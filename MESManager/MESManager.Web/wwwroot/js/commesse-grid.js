@@ -52,6 +52,8 @@ window.commesseGrid = (function() {
                 sortable: true,
                 filter: true
             },
+            headerHeight: 24,
+            rowHeight: 28,
             animateRows: true,
             rowSelection: 'single',
             onGridReady: (params) => {

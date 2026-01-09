@@ -13,7 +13,7 @@
 <div class="commesse-page">
     <div class="toolbar-sticky">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
-            <MudText Typo="Typo.h4">Commesse</MudText>
+            <MudText Typo="Typo.h6">Commesse</MudText>
             <MudSpacer />
 
             
@@ -21,9 +21,9 @@
                          Placeholder="Cerca in tutte le colonne..."
                          Variant="Variant.Outlined"
                          Margin="Margin.Dense"
-                         Style="width: 300px;"
+                         Style="width: 280px;"
                          Immediate="true"
-                         DebounceInterval="300"
+                         DebounceInterval="280"
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@ResetGrid">Reset</MudButton>
@@ -74,7 +74,7 @@
     </div>
 
     <div id="commesseGrid" class="ag-theme-alpine" 
-         style="width: 100%; height: calc(100vh - 300px); margin-top: 1rem;">
+         style="width: 100%; height: calc(100vh - 150px);">
     </div>
 </div>
 
@@ -88,8 +88,8 @@
         top: 0;
         z-index: 10;
         background: white;
-        padding: 1rem 0;
-        margin-bottom: 1rem;
+        padding: 0.1 rem 0;
+        margin-bottom: 0.2rem;
     }
 </style>
 
@@ -130,7 +130,7 @@
         if (firstRender)
         {
             // Delay per assicurarsi che gli script siano caricati
-            await Task.Delay(100);
+            await Task.Delay(300);
             await InitializeGrid();
         }
     }
