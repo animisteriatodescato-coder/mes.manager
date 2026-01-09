@@ -1,0 +1,3411 @@
+[
+  {
+    "Codice": "0001",
+    "Nome": "VDP FONDERIA S.P.A.",
+    "Email": "acquisti@vdp.it",
+    "Note": "",
+    "UltimaModifica": "2024-10-01 10:30:42"
+  },
+  {
+    "Codice": "0001",
+    "Nome": "ULTRACOM",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-09-11 15:08:45"
+  },
+  {
+    "Codice": "0002",
+    "Nome": "IMMOBILIARE LUPIOLA \r\ndi Todescato Giuliano \u0026 C. S.n.c.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:12:01"
+  },
+  {
+    "Codice": "0002",
+    "Nome": "FONDERIA ZARDO S.P.A.",
+    "Email": "admin@fonderiazardo.it",
+    "Note": "",
+    "UltimaModifica": "2025-01-15 10:04:43"
+  },
+  {
+    "Codice": "0003",
+    "Nome": "FONDERIA POVOLARO S.R.L.",
+    "Email": "acquisti@fonderiapovolaro.com",
+    "Note": "",
+    "UltimaModifica": "2024-06-27 15:07:00"
+  },
+  {
+    "Codice": "0003",
+    "Nome": "BANCA POPOLARE DI VICENZA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-13 14:59:24"
+  },
+  {
+    "Codice": "0004",
+    "Nome": "TIM S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-08-01 12:34:06"
+  },
+  {
+    "Codice": "0004",
+    "Nome": "GDC CAST S.P.A.",
+    "Email": "acquisti@gdccast.it",
+    "Note": "",
+    "UltimaModifica": "2024-06-27 15:05:57"
+  },
+  {
+    "Codice": "0005",
+    "Nome": "FONDERIE DI MONTORSO S.P.A.",
+    "Email": "cont.fornitori@fonderiadimontorso.com",
+    "Note": "",
+    "UltimaModifica": "2021-12-15 11:10:04"
+  },
+  {
+    "Codice": "0005",
+    "Nome": "DELLAI di Dellai Gioacchino",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-09-11 14:48:14"
+  },
+  {
+    "Codice": "0006",
+    "Nome": "DUSO S.r.l.",
+    "Email": "produzione@dusosrl.it",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:24:47"
+  },
+  {
+    "Codice": "0006",
+    "Nome": "TRENTA S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-09-11 14:28:06"
+  },
+  {
+    "Codice": "0007",
+    "Nome": "FAIV",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-13 15:00:47"
+  },
+  {
+    "Codice": "0007",
+    "Nome": "FONDERIA FOMEL S.r.l.",
+    "Email": "fonderiafomel@gmail.com",
+    "Note": "",
+    "UltimaModifica": "2024-10-08 11:21:15"
+  },
+  {
+    "Codice": "0008",
+    "Nome": "FONDERIE SOLIMAN S.P.A.",
+    "Email": "amministrazione-fs@solimangroup.com",
+    "Note": "",
+    "UltimaModifica": "2020-02-10 13:03:08"
+  },
+  {
+    "Codice": "0008",
+    "Nome": "SOVICAR S.r.l.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:32:15"
+  },
+  {
+    "Codice": "0009",
+    "Nome": "STUDIO COMMERCIALE PONSO MACULAN",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:17:42"
+  },
+  {
+    "Codice": "0009",
+    "Nome": "FELMAC S.r.l.",
+    "Email": "info@felmac.it",
+    "Note": "",
+    "UltimaModifica": "2021-11-30 10:45:02"
+  },
+  {
+    "Codice": "0010",
+    "Nome": "P.S.D. S.r.l.",
+    "Email": "fonderpsd@alice.it",
+    "Note": "",
+    "UltimaModifica": "2021-11-30 10:45:10"
+  },
+  {
+    "Codice": "0010",
+    "Nome": "COVER UP S.r.l. UNIPERSONALE",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-03-08 09:41:25"
+  },
+  {
+    "Codice": "0011",
+    "Nome": "IMIC S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:24:59"
+  },
+  {
+    "Codice": "0011",
+    "Nome": "SASSO S.R.L.",
+    "Email": "amministrazione@animisteriasasso.it",
+    "Note": "",
+    "UltimaModifica": "2021-11-30 10:45:16"
+  },
+  {
+    "Codice": "0012",
+    "Nome": "FONDERIA SILVESTRI S.r.l.",
+    "Email": "amministrazione@fondsilvestri.com",
+    "Note": "",
+    "UltimaModifica": "2021-11-30 10:45:22"
+  },
+  {
+    "Codice": "0012",
+    "Nome": "FRISIEROAUTOMAZIONI s.n.c.\r\ndi Alessandro e Francesco Frisiero",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:31:34"
+  },
+  {
+    "Codice": "0013",
+    "Nome": "AUTOTRASPORTI DALLE RIVE di Dalle Rive Andrea",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-11-12 12:31:46"
+  },
+  {
+    "Codice": "0013",
+    "Nome": "LA MADONNINA di Corr\u00E0 Luciano",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-11-30 10:45:29"
+  },
+  {
+    "Codice": "0014",
+    "Nome": "G. ILLESI di Illesi Giancarlo",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-09-11 14:50:30"
+  },
+  {
+    "Codice": "0014",
+    "Nome": "SANTA CATERINA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-27 15:14:28"
+  },
+  {
+    "Codice": "0015",
+    "Nome": "FONDERIE RAVAZZOLO S.A.S.\r\n",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:18:46"
+  },
+  {
+    "Codice": "0015",
+    "Nome": "F.LLI MAZZON S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:27:51"
+  },
+  {
+    "Codice": "0016",
+    "Nome": "SUPERFERRAMENTA di De Guio Dino \u0026 C. s.n.c.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:29:52"
+  },
+  {
+    "Codice": "0016",
+    "Nome": "FONDERIA ARTISTICA MARELLO \r\ndi Sottoriva R e Urbani L snc",
+    "Email": "fond.marello@hotmail.it",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:18:51"
+  },
+  {
+    "Codice": "0017",
+    "Nome": "FONDERIA ZALTRON S.R.L.",
+    "Email": "info@fonderiazaltron.191.it",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:18:55"
+  },
+  {
+    "Codice": "0017",
+    "Nome": "TUTTOUFFICIO CORTESE S.n.c.\r\ndi Cortese Giuseppe \u0026 C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:32:46"
+  },
+  {
+    "Codice": "0018",
+    "Nome": "RANGERS S.r.l.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-13 15:02:28"
+  },
+  {
+    "Codice": "0018",
+    "Nome": "PREMA S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-01-08 10:55:31"
+  },
+  {
+    "Codice": "0019",
+    "Nome": "FONDERIA EMMEZETA DI MAGGIOLO GALDINO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:19:02"
+  },
+  {
+    "Codice": "0019",
+    "Nome": "STUDIO LEGALE MANTOVANI E ASSOCIATI",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:37:23"
+  },
+  {
+    "Codice": "0020",
+    "Nome": "MONDOFFICE S.r.l.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:38:09"
+  },
+  {
+    "Codice": "0020",
+    "Nome": "FRIUL CENTRIFUGA S.R.L. A S.U.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:19:06"
+  },
+  {
+    "Codice": "0021",
+    "Nome": "FONDERIA TORRESAN SNC DI Carollo Giovanna Maria \u0026 Figli",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:19:11"
+  },
+  {
+    "Codice": "0021",
+    "Nome": "UNIEURO S.r.l.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:38:50"
+  },
+  {
+    "Codice": "0022",
+    "Nome": "TONER ITALIA s.n.c.\r\ndi Lo Greco Francesco \u0026 C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:41:23"
+  },
+  {
+    "Codice": "0022",
+    "Nome": "OLMAT SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-27 15:14:45"
+  },
+  {
+    "Codice": "0023",
+    "Nome": "EUROUFFICIO S.r.l.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:41:48"
+  },
+  {
+    "Codice": "0023",
+    "Nome": "FONDERIA BARALDI SILVANO SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:19:17"
+  },
+  {
+    "Codice": "0024",
+    "Nome": "F.A.B. S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:19:23"
+  },
+  {
+    "Codice": "0024",
+    "Nome": "GNG GRAPHICNORD GROUP S.r.l.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:48:41"
+  },
+  {
+    "Codice": "0025",
+    "Nome": "COMPRESSORI B.M.F. S.r.l.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:49:20"
+  },
+  {
+    "Codice": "0025",
+    "Nome": "FONDERIA F.LLI DAL BIANCO S.R.L.",
+    "Email": "fonderiadalbianco@libero.it",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:19:27"
+  },
+  {
+    "Codice": "0026",
+    "Nome": "FONDERIE ALMA S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:19:31"
+  },
+  {
+    "Codice": "0026",
+    "Nome": "DIERRE di Rigon Giuliana",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-09-11 14:51:32"
+  },
+  {
+    "Codice": "0027",
+    "Nome": "REMO MATTEAZZI GEOMETRA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-09-11 14:52:31"
+  },
+  {
+    "Codice": "0027",
+    "Nome": "FONDERIA IN CONCHIGLIA S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-27 15:15:11"
+  },
+  {
+    "Codice": "0028",
+    "Nome": "ACQUE VICENTINE S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-09-11 14:27:49"
+  },
+  {
+    "Codice": "0028",
+    "Nome": "SASSUOLO FUSIONI SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-04-20 11:41:16"
+  },
+  {
+    "Codice": "0029",
+    "Nome": "PUNTO VERDE di Dalle Rive f.lli s.r.l.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:53:23"
+  },
+  {
+    "Codice": "0029",
+    "Nome": "METALVENETA S.A.S.\r\nDi Tonello Fabiano \u0026 C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:19:40"
+  },
+  {
+    "Codice": "0030",
+    "Nome": "ANIMISTERIA VENETA S.R.L.\r\n",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-05-23 15:44:56"
+  },
+  {
+    "Codice": "0030",
+    "Nome": "SO.GES.CAR S.n.c.\r\ndi Perdoncin Riccardo \u0026 C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:54:12"
+  },
+  {
+    "Codice": "0031",
+    "Nome": "VENETO ECOLOGIA s.a.s.\r\ndi Andrein Gianpietro \u0026 C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:54:48"
+  },
+  {
+    "Codice": "0031",
+    "Nome": "ZENIT ITALIA SRL a socio unico",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-03-14 11:44:46"
+  },
+  {
+    "Codice": "0032",
+    "Nome": "FOMETAL S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:19:48"
+  },
+  {
+    "Codice": "0032",
+    "Nome": "SILVA SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-05-15 10:21:29"
+  },
+  {
+    "Codice": "0033",
+    "Nome": "AUTOSTRADE PER L\u0027ITALIA S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-13 15:02:51"
+  },
+  {
+    "Codice": "0033",
+    "Nome": "FONDERIA SANCISI S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-05-23 15:44:12"
+  },
+  {
+    "Codice": "0034",
+    "Nome": "SICILIA BELLA \r\ndi Finocchio Paolo",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:19:54"
+  },
+  {
+    "Codice": "0034",
+    "Nome": "TELEPASS S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-13 15:03:04"
+  },
+  {
+    "Codice": "0035",
+    "Nome": "OBIETTIVO LAVORO S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-10 15:56:37"
+  },
+  {
+    "Codice": "0035",
+    "Nome": "LIBERIOR S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:19:58"
+  },
+  {
+    "Codice": "0036",
+    "Nome": "JONAK JOSIP",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-12 15:20:02"
+  },
+  {
+    "Codice": "0036",
+    "Nome": "TERMOIDRAULICA F.LLI DAL MOLIN S.r.l.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-04-21 12:38:08"
+  },
+  {
+    "Codice": "0037",
+    "Nome": "BER.MAR SERVIZI SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-04-26 14:42:17"
+  },
+  {
+    "Codice": "0037",
+    "Nome": "DUSO S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-27 15:15:32"
+  },
+  {
+    "Codice": "0038",
+    "Nome": "CARROZZERIA MAGNABOSCO GIUSEPPE \u0026 DANIELE S.N.C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-12 12:02:17"
+  },
+  {
+    "Codice": "0038",
+    "Nome": "ANIMISTERIA TODESCATO \u0026 C. s.a.s.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-03-31 10:15:14"
+  },
+  {
+    "Codice": "0039",
+    "Nome": "FONDERIE ACCIAIERIE ROIALE S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-27 15:15:46"
+  },
+  {
+    "Codice": "0039",
+    "Nome": "UNI 3 SERVIZI S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-12 12:06:32"
+  },
+  {
+    "Codice": "0040",
+    "Nome": "CASON MORENO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2020-11-06 10:44:12"
+  },
+  {
+    "Codice": "0040",
+    "Nome": "AUTRASPORTI DALLE RIVE di Dalle Rive Andrea",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-11-07 11:34:04"
+  },
+  {
+    "Codice": "0041",
+    "Nome": "VDZ srl",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-27 15:16:00"
+  },
+  {
+    "Codice": "0041",
+    "Nome": "GIGA SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-11 14:54:48"
+  },
+  {
+    "Codice": "0042",
+    "Nome": "MULLER ANDRE MARCEL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-11 14:57:30"
+  },
+  {
+    "Codice": "0042",
+    "Nome": "ANIMA S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-27 15:16:10"
+  },
+  {
+    "Codice": "0043",
+    "Nome": "LE FONDERIE DEL DELTA S.R.L. IN FALLIMENTO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2020-12-17 11:54:16"
+  },
+  {
+    "Codice": "0043",
+    "Nome": "BEDIN F.LLI S.N.C.\r\ndi Gianfranco \u0026 Mariano",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-11 14:59:07"
+  },
+  {
+    "Codice": "0044",
+    "Nome": "FONDERIE DI MONTORSO SPA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-09-09 17:42:44"
+  },
+  {
+    "Codice": "0044",
+    "Nome": "SCARANELLO S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-27 15:16:23"
+  },
+  {
+    "Codice": "0045",
+    "Nome": "C2MAC GROUP S.P.A.",
+    "Email": "cont.fornitori@fonderiadimontorso.com",
+    "Note": "",
+    "UltimaModifica": "2022-12-05 09:16:59"
+  },
+  {
+    "Codice": "0045",
+    "Nome": "BOSS EQUIPMENT S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-05-11 15:05:12"
+  },
+  {
+    "Codice": "0046",
+    "Nome": "SCHEDA CARBURANTI",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-03-31 10:20:27"
+  },
+  {
+    "Codice": "0046",
+    "Nome": "MARBA SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-27 15:16:38"
+  },
+  {
+    "Codice": "0047",
+    "Nome": "VDC S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-27 15:16:50"
+  },
+  {
+    "Codice": "0047",
+    "Nome": "DOLOMITI ENERGIE S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-09-11 14:27:55"
+  },
+  {
+    "Codice": "0048",
+    "Nome": "PRIMAFOND SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-06-13 12:05:52"
+  },
+  {
+    "Codice": "0048",
+    "Nome": "VENETO LAVORO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-03-31 10:51:28"
+  },
+  {
+    "Codice": "0049",
+    "Nome": "M.D. S.n.c. di COTTI ARVEDO \u0026 C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-04-04 11:54:27"
+  },
+  {
+    "Codice": "0049",
+    "Nome": "AZIENDA ULSS n.8 BERICA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-04-13 11:07:39"
+  },
+  {
+    "Codice": "0050",
+    "Nome": "CESAR S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-07-13 12:49:53"
+  },
+  {
+    "Codice": "0050",
+    "Nome": "FONDERIA CORRA\u0027 SPA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-18 12:50:59"
+  },
+  {
+    "Codice": "0051",
+    "Nome": "FONDERIE ALLUMINIO TAZZARI SPA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-05-23 15:45:45"
+  },
+  {
+    "Codice": "0051",
+    "Nome": "WORK SHOP S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-07-13 12:59:25"
+  },
+  {
+    "Codice": "0052",
+    "Nome": "GDC CAST S.P.A.\r\n",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-08-16 10:29:56"
+  },
+  {
+    "Codice": "0052",
+    "Nome": "O.M.P. OFFICINE MAZZOCCO PAGNONI SRL\r\n",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-10-06 15:28:57"
+  },
+  {
+    "Codice": "0053",
+    "Nome": "LA COLOMBARA S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-08-16 10:52:13"
+  },
+  {
+    "Codice": "0053",
+    "Nome": "2VI SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-05-09 11:08:02"
+  },
+  {
+    "Codice": "0054",
+    "Nome": "ITALCORE SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-27 15:17:19"
+  },
+  {
+    "Codice": "0054",
+    "Nome": "DUSO S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-08-16 11:01:02"
+  },
+  {
+    "Codice": "0055",
+    "Nome": "CUSINATO F.LLI S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-08-16 11:12:29"
+  },
+  {
+    "Codice": "0055",
+    "Nome": "ZANARDI FONDERIE SPA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-08-28 14:15:44"
+  },
+  {
+    "Codice": "0056",
+    "Nome": "STEBER SCAFFALATURE\r\ndi Eberrini Rag. Stefano",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-08-16 11:16:34"
+  },
+  {
+    "Codice": "0057",
+    "Nome": "ANTINCENDIO PALLADIO SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-10-11 11:23:47"
+  },
+  {
+    "Codice": "0058",
+    "Nome": "PIOTTO RENZO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-09-11 14:54:24"
+  },
+  {
+    "Codice": "0059",
+    "Nome": "BARON LUIGI",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-09-11 14:55:26"
+  },
+  {
+    "Codice": "0060",
+    "Nome": "STUDIO VICENTIN SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-11-15 09:44:37"
+  },
+  {
+    "Codice": "0061",
+    "Nome": "2EMME SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-11-15 17:15:59"
+  },
+  {
+    "Codice": "0062",
+    "Nome": "S.V.A.R. s.a.s. \r\ndi A. Sartori \u0026 C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-11-15 17:37:13"
+  },
+  {
+    "Codice": "0063",
+    "Nome": "TOZZO ANTINFORTUNISTICA di Tozzo Renzo",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-11-22 12:04:55"
+  },
+  {
+    "Codice": "0064",
+    "Nome": "RIST. PIZZERIA ARGENTINA\r\nFONTANA RISTORAZIONE SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-12-15 16:30:22"
+  },
+  {
+    "Codice": "0065",
+    "Nome": "TRE R SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-12-15 16:36:02"
+  },
+  {
+    "Codice": "0066",
+    "Nome": "CECCHINI COLLECTION SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-12-15 17:18:03"
+  },
+  {
+    "Codice": "0067",
+    "Nome": "EUROFINS - MODULO UNO S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2016-12-29 13:34:53"
+  },
+  {
+    "Codice": "0068",
+    "Nome": "COMMERCIALE ENNETI srl",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-01-13 10:16:47"
+  },
+  {
+    "Codice": "0069",
+    "Nome": "MOGENTALE S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-01-13 10:21:04"
+  },
+  {
+    "Codice": "0070",
+    "Nome": "MICROAREA S.P.A",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-02-14 12:26:33"
+  },
+  {
+    "Codice": "0071",
+    "Nome": "DURING S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-02-14 12:51:10"
+  },
+  {
+    "Codice": "0072",
+    "Nome": "RANDSTAD ITALIA S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-02-14 12:50:45"
+  },
+  {
+    "Codice": "0073",
+    "Nome": "MOTOR SERVICE SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-05-15 11:42:43"
+  },
+  {
+    "Codice": "0074",
+    "Nome": "SOLUZIONE UFFICIO S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-04-20 16:02:15"
+  },
+  {
+    "Codice": "0075",
+    "Nome": "VDP FONDERIA S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-06-13 11:24:26"
+  },
+  {
+    "Codice": "0076",
+    "Nome": "REAG REAL ESTATE ADVISORY GROUP SPA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-06-13 11:23:42"
+  },
+  {
+    "Codice": "0077",
+    "Nome": "B.R. PNEUMATICI S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-06-13 11:32:23"
+  },
+  {
+    "Codice": "0078",
+    "Nome": "R.G. FER S.A.S. di Rizzi Gianantonio \u0026 C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-06-13 11:39:36"
+  },
+  {
+    "Codice": "0079",
+    "Nome": "PIZZERIA TRATTORIA ALLE FORNACI\r\ndi Cappozzo Natale Bruno \u0026 C. s.n.c.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-08-14 18:29:59"
+  },
+  {
+    "Codice": "0080",
+    "Nome": "INTESA SANPAOLO S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-09-13 12:20:45"
+  },
+  {
+    "Codice": "0081",
+    "Nome": "T.V.S. - TECNO VENETA SERVIZI S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-10-09 10:39:55"
+  },
+  {
+    "Codice": "0082",
+    "Nome": "VALFER S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-10-09 12:28:28"
+  },
+  {
+    "Codice": "0083",
+    "Nome": "LYRECO ITALIA S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-11-13 16:27:49"
+  },
+  {
+    "Codice": "0084",
+    "Nome": "RICAMIFICIO EIKON",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-09-25 09:59:43"
+  },
+  {
+    "Codice": "0085",
+    "Nome": "BUFFALO GRILL S.R.L.S.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-12-14 10:44:50"
+  },
+  {
+    "Codice": "0086",
+    "Nome": "IDRO-COMM. S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-12-14 10:49:21"
+  },
+  {
+    "Codice": "0087",
+    "Nome": "SCHIAVOTTO S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2017-12-14 11:08:03"
+  },
+  {
+    "Codice": "0088",
+    "Nome": "MEDIAMARKET S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-03-27 11:17:02"
+  },
+  {
+    "Codice": "0089",
+    "Nome": "ALI\u0027 S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-01-11 10:54:22"
+  },
+  {
+    "Codice": "0090",
+    "Nome": "NUOVA ELETTROMECCANICA S.N.C.\r\ndi Munaretto Placido \u0026 Pozzato Domenico",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-01-26 12:59:37"
+  },
+  {
+    "Codice": "0091",
+    "Nome": "PESSATO STEFANO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-08-05 11:03:17"
+  },
+  {
+    "Codice": "0092",
+    "Nome": "SATEF HUTTENES ALBERTUS S.P.A. a Socio Unico",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-03-13 12:31:13"
+  },
+  {
+    "Codice": "0093",
+    "Nome": "MARBA SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-06-16 11:49:16"
+  },
+  {
+    "Codice": "0094",
+    "Nome": "MORO ALDO\r\ndi Moro Geom.Tiziano \u0026 C. s.n.c.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-03-16 11:48:41"
+  },
+  {
+    "Codice": "0095",
+    "Nome": "FRANCESCO ZANOTTO ARCHITETTO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-04-13 09:31:55"
+  },
+  {
+    "Codice": "0096",
+    "Nome": "ENERGY ONE S.n.c.\r\ndi Battilana S. e Fantinato R. \u0026 C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-04-13 10:01:59"
+  },
+  {
+    "Codice": "0097",
+    "Nome": "INDUSTRIAL CARS S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-04-13 10:39:24"
+  },
+  {
+    "Codice": "0098",
+    "Nome": "FARMACIA SANDRIGO SNC",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-04-13 10:50:20"
+  },
+  {
+    "Codice": "0099",
+    "Nome": "CHEMELLO NICLA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-05-14 13:42:31"
+  },
+  {
+    "Codice": "0100",
+    "Nome": "MASSIGNAN GIANNI \u0026 FIGLI SNC",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-05-14 16:13:37"
+  },
+  {
+    "Codice": "0101",
+    "Nome": "CNH INDUSTRIAL CAPITAL EUROPE",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-05-08 14:15:15"
+  },
+  {
+    "Codice": "0102",
+    "Nome": "ESSEGI S.N.C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-06-12 15:28:17"
+  },
+  {
+    "Codice": "0103",
+    "Nome": "STUDIO NOTARILE LORETTU Dott. STEFANO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-06-12 15:50:53"
+  },
+  {
+    "Codice": "0104",
+    "Nome": "FIANDRI S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-09-21 11:24:21"
+  },
+  {
+    "Codice": "0105",
+    "Nome": "CENTRO IMBALLO \r\ndi Cencherle Franco \u0026 C. S.n.c.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-08-01 11:22:20"
+  },
+  {
+    "Codice": "0106",
+    "Nome": "ICCREA BANCAIMPRESA S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-05-08 14:15:45"
+  },
+  {
+    "Codice": "0107",
+    "Nome": "NARDI MATTIA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-10-14 12:07:15"
+  },
+  {
+    "Codice": "0108",
+    "Nome": "BRADO S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-08-01 12:42:45"
+  },
+  {
+    "Codice": "0109",
+    "Nome": "NOVA S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-02-28 10:54:57"
+  },
+  {
+    "Codice": "0110",
+    "Nome": "DELLAI \u0026 C. S.N.C.\r\ndi DELLAI ANDREA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-08-23 15:35:12"
+  },
+  {
+    "Codice": "0111",
+    "Nome": "COLORIFICIO FERRAMENTA FARESIN S.N.C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-10-11 11:04:31"
+  },
+  {
+    "Codice": "0112",
+    "Nome": "VIACQUA S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-10-11 11:10:34"
+  },
+  {
+    "Codice": "0113",
+    "Nome": "F.LLI MARANA DI DEVIS ENDRIK \u0026 C. S.N.C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-11-09 10:06:02"
+  },
+  {
+    "Codice": "0114",
+    "Nome": "TERMIT d.d.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-11-28 12:39:38"
+  },
+  {
+    "Codice": "0115",
+    "Nome": "CAVALIERE S.r.l.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2018-11-28 13:26:49"
+  },
+  {
+    "Codice": "0116",
+    "Nome": "DIESSE S.r.l.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-01-09 12:13:13"
+  },
+  {
+    "Codice": "0117",
+    "Nome": "MENIN ADRIANO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-02-28 10:56:23"
+  },
+  {
+    "Codice": "0118",
+    "Nome": "ING. CONCATO RICCARDO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-01-09 12:51:16"
+  },
+  {
+    "Codice": "0119",
+    "Nome": "FERRAMENTA ILLESI S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-02-06 12:53:25"
+  },
+  {
+    "Codice": "0120",
+    "Nome": "ILLESI GIANCARLO S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-02-06 12:55:10"
+  },
+  {
+    "Codice": "0121",
+    "Nome": "AMAZON EU S.\u00E0.r.l. Succursale Italiana",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-01-19 13:42:17"
+  },
+  {
+    "Codice": "0122",
+    "Nome": "DUSO S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-02-27 10:19:45"
+  },
+  {
+    "Codice": "0123",
+    "Nome": "MAGNABOSCO GIUSEPPE",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-03-13 12:03:21"
+  },
+  {
+    "Codice": "0124",
+    "Nome": "MAGNABOSCO DANIELE",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-03-13 12:06:43"
+  },
+  {
+    "Codice": "0125",
+    "Nome": "MONTAGGI FENIX S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-03-16 17:35:20"
+  },
+  {
+    "Codice": "0126",
+    "Nome": "TOZZO SRLS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-03-16 18:05:33"
+  },
+  {
+    "Codice": "0127",
+    "Nome": "FIORINI IOLANDA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-03-16 18:23:15"
+  },
+  {
+    "Codice": "0128",
+    "Nome": "COMMIT DI MIOTTI ANDREA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-03-16 18:28:54"
+  },
+  {
+    "Codice": "0129",
+    "Nome": "CORIF SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-04-09 11:59:50"
+  },
+  {
+    "Codice": "0130",
+    "Nome": "VIGNAGA DANIELE",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-04-09 12:13:46"
+  },
+  {
+    "Codice": "0131",
+    "Nome": "RAMONA SCHMITZ",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-05-03 14:06:49"
+  },
+  {
+    "Codice": "0132",
+    "Nome": "GLS ENTERPRISE SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-05-03 15:54:20"
+  },
+  {
+    "Codice": "0133",
+    "Nome": "ANIMISTERIA TODESCATO \u0026 C. s.a.s.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-05-28 12:29:42"
+  },
+  {
+    "Codice": "0134",
+    "Nome": "COMMERCIALE VENETA BELTRAME S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-06-17 10:26:35"
+  },
+  {
+    "Codice": "0135",
+    "Nome": "UNIPOLTECH S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-06-14 21:35:19"
+  },
+  {
+    "Codice": "0136",
+    "Nome": "ZONTA GIANANTONIO \u0026 C. SAS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-10-22 10:37:24"
+  },
+  {
+    "Codice": "0137",
+    "Nome": "T.F. SERVIZI S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-06-17 10:48:38"
+  },
+  {
+    "Codice": "0138",
+    "Nome": "LA PERLA DI ACAMPORA MATTEO \u0026 C. SNC",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-07-05 10:19:38"
+  },
+  {
+    "Codice": "0139",
+    "Nome": "ZORZO TECNOLOGIE S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-10-14 11:09:30"
+  },
+  {
+    "Codice": "0140",
+    "Nome": "ICCREA BANCAIMPRESA S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-09-02 12:13:14"
+  },
+  {
+    "Codice": "0141",
+    "Nome": "FORAPANI STEFANO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-09-02 12:11:36"
+  },
+  {
+    "Codice": "0142",
+    "Nome": "TELEMAR S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-09-02 12:27:08"
+  },
+  {
+    "Codice": "0143",
+    "Nome": "TRATTORIA QUATTRO STRADE di Meneghini Francesca",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-10-14 11:14:01"
+  },
+  {
+    "Codice": "0144",
+    "Nome": "M3 DI BRUN RUGGERO \u0026 C. S.A.S.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2019-11-14 13:12:27"
+  },
+  {
+    "Codice": "0145",
+    "Nome": "ETC SOLUZIONI AZIENDALI SRL UNIPERSONALE",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-12-01 10:26:35"
+  },
+  {
+    "Codice": "0146",
+    "Nome": "MARGHERITA SOCIETA\u0027 COOPERATIVA SOCIALE ONLUS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2020-02-11 11:01:23"
+  },
+  {
+    "Codice": "0147",
+    "Nome": "HA ITALIA S.P.A. HA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2020-02-11 11:11:06"
+  },
+  {
+    "Codice": "0148",
+    "Nome": "BATTOCCHIO MARIANO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2020-04-14 11:16:35"
+  },
+  {
+    "Codice": "0149",
+    "Nome": "REFRIGERAZIONE ELETTRICA VICENTINA SRL UNIPERSONALE",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-02-11 11:27:42"
+  },
+  {
+    "Codice": "0150",
+    "Nome": "POSSENTI di Ruggeri Maura",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2020-08-05 14:29:01"
+  },
+  {
+    "Codice": "0151",
+    "Nome": "CARROZZERIA AURELIA SNC di Pesavento L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2020-09-07 11:14:23"
+  },
+  {
+    "Codice": "0152",
+    "Nome": "LEROY MERLIN ITALIA SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2020-10-01 10:50:16"
+  },
+  {
+    "Codice": "0153",
+    "Nome": "ZAMPERETTI LEGNAMI S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2020-10-06 13:04:05"
+  },
+  {
+    "Codice": "0154",
+    "Nome": "LYRECO ITALIA SRL\r\nCENTRO DISTRIBUZIONE",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2020-11-12 08:16:02"
+  },
+  {
+    "Codice": "0155",
+    "Nome": "SASSO S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-02-12 11:04:58"
+  },
+  {
+    "Codice": "0156",
+    "Nome": "Me.Di.Ca. Group Srl",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2020-12-09 09:45:29"
+  },
+  {
+    "Codice": "0157",
+    "Nome": "IV.AL SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-01-22 11:38:30"
+  },
+  {
+    "Codice": "0158",
+    "Nome": "COSEP - SOCIETA\u0027 COOPERATIVA SOCIALE",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2020-12-28 10:31:05"
+  },
+  {
+    "Codice": "0159",
+    "Nome": "TFA SERVICE SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2020-12-28 10:35:52"
+  },
+  {
+    "Codice": "0160",
+    "Nome": "PLAST-MECCANICA SPA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-01-22 11:15:43"
+  },
+  {
+    "Codice": "0161",
+    "Nome": "PULIASSISTENZA SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-01-22 11:26:48"
+  },
+  {
+    "Codice": "0162",
+    "Nome": "F.LLI BEVILACQUA SNC \r\nDI BEVILACQUA MARCO E CAMILLO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-01-22 11:46:14"
+  },
+  {
+    "Codice": "0163",
+    "Nome": "EUROINTERIM S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-06-14 10:44:57"
+  },
+  {
+    "Codice": "0164",
+    "Nome": "FCA BANK S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-04-06 12:23:49"
+  },
+  {
+    "Codice": "0165",
+    "Nome": "ELETTROMECCANICA PIERRO SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-04-08 11:46:22"
+  },
+  {
+    "Codice": "0166",
+    "Nome": "HELVI SPA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-04-16 16:39:18"
+  },
+  {
+    "Codice": "0167",
+    "Nome": "MICHELAZZO SERVICE SNC di Michelazzo Mirco \u0026 C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-04-27 09:05:59"
+  },
+  {
+    "Codice": "0168",
+    "Nome": "ZAZZERON MATTEO E C. SRLCR",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-05-07 10:49:42"
+  },
+  {
+    "Codice": "0169",
+    "Nome": "LINDE GAS ITALIA S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-05-07 11:00:24"
+  },
+  {
+    "Codice": "0170",
+    "Nome": "TECTAKE ITALIA S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-05-07 11:03:33"
+  },
+  {
+    "Codice": "0171",
+    "Nome": "I.CAR SRL A SOCIO UNICO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-05-07 11:21:07"
+  },
+  {
+    "Codice": "0172",
+    "Nome": "ARCHIMEDE SPA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-05-12 09:08:54"
+  },
+  {
+    "Codice": "0173",
+    "Nome": "AMILON SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-14 10:24:39"
+  },
+  {
+    "Codice": "0174",
+    "Nome": "SORARIS SPA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-06-04 10:53:30"
+  },
+  {
+    "Codice": "0175",
+    "Nome": "CECCATO AUTOMOBILI SPA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-06-04 10:59:04"
+  },
+  {
+    "Codice": "0176",
+    "Nome": "ART \u0026 STICK S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-06-04 11:26:45"
+  },
+  {
+    "Codice": "0177",
+    "Nome": "CELIN SNC DI CELIN WALTER \u0026 MASSIMO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-01-21 11:10:46"
+  },
+  {
+    "Codice": "0178",
+    "Nome": "AXL S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-06-10 10:29:55"
+  },
+  {
+    "Codice": "0179",
+    "Nome": "VIDA SAS di Valentina e Alessio Avataneo \u0026 C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-07-07 10:01:24"
+  },
+  {
+    "Codice": "0180",
+    "Nome": "TOPOLENA SHOP S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-07-07 10:08:50"
+  },
+  {
+    "Codice": "0181",
+    "Nome": "AMAZON EU S.A.R.L. deutshchland",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-25 10:47:23"
+  },
+  {
+    "Codice": "0182",
+    "Nome": "AERZETIX EOOD",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-07-29 10:05:52"
+  },
+  {
+    "Codice": "0183",
+    "Nome": "VIDA XL INTERNATIONAL B.V.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-07-29 10:05:11"
+  },
+  {
+    "Codice": "0184",
+    "Nome": "FRIDLE GROUP S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-08-05 11:41:10"
+  },
+  {
+    "Codice": "0185",
+    "Nome": "SCATOLIFICIO GLORIA SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-08-05 12:25:03"
+  },
+  {
+    "Codice": "0186",
+    "Nome": "C2MAC GROUP S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-09-09 17:42:36"
+  },
+  {
+    "Codice": "0187",
+    "Nome": "ELECTRONIC SYSTEM BUSINESS S.R.L.S.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-10-12 05:10:36"
+  },
+  {
+    "Codice": "0188",
+    "Nome": "VSTORE sas di Viviana Bagnato \u0026 C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-10-12 05:19:41"
+  },
+  {
+    "Codice": "0189",
+    "Nome": "ECOVITA SRLS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-10-14 09:29:35"
+  },
+  {
+    "Codice": "0190",
+    "Nome": "AMAZON EU S.a.r.l. Succursale Francaise",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-10-14 14:08:10"
+  },
+  {
+    "Codice": "0191",
+    "Nome": "SUPERMERCATI TOSANO CEREA SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-11-10 12:56:13"
+  },
+  {
+    "Codice": "0192",
+    "Nome": "TECNOINGROS SAS DI PASTORELLO GI",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-11-10 13:13:31"
+  },
+  {
+    "Codice": "0193",
+    "Nome": "TRATTORIA DA PALMERINO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-12-24 09:56:08"
+  },
+  {
+    "Codice": "0194",
+    "Nome": "ITALIAN TOBACCO DISTRIBUTION S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2021-12-24 10:09:33"
+  },
+  {
+    "Codice": "0195",
+    "Nome": "AXERA S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-02-14 11:14:42"
+  },
+  {
+    "Codice": "0196",
+    "Nome": "ZUCCHETTI S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-02-15 11:42:17"
+  },
+  {
+    "Codice": "0197",
+    "Nome": "A.T.I. S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-03-10 12:36:51"
+  },
+  {
+    "Codice": "0198",
+    "Nome": "UNICOMM S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-03-10 12:42:39"
+  },
+  {
+    "Codice": "0199",
+    "Nome": "PUNTO CONTABILE di Bedin Ornella",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-03-10 12:58:52"
+  },
+  {
+    "Codice": "0200",
+    "Nome": "EDIL LAMBERTI S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-03-10 13:07:37"
+  },
+  {
+    "Codice": "0201",
+    "Nome": "AMAZON EU S.\u00E0.r.l. Succursal en Espana",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-21 10:34:13"
+  },
+  {
+    "Codice": "0202",
+    "Nome": "Radius Business Solutions (Italia) S.r.l.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-04-11 14:31:23"
+  },
+  {
+    "Codice": "0203",
+    "Nome": "LORENZONI SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-06-14 21:13:15"
+  },
+  {
+    "Codice": "0204",
+    "Nome": "STUDIO OMASSI - PONSO - MACULAN S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-06-14 21:24:58"
+  },
+  {
+    "Codice": "0205",
+    "Nome": "2VI SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-06-14 21:55:13"
+  },
+  {
+    "Codice": "0206",
+    "Nome": "TADIELLO CHIARA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-07-06 09:34:15"
+  },
+  {
+    "Codice": "0207",
+    "Nome": "GED GROUP SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-07-06 09:53:41"
+  },
+  {
+    "Codice": "0208",
+    "Nome": "MODELLERIA ZUIN SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-07-06 10:18:21"
+  },
+  {
+    "Codice": "0209",
+    "Nome": "ANTICA BELVEDERE S.A.S. di Fabio Zanotto \u0026 C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-08-12 10:21:52"
+  },
+  {
+    "Codice": "0210",
+    "Nome": "GROOVE TO S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-08-12 11:10:09"
+  },
+  {
+    "Codice": "0211",
+    "Nome": "ADIPIETRO COMMERCIALE S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-08-12 11:23:35"
+  },
+  {
+    "Codice": "0212",
+    "Nome": "MARTIGNONI MARCO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-09-07 13:32:50"
+  },
+  {
+    "Codice": "0213",
+    "Nome": "CAMERA DI COMMERCIO INDUSTRIA ARTIGIANATO E AGRICOLTURA DI VICENZA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-09-09 11:06:04"
+  },
+  {
+    "Codice": "0214",
+    "Nome": "LA MENIN S.R.L.S.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-10-06 10:40:18"
+  },
+  {
+    "Codice": "0215",
+    "Nome": "LOIMA S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-11-11 11:30:58"
+  },
+  {
+    "Codice": "0216",
+    "Nome": "ISTITUTO PREVIDENZA SOCIALE - INPS Sede di VICENZA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-14 10:13:50"
+  },
+  {
+    "Codice": "0217",
+    "Nome": "RAE BATTERIE 1950 SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-14 10:54:10"
+  },
+  {
+    "Codice": "0218",
+    "Nome": "DOMINA S.R.L. Unipersonale",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-14 11:25:42"
+  },
+  {
+    "Codice": "0219",
+    "Nome": "RISTORANTE DAI GELOSI SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-14 11:29:50"
+  },
+  {
+    "Codice": "0220",
+    "Nome": "EUROBRICO S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2022-12-14 12:03:57"
+  },
+  {
+    "Codice": "0221",
+    "Nome": "DOLCIARIA A. LOISON SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-01-12 11:27:14"
+  },
+  {
+    "Codice": "0222",
+    "Nome": "BELCOGAMMA SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-02-03 11:11:03"
+  },
+  {
+    "Codice": "0223",
+    "Nome": "V RECINZIONI SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-02-06 10:45:00"
+  },
+  {
+    "Codice": "0224",
+    "Nome": "BIANCO ELETTRICITA\u0027 SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-03-13 18:21:12"
+  },
+  {
+    "Codice": "0225",
+    "Nome": "FENYX ITALIA SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-03-13 18:28:26"
+  },
+  {
+    "Codice": "0226",
+    "Nome": "TEMAR SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-03-13 18:36:29"
+  },
+  {
+    "Codice": "0227",
+    "Nome": "BLASS S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-04-13 11:38:24"
+  },
+  {
+    "Codice": "0228",
+    "Nome": "FERROELETTRA S.A.S.\r\ndi  Cardinale Angelo e Antonello",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-04-11 11:48:25"
+  },
+  {
+    "Codice": "0229",
+    "Nome": "RIST. GUI LIN XIA LINGQIAO \u0026 C. S.n.c.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-04-11 11:53:36"
+  },
+  {
+    "Codice": "0230",
+    "Nome": "A2Z WORLD S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-04-11 11:57:20"
+  },
+  {
+    "Codice": "0231",
+    "Nome": "85CENTO DI GIUSEPPE CILLIS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-05-15 09:55:09"
+  },
+  {
+    "Codice": "0232",
+    "Nome": "OSTERIA L\u0027ANTICO POZZO di Cecchetto Stefania",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-06-09 10:36:08"
+  },
+  {
+    "Codice": "0233",
+    "Nome": "EXTREMEBIT S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-06-09 10:34:17"
+  },
+  {
+    "Codice": "0234",
+    "Nome": "PARCHEGGIO MALPENSA AIRPORT",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-06-14 09:45:33"
+  },
+  {
+    "Codice": "0235",
+    "Nome": "LEONE SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-07-10 10:13:37"
+  },
+  {
+    "Codice": "0236",
+    "Nome": "PERINELLI FORNITURE SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-07-10 10:34:08"
+  },
+  {
+    "Codice": "0237",
+    "Nome": "AMAZON EU succursale Polonia",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-07-14 09:49:19"
+  },
+  {
+    "Codice": "0238",
+    "Nome": "PAYPRO EUROPE LIMITED",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-07-14 10:09:42"
+  },
+  {
+    "Codice": "0239",
+    "Nome": "YASTA SRLS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-08-22 10:41:11"
+  },
+  {
+    "Codice": "0240",
+    "Nome": "COLORIFICIO ROSATI DI ROSATI MARCO E C. S.A.S.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-08-22 11:04:16"
+  },
+  {
+    "Codice": "0241",
+    "Nome": "COMID SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-08-22 11:14:59"
+  },
+  {
+    "Codice": "0242",
+    "Nome": "ARUBA SPA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-08-22 11:28:19"
+  },
+  {
+    "Codice": "0243",
+    "Nome": "AUTORICAMBI di Borgo Gabriella \u0026 C. s.a.s.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-08-22 11:38:58"
+  },
+  {
+    "Codice": "0244",
+    "Nome": "G.R.P. Soluzioni Elettroniche di Poli Giovanni",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-08-22 12:33:45"
+  },
+  {
+    "Codice": "0245",
+    "Nome": "Shen Zhen",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-10-30 10:48:30"
+  },
+  {
+    "Codice": "0246",
+    "Nome": "GUANGZHOURUNXIMAO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-13 16:54:31"
+  },
+  {
+    "Codice": "0247",
+    "Nome": "GUANGZHOUTONGHUIMAO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-15 14:56:25"
+  },
+  {
+    "Codice": "0248",
+    "Nome": "PIRCHER R CO KG - SAS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-14 11:05:45"
+  },
+  {
+    "Codice": "0249",
+    "Nome": "ISTEL s.r.l. - Societ\u00E0 Unipersonale",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-14 11:09:31"
+  },
+  {
+    "Codice": "0250",
+    "Nome": "ITALTECHNOLOGY S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-14 11:36:07"
+  },
+  {
+    "Codice": "0251",
+    "Nome": "METALSISTEM LINE SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-14 11:57:44"
+  },
+  {
+    "Codice": "0252",
+    "Nome": "AIN",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-15 14:16:41"
+  },
+  {
+    "Codice": "0253",
+    "Nome": "INORCO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-15 14:36:35"
+  },
+  {
+    "Codice": "0254",
+    "Nome": "ADRIAN CZIBERE E K",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-15 14:37:14"
+  },
+  {
+    "Codice": "0255",
+    "Nome": "NINGBO AO ER MI TE ELECTRONICS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-15 15:04:12"
+  },
+  {
+    "Codice": "0256",
+    "Nome": "HEFEI MAIXU",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-15 15:07:06"
+  },
+  {
+    "Codice": "0257",
+    "Nome": "Pelignashop di Santilli Franca",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-25 10:07:11"
+  },
+  {
+    "Codice": "0258",
+    "Nome": "HEYUANSHIYUANLANSGH",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-25 10:52:56"
+  },
+  {
+    "Codice": "0259",
+    "Nome": "BORSA VENETA S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-27 13:05:04"
+  },
+  {
+    "Codice": "0260",
+    "Nome": "OCTOPUS CONCEPT",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-27 14:46:14"
+  },
+  {
+    "Codice": "0261",
+    "Nome": "J.G. PROFESSIONAL TOOLS SL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-28 08:51:02"
+  },
+  {
+    "Codice": "0262",
+    "Nome": "SCHWEMMER \u0026 DORN",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-09-28 09:01:50"
+  },
+  {
+    "Codice": "0263",
+    "Nome": "WUHANLUMAKEJIYOUXIANG",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-10-20 09:17:24"
+  },
+  {
+    "Codice": "0264",
+    "Nome": "SHENZHENSHIHA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-10-20 09:23:40"
+  },
+  {
+    "Codice": "0265",
+    "Nome": "SHENZHEN LITIME TECNOLOGY",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-10-20 09:29:35"
+  },
+  {
+    "Codice": "0266",
+    "Nome": "GEMMAPACK SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-11-08 11:13:33"
+  },
+  {
+    "Codice": "0267",
+    "Nome": "FU ZHOU QI XIN YUAN",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-11-09 10:49:03"
+  },
+  {
+    "Codice": "0268",
+    "Nome": "SHENZHENSHI XIAOLIUKEJI",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-11-09 10:53:00"
+  },
+  {
+    "Codice": "0269",
+    "Nome": "HANGZHOU XINTOG",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-11-09 10:56:04"
+  },
+  {
+    "Codice": "0270",
+    "Nome": "hefeisiteruigewang",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-01-30 15:53:29"
+  },
+  {
+    "Codice": "0271",
+    "Nome": "RGDIGITAL SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-11 10:19:37"
+  },
+  {
+    "Codice": "0272",
+    "Nome": "TRATTORIA DAL COGO - COGO SAS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-11 10:33:00"
+  },
+  {
+    "Codice": "0273",
+    "Nome": "SABA ITALIA SPA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-11 11:41:38"
+  },
+  {
+    "Codice": "0274",
+    "Nome": "taiyuanshiyong",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-01-31 09:25:39"
+  },
+  {
+    "Codice": "0275",
+    "Nome": "SHENZHENSHIJUNNAN",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-12 09:08:21"
+  },
+  {
+    "Codice": "0276",
+    "Nome": "GONZALO MARTIN GUTIERREZ",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-12 11:51:39"
+  },
+  {
+    "Codice": "0277",
+    "Nome": "GUANG DONG BO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-27 13:37:35"
+  },
+  {
+    "Codice": "0278",
+    "Nome": "YUN CHENG SHI",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-27 13:52:54"
+  },
+  {
+    "Codice": "0279",
+    "Nome": "SUZHOUWEIDIKEJIYOU",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-27 13:59:05"
+  },
+  {
+    "Codice": "0280",
+    "Nome": "FERCOLOR S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-29 10:38:08"
+  },
+  {
+    "Codice": "0281",
+    "Nome": "AR-STORE di Raspugli Andrea",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-29 10:47:16"
+  },
+  {
+    "Codice": "0282",
+    "Nome": "SECCO DENIS E ENRICA SNC",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-29 11:01:10"
+  },
+  {
+    "Codice": "0283",
+    "Nome": "MARCHI SERVICE S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-29 11:16:10"
+  },
+  {
+    "Codice": "0284",
+    "Nome": "DEMA SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-29 11:26:42"
+  },
+  {
+    "Codice": "0285",
+    "Nome": "SVISION RISTO GROUP SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-29 11:42:55"
+  },
+  {
+    "Codice": "0286",
+    "Nome": "SAN MARCO S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-29 11:46:42"
+  },
+  {
+    "Codice": "0287",
+    "Nome": "S. \u0026 S. TRADE SRLS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-29 11:50:37"
+  },
+  {
+    "Codice": "0288",
+    "Nome": "POLI MUSEO DELLA GRAPPA SRL SOC. UNIPERS.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-29 12:12:08"
+  },
+  {
+    "Codice": "0289",
+    "Nome": "DIGITAL ELETRONIK SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2023-12-29 12:40:34"
+  },
+  {
+    "Codice": "0290",
+    "Nome": "ECAMRICERT SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-01-04 10:46:12"
+  },
+  {
+    "Codice": "0291",
+    "Nome": "SUZHOUWEIDIKE",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-01-09 11:33:04"
+  },
+  {
+    "Codice": "0292",
+    "Nome": "DONGGUANSHI",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-10-31 11:26:58"
+  },
+  {
+    "Codice": "0293",
+    "Nome": "AGAPE SOCIETA\u0027 COOPERATIVA SOCIALE",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-01-11 10:30:44"
+  },
+  {
+    "Codice": "0294",
+    "Nome": "PROTECTIONFILMS24",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-01-31 10:19:03"
+  },
+  {
+    "Codice": "0295",
+    "Nome": "SHENZHENSHISANTENGG",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-01-31 11:44:17"
+  },
+  {
+    "Codice": "0296",
+    "Nome": "MABLEO TECNOLOGY LIMITED",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-01-31 11:49:04"
+  },
+  {
+    "Codice": "0297",
+    "Nome": "TRATTORIA VIA FERRARI SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-02-15 11:42:46"
+  },
+  {
+    "Codice": "0298",
+    "Nome": "B.I.ME SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-02-15 12:10:48"
+  },
+  {
+    "Codice": "0299",
+    "Nome": "MITROVICH P.I. LUIGI \u0026 C. SNC",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-02-15 12:28:00"
+  },
+  {
+    "Codice": "0300",
+    "Nome": "RISTORANTE PIZZERIA MAMMA MIA - F.LLI BUONOCORE SAS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-02-15 12:31:27"
+  },
+  {
+    "Codice": "0301",
+    "Nome": "GISEKE GMBH \u0026 CO.KG",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-02-23 08:50:12"
+  },
+  {
+    "Codice": "0302",
+    "Nome": "ZINGAFER di Francesco Zingarino",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-02-29 09:59:12"
+  },
+  {
+    "Codice": "0303",
+    "Nome": "M2C di Gonella Luca e Cristina s.n.c.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-02-29 10:50:30"
+  },
+  {
+    "Codice": "0304",
+    "Nome": "CHEMIA S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-02-29 11:03:31"
+  },
+  {
+    "Codice": "0305",
+    "Nome": "CDA DISTRIBUTORI SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-02-29 11:06:45"
+  },
+  {
+    "Codice": "0306",
+    "Nome": "MGidea SRL - Societ\u00E0 Unipersonale",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-03-11 11:47:41"
+  },
+  {
+    "Codice": "0307",
+    "Nome": "GUANGZHOUTONG",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-03-27 09:46:03"
+  },
+  {
+    "Codice": "0308",
+    "Nome": "ZHUHAI HANLONG",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-03-27 09:49:56"
+  },
+  {
+    "Codice": "0309",
+    "Nome": "KA WENG INTERNATIONAL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-03-27 15:02:58"
+  },
+  {
+    "Codice": "0310",
+    "Nome": "MATERIALE EDILE DONA\u0027 SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-04-08 11:18:54"
+  },
+  {
+    "Codice": "0311",
+    "Nome": "FABIO STORE SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-04-08 11:46:34"
+  },
+  {
+    "Codice": "0312",
+    "Nome": "GLOBAL DREAM SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-04-08 11:53:44"
+  },
+  {
+    "Codice": "0313",
+    "Nome": "LE FOLLIE DI FRANGIO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-04-08 12:27:16"
+  },
+  {
+    "Codice": "0314",
+    "Nome": "METAL WORK SERVICE SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-04-08 12:30:56"
+  },
+  {
+    "Codice": "0315",
+    "Nome": "SHENZHENSHIFU",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-04-18 14:13:45"
+  },
+  {
+    "Codice": "0316",
+    "Nome": "SHENZEHENANQITESHASNG",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-05-10 15:00:31"
+  },
+  {
+    "Codice": "0317",
+    "Nome": "GARZADORI SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-05-13 09:55:55"
+  },
+  {
+    "Codice": "0318",
+    "Nome": "INBAGNO SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-05-13 10:20:37"
+  },
+  {
+    "Codice": "0319",
+    "Nome": "BRAGATO SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-05-13 11:13:50"
+  },
+  {
+    "Codice": "0320",
+    "Nome": "CUOMO ALFONSO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-05-13 11:49:39"
+  },
+  {
+    "Codice": "0321",
+    "Nome": "SHENZHENSHIXIANYINUMA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-05-22 09:37:25"
+  },
+  {
+    "Codice": "0322",
+    "Nome": "YISAVE TECHNOLOGY LIMITED",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-05-24 15:37:42"
+  },
+  {
+    "Codice": "0323",
+    "Nome": "OFFICE DEPOT ITALIA SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-04 11:40:45"
+  },
+  {
+    "Codice": "0324",
+    "Nome": "PADDLE.COM MARKET LTD",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-04 16:00:31"
+  },
+  {
+    "Codice": "0325",
+    "Nome": "SHENZHEN ZHAOWEI TECN",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-10 10:40:39"
+  },
+  {
+    "Codice": "0326",
+    "Nome": "PRO \u0026 FAST S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-11 10:36:15"
+  },
+  {
+    "Codice": "0327",
+    "Nome": "SHENZHENSHI",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-06-20 16:13:21"
+  },
+  {
+    "Codice": "0328",
+    "Nome": "SHENZHENSHIEN",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-12 11:31:48"
+  },
+  {
+    "Codice": "0329",
+    "Nome": "SOLUZIONE UFFICIO SERVICE SRL UNIPERSONALE",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-17 10:18:04"
+  },
+  {
+    "Codice": "0330",
+    "Nome": "MEMORYKING GMBH \u0026 CO. KG",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-19 11:11:15"
+  },
+  {
+    "Codice": "0331",
+    "Nome": "FU ZHOU QI XIN YUAN",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-24 11:32:07"
+  },
+  {
+    "Codice": "0332",
+    "Nome": "YUNNANZILISHANG",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-06-24 11:29:49"
+  },
+  {
+    "Codice": "0333",
+    "Nome": "AERREGI",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-07-08 10:21:33"
+  },
+  {
+    "Codice": "0334",
+    "Nome": "ISINET S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-07-08 10:26:00"
+  },
+  {
+    "Codice": "0335",
+    "Nome": "SMARTSHOP SRLS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-07-08 10:32:19"
+  },
+  {
+    "Codice": "0336",
+    "Nome": "CAMICERIA FRANCE S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-07-08 11:02:20"
+  },
+  {
+    "Codice": "0337",
+    "Nome": "SIEGFRIED MUXEL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-07-10 10:38:37"
+  },
+  {
+    "Codice": "0338",
+    "Nome": "SHENZHEN MINGHE PRINTING",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-07-12 10:31:09"
+  },
+  {
+    "Codice": "0339",
+    "Nome": "PINGXIANGBAIY",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-05-14 11:48:27"
+  },
+  {
+    "Codice": "0340",
+    "Nome": "ZHUHAI YIXING",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-07-19 08:59:43"
+  },
+  {
+    "Codice": "0341",
+    "Nome": "WXIAO ERQXIAO LIMITED",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-07-23 12:06:24"
+  },
+  {
+    "Codice": "0342",
+    "Nome": "ZHEJIANG AIKE",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-07-24 13:35:04"
+  },
+  {
+    "Codice": "0343",
+    "Nome": "SHENZHENSHI CHUNQUI",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-07-24 13:34:42"
+  },
+  {
+    "Codice": "0344",
+    "Nome": "OFFICE \u0026 SUPPLIES S.R.L. Semplificata",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-08-05 10:26:59"
+  },
+  {
+    "Codice": "0345",
+    "Nome": "CA RIVIERA SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-08-05 10:38:13"
+  },
+  {
+    "Codice": "0346",
+    "Nome": "ZHU ZHOU HONG",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-08-30 11:13:07"
+  },
+  {
+    "Codice": "0347",
+    "Nome": "FAILELA SNC DI SCAPIN GIULIA E MARIA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-09-03 10:23:41"
+  },
+  {
+    "Codice": "0348",
+    "Nome": "WENZHOULING",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-09-10 11:12:55"
+  },
+  {
+    "Codice": "0349",
+    "Nome": "GUANGZHOUSHI",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-09-24 14:38:44"
+  },
+  {
+    "Codice": "0350",
+    "Nome": "DANUSO SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-10-02 14:40:12"
+  },
+  {
+    "Codice": "0351",
+    "Nome": "TECNOUTENSILI CAPARARP SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-10-02 14:54:22"
+  },
+  {
+    "Codice": "0352",
+    "Nome": "BIANCO GIUSEPPE FRANCESCO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-10-14 11:42:57"
+  },
+  {
+    "Codice": "0353",
+    "Nome": "AERZETIX EOOD",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-10-14 13:36:15"
+  },
+  {
+    "Codice": "0354",
+    "Nome": "EA COMMERCE SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-11-11 12:49:04"
+  },
+  {
+    "Codice": "0355",
+    "Nome": "ROTEX SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-11-11 13:02:01"
+  },
+  {
+    "Codice": "0356",
+    "Nome": "TRATTORIA VECCHIO BARACCON di Diego Casot",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-11-11 13:06:01"
+  },
+  {
+    "Codice": "0357",
+    "Nome": "CIANFROCCA GIANLUCA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-11-11 13:32:34"
+  },
+  {
+    "Codice": "0358",
+    "Nome": "AERRE TRASPORTI",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-11-11 13:50:38"
+  },
+  {
+    "Codice": "0359",
+    "Nome": "SHANGHAI WANWAY",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-11-12 08:27:23"
+  },
+  {
+    "Codice": "0360",
+    "Nome": "SHENZHENSHI LAN",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-11-18 10:13:04"
+  },
+  {
+    "Codice": "0361",
+    "Nome": "HARMONIQUE WAY TRADING",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-11-29 11:09:03"
+  },
+  {
+    "Codice": "0362",
+    "Nome": "PEARL STREET ENTERPRISES",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-11-29 11:14:18"
+  },
+  {
+    "Codice": "0363",
+    "Nome": "ORTOLANI ALBERTO DI BON MARIUCCIA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-12-13 13:00:29"
+  },
+  {
+    "Codice": "0364",
+    "Nome": "NORDIC BY NATURE OY",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-12-16 13:54:41"
+  },
+  {
+    "Codice": "0365",
+    "Nome": "HUMMINGBIRT GMBH",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2024-12-16 13:57:12"
+  },
+  {
+    "Codice": "0366",
+    "Nome": "LAICA SPA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-01-08 10:48:49"
+  },
+  {
+    "Codice": "0367",
+    "Nome": "HX WAROOM DI HU JIANGUO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-01-08 10:55:14"
+  },
+  {
+    "Codice": "0368",
+    "Nome": "A.G. SRLS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-01-08 11:21:25"
+  },
+  {
+    "Codice": "0369",
+    "Nome": "AMAZON EU S\u00E0RL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-01-22 12:01:06"
+  },
+  {
+    "Codice": "0370",
+    "Nome": "TAIYANSHI",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-01-22 12:04:42"
+  },
+  {
+    "Codice": "0371",
+    "Nome": "CORDIANO MARCELLO GROUP SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-02-11 09:18:34"
+  },
+  {
+    "Codice": "0372",
+    "Nome": "ALLBOARDS ITALIA SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-02-11 09:21:05"
+  },
+  {
+    "Codice": "0373",
+    "Nome": "ARLIA GIUSEPPE DI MARINO E ALESSANDRO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-02-11 09:31:00"
+  },
+  {
+    "Codice": "0374",
+    "Nome": "MICHELE DIBENEDETTO E C. SAS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-02-11 09:35:11"
+  },
+  {
+    "Codice": "0375",
+    "Nome": "BYCLAIN SNC DI LOMETTI RICCARDO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-02-11 11:08:56"
+  },
+  {
+    "Codice": "0376",
+    "Nome": "ACCUMULATORI GIDI SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-02-11 11:15:15"
+  },
+  {
+    "Codice": "0377",
+    "Nome": "GUTESTAR DI GUAN JUNYING",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-02-11 11:20:37"
+  },
+  {
+    "Codice": "0378",
+    "Nome": "JOHN UNCOI LTD",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-02-19 16:30:24"
+  },
+  {
+    "Codice": "0379",
+    "Nome": "AIM TOOLS LTD",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-02-19 16:33:46"
+  },
+  {
+    "Codice": "0380",
+    "Nome": "RISTORANTE SUSHI HU LINGLING",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-03-10 11:08:45"
+  },
+  {
+    "Codice": "0381",
+    "Nome": "TRATTORIA DI TONELLO ALBINA \u0026 C. SAS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-03-10 11:14:45"
+  },
+  {
+    "Codice": "0382",
+    "Nome": "MENDOLA FRANCO TINDARO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-03-10 11:28:30"
+  },
+  {
+    "Codice": "0383",
+    "Nome": "FONDERIA SCARANELLO SRL Societ\u00E0 a Socio Unico",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-03-10 12:14:00"
+  },
+  {
+    "Codice": "0384",
+    "Nome": "XIANRONG",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-04-02 08:56:18"
+  },
+  {
+    "Codice": "0385",
+    "Nome": "M30 S.R.L.S",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-04-08 13:02:10"
+  },
+  {
+    "Codice": "0386",
+    "Nome": "LA PICCOLA TRATTORIA SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-04-08 13:06:53"
+  },
+  {
+    "Codice": "0387",
+    "Nome": "GIOVANNI GRIGOLETTO S.N.C. di Angela Santomaso \u0026 Figli",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-04-08 13:12:03"
+  },
+  {
+    "Codice": "0388",
+    "Nome": "STAMPA \u0026 STAMPE S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-04-08 13:36:51"
+  },
+  {
+    "Codice": "0389",
+    "Nome": "SHAOXINGOU",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-04-10 09:05:03"
+  },
+  {
+    "Codice": "0390",
+    "Nome": "DONADELLO SILVIA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-05-13 10:50:20"
+  },
+  {
+    "Codice": "0391",
+    "Nome": "JIN GU SNC di Zhang Hanyu \u0026 C.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-05-13 11:26:55"
+  },
+  {
+    "Codice": "0392",
+    "Nome": "WATER NETWORK SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-05-13 11:42:08"
+  },
+  {
+    "Codice": "0393",
+    "Nome": "DABRU SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-05-13 11:52:33"
+  },
+  {
+    "Codice": "0394",
+    "Nome": "ZHANG XIAOLIN",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-05-13 12:14:56"
+  },
+  {
+    "Codice": "0395",
+    "Nome": "WUHAN NUO YA",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-05-14 11:39:35"
+  },
+  {
+    "Codice": "0396",
+    "Nome": "AIMO SHENZHEN",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-05-14 12:11:40"
+  },
+  {
+    "Codice": "0397",
+    "Nome": "SHENZENHONG",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-05-22 08:47:45"
+  },
+  {
+    "Codice": "0398",
+    "Nome": "SHENZHENCHEN",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-06-18 14:34:43"
+  },
+  {
+    "Codice": "0399",
+    "Nome": "BAR-BECUE di Cattin Ennio",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-06-11 10:55:53"
+  },
+  {
+    "Codice": "0400",
+    "Nome": "MORA SNC",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-06-11 11:23:14"
+  },
+  {
+    "Codice": "0401",
+    "Nome": "EUZIEL INTERNATIONAL GMBH",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-06-20 10:23:14"
+  },
+  {
+    "Codice": "0402",
+    "Nome": "ONE RETAIL GROUP",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-06-20 16:02:31"
+  },
+  {
+    "Codice": "0403",
+    "Nome": "NANTONGFEIRU",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-06-20 16:05:23"
+  },
+  {
+    "Codice": "0404",
+    "Nome": "LABORATORIO 102 SNC di Crusco A. e Marini A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-07-14 15:07:02"
+  },
+  {
+    "Codice": "0405",
+    "Nome": "ACQUAVERDE SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-07-14 15:11:13"
+  },
+  {
+    "Codice": "0406",
+    "Nome": "EMOZIONI DI LUCE di Giuliano Strazzabosco",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-07-14 15:17:51"
+  },
+  {
+    "Codice": "0407",
+    "Nome": "HOUSE CLOUD di Esposito Gianluca",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-07-14 15:42:09"
+  },
+  {
+    "Codice": "0408",
+    "Nome": "TRATTORIA ALLA FORTUNA SAS di Busato Alessia",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-07-14 15:44:27"
+  },
+  {
+    "Codice": "0409",
+    "Nome": "AUTOSILVER S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-08-18 12:51:44"
+  },
+  {
+    "Codice": "0410",
+    "Nome": "ECOLKEM S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-08-18 13:07:01"
+  },
+  {
+    "Codice": "0411",
+    "Nome": "ALBERGO RISTORANTE AL GARIBALDINO di Dall\u0027Osto Paola e Renata s.n.c.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-08-18 13:51:19"
+  },
+  {
+    "Codice": "0412",
+    "Nome": "TIANJIN",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-08-26 11:45:55"
+  },
+  {
+    "Codice": "0413",
+    "Nome": "HEALAN INGREDIENTS SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-08-27 11:59:52"
+  },
+  {
+    "Codice": "0414",
+    "Nome": "GJK STYLING SP ZOO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-09-02 15:39:05"
+  },
+  {
+    "Codice": "0415",
+    "Nome": "FIUME NOVO SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-10-07 12:12:13"
+  },
+  {
+    "Codice": "0416",
+    "Nome": "MASTER GREEN di Matteo Marana",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-10-07 12:55:09"
+  },
+  {
+    "Codice": "0417",
+    "Nome": "O\u0027 SCUGNIZZO NAPOLETANO di Stefano Noschese",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-10-07 13:02:21"
+  },
+  {
+    "Codice": "0418",
+    "Nome": "ESTETICA FOUR SEASONS di Vivaldi Susanna",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-10-07 13:12:25"
+  },
+  {
+    "Codice": "0419",
+    "Nome": "FITOHERBAL SRLS",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-10-07 13:16:12"
+  },
+  {
+    "Codice": "0420",
+    "Nome": "FANTIN RENATO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-10-07 13:29:06"
+  },
+  {
+    "Codice": "0421",
+    "Nome": "OPENAI IRELAND LIMITES",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-10-09 14:43:29"
+  },
+  {
+    "Codice": "0422",
+    "Nome": "BEYOUND GMBH",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-10-30 10:41:08"
+  },
+  {
+    "Codice": "0423",
+    "Nome": "ANHUITIEWO",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-10-30 10:43:33"
+  },
+  {
+    "Codice": "0424",
+    "Nome": "CHENGDUXIAN",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-10-31 10:23:51"
+  },
+  {
+    "Codice": "0425",
+    "Nome": "6 PROSPECT RD",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-10-31 10:27:12"
+  },
+  {
+    "Codice": "0426",
+    "Nome": "CAMBIELLO S.P.A.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-11-04 11:06:09"
+  },
+  {
+    "Codice": "0427",
+    "Nome": "IDEAL COPERTURE S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-11-04 11:35:16"
+  },
+  {
+    "Codice": "0428",
+    "Nome": "DERI S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-11-04 12:01:13"
+  },
+  {
+    "Codice": "0429",
+    "Nome": "TESLA INVESTIMENTI SRL",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-11-10 10:43:02"
+  },
+  {
+    "Codice": "0430",
+    "Nome": "EDILWARE S.R.L.",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-11-10 11:46:54"
+  },
+  {
+    "Codice": "0431",
+    "Nome": "SHENZENSHI",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-11-26 16:30:42"
+  },
+  {
+    "Codice": "0432",
+    "Nome": "VOUKOURESTIOU 25",
+    "Email": "",
+    "Note": "",
+    "UltimaModifica": "2025-11-26 16:30:03"
+  }
+]

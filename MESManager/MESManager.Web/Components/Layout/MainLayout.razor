@@ -1,0 +1,112 @@
+@inherits LayoutComponentBase
+
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+        <MudText Typo="Typo.h5" Class="ml-3">MESManager</MudText>
+        <MudSpacer />
+        
+        @* Menu categorie principale *@
+        <MudMenu Icon="@Icons.Material.Filled.Apps" Color="Color.Inherit" AnchorOrigin="Origin.BottomCenter">
+            <MudMenuItem OnClick="@(() => SetCategory("Produzione"))">Produzione</MudMenuItem>
+            <MudMenuItem OnClick="@(() => SetCategory("Programma"))">Programma</MudMenuItem>
+            <MudMenuItem OnClick="@(() => SetCategory("Cataloghi"))">Cataloghi</MudMenuItem>
+            <MudMenuItem OnClick="@(() => SetCategory("Manutenzioni"))">Manutenzioni</MudMenuItem>
+            <MudMenuItem OnClick="@(() => SetCategory("Tabelle"))">Tabelle</MudMenuItem>
+            <MudMenuItem OnClick="@(() => SetCategory("Sync"))">Sync</MudMenuItem>
+            <MudMenuItem OnClick="@(() => SetCategory("Statistiche"))">Statistiche</MudMenuItem>
+            <MudMenuItem OnClick="@(() => SetCategory("Impostazioni"))">Impostazioni</MudMenuItem>
+        </MudMenu>
+        
+        <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" 
+                       Color="Color.Inherit" 
+                       OnClick="@ToggleTheme" />
+    </MudAppBar>
+    
+    @* Sottomenu dinamico per categoria *@
+    @if (!string.IsNullOrEmpty(_currentCategory))
+    {
+        <MudAppBar Elevation="0" Dense="true" Color="Color.Default">
+            <MudText Typo="Typo.subtitle1" Class="mr-4">@_currentCategory</MudText>
+            @foreach (var item in GetMenuItems(_currentCategory))
+            {
+                <MudButton Href="@item.Url" Color="Color.Inherit" Size="Size.Small" Class="mr-1">
+                    @item.Title
+                </MudButton>
+            }
+        </MudAppBar>
+    }
+    
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="2">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h6">Menu</MudText>
+        </MudDrawerHeader>
+        <MudNavMenu>
+            <MudNavLink Href="/" Icon="@Icons.Material.Filled.Dashboard">Home</MudNavLink>
+            
+            <MudNavGroup Title="Produzione" Icon="@Icons.Material.Filled.Factory" Expanded="true">
+                <MudNavLink Href="/produzione/dashboard">Dashboard</MudNavLink>
+                <MudNavLink Href="/produzione/gantt-macchine">Gantt Macchine</MudNavLink>
+                <MudNavLink Href="/produzione/mes-stato">MES Stato Realtime</MudNavLink>
+                <MudNavLink Href="/produzione/plc-realtime">PLC Realtime</MudNavLink>
+                <MudNavLink Href="/produzione/plc-storico">PLC Storico</MudNavLink>
+                <MudNavLink Href="/produzione/incollaggio">Incollaggio</MudNavLink>
+            </MudNavGroup>
+            
+            <MudNavGroup Title="Programma" Icon="@Icons.Material.Filled.Schedule">
+                <MudNavLink Href="/programma/commesse-aperte">Commesse Aperte</MudNavLink>
+                <MudNavLink Href="/programma/programma-macchine">Programma Macchine</MudNavLink>
+                <MudNavLink Href="/programma/stampa">Stampa Programma</MudNavLink>
+            </MudNavGroup>
+            
+            <MudNavGroup Title="Cataloghi" Icon="@Icons.Material.Filled.LibraryBooks">
+                <MudNavLink Href="/cataloghi/commesse">Commesse</MudNavLink>
+                <MudNavLink Href="/cataloghi/articoli">Articoli</MudNavLink>
+                <MudNavLink Href="/cataloghi/clienti">Clienti</MudNavLink>
+                <MudNavLink Href="/cataloghi/ricette">Ricette</MudNavLink>
+                <MudNavLink Href="/cataloghi/foto">Foto</MudNavLink>
+            </MudNavGroup>
+            
+            <MudNavGroup Title="Manutenzioni" Icon="@Icons.Material.Filled.Build">
+                <MudNavLink Href="/manutenzioni/alert">Alert</MudNavLink>
+                <MudNavLink Href="/manutenzioni/catalogo">Catalogo</MudNavLink>
+            </MudNavGroup>
+            
+            <MudNavGroup Title="Tabelle" Icon="@Icons.Material.Filled.TableChart">
+                <MudNavLink Href="/tabelle/vernici">Vernici</MudNavLink>
+                <MudNavLink Href="/tabelle/sabbie">Sabbie</MudNavLink>
+                <MudNavLink Href="/tabelle/imballi">Imballi</MudNavLink>
+                <MudNavLink Href="/tabelle/operatori">Operatori</MudNavLink>
+                <MudNavLink Href="/tabelle/colle">Colle</MudNavLink>
+            </MudNavGroup>
+            
+            <MudNavGroup Title="Sync" Icon="@Icons.Material.Filled.Sync">
+                <MudNavLink Href="/sync/mago">Mago</MudNavLink>
+                <MudNavLink Href="/sync/macchine">Macchine</MudNavLink>
+                <MudNavLink Href="/sync/google">Google</MudNavLink>
+            </MudNavGroup>
+            
+            <MudNavGroup Title="Statistiche" Icon="@Icons.Material.Filled.BarChart">
+                <MudNavLink Href="/statistiche/produzione">Produzione</MudNavLink>
+                <MudNavLink Href="/statistiche/ordini">Ordini</MudNavLink>
+            </MudNavGroup>
+            
+            <MudNavGroup Title="Impostazioni" Icon="@Icons.Material.Filled.Settings">
+                <MudNavLink Href="/impostazioni/calendario">Calendario</MudNavLink>
+                <MudNavLink Href="/impostazioni/utenti">Utenti</MudNavLink>
+                <MudNavLink Href="/impostazioni/generali">Generali</MudNavLink>
+            </MudNavGroup>
+        </MudNavMenu>
+    </MudDrawer>
+    
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>

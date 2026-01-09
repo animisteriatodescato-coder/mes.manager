@@ -1,0 +1,266 @@
+@page "/cataloghi/commesse"
+@using MESManager.Web.Models
+@using MESManager.Web.Services
+@using Microsoft.JSInterop
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject PreferencesService PreferencesService
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+<PageTitle>Catalogo Commesse</PageTitle>
+
+<div class="commesse-page">
+    <div class="toolbar-sticky">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
+            <MudText Typo="Typo.h4">Commesse</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="@searchText" 
+                         Placeholder="Ricerca globale..." 
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         Style="width: 300px;"
+                         Immediate="true"
+                         @oninput="@OnSearchInput" />
+            
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@ResetGrid">Reset</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)">Impostazioni</MudButton>
+        </MudStack>
+        
+        @if (showSettings)
+        {
+            <MudPaper Class="pa-4 mt-2" Elevation="1" Style="background-color: #f5f5f5;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Wrap="Wrap.Wrap">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText>Font Size:</MudText>
+                        <MudNumericField Value="@settings.FontSize" Min="10" Max="24" Step="1" 
+                                        Variant="Variant.Outlined" Margin="Margin.Dense"
+                                        ValueChanged="@(async (int val) => { settings.FontSize = val; await ApplyUiSettings(); })" 
+                                        Style="width: 80px;" />
+                    </MudStack>
+                    
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText>Row Height:</MudText>
+                        <MudNumericField Value="@settings.RowHeight" Min="25" Max="80" Step="5" 
+                                        Variant="Variant.Outlined" Margin="Margin.Dense"
+                                        ValueChanged="@(async (int val) => { settings.RowHeight = val; await ApplyUiSettings(); })" 
+                                        Style="width: 80px;" />
+                    </MudStack>
+                    
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText>Density:</MudText>
+                        <MudSelect Value="@settings.Density" 
+                                  Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  ValueChanged="@(async (string val) => { settings.Density = val; await ApplyUiSettings(); })" 
+                                  Style="width: 120px;">
+                            <MudSelectItem Value="@("Compact")">Compact</MudSelectItem>
+                            <MudSelectItem Value="@("Normal")">Normal</MudSelectItem>
+                            <MudSelectItem Value="@("Comfortable")">Comfortable</MudSelectItem>
+                        </MudSelect>
+                    </MudStack>
+                    
+                    <MudCheckBox Value="@settings.Zebra" Label="Zebra" Color="Color.Primary"
+                                ValueChanged="@(async (bool val) => { settings.Zebra = val; await ApplyUiSettings(); })" />
+                    
+                    <MudCheckBox Value="@settings.GridLines" Label="Grid Lines" Color="Color.Primary"
+                                ValueChanged="@(async (bool val) => { settings.GridLines = val; await ApplyUiSettings(); })" />
+                </MudStack>
+            </MudPaper>
+        }
+    </div>
+
+    <div id="commesseGrid" class="ag-theme-alpine" 
+         style="width: 100%; height: calc(100vh - 300px); margin-top: 1rem;">
+    </div>
+</div>
+
+<style>
+    .commesse-page {
+        position: relative;
+    }
+
+    .toolbar-sticky {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: white;
+        padding: 1rem 0;
+        margin-bottom: 1rem;
+    }
+</style>
+
+@code {
+    private List<CommessaDto> _commesse = new();
+    private GridUiSettings settings = new();
+    private string searchText = string.Empty;
+    private bool showSettings = false;
+    private System.Threading.Timer? debounceTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Http.BaseAddress = new Uri(Nav.BaseUri);
+        _commesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
+        
+        var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("commesse-grid-settings");
+        if (savedSettings != null)
+        {
+            settings = savedSettings;
+            searchText = settings.GlobalSearch;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Delay per assicurarsi che gli script siano caricati
+            await Task.Delay(100);
+            await InitializeGrid();
+        }
+    }
+
+    private async Task InitializeGrid()
+    {
+        try
+        {
+            // Verifica che window.commesseGrid esista
+            var exists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.commesseGrid !== 'undefined'");
+            if (!exists)
+            {
+                Console.WriteLine("ERROR: window.commesseGrid is not defined!");
+                return;
+            }
+
+            await JSRuntime.InvokeVoidAsync("commesseGrid.init", "commesseGrid", _commesse, settings.ColumnStateJson);
+            await ApplyUiSettings();
+            if (!string.IsNullOrEmpty(searchText))
+            {
+                await JSRuntime.InvokeVoidAsync("commesseGrid.setQuickFilter", searchText);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing grid: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        }
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? string.Empty;
+        
+        debounceTimer?.Dispose();
+        debounceTimer = new System.Threading.Timer(async _ =>
+        {
+            await InvokeAsync(async () =>
+            {
+                try
+                {
+                    await JSRuntime.InvokeVoidAsync("commesseGrid.setQuickFilter", searchText);
+                    settings.GlobalSearch = searchText;
+                    await SaveSettings();
+                }
+                catch { }
+            });
+        }, null, 300, Timeout.Infinite);
+    }
+
+    private async Task ToggleColumnPanel()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("commesseGrid.toggleColumnPanel");
+        }
+        catch { }
+    }
+
+    private async Task ResetGrid()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("commesseGrid.resetState");
+            settings = new GridUiSettings();
+            searchText = string.Empty;
+            await PreferencesService.RemoveAsync("commesse-grid-settings");
+            await ApplyUiSettings();
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    private async Task ExportCsv()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("commesseGrid.exportCsv");
+        }
+        catch { }
+    }
+
+    private async Task ApplyUiSettings()
+    {
+        try
+        {
+            var densityPadding = GetDensityPadding();
+            await JSRuntime.InvokeVoidAsync("commesseGrid.setUiVars", 
+                settings.FontSize, 
+                settings.RowHeight, 
+                densityPadding,
+                settings.Zebra,
+                settings.GridLines);
+            await SaveSettings();
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    private string GetDensityPadding()
+    {
+        return settings.Density switch
+        {
+            "Compact" => "4px",
+            "Comfortable" => "12px",
+            _ => "8px"
+        };
+    }
+
+    private async Task SaveSettings()
+    {
+        try
+        {
+            var state = await JSRuntime.InvokeAsync<string>("commesseGrid.getState");
+            settings.ColumnStateJson = state;
+            await PreferencesService.SetAsync("commesse-grid-settings", settings);
+        }
+        catch { }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        debounceTimer?.Dispose();
+        
+        try
+        {
+            await SaveSettings();
+        }
+        catch { }
+    }
+
+    private class CommessaDto
+    {
+        public Guid Id { get; set; }
+        public string Codice { get; set; } = string.Empty;
+        public Guid? ArticoloId { get; set; }
+        public Guid? ClienteId { get; set; }
+        public decimal QuantitaRichiesta { get; set; }
+        public DateTime? DataConsegna { get; set; }
+        public string Stato { get; set; } = string.Empty;
+        public string RiferimentoOrdineCliente { get; set; } = string.Empty;
+        public DateTime UltimaModifica { get; set; }
+        public DateTime TimestampSync { get; set; }
+    }
+}
+
+

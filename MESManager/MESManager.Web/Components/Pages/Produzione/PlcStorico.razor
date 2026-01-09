@@ -1,0 +1,31 @@
+@page "/produzione/plc-storico"
+
+<PageTitle>PLC Storico</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Storico Dati PLC</MudText>
+
+<MudGrid>
+    <MudItem xs="12" md="6">
+        <MudDatePicker Label="Data Inizio" @bind-Date="_dataInizio" />
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudDatePicker Label="Data Fine" @bind-Date="_dataFine" />
+    </MudItem>
+    <MudItem xs="12">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CercaDati">
+            Cerca Dati Storici
+        </MudButton>
+    </MudItem>
+</MudGrid>
+
+<MudText Class="mt-4">Pagina predisposta per visualizzazione storico PLC</MudText>
+
+@code {
+    private DateTime? _dataInizio = DateTime.Today.AddDays(-7);
+    private DateTime? _dataFine = DateTime.Today;
+
+    private void CercaDati()
+    {
+        // Implementare ricerca dati storici
+    }
+}

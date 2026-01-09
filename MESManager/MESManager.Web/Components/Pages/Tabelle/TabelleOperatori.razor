@@ -1,0 +1,37 @@
+@page "/tabelle/operatori"
+
+<PageTitle>Tabelle Operatori</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Tabelle Operatori</MudText>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mb-4" StartIcon="@Icons.Material.Filled.Add">
+    Nuovo Operatore
+</MudButton>
+
+<MudTable Items="@_operatori" Hover="true">
+    <HeaderContent>
+        <MudTh>Matricola</MudTh>
+        <MudTh>Nome</MudTh>
+        <MudTh>Cognome</MudTh>
+        <MudTh>Azioni</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Matricola</MudTd>
+        <MudTd>@context.Nome</MudTd>
+        <MudTd>@context.Cognome</MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" />
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<OperatoreDto> _operatori = new();
+
+    private class OperatoreDto
+    {
+        public string Matricola { get; set; } = string.Empty;
+        public string Nome { get; set; } = string.Empty;
+        public string Cognome { get; set; } = string.Empty;
+    }
+}

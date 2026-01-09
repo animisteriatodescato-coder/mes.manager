@@ -1,0 +1,53 @@
+@page "/cataloghi/articoli"
+@layout MainLayout
+
+<PageTitle>Catalogo Articoli</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Catalogo Articoli</MudText>
+<MudTable Items="@_articoli" Hover="true" Breakpoint="Breakpoint.Sm" SortLabel="Ordina per" FixedHeader="true" Height="600px">
+    <HeaderContent>
+        <MudTh Style="min-width:120px;max-width:300px;font-size:1.3rem;font-weight:bold;background:#222;position:sticky;top:0;z-index:2;cursor:pointer;">Codice</MudTh>
+        <MudTh Style="min-width:200px;max-width:600px;font-size:1.3rem;font-weight:bold;background:#222;position:sticky;top:0;z-index:2;cursor:pointer;">Descrizione</MudTh>
+        <MudTh Style="min-width:80px;max-width:120px;font-size:1.3rem;font-weight:bold;background:#222;position:sticky;top:0;z-index:2;cursor:pointer;">Prezzo</MudTh>
+        <MudTh Style="min-width:80px;max-width:120px;font-size:1.3rem;font-weight:bold;background:#222;position:sticky;top:0;z-index:2;cursor:pointer;">Attivo</MudTh>
+        <MudTh Style="min-width:160px;max-width:200px;font-size:1.3rem;font-weight:bold;background:#222;position:sticky;top:0;z-index:2;cursor:pointer;">Ultima Modifica</MudTh>
+        <MudTh Style="min-width:120px;max-width:200px;font-size:1.3rem;font-weight:bold;background:#222;position:sticky;top:0;z-index:2;cursor:pointer;">Sync</MudTh>
+        <MudTh Style="min-width:80px;max-width:120px;font-size:1.3rem;font-weight:bold;background:#222;position:sticky;top:0;z-index:2;">Azioni</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Codice">@context.Codice</MudTd>
+        <MudTd DataLabel="Descrizione">@context.Descrizione</MudTd>
+        <MudTd DataLabel="Prezzo">@context.Prezzo</MudTd>
+        <MudTd DataLabel="Attivo">@context.Attivo</MudTd>
+        <MudTd DataLabel="Ultima Modifica">@context.UltimaModifica.ToString("g")</MudTd>
+        <MudTd DataLabel="Sync">@context.TimestampSync.ToString("g")</MudTd>
+        <MudTd DataLabel="Azioni">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" />
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+@code {
+    private List<ArticoloDto> _articoli = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Http.BaseAddress = new Uri(Nav.BaseUri);
+        _articoli = await Http.GetFromJsonAsync<List<ArticoloDto>>("api/Articoli");
+    }
+
+    private class ArticoloDto
+    {
+        public Guid Id { get; set; }
+        public string Codice { get; set; } = string.Empty;
+        public string Descrizione { get; set; } = string.Empty;
+        public decimal Prezzo { get; set; }
+        public bool Attivo { get; set; }
+        public DateTime UltimaModifica { get; set; }
+        public DateTime TimestampSync { get; set; }
+    }
+}

@@ -1,0 +1,30 @@
+@page "/impostazioni/calendario"
+
+<PageTitle>Calendario Produzione</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Calendario Produzione</MudText>
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h6" Class="mb-4">Giorni Lavorativi</MudText>
+    <MudCheckBox Label="Lunedì" @bind-Value="_lunedi" />
+    <MudCheckBox Label="Martedì" @bind-Value="_martedi" />
+    <MudCheckBox Label="Mercoledì" @bind-Value="_mercoledi" />
+    <MudCheckBox Label="Giovedì" @bind-Value="_giovedi" />
+    <MudCheckBox Label="Venerdì" @bind-Value="_venerdi" />
+    <MudCheckBox Label="Sabato" @bind-Value="_sabato" />
+    <MudCheckBox Label="Domenica" @bind-Value="_domenica" />
+    
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4">
+        Salva Impostazioni
+    </MudButton>
+</MudPaper>
+
+@code {
+    private bool _lunedi = true;
+    private bool _martedi = true;
+    private bool _mercoledi = true;
+    private bool _giovedi = true;
+    private bool _venerdi = true;
+    private bool _sabato = false;
+    private bool _domenica = false;
+}

@@ -1,0 +1,93 @@
+@page "/produzione/mes-stato"
+
+<PageTitle>MES Stato Realtime</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">MES Stato Realtime</MudText>
+
+<MudGrid>
+    <MudItem xs="12" md="6" lg="3">
+        <MudCard>
+            <MudCardContent>
+                <MudText Typo="Typo.h6">Macchine Attive</MudText>
+                <MudText Typo="Typo.h3" Color="Color.Success">0/10</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" md="6" lg="3">
+        <MudCard>
+            <MudCardContent>
+                <MudText Typo="Typo.h6">Produzione Odierna</MudText>
+                <MudText Typo="Typo.h3" Color="Color.Info">0 pz</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" md="6" lg="3">
+        <MudCard>
+            <MudCardContent>
+                <MudText Typo="Typo.h6">Allarmi Attivi</MudText>
+                <MudText Typo="Typo.h3" Color="Color.Error">0</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" md="6" lg="3">
+        <MudCard>
+            <MudCardContent>
+                <MudText Typo="Typo.h6">Efficienza</MudText>
+                <MudText Typo="Typo.h3" Color="Color.Warning">0%</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+<MudTable Items="@_macchine" Class="mt-4" Hover="true">
+    <HeaderContent>
+        <MudTh>Codice</MudTh>
+        <MudTh>Nome</MudTh>
+        <MudTh>Stato</MudTh>
+        <MudTh>Ultimo Aggiornamento</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Codice</MudTd>
+        <MudTd>@context.Nome</MudTd>
+        <MudTd>
+            <MudChip T="string" Size="Size.Small" Color="@GetStatoColor(context.Stato)">@context.Stato</MudChip>
+        </MudTd>
+        <MudTd>@context.UltimoAggiornamento.ToString("HH:mm:ss")</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<MacchinaRealtime> _macchine = new();
+
+    protected override void OnInitialized()
+    {
+        // Dati di esempio
+        _macchine = new List<MacchinaRealtime>
+        {
+            new() { Codice = "M001", Nome = "Macchina 1", Stato = "Ferma", UltimoAggiornamento = DateTime.Now },
+            new() { Codice = "M002", Nome = "Macchina 2", Stato = "Ferma", UltimoAggiornamento = DateTime.Now }
+        };
+    }
+
+    private Color GetStatoColor(string stato)
+    {
+        return stato switch
+        {
+            "InFunzione" => Color.Success,
+            "Ferma" => Color.Default,
+            "Allarme" => Color.Error,
+            "Manutenzione" => Color.Warning,
+            _ => Color.Default
+        };
+    }
+
+    private class MacchinaRealtime
+    {
+        public string Codice { get; set; } = string.Empty;
+        public string Nome { get; set; } = string.Empty;
+        public string Stato { get; set; } = string.Empty;
+        public DateTime UltimoAggiornamento { get; set; }
+    }
+}
+
+

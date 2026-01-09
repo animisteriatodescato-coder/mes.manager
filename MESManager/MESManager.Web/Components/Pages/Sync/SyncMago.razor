@@ -1,0 +1,307 @@
+@page "/sync/mago"
+@using MESManager.Sync.Services
+@using MESManager.Domain.Entities
+@using MESManager.Infrastructure.Data
+@using Microsoft.EntityFrameworkCore
+@inject ISyncCoordinator SyncCoordinator
+@inject MesManagerDbContext DbContext
+@inject ISnackbar Snackbar
+
+<PageTitle>Sincronizzazione Mago</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Sincronizzazione Mago</MudText>
+
+<MudGrid>
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6" Class="mb-4">Stato Sincronizzazione</MudText>
+            
+            @if (_syncStates != null)
+            {
+                <MudSimpleTable Dense="true">
+                    <thead>
+                        <tr>
+                            <th>Modulo</th>
+                            <th>Ultima Sincronizzazione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var state in _syncStates)
+                        {
+                            <tr>
+                                <td><strong>@state.Modulo</strong></td>
+                                <td>@(state.UltimaSyncRiuscita?.ToString("dd/MM/yyyy HH:mm:ss") ?? "Mai sincronizzato")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            }
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6" Class="mb-4">Azioni Sincronizzazione</MudText>
+            
+            <MudStack Spacing="2">
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          StartIcon="@Icons.Material.Filled.People"
+                          OnClick="@(async () => await SyncModuloAsync("Clienti"))"
+                          Disabled="@_syncing"
+                          FullWidth="true">
+                    Sincronizza Clienti
+                </MudButton>
+                
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          StartIcon="@Icons.Material.Filled.Inventory"
+                          OnClick="@(async () => await SyncModuloAsync("Articoli"))"
+                          Disabled="@_syncing"
+                          FullWidth="true">
+                    Sincronizza Articoli
+                </MudButton>
+                
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          StartIcon="@Icons.Material.Filled.Assignment"
+                          OnClick="@(async () => await SyncModuloAsync("Commesse"))"
+                          Disabled="@_syncing"
+                          FullWidth="true">
+                    Sincronizza Commesse
+                </MudButton>
+                
+                <MudDivider />
+                
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Success" 
+                          StartIcon="@Icons.Material.Filled.SyncAlt"
+                          OnClick="@(async () => await SyncTuttoAsync())"
+                          Disabled="@_syncing"
+                          FullWidth="true"
+                          Size="Size.Large">
+                    Sincronizza Tutto
+                </MudButton>
+            </MudStack>
+            
+            @if (_syncing)
+            {
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mt-4" />
+                <MudText Typo="Typo.caption" Class="mt-2">Sincronizzazione in corso...</MudText>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@if (_ultimoLog != null)
+{
+    <MudPaper Class="pa-4 mt-4">
+        <MudText Typo="Typo.h6" Class="mb-2">Ultimo Risultato</MudText>
+        <MudAlert Severity="@(_ultimoLog.Errori > 0 ? Severity.Error : Severity.Success)" Class="mb-2">
+            <strong>@_ultimoLog.Modulo</strong> - @_ultimoLog.DataOra.ToString("dd/MM/yyyy HH:mm:ss")
+        </MudAlert>
+        <MudGrid>
+            <MudItem xs="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_ultimoLog.Nuovi</MudText>
+                        <MudText Typo="Typo.body2">Nuovi</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Info">@_ultimoLog.Aggiornati</MudText>
+                        <MudText Typo="Typo.body2">Aggiornati</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Default">@_ultimoLog.Ignorati</MudText>
+                        <MudText Typo="Typo.body2">Ignorati</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Error">@_ultimoLog.Errori</MudText>
+                        <MudText Typo="Typo.body2">Errori</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+        
+        @if (!string.IsNullOrEmpty(_ultimoLog.MessaggioErrore))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-2">
+                @_ultimoLog.MessaggioErrore
+            </MudAlert>
+        }
+        
+        @if (!string.IsNullOrEmpty(_ultimoLog.FileBackupPath))
+        {
+            <MudText Typo="Typo.caption" Class="mt-2">
+                Backup salvato in: @_ultimoLog.FileBackupPath
+            </MudText>
+        }
+    </MudPaper>
+}
+
+<MudPaper Class="pa-4 mt-4">
+    <MudText Typo="Typo.h6" Class="mb-4">Storico Sincronizzazioni</MudText>
+    
+    <MudTable Items="@_logs" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Data/Ora</MudTh>
+            <MudTh>Modulo</MudTh>
+            <MudTh>Nuovi</MudTh>
+            <MudTh>Aggiornati</MudTh>
+            <MudTh>Ignorati</MudTh>
+            <MudTh>Errori</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Data/Ora">@context.DataOra.ToString("dd/MM/yyyy HH:mm:ss")</MudTd>
+            <MudTd DataLabel="Modulo"><MudChip T="string" Size="Size.Small">@context.Modulo</MudChip></MudTd>
+            <MudTd DataLabel="Nuovi"><MudChip T="string" Size="Size.Small" Color="Color.Success">@context.Nuovi</MudChip></MudTd>
+            <MudTd DataLabel="Aggiornati"><MudChip T="string" Size="Size.Small" Color="Color.Info">@context.Aggiornati</MudChip></MudTd>
+            <MudTd DataLabel="Ignorati">@context.Ignorati</MudTd>
+            <MudTd DataLabel="Errori">
+                @if (context.Errori > 0)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Error">@context.Errori</MudChip>
+                }
+                else
+                {
+                    <span>0</span>
+                }
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private List<SyncState> _syncStates = new();
+    private List<LogSyncEntry> _logs = new();
+    private LogSyncEntry? _ultimoLog;
+    private bool _syncing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await CaricaDatiAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore caricamento dati iniziali: {ex.Message}", Severity.Error);
+            Console.WriteLine($"[OnInitializedAsync] Errore: {ex}");
+        }
+    }
+
+    private async Task CaricaDatiAsync()
+    {
+        try
+        {
+            _syncStates = await DbContext.SyncStates.ToListAsync();
+            _logs = await DbContext.LogSync
+                .OrderByDescending(l => l.DataOra)
+                .Take(20)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore caricamento dati dal database: {ex.Message}", Severity.Error);
+            Console.WriteLine($"[CaricaDatiAsync] Errore: {ex}");
+            _syncStates = new List<SyncState>();
+            _logs = new List<LogSyncEntry>();
+        }
+    }
+
+    private async Task SyncModuloAsync(string modulo)
+    {
+        _syncing = true;
+        StateHasChanged();
+
+        try
+        {
+            Snackbar.Add($"Avvio sincronizzazione {modulo}...", Severity.Info);
+            LogSyncEntry result = modulo switch
+            {
+                "Clienti" => await SyncCoordinator.SyncClientiAsync(),
+                "Articoli" => await SyncCoordinator.SyncArticoliAsync(),
+                "Commesse" => await SyncCoordinator.SyncCommesseAsync(),
+                _ => throw new ArgumentException($"Modulo non valido: {modulo}")
+            };
+
+            _ultimoLog = result;
+
+            if (result.Errori > 0)
+            {
+                Snackbar.Add($"Sincronizzazione {modulo} completata con errori: {result.MessaggioErrore}", Severity.Error);
+            }
+            else
+            {
+                Snackbar.Add($"Sincronizzazione {modulo} completata con successo!", Severity.Success);
+            }
+
+            await CaricaDatiAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore durante sincronizzazione {modulo}: {ex.Message}", Severity.Error);
+            Console.WriteLine($"[SyncModuloAsync] Errore: {ex}");
+        }
+        finally
+        {
+            _syncing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SyncTuttoAsync()
+    {
+        _syncing = true;
+        StateHasChanged();
+
+        try
+        {
+            Snackbar.Add($"Avvio sincronizzazione completa...", Severity.Info);
+            var results = await SyncCoordinator.SyncTuttoAsync();
+
+            var totaleNuovi = results.Sum(r => r.Nuovi);
+            var totaleAggiornati = results.Sum(r => r.Aggiornati);
+            var totaleErrori = results.Sum(r => r.Errori);
+
+            if (results.Any())
+            {
+                _ultimoLog = results.Last();
+            }
+
+            if (totaleErrori > 0)
+            {
+                var erroriDettaglio = string.Join("; ", results.Where(r => r.Errori > 0).Select(r => $"{r.Modulo}: {r.MessaggioErrore}"));
+                Snackbar.Add($"Sincronizzazione completata con {totaleErrori} errori: {erroriDettaglio}", Severity.Error);
+            }
+            else
+            {
+                Snackbar.Add($"Sincronizzazione completa: {totaleNuovi} nuovi, {totaleAggiornati} aggiornati", Severity.Success);
+            }
+
+            await CaricaDatiAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore durante sincronizzazione completa: {ex.Message}", Severity.Error);
+            Console.WriteLine($"[SyncTuttoAsync] Errore: {ex}");
+        }
+        finally
+        {
+            _syncing = false;
+            StateHasChanged();
+        }
+    }
+}

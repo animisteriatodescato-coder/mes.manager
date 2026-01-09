@@ -1,0 +1,38 @@
+@page "/manutenzioni/catalogo"
+
+<PageTitle>Catalogo Manutenzioni</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Catalogo Manutenzioni</MudText>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mb-4" StartIcon="@Icons.Material.Filled.Add">
+    Nuova Manutenzione
+</MudButton>
+
+<MudTable Items="@_manutenzioni" Hover="true">
+    <HeaderContent>
+        <MudTh>Macchina</MudTh>
+        <MudTh>Descrizione</MudTh>
+        <MudTh>Data Prevista</MudTh>
+        <MudTh>Stato</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Macchina</MudTd>
+        <MudTd>@context.Descrizione</MudTd>
+        <MudTd>@context.DataPrevista.ToString("dd/MM/yyyy")</MudTd>
+        <MudTd><MudChip T="string" Size="Size.Small">@context.Stato</MudChip></MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<ManutenzioneDto> _manutenzioni = new();
+
+    private class ManutenzioneDto
+    {
+        public string Macchina { get; set; } = string.Empty;
+        public string Descrizione { get; set; } = string.Empty;
+        public DateTime DataPrevista { get; set; }
+        public string Stato { get; set; } = string.Empty;
+    }
+}
+
+
