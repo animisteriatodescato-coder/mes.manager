@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using MESManager.Application.Interfaces;
 using MESManager.Infrastructure.Data;
 using MESManager.Infrastructure.Services;
+using MESManager.Application.Services;
+using MESManager.Infrastructure.Repositories;
 
 namespace MESManager.Infrastructure;
 
@@ -14,13 +16,16 @@ public static class DependencyInjection
         services.AddDbContext<MesManagerDbContext>(options =>
             options.UseSqlServer(connectionString));
 
+        // Repositories
+        services.AddScoped<IAnimeRepository, AnimeRepository>();
+
         // App Services
         services.AddScoped<IArticoloAppService, ArticoloAppService>(); // ILogger<T> is injected by default in .NET DI
         services.AddScoped<IMacchinaAppService, MacchinaAppService>();
         services.AddScoped<ICommessaAppService, CommessaAppService>();
         services.AddScoped<IRicettaAppService, RicettaAppService>();
         services.AddScoped<IClienteAppService, ClienteAppService>();
-        services.AddScoped<IAnimeAppService, AnimeAppService>();
+        services.AddScoped<IAnimeService, AnimeService>();
         // Aggiungi altri servizi qui quando implementati
 
         return services;

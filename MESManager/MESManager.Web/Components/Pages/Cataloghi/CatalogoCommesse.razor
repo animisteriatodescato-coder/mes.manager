@@ -15,14 +15,16 @@
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
             <MudText Typo="Typo.h4">Commesse</MudText>
             <MudSpacer />
-            <MudTextField @bind-Value="@searchText" 
-                         Placeholder="Ricerca globale..." 
+
+            
+            <MudTextField @bind-Value="searchText"
+                         Placeholder="Cerca in tutte le colonne..."
                          Variant="Variant.Outlined"
                          Margin="Margin.Dense"
                          Style="width: 300px;"
                          Immediate="true"
-                         @oninput="@OnSearchInput" />
-            
+                         DebounceInterval="300"
+                         OnDebounceIntervalElapsed="OnSearchDebounced" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@ResetGrid">Reset</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
@@ -94,9 +96,22 @@
 @code {
     private List<CommessaDto> _commesse = new();
     private GridUiSettings settings = new();
-    private string searchText = string.Empty;
+    // Rimossa ricerca globale, ora si usano i filtri per colonna stile Excel
     private bool showSettings = false;
     private System.Threading.Timer? debounceTimer;
+    private string searchText = string.Empty;
+
+    private async Task OnSearchDebounced(string value)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("commesseGrid.setQuickFilter", value);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error filtering grid: {ex.Message}");
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -107,7 +122,6 @@
         if (savedSettings != null)
         {
             settings = savedSettings;
-            searchText = settings.GlobalSearch;
         }
     }
 
@@ -135,10 +149,7 @@
 
             await JSRuntime.InvokeVoidAsync("commesseGrid.init", "commesseGrid", _commesse, settings.ColumnStateJson);
             await ApplyUiSettings();
-            if (!string.IsNullOrEmpty(searchText))
-            {
-                await JSRuntime.InvokeVoidAsync("commesseGrid.setQuickFilter", searchText);
-            }
+            // Ricerca globale rimossa, ora si usano i filtri per colonna
         }
         catch (Exception ex)
         {
@@ -147,25 +158,7 @@
         }
     }
 
-    private void OnSearchInput(ChangeEventArgs e)
-    {
-        searchText = e.Value?.ToString() ?? string.Empty;
-        
-        debounceTimer?.Dispose();
-        debounceTimer = new System.Threading.Timer(async _ =>
-        {
-            await InvokeAsync(async () =>
-            {
-                try
-                {
-                    await JSRuntime.InvokeVoidAsync("commesseGrid.setQuickFilter", searchText);
-                    settings.GlobalSearch = searchText;
-                    await SaveSettings();
-                }
-                catch { }
-            });
-        }, null, 300, Timeout.Infinite);
-    }
+
 
     private async Task ToggleColumnPanel()
     {
@@ -182,7 +175,7 @@
         {
             await JSRuntime.InvokeVoidAsync("commesseGrid.resetState");
             settings = new GridUiSettings();
-            searchText = string.Empty;
+            // Ricerca globale rimossa
             await PreferencesService.RemoveAsync("commesse-grid-settings");
             await ApplyUiSettings();
             StateHasChanged();
