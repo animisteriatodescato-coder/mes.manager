@@ -33,7 +33,7 @@
         
         @if (showSettings)
         {
-            <MudPaper Class="pa-4 mt-2" Elevation="1" Style="background-color: #f5f5f5;">
+            <MudPaper Class="pa-4 mt-2" Elevation="1">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Wrap="Wrap.Wrap">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                         <MudText>Font Size:</MudText>
@@ -87,9 +87,34 @@
         position: sticky;
         top: 0;
         z-index: 10;
-        background: white;
+        background: var(--mud-palette-surface);
         padding: 0.1 rem 0;
         margin-bottom: 0.2rem;
+    }
+
+    /* Gestione Colonne in dark mode */
+    @@media (prefers-color-scheme: dark) {
+        .ag-theme-alpine .ag-side-bar,
+        .ag-theme-alpine .ag-tool-panel-wrapper,
+        .ag-theme-alpine .ag-column-select-panel,
+        .ag-theme-alpine .ag-column-panel {
+            background-color: #1e1e1e !important;
+        }
+
+        .ag-theme-alpine .ag-column-select-header,
+        .ag-theme-alpine .ag-column-select-column-label,
+        .ag-theme-alpine .ag-column-select-column-group,
+        .ag-theme-alpine .ag-column-select-header-label,
+        .ag-theme-alpine .ag-filter-toolpanel-header {
+            color: #201e1e !important;
+        }
+
+        .ag-theme-alpine .ag-input-field-input,
+        .ag-theme-alpine .ag-text-field-input {
+            background-color: #2d2d2d !important;
+            color: #333232 !important;
+            border-color: #444 !important;
+        }
     }
 </style>
 
