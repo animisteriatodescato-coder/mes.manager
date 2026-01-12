@@ -25,7 +25,7 @@ public class PlcAppService : IPlcAppService
         return query.Select(p => new PlcRealtimeDto
         {
             MacchinaId = p.MacchinaId,
-            MacchinaNumero = p.Macchina.Codice.Replace("M", "").TrimStart('0'),
+            MacchinaNumero = int.TryParse(p.Macchina.Codice.Replace("M", ""), out int num) ? num.ToString("D2") : p.Macchina.Codice,
             MacchianaNome = p.Macchina.Nome,
             
             CicliFatti = p.CicliFatti,
@@ -69,7 +69,7 @@ public class PlcAppService : IPlcAppService
         {
             Id = p.Id,
             MacchinaId = p.MacchinaId,
-            MacchinaNumero = p.Macchina.Codice.Replace("M", "").TrimStart('0'),
+            MacchinaNumero = int.TryParse(p.Macchina.Codice.Replace("M", ""), out int num) ? num.ToString("D2") : p.Macchina.Codice,
             MacchianaNome = p.Macchina.Nome,
             
             Timestamp = p.DataOra,
@@ -103,7 +103,7 @@ public class PlcAppService : IPlcAppService
         {
             Id = e.Id,
             MacchinaId = e.MacchinaId,
-            MacchinaNumero = e.Macchina.Codice.Replace("M", "").TrimStart('0'),
+            MacchinaNumero = int.TryParse(e.Macchina.Codice.Replace("M", ""), out int num) ? num.ToString("D2") : e.Macchina.Codice,
             MacchianaNome = e.Macchina.Nome,
             
             Timestamp = e.DataOra,
