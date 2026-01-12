@@ -254,9 +254,19 @@ window.plcRealtimeGrid = (function () {
                 gridApi = params.api;
                 console.log('PLC Grid initialized successfully');
                 
-                if (savedColumnState) {
+                // Prova prima lo stato passato da Blazor, poi quello dal localStorage
+                let stateToRestore = savedColumnState;
+                if (!stateToRestore) {
                     try {
-                        const state = JSON.parse(savedColumnState);
+                        stateToRestore = localStorage.getItem('plc-realtime-grid-columns');
+                    } catch (e) {
+                        console.error('Error reading from localStorage:', e);
+                    }
+                }
+                
+                if (stateToRestore) {
+                    try {
+                        const state = JSON.parse(stateToRestore);
                         params.api.applyColumnState({ state: state, applyOrder: true });
                     } catch (e) {
                         console.error('Error restoring column state:', e);
@@ -280,7 +290,14 @@ window.plcRealtimeGrid = (function () {
     }
 
     function saveState() {
-        // State saving handled by Blazor
+        if (gridApi) {
+            try {
+                const state = gridApi.getColumnState();
+                localStorage.setItem('plc-realtime-grid-columns', JSON.stringify(state));
+            } catch (e) {
+                console.error('Error saving grid state:', e);
+            }
+        }
     }
 
     function setQuickFilter(text) {
@@ -369,6 +386,11 @@ window.plcRealtimeGrid = (function () {
     function resetGrid() {
         if (gridApi) {
             gridApi.resetColumnState();
+            try {
+                localStorage.removeItem('plc-realtime-grid-columns');
+            } catch (e) {
+                console.error('Error clearing localStorage:', e);
+            }
         }
     }
 

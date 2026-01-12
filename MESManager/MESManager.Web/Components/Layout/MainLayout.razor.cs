@@ -1,10 +1,14 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using MESManager.Web.Services;
 
 namespace MESManager.Web.Components.Layout;
 
 public partial class MainLayout
 {
+    [Inject]
+    private PreferencesService PreferencesService { get; set; } = default!;
+    
     private bool _isDarkMode = true;
     private bool _drawerOpen = false;
     private string _currentCategory = string.Empty;
@@ -25,9 +29,21 @@ public partial class MainLayout
         }
     };
     
-    private void ToggleTheme()
+    protected override async Task OnInitializedAsync()
+    {
+        // Carica il tema salvato
+        var savedDarkMode = await PreferencesService.GetAsync<bool?>("isDarkMode");
+        if (savedDarkMode.HasValue)
+        {
+            _isDarkMode = savedDarkMode.Value;
+        }
+    }
+    
+    private async Task ToggleTheme()
     {
         _isDarkMode = !_isDarkMode;
+        // Salva la preferenza
+        await PreferencesService.SetAsync("isDarkMode", _isDarkMode);
     }
     
     private void ToggleDrawer()
