@@ -65,36 +65,92 @@ window.plcRealtimeGrid = (function () {
             { 
                 field: 'percentualeCompletamento', 
                 headerName: '% Completamento', 
-                width: 160,
+                width: 200,
                 sortable: true, 
                 filter: 'agNumberColumnFilter', 
                 resizable: true,
                 type: 'numericColumn',
-                valueFormatter: params => params.value ? params.value.toFixed(1) + '%' : '0%',
-                cellStyle: params => {
-                    const val = params.value || 0;
-                    if (val >= 100) return { backgroundColor: '#4caf50', color: 'white', fontWeight: 'bold' };
-                    if (val >= 75) return { backgroundColor: '#8bc34a', color: 'white' };
-                    if (val >= 50) return { backgroundColor: '#ffc107', color: 'black' };
-                    if (val >= 25) return { backgroundColor: '#ff9800', color: 'white' };
-                    return { backgroundColor: '#f44336', color: 'white' };
+                cellRenderer: params => {
+                    const percentuale = params.value || 0;
+                    const tempoRilevato = params.data.tempoMedioRilevato || 0;
+                    const tempoMedio = params.data.tempoMedio || 0;
+                    
+                    // Determina il colore in base al tempo
+                    let barColor;
+                    if (tempoMedio === 0) {
+                        barColor = '#9e9e9e'; // Grigio se non c'è tempo medio
+                    } else {
+                        const ratio = tempoRilevato / tempoMedio;
+                        if (ratio <= 0.95) {
+                            barColor = '#4caf50'; // Verde - in anticipo o in linea
+                        } else if (ratio <= 1.05) {
+                            barColor = '#8bc34a'; // Verde chiaro - leggermente sopra
+                        } else if (ratio <= 1.15) {
+                            barColor = '#ffc107'; // Giallo - in ritardo moderato
+                        } else if (ratio <= 1.3) {
+                            barColor = '#ff9800'; // Arancione - in ritardo
+                        } else {
+                            barColor = '#f44336'; // Rosso - molto in ritardo
+                        }
+                    }
+                    
+                    return `
+                        <div style="width: 100%; height: 100%; display: flex; align-items: center; position: relative;">
+                            <div style="position: absolute; width: 100%; height: 100%; background: #e0e0e0;"></div>
+                            <div style="position: absolute; width: ${Math.min(percentuale, 100)}%; height: 100%; background: ${barColor}; transition: width 0.3s ease;"></div>
+                            <span style="position: relative; z-index: 1; margin-left: 8px; font-weight: bold; color: ${percentuale > 50 ? 'white' : 'black'}; text-shadow: ${percentuale > 50 ? '0 0 2px rgba(0,0,0,0.3)' : 'none'};">
+                                ${percentuale.toFixed(1)}%
+                            </span>
+                        </div>
+                    `;
                 }
             },
             { 
                 field: 'cicliScarti', 
                 headerName: 'Scarti', 
-                width: 100,
+                width: 120,
                 sortable: true, 
                 filter: 'agNumberColumnFilter', 
                 resizable: true,
                 type: 'numericColumn',
-                valueFormatter: params => params.value ? params.value.toLocaleString() : '0',
-                cellStyle: params => {
-                    const val = params.value || 0;
-                    if (val > 10) return { backgroundColor: '#f44336', color: 'white' };
-                    if (val > 5) return { backgroundColor: '#ff9800', color: 'white' };
-                    if (val > 0) return { backgroundColor: '#ffc107', color: 'black' };
-                    return null;
+                cellRenderer: params => {
+                    const scarti = params.value || 0;
+                    const cicliFatti = params.data.cicliFatti || 0;
+                    
+                    if (cicliFatti === 0) {
+                        return `<span style="color: #9e9e9e;">${scarti}</span>`;
+                    }
+                    
+                    const percentualeScarti = (scarti / cicliFatti) * 100;
+                    
+                    // Determina il colore in base alla percentuale di scarti (1-8%)
+                    let color;
+                    if (percentualeScarti <= 1) {
+                        color = '#2196f3'; // Blu - ottimo
+                    } else if (percentualeScarti <= 2) {
+                        color = '#4caf50'; // Verde - buono
+                    } else if (percentualeScarti <= 3) {
+                        color = '#8bc34a'; // Verde chiaro - accettabile
+                    } else if (percentualeScarti <= 4) {
+                        color = '#ffc107'; // Giallo - attenzione
+                    } else if (percentualeScarti <= 5) {
+                        color = '#ff9800'; // Arancione - problematico
+                    } else if (percentualeScarti <= 6) {
+                        color = '#ff5722'; // Arancione scuro - critico
+                    } else if (percentualeScarti <= 8) {
+                        color = '#f44336'; // Rosso - grave
+                    } else {
+                        color = '#b71c1c'; // Rosso scuro - gravissimo
+                    }
+                    
+                    return `
+                        <div style="display: flex; align-items: center; justify-content: space-between; height: 100%; padding: 0 8px;">
+                            <span style="font-weight: bold; color: ${color};">${scarti}</span>
+                            <span style="font-size: 0.85em; color: ${color}; background: ${color}22; padding: 2px 6px; border-radius: 4px;">
+                                ${percentualeScarti.toFixed(1)}%
+                            </span>
+                        </div>
+                    `;
                 }
             },
             { 
