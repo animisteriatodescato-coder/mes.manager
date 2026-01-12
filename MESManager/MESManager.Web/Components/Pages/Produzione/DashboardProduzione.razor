@@ -1,7 +1,356 @@
 @page "/produzione/dashboard"
-@layout MainLayout
+@using MESManager.Application.DTOs
+@using MESManager.Web.Services
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
 
 <PageTitle>Dashboard Produzione</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Dashboard Produzione</MudText>
-<MudText>Pagina predisposta per visualizzazione dashboard produzione</MudText>
+<div class="dashboard-container">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h4">Dashboard Produzione</MudText>
+        <div class="d-flex gap-2">
+            <MudChip Color="Color.Success" Size="Size.Small">@_data.Count Macchine Attive</MudChip>
+            <MudChip Color="Color.Info" Size="Size.Small">Aggiornato: @DateTime.Now.ToString("HH:mm:ss")</MudChip>
+            <MudSwitch T="bool" @bind-Checked="autoRefresh" Color="Color.Primary" Label="Auto-refresh" />
+        </div>
+    </div>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+    }
+
+    <MudGrid Spacing="3">
+        @foreach (var machine in _data.OrderBy(m => m.MacchinaNumero))
+        {
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudCard Elevation="3" Class="machine-card @GetMachineCardClass(machine.StatoMacchina)">
+                    <MudCardHeader Class="pb-2">
+                        <CardHeaderContent>
+                            <div class="d-flex justify-space-between align-center">
+                                <MudText Typo="Typo.h6" Class="machine-number">@machine.MacchinaNumero</MudText>
+                                <MudChip Size="Size.Small" Color="@GetStatoColor(machine.StatoMacchina)" Class="status-chip">
+                                    @GetStatoText(machine.StatoMacchina)
+                                </MudChip>
+                            </div>
+                            <MudText Typo="Typo.body2" Class="machine-name">@machine.MacchianNome</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent Class="pt-2 pb-2">
+                        <!-- Barra di Completamento -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-space-between mb-1">
+                                <MudText Typo="Typo.caption">Completamento</MudText>
+                                <MudText Typo="Typo.caption" Style="font-weight: bold">@machine.PercentualeCompletamento.ToString("F1")%</MudText>
+                            </div>
+                            <MudProgressLinear Color="@GetProgressColor(machine)" Value="@machine.PercentualeCompletamento" Size="Size.Medium" Class="rounded" />
+                        </div>
+
+                        <!-- Metriche Produzione -->
+                        <MudGrid Spacing="1" Class="metrics-grid">
+                            <MudItem xs="6">
+                                <div class="metric-box">
+                                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success" />
+                                    <div class="metric-content">
+                                        <MudText Typo="Typo.caption" Class="metric-label">Cicli Fatti</MudText>
+                                        <MudText Typo="Typo.body1" Class="metric-value">@machine.CicliFatti.ToString("N0")</MudText>
+                                    </div>
+                                </div>
+                            </MudItem>
+                            <MudItem xs="6">
+                                <div class="metric-box">
+                                    <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Small" Color="@GetScartiColor(machine)" />
+                                    <div class="metric-content">
+                                        <MudText Typo="Typo.caption" Class="metric-label">Scarti</MudText>
+                                        <MudText Typo="Typo.body1" Class="metric-value" Style="color: @GetScartiColorHex(machine)">
+                                            @machine.CicliScarti <span style="font-size: 0.8em">(@GetPercentualeScarti(machine)%)</span>
+                                        </MudText>
+                                    </div>
+                                </div>
+                            </MudItem>
+                            <MudItem xs="6">
+                                <div class="metric-box">
+                                    <MudIcon Icon="@Icons.Material.Filled.Flag" Size="Size.Small" Color="Color.Primary" />
+                                    <div class="metric-content">
+                                        <MudText Typo="Typo.caption" Class="metric-label">Obiettivo</MudText>
+                                        <MudText Typo="Typo.body1" Class="metric-value">@machine.QuantitaDaProdurre.ToString("N0")</MudText>
+                                    </div>
+                                </div>
+                            </MudItem>
+                            <MudItem xs="6">
+                                <div class="metric-box">
+                                    <MudIcon Icon="@Icons.Material.Filled.Speed" Size="Size.Small" Color="@GetTempoColor(machine)" />
+                                    <div class="metric-content">
+                                        <MudText Typo="Typo.caption" Class="metric-label">Tempo</MudText>
+                                        <MudText Typo="Typo.body1" Class="metric-value" Style="color: @GetTempoColorHex(machine)">
+                                            @machine.TempoMedioRilevato.ToString("F1")s
+                                        </MudText>
+                                    </div>
+                                </div>
+                            </MudItem>
+                        </MudGrid>
+
+                        <!-- Operatore e Barcode -->
+                        @if (!string.IsNullOrEmpty(machine.NomeOperatore))
+                        {
+                            <MudDivider Class="my-2" />
+                            <div class="d-flex align-center gap-1">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                                <MudText Typo="Typo.caption">@machine.NomeOperatore</MudText>
+                            </div>
+                        }
+                        @if (machine.BarcodeLavorazione > 0)
+                        {
+                            <div class="d-flex align-center gap-1 mt-1">
+                                <MudIcon Icon="@Icons.Material.Filled.QrCode" Size="Size.Small" />
+                                <MudText Typo="Typo.caption">Barcode: @machine.BarcodeLavorazione</MudText>
+                            </div>
+                        }
+                    </MudCardContent>
+                    <MudCardActions Class="pt-0">
+                        <MudButton Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" 
+                                   OnClick="@(() => Nav.NavigateTo("/produzione/plc-realtime"))">
+                            Dettagli
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+
+    @if (_data.Count == 0 && !_loading)
+    {
+        <MudPaper Class="pa-8 text-center" Elevation="0">
+            <MudIcon Icon="@Icons.Material.Filled.WarningAmber" Size="Size.Large" Color="Color.Warning" />
+            <MudText Typo="Typo.h6" Class="mt-4">Nessuna macchina attiva</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">I dati delle macchine verranno visualizzati qui non appena disponibili</MudText>
+        </MudPaper>
+    }
+</div>
+
+<style>
+    .dashboard-container {
+        padding: 1rem;
+    }
+
+    .machine-card {
+        height: 100%;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-left: 4px solid var(--mud-palette-primary);
+    }
+
+    .machine-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
+    }
+
+    .machine-card.status-emergenza {
+        border-left-color: #f44336;
+        background: linear-gradient(to right, rgba(244, 67, 54, 0.05), transparent);
+    }
+
+    .machine-card.status-allarme {
+        border-left-color: #ff9800;
+        background: linear-gradient(to right, rgba(255, 152, 0, 0.05), transparent);
+    }
+
+    .machine-card.status-automatico {
+        border-left-color: #4caf50;
+        background: linear-gradient(to right, rgba(76, 175, 80, 0.05), transparent);
+    }
+
+    .machine-number {
+        font-weight: 700;
+        font-size: 1.5rem;
+        color: var(--mud-palette-primary);
+    }
+
+    .machine-name {
+        color: var(--mud-palette-text-secondary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .status-chip {
+        font-weight: 600;
+        font-size: 0.7rem;
+    }
+
+    .metric-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        background: var(--mud-palette-background-grey);
+        border-radius: 8px;
+    }
+
+    .metric-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .metric-label {
+        color: var(--mud-palette-text-secondary);
+        line-height: 1;
+        margin-bottom: 2px;
+    }
+
+    .metric-value {
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .metrics-grid {
+        margin-top: 0;
+    }
+</style>
+
+@code {
+    private List<PlcRealtimeDto> _data = new();
+    private bool _loading = true;
+    private bool autoRefresh = true;
+    private System.Threading.Timer? _timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Http.BaseAddress = new Uri(Nav.BaseUri);
+        await LoadData();
+        
+        _timer = new System.Threading.Timer(async _ =>
+        {
+            if (autoRefresh)
+            {
+                await InvokeAsync(async () =>
+                {
+                    await LoadData();
+                    StateHasChanged();
+                });
+            }
+        }, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            _loading = true;
+            var url = $"api/Plc/realtime";
+            _data = await Http.GetFromJsonAsync<List<PlcRealtimeDto>>(url) ?? new();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore caricamento dati: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string GetMachineCardClass(string? stato)
+    {
+        if (string.IsNullOrEmpty(stato)) return "";
+        
+        if (stato.Contains("EMERGENZA")) return "status-emergenza";
+        if (stato.Contains("ALLARME")) return "status-allarme";
+        if (stato.Contains("AUTOMATICO") || stato.Contains("CICLO")) return "status-automatico";
+        
+        return "";
+    }
+
+    private Color GetStatoColor(string? stato)
+    {
+        if (string.IsNullOrEmpty(stato)) return Color.Default;
+        
+        if (stato.Contains("EMERGENZA")) return Color.Error;
+        if (stato.Contains("ALLARME")) return Color.Warning;
+        if (stato.Contains("MANUALE")) return Color.Default;
+        if (stato.Contains("AUTOMATICO") || stato.Contains("CICLO")) return Color.Success;
+        
+        return Color.Default;
+    }
+
+    private string GetStatoText(string? stato)
+    {
+        if (string.IsNullOrEmpty(stato)) return "N/A";
+        
+        if (stato.Contains("EMERGENZA")) return "EMERGENZA";
+        if (stato.Contains("ALLARME")) return "ALLARME";
+        if (stato.Contains("MANUALE")) return "MANUALE";
+        if (stato.Contains("AUTOMATICO")) return "AUTO";
+        if (stato.Contains("CICLO")) return "CICLO";
+        
+        return stato;
+    }
+
+    private Color GetProgressColor(PlcRealtimeDto machine)
+    {
+        var percentuale = machine.PercentualeCompletamento;
+        if (percentuale >= 90) return Color.Success;
+        if (percentuale >= 70) return Color.Info;
+        if (percentuale >= 50) return Color.Warning;
+        return Color.Error;
+    }
+
+    private string GetPercentualeScarti(PlcRealtimeDto machine)
+    {
+        if (machine.CicliFatti == 0) return "0.0";
+        var percentuale = (machine.CicliScarti / (double)machine.CicliFatti) * 100;
+        return percentuale.ToString("F1");
+    }
+
+    private Color GetScartiColor(PlcRealtimeDto machine)
+    {
+        if (machine.CicliFatti == 0) return Color.Default;
+        var percentuale = (machine.CicliScarti / (double)machine.CicliFatti) * 100;
+        
+        if (percentuale <= 1) return Color.Info;
+        if (percentuale <= 3) return Color.Success;
+        if (percentuale <= 5) return Color.Warning;
+        return Color.Error;
+    }
+
+    private string GetScartiColorHex(PlcRealtimeDto machine)
+    {
+        if (machine.CicliFatti == 0) return "#757575";
+        var percentuale = (machine.CicliScarti / (double)machine.CicliFatti) * 100;
+        
+        if (percentuale <= 1) return "#2196f3";
+        if (percentuale <= 2) return "#4caf50";
+        if (percentuale <= 3) return "#8bc34a";
+        if (percentuale <= 5) return "#ff9800";
+        if (percentuale <= 8) return "#f44336";
+        return "#b71c1c";
+    }
+
+    private Color GetTempoColor(PlcRealtimeDto machine)
+    {
+        if (machine.TempoMedio == 0) return Color.Default;
+        var ratio = machine.TempoMedioRilevato / machine.TempoMedio;
+        
+        if (ratio <= 0.95) return Color.Success;
+        if (ratio <= 1.15) return Color.Info;
+        return Color.Error;
+    }
+
+    private string GetTempoColorHex(PlcRealtimeDto machine)
+    {
+        if (machine.TempoMedio == 0) return "#757575";
+        var ratio = machine.TempoMedioRilevato / machine.TempoMedio;
+        
+        if (ratio <= 0.95) return "#4caf50";
+        if (ratio <= 1.05) return "#8bc34a";
+        if (ratio <= 1.15) return "#ffc107";
+        if (ratio <= 1.3) return "#ff9800";
+        return "#f44336";
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}
