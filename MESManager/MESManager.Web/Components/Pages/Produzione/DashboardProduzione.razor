@@ -11,8 +11,8 @@
     <div class="d-flex justify-space-between align-center mb-4">
         <MudText Typo="Typo.h4">Dashboard Produzione</MudText>
         <div class="d-flex gap-2">
-            <MudChip Color="Color.Success" Size="Size.Small">@_data.Count Macchine Attive</MudChip>
-            <MudChip Color="Color.Info" Size="Size.Small">Aggiornato: @DateTime.Now.ToString("HH:mm:ss")</MudChip>
+            <MudChip T="string" Color="Color.Success" Size="Size.Small">@_data.Count Macchine Attive</MudChip>
+            <MudChip T="string" Color="Color.Info" Size="Size.Small">Aggiornato: @DateTime.Now.ToString("HH:mm:ss")</MudChip>
             <MudSwitch T="bool" @bind-Checked="autoRefresh" Color="Color.Primary" Label="Auto-refresh" />
         </div>
     </div>
@@ -26,16 +26,16 @@
         @foreach (var machine in _data.OrderBy(m => m.MacchinaNumero))
         {
             <MudItem xs="12" sm="6" md="4" lg="3">
-                <MudCard Elevation="3" Class="machine-card @GetMachineCardClass(machine.StatoMacchina)">
+                <MudCard Elevation="3" Class="@($"machine-card {GetMachineCardClass(machine.StatoMacchina)}")">
                     <MudCardHeader Class="pb-2">
                         <CardHeaderContent>
                             <div class="d-flex justify-space-between align-center">
                                 <MudText Typo="Typo.h6" Class="machine-number">@machine.MacchinaNumero</MudText>
-                                <MudChip Size="Size.Small" Color="@GetStatoColor(machine.StatoMacchina)" Class="status-chip">
+                                <MudChip T="string" Size="Size.Small" Color="@GetStatoColor(machine.StatoMacchina)" Class="status-chip">
                                     @GetStatoText(machine.StatoMacchina)
                                 </MudChip>
                             </div>
-                            <MudText Typo="Typo.body2" Class="machine-name">@machine.MacchianNome</MudText>
+                            <MudText Typo="Typo.body2" Class="machine-name">@machine.MacchianaNome</MudText>
                         </CardHeaderContent>
                     </MudCardHeader>
                     <MudCardContent Class="pt-2 pb-2">
@@ -45,7 +45,7 @@
                                 <MudText Typo="Typo.caption">Completamento</MudText>
                                 <MudText Typo="Typo.caption" Style="font-weight: bold">@machine.PercentualeCompletamento.ToString("F1")%</MudText>
                             </div>
-                            <MudProgressLinear Color="@GetProgressColor(machine)" Value="@machine.PercentualeCompletamento" Size="Size.Medium" Class="rounded" />
+                            <MudProgressLinear Color="@GetProgressColor(machine)" Value="@((double)machine.PercentualeCompletamento)" Size="Size.Medium" Class="rounded" />
                         </div>
 
                         <!-- Metriche Produzione -->
@@ -64,7 +64,7 @@
                                     <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Small" Color="@GetScartiColor(machine)" />
                                     <div class="metric-content">
                                         <MudText Typo="Typo.caption" Class="metric-label">Scarti</MudText>
-                                        <MudText Typo="Typo.body1" Class="metric-value" Style="color: @GetScartiColorHex(machine)">
+                                        <MudText Typo="Typo.body1" Class="metric-value" Style="@($"color: {GetScartiColorHex(machine)}")">
                                             @machine.CicliScarti <span style="font-size: 0.8em">(@GetPercentualeScarti(machine)%)</span>
                                         </MudText>
                                     </div>
@@ -84,7 +84,7 @@
                                     <MudIcon Icon="@Icons.Material.Filled.Speed" Size="Size.Small" Color="@GetTempoColor(machine)" />
                                     <div class="metric-content">
                                         <MudText Typo="Typo.caption" Class="metric-label">Tempo</MudText>
-                                        <MudText Typo="Typo.body1" Class="metric-value" Style="color: @GetTempoColorHex(machine)">
+                                        <MudText Typo="Typo.body1" Class="metric-value" Style="@($"color: {GetTempoColorHex(machine)}")">
                                             @machine.TempoMedioRilevato.ToString("F1")s
                                         </MudText>
                                     </div>
