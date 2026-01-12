@@ -9,22 +9,21 @@ namespace MESManager.PlcSync.Services;
 public class PlcSyncService
 {
     private readonly ILogger<PlcSyncService> _logger;
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IDbContextFactory<MesManagerDbContext> _contextFactory;
 
     public PlcSyncService(
         ILogger<PlcSyncService> logger,
-        IServiceScopeFactory scopeFactory)
+        IDbContextFactory<MesManagerDbContext> contextFactory)
     {
         _logger = logger;
-        _scopeFactory = scopeFactory;
+        _contextFactory = contextFactory;
     }
 
     public async Task SyncSnapshotAsync(Guid macchinaId, PlcSnapshot snapshot, MachineState? state, CancellationToken cancellationToken = default)
     {
         try
         {
-            using var scope = _scopeFactory.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<MesManagerDbContext>();
+            await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
 
             // 1. UPSERT PLCRealtime (sempre)
             var realtime = await context.PLCRealtime

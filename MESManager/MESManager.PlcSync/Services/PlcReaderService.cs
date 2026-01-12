@@ -46,6 +46,7 @@ public class PlcReaderService
             // Lettura dati produzione
             var snapshot = new PlcSnapshot
             {
+                MacchinaId = config.MacchinaId,
                 Timestamp = DateTime.Now,
                 
                 // Lettura dati produzione

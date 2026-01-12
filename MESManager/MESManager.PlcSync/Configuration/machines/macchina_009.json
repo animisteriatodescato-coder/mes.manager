@@ -1,0 +1,24 @@
+{
+  "MachineId": "11111111-1111-1111-1111-000000000009",
+  "Numero": 9,
+  "Nome": "Centro Lavoro 9",
+  "PlcIp": "192.168.17.20",
+  "Enabled": true,
+  "Offsets": {
+    "CicliFatti": 0,
+    "QuantitaDaProdurre": 2,
+    "CicliScarti": 4,
+    "BarcodeLavorazione": 6,
+    "OperatoreNumero": 26,
+    "TempoMedioRilevato": 28,
+    "TempoMedio": 32,
+    "Figure": 36,
+    "StatoMacchina": 38,
+    "QuantitaRaggiunta": 40,
+    "FlagNuovaProduzione": 42,
+    "FlagInizioSetup": 43,
+    "FlagFineSetup": 44,
+    "FlagInProduzione": 45,
+    "FlagQuantitaRaggiunta": 46
+  }
+}

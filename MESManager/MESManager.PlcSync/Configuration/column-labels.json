@@ -1,0 +1,39 @@
+{
+  "Realtime": {
+    "Timestamp": "Data/Ora",
+    "MacchinaNumero": "N° Macchina",
+    "MacchianaNome": "Nome Macchina",
+    "BarcodeLavorazione": "Barcode Lavorazione",
+    "CicliFatti": "Cicli Fatti",
+    "QuantitaDaProdurre": "Qta da Produrre",
+    "CicliScarti": "Cicli Scarti",
+    "NomeOperatore": "Nome Operatore",
+    "TempoMedioRilevato": "Tempo Medio Rilevato (s)",
+    "TempoMedio": "Tempo Medio (s)",
+    "StatoMacchina": "Stato Macchina",
+    "Figure": "Figure",
+    "PercentualeCompletamento": "% Completamento",
+    "QuantitaRaggiunta": "Quantità Raggiunta"
+  },
+  "Storico": {
+    "Timestamp": "Data/Ora",
+    "MacchinaNumero": "N° Macchina",
+    "BarcodeLavorazione": "Barcode Lavorazione",
+    "CicliFatti": "Cicli Fatti",
+    "QuantitaDaProdurre": "Qta da Produrre",
+    "CicliScarti": "Cicli Scarti",
+    "NumeroOperatore": "N° Operatore",
+    "NomeOperatore": "Nome Operatore",
+    "TempoMedioRilevato": "Tempo Medio Rilevato (s)",
+    "TempoMedio": "Tempo Medio (s)",
+    "StatoMacchina": "Stato Macchina",
+    "Figure": "Figure"
+  },
+  "Eventi": {
+    "NuovaProduzione": "Nuova Produzione",
+    "InizioSetup": "Inizio Set-up Macchina",
+    "FineSetup": "Fine Set-up Macchina",
+    "InProduzione": "In Produzione",
+    "QuantitaRaggiunta": "Quantità Raggiunta"
+  }
+}

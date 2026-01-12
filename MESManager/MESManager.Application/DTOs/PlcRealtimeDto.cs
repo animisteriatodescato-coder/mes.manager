@@ -4,7 +4,7 @@ public class PlcRealtimeDto
 {
     public Guid MacchinaId { get; set; }
     public string MacchinaNumero { get; set; } = string.Empty;
-    public string MacchianNome { get; set; } = string.Empty;
+    public string MacchianaNome { get; set; } = string.Empty;
     
     public int CicliFatti { get; set; }
     public int QuantitaDaProdurre { get; set; }

@@ -1,7 +1,10 @@
+using System.Text.Json.Serialization;
+
 namespace MESManager.PlcSync.Configuration;
 
 public class PlcMachineConfig
 {
+    [JsonPropertyName("MachineId")]
     public Guid MacchinaId { get; set; }
     public int Numero { get; set; }
     public string Nome { get; set; } = string.Empty;

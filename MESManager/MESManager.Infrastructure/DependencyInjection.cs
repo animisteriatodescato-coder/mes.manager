@@ -14,7 +14,11 @@ public static class DependencyInjection
     {
         // DbContext
         services.AddDbContext<MesManagerDbContext>(options =>
-            options.UseSqlServer(connectionString));
+            options.UseSqlServer(connectionString, sqlOptions => 
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(30),
+                    errorNumbersToAdd: null)));
 
         // Repositories
         services.AddScoped<IAnimeRepository, AnimeRepository>();

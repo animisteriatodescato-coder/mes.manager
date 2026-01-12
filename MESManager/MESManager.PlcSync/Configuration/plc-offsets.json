@@ -1,0 +1,30 @@
+{
+  "Description": "Offsets PLC DB55 - Configurazione standard per tutte le macchine",
+  "DbNumber": 55,
+  "DbStart": 0,
+  "DbLength": 200,
+  "Rack": 0,
+  "Slot": 1,
+  "Offsets": {
+    "InizioSetup": 8,
+    "FineSetup": 10,
+    "NuovaProduzione": 12,
+    "FineProduzione": 14,
+    "QuantitaRaggiunta": 16,
+    "CicliFatti": 18,
+    "CicliScarti": 20,
+    "NumeroOperatore": 22,
+    "TempoMedioRilevato": 24,
+    "StatoEmergenza": 34,
+    "StatoManuale": 36,
+    "StatoAutomatico": 38,
+    "StatoCiclo": 40,
+    "StatoPezziRaggiunto": 42,
+    "StatoAllarme": 44,
+    "BarcodeLavorazione": 46,
+    "QuantitaDaProdurre": 162,
+    "TempoMedio": 164,
+    "Figure": 170
+  },
+  "Note": "Tutti i valori sono INT (2 bytes) eccetto BarcodeLavorazione che può essere string/int"
+}

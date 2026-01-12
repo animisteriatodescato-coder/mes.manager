@@ -2,6 +2,7 @@ namespace MESManager.PlcSync.Models;
 
 public class PlcSnapshot
 {
+    public Guid MacchinaId { get; set; }
     public DateTime Timestamp { get; set; }
     
     // Produzione

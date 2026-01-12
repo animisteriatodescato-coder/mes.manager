@@ -5,7 +5,7 @@ public class PlcStoricoDto
     public Guid Id { get; set; }
     public Guid MacchinaId { get; set; }
     public string MacchinaNumero { get; set; } = string.Empty;
-    public string MacchianNome { get; set; } = string.Empty;
+    public string MacchianaNome { get; set; } = string.Empty;
     
     public DateTime Timestamp { get; set; }
     public string StatoMacchina { get; set; } = string.Empty;
