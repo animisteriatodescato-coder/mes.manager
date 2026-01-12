@@ -5,8 +5,26 @@ public class PLCRealtime
     public Guid Id { get; set; }
     public Guid MacchinaId { get; set; }
     public DateTime DataUltimoAggiornamento { get; set; }
-    public int ValoreGenerico { get; set; }
+    
+    // === PRODUZIONE ===
+    public int CicliFatti { get; set; }
+    public int QuantitaDaProdurre { get; set; }
+    public int CicliScarti { get; set; }
+    public int BarcodeLavorazione { get; set; }
+    
+    // === OPERATORE ===
+    public Guid? OperatoreId { get; set; }
+    
+    // === TEMPI ===
+    public int TempoMedioRilevato { get; set; }
+    public int TempoMedio { get; set; }
+    public int Figure { get; set; }
+    
+    // === STATI ===
+    public string StatoMacchina { get; set; } = string.Empty;
+    public bool QuantitaRaggiunta { get; set; }
     
     // Navigazioni
     public Macchina Macchina { get; set; } = null!;
+    public Operatore? Operatore { get; set; }
 }

@@ -1,5 +1,6 @@
 using MESManager.Web.Components;
 using MESManager.Infrastructure;
+using MESManager.Infrastructure.Services;
 using MESManager.Sync;
 using MESManager.Sync.Configuration;
 using MudBlazor.Services;
@@ -30,6 +31,7 @@ builder.Services.AddHttpClient();
 
 // Custom Services
 builder.Services.AddScoped<PreferencesService>();
+builder.Services.AddScoped<IPlcSyncCoordinator, PlcSyncCoordinator>();
 
 // Infrastructure e DbContext
 builder.Services.AddInfrastructure(connectionString);

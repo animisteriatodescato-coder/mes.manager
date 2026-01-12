@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<IRicettaAppService, RicettaAppService>();
         services.AddScoped<IClienteAppService, ClienteAppService>();
         services.AddScoped<IAnimeService, AnimeService>();
+        services.AddScoped<IPlcAppService, PlcAppService>();
         // Aggiungi altri servizi qui quando implementati
 
         return services;

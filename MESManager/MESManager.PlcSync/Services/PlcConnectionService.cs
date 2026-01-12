@@ -1,0 +1,91 @@
+using MESManager.PlcSync.Configuration;
+using MESManager.PlcSync.Models;
+using Sharp7;
+
+namespace MESManager.PlcSync.Services;
+
+public class PlcConnectionService
+{
+    private readonly ILogger<PlcConnectionService> _logger;
+    private readonly Dictionary<Guid, MachineState> _machineStates = new();
+
+    public PlcConnectionService(ILogger<PlcConnectionService> logger)
+    {
+        _logger = logger;
+    }
+
+    public Task<bool> ConnectAsync(PlcMachineConfig config, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (!_machineStates.ContainsKey(config.MacchinaId))
+            {
+                _machineStates[config.MacchinaId] = new MachineState();
+            }
+
+            var state = _machineStates[config.MacchinaId];
+            
+            if (state.Client.Connected)
+                return Task.FromResult(true);
+
+            var result = state.Client.ConnectTo(
+                config.PlcIp,
+                config.PlcSettings.Rack,
+                config.PlcSettings.Slot
+            );
+
+            if (result == 0)
+            {
+                _logger.LogInformation("Connesso al PLC {MacchinaNumero} ({PlcIp})", 
+                    config.Numero, config.PlcIp);
+                return Task.FromResult(true);
+            }
+            else
+            {
+                _logger.LogError("Errore connessione PLC {MacchinaNumero} ({PlcIp}): Codice {ErrorCode}", 
+                    config.Numero, config.PlcIp, result);
+                return Task.FromResult(false);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Eccezione durante connessione PLC {MacchinaNumero}", config.Numero);
+            return Task.FromResult(false);
+        }
+    }
+
+    public async Task ReconnectAsync(PlcMachineConfig config, int delayMs, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (_machineStates.TryGetValue(config.MacchinaId, out var state))
+            {
+                try { state.Client.Disconnect(); } catch { }
+            }
+
+            await Task.Delay(delayMs, cancellationToken);
+            await ConnectAsync(config, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore durante riconnessione PLC {MacchinaNumero}", config.Numero);
+        }
+    }
+
+    public MachineState? GetMachineState(Guid macchinaId)
+    {
+        return _machineStates.TryGetValue(macchinaId, out var state) ? state : null;
+    }
+
+    public void Dispose()
+    {
+        foreach (var state in _machineStates.Values)
+        {
+            try
+            {
+                state.Client.Disconnect();
+            }
+            catch { }
+        }
+    }
+}

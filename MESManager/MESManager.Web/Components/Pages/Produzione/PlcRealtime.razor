@@ -1,11 +1,262 @@
 @page "/produzione/plc-realtime"
+@using MESManager.Application.DTOs
+@using MESManager.Web.Models
+@using MESManager.Web.Services
+@using Microsoft.JSInterop
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject PreferencesService PreferencesService
+@inject IJSRuntime JSRuntime
+@inject ISnackbar Snackbar
+@implements IAsyncDisposable
 
 <PageTitle>PLC Realtime</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Dati PLC in Tempo Reale</MudText>
+<div class="plc-realtime-page">
+    <div class="toolbar-sticky">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
+            <MudText Typo="Typo.h6">Dati PLC in Tempo Reale</MudText>
+            <MudSpacer />
+            
+            <MudButton Variant="Variant.Filled" Color="Color.Success" 
+                      StartIcon="@Icons.Material.Filled.Sync" 
+                      OnClick="SincronizzaMacchine" Disabled="@_syncing">
+                @if (_syncing)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Sincronizzazione...</span>
+                }
+                else
+                {
+                    <span>Sincronizza Macchine</span>
+                }
+            </MudButton>
+            
+            <MudSwitch T="bool" @bind-Checked="autoRefreshEnabled" Color="Color.Primary" Label="Auto-refresh" />
+            
+            @if (autoRefreshEnabled)
+            {
+                <MudText Typo="Typo.caption">Ogni @refreshInterval secondi</MudText>
+            }
+            
+            <MudTextField @bind-Value="searchText"
+                         Placeholder="Cerca..."
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         Style="width: 200px;"
+                         Immediate="true"
+                         DebounceInterval="280"
+                         OnDebounceIntervalElapsed="OnSearchDebounced" />
+            
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@ResetGrid">Reset</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => settingsOpen = !settingsOpen)">Impostazioni</MudButton>
+        </MudStack>
+    </div>
 
-<MudAlert Severity="Severity.Info" Class="mb-4">
-    Aggiornamento automatico ogni 4 secondi tramite Worker Service
-</MudAlert>
+    <div id="plcRealtimeGrid" class="ag-theme-alpine" 
+         style="width: 100%; height: calc(100vh - 200px);">
+    </div>
+</div>
 
-<MudText>Pagina predisposta per visualizzazione dati PLC realtime con SignalR</MudText>
+<MudDrawer @bind-Open="@settingsOpen" Anchor="Anchor.End" Elevation="1" Variant="@DrawerVariant.Temporary">
+    <MudDrawerHeader>
+        <MudText Typo="Typo.h6">Impostazioni Grid</MudText>
+    </MudDrawerHeader>
+    <MudDivider />
+    <MudList T="string">
+        <MudListItem T="string">
+            <MudSlider @bind-Value="settings.FontSize" Min="10" Max="20" Step="1">Font Size: @settings.FontSize px</MudSlider>
+        </MudListItem>
+        <MudListItem T="string">
+            <MudSlider @bind-Value="settings.RowHeight" Min="25" Max="60" Step="5">Row Height: @settings.RowHeight px</MudSlider>
+        </MudListItem>
+        <MudListItem T="string">
+            <MudSlider @bind-Value="refreshInterval" Min="2" Max="60" Step="1">Refresh Interval: @refreshInterval s</MudSlider>
+        </MudListItem>
+        <MudListItem T="string">
+            <MudSwitch T="bool" @bind-Checked="settings.Zebra" Color="Color.Primary">Righe Zebrate</MudSwitch>
+        </MudListItem>
+        <MudListItem T="string">
+            <MudSwitch T="bool" @bind-Checked="settings.GridLines" Color="Color.Primary">Linee Griglia</MudSwitch>
+        </MudListItem>
+    </MudList>
+</MudDrawer>
+
+<style>
+    .plc-realtime-page {
+        position: relative;
+    }
+
+    .toolbar-sticky {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--mud-palette-surface);
+        padding: 0.5rem 0;
+        margin-bottom: 0.5rem;
+    }
+</style>
+
+@code {
+    private List<PlcRealtimeDto> _data = new();
+    private GridUiSettings settings = new();
+    private string searchText = string.Empty;
+    private bool settingsOpen = false;
+    private bool autoRefreshEnabled = true;
+    private int refreshInterval = 4;
+    private bool _syncing = false;
+    private System.Threading.Timer? _timer;
+
+    private async Task OnSearchDebounced(string value)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("plcRealtimeGrid.setQuickFilter", value);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error filtering grid: {ex.Message}");
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Http.BaseAddress = new Uri(Nav.BaseUri);
+        await LoadData();
+        
+        // Avvia timer per auto-refresh
+        _timer = new System.Threading.Timer(async _ =>
+        {
+            if (autoRefreshEnabled)
+            {
+                await InvokeAsync(async () => await LoadData());
+            }
+        }, null, TimeSpan.FromSeconds(refreshInterval), TimeSpan.FromSeconds(refreshInterval));
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var savedColumnState = await PreferencesService.GetAsync<string>("plc-realtime-grid-columns");
+                await JSRuntime.InvokeVoidAsync("plcRealtimeGrid.init", "plcRealtimeGrid", _data, savedColumnState);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing grid: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            var url = $"api/Plc/realtime";
+            _data = await Http.GetFromJsonAsync<List<PlcRealtimeDto>>(url) ?? new();
+            await RefreshGrid();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+    }
+
+    private async Task SincronizzaMacchine()
+    {
+        _syncing = true;
+        StateHasChanged();
+        
+        try
+        {
+            Snackbar.Add("Avvio sincronizzazione macchine...", Severity.Info);
+            
+            var response = await Http.PostAsync("api/Plc/sync/all", null);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var results = await response.Content.ReadFromJsonAsync<List<PlcSyncResultDto>>();
+                var totaleAggiornati = results?.Sum(r => r.RecordAggiornati) ?? 0;
+                var errori = results?.Where(r => !r.Successo).ToList() ?? new();
+                
+                if (errori.Any())
+                {
+                    var messaggiErrore = string.Join(", ", errori.Select(e => $"{e.MacchinaCodiceMacchina}: {e.MessaggioErrore}"));
+                    Snackbar.Add($"Sincronizzazione completata con errori: {messaggiErrore}", Severity.Warning);
+                }
+                else
+                {
+                    Snackbar.Add($"Sincronizzazione completata! {totaleAggiornati} record aggiornati", Severity.Success);
+                }
+                
+                // Refresh dati dopo sync
+                await Task.Delay(500);
+                await LoadData();
+            }
+            else
+            {
+                Snackbar.Add($"Errore durante la sincronizzazione: {response.StatusCode}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+            Console.WriteLine($"Error syncing machines: {ex}");
+        }
+        finally
+        {
+            _syncing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshGrid()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("plcRealtimeGrid.updateData", _data);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error refreshing grid: {ex.Message}");
+        }
+    }
+
+    private async Task ToggleColumnPanel()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("plcRealtimeGrid.toggleColumnPanel");
+        }
+        catch { }
+    }
+
+    private async Task ResetGrid()
+    {
+        try
+        {
+            await PreferencesService.RemoveAsync("plc-realtime-grid-columns");
+            await JSRuntime.InvokeVoidAsync("plcRealtimeGrid.resetGrid");
+            Nav.NavigateTo(Nav.Uri, forceLoad: true);
+        }
+        catch { }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _timer?.Dispose();
+        
+        try
+        {
+            var columnState = await JSRuntime.InvokeAsync<string>("plcRealtimeGrid.getColumnState");
+            if (!string.IsNullOrEmpty(columnState))
+            {
+                await PreferencesService.SetAsync("plc-realtime-grid-columns", columnState);
+            }
+        }
+        catch { }
+    }
+}
