@@ -2,6 +2,11 @@ namespace MESManager.PlcSync.Configuration;
 
 public class PlcOffsetsConfig
 {
+    // === CAMPI PRODUZIONE (uso corrente) ===
+    public int NumeroMacchina { get; set; } = 0;
+    public int ComunicazioneAbilitata { get; set; } = 2;
+    public int ProntoRicevereNuoviDati { get; set; } = 4;
+    public int DatiRicevuti { get; set; } = 6;
     public int InizioSetup { get; set; } = 8;
     public int FineSetup { get; set; } = 10;
     public int NuovaProduzione { get; set; } = 12;
@@ -11,6 +16,10 @@ public class PlcOffsetsConfig
     public int CicliScarti { get; set; } = 20;
     public int NumeroOperatore { get; set; } = 22;
     public int TempoMedioRil { get; set; } = 24;
+    public int ProduzioneInRitardo { get; set; } = 26;
+    public int ProduzioneInAnticipo { get; set; } = 28;
+    public int ProduzioneInLineaConTempi { get; set; } = 30;
+    public int RegistroWatchDog { get; set; } = 32;
     public int StatoEmergenza { get; set; } = 34;
     public int StatoManuale { get; set; } = 36;
     public int StatoAutomatico { get; set; } = 38;
@@ -18,7 +27,56 @@ public class PlcOffsetsConfig
     public int StatoPezziRagg { get; set; } = 42;
     public int StatoAllarme { get; set; } = 44;
     public int BarcodeLavorazione { get; set; } = 46;
+    
+    // === CAMPI RICETTE (uso futuro) ===
+    public int StatoProduzione { get; set; } = 98;
+    public int NumeroRicetta { get; set; } = 100;
+    public int AbilitazionePrimaPulitura { get; set; } = 102;
+    public int AbilitazioneSecondaPulitura { get; set; } = 104;
+    public int TempoPulitoreAvanti { get; set; } = 106;
+    public int TempoRitardoSecondaPulitura { get; set; } = 108;
+    public int TempoSecondaPulitura { get; set; } = 110;
+    public int AbilitazioneNastroSalitaDiscesa { get; set; } = 112;
+    public int AbilitazioneNastroIndietro { get; set; } = 114;
+    public int TempoNastroAvanti { get; set; } = 116;
+    public int TempoRitardoNastroIndietro { get; set; } = 118;
+    public int TempoNastroIndietro { get; set; } = 120;
+    public int TempoRitardoSparo { get; set; } = 122;
+    public int TempoSparo { get; set; } = 124;
+    public int TempoInvestimento { get; set; } = 126;
+    public int TempoCottura { get; set; } = 128;
+    public int FrequenzaCariche { get; set; } = 130;
+    public int TempoMandata { get; set; } = 132;
+    public int TempoScaricoMandata { get; set; } = 134;
+    public int TempoSerbatoioChiudi { get; set; } = 136;
+    public int TempoRitardoDiscesaSerbatoio { get; set; } = 138;
+    public int RitardoEstrattoreLatoMobile { get; set; } = 140;
+    public int TempoEstrattoreLatoMobile { get; set; } = 142;
+    public int RitardoEstrattoreLatoFisso { get; set; } = 144;
+    public int TempoEstrattoreLatoFisso { get; set; } = 146;
+    public int TempoChiusuraPannello { get; set; } = 148;
+    public int AbilitazioneMaschio { get; set; } = 150;
+    public int TempoMaschio { get; set; } = 152;
+    public int RitardoChiusuraMaschio { get; set; } = 154;
+    public int RitardoAperturaMaschio { get; set; } = 156;
+    public int RitardoRestartCiclo { get; set; } = 158;
+    public int CodicePDF { get; set; } = 160;
     public int QuantitaDaProd { get; set; } = 162;
     public int TempoMedio { get; set; } = 164;
+    public int TempoRallentamentoChiusuraPannello { get; set; } = 166;
+    public int AbilitazioneSparoLaterale { get; set; } = 168;
     public int Figure { get; set; } = 170;
+    public int RitardoCaricoSabbia { get; set; } = 172;
+    public int NastroAlto { get; set; } = 174;
+    public int NastroBasso { get; set; } = 176;
+    public int QuotaPannelloChiuso { get; set; } = 178;
+    public int QuotaRallentamentoChiusura { get; set; } = 180;
+    public int QuotaDisaccoppiamento { get; set; } = 182;
+    public int QuotaRallentamentoApertura { get; set; } = 184;
+    public int QuotaPannelloAperto { get; set; } = 186;
+    public int PressioneSparo { get; set; } = 188;
+    public int TempoCaricoSabbiaSuperiore { get; set; } = 190;
+    public int AbilitaPulitoreSuperiore { get; set; } = 192;
+    public int AbilitaSparoSuperiore { get; set; } = 194;
+    public int TempoDiscesaTesta { get; set; } = 196;
 }
