@@ -10,6 +10,7 @@ public class PLCStorico
     // Campi denormalizzati per query veloci
     public string? StatoMacchina { get; set; }
     public Guid? OperatoreId { get; set; }
+    public int NumeroOperatore { get; set; }  // Numero raw dal PLC
     
     // Navigazioni
     public Macchina Macchina { get; set; } = null!;

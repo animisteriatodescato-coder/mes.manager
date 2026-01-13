@@ -4,6 +4,7 @@ using MESManager.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MESManager.Infrastructure.Migrations
 {
     [DbContext(typeof(MesManagerDbContext))]
-    partial class MesManagerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260113111134_AddNumeroOperatoreField")]
+    partial class AddNumeroOperatoreField
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -340,18 +343,9 @@ namespace MESManager.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("Attivo")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Cognome")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("DataAssunzione")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DataLicenziamento")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Matricola")
                         .IsRequired()

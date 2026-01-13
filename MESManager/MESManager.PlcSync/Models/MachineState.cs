@@ -7,6 +7,7 @@ public class MachineState
     public S7Client Client { get; set; }
     public string LastStato { get; set; } = string.Empty;
     public int LastNumeroOperatore { get; set; } = -1;
+    public int LastCicliFatti { get; set; } = 0;
     
     // Per tracciare eventi 0→1
     public bool PrevNuovaProduzione { get; set; }

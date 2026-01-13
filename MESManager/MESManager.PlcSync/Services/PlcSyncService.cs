@@ -59,6 +59,7 @@ public class PlcSyncService
                 realtime.Figure = snapshot.Figure;
                 realtime.StatoMacchina = snapshot.StatoMacchina;
                 realtime.QuantitaRaggiunta = snapshot.QuantitaRaggiunta;
+                realtime.NumeroOperatore = snapshot.NumeroOperatore;
 
                 // Risolvi operatore
                 realtime.OperatoreId = await ResolveOperatoreIdAsync(context, snapshot.NumeroOperatore, cancellationToken);
@@ -72,12 +73,20 @@ public class PlcSyncService
                 operatoreId = await ResolveOperatoreIdAsync(context, snapshot.NumeroOperatore, cancellationToken);
             }
 
-            // 2. INSERT PLCStorico (solo se cambio significativo)
+            // 2. INSERT PLCStorico (ogni 20 cicli o cambio significativo)
             bool hasChange = state != null && 
                              (state.LastStato != snapshot.StatoMacchina || 
                               state.LastNumeroOperatore != snapshot.NumeroOperatore);
 
-            if (_settings.EnableStorico && hasChange)
+            // Verifica se sono passati 20 cicli dall'ultimo salvataggio
+            bool shouldSaveEvery20Cycles = false;
+            if (state != null && snapshot.CicliFatti > 0)
+            {
+                int cyclesSinceLastSave = snapshot.CicliFatti - state.LastCicliFatti;
+                shouldSaveEvery20Cycles = cyclesSinceLastSave >= 20;
+            }
+
+            if (_settings.EnableStorico && (hasChange || shouldSaveEvery20Cycles))
             {
                 var storico = new PLCStorico
                 {
@@ -86,6 +95,7 @@ public class PlcSyncService
                     DataOra = snapshot.Timestamp,
                     Dati = JsonSerializer.Serialize(snapshot),
                     StatoMacchina = snapshot.StatoMacchina,
+                    NumeroOperatore = snapshot.NumeroOperatore,
                     OperatoreId = operatoreId
                 };
 
@@ -96,10 +106,12 @@ public class PlcSyncService
                 {
                     state.LastStato = snapshot.StatoMacchina;
                     state.LastNumeroOperatore = snapshot.NumeroOperatore;
+                    state.LastCicliFatti = snapshot.CicliFatti;
                 }
 
-                _logger.LogInformation("Snapshot storico salvato per macchina {MacchinaId} - Stato: {Stato}", 
-                    macchinaId, snapshot.StatoMacchina);
+                string reason = hasChange ? "cambio stato/operatore" : "20 cicli";
+                _logger.LogInformation("Snapshot storico salvato per macchina {MacchinaId} ({Reason}) - Stato: {Stato}, Cicli: {Cicli}", 
+                    macchinaId, reason, snapshot.StatoMacchina, snapshot.CicliFatti);
             }
 
             // 3. INSERT EventoPLC (se eventi 0→1)

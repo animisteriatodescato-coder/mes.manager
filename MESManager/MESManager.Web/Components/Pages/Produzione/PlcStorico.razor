@@ -89,8 +89,8 @@
     private string searchText = string.Empty;
     private string selectedFilterColumn = string.Empty;
     private string filterValue = string.Empty;
-    private DateTime? dataInizio = DateTime.Today.AddDays(-7);
-    private DateTime? dataFine = DateTime.Today;
+    private DateTime? dataInizio = DateTime.Today;
+    private DateTime? dataFine = DateTime.Today.AddDays(1);
 
     private async Task OnSearchDebounced(string value)
     {

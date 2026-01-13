@@ -33,8 +33,8 @@ public class PlcAppService : IPlcAppService
             CicliScarti = p.CicliScarti,
             BarcodeLavorazione = p.BarcodeLavorazione,
             
-            NumeroOperatore = p.Operatore?.NumeroOperatore,
-            NomeOperatore = p.Operatore != null ? $"{p.Operatore.Nome} {p.Operatore.Cognome}" : null,
+            NumeroOperatore = p.NumeroOperatore > 0 ? p.NumeroOperatore : (int?)null,
+            NomeOperatore = p.Operatore != null ? $"{p.Operatore.Nome} {p.Operatore.Cognome}" : (p.NumeroOperatore > 0 ? p.NumeroOperatore.ToString() : null),
             
             TempoMedioRilevato = p.TempoMedioRilevato,
             TempoMedio = p.TempoMedio,
@@ -118,8 +118,8 @@ public class PlcAppService : IPlcAppService
                 Timestamp = p.DataOra,
                 StatoMacchina = p.StatoMacchina ?? "Sconosciuto",
 
-                NumeroOperatore = p.Operatore?.NumeroOperatore,
-                NomeOperatore = p.Operatore != null ? $"{p.Operatore.Nome} {p.Operatore.Cognome}" : null,
+                NumeroOperatore = p.NumeroOperatore > 0 ? p.NumeroOperatore : (int?)null,
+                NomeOperatore = p.Operatore != null ? $"{p.Operatore.Nome} {p.Operatore.Cognome}" : (p.NumeroOperatore > 0 ? p.NumeroOperatore.ToString() : null),
 
                 BarcodeLavorazione = barcode,
                 CicliFatti = cicliFatti,
@@ -210,8 +210,8 @@ public class PlcAppService : IPlcAppService
                 Timestamp = p.DataOra,
                 StatoMacchina = p.StatoMacchina ?? "Sconosciuto",
 
-                NumeroOperatore = p.Operatore?.NumeroOperatore,
-                NomeOperatore = p.Operatore != null ? $"{p.Operatore.Nome} {p.Operatore.Cognome}" : null,
+                NumeroOperatore = p.NumeroOperatore > 0 ? p.NumeroOperatore : (int?)null,
+                NomeOperatore = p.Operatore != null ? $"{p.Operatore.Nome} {p.Operatore.Cognome}" : (p.NumeroOperatore > 0 ? p.NumeroOperatore.ToString() : null),
 
                 BarcodeLavorazione = barcode,
                 CicliFatti = cicliFatti,

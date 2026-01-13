@@ -1,0 +1,183 @@
+@page "/impostazioni/operatori"
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@inject IOperatoreAppService OperatoreService
+@inject ISnackbar Snackbar
+
+<PageTitle>Gestione Operatori</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Gestione Operatori</MudText>
+<MudText Class="mb-8">Anagrafica operatori di produzione</MudText>
+
+<MudPaper Class="pa-4">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenCreateDialog" Class="mb-4">
+        <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-2" /> Nuovo Operatore
+    </MudButton>
+
+    @if (operatori == null)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudTable Items="@operatori" Hover="true" Striped="true" Dense="true">
+            <HeaderContent>
+                <MudTh>Numero</MudTh>
+                <MudTh>Nome</MudTh>
+                <MudTh>Cognome</MudTh>
+                <MudTh>Attivo</MudTh>
+                <MudTh>Ore Lavorate</MudTh>
+                <MudTh>Data Assunzione</MudTh>
+                <MudTh>Data Licenziamento</MudTh>
+                <MudTh>Azioni</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Numero">@context.NumeroOperatore</MudTd>
+                <MudTd DataLabel="Nome">@context.Nome</MudTd>
+                <MudTd DataLabel="Cognome">@context.Cognome</MudTd>
+                <MudTd DataLabel="Attivo">
+                    @if (context.Attivo)
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Attivo</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Default" Size="Size.Small">Non attivo</MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Ore Lavorate">@(context.OreLavorate?.ToString("F1") ?? "0.0") h</MudTd>
+                <MudTd DataLabel="Data Assunzione">@(context.DataAssunzione?.ToString("dd/MM/yyyy") ?? "-")</MudTd>
+                <MudTd DataLabel="Data Licenziamento">@(context.DataLicenziamento?.ToString("dd/MM/yyyy") ?? "-")</MudTd>
+                <MudTd DataLabel="Azioni">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditDialog(context)" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteOperatore(context)" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudPaper>
+
+<MudDialog @bind-Visible="dialogVisible" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@dialogTitle</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudNumericField @bind-Value="editingOperatore.NumeroOperatore" Label="Numero Operatore" Required="true" Min="1" />
+        <MudTextField @bind-Value="editingOperatore.Nome" Label="Nome" Required="true" />
+        <MudTextField @bind-Value="editingOperatore.Cognome" Label="Cognome" Required="true" />
+        <MudSwitch T="bool" @bind-Value="editingOperatore.Attivo" Label="Attivo" Color="Color.Success" />
+        <MudDatePicker @bind-Date="editingOperatore.DataAssunzione" Label="Data Assunzione" />
+        <MudDatePicker @bind-Date="editingOperatore.DataLicenziamento" Label="Data Licenziamento" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseDialog">Annulla</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveOperatore">Salva</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<OperatoreDto>? operatori;
+    private bool dialogVisible = false;
+    private string dialogTitle = "";
+    private OperatoreDto editingOperatore = new();
+    private bool isEditing = false;
+
+    private DialogOptions dialogOptions = new DialogOptions
+    {
+        MaxWidth = MaxWidth.Small,
+        FullWidth = true
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOperatori();
+    }
+
+    private async Task LoadOperatori()
+    {
+        try
+        {
+            operatori = await OperatoreService.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nel caricamento operatori: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void OpenCreateDialog()
+    {
+        dialogTitle = "Nuovo Operatore";
+        editingOperatore = new OperatoreDto { Attivo = true };
+        isEditing = false;
+        dialogVisible = true;
+    }
+
+    private void OpenEditDialog(OperatoreDto operatore)
+    {
+        dialogTitle = "Modifica Operatore";
+        editingOperatore = new OperatoreDto
+        {
+            Id = operatore.Id,
+            NumeroOperatore = operatore.NumeroOperatore,
+            Nome = operatore.Nome,
+            Cognome = operatore.Cognome,
+            Attivo = operatore.Attivo,
+            DataAssunzione = operatore.DataAssunzione,
+            DataLicenziamento = operatore.DataLicenziamento
+        };
+        isEditing = true;
+        dialogVisible = true;
+    }
+
+    private void CloseDialog()
+    {
+        dialogVisible = false;
+    }
+
+    private async Task SaveOperatore()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(editingOperatore.Nome) || 
+                string.IsNullOrWhiteSpace(editingOperatore.Cognome) ||
+                editingOperatore.NumeroOperatore <= 0)
+            {
+                Snackbar.Add("Compila tutti i campi obbligatori", Severity.Warning);
+                return;
+            }
+
+            if (isEditing)
+            {
+                await OperatoreService.UpdateAsync(editingOperatore);
+                Snackbar.Add("Operatore aggiornato con successo", Severity.Success);
+            }
+            else
+            {
+                await OperatoreService.CreateAsync(editingOperatore);
+                Snackbar.Add("Operatore creato con successo", Severity.Success);
+            }
+            
+            await LoadOperatori();
+            CloseDialog();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nel salvataggio: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteOperatore(OperatoreDto operatore)
+    {
+        try
+        {
+            await OperatoreService.DeleteAsync(operatore.Id);
+            Snackbar.Add("Operatore eliminato con successo", Severity.Success);
+            await LoadOperatori();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nell'eliminazione: {ex.Message}", Severity.Error);
+        }
+    }
+}

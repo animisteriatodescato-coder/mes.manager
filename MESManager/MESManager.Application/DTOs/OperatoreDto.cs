@@ -1,13 +1,13 @@
-namespace MESManager.Domain.Entities;
+namespace MESManager.Application.DTOs;
 
-public class Operatore
+public class OperatoreDto
 {
     public Guid Id { get; set; }
-    public int? NumeroOperatore { get; set; }  // Numero dal PLC
-    public string Matricola { get; set; } = string.Empty;
+    public int NumeroOperatore { get; set; }
     public string Nome { get; set; } = string.Empty;
     public string Cognome { get; set; } = string.Empty;
     public bool Attivo { get; set; } = true;
     public DateTime? DataAssunzione { get; set; }
     public DateTime? DataLicenziamento { get; set; }
+    public double? OreLavorate { get; set; }  // Calcolate dallo storico
 }

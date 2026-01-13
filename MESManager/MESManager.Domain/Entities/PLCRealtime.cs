@@ -14,6 +14,7 @@ public class PLCRealtime
     
     // === OPERATORE ===
     public Guid? OperatoreId { get; set; }
+    public int NumeroOperatore { get; set; }  // Numero raw dal PLC
     
     // === TEMPI ===
     public int TempoMedioRilevato { get; set; }
