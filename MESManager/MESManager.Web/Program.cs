@@ -13,8 +13,12 @@ using MESManager.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Abilita i controller API
-builder.Services.AddControllers();
+// Abilita i controller API con JSON camelCase
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 
 // Configurazione Connection String
 var connectionString = "Server=localhost\\SQLEXPRESS;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;";

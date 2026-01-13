@@ -120,6 +120,64 @@ sc create "MESManager Worker" binPath="C:\Path\To\MESManager.Worker.exe"
 sc start "MESManager Worker"
 ```
 
+## Eseguibili senza "dotnet run" (Windows)
+- Per generare eseguibili Windows (.exe) senza usare `dotnet run`, usa lo script di publish incluso nella soluzione.
+
+### Build veloce
+- PowerShell (dalla cartella della soluzione):
+
+```powershell
+./publish-win.ps1
+```
+
+- Output per ogni progetto in: `publish/win-x64/Release/<NomeProgetto>/`
+  - Esempi:
+    - `publish/win-x64/Release/MESManager.Web/MESManager.Web.exe`
+    - `publish/win-x64/Release/MESManager.Worker/MESManager.Worker.exe`
+    - `publish/win-x64/Release/MESManager.PlcSync/MESManager.PlcSync.exe`
+
+### Pubblicare un singolo progetto
+```powershell
+./publish-win.ps1 -Projects 'MESManager.Web/MESManager.Web.csproj'
+```
+
+Nota: `PlcMagoSync` è escluso di default perché richiede il progetto `PlcShared` non presente. Quando disponibile, puoi pubblicarlo esplicitamente:
+```powershell
+./publish-win.ps1 -Projects 'PlcMagoSync/PlcMagoSync.csproj'
+```
+Allo stesso modo, `PlcDashboard` non è incluso di default. Se necessario e presente nel workspace, puoi pubblicarlo così:
+```powershell
+./publish-win.ps1 -Projects 'PlcDashboard/PlcDashboard.csproj'
+```
+
+### Eseguire gli .exe
+- Web (Kestrel):
+  - Facoltativo: impostare porta/URL
+    ```powershell
+    $env:ASPNETCORE_URLS = "http://localhost:5000"
+    ```
+  - Avvio:
+    ```powershell
+    ./publish/win-x64/Release/MESManager.Web/MESManager.Web.exe
+    ```
+- Worker/Console/WinForms:
+  - Avvio diretto dell'eseguibile nella rispettiva cartella `publish/...`.
+
+### Avvio rapido (doppioclick)
+- Web su porta 5156:
+  - [MESManager/start-web-5156.cmd](MESManager/start-web-5156.cmd)
+- Worker:
+  - [MESManager/start-worker.cmd](MESManager/start-worker.cmd)
+
+### Note
+- Lo script pubblica per `win-x64`, self-contained e single-file per evitare dipendenza dal runtime installato.
+- Per performance aggiuntive puoi usare `-ReadyToRun`:
+  ```powershell
+  ./publish-win.ps1 -ReadyToRun
+  ```
+- Il trimming è disabilitato per sicurezza (riflessione, ASP.NET). Abilitalo solo dopo verifica per singoli progetti aggiungendo `/p:PublishTrimmed=true` dove appropriato.
+- I file `appsettings*.json` e la `wwwroot` vengono copiati in output tramite `dotnet publish`.
+
 ## Migrazioni Database
 
 ### Creare una nuova migrazione

@@ -28,11 +28,67 @@ window.plcStoricoGrid = (function () {
                 resizable: true
             },
             { 
-                field: 'macchianNome', 
+                field: 'macchianaNome', 
                 headerName: 'Nome', 
                 width: 180,
                 sortable: true, 
                 filter: true, 
+                resizable: true 
+            },
+            { 
+                field: 'barcodeLavorazione', 
+                headerName: 'Commessa', 
+                width: 140,
+                sortable: true, 
+                filter: 'agNumberColumnFilter', 
+                resizable: true 
+            },
+            { 
+                field: 'cicliFatti', 
+                headerName: 'Qta prodotta', 
+                width: 140,
+                sortable: true, 
+                filter: 'agNumberColumnFilter', 
+                resizable: true 
+            },
+            { 
+                field: 'quantitaDaProdurre', 
+                headerName: 'Qta da produrre', 
+                width: 160,
+                sortable: true, 
+                filter: 'agNumberColumnFilter', 
+                resizable: true 
+            },
+            { 
+                field: 'cicliScarti', 
+                headerName: 'Scarti', 
+                width: 120,
+                sortable: true, 
+                filter: 'agNumberColumnFilter', 
+                resizable: true 
+            },
+            { 
+                field: 'tempoMedioRilevato', 
+                headerName: 'T. rilevato', 
+                width: 130,
+                sortable: true, 
+                filter: 'agNumberColumnFilter', 
+                resizable: true 
+            },
+            { 
+                field: 'tempoMedio', 
+                headerName: 'T. medio', 
+                width: 120,
+                sortable: true, 
+                filter: 'agNumberColumnFilter', 
+                resizable: true 
+            },
+            { 
+                field: 'figure', 
+                headerName: 'Figure', 
+                width: 110,
+                sortable: true, 
+                filter: 'agNumberColumnFilter', 
                 resizable: true 
             },
             { 
@@ -67,6 +123,38 @@ window.plcStoricoGrid = (function () {
                 filter: 'agNumberColumnFilter', 
                 resizable: true,
                 hide: true
+            },
+            { 
+                field: 'nuovaProduzioneTs', 
+                headerName: 'Nuova Produzione', 
+                width: 160,
+                sortable: true, 
+                filter: true, 
+                resizable: true 
+            },
+            { 
+                field: 'inizioSetupTs', 
+                headerName: 'Inizio setup', 
+                width: 140,
+                sortable: true, 
+                filter: true, 
+                resizable: true 
+            },
+            { 
+                field: 'fineSetupTs', 
+                headerName: 'Fine setup', 
+                width: 140,
+                sortable: true, 
+                filter: true, 
+                resizable: true 
+            },
+            { 
+                field: 'inProduzioneTs', 
+                headerName: 'In produzione', 
+                width: 140,
+                sortable: true, 
+                filter: true, 
+                resizable: true 
             },
             { 
                 field: 'dati', 

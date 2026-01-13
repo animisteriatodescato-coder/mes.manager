@@ -17,4 +17,12 @@
     <ProjectReference Include="..\MESManager.Domain\MESManager.Domain.csproj" />
     <ProjectReference Include="..\MESManager.Infrastructure\MESManager.Infrastructure.csproj" />
   </ItemGroup>
+
+  <!-- Ensure JSON configs are copied to build/publish output -->
+  <ItemGroup>
+    <None Include="Configuration\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
 </Project>

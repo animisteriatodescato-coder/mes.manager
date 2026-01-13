@@ -34,6 +34,13 @@ public class PlcSyncWorker : BackgroundService
         // Carica settings
         _settings = _configuration.GetSection("PlcSync").Get<PlcSyncSettings>() ?? new PlcSyncSettings();
 
+        _logger.LogInformation("Impostazioni PlcSync: Polling={Polling}s, Realtime={Realtime}, Storico={Storico}, Events={Events}, ConfigPath={ConfigPath}",
+            _settings.PollingIntervalSeconds,
+            _settings.EnableRealtime,
+            _settings.EnableStorico,
+            _settings.EnableEvents,
+            _settings.MachineConfigPath);
+
         // Carica configurazioni macchine
         var machines = await LoadMachineConfigsAsync();
 
@@ -43,6 +50,10 @@ public class PlcSyncWorker : BackgroundService
             await Task.Delay(Timeout.Infinite, stoppingToken);
             return;
         }
+
+        var enabledCount = machines.Count(m => m.Enabled);
+        var disabledCount = machines.Count - enabledCount;
+        _logger.LogInformation("Macchine caricate: {Total}, abilitate: {Enabled}, disabilitate: {Disabled}", machines.Count, enabledCount, disabledCount);
 
         // Connetti a tutte le macchine
         foreach (var machine in machines.Where(m => m.Enabled))

@@ -32,7 +32,7 @@
                 }
             </MudButton>
             
-            <MudSwitch T="bool" @bind-Checked="autoRefreshEnabled" Color="Color.Primary" Label="Auto-refresh" />
+            <MudSwitch T="bool" @bind-Value="@autoRefreshEnabled" Color="Color.Primary" Label="Auto-refresh" />
             
             @if (autoRefreshEnabled)
             {
@@ -103,10 +103,36 @@
     private GridUiSettings settings = new();
     private string searchText = string.Empty;
     private bool settingsOpen = false;
-    private bool autoRefreshEnabled = true;
+    private bool _autoRefreshEnabled = true;
     private int refreshInterval = 4;
     private bool _syncing = false;
     private System.Threading.Timer? _timer;
+    private bool _hasRendered = false;
+
+    private bool autoRefreshEnabled
+    {
+        get => _autoRefreshEnabled;
+        set
+        {
+            _autoRefreshEnabled = value;
+            UpdateTimer();
+        }
+    }
+
+    private void UpdateTimer()
+    {
+        if (_timer != null)
+        {
+            if (_autoRefreshEnabled)
+            {
+                _timer.Change(TimeSpan.FromSeconds(refreshInterval), TimeSpan.FromSeconds(refreshInterval));
+            }
+            else
+            {
+                _timer.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+            }
+        }
+    }
 
     private async Task OnSearchDebounced(string value)
     {
@@ -128,17 +154,20 @@
         // Avvia timer per auto-refresh
         _timer = new System.Threading.Timer(async _ =>
         {
-            if (autoRefreshEnabled)
+            await InvokeAsync(async () =>
             {
-                await InvokeAsync(async () => await LoadData());
-            }
-        }, null, TimeSpan.FromSeconds(refreshInterval), TimeSpan.FromSeconds(refreshInterval));
+                await LoadData();
+                StateHasChanged();
+            });
+        }, null, autoRefreshEnabled ? TimeSpan.FromSeconds(refreshInterval) : System.Threading.Timeout.InfiniteTimeSpan,
+               autoRefreshEnabled ? TimeSpan.FromSeconds(refreshInterval) : System.Threading.Timeout.InfiniteTimeSpan);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            _hasRendered = true;
             try
             {
                 var savedColumnState = await PreferencesService.GetAsync<string>("plc-realtime-grid-columns");
@@ -157,7 +186,12 @@
         {
             var url = $"api/Plc/realtime";
             _data = await Http.GetFromJsonAsync<List<PlcRealtimeDto>>(url) ?? new();
-            await RefreshGrid();
+            
+            // Aggiorna il grid solo se è già stato renderizzato
+            if (_hasRendered)
+            {
+                await RefreshGrid();
+            }
         }
         catch (Exception ex)
         {
@@ -215,9 +249,13 @@
 
     private async Task RefreshGrid()
     {
+        if (!_hasRendered) return;
+        
         try
         {
             await JSRuntime.InvokeVoidAsync("plcRealtimeGrid.updateData", _data);
+            // Forza il refresh delle celle per aggiornare i valori visualizzati
+            await JSRuntime.InvokeVoidAsync("plcRealtimeGrid.refreshCells");
         }
         catch (Exception ex)
         {

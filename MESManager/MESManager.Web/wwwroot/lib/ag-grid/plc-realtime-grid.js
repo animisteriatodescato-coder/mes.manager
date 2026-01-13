@@ -19,7 +19,7 @@ window.plcRealtimeGrid = (function () {
                 resizable: true
             },
             { 
-                field: 'macchianNome', 
+                field: 'macchianaNome', 
                 headerName: 'Nome', 
                 width: 180,
                 sortable: true, 
@@ -246,6 +246,7 @@ window.plcRealtimeGrid = (function () {
                 filter: true,
                 resizable: true
             },
+            getRowId: (params) => params.data.macchinaId, // Usa macchinaId come chiave univoca
             enableRangeSelection: true,
             enableCellTextSelection: true,
             animateRows: true,
@@ -285,7 +286,21 @@ window.plcRealtimeGrid = (function () {
 
     function updateData(rowData) {
         if (gridApi) {
+            console.log('Updating grid with', rowData.length, 'rows');
+            console.log('Sample data:', rowData[0]); // Mostra il primo record
+            // Usa setGridOption per aggiornare i dati - più semplice e affidabile
             gridApi.setGridOption('rowData', rowData);
+            // Forza il refresh delle celle per aggiornare i renderer
+            setTimeout(() => {
+                gridApi.refreshCells({ force: true, suppressFlash: false });
+                console.log('Cells refreshed');
+            }, 100);
+        }
+    }
+
+    function refreshCells() {
+        if (gridApi) {
+            gridApi.refreshCells({ force: true });
         }
     }
 
@@ -428,6 +443,7 @@ window.plcRealtimeGrid = (function () {
     return {
         init,
         updateData,
+        refreshCells,
         setQuickFilter,
         toggleColumnPanel,
         resetGrid,

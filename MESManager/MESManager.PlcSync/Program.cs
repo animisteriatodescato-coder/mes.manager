@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = Host.CreateApplicationBuilder(args);
 
+// Bind PlcSync settings for options pattern
+builder.Services.Configure<MESManager.PlcSync.Configuration.PlcSyncSettings>(
+    builder.Configuration.GetSection("PlcSync"));
+
 // DbContext con factory per supportare Singleton services
 builder.Services.AddDbContextFactory<MesManagerDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("MESManagerDb"), sqlOptions => 

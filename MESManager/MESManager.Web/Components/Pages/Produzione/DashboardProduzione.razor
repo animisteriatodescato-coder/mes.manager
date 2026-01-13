@@ -7,13 +7,13 @@
 
 <PageTitle>Dashboard Produzione</PageTitle>
 
-<div class="dashboard-container">
+<div class="dashboard-container" style="background: #f5f5f5 !important;">
     <div class="d-flex justify-space-between align-center mb-4">
         <MudText Typo="Typo.h4">Dashboard Produzione</MudText>
         <div class="d-flex gap-2">
             <MudChip T="string" Color="Color.Success" Size="Size.Small">@_data.Count Macchine Attive</MudChip>
             <MudChip T="string" Color="Color.Info" Size="Size.Small">Aggiornato: @DateTime.Now.ToString("HH:mm:ss")</MudChip>
-            <MudSwitch T="bool" @bind-Checked="autoRefresh" Color="Color.Primary" Label="Auto-refresh" />
+            <MudSwitch T="bool" @bind-Value="@autoRefresh" Color="Color.Primary" Label="Auto-refresh" />
         </div>
     </div>
 
@@ -30,41 +30,50 @@
                     <MudCardHeader Class="pb-2">
                         <CardHeaderContent>
                             <div class="d-flex justify-space-between align-center">
-                                <MudText Typo="Typo.h6" Class="machine-number">@machine.MacchinaNumero</MudText>
-                                <MudChip T="string" Size="Size.Small" Color="@GetStatoColor(machine.StatoMacchina)" Class="status-chip">
+                                <MudText Typo="Typo.h3" Class="machine-number">@machine.MacchinaNumero</MudText>
+                                <MudChip T="string" Size="Size.Medium" Color="@GetStatoColor(machine.StatoMacchina)" Class="status-chip">
                                     @GetStatoText(machine.StatoMacchina)
                                 </MudChip>
                             </div>
-                            <MudText Typo="Typo.body2" Class="machine-name">@machine.MacchianaNome</MudText>
                         </CardHeaderContent>
                     </MudCardHeader>
                     <MudCardContent Class="pt-2 pb-2">
                         <!-- Barra di Completamento -->
                         <div class="mb-3">
                             <div class="d-flex justify-space-between mb-1">
-                                <MudText Typo="Typo.caption">Completamento</MudText>
-                                <MudText Typo="Typo.caption" Style="font-weight: bold">@machine.PercentualeCompletamento.ToString("F1")%</MudText>
+                                <MudText Typo="Typo.body1" Class="section-title">Completamento</MudText>
+                                <MudText Typo="Typo.h6" Style="font-weight: bold">@machine.PercentualeCompletamento.ToString("F1")%</MudText>
                             </div>
-                            <MudProgressLinear Color="@GetProgressColor(machine)" Value="@((double)machine.PercentualeCompletamento)" Size="Size.Medium" Class="rounded" />
+                            <MudProgressLinear Color="@GetProgressColor(machine)" Value="@((double)machine.PercentualeCompletamento)" Size="Size.Large" Class="rounded-progress" />
                         </div>
 
                         <!-- Metriche Produzione -->
                         <MudGrid Spacing="1" Class="metrics-grid">
-                            <MudItem xs="6">
-                                <div class="metric-box">
-                                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success" />
-                                    <div class="metric-content">
-                                        <MudText Typo="Typo.caption" Class="metric-label">Cicli Fatti</MudText>
-                                        <MudText Typo="Typo.body1" Class="metric-value">@machine.CicliFatti.ToString("N0")</MudText>
+                            <MudItem xs="12">
+                                <div class="metric-box-inline">
+                                    <div class="metric-inline-item">
+                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Medium" Color="Color.Success" />
+                                        <div class="metric-content">
+                                            <MudText Typo="Typo.body2" Class="metric-label">Cicli Fatti</MudText>
+                                            <MudText Typo="Typo.h6" Class="metric-value">@machine.CicliFatti.ToString("N0")</MudText>
+                                        </div>
+                                    </div>
+                                    <div class="metric-divider"></div>
+                                    <div class="metric-inline-item">
+                                        <MudIcon Icon="@Icons.Material.Filled.Flag" Size="Size.Medium" Color="Color.Primary" />
+                                        <div class="metric-content">
+                                            <MudText Typo="Typo.body2" Class="metric-label">Obiettivo</MudText>
+                                            <MudText Typo="Typo.h6" Class="metric-value">@machine.QuantitaDaProdurre.ToString("N0")</MudText>
+                                        </div>
                                     </div>
                                 </div>
                             </MudItem>
                             <MudItem xs="6">
                                 <div class="metric-box">
-                                    <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Small" Color="@GetScartiColor(machine)" />
+                                    <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Medium" Color="@GetScartiColor(machine)" />
                                     <div class="metric-content">
-                                        <MudText Typo="Typo.caption" Class="metric-label">Scarti</MudText>
-                                        <MudText Typo="Typo.body1" Class="metric-value" Style="@($"color: {GetScartiColorHex(machine)}")">
+                                        <MudText Typo="Typo.body2" Class="metric-label">Scarti</MudText>
+                                        <MudText Typo="Typo.h6" Class="metric-value" Style="@($"color: {GetScartiColorHex(machine)}")">
                                             @machine.CicliScarti <span style="font-size: 0.8em">(@GetPercentualeScarti(machine)%)</span>
                                         </MudText>
                                     </div>
@@ -72,20 +81,11 @@
                             </MudItem>
                             <MudItem xs="6">
                                 <div class="metric-box">
-                                    <MudIcon Icon="@Icons.Material.Filled.Flag" Size="Size.Small" Color="Color.Primary" />
+                                    <MudIcon Icon="@Icons.Material.Filled.Speed" Size="Size.Medium" Color="@GetTempoColor(machine)" />
                                     <div class="metric-content">
-                                        <MudText Typo="Typo.caption" Class="metric-label">Obiettivo</MudText>
-                                        <MudText Typo="Typo.body1" Class="metric-value">@machine.QuantitaDaProdurre.ToString("N0")</MudText>
-                                    </div>
-                                </div>
-                            </MudItem>
-                            <MudItem xs="6">
-                                <div class="metric-box">
-                                    <MudIcon Icon="@Icons.Material.Filled.Speed" Size="Size.Small" Color="@GetTempoColor(machine)" />
-                                    <div class="metric-content">
-                                        <MudText Typo="Typo.caption" Class="metric-label">Tempo</MudText>
-                                        <MudText Typo="Typo.body1" Class="metric-value" Style="@($"color: {GetTempoColorHex(machine)}")">
-                                            @machine.TempoMedioRilevato.ToString("F1")s
+                                        <MudText Typo="Typo.body2" Class="metric-label">Tempo</MudText>
+                                        <MudText Typo="Typo.h6" Class="metric-value" Style="@($"color: {GetTempoColorHex(machine)}")">
+                                            @((int)Math.Round((double)machine.TempoMedioRilevato)) / @((int)Math.Round((double)machine.TempoMedio))
                                         </MudText>
                                     </div>
                                 </div>
@@ -93,19 +93,24 @@
                         </MudGrid>
 
                         <!-- Operatore e Barcode -->
-                        @if (!string.IsNullOrEmpty(machine.NomeOperatore))
+                        @if (!string.IsNullOrEmpty(machine.NomeOperatore) || machine.BarcodeLavorazione > 0)
                         {
                             <MudDivider Class="my-2" />
-                            <div class="d-flex align-center gap-1">
-                                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
-                                <MudText Typo="Typo.caption">@machine.NomeOperatore</MudText>
-                            </div>
-                        }
-                        @if (machine.BarcodeLavorazione > 0)
-                        {
-                            <div class="d-flex align-center gap-1 mt-1">
-                                <MudIcon Icon="@Icons.Material.Filled.QrCode" Size="Size.Small" />
-                                <MudText Typo="Typo.caption">Barcode: @machine.BarcodeLavorazione</MudText>
+                            <div class="d-flex align-center justify-space-between gap-2">
+                                @if (!string.IsNullOrEmpty(machine.NomeOperatore))
+                                {
+                                    <div class="d-flex align-center gap-1">
+                                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                                        <MudText Typo="Typo.body2">@machine.NomeOperatore</MudText>
+                                    </div>
+                                }
+                                @if (machine.BarcodeLavorazione > 0)
+                                {
+                                    <div class="d-flex align-center gap-1">
+                                        <MudIcon Icon="@Icons.Material.Filled.QrCode" Size="Size.Small" />
+                                        <MudText Typo="Typo.body2">@machine.BarcodeLavorazione</MudText>
+                                    </div>
+                                }
                             </div>
                         }
                     </MudCardContent>
@@ -132,60 +137,121 @@
 
 <style>
     .dashboard-container {
-        padding: 1rem;
+        padding: 1.5rem;
+        background: #f5f5f5 !important;
+        min-height: 100vh;
     }
+
+
 
     .machine-card {
         height: 100%;
-        transition: transform 0.2s, box-shadow 0.2s;
-        border-left: 4px solid var(--mud-palette-primary);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 4px solid var(--mud-palette-primary);
+        border-radius: 12px !important;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        background: radial-gradient(circle at center, #ffffff 0%, rgba(33, 150, 243, 0.08) 100%) !important;
     }
 
     .machine-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.2) !important;
     }
 
     .machine-card.status-emergenza {
-        border-left-color: #f44336;
-        background: linear-gradient(to right, rgba(244, 67, 54, 0.05), transparent);
+        border: 4px solid #f44336;
+        background: radial-gradient(circle at center, #ffffff 0%, rgba(244, 67, 54, 0.12) 100%) !important;
+        box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3) !important;
     }
 
     .machine-card.status-allarme {
-        border-left-color: #ff9800;
-        background: linear-gradient(to right, rgba(255, 152, 0, 0.05), transparent);
+        border: 4px solid #ff9800;
+        background: radial-gradient(circle at center, #ffffff 0%, rgba(255, 152, 0, 0.12) 100%) !important;
+        box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3) !important;
     }
 
     .machine-card.status-automatico {
-        border-left-color: #4caf50;
-        background: linear-gradient(to right, rgba(76, 175, 80, 0.05), transparent);
+        border: 4px solid #4caf50;
+        background: radial-gradient(circle at center, #ffffff 0%, rgba(76, 175, 80, 0.12) 100%) !important;
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3) !important;
     }
 
     .machine-number {
-        font-weight: 700;
-        font-size: 1.5rem;
-        color: var(--mud-palette-primary);
-    }
-
-    .machine-name {
-        color: var(--mud-palette-text-secondary);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        font-weight: 800;
+        font-size: 3rem;
+        background: linear-gradient(135deg, var(--mud-palette-primary) 0%, #1976d2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -1px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
     }
 
     .status-chip {
+        font-weight: 700;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .section-title {
         font-weight: 600;
-        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.8;
+    }
+
+    .rounded-progress {
+        border-radius: 12px !important;
+        height: 12px !important;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .metric-box {
         display: flex;
         align-items: center;
+        gap: 12px;
+        padding: 10px;
+        background: linear-gradient(135deg, rgba(63, 81, 181, 0.05) 0%, rgba(33, 150, 243, 0.05) 100%);
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        transition: all 0.2s ease;
+    }
+
+    .metric-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .metric-box-inline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px;
+        background: linear-gradient(135deg, rgba(63, 81, 181, 0.05) 0%, rgba(33, 150, 243, 0.05) 100%);
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        transition: all 0.2s ease;
         gap: 8px;
-        padding: 8px;
-        background: var(--mud-palette-background-grey);
-        border-radius: 8px;
+    }
+
+    .metric-box-inline:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .metric-inline-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+    }
+
+    .metric-divider {
+        width: 1px;
+        height: 40px;
+        background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.1), transparent);
     }
 
     .metric-content {
@@ -195,13 +261,16 @@
 
     .metric-label {
         color: var(--mud-palette-text-secondary);
-        line-height: 1;
-        margin-bottom: 2px;
+        line-height: 1.2;
+        margin-bottom: 4px;
+        font-weight: 500;
+        font-size: 0.75rem;
     }
 
     .metric-value {
-        font-weight: 700;
+        font-weight: 800;
         line-height: 1.2;
+        font-size: 1rem;
     }
 
     .metrics-grid {
@@ -212,8 +281,34 @@
 @code {
     private List<PlcRealtimeDto> _data = new();
     private bool _loading = true;
-    private bool autoRefresh = true;
+    private bool _autoRefresh = true;
+    private int refreshIntervalSeconds = 3;
     private System.Threading.Timer? _timer;
+
+    private bool autoRefresh
+    {
+        get => _autoRefresh;
+        set
+        {
+            _autoRefresh = value;
+            UpdateTimer();
+        }
+    }
+
+    private void UpdateTimer()
+    {
+        if (_timer != null)
+        {
+            if (_autoRefresh)
+            {
+                _timer.Change(TimeSpan.FromSeconds(refreshIntervalSeconds), TimeSpan.FromSeconds(refreshIntervalSeconds));
+            }
+            else
+            {
+                _timer.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+            }
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -222,15 +317,13 @@
         
         _timer = new System.Threading.Timer(async _ =>
         {
-            if (autoRefresh)
+            await InvokeAsync(async () =>
             {
-                await InvokeAsync(async () =>
-                {
-                    await LoadData();
-                    StateHasChanged();
-                });
-            }
-        }, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
+                await LoadData();
+                StateHasChanged();
+            });
+        }, null, _autoRefresh ? TimeSpan.FromSeconds(refreshIntervalSeconds) : System.Threading.Timeout.InfiniteTimeSpan, 
+               _autoRefresh ? TimeSpan.FromSeconds(refreshIntervalSeconds) : System.Threading.Timeout.InfiniteTimeSpan);
     }
 
     private async Task LoadData()

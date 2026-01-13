@@ -35,6 +35,15 @@ public class PlcController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("storico")]
+    public async Task<ActionResult<List<PlcStoricoDto>>> GetStoricoAll(
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to)
+    {
+        var result = await _service.GetAllStoricoAsync(from, to);
+        return Ok(result);
+    }
+
     [HttpGet("eventi/{macchinaId}")]
     public async Task<ActionResult<List<EventoPLCDto>>> GetEventi(
         Guid macchinaId,

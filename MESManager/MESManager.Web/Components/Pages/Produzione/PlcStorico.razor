@@ -17,13 +17,23 @@
             <MudText Typo="Typo.h6">Storico Dati PLC</MudText>
             <MudSpacer />
             
-            <MudSelect T="Guid?" Label="Macchina" @bind-Value="selectedMacchinaId" 
-                      Variant="Variant.Outlined" Margin="Margin.Dense" Style="width: 250px;">
-                @foreach (var macchina in macchine)
-                {
-                    <MudSelectItem T="Guid?" Value="@((Guid?)macchina.Id)">@macchina.Codice - @macchina.Nome</MudSelectItem>
-                }
+            <MudSelect T="string" Label="Colonna filtro" @bind-Value="selectedFilterColumn" 
+                      Variant="Variant.Outlined" Margin="Margin.Dense" Style="width: 200px;">
+                <MudSelectItem T="string" Value="@("")">Nessun filtro</MudSelectItem>
+                <MudSelectItem T="string" Value="@("macchina")">Macchina</MudSelectItem>
+                <MudSelectItem T="string" Value="@("operatore")">Operatore</MudSelectItem>
+                <MudSelectItem T="string" Value="@("stato")">Stato</MudSelectItem>
+                <MudSelectItem T="string" Value="@("commessa")">Commessa</MudSelectItem>
             </MudSelect>
+            
+            @if (!string.IsNullOrEmpty(selectedFilterColumn))
+            {
+                <MudTextField @bind-Value="filterValue"
+                             Label="Valore filtro"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Dense"
+                             Style="width: 200px;" />
+            }
             
             <MudDatePicker Label="Da" @bind-Date="dataInizio" 
                           Variant="Variant.Outlined" Margin="Margin.Dense" />
@@ -33,7 +43,7 @@
             
             <MudButton Variant="Variant.Filled" Color="Color.Primary" 
                       StartIcon="@Icons.Material.Filled.Search" 
-                      OnClick="LoadData" Disabled="!selectedMacchinaId.HasValue">
+                      OnClick="LoadData">
                 Cerca
             </MudButton>
             
@@ -73,10 +83,12 @@
 
 @code {
     private List<PlcStoricoDto> _data = new();
+    private List<PlcStoricoDto> _allData = new();
     private List<MacchinaDto> macchine = new();
     private GridUiSettings settings = new();
     private string searchText = string.Empty;
-    private Guid? selectedMacchinaId;
+    private string selectedFilterColumn = string.Empty;
+    private string filterValue = string.Empty;
     private DateTime? dataInizio = DateTime.Today.AddDays(-7);
     private DateTime? dataFine = DateTime.Today;
 
@@ -96,14 +108,10 @@
     {
         Http.BaseAddress = new Uri(Nav.BaseUri);
         
-        // Carica lista macchine
+        // Carica lista macchine per eventuale uso futuro
         try
         {
             macchine = await Http.GetFromJsonAsync<List<MacchinaDto>>("api/Macchine") ?? new();
-            if (macchine.Any())
-            {
-                selectedMacchinaId = macchine.First().Id;
-            }
         }
         catch (Exception ex)
         {
@@ -129,21 +137,39 @@
 
     private async Task LoadData()
     {
-        if (!selectedMacchinaId.HasValue) return;
-        
         try
         {
             var from = dataInizio?.ToString("yyyy-MM-dd");
             var to = dataFine?.ToString("yyyy-MM-dd");
-            var url = $"api/Plc/storico/{selectedMacchinaId}?from={from}&to={to}";
+            var url = $"api/Plc/storico?from={from}&to={to}";
             
-            _data = await Http.GetFromJsonAsync<List<PlcStoricoDto>>(url) ?? new();
+            _allData = await Http.GetFromJsonAsync<List<PlcStoricoDto>>(url) ?? new();
+            
+            // Applica filtro client-side
+            _data = ApplyFilter(_allData);
+            
             await RefreshGrid();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading data: {ex.Message}");
         }
+    }
+
+    private List<PlcStoricoDto> ApplyFilter(List<PlcStoricoDto> data)
+    {
+        if (string.IsNullOrEmpty(selectedFilterColumn) || string.IsNullOrEmpty(filterValue))
+            return data;
+
+        return selectedFilterColumn.ToLower() switch
+        {
+            "macchina" => data.Where(d => d.MacchianaNome?.Contains(filterValue, StringComparison.OrdinalIgnoreCase) == true).ToList(),
+            "operatore" => data.Where(d => d.NomeOperatore?.Contains(filterValue, StringComparison.OrdinalIgnoreCase) == true || 
+                                          d.NumeroOperatore?.ToString().Contains(filterValue) == true).ToList(),
+            "stato" => data.Where(d => d.StatoMacchina?.Contains(filterValue, StringComparison.OrdinalIgnoreCase) == true).ToList(),
+            "commessa" => data.Where(d => d.BarcodeLavorazione.ToString().Contains(filterValue)).ToList(),
+            _ => data
+        };
     }
 
     private async Task RefreshGrid()
