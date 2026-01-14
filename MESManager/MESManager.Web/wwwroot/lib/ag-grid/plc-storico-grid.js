@@ -200,8 +200,10 @@ window.plcStoricoGrid = (function () {
             defaultColDef: {
                 sortable: true,
                 filter: true,
-                resizable: true
+                resizable: true,
+                floatingFilter: false
             },
+            suppressMenuHide: true,
             enableRangeSelection: true,
             enableCellTextSelection: true,
             animateRows: true,

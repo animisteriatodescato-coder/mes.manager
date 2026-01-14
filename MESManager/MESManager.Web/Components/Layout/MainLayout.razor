@@ -13,21 +13,15 @@
         <MudText Typo="Typo.h5" Class="ml-3">@GetPageTitle()</MudText>
         <MudSpacer />
         
-        @* Controlli specifici per pagine con toolbar *@
-        @if (HasToolbar())
+        @* Contenuto custom da pagine specifiche (es. PlcRealtime) *@
+        @if (AppBarContentService.Content != null)
         {
-            <MudTextField @bind-Value="_toolbarSearchText"
-                         Placeholder="Cerca..."
-                         Variant="Variant.Outlined"
-                         Margin="Margin.Dense"
-                         Style="width: 200px; background-color: white; color: black;"
-                         Immediate="true"
-                         DebounceInterval="280"
-                         OnDebounceIntervalElapsed="OnToolbarSearch" />
-            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@OnToolbarToggleColumns" Color="Color.Inherit">Colonne</MudButton>
-            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@OnToolbarReset" Color="Color.Inherit">Reset</MudButton>
-            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Download" OnClick="@OnToolbarExport" Color="Color.Inherit">Export CSV</MudButton>
-            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Settings" OnClick="@OnToolbarToggleSettings" Color="Color.Inherit">Impostazioni</MudButton>
+            @AppBarContentService.Content
+        }
+        else if (IsPlcRealtimePage())
+        {
+            @* Controlli specifici per PLC Realtime *@
+            @RenderPlcRealtimeToolbar()
         }
         else
         {
@@ -87,6 +81,7 @@
             
             <MudNavGroup Title="Cataloghi" Icon="@Icons.Material.Filled.LibraryBooks">
                 <MudNavLink Href="/cataloghi/commesse">Commesse</MudNavLink>
+                <MudNavLink Href="/cataloghi/anime">Anime</MudNavLink>
                 <MudNavLink Href="/cataloghi/articoli">Articoli</MudNavLink>
                 <MudNavLink Href="/cataloghi/clienti">Clienti</MudNavLink>
                 <MudNavLink Href="/cataloghi/ricette">Ricette</MudNavLink>
@@ -107,6 +102,7 @@
             </MudNavGroup>
             
             <MudNavGroup Title="Sync" Icon="@Icons.Material.Filled.Sync">
+                <MudNavLink Href="/sync/gantt">Gantt</MudNavLink>
                 <MudNavLink Href="/sync/mago">Mago</MudNavLink>
                 <MudNavLink Href="/sync/macchine">Macchine</MudNavLink>
                 <MudNavLink Href="/sync/google">Google</MudNavLink>

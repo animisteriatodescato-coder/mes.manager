@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
 using MudBlazor;
 using MESManager.Web.Services;
 
@@ -14,6 +15,9 @@ public partial class MainLayout : IDisposable
     
     [Inject]
     private NavigationManager NavManager { get; set; } = default!;
+    
+    [Inject]
+    private AppBarContentService AppBarContentService { get; set; } = default!;
     
     private bool _isDarkMode = true;
     private bool _drawerOpen = false;
@@ -50,12 +54,16 @@ public partial class MainLayout : IDisposable
         
         // Sottoscrivi ai cambiamenti di navigazione per aggiornare il titolo
         NavManager.LocationChanged += OnLocationChanged;
+        
+        // Sottoscrivi ai cambiamenti dell'AppBar
+        AppBarContentService.OnChange += OnAppBarContentChanged;
     }
     
     public void Dispose()
     {
         PageToolbarService.OnPageChanged -= OnPageChanged;
         NavManager.LocationChanged -= OnLocationChanged;
+        AppBarContentService.OnChange -= OnAppBarContentChanged;
     }
     
     private void OnPageChanged()
@@ -68,31 +76,35 @@ public partial class MainLayout : IDisposable
         InvokeAsync(StateHasChanged);
     }
     
+    private void OnAppBarContentChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+    
     private bool HasToolbar()
     {
+        // Escludi pagine che hanno toolbar personalizzate
+        var currentPath = NavManager.ToBaseRelativePath(NavManager.Uri).ToLower();
+        if (currentPath.Contains("plc-realtime") || 
+            currentPath.Contains("plc-storico") ||
+            currentPath.Contains("mes-stato"))
+        {
+            return false;
+        }
+        
         var pageKey = PageToolbarService.GetCurrentPageKey();
         return !string.IsNullOrEmpty(pageKey);
     }
     
+    private bool IsPlcRealtimePage()
+    {
+        var pageKey = PageToolbarService.GetCurrentPageKey();
+        return pageKey == "plc-realtime";
+    }
+
     private string GetPageTitle()
     {
-        // Prima prova a usare il pageKey se disponibile
-        var pageKey = PageToolbarService.GetCurrentPageKey();
-        if (!string.IsNullOrEmpty(pageKey))
-        {
-            return pageKey switch
-            {
-                "articoli" => "Catalogo Articoli",
-                "commesse" => "Catalogo Commesse",
-                "clienti" => "Catalogo Clienti",
-                "ricette" => "Catalogo Ricette",
-                "plc-realtime" => "PLC Realtime",
-                "plc-storico" => "PLC Storico",
-                _ => "MESManager"
-            };
-        }
-        
-        // Altrimenti usa l'URL corrente
+        // Usa sempre l'URL corrente per determinare il titolo
         var currentPath = NavManager.ToBaseRelativePath(NavManager.Uri).ToLower();
         return currentPath switch
         {
@@ -113,6 +125,7 @@ public partial class MainLayout : IDisposable
             
             // Cataloghi
             "cataloghi/commesse" => "Catalogo Commesse",
+            "cataloghi/anime" => "Catalogo Anime",
             "cataloghi/articoli" => "Catalogo Articoli",
             "cataloghi/clienti" => "Catalogo Clienti",
             "cataloghi/ricette" => "Catalogo Ricette",
@@ -130,6 +143,7 @@ public partial class MainLayout : IDisposable
             "tabelle/colle" => "Tabella Colle",
             
             // Sync
+            "sync/gantt" => "Sync Gantt",
             "sync/mago" => "Sync Mago",
             "sync/macchine" => "Sync Macchine",
             "sync/google" => "Sync Google",
@@ -214,6 +228,132 @@ public partial class MainLayout : IDisposable
         }
     }
     
+    // Metodi specifici per PLC Realtime
+    private async Task OnPlcSyncMachines()
+    {
+        var page = PageToolbarService.GetActivePage("plc-realtime") as dynamic;
+        if (page != null)
+        {
+            await page.SincronizzaMacchine_Public();
+        }
+    }
+    
+    private void OnPlcToggleAutoRefresh()
+    {
+        var page = PageToolbarService.GetActivePage("plc-realtime") as dynamic;
+        if (page != null)
+        {
+            page.ToggleAutoRefresh_Public();
+            StateHasChanged();
+        }
+    }
+    
+    #pragma warning disable ASP0006
+    private RenderFragment RenderPlcRealtimeToolbar() => builder =>
+    {
+        var page = PageToolbarService.GetActivePage("plc-realtime") as dynamic;
+        if (page == null) return;
+        
+        int seq = 0;
+        
+        // Pulsante Sincronizza Macchine
+        builder.OpenComponent<MudButton>(seq++);
+        builder.AddAttribute(seq++, "Variant", Variant.Filled);
+        builder.AddAttribute(seq++, "Color", Color.Success);
+        builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.Sync);
+        builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnPlcSyncMachines));
+        builder.AddAttribute(seq++, "Disabled", (bool)page.IsSyncing);
+        builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 =>
+        {
+            int s2 = 0;
+            if ((bool)page.IsSyncing)
+            {
+                b2.OpenComponent<MudProgressCircular>(s2++);
+                b2.AddAttribute(s2++, "Size", Size.Small);
+                b2.AddAttribute(s2++, "Indeterminate", true);
+                b2.AddAttribute(s2++, "Class", "mr-2");
+                b2.CloseComponent();
+                
+                b2.OpenElement(s2++, "span");
+                b2.AddContent(s2++, "Sincronizzazione...");
+                b2.CloseElement();
+            }
+            else
+            {
+                b2.OpenElement(s2++, "span");
+                b2.AddContent(s2++, "Sincronizza Macchine");
+                b2.CloseElement();
+            }
+        }));
+        builder.CloseComponent();
+        
+        // Switch Auto-refresh
+        builder.OpenComponent<MudSwitch<bool>>(seq++);
+        builder.AddAttribute(seq++, "Value", (bool)page.AutoRefreshEnabled);
+        builder.AddAttribute(seq++, "ValueChanged", EventCallback.Factory.Create<bool>(this, _ => OnPlcToggleAutoRefresh()));
+        builder.AddAttribute(seq++, "Color", Color.Primary);
+        builder.AddAttribute(seq++, "Label", "Auto-refresh");
+        builder.CloseComponent();
+        
+        // Testo intervallo (se auto-refresh è attivo)
+        if ((bool)page.AutoRefreshEnabled)
+        {
+            builder.OpenComponent<MudText>(seq++);
+            builder.AddAttribute(seq++, "Typo", Typo.caption);
+            builder.AddAttribute(seq++, "Class", "mr-2");
+            builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 =>
+            {
+                b2.AddContent(0, $"Ogni {(int)page.RefreshInterval} s");
+            }));
+            builder.CloseComponent();
+        }
+        
+        // Campo di ricerca
+        builder.OpenComponent<MudTextField<string>>(seq++);
+        builder.AddAttribute(seq++, "Value", (string)page.SearchText);
+        builder.AddAttribute(seq++, "ValueChanged", EventCallback.Factory.Create<string>(this, async (value) =>
+        {
+            _toolbarSearchText = value;
+            await OnToolbarSearch(value);
+        }));
+        builder.AddAttribute(seq++, "Placeholder", "Cerca...");
+        builder.AddAttribute(seq++, "Variant", Variant.Outlined);
+        builder.AddAttribute(seq++, "Margin", Margin.Dense);
+        builder.AddAttribute(seq++, "Style", "width: 200px; background-color: white; color: black;");
+        builder.AddAttribute(seq++, "Immediate", true);
+        builder.AddAttribute(seq++, "DebounceInterval", 280);
+        builder.AddAttribute(seq++, "OnDebounceIntervalElapsed", EventCallback.Factory.Create<string>(this, OnToolbarSearch));
+        builder.CloseComponent();
+        
+        // Pulsante Colonne
+        builder.OpenComponent<MudButton>(seq++);
+        builder.AddAttribute(seq++, "Variant", Variant.Text);
+        builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.ViewColumn);
+        builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnToolbarToggleColumns));
+        builder.AddAttribute(seq++, "Color", Color.Inherit);
+        builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 => b2.AddContent(0, "Colonne")));
+        builder.CloseComponent();
+        
+        // Pulsante Reset
+        builder.OpenComponent<MudButton>(seq++);
+        builder.AddAttribute(seq++, "Variant", Variant.Text);
+        builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.Refresh);
+        builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnToolbarReset));
+        builder.AddAttribute(seq++, "Color", Color.Inherit);
+        builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 => b2.AddContent(0, "Reset")));
+        builder.CloseComponent();
+        
+        // Pulsante Impostazioni
+        builder.OpenComponent<MudButton>(seq++);
+        builder.AddAttribute(seq++, "Variant", Variant.Text);
+        builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.Settings);
+        builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnToolbarToggleSettings));
+        builder.AddAttribute(seq++, "Color", Color.Inherit);
+        builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 => b2.AddContent(0, "Impostazioni")));
+        builder.CloseComponent();
+    };
+    #pragma warning restore ASP0006
+    
     private async Task ToggleTheme()
     {
         _isDarkMode = !_isDarkMode;
@@ -256,6 +396,7 @@ public partial class MainLayout : IDisposable
                 new("Articoli", "/cataloghi/articoli"),
                 new("Clienti", "/cataloghi/clienti"),
                 new("Ricette", "/cataloghi/ricette"),
+                new("Anime", "/cataloghi/anime"),
                 new("Foto", "/cataloghi/foto")
             },
             "Manutenzioni" => new List<MenuItem>

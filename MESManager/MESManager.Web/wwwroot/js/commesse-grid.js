@@ -3,8 +3,27 @@ window.commesseGrid = (function() {
 
     const columnDefs = [
         { field: 'Codice', headerName: 'Codice', sortable: true, filter: true, width: 150 },
-        { field: 'ArticoloId', headerName: 'Articolo ID', sortable: true, filter: true, width: 280 },
-        { field: 'ClienteId', headerName: 'Cliente ID', sortable: true, filter: true, width: 280 },
+        { 
+            field: 'ArticoloCodice', 
+            headerName: 'Codice Articolo', 
+            sortable: true, 
+            filter: true, 
+            width: 150 
+        },
+        { 
+            field: 'ArticoloDescrizione', 
+            headerName: 'Descrizione Articolo', 
+            sortable: true, 
+            filter: true, 
+            width: 250 
+        },
+        { 
+            field: 'ClienteRagioneSociale', 
+            headerName: 'Cliente', 
+            sortable: true, 
+            filter: true, 
+            width: 250 
+        },
         { field: 'QuantitaRichiesta', headerName: 'Quantità', sortable: true, filter: true, width: 120 },
         { 
             field: 'DataConsegna', 
@@ -69,6 +88,15 @@ window.commesseGrid = (function() {
                         console.warn('Failed to restore column state:', e);
                     }
                 }
+            },
+            onSelectionChanged: () => {
+                window.dispatchEvent(new CustomEvent('commesseGridStatsChanged'));
+            },
+            onFilterChanged: () => {
+                window.dispatchEvent(new CustomEvent('commesseGridStatsChanged'));
+            },
+            onModelUpdated: () => {
+                window.dispatchEvent(new CustomEvent('commesseGridStatsChanged'));
             }
         };
 

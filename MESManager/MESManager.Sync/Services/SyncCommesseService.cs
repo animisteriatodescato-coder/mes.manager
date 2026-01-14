@@ -67,7 +67,7 @@ public class SyncCommesseService
                         ArticoloId = articolo?.Id,
                         QuantitaRichiesta = decimal.TryParse(commessaMago.Qty, out var q) ? q : 0,
                         DataConsegna = DateTime.TryParse(commessaMago.ExpectedDeliveryDate, out var dc) ? dc : null,
-                        Stato = StatoCommessa.Aperta,
+                        Stato = MapStatoCommessaDaMago(commessaMago.Delivered, commessaMago.Invoiced),
                         RiferimentoOrdineCliente = commessaMago.YourReference,
                         UltimaModifica = DateTime.TryParse(commessaMago.TBModified, out var um) ? um : DateTime.MinValue,
                         TimestampSync = DateTime.Now
@@ -81,7 +81,8 @@ public class SyncCommesseService
                     commessa.ArticoloId = articolo?.Id;
                     commessa.QuantitaRichiesta = decimal.TryParse(commessaMago.Qty, out var q2) ? q2 : 0;
                     commessa.DataConsegna = DateTime.TryParse(commessaMago.ExpectedDeliveryDate, out var dc2) ? dc2 : null;
-                    commessa.Stato = StatoCommessa.Aperta;
+                    // Aggiorna lo stato da Mago
+                    commessa.Stato = MapStatoCommessaDaMago(commessaMago.Delivered, commessaMago.Invoiced);
                     commessa.RiferimentoOrdineCliente = commessaMago.YourReference;
                     commessa.UltimaModifica = DateTime.TryParse(commessaMago.TBModified, out var um2) ? um2 : DateTime.MinValue;
                     commessa.TimestampSync = DateTime.Now;
@@ -89,7 +90,36 @@ public class SyncCommesseService
                 }
                 else
                 {
-                    log.Ignorati++;
+                    // Aggiorna comunque ClienteId, ArticoloId e Stato
+                    bool updated = false;
+                    if (commessa.ClienteId != cliente?.Id)
+                    {
+                        commessa.ClienteId = cliente?.Id;
+                        updated = true;
+                    }
+                    if (commessa.ArticoloId != articolo?.Id)
+                    {
+                        commessa.ArticoloId = articolo?.Id;
+                        updated = true;
+                    }
+                    
+                    // Aggiorna sempre lo stato da Mago, indipendentemente dalla data di modifica
+                    var nuovoStato = MapStatoCommessaDaMago(commessaMago.Delivered, commessaMago.Invoiced);
+                    if (commessa.Stato != nuovoStato)
+                    {
+                        commessa.Stato = nuovoStato;
+                        updated = true;
+                    }
+                    
+                    if (updated)
+                    {
+                        commessa.TimestampSync = DateTime.Now;
+                        log.Aggiornati++;
+                    }
+                    else
+                    {
+                        log.Ignorati++;
+                    }
                 }
             }
 
@@ -120,15 +150,17 @@ public class SyncCommesseService
         return log;
     }
 
-    private StatoCommessa MapStatoCommessa(string statoMago)
+    private StatoCommessa MapStatoCommessaDaMago(string delivered, string invoiced)
     {
-        return statoMago.ToUpper() switch
-        {
-            "APERTA" or "OPEN" => StatoCommessa.Aperta,
-            "IN LAVORAZIONE" or "WORKING" => StatoCommessa.InLavorazione,
-            "COMPLETATA" or "COMPLETED" => StatoCommessa.Completata,
-            "CHIUSA" or "CLOSED" => StatoCommessa.Chiusa,
-            _ => StatoCommessa.Sconosciuto
-        };
+        // Invoiced = 1 -> Fatturata (che consideriamo come Chiusa)
+        if (invoiced == "1")
+            return StatoCommessa.Chiusa;
+        
+        // Delivered = 1 -> Consegnata (che consideriamo come Completata)
+        if (delivered == "1")
+            return StatoCommessa.Completata;
+        
+        // Altrimenti è Aperta
+        return StatoCommessa.Aperta;
     }
 }

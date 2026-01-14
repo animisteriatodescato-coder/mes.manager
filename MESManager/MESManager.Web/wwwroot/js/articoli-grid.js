@@ -1,5 +1,6 @@
 window.articoliGrid = (function() {
     let gridApi = null;
+    let isGridInitialized = false;
 
     const columnDefs = [
         { 
@@ -68,6 +69,17 @@ window.articoliGrid = (function() {
             return;
         }
 
+        // Distruggi la griglia esistente se presente
+        if (gridApi) {
+            try {
+                gridApi.destroy();
+            } catch (e) {
+                console.warn('Error destroying grid:', e);
+            }
+            gridApi = null;
+            isGridInitialized = false;
+        }
+
         console.log('Initializing grid with data:', data);
         console.log('Data length:', data ? data.length : 'null');
 
@@ -87,6 +99,7 @@ window.articoliGrid = (function() {
             pagination: false,
             onGridReady: (params) => {
                 gridApi = params.api;
+                isGridInitialized = true;
                 console.log('Articoli Grid ready, rowData count:', gridApi.getDisplayedRowCount());
                 console.log('Articoli Data:', data);
                 if (savedColumnState) {
@@ -151,7 +164,18 @@ window.articoliGrid = (function() {
 
     function toggleColumnPanel() {
         console.log('toggleColumnPanel called');
-        if (!gridApi) return;
+        if (!gridApi || !isGridInitialized) {
+            console.error('toggleColumnPanel: gridApi is null or not initialized!');
+            return;
+        }
+        
+        try {
+            // Verifica che gridApi sia ancora valido
+            gridApi.getColumnState();
+        } catch (e) {
+            console.error('toggleColumnPanel: gridApi is destroyed or invalid', e);
+            return;
+        }
 
         // Rimuovi overlay esistente se presente
         let existingOverlay = document.getElementById('columnSelectorOverlay');

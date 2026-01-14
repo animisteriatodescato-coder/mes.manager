@@ -8,6 +8,7 @@ public class CommessaMago
     public string Customer { get; set; } = string.Empty;
     public string CompanyName { get; set; } = string.Empty;
     public string Delivered { get; set; } = string.Empty;
+    public string Invoiced { get; set; } = string.Empty;
     public string ExpectedDeliveryDate { get; set; } = string.Empty;
     public string OurReference { get; set; } = string.Empty;
     public string YourReference { get; set; } = string.Empty;

@@ -27,6 +27,9 @@ public class CommessaAppService : ICommessaAppService
                 Codice = c.Codice,
                 ArticoloId = c.ArticoloId,
                 ClienteId = c.ClienteId,
+                ClienteRagioneSociale = c.Cliente != null ? c.Cliente.RagioneSociale : null,
+                ArticoloCodice = c.Articolo != null ? c.Articolo.Codice : null,
+                ArticoloDescrizione = c.Articolo != null ? c.Articolo.Descrizione : null,
                 QuantitaRichiesta = c.QuantitaRichiesta,
                 DataConsegna = c.DataConsegna,
                 Stato = c.Stato.ToString(),
@@ -102,6 +105,15 @@ public class CommessaAppService : ICommessaAppService
         };
     }
     
+    public async Task AggiornaStatoAsync(Guid id, string stato)
+    {
+        var commessa = await _context.Commesse.FindAsync(id);
+        if (commessa == null) throw new Exception("Commessa non trovata");
+        
+        commessa.Stato = Enum.Parse<StatoCommessa>(stato);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task EliminaAsync(Guid id)
     {
         var commessa = await _context.Commesse.FindAsync(id);

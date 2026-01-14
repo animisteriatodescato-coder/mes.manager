@@ -104,6 +104,15 @@ window.clientiGrid = (function() {
                         console.warn('Failed to restore column state:', e);
                     }
                 }
+            },
+            onSelectionChanged: () => {
+                window.dispatchEvent(new CustomEvent('clientiGridStatsChanged'));
+            },
+            onFilterChanged: () => {
+                window.dispatchEvent(new CustomEvent('clientiGridStatsChanged'));
+            },
+            onModelUpdated: () => {
+                window.dispatchEvent(new CustomEvent('clientiGridStatsChanged'));
             }
         };
 

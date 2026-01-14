@@ -17,7 +17,7 @@ namespace MESManager.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.22")
+                .HasAnnotation("ProductVersion", "8.0.23")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -30,13 +30,67 @@ namespace MESManager.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Codice")
+                    b.Property<string>("Allegato")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("Altezza")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Ciclo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CodiceAnime")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CodiceArticolo")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Descrizione")
+                    b.Property<string>("CodiceCassa")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DataImportazione")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DataModificaRecord")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DescrizioneArticolo")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("IdArticolo")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Imballo")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Larghezza")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MacchineSuDisponibili")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Peso")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("Profondita")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("TrasmettiTutto")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Ubicazione")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UnitaMisura")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UtenteModificaRecord")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 

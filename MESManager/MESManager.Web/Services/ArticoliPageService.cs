@@ -8,17 +8,25 @@ public class PageToolbarService : IPageToolbarService
 
     public void SetActivePage(string pageKey, object? page)
     {
+        Console.WriteLine($"[PageToolbarService] SetActivePage called: pageKey='{pageKey}', page={(page != null ? "SET" : "NULL")}");
         _currentPageKey = pageKey;
         _activePage = page;
+        Console.WriteLine($"[PageToolbarService] Current page is now: '{_currentPageKey}'");
         OnPageChanged?.Invoke();
     }
 
     public object? GetActivePage(string pageKey)
     {
-        return _currentPageKey == pageKey ? _activePage : null;
+        var result = _currentPageKey == pageKey ? _activePage : null;
+        Console.WriteLine($"[PageToolbarService] GetActivePage('{pageKey}'): currentKey='{_currentPageKey}', returning={(result != null ? "OBJECT" : "NULL")}");
+        return result;
     }
 
-    public string? GetCurrentPageKey() => _currentPageKey;
+    public string? GetCurrentPageKey() 
+    {
+        Console.WriteLine($"[PageToolbarService] GetCurrentPageKey called, returning: '{_currentPageKey}'");
+        return _currentPageKey;
+    }
 
     public bool IsPageActive(string pageKey) => _currentPageKey == pageKey;
 }

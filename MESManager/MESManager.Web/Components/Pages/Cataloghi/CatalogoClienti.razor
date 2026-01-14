@@ -12,6 +12,23 @@
 <PageTitle>Catalogo Clienti</PageTitle>
 
 <div class="clienti-page">
+    <div class="settings-panel">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
+            <MudTextField @bind-Value="searchText"
+                         Placeholder="Cerca in tutte le colonne..."
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         Style="width: 280px;"
+                         Immediate="true"
+                         DebounceInterval="280"
+                         OnDebounceIntervalElapsed="OnSearchDebounced" />
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@ResetGrid">Reset</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)">Impostazioni</MudButton>
+        </MudStack>
+    </div>
+    
     @if (showSettings)
     {
         <MudPaper Class="pa-4 mt-2" Elevation="1">
@@ -56,6 +73,23 @@
     <div id="clientiGrid" class="ag-theme-alpine" 
          style="width: 100%; height: calc(100vh - 150px);">
     </div>
+
+    <MudPaper Class="footer-info pa-1 mt-2" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Totale righe: <strong>@totalRows</strong></MudText>
+            <MudDivider Vertical="true" FlexItem="true" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Righe filtrate: <strong>@filteredRows</strong></MudText>
+            <MudDivider Vertical="true" FlexItem="true" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Righe selezionate: <strong>@selectedRows</strong></MudText>
+            <MudDivider Vertical="true" FlexItem="true" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Ultimo aggiornamento: <strong>@lastUpdate.ToString("HH:mm:ss")</strong></MudText>
+            <MudSpacer />
+            <MudChip T="string" Size="Size.Small" Color="@(isLoading ? Color.Warning : Color.Success)" 
+                     Icon="@(isLoading ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.CheckCircle)">
+                @gridStatus
+            </MudChip>
+        </MudStack>
+    </MudPaper>
 </div>
 
 <style>
@@ -103,6 +137,13 @@
     private GridUiSettings settings = new();
     private bool showSettings = false;
     private string searchText = string.Empty;
+
+    private int totalRows = 0;
+    private int filteredRows = 0;
+    private int selectedRows = 0;
+    private DateTime lastUpdate = DateTime.MinValue;
+    private bool isLoading = false;
+    private string gridStatus = "Pronto";
 
     private async Task OnSearchDebounced(string value)
     {

@@ -1,0 +1,126 @@
+@page "/sync/gantt"
+@using MESManager.Application.DTOs
+@using System.Text.Json
+@inject NavigationManager NavManager
+@inject IHttpClientFactory HttpClientFactory
+@inject ISnackbar Snackbar
+
+<PageTitle>Sincronizzazione Gantt</PageTitle>
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6" Class="mb-4">Importazione Anime da Gantt</MudText>
+            
+            <MudStack Spacing="3">
+                <MudAlert Severity="Severity.Info">
+                    Questa funzione importa i dati delle Anime dal sistema Gantt esterno.
+                    L'operazione potrebbe richiedere alcuni minuti.
+                </MudAlert>
+
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Success" 
+                          StartIcon="@Icons.Material.Filled.CloudDownload"
+                          OnClick="@ImportaFromGantt"
+                          Disabled="@_importando"
+                          Size="Size.Large">
+                    @if (_importando)
+                    {
+                        <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                        <span>Importazione in corso...</span>
+                    }
+                    else
+                    {
+                        <span>Importa da Gantt</span>
+                    }
+                </MudButton>
+
+                @if (_risultati != null && _risultati.Any())
+                {
+                    <MudDivider />
+                    
+                    <MudText Typo="Typo.h6" Class="mt-4">Risultati Ultima Importazione</MudText>
+                    
+                    <MudSimpleTable Dense="true" Hover="true" Bordered="true">
+                        <thead>
+                            <tr>
+                                <th>Codice Anima</th>
+                                <th>Codice Articolo</th>
+                                <th>Descrizione Articolo</th>
+                                <th>Stato</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var anima in _risultati)
+                            {
+                                <tr>
+                                    <td><strong>@anima.CodiceAnime</strong></td>
+                                    <td>@anima.CodiceArticolo</td>
+                                    <td>@anima.DescrizioneArticolo</td>
+                                    <td>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Success">Importato</MudChip>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                    
+                    <MudText Typo="Typo.body2" Class="mt-2">
+                        Totale anime importate: <strong>@_risultati.Count</strong>
+                    </MudText>
+                }
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private bool _importando = false;
+    private List<AnimeDto>? _risultati = null;
+
+    private async Task ImportaFromGantt()
+    {
+        _importando = true;
+        _risultati = null;
+        StateHasChanged();
+
+        try
+        {
+            var httpClient = HttpClientFactory.CreateClient();
+            var baseUri = new Uri(NavManager.BaseUri);
+            var importUrl = new Uri(baseUri, "api/Anime/import");
+            
+            var response = await httpClient.PostAsync(importUrl, null);
+            if (response.IsSuccessStatusCode)
+            {
+                var responseText = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<JsonElement>(responseText);
+                var count = result.TryGetProperty("ImportedCount", out var countProp) ? countProp.GetInt32() : 0;
+                
+                Snackbar.Add($"✓ Importazione completata: {count} anime importati da Gantt", Severity.Success);
+                
+                // Ricarica i dati per mostrare i risultati
+                var animeUrl = new Uri(baseUri, "api/Anime");
+                _risultati = await httpClient.GetFromJsonAsync<List<AnimeDto>>(animeUrl) ?? new();
+            }
+            else
+            {
+                var errorText = await response.Content.ReadAsStringAsync();
+                var errorResponse = JsonSerializer.Deserialize<JsonElement>(errorText);
+                var errorMessage = errorResponse.TryGetProperty("Error", out var errorProp) 
+                    ? errorProp.GetString() 
+                    : "Errore sconosciuto durante l'importazione";
+                Snackbar.Add($"✗ Errore: {errorMessage}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"✗ Errore durante l'importazione: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _importando = false;
+            StateHasChanged();
+        }
+    }
+}

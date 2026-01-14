@@ -20,12 +20,37 @@ window.commesseGrid = (function () {
                 checkboxSelection: true
             },
             { 
+                field: 'clienteRagioneSociale', 
+                headerName: 'Ragione Sociale', 
+                width: 250,
+                sortable: true, 
+                filter: true, 
+                resizable: true 
+            },
+            { 
+                field: 'articoloCodice', 
+                headerName: 'Cod. Articolo', 
+                width: 150,
+                sortable: true, 
+                filter: true, 
+                resizable: true 
+            },
+            { 
+                field: 'articoloDescrizione', 
+                headerName: 'Descrizione Articolo', 
+                width: 300,
+                sortable: true, 
+                filter: true, 
+                resizable: true 
+            },
+            { 
                 field: 'articoloId', 
                 headerName: 'ArticoloId', 
                 width: 280,
                 sortable: true, 
                 filter: true, 
-                resizable: true 
+                resizable: true,
+                hide: true // Nascosto per default
             },
             { 
                 field: 'clienteId', 
@@ -33,7 +58,8 @@ window.commesseGrid = (function () {
                 width: 280,
                 sortable: true, 
                 filter: true, 
-                resizable: true 
+                resizable: true,
+                hide: true // Nascosto per default
             },
             { 
                 field: 'quantitaRichiesta', 
@@ -57,14 +83,25 @@ window.commesseGrid = (function () {
             { 
                 field: 'stato', 
                 headerName: 'Stato', 
-                width: 130,
+                width: 150,
                 sortable: true, 
                 filter: true, 
                 resizable: true,
+                editable: true,
+                cellEditor: 'agSelectCellEditor',
+                cellEditorParams: {
+                    values: ['Aperta', 'InLavorazione', 'Completata', 'Chiusa']
+                },
+                valueFormatter: params => {
+                    if (!params.value) return '';
+                    if (params.value === 'InLavorazione') return 'In Lavorazione';
+                    return params.value;
+                },
                 cellStyle: params => {
-                    if (params.value === 'Completato') return { backgroundColor: '#4caf50', color: 'white', fontWeight: 'bold' };
-                    if (params.value === 'In Corso') return { backgroundColor: '#ff9800', color: 'white', fontWeight: 'bold' };
-                    if (params.value === 'Pianificato') return { backgroundColor: '#2196f3', color: 'white', fontWeight: 'bold' };
+                    if (params.value === 'Completata') return { backgroundColor: '#4caf50', color: 'white', fontWeight: 'bold' };
+                    if (params.value === 'InLavorazione') return { backgroundColor: '#ff9800', color: 'white', fontWeight: 'bold' };
+                    if (params.value === 'Aperta') return { backgroundColor: '#2196f3', color: 'white', fontWeight: 'bold' };
+                    if (params.value === 'Chiusa') return { backgroundColor: '#757575', color: 'white', fontWeight: 'bold' };
                     return null;
                 }
             },
@@ -136,7 +173,12 @@ window.commesseGrid = (function () {
             onColumnResized: saveState,
             onColumnVisible: saveState,
             onSortChanged: saveState,
-            onFilterChanged: saveState
+            onFilterChanged: saveState,
+            onCellValueChanged: (event) => {
+                if (event.column.colId === 'stato') {
+                    updateStatoCommessa(event.data.id, event.newValue);
+                }
+            }
         };
 
         const gridDiv = new agGrid.Grid(container, gridOptions);
@@ -145,6 +187,26 @@ window.commesseGrid = (function () {
 
     function saveState() {
         // State saving is handled by Blazor component
+    }
+
+    function updateStatoCommessa(id, nuovoStato) {
+        fetch(`/api/Commesse/${id}/stato`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ stato: nuovoStato })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Errore aggiornamento stato');
+            }
+            console.log('Stato aggiornato con successo');
+        })
+        .catch(error => {
+            console.error('Errore:', error);
+            alert('Errore durante l\'aggiornamento dello stato');
+        });
     }
 
     function setQuickFilter(text) {

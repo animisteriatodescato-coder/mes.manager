@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using MESManager.Infrastructure.Data;
 using MESManager.Web.Hubs;
 using MESManager.Web.Services;
+using MESManager.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,9 +36,14 @@ builder.Services.AddHttpClient();
 
 // Custom Services
 builder.Services.AddScoped<PreferencesService>();
-builder.Services.AddScoped<PlcDataService>();
+builder.Services.AddScoped<AnimeImportService>();
+builder.Services.AddHttpClient<PlcDataService>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:5156/");
+});
 builder.Services.AddScoped<IPlcSyncCoordinator, PlcSyncCoordinator>();
 builder.Services.AddSingleton<IPageToolbarService, PageToolbarService>();
+builder.Services.AddScoped<AppBarContentService>();
 
 // Infrastructure e DbContext
 builder.Services.AddInfrastructure(connectionString);

@@ -96,6 +96,7 @@ ORDER BY i.Item
         cmd.CommandText = @"
 SELECT 
     SO.Delivered,
+    SO.Invoiced,
     SO.Customer, 
     SO.SaleOrdId, 
     SOD.Line, 
@@ -127,6 +128,7 @@ ORDER BY SO.InternalOrdNo, SOD.Line;
                 Customer = reader["Customer"]?.ToString()?.Trim() ?? string.Empty,
                 CompanyName = reader["CompanyName"]?.ToString()?.Trim() ?? string.Empty,
                 Delivered = reader["Delivered"]?.ToString()?.Trim() ?? string.Empty,
+                Invoiced = reader["Invoiced"]?.ToString()?.Trim() ?? string.Empty,
                 ExpectedDeliveryDate = reader["ExpectedDeliveryDate"]?.ToString()?.Trim() ?? string.Empty,
                 OurReference = reader["OurReference"]?.ToString()?.Trim() ?? string.Empty,
                 YourReference = reader["YourReference"]?.ToString()?.Trim() ?? string.Empty,
