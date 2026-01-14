@@ -127,7 +127,6 @@
     private List<ArticoloDto> _articoli = new();
     private GridUiSettings settings = new();
     private bool showSettings = false;
-    private System.Threading.Timer? debounceTimer;
     private string searchText = string.Empty;
     
     // Footer stats
@@ -311,8 +310,6 @@
 
     public async ValueTask DisposeAsync()
     {
-        debounceTimer?.Dispose();
-        
         // Deregistra questa pagina
         PageToolbarService.SetActivePage("articoli", null);
         

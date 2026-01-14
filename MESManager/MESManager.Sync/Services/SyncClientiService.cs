@@ -77,7 +77,6 @@ public class SyncClientiService
                 else
                 {
                     // Aggiorna sempre i dati del cliente esistente
-                    bool modificato = false;
                     if (DateTime.TryParse(clienteMago.UltimaModifica, out var um3) && um3 > cliente.UltimaModifica)
                     {
                         cliente.RagioneSociale = clienteMago.Nome;
@@ -87,7 +86,6 @@ public class SyncClientiService
                         cliente.UltimaModifica = um3;
                         cliente.TimestampSync = DateTime.Now;
                         log.Aggiornati++;
-                        modificato = true;
                     }
                     else
                     {

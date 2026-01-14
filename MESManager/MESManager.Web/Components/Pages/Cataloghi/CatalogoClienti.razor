@@ -102,7 +102,6 @@
     private List<ClienteDto> _clienti = new();
     private GridUiSettings settings = new();
     private bool showSettings = false;
-    private System.Threading.Timer? debounceTimer;
     private string searchText = string.Empty;
 
     private async Task OnSearchDebounced(string value)
@@ -232,8 +231,6 @@
 
     public async ValueTask DisposeAsync()
     {
-        debounceTimer?.Dispose();
-        
         // Deregistra questa pagina
         PageToolbarService.SetActivePage("clienti", null);
         
