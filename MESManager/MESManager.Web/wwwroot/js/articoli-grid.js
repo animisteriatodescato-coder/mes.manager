@@ -99,6 +99,15 @@ window.articoliGrid = (function() {
                         console.warn('Failed to restore column state:', e);
                     }
                 }
+            },
+            onSelectionChanged: () => {
+                window.dispatchEvent(new CustomEvent('articoliGridStatsChanged'));
+            },
+            onFilterChanged: () => {
+                window.dispatchEvent(new CustomEvent('articoliGridStatsChanged'));
+            },
+            onModelUpdated: () => {
+                window.dispatchEvent(new CustomEvent('articoliGridStatsChanged'));
             }
         };
 
@@ -296,6 +305,21 @@ window.articoliGrid = (function() {
         }
     }
 
+    function getGridStats() {
+        if (!gridApi) return { total: 0, filtered: 0, selected: 0 };
+
+        return {
+            total: gridApi.getModel().getRowCount(),
+            filtered: gridApi.getDisplayedRowCount(),
+            selected: gridApi.getSelectedRows().length
+        };
+    }
+
+    window.addEventListener('articoliGridStatsChanged', () => {
+        const stats = getGridStats();
+        console.log('Grid Stats Updated:', stats);
+    });
+
     return {
         init: init,
         setQuickFilter: setQuickFilter,
@@ -305,6 +329,7 @@ window.articoliGrid = (function() {
         resetState: resetState,
         toggleColumnPanel: toggleColumnPanel,
         setUiVars: setUiVars,
-        exportCsv: exportCsv
+        exportCsv: exportCsv,
+        getGridStats: getGridStats
     };
 })();

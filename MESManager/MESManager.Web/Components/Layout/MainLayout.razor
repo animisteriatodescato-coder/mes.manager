@@ -1,4 +1,6 @@
 @inherits LayoutComponentBase
+@using MESManager.Web.Services
+@implements IDisposable
 
 <MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
 <MudPopoverProvider />
@@ -8,20 +10,39 @@
 <MudLayout>
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-        <MudText Typo="Typo.h5" Class="ml-3">MESManager</MudText>
+        <MudText Typo="Typo.h5" Class="ml-3">@GetPageTitle()</MudText>
         <MudSpacer />
         
-        @* Menu categorie principale *@
-        <MudMenu Icon="@Icons.Material.Filled.Apps" Color="Color.Inherit" AnchorOrigin="Origin.BottomCenter">
-            <MudMenuItem OnClick="@(() => SetCategory("Produzione"))">Produzione</MudMenuItem>
-            <MudMenuItem OnClick="@(() => SetCategory("Programma"))">Programma</MudMenuItem>
-            <MudMenuItem OnClick="@(() => SetCategory("Cataloghi"))">Cataloghi</MudMenuItem>
-            <MudMenuItem OnClick="@(() => SetCategory("Manutenzioni"))">Manutenzioni</MudMenuItem>
-            <MudMenuItem OnClick="@(() => SetCategory("Tabelle"))">Tabelle</MudMenuItem>
-            <MudMenuItem OnClick="@(() => SetCategory("Sync"))">Sync</MudMenuItem>
-            <MudMenuItem OnClick="@(() => SetCategory("Statistiche"))">Statistiche</MudMenuItem>
-            <MudMenuItem OnClick="@(() => SetCategory("Impostazioni"))">Impostazioni</MudMenuItem>
-        </MudMenu>
+        @* Controlli specifici per pagine con toolbar *@
+        @if (HasToolbar())
+        {
+            <MudTextField @bind-Value="_toolbarSearchText"
+                         Placeholder="Cerca..."
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         Style="width: 200px; background-color: white; color: black;"
+                         Immediate="true"
+                         DebounceInterval="280"
+                         OnDebounceIntervalElapsed="OnToolbarSearch" />
+            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@OnToolbarToggleColumns" Color="Color.Inherit">Colonne</MudButton>
+            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@OnToolbarReset" Color="Color.Inherit">Reset</MudButton>
+            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Download" OnClick="@OnToolbarExport" Color="Color.Inherit">Export CSV</MudButton>
+            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Settings" OnClick="@OnToolbarToggleSettings" Color="Color.Inherit">Impostazioni</MudButton>
+        }
+        else
+        {
+            @* Menu categorie principale - solo se non siamo su una pagina con toolbar *@
+            <MudMenu Icon="@Icons.Material.Filled.Apps" Color="Color.Inherit" AnchorOrigin="Origin.BottomCenter">
+                <MudMenuItem OnClick="@(() => SetCategory("Produzione"))">Produzione</MudMenuItem>
+                <MudMenuItem OnClick="@(() => SetCategory("Programma"))">Programma</MudMenuItem>
+                <MudMenuItem OnClick="@(() => SetCategory("Cataloghi"))">Cataloghi</MudMenuItem>
+                <MudMenuItem OnClick="@(() => SetCategory("Manutenzioni"))">Manutenzioni</MudMenuItem>
+                <MudMenuItem OnClick="@(() => SetCategory("Tabelle"))">Tabelle</MudMenuItem>
+                <MudMenuItem OnClick="@(() => SetCategory("Sync"))">Sync</MudMenuItem>
+                <MudMenuItem OnClick="@(() => SetCategory("Statistiche"))">Statistiche</MudMenuItem>
+                <MudMenuItem OnClick="@(() => SetCategory("Impostazioni"))">Impostazioni</MudMenuItem>
+            </MudMenu>
+        }
         
         <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" 
                        Color="Color.Inherit" 

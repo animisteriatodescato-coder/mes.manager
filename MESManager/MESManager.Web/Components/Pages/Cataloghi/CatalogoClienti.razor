@@ -6,72 +6,52 @@
 @inject NavigationManager Nav
 @inject PreferencesService PreferencesService
 @inject IJSRuntime JSRuntime
+@inject IPageToolbarService PageToolbarService
 @implements IAsyncDisposable
 
 <PageTitle>Catalogo Clienti</PageTitle>
 
 <div class="clienti-page">
-    <div class="toolbar-sticky">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
-            <MudText Typo="Typo.h6">Clienti</MudText>
-            <MudSpacer />
-
-            
-            <MudTextField @bind-Value="searchText"
-                         Placeholder="Cerca in tutte le colonne..."
-                         Variant="Variant.Outlined"
-                         Margin="Margin.Dense"
-                         Style="width: 280px;"
-                         Immediate="true"
-                         DebounceInterval="280"
-                         OnDebounceIntervalElapsed="OnSearchDebounced" />
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@ResetGrid">Reset</MudButton>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)">Impostazioni</MudButton>
-        </MudStack>
-        
-        @if (showSettings)
-        {
-            <MudPaper Class="pa-4 mt-2" Elevation="1">
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Wrap="Wrap.Wrap">
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudText>Font Size:</MudText>
-                        <MudNumericField Value="@settings.FontSize" Min="10" Max="24" Step="1" 
-                                        Variant="Variant.Outlined" Margin="Margin.Dense"
-                                        ValueChanged="@(async (int val) => { settings.FontSize = val; await ApplyUiSettings(); })" 
-                                        Style="width: 80px;" />
-                    </MudStack>
-                    
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudText>Row Height:</MudText>
-                        <MudNumericField Value="@settings.RowHeight" Min="25" Max="80" Step="5" 
-                                        Variant="Variant.Outlined" Margin="Margin.Dense"
-                                        ValueChanged="@(async (int val) => { settings.RowHeight = val; await ApplyUiSettings(); })" 
-                                        Style="width: 80px;" />
-                    </MudStack>
-                    
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudText>Density:</MudText>
-                        <MudSelect Value="@settings.Density" 
-                                  Variant="Variant.Outlined" Margin="Margin.Dense"
-                                  ValueChanged="@(async (string val) => { settings.Density = val; await ApplyUiSettings(); })" 
-                                  Style="width: 120px;">
-                            <MudSelectItem Value="@("Compact")">Compact</MudSelectItem>
-                            <MudSelectItem Value="@("Normal")">Normal</MudSelectItem>
-                            <MudSelectItem Value="@("Comfortable")">Comfortable</MudSelectItem>
-                        </MudSelect>
-                    </MudStack>
-                    
-                    <MudCheckBox Value="@settings.Zebra" Label="Zebra" Color="Color.Primary"
-                                ValueChanged="@(async (bool val) => { settings.Zebra = val; await ApplyUiSettings(); })" />
-                    
-                    <MudCheckBox Value="@settings.GridLines" Label="Grid Lines" Color="Color.Primary"
-                                ValueChanged="@(async (bool val) => { settings.GridLines = val; await ApplyUiSettings(); })" />
+    @if (showSettings)
+    {
+        <MudPaper Class="pa-4 mt-2" Elevation="1">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Wrap="Wrap.Wrap">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText>Font Size:</MudText>
+                    <MudNumericField Value="@settings.FontSize" Min="10" Max="24" Step="1" 
+                                    Variant="Variant.Outlined" Margin="Margin.Dense"
+                                    ValueChanged="@(async (int val) => { settings.FontSize = val; await ApplyUiSettings(); })" 
+                                    Style="width: 80px;" />
                 </MudStack>
-            </MudPaper>
-        }
-    </div>
+                
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText>Row Height:</MudText>
+                    <MudNumericField Value="@settings.RowHeight" Min="25" Max="80" Step="5" 
+                                    Variant="Variant.Outlined" Margin="Margin.Dense"
+                                    ValueChanged="@(async (int val) => { settings.RowHeight = val; await ApplyUiSettings(); })" 
+                                    Style="width: 80px;" />
+                </MudStack>
+                
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText>Density:</MudText>
+                    <MudSelect Value="@settings.Density" 
+                              Variant="Variant.Outlined" Margin="Margin.Dense"
+                              ValueChanged="@(async (string val) => { settings.Density = val; await ApplyUiSettings(); })" 
+                              Style="width: 120px;">
+                        <MudSelectItem Value="@("Compact")">Compact</MudSelectItem>
+                        <MudSelectItem Value="@("Normal")">Normal</MudSelectItem>
+                        <MudSelectItem Value="@("Comfortable")">Comfortable</MudSelectItem>
+                    </MudSelect>
+                </MudStack>
+                
+                <MudCheckBox Value="@settings.Zebra" Label="Zebra" Color="Color.Primary"
+                            ValueChanged="@(async (bool val) => { settings.Zebra = val; await ApplyUiSettings(); })" />
+                
+                <MudCheckBox Value="@settings.GridLines" Label="Grid Lines" Color="Color.Primary"
+                            ValueChanged="@(async (bool val) => { settings.GridLines = val; await ApplyUiSettings(); })" />
+            </MudStack>
+        </MudPaper>
+    }
 
     <div id="clientiGrid" class="ag-theme-alpine" 
          style="width: 100%; height: calc(100vh - 150px);">
@@ -139,6 +119,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        PageToolbarService.SetActivePage("clienti", this);
+        
         Http.BaseAddress = new Uri(Nav.BaseUri);
         _clienti = await Http.GetFromJsonAsync<List<ClienteDto>>("api/Clienti") ?? new();
         
@@ -252,11 +234,30 @@
     {
         debounceTimer?.Dispose();
         
+        // Deregistra questa pagina
+        PageToolbarService.SetActivePage("clienti", null);
+        
         try
         {
             await SaveSettings();
         }
         catch { }
+    }
+    
+    // Metodi pubblici per essere chiamati dalla AppBar
+    public async Task OnSearchDebounced_Public(string value)
+    {
+        searchText = value;
+        await OnSearchDebounced(value);
+    }
+    
+    public async Task ToggleColumnPanel_Public() => await ToggleColumnPanel();
+    public async Task ResetGrid_Public() => await ResetGrid();
+    public async Task ExportCsv_Public() => await ExportCsv();
+    public void ToggleSettings_Public()
+    {
+        showSettings = !showSettings;
+        StateHasChanged();
     }
 
     private class ClienteDto

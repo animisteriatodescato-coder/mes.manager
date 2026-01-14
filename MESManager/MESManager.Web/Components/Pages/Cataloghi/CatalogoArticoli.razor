@@ -6,76 +6,73 @@
 @inject NavigationManager Nav
 @inject PreferencesService PreferencesService
 @inject IJSRuntime JSRuntime
+@inject IPageToolbarService PageToolbarService
 @implements IAsyncDisposable
 
 <PageTitle>Catalogo Articoli</PageTitle>
 
 <div class="articoli-page">
-    <div class="toolbar-sticky">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
-            <MudText Typo="Typo.h6">Articoli</MudText>
-            <MudSpacer />
-
-            
-            <MudTextField @bind-Value="searchText"
-                         Placeholder="Cerca in tutte le colonne..."
-                         Variant="Variant.Outlined"
-                         Margin="Margin.Dense"
-                         Style="width: 280px;"
-                         Immediate="true"
-                         DebounceInterval="280"
-                         OnDebounceIntervalElapsed="OnSearchDebounced" />
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@ResetGrid">Reset</MudButton>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)">Impostazioni</MudButton>
-        </MudStack>
-        
-        @if (showSettings)
-        {
-            <MudPaper Class="pa-4 mt-2" Elevation="1">
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Wrap="Wrap.Wrap">
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudText>Font Size:</MudText>
-                        <MudNumericField Value="@settings.FontSize" Min="10" Max="24" Step="1" 
-                                        Variant="Variant.Outlined" Margin="Margin.Dense"
-                                        ValueChanged="@(async (int val) => { settings.FontSize = val; await ApplyUiSettings(); })" 
-                                        Style="width: 80px;" />
-                    </MudStack>
-                    
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudText>Row Height:</MudText>
-                        <MudNumericField Value="@settings.RowHeight" Min="25" Max="80" Step="5" 
-                                        Variant="Variant.Outlined" Margin="Margin.Dense"
-                                        ValueChanged="@(async (int val) => { settings.RowHeight = val; await ApplyUiSettings(); })" 
-                                        Style="width: 80px;" />
-                    </MudStack>
-                    
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudText>Density:</MudText>
-                        <MudSelect Value="@settings.Density" 
-                                  Variant="Variant.Outlined" Margin="Margin.Dense"
-                                  ValueChanged="@(async (string val) => { settings.Density = val; await ApplyUiSettings(); })" 
-                                  Style="width: 120px;">
-                            <MudSelectItem Value="@("Compact")">Compact</MudSelectItem>
-                            <MudSelectItem Value="@("Normal")">Normal</MudSelectItem>
-                            <MudSelectItem Value="@("Comfortable")">Comfortable</MudSelectItem>
-                        </MudSelect>
-                    </MudStack>
-                    
-                    <MudCheckBox Value="@settings.Zebra" Label="Zebra" Color="Color.Primary"
-                                ValueChanged="@(async (bool val) => { settings.Zebra = val; await ApplyUiSettings(); })" />
-                    
-                    <MudCheckBox Value="@settings.GridLines" Label="Grid Lines" Color="Color.Primary"
-                                ValueChanged="@(async (bool val) => { settings.GridLines = val; await ApplyUiSettings(); })" />
+    @if (showSettings)
+    {
+        <MudPaper Class="pa-4 mt-2" Elevation="1">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Wrap="Wrap.Wrap">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText>Font Size:</MudText>
+                    <MudNumericField Value="@settings.FontSize" Min="10" Max="24" Step="1" 
+                                    Variant="Variant.Outlined" Margin="Margin.Dense"
+                                    ValueChanged="@(async (int val) => { settings.FontSize = val; await ApplyUiSettings(); })" 
+                                    Style="width: 80px;" />
                 </MudStack>
-            </MudPaper>
-        }
-    </div>
+                
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText>Row Height:</MudText>
+                    <MudNumericField Value="@settings.RowHeight" Min="25" Max="80" Step="5" 
+                                    Variant="Variant.Outlined" Margin="Margin.Dense"
+                                    ValueChanged="@(async (int val) => { settings.RowHeight = val; await ApplyUiSettings(); })" 
+                                    Style="width: 80px;" />
+                </MudStack>
+                
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText>Density:</MudText>
+                    <MudSelect Value="@settings.Density" 
+                              Variant="Variant.Outlined" Margin="Margin.Dense"
+                              ValueChanged="@(async (string val) => { settings.Density = val; await ApplyUiSettings(); })" 
+                              Style="width: 120px;">
+                        <MudSelectItem Value="@("Compact")">Compact</MudSelectItem>
+                        <MudSelectItem Value="@("Normal")">Normal</MudSelectItem>
+                        <MudSelectItem Value="@("Comfortable")">Comfortable</MudSelectItem>
+                    </MudSelect>
+                </MudStack>
+                
+                <MudCheckBox Value="@settings.Zebra" Label="Zebra" Color="Color.Primary"
+                            ValueChanged="@(async (bool val) => { settings.Zebra = val; await ApplyUiSettings(); })" />
+                
+                <MudCheckBox Value="@settings.GridLines" Label="Grid Lines" Color="Color.Primary"
+                            ValueChanged="@(async (bool val) => { settings.GridLines = val; await ApplyUiSettings(); })" />
+            </MudStack>
+        </MudPaper>
+    }
 
     <div id="articoliGrid" class="ag-theme-alpine" 
          style="width: 100%; height: calc(100vh - 150px);">
     </div>
+
+    <MudPaper Class="footer-info pa-1 mt-2" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Totale righe: <strong>@totalRows</strong></MudText>
+            <MudDivider Vertical="true" FlexItem="true" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Righe filtrate: <strong>@filteredRows</strong></MudText>
+            <MudDivider Vertical="true" FlexItem="true" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Righe selezionate: <strong>@selectedRows</strong></MudText>
+            <MudDivider Vertical="true" FlexItem="true" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Ultimo aggiornamento: <strong>@lastUpdate.ToString("HH:mm:ss")</strong></MudText>
+            <MudSpacer />
+            <MudChip T="string" Size="Size.Small" Color="@(isLoading ? Color.Warning : Color.Success)" 
+                     Icon="@(isLoading ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.CheckCircle)">
+                @gridStatus
+            </MudChip>
+        </MudStack>
+    </MudPaper>
 </div>
 
 <style>
@@ -90,6 +87,14 @@
         background: var(--mud-palette-surface);
         padding: 0.1 rem 0;
         margin-bottom: 0.2rem;
+    }
+    
+    .footer-info {
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+        background: var(--mud-palette-surface);
+        border-top: 2px solid var(--mud-palette-primary);
     }
 
     /* Gestione Colonne in dark mode */
@@ -124,12 +129,21 @@
     private bool showSettings = false;
     private System.Threading.Timer? debounceTimer;
     private string searchText = string.Empty;
+    
+    // Footer stats
+    private int totalRows = 0;
+    private int filteredRows = 0;
+    private int selectedRows = 0;
+    private DateTime lastUpdate = DateTime.MinValue;
+    private bool isLoading = false;
+    private string gridStatus = "Pronto";
 
     private async Task OnSearchDebounced(string value)
     {
         try
         {
             await JSRuntime.InvokeVoidAsync("articoliGrid.setQuickFilter", value);
+            await UpdateGridStats();
         }
         catch (Exception ex)
         {
@@ -139,14 +153,30 @@
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
+        gridStatus = "Caricamento...";
+        
+        // Registra questa pagina come attiva
+        PageToolbarService.SetActivePage("articoli", this);
+        
+        StateHasChanged();
+        
         Http.BaseAddress = new Uri(Nav.BaseUri);
         _articoli = await Http.GetFromJsonAsync<List<ArticoloDto>>("api/Articoli") ?? new();
+        
+        totalRows = _articoli.Count;
+        filteredRows = totalRows;
+        lastUpdate = DateTime.Now;
+        isLoading = false;
+        gridStatus = "Pronto";
         
         var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("articoli-grid-settings");
         if (savedSettings != null)
         {
             settings = savedSettings;
         }
+        
+        StateHasChanged();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -155,6 +185,15 @@
         {
             await Task.Delay(300);
             await InitializeGrid();
+            
+            // Avvia timer per aggiornare le statistiche
+            var timer = new System.Threading.Timer(async _ =>
+            {
+                await InvokeAsync(async () =>
+                {
+                    await UpdateGridStats();
+                });
+            }, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
         }
     }
 
@@ -171,11 +210,33 @@
 
             await JSRuntime.InvokeVoidAsync("articoliGrid.init", "articoliGrid", _articoli, settings.ColumnStateJson);
             await ApplyUiSettings();
+            
+            // Aggiorna statistiche iniziali
+            await UpdateGridStats();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error initializing grid: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        }
+    }
+    
+    private async Task UpdateGridStats()
+    {
+        try
+        {
+            var stats = await JSRuntime.InvokeAsync<GridStats>("articoliGrid.getGridStats");
+            if (stats != null)
+            {
+                totalRows = _articoli.Count;
+                filteredRows = stats.Filtered;
+                selectedRows = stats.Selected;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating grid stats: {ex.Message}");
         }
     }
 
@@ -252,12 +313,39 @@
     {
         debounceTimer?.Dispose();
         
+        // Deregistra questa pagina
+        PageToolbarService.SetActivePage("articoli", null);
+        
         try
         {
             await SaveSettings();
         }
         catch { }
     }
+    
+    // Metodi pubblici per essere chiamati dalla AppBar
+    public async Task OnSearchDebounced_Public(string value)
+    {
+        searchText = value;
+        await OnSearchDebounced(value);
+    }
+    
+    public async Task ToggleColumnPanel_Public() => await ToggleColumnPanel();
+    public async Task ResetGrid_Public() => await ResetGrid();
+    public async Task ExportCsv_Public() => await ExportCsv();
+    public void ToggleSettings_Public()
+    {
+        showSettings = !showSettings;
+        StateHasChanged();
+    }
+    
+    public string SearchText => searchText;
+    public int TotalRows => totalRows;
+    public int FilteredRows => filteredRows;
+    public int SelectedRows => selectedRows;
+    public DateTime LastUpdate => lastUpdate;
+    public bool IsLoading => isLoading;
+    public string GridStatus => gridStatus;
 
     private class ArticoloDto
     {
@@ -268,5 +356,12 @@
         public bool Attivo { get; set; }
         public DateTime UltimaModifica { get; set; }
         public DateTime TimestampSync { get; set; }
+    }
+    
+    private class GridStats
+    {
+        public int Total { get; set; }
+        public int Filtered { get; set; }
+        public int Selected { get; set; }
     }
 }

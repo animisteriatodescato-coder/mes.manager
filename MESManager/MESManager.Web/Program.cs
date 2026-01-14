@@ -35,7 +35,9 @@ builder.Services.AddHttpClient();
 
 // Custom Services
 builder.Services.AddScoped<PreferencesService>();
+builder.Services.AddScoped<PlcDataService>();
 builder.Services.AddScoped<IPlcSyncCoordinator, PlcSyncCoordinator>();
+builder.Services.AddSingleton<IPageToolbarService, PageToolbarService>();
 
 // Infrastructure e DbContext
 builder.Services.AddInfrastructure(connectionString);

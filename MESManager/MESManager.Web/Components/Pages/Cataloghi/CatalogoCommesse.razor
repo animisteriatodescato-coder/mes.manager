@@ -6,12 +6,13 @@
 @inject NavigationManager Nav
 @inject PreferencesService PreferencesService
 @inject IJSRuntime JSRuntime
+@inject IPageToolbarService PageToolbarService
 @implements IAsyncDisposable
 
 <PageTitle>Catalogo Commesse</PageTitle>
 
 <div class="commesse-page">
-    <div class="toolbar-sticky">
+    <div class="settings-panel" style="display: none;">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
             <MudText Typo="Typo.h6">Commesse</MudText>
             <MudSpacer />
@@ -140,6 +141,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        PageToolbarService.SetActivePage("commesse", this);
+        
         Http.BaseAddress = new Uri(Nav.BaseUri);
         _commesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
         
@@ -259,11 +262,30 @@
     {
         debounceTimer?.Dispose();
         
+        // Deregistra questa pagina
+        PageToolbarService.SetActivePage("commesse", null);
+        
         try
         {
             await SaveSettings();
         }
         catch { }
+    }
+    
+    // Metodi pubblici per essere chiamati dalla AppBar
+    public async Task OnSearchDebounced_Public(string value)
+    {
+        searchText = value;
+        await OnSearchDebounced(value);
+    }
+    
+    public async Task ToggleColumnPanel_Public() => await ToggleColumnPanel();
+    public async Task ResetGrid_Public() => await ResetGrid();
+    public async Task ExportCsv_Public() => await ExportCsv();
+    public void ToggleSettings_Public()
+    {
+        showSettings = !showSettings;
+        StateHasChanged();
     }
 
     private class CommessaDto
