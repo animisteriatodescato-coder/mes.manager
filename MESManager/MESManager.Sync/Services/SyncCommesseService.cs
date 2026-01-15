@@ -54,15 +54,17 @@ public class SyncCommesseService
                 var articolo = await _context.Articoli
                     .FirstOrDefaultAsync(a => a.Codice == commessaMago.Item, cancellationToken);
 
+                // Usa la combinazione InternalOrdNo + Item come chiave univoca (come PlcMagoSync)
+                var codiceCommessa = $"{commessaMago.InternalOrdNo}-{commessaMago.Item}";
                 var commessa = await _context.Commesse
-                    .FirstOrDefaultAsync(c => c.Codice == commessaMago.InternalOrdNo, cancellationToken);
+                    .FirstOrDefaultAsync(c => c.Codice == codiceCommessa, cancellationToken);
 
                 if (commessa == null)
                 {
                     commessa = new Commessa
                     {
                         Id = Guid.NewGuid(),
-                        Codice = commessaMago.InternalOrdNo,
+                        Codice = codiceCommessa,
                         ClienteId = cliente?.Id,
                         ArticoloId = articolo?.Id,
                         QuantitaRichiesta = decimal.TryParse(commessaMago.Qty, out var q) ? q : 0,
@@ -152,15 +154,11 @@ public class SyncCommesseService
 
     private StatoCommessa MapStatoCommessaDaMago(string delivered, string invoiced)
     {
-        // Invoiced = 1 -> Fatturata (che consideriamo come Chiusa)
-        if (invoiced == "1")
+        // Delivered = 0 -> Chiusa (consegnata)
+        // Delivered = 1 -> Aperta (da consegnare)
+        if (delivered == "0")
             return StatoCommessa.Chiusa;
         
-        // Delivered = 1 -> Consegnata (che consideriamo come Completata)
-        if (delivered == "1")
-            return StatoCommessa.Completata;
-        
-        // Altrimenti è Aperta
         return StatoCommessa.Aperta;
     }
 }
