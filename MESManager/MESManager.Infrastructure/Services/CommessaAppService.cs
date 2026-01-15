@@ -18,10 +18,34 @@ public class CommessaAppService : ICommessaAppService
     
     public async Task<List<CommessaDto>> GetListaAsync()
     {
-        return await _context.Commesse
+        var commesse = await _context.Commesse
             .Include(c => c.Articolo)
             .Include(c => c.Cliente)
-            .Select(c => new CommessaDto
+            .ToListAsync();
+            
+        var articoloCodes = commesse
+            .Where(c => c.Articolo != null)
+            .Select(c => c.Articolo!.Codice)
+            .Distinct()
+            .ToList();
+            
+        var animeData = await _context.Anime
+            .Where(a => articoloCodes.Contains(a.CodiceArticolo))
+            .ToListAsync();
+            
+        var animeLookup = animeData
+            .GroupBy(a => a.CodiceArticolo)
+            .ToDictionary(g => g.Key, g => g.First());
+        
+        return commesse.Select(c =>
+        {
+            Anime? anime = null;
+            if (c.Articolo != null && animeLookup.TryGetValue(c.Articolo.Codice, out var a))
+            {
+                anime = a;
+            }
+            
+            return new CommessaDto
             {
                 Id = c.Id,
                 Codice = c.Codice,
@@ -53,9 +77,25 @@ public class CommessaAppService : ICommessaAppService
                 
                 // Audit
                 UltimaModifica = c.UltimaModifica,
-                TimestampSync = c.TimestampSync
-            })
-            .ToListAsync();
+                TimestampSync = c.TimestampSync,
+                
+                // Anime properties
+                UnitaMisura = anime?.UnitaMisura,
+                Larghezza = anime?.Larghezza,
+                Altezza = anime?.Altezza,
+                Profondita = anime?.Profondita,
+                Imballo = anime?.Imballo,
+                NoteAnime = anime?.Note,
+                Allegato = anime?.Allegato,
+                Peso = anime?.Peso,
+                Ubicazione = anime?.Ubicazione,
+                Ciclo = anime?.Ciclo,
+                CodiceCassa = anime?.CodiceCassa,
+                CodiceAnime = anime?.CodiceAnime,
+                MacchineSuDisponibili = anime?.MacchineSuDisponibili,
+                TrasmettiTutto = anime?.TrasmettiTutto
+            };
+        }).ToList();
     }
     
     public async Task<CommessaDto?> GetByIdAsync(Guid id)

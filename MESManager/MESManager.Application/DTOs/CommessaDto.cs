@@ -35,4 +35,20 @@ public class CommessaDto
     // Audit
     public DateTime UltimaModifica { get; set; }
     public DateTime TimestampSync { get; set; }
+    
+    // Anime properties (from Anime table via ArticoloCodice)
+    public string? UnitaMisura { get; set; }
+    public int? Larghezza { get; set; }
+    public int? Altezza { get; set; }
+    public int? Profondita { get; set; }
+    public int? Imballo { get; set; }
+    public string? NoteAnime { get; set; }
+    public string? Allegato { get; set; }
+    public string? Peso { get; set; }
+    public string? Ubicazione { get; set; }
+    public string? Ciclo { get; set; }
+    public string? CodiceCassa { get; set; }
+    public string? CodiceAnime { get; set; }
+    public string? MacchineSuDisponibili { get; set; }
+    public bool? TrasmettiTutto { get; set; }
 }
