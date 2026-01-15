@@ -17,6 +17,7 @@ public class CommessaDto
     
     // Campi denormalizzati per visualizzazione
     public string? ClienteRagioneSociale { get; set; }
+    public string? CompanyName { get; set; } // Nome cliente da Mago
     public string? ArticoloCodice { get; set; }
     public string? ArticoloDescrizione { get; set; }
     

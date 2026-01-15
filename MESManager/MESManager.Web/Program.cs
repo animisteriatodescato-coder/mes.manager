@@ -106,3 +106,6 @@ app.MapHub<RealtimeHub>("/hubs/realtime");
 app.MapControllers();
 
 app.Run();
+
+// Rendi Program visibile ai test E2E
+public partial class Program { }

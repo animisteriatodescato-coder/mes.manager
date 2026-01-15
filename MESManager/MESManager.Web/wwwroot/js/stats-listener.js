@@ -8,4 +8,16 @@ export function subscribeToStatsChanges(dotNetReference) {
             await dotNetRef.invokeMethodAsync('UpdateStats');
         }
     });
+
+    // Auto-salva stato quando cambia struttura grid
+    let saveTimeout;
+    window.addEventListener('commesseGridStateChanged', async () => {
+        if (dotNetRef) {
+            // Debounce per evitare troppi salvataggi durante resize
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(async () => {
+                await dotNetRef.invokeMethodAsync('SaveGridStateFromJs');
+            }, 500);
+        }
+    });
 }

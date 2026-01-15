@@ -35,7 +35,8 @@ public class CommessaAppService : ICommessaAppService
                 // Relazioni
                 ArticoloId = c.ArticoloId,
                 ClienteId = c.ClienteId,
-                ClienteRagioneSociale = c.Cliente != null ? c.Cliente.RagioneSociale : null,
+                ClienteRagioneSociale = c.CompanyName ?? (c.Cliente != null ? c.Cliente.RagioneSociale : null),
+                CompanyName = c.CompanyName,
                 ArticoloCodice = c.Articolo != null ? c.Articolo.Codice : null,
                 ArticoloDescrizione = c.Articolo != null ? c.Articolo.Descrizione : null,
                 

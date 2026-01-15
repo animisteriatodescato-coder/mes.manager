@@ -16,6 +16,7 @@ public class Commessa
     // Relazioni
     public Guid? ArticoloId { get; set; }
     public Guid? ClienteId { get; set; }
+    public string? CompanyName { get; set; } // Nome cliente da Mago (denormalizzato)
     
     // Dati commessa
     public string? Description { get; set; } // Descrizione dalla linea

@@ -75,6 +75,7 @@ public class SyncCommesseService
                         // Relazioni
                         ClienteId = cliente?.Id,
                         ArticoloId = articolo?.Id,
+                        CompanyName = commessaMago.CompanyName,
                         
                         // Dati commessa
                         Description = commessaMago.Description,
@@ -105,6 +106,7 @@ public class SyncCommesseService
                     // Relazioni
                     commessa.ClienteId = cliente?.Id;
                     commessa.ArticoloId = articolo?.Id;
+                    commessa.CompanyName = commessaMago.CompanyName;
                     
                     // Dati commessa
                     commessa.Description = commessaMago.Description;
@@ -186,11 +188,11 @@ public class SyncCommesseService
 
     private StatoCommessa MapStatoCommessaDaMago(string delivered, string invoiced)
     {
-        // Delivered = 0 -> Chiusa (consegnata)
-        // Delivered = 1 -> Aperta (da consegnare)
+        // Delivered = 0 -> Aperta (da consegnare)
+        // Delivered = 1 -> Chiusa (consegnata)
         if (delivered == "0")
-            return StatoCommessa.Chiusa;
+            return StatoCommessa.Aperta;
         
-        return StatoCommessa.Aperta;
+        return StatoCommessa.Chiusa;
     }
 }
