@@ -75,4 +75,62 @@ public class MESManagerE2ETests : PlaywrightTestBase
         // Verifica nessun errore console
         await AssertNoConsoleErrors();
     }
+
+    [Fact(DisplayName = "Commesse Aperte - carica grid con colonna MA")]
+    public async Task CommesseAperte_LoadsGridWithMAColumn()
+    {
+        // Navigate to Commesse Aperte page
+        await Page.GotoAsync(BaseUrl + "/programma/commesse-aperte", new() { WaitUntil = WaitUntilState.NetworkIdle });
+
+        // Aspetta caricamento grid
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Verifica presenza grid AG Grid
+        var grid = Page.Locator("#commesseAperteGrid");
+        await Expect(grid).ToBeVisibleAsync();
+
+        // Verifica che il grid abbia header row
+        var gridHeaders = Page.Locator(".ag-header-row");
+        await Expect(gridHeaders.First).ToBeVisibleAsync();
+
+        // Verifica presenza colonna MA (NumeroMacchina) - la prima colonna
+        var maHeader = Page.Locator(".ag-header-cell[col-id='numeroMacchina']");
+        await Expect(maHeader).ToBeVisibleAsync();
+
+        // Verifica che la colonna MA sia la prima colonna (pinned left)
+        var pinnedLeftHeader = Page.Locator(".ag-pinned-left-header .ag-header-cell").First;
+        await Expect(pinnedLeftHeader).ToBeVisibleAsync();
+
+        // Verifica nessun errore console
+        await AssertNoConsoleErrors();
+    }
+
+    [Fact(DisplayName = "Programma Macchine - carica grid con colonne complete")]
+    public async Task ProgrammaMacchine_LoadsGridWithColumns()
+    {
+        // Navigate to Programma Macchine page
+        await Page.GotoAsync(BaseUrl + "/programma/programma-macchine", new() { WaitUntil = WaitUntilState.NetworkIdle });
+
+        // Aspetta caricamento grid
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Verifica presenza grid AG Grid
+        var grid = Page.Locator("#programmaMacchineGrid");
+        await Expect(grid).ToBeVisibleAsync();
+
+        // Verifica che il grid abbia header row
+        var gridHeaders = Page.Locator(".ag-header-row");
+        await Expect(gridHeaders.First).ToBeVisibleAsync();
+
+        // Verifica presenza colonna Macchina
+        var macchinaHeader = Page.Locator(".ag-header-cell[col-id='numeroMacchina']");
+        await Expect(macchinaHeader).ToBeVisibleAsync();
+
+        // Verifica presenza toolbar con pulsanti
+        var toolbar = Page.Locator(".mud-toolbar");
+        await Expect(toolbar.First).ToBeVisibleAsync();
+
+        // Verifica nessun errore console
+        await AssertNoConsoleErrors();
+    }
 }
