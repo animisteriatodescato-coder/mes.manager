@@ -1,14 +1,20 @@
 # MESManager.E2E - Test End-to-End con Playwright
 
-✅ **Test Status**: 3/3 passing (Totale test: 3, Superati: 3, Tempo: ~14s)
+✅ **Test Status**: Test organizzati per categoria (Core, Modified, Page-specific)
 
 Questo progetto contiene test E2E automatici per MESManager usando Microsoft Playwright per .NET.
 
 ## Test Implementati
 
+### Test Core (sempre eseguiti)
 1. ✅ **Home non è bianca** - Verifica che la home page carichi elementi visibili (appbar, layout MudBlazor)
-2. ✅ **Navbar non duplicata** - Verifica che esista solo una istanza dell'appbar principale
-3. ✅ **Commesse carica UI** - Verifica che la pagina Commesse carichi titolo, grid e header ag-Grid
+
+### Test su Pagine Modificate (Modified)
+1. ✅ **Pianificazione - caricamento pagina Gantt** - Verifica il caricamento della pagina di pianificazione
+2. ✅ **Pianificazione - campi configurazione** - Verifica presenza campi setup e pulsanti
+3. ✅ **Pianificazione - componente Gantt** - Verifica presenza componente o messaggio informativo
+4. ✅ **Pianificazione - legenda stati** - Verifica legenda con chip colorati
+5. ✅ **Pianificazione - API impostazioni** - Verifica funzionamento API di configurazione
 
 **Tutti i test includono verifica automatica di errori console JavaScript.**
 
@@ -33,21 +39,36 @@ pwsh playwright.ps1 install chromium
 
 ## Esecuzione Test
 
-### Esecuzione Standard (Headless)
+### Solo pagine modificate (CONSIGLIATO per sviluppo)
+
+```powershell
+dotnet test --filter "Category=Modified"
+```
+
+### Con browser visibile (utile per debugging)
+
+```powershell
+$env:PLAYWRIGHT_HEADED="1"
+dotnet test --filter "Category=Modified"
+```
+
+### Solo test su pagina Pianificazione
+
+```powershell
+dotnet test --filter "Page=Pianificazione"
+```
+
+### Tutti i test (Core + Modified)
 
 ```powershell
 dotnet test
 ```
 
+**Per maggiori opzioni di filtro, consulta [TEST_FILTERS.md](TEST_FILTERS.md).**
+
 **IMPORTANTE**: I test avviano automaticamente l'applicazione web su `http://127.0.0.1:5156`. Assicurati che:
 - La porta 5156 sia disponibile (non in uso da altri processi)
 - L'app web non sia già in esecuzione manualmente sulla stessa porta
-
-### Esecuzione con Browser Visibile (Headed Mode)
-
-```powershell
-$env:PLAYWRIGHT_HEADED="1"
-dotnet test
 ```
 
 ### Esecuzione con Slow Motion (debug)

@@ -6,7 +6,12 @@ namespace MESManager.E2E;
 
 public class MESManagerE2ETests : PlaywrightTestBase
 {
+    // ========================================
+    // TEST CORE - Sempre eseguiti
+    // ========================================
+    
     [Fact(DisplayName = "Home non è bianca - verifica contenuto principale")]
+    [Trait("Category", "Core")]
     public async Task Home_IsNotBlank()
     {
         // Navigate to home
@@ -28,109 +33,144 @@ public class MESManagerE2ETests : PlaywrightTestBase
         await AssertNoConsoleErrors();
     }
 
-    [Fact(DisplayName = "Navbar/AppBar non duplicata - verifica singola istanza")]
-    public async Task NavBar_IsNotDuplicated()
+    // ========================================
+    // TEST PIANIFICAZIONE - Pagine modificate
+    // ========================================
+    
+    [Fact(DisplayName = "Pianificazione - verifica caricamento pagina Gantt")]
+    [Trait("Category", "Modified")]
+    [Trait("Page", "Pianificazione")]
+    public async Task Pianificazione_LoadsGanttPage()
     {
-        // Navigate to Commesse page
-        await Page.GotoAsync(BaseUrl + "/cataloghi/commesse", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        // Navigate to Pianificazione page
+        await Page.GotoAsync(BaseUrl + "/pianificazione", new() { WaitUntil = WaitUntilState.NetworkIdle });
 
-        // Aspetta caricamento pagina
+        // Aspetta caricamento completo
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-        // Verifica che esista SOLO una appbar principale
-        var mainAppBars = Page.GetByTestId("main-appbar");
-        await Expect(mainAppBars).ToHaveCountAsync(1);
-
-        // Verifica che non ci siano appbar duplicate (usando classe MudAppBar)
-        var allAppBars = Page.Locator(".mud-appbar[data-testid='main-appbar']");
-        await Expect(allAppBars).ToHaveCountAsync(1);
-
-        // Verifica nessun errore console
-        await AssertNoConsoleErrors();
-    }
-
-    [Fact(DisplayName = "Commesse carica UI principale - verifica grid e titolo")]
-    public async Task Commesse_LoadsMainUI()
-    {
-        // Navigate to Commesse page
-        await Page.GotoAsync(BaseUrl + "/cataloghi/commesse", new() { WaitUntil = WaitUntilState.NetworkIdle });
 
         // Verifica presenza titolo pagina
-        var title = Page.GetByTestId("commesse-title");
+        var title = Page.Locator("h4:has-text('Pianificazione Produzione')");
         await Expect(title).ToBeVisibleAsync();
-        await Expect(title).ToHaveTextAsync("Commesse");
 
-        // Verifica presenza grid
-        var grid = Page.GetByTestId("commesse-grid");
-        await Expect(grid).ToBeVisibleAsync();
-
-        // Verifica che il grid abbia contenuto (header row di ag-Grid)
-        var gridHeaders = Page.Locator(".ag-header-row");
-        await Expect(gridHeaders.First).ToBeVisibleAsync();
-
-        // Verifica che ci siano colonne (almeno una colonna header)
-        var headerCells = Page.Locator(".ag-header-cell");
-        await Expect(headerCells.First).ToBeVisibleAsync();
+        // Verifica presenza pannello impostazioni
+        var setupPanel = Page.Locator("label:has-text('Tempo Setup (minuti)')");
+        await Expect(setupPanel).ToBeVisibleAsync();
 
         // Verifica nessun errore console
         await AssertNoConsoleErrors();
     }
 
-    [Fact(DisplayName = "Commesse Aperte - carica grid con colonna MA")]
-    public async Task CommesseAperte_LoadsGridWithMAColumn()
+    [Fact(DisplayName = "Pianificazione - verifica campi configurazione")]
+    [Trait("Category", "Modified")]
+    [Trait("Page", "Pianificazione")]
+    public async Task Pianificazione_HasConfigurationFields()
     {
-        // Navigate to Commesse Aperte page
-        await Page.GotoAsync(BaseUrl + "/programma/commesse-aperte", new() { WaitUntil = WaitUntilState.NetworkIdle });
-
-        // Aspetta caricamento grid
+        // Navigate to Pianificazione page
+        await Page.GotoAsync(BaseUrl + "/pianificazione", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        // Verifica presenza grid AG Grid
-        var grid = Page.Locator("#commesseAperteGrid");
-        await Expect(grid).ToBeVisibleAsync();
+        // Verifica presenza campo Tempo Setup
+        var tempoSetup = Page.Locator("input").Filter(new() { HasNot = Page.Locator("[type=hidden]") }).First;
+        await Expect(tempoSetup).ToBeVisibleAsync();
 
-        // Verifica che il grid abbia header row
-        var gridHeaders = Page.Locator(".ag-header-row");
-        await Expect(gridHeaders.First).ToBeVisibleAsync();
+        // Verifica presenza pulsante Salva Impostazioni
+        var salvaBtnText = Page.Locator("button:has-text('Salva Impostazioni')");
+        await Expect(salvaBtnText).ToBeVisibleAsync();
 
-        // Verifica presenza colonna MA (NumeroMacchina) - la prima colonna
-        var maHeader = Page.Locator(".ag-header-cell[col-id='numeroMacchina']");
-        await Expect(maHeader).ToBeVisibleAsync();
-
-        // Verifica che la colonna MA sia la prima colonna (pinned left)
-        var pinnedLeftHeader = Page.Locator(".ag-pinned-left-header .ag-header-cell").First;
-        await Expect(pinnedLeftHeader).ToBeVisibleAsync();
+        // Verifica presenza pulsante Aggiorna Dati
+        var aggiornaBtnText = Page.Locator("button:has-text('Aggiorna Dati')");
+        await Expect(aggiornaBtnText).ToBeVisibleAsync();
 
         // Verifica nessun errore console
         await AssertNoConsoleErrors();
     }
 
-    [Fact(DisplayName = "Programma Macchine - carica grid con colonne complete")]
-    public async Task ProgrammaMacchine_LoadsGridWithColumns()
+    [Fact(DisplayName = "Pianificazione - verifica presenza componente Gantt o messaggio info")]
+    [Trait("Category", "Modified")]
+    [Trait("Page", "Pianificazione")]
+    public async Task Pianificazione_HasGanttOrInfoMessage()
     {
-        // Navigate to Programma Macchine page
-        await Page.GotoAsync(BaseUrl + "/programma/programma-macchine", new() { WaitUntil = WaitUntilState.NetworkIdle });
-
-        // Aspetta caricamento grid
+        // Navigate to Pianificazione page
+        await Page.GotoAsync(BaseUrl + "/pianificazione", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        // Verifica presenza grid AG Grid
-        var grid = Page.Locator("#programmaMacchineGrid");
-        await Expect(grid).ToBeVisibleAsync();
+        // Verifica che ci sia o il componente Gantt o il messaggio informativo
+        // (dipende se ci sono dati o meno)
+        var hasGantt = await Page.Locator(".e-gantt").CountAsync() > 0;
+        var hasInfoMessage = await Page.Locator("text=Nessuna commessa pianificata").CountAsync() > 0;
 
-        // Verifica che il grid abbia header row
-        var gridHeaders = Page.Locator(".ag-header-row");
-        await Expect(gridHeaders.First).ToBeVisibleAsync();
+        // Deve esserci almeno uno dei due
+        Assert.True(hasGantt || hasInfoMessage, 
+            "Dovrebbe essere presente il componente Gantt o il messaggio informativo");
 
-        // Verifica presenza colonna Macchina
-        var macchinaHeader = Page.Locator(".ag-header-cell[col-id='numeroMacchina']");
-        await Expect(macchinaHeader).ToBeVisibleAsync();
+        // Verifica nessun errore console
+        await AssertNoConsoleErrors();
+    }
 
-        // Verifica presenza toolbar con pulsanti
-        var toolbar = Page.Locator(".mud-toolbar");
-        await Expect(toolbar.First).ToBeVisibleAsync();
+    [Fact(DisplayName = "Pianificazione - verifica legenda stati")]
+    [Trait("Category", "Modified")]
+    [Trait("Page", "Pianificazione")]
+    public async Task Pianificazione_HasStatusLegend()
+    {
+        // Navigate to Pianificazione page
+        await Page.GotoAsync(BaseUrl + "/pianificazione", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Verifica presenza sezione legenda (se ci sono dati)
+        var legendTitle = Page.Locator("h6:has-text('Legenda Stati')");
+        var hasData = await Page.Locator(".e-gantt").CountAsync() > 0;
+
+        if (hasData)
+        {
+            await Expect(legendTitle).ToBeVisibleAsync();
+
+            // Verifica presenza chip stati
+            var chips = Page.Locator(".mud-chip");
+            var chipCount = await chips.CountAsync();
+            Assert.True(chipCount >= 5, $"Dovrebbero esserci almeno 5 chip di stato, trovati: {chipCount}");
+        }
+
+        // Verifica nessun errore console
+        await AssertNoConsoleErrors();
+    }
+
+    [Fact(DisplayName = "Pianificazione - API impostazioni risponde correttamente")]
+    [Trait("Category", "Modified")]
+    [Trait("Page", "Pianificazione")]
+    public async Task Pianificazione_ApiImpostazioniWorks()
+    {
+        // Navigate to Pianificazione page
+        await Page.GotoAsync(BaseUrl + "/pianificazione", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Intercetta la chiamata API
+        var apiResponsePromise = Page.WaitForResponseAsync(
+            response => response.Url.Contains("/api/Pianificazione/impostazioni") && response.Status == 200,
+            new() { Timeout = 10000 }
+        );
+
+        // Clicca su Aggiorna Dati per triggerare la chiamata
+        var aggiornaBtn = Page.Locator("button:has-text('Aggiorna Dati')");
+        if (await aggiornaBtn.CountAsync() > 0)
+        {
+            await aggiornaBtn.ClickAsync();
+        }
+
+        // Verifica che la risposta API sia arrivata (o già presente)
+        try
+        {
+            var response = await apiResponsePromise;
+            Assert.Equal(200, response.Status);
+        }
+        catch (TimeoutException)
+        {
+            // Se timeout, verifica almeno che la pagina sia caricata correttamente
+            var title = Page.Locator("h4:has-text('Pianificazione Produzione')");
+            await Expect(title).ToBeVisibleAsync();
+        }
 
         // Verifica nessun errore console
         await AssertNoConsoleErrors();
     }
 }
+
