@@ -32,6 +32,12 @@ public class Commessa
     // Programmazione Macchine
     public int? NumeroMacchina { get; set; } // Numero macchina assegnata
     
+    // Pianificazione produzione (per diagramma Gantt)
+    public DateTime? DataInizioPrevisione { get; set; } // Data/ora inizio prevista
+    public DateTime? DataFinePrevisione { get; set; } // Data/ora fine prevista (calcolata)
+    public DateTime? DataInizioProduzione { get; set; } // Data/ora inizio effettivo
+    public DateTime? DataFineProduzione { get; set; } // Data/ora fine effettivo
+    
     // Audit
     public DateTime UltimaModifica { get; set; }
     public DateTime TimestampSync { get; set; }

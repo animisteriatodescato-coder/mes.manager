@@ -11,6 +11,8 @@ using MESManager.Infrastructure.Data;
 using MESManager.Web.Hubs;
 using MESManager.Web.Services;
 using MESManager.Application.Services;
+using MESManager.Application.Interfaces;
+using Syncfusion.Blazor;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,12 +33,16 @@ builder.Services.AddRazorComponents()
 // MudBlazor
 builder.Services.AddMudServices();
 
+// Syncfusion Blazor
+builder.Services.AddSyncfusionBlazor();
+
 // HttpClient per Blazor
 builder.Services.AddHttpClient();
 
 // Custom Services
 builder.Services.AddScoped<PreferencesService>();
 builder.Services.AddScoped<AnimeImportService>();
+builder.Services.AddScoped<IPianificazioneService, PianificazioneService>();
 builder.Services.AddHttpClient<PlcDataService>(client =>
 {
     client.BaseAddress = new Uri("http://localhost:5156/");

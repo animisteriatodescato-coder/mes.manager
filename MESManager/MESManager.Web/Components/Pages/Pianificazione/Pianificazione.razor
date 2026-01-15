@@ -1,0 +1,272 @@
+@page "/pianificazione"
+@using MESManager.Application.DTOs
+@using Syncfusion.Blazor.Gantt
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<PageTitle>Pianificazione Produzione - Gantt</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">📅 Pianificazione Produzione</MudText>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="@impostazioniDto.TempoSetupMinuti" 
+                          Label="Tempo Setup (minuti)" 
+                          Variant="Variant.Outlined"
+                          T="int"
+                          Margin="Margin.Dense"/>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudTextField @bind-Value="@impostazioniDto.OreLavorativeGiornaliere" 
+                          Label="Ore Lavorative/Giorno" 
+                          Variant="Variant.Outlined"
+                          T="int"
+                          Margin="Margin.Dense"/>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudTextField @bind-Value="@impostazioniDto.GiorniLavorativiSettimanali" 
+                          Label="Giorni Lavorativi/Settimana" 
+                          Variant="Variant.Outlined"
+                          T="int"
+                          Margin="Margin.Dense"/>
+        </MudItem>
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       OnClick="SalvaImpostazioni"
+                       StartIcon="@Icons.Material.Filled.Save">
+                Salva Impostazioni
+            </MudButton>
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Secondary" 
+                       OnClick="CaricaDati"
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       Class="ml-2">
+                Aggiorna Dati
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (commesseGantt != null && commesseGantt.Any())
+{
+    <MudPaper Class="pa-4">
+        <div style="width: 100%; height: 600px;">
+            <SfGantt DataSource="@commesseGantt" 
+                     Height="100%" 
+                     Width="100%"
+                     TreeColumnIndex="1"
+                     ProjectStartDate="@GetProjectStartDate()"
+                     ProjectEndDate="@GetProjectEndDate()"
+                     AllowSelection="true"
+                     GridLines="Syncfusion.Blazor.Gantt.GridLine.Both">
+                
+                <GanttTaskFields Id="Id" 
+                                 Name="Codice" 
+                                 StartDate="DataInizioPrevisione" 
+                                 EndDate="DataFinePrevisione"
+                                 Progress="PercentualeCompletamento"
+                                 ResourceInfo="NomeMacchina"
+                                 Duration="DurataPrevistaMinuti"
+                                 Notes="Description">
+                </GanttTaskFields>
+                
+                <GanttColumns>
+                    <GanttColumn Field="Codice" HeaderText="Commessa" Width="150"></GanttColumn>
+                    <GanttColumn Field="Description" HeaderText="Descrizione" Width="200"></GanttColumn>
+                    <GanttColumn Field="NomeMacchina" HeaderText="Macchina" Width="120"></GanttColumn>
+                    <GanttColumn Field="QuantitaRichiesta" HeaderText="Quantità" Width="100"></GanttColumn>
+                    <GanttColumn Field="DataConsegna" HeaderText="Consegna" Width="120" Format="dd/MM/yyyy"></GanttColumn>
+                    <GanttColumn Field="Stato" HeaderText="Stato" Width="100"></GanttColumn>
+                    <GanttColumn Field="PercentualeCompletamento" HeaderText="% Completamento" Width="130"></GanttColumn>
+                </GanttColumns>
+                
+                <GanttLabelSettings TValue="CommessaGanttDto" RightLabel="Description"></GanttLabelSettings>
+                
+                <GanttTooltipSettings TValue="CommessaGanttDto" ShowTooltip="true">
+                    <TaskbarTemplate>
+                        <div style="padding: 10px;">
+                            <strong>@context.Codice</strong><br/>
+                            @context.Description<br/>
+                            Macchina: @context.NomeMacchina<br/>
+                            Quantità: @context.QuantitaRichiesta @context.UoM<br/>
+                            Durata: @context.DurataPrevistaMinuti min<br/>
+                            Stato: @context.Stato<br/>
+                            Setup: @context.TempoSetupMinuti min | 
+                            Ciclo: @context.TempoCicloSecondi s | 
+                            Figure: @context.NumeroFigure
+                        </div>
+                    </TaskbarTemplate>
+                </GanttTooltipSettings>
+                
+                <GanttEvents TValue="CommessaGanttDto" 
+                             TaskbarEdited="OnTaskbarEdited">
+                </GanttEvents>
+            </SfGantt>
+        </div>
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mt-4">
+        <MudText Typo="Typo.h6" Class="mb-3">📊 Legenda Stati</MudText>
+        <MudGrid>
+            <MudItem xs="6" md="2">
+                <MudChip T="string" Color="Color.Success" Size="Size.Small">In Corso</MudChip>
+            </MudItem>
+            <MudItem xs="6" md="2">
+                <MudChip T="string" Color="Color.Error" Size="Size.Small">In Ritardo</MudChip>
+            </MudItem>
+            <MudItem xs="6" md="2">
+                <MudChip T="string" Color="Color.Info" Size="Size.Small">Completata</MudChip>
+            </MudItem>
+            <MudItem xs="6" md="2">
+                <MudChip T="string" Color="Color.Warning" Size="Size.Small">Pianificata</MudChip>
+            </MudItem>
+            <MudItem xs="6" md="2">
+                <MudChip T="string" Color="Color.Default" Size="Size.Small">Sospesa</MudChip>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mt-4">
+        <MudText Typo="Typo.h6" Class="mb-3">📈 Statistiche</MudText>
+        <MudGrid>
+            <MudItem xs="6" md="3">
+                <MudText><strong>Totale Commesse:</strong> @commesseGantt.Count</MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText><strong>Completate:</strong> @commesseGantt.Count(c => c.Stato == "Completata")</MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText><strong>In Corso:</strong> @commesseGantt.Count(c => c.Stato == "InCorso")</MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText><strong>In Ritardo:</strong> @commesseGantt.Count(c => c.Stato == "InRitardo")</MudText>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+}
+else
+{
+    <MudAlert Severity="Severity.Info">
+        Nessuna commessa pianificata. Assicurati che le commesse abbiano una macchina assegnata e date di pianificazione.
+    </MudAlert>
+}
+
+@code {
+    private List<CommessaGanttDto> commesseGantt = new();
+    private ImpostazioniProduzioneDto impostazioniDto = new() 
+    { 
+        TempoSetupMinuti = 90, 
+        OreLavorativeGiornaliere = 8, 
+        GiorniLavorativiSettimanali = 5 
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CaricaImpostazioni();
+        await CaricaDati();
+    }
+
+    private async Task CaricaDati()
+    {
+        try
+        {
+            commesseGantt = await Http.GetFromJsonAsync<List<CommessaGanttDto>>("api/Pianificazione") ?? new();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nel caricamento dei dati: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task CaricaImpostazioni()
+    {
+        try
+        {
+            var impostazioni = await Http.GetFromJsonAsync<ImpostazioniProduzioneDto>("api/Pianificazione/impostazioni");
+            if (impostazioni != null)
+            {
+                impostazioniDto = impostazioni;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nel caricamento delle impostazioni: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private async Task SalvaImpostazioni()
+    {
+        try
+        {
+            var response = await Http.PutAsJsonAsync("api/Pianificazione/impostazioni", impostazioniDto);
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Impostazioni salvate con successo!", Severity.Success);
+                await CaricaDati(); // Ricarica i dati per ricalcolare le durate
+            }
+            else
+            {
+                Snackbar.Add("Errore nel salvataggio delle impostazioni", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OnTaskbarEdited(TaskbarEditedEventArgs<CommessaGanttDto> args)
+    {
+        try
+        {
+            var request = new
+            {
+                DataInizioPrevisione = args.Data.DataInizioPrevisione,
+                NumeroMacchina = args.Data.NumeroMacchina
+            };
+
+            var response = await Http.PutAsJsonAsync($"api/Pianificazione/{args.Data.Id}/pianificazione", request);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Pianificazione aggiornata!", Severity.Success);
+                await CaricaDati();
+            }
+            else
+            {
+                Snackbar.Add("Errore nell'aggiornamento", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private DateTime GetProjectStartDate()
+    {
+        if (!commesseGantt.Any(c => c.DataInizioPrevisione.HasValue))
+            return DateTime.Now;
+        
+        return commesseGantt
+            .Where(c => c.DataInizioPrevisione.HasValue)
+            .Min(c => c.DataInizioPrevisione!.Value)
+            .AddDays(-7); // Inizia una settimana prima
+    }
+
+    private DateTime GetProjectEndDate()
+    {
+        if (!commesseGantt.Any(c => c.DataFinePrevisione.HasValue))
+            return DateTime.Now.AddMonths(1);
+        
+        return commesseGantt
+            .Where(c => c.DataFinePrevisione.HasValue)
+            .Max(c => c.DataFinePrevisione!.Value)
+            .AddDays(7); // Termina una settimana dopo
+    }
+}

@@ -10,6 +10,10 @@ public class Articolo
     public DateTime UltimaModifica { get; set; }
     public DateTime TimestampSync { get; set; }
 
+    // Dati produttivi (per calcolo tempi pianificazione)
+    public int TempoCiclo { get; set; } // Tempo ciclo in secondi
+    public int NumeroFigure { get; set; } // Numero di figure/pezzi per ciclo
+
     // Navigazioni
     public Ricetta? Ricetta { get; set; }
     public ICollection<Commessa> Commesse { get; set; } = new List<Commessa>();

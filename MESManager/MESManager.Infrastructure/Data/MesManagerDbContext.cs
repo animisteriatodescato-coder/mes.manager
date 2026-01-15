@@ -25,6 +25,7 @@ public class MesManagerDbContext : DbContext
     public DbSet<LogSyncEntry> LogSync => Set<LogSyncEntry>();
     public DbSet<SyncState> SyncStates => Set<SyncState>();
     public DbSet<Anime> Anime => Set<Anime>();
+    public DbSet<ImpostazioniProduzione> ImpostazioniProduzione => Set<ImpostazioniProduzione>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
