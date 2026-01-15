@@ -65,12 +65,29 @@ public class SyncCommesseService
                     {
                         Id = Guid.NewGuid(),
                         Codice = codiceCommessa,
+                        
+                        // Riferimenti Mago
+                        SaleOrdId = commessaMago.SaleOrdId,
+                        InternalOrdNo = commessaMago.InternalOrdNo,
+                        ExternalOrdNo = commessaMago.ExternalOrdNo,
+                        Line = commessaMago.Line,
+                        
+                        // Relazioni
                         ClienteId = cliente?.Id,
                         ArticoloId = articolo?.Id,
+                        
+                        // Dati commessa
+                        Description = commessaMago.Description,
                         QuantitaRichiesta = decimal.TryParse(commessaMago.Qty, out var q) ? q : 0,
+                        UoM = commessaMago.UoM,
                         DataConsegna = DateTime.TryParse(commessaMago.ExpectedDeliveryDate, out var dc) ? dc : null,
                         Stato = MapStatoCommessaDaMago(commessaMago.Delivered, commessaMago.Invoiced),
+                        
+                        // Riferimenti
                         RiferimentoOrdineCliente = commessaMago.YourReference,
+                        OurReference = commessaMago.OurReference,
+                        
+                        // Audit
                         UltimaModifica = DateTime.TryParse(commessaMago.TBModified, out var um) ? um : DateTime.MinValue,
                         TimestampSync = DateTime.Now
                     };
@@ -79,13 +96,28 @@ public class SyncCommesseService
                 }
                 else if (DateTime.TryParse(commessaMago.TBModified, out var um3) && um3 > commessa.UltimaModifica)
                 {
+                    // Riferimenti Mago
+                    commessa.SaleOrdId = commessaMago.SaleOrdId;
+                    commessa.InternalOrdNo = commessaMago.InternalOrdNo;
+                    commessa.ExternalOrdNo = commessaMago.ExternalOrdNo;
+                    commessa.Line = commessaMago.Line;
+                    
+                    // Relazioni
                     commessa.ClienteId = cliente?.Id;
                     commessa.ArticoloId = articolo?.Id;
+                    
+                    // Dati commessa
+                    commessa.Description = commessaMago.Description;
                     commessa.QuantitaRichiesta = decimal.TryParse(commessaMago.Qty, out var q2) ? q2 : 0;
+                    commessa.UoM = commessaMago.UoM;
                     commessa.DataConsegna = DateTime.TryParse(commessaMago.ExpectedDeliveryDate, out var dc2) ? dc2 : null;
-                    // Aggiorna lo stato da Mago
                     commessa.Stato = MapStatoCommessaDaMago(commessaMago.Delivered, commessaMago.Invoiced);
+                    
+                    // Riferimenti
                     commessa.RiferimentoOrdineCliente = commessaMago.YourReference;
+                    commessa.OurReference = commessaMago.OurReference;
+                    
+                    // Audit
                     commessa.UltimaModifica = DateTime.TryParse(commessaMago.TBModified, out var um2) ? um2 : DateTime.MinValue;
                     commessa.TimestampSync = DateTime.Now;
                     log.Aggiornati++;

@@ -2,20 +2,23 @@ window.commesseGrid = (function() {
     let gridApi = null;
 
     const columnDefs = [
-        { field: 'Codice', headerName: 'Codice', sortable: true, filter: true, width: 150 },
+        { field: 'Codice', headerName: 'Codice', sortable: true, filter: true, width: 180, pinned: 'left' },
+        { field: 'InternalOrdNo', headerName: 'Num. Ordine', sortable: true, filter: true, width: 130 },
+        { field: 'ExternalOrdNo', headerName: 'Ordine Esterno', sortable: true, filter: true, width: 150 },
+        { field: 'Line', headerName: 'Linea', sortable: true, filter: true, width: 80 },
         { 
             field: 'ArticoloCodice', 
-            headerName: 'Codice Articolo', 
+            headerName: 'Cod. Articolo', 
             sortable: true, 
             filter: true, 
             width: 150 
         },
         { 
-            field: 'ArticoloDescrizione', 
-            headerName: 'Descrizione Articolo', 
+            field: 'Description', 
+            headerName: 'Descrizione', 
             sortable: true, 
             filter: true, 
-            width: 250 
+            width: 300 
         },
         { 
             field: 'ClienteRagioneSociale', 
@@ -24,31 +27,51 @@ window.commesseGrid = (function() {
             filter: true, 
             width: 250 
         },
-        { field: 'QuantitaRichiesta', headerName: 'Quantità', sortable: true, filter: true, width: 120 },
+        { 
+            field: 'QuantitaRichiesta', 
+            headerName: 'Quantità', 
+            sortable: true, 
+            filter: true, 
+            width: 100,
+            type: 'numericColumn'
+        },
+        { field: 'UoM', headerName: 'U.M.', sortable: true, filter: true, width: 80 },
         { 
             field: 'DataConsegna', 
             headerName: 'Data Consegna', 
             sortable: true, 
             filter: true, 
-            width: 150,
+            width: 120,
             valueFormatter: params => params.value ? new Date(params.value).toLocaleDateString('it-IT') : ''
         },
-        { field: 'Stato', headerName: 'Stato', sortable: true, filter: true, width: 150 },
-        { field: 'RiferimentoOrdineCliente', headerName: 'Rif. Ordine Cliente', sortable: true, filter: true, width: 200 },
+        { 
+            field: 'Stato', 
+            headerName: 'Stato', 
+            sortable: true, 
+            filter: true, 
+            width: 120,
+            cellStyle: params => {
+                if (params.value === 'Aperta') return { backgroundColor: '#e8f5e9', color: '#2e7d32' };
+                if (params.value === 'Chiusa') return { backgroundColor: '#fce4ec', color: '#c2185b' };
+                return null;
+            }
+        },
+        { field: 'RiferimentoOrdineCliente', headerName: 'Rif. Cliente', sortable: true, filter: true, width: 150 },
+        { field: 'OurReference', headerName: 'Ns. Riferimento', sortable: true, filter: true, width: 150 },
         { 
             field: 'UltimaModifica', 
             headerName: 'Ultima Modifica', 
             sortable: true, 
             filter: true, 
-            width: 180,
+            width: 160,
             valueFormatter: params => params.value ? new Date(params.value).toLocaleString('it-IT') : ''
         },
         { 
             field: 'TimestampSync', 
-            headerName: 'Timestamp Sync', 
+            headerName: 'Sync', 
             sortable: true, 
             filter: true, 
-            width: 180,
+            width: 160,
             valueFormatter: params => params.value ? new Date(params.value).toLocaleString('it-IT') : ''
         }
     ];
@@ -169,6 +192,16 @@ window.commesseGrid = (function() {
         }
     }
 
+    function getStats() {
+        if (!gridApi) return { total: 0, filtered: 0, selected: 0 };
+        
+        return {
+            total: gridApi.getModel().getRowCount(),
+            filtered: gridApi.getDisplayedRowCount(),
+            selected: gridApi.getSelectedRows().length
+        };
+    }
+
     return {
         init: init,
         setQuickFilter: setQuickFilter,
@@ -177,6 +210,7 @@ window.commesseGrid = (function() {
         getState: getState,
         resetState: resetState,
         setUiVars: setUiVars,
-        exportCsv: exportCsv
+        exportCsv: exportCsv,
+        getStats: getStats
     };
 })();

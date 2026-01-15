@@ -80,11 +80,15 @@
 
     <MudPaper Class="footer-info pa-1 mt-2" Elevation="1">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
-            <MudText Typo="Typo.caption" Color="Color.Secondary">Totale righe: <strong>@totalRows</strong></MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Totale: <strong>@totalRows</strong></MudText>
             <MudDivider Vertical="true" FlexItem="true" />
-            <MudText Typo="Typo.caption" Color="Color.Secondary">Righe filtrate: <strong>@filteredRows</strong></MudText>
+            <MudText Typo="Typo.caption" Color="Color.Success">Aperte: <strong>@aperteCount</strong></MudText>
             <MudDivider Vertical="true" FlexItem="true" />
-            <MudText Typo="Typo.caption" Color="Color.Secondary">Righe selezionate: <strong>@selectedRows</strong></MudText>
+            <MudText Typo="Typo.caption" Color="Color.Default">Chiuse: <strong>@chiuseCount</strong></MudText>
+            <MudDivider Vertical="true" FlexItem="true" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Filtrate: <strong>@filteredRows</strong></MudText>
+            <MudDivider Vertical="true" FlexItem="true" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Selezionate: <strong>@selectedRows</strong></MudText>
             <MudDivider Vertical="true" FlexItem="true" />
             <MudText Typo="Typo.caption" Color="Color.Secondary">Ultimo aggiornamento: <strong>@lastUpdate.ToString("HH:mm:ss")</strong></MudText>
             <MudSpacer />
@@ -146,9 +150,12 @@
     private int totalRows = 0;
     private int filteredRows = 0;
     private int selectedRows = 0;
+    private int aperteCount = 0;
+    private int chiuseCount = 0;
     private DateTime lastUpdate = DateTime.MinValue;
     private bool isLoading = false;
     private string gridStatus = "Pronto";
+    private IJSObjectReference? jsModule;
 
     private async Task OnSearchDebounced(string value)
     {
@@ -169,6 +176,11 @@
         Http.BaseAddress = new Uri(Nav.BaseUri);
         _commesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
         
+        totalRows = _commesse.Count;
+        aperteCount = _commesse.Count(c => c.Stato == "Aperta");
+        chiuseCount = _commesse.Count(c => c.Stato == "Chiusa");
+        lastUpdate = DateTime.Now;
+        
         var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("commesse-grid-settings");
         if (savedSettings != null)
         {
@@ -183,6 +195,27 @@
             // Delay per assicurarsi che gli script siano caricati
             await Task.Delay(300);
             await InitializeGrid();
+            
+            // Sottoscrivi agli eventi di cambio statistiche
+            jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/stats-listener.js");
+            await jsModule.InvokeVoidAsync("subscribeToStatsChanges", DotNetObjectReference.Create(this));
+        }
+    }
+
+    [JSInvokable]
+    public async Task UpdateStats()
+    {
+        try
+        {
+            var stats = await JSRuntime.InvokeAsync<GridStats>("commesseGrid.getStats");
+            totalRows = stats.Total;
+            filteredRows = stats.Filtered;
+            selectedRows = stats.Selected;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating stats: {ex.Message}");
         }
     }
 
@@ -286,6 +319,11 @@
         // Deregistra questa pagina
         PageToolbarService.SetActivePage("commesse", null);
         
+        if (jsModule != null)
+        {
+            await jsModule.DisposeAsync();
+        }
+        
         try
         {
             await SaveSettings();
@@ -327,6 +365,13 @@
         public string RiferimentoOrdineCliente { get; set; } = string.Empty;
         public DateTime UltimaModifica { get; set; }
         public DateTime TimestampSync { get; set; }
+    }
+
+    private class GridStats
+    {
+        public int Total { get; set; }
+        public int Filtered { get; set; }
+        public int Selected { get; set; }
     }
 }
 

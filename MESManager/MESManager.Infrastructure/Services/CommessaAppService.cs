@@ -25,15 +25,32 @@ public class CommessaAppService : ICommessaAppService
             {
                 Id = c.Id,
                 Codice = c.Codice,
+                
+                // Riferimenti Mago
+                SaleOrdId = c.SaleOrdId,
+                InternalOrdNo = c.InternalOrdNo,
+                ExternalOrdNo = c.ExternalOrdNo,
+                Line = c.Line,
+                
+                // Relazioni
                 ArticoloId = c.ArticoloId,
                 ClienteId = c.ClienteId,
                 ClienteRagioneSociale = c.Cliente != null ? c.Cliente.RagioneSociale : null,
                 ArticoloCodice = c.Articolo != null ? c.Articolo.Codice : null,
                 ArticoloDescrizione = c.Articolo != null ? c.Articolo.Descrizione : null,
+                
+                // Dati commessa
+                Description = c.Description,
                 QuantitaRichiesta = c.QuantitaRichiesta,
+                UoM = c.UoM,
                 DataConsegna = c.DataConsegna,
                 Stato = c.Stato.ToString(),
+                
+                // Riferimenti
                 RiferimentoOrdineCliente = c.RiferimentoOrdineCliente,
+                OurReference = c.OurReference,
+                
+                // Audit
                 UltimaModifica = c.UltimaModifica,
                 TimestampSync = c.TimestampSync
             })
