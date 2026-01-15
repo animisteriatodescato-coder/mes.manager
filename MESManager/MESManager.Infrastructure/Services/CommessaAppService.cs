@@ -63,6 +63,7 @@ public class CommessaAppService : ICommessaAppService
                 CompanyName = c.CompanyName,
                 ArticoloCodice = c.Articolo != null ? c.Articolo.Codice : null,
                 ArticoloDescrizione = c.Articolo != null ? c.Articolo.Descrizione : null,
+                ArticoloPrezzo = c.Articolo != null ? c.Articolo.Prezzo : null,
                 
                 // Dati commessa
                 Description = c.Description,
@@ -74,6 +75,9 @@ public class CommessaAppService : ICommessaAppService
                 // Riferimenti
                 RiferimentoOrdineCliente = c.RiferimentoOrdineCliente,
                 OurReference = c.OurReference,
+                
+                // Programmazione Macchine
+                NumeroMacchina = c.NumeroMacchina,
                 
                 // Audit
                 UltimaModifica = c.UltimaModifica,
@@ -169,6 +173,15 @@ public class CommessaAppService : ICommessaAppService
         if (commessa == null) throw new Exception("Commessa non trovata");
         
         commessa.Stato = Enum.Parse<StatoCommessa>(stato);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task AggiornaNumeroMacchinaAsync(Guid id, int? numeroMacchina)
+    {
+        var commessa = await _context.Commesse.FindAsync(id);
+        if (commessa == null) throw new Exception("Commessa non trovata");
+        
+        commessa.NumeroMacchina = numeroMacchina;
         await _context.SaveChangesAsync();
     }
 

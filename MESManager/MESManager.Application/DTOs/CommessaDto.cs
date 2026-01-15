@@ -20,6 +20,7 @@ public class CommessaDto
     public string? CompanyName { get; set; } // Nome cliente da Mago
     public string? ArticoloCodice { get; set; }
     public string? ArticoloDescrizione { get; set; }
+    public decimal? ArticoloPrezzo { get; set; }
     
     // Dati commessa
     public string? Description { get; set; }
@@ -31,6 +32,9 @@ public class CommessaDto
     // Riferimenti
     public string? RiferimentoOrdineCliente { get; set; }
     public string? OurReference { get; set; }
+    
+    // Programmazione Macchine
+    public int? NumeroMacchina { get; set; }
     
     // Audit
     public DateTime UltimaModifica { get; set; }

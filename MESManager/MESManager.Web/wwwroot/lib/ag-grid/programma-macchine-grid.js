@@ -1,6 +1,11 @@
-window.commesseAperteGrid = (function() {
+window.programmaMacchineGrid = (function() {
     let gridApi = null;
-    let dotNetHelper = null;
+
+    // Colori alternati per le macchine (azzurro e verde pallido)
+    const machineColors = {
+        even: '#e3f2fd', // azzurro pallido
+        odd: '#e8f5e9'   // verde pallido
+    };
 
     const columnDefs = [
         { 
@@ -10,19 +15,8 @@ window.commesseAperteGrid = (function() {
             filter: 'agNumberColumnFilter', 
             width: 70, 
             pinned: 'left',
-            editable: true,
-            cellEditor: 'agNumberCellEditor',
-            cellEditorParams: {
-                min: 0,
-                max: 99,
-                precision: 0
-            },
-            cellStyle: params => {
-                if (params.value != null && params.value > 0) {
-                    return { backgroundColor: '#e3f2fd', fontWeight: 'bold', textAlign: 'center' };
-                }
-                return { textAlign: 'center' };
-            }
+            sort: 'asc',
+            cellStyle: { fontWeight: 'bold', textAlign: 'center' }
         },
         { field: 'codice', headerName: 'Codice', sortable: true, filter: true, width: 180, pinned: 'left' },
         { field: 'internalOrdNo', headerName: 'Num. Ordine', sortable: true, filter: true, width: 130 },
@@ -80,12 +74,7 @@ window.commesseAperteGrid = (function() {
             headerName: 'Stato', 
             sortable: true, 
             filter: true, 
-            width: 120,
-            cellStyle: params => {
-                if (params.value === 'Aperta') return { backgroundColor: '#e8f5e9', color: '#2e7d32' };
-                if (params.value === 'Chiusa') return { backgroundColor: '#fce4ec', color: '#c2185b' };
-                return null;
-            }
+            width: 120
         },
         { field: 'riferimentoOrdineCliente', headerName: 'Rif. Cliente', sortable: true, filter: true, width: 150 },
         { field: 'ourReference', headerName: 'Ns. Riferimento', sortable: true, filter: true, width: 150 },
@@ -130,6 +119,12 @@ window.commesseAperteGrid = (function() {
         }
     ];
 
+    // Calcola il colore basato sul numero macchina (alternando tra azzurro e verde)
+    function getMachineColor(numeroMacchina) {
+        if (numeroMacchina == null || numeroMacchina <= 0) return null;
+        return numeroMacchina % 2 === 0 ? machineColors.even : machineColors.odd;
+    }
+
     function init(gridId, data, savedColumnState) {
         const gridDiv = document.getElementById(gridId);
         if (!gridDiv) {
@@ -137,15 +132,12 @@ window.commesseAperteGrid = (function() {
             return;
         }
 
-        console.log('Initializing commesse aperte grid with data:', data);
-        console.log('Data length:', data ? data.length : 'null');
-        if (data && data.length > 0) {
-            console.log('First row sample:', data[0]);
-        }
+        // Filter only rows with numeroMacchina assigned
+        const filteredData = data.filter(row => row.numeroMacchina != null && row.numeroMacchina > 0);
 
         const gridOptions = {
             columnDefs: columnDefs,
-            rowData: data,
+            rowData: filteredData,
             defaultColDef: {
                 resizable: true,
                 sortable: true,
@@ -153,7 +145,8 @@ window.commesseAperteGrid = (function() {
             },
             getRowStyle: params => {
                 if (params.data && params.data.numeroMacchina != null && params.data.numeroMacchina > 0) {
-                    return { backgroundColor: '#e3f2fd' };
+                    const color = getMachineColor(params.data.numeroMacchina);
+                    return { backgroundColor: color };
                 }
                 return null;
             },
@@ -184,7 +177,6 @@ window.commesseAperteGrid = (function() {
             rowSelection: 'single',
             onGridReady: (params) => {
                 gridApi = params.api;
-                console.log('Commesse Aperte Grid ready, rowData count:', gridApi.getDisplayedRowCount());
                 if (savedColumnState) {
                     try {
                         gridApi.applyColumnState({
@@ -197,54 +189,36 @@ window.commesseAperteGrid = (function() {
                 }
             },
             onColumnMoved: () => {
-                window.dispatchEvent(new CustomEvent('commesseAperteGridStateChanged'));
+                window.dispatchEvent(new CustomEvent('programmaMacchineGridStateChanged'));
             },
             onColumnResized: () => {
-                window.dispatchEvent(new CustomEvent('commesseAperteGridStateChanged'));
+                window.dispatchEvent(new CustomEvent('programmaMacchineGridStateChanged'));
             },
             onColumnVisible: () => {
-                window.dispatchEvent(new CustomEvent('commesseAperteGridStateChanged'));
+                window.dispatchEvent(new CustomEvent('programmaMacchineGridStateChanged'));
             },
             onSortChanged: () => {
-                window.dispatchEvent(new CustomEvent('commesseAperteGridStateChanged'));
+                window.dispatchEvent(new CustomEvent('programmaMacchineGridStateChanged'));
             },
             onSelectionChanged: () => {
-                window.dispatchEvent(new CustomEvent('commesseAperteGridStatsChanged'));
+                window.dispatchEvent(new CustomEvent('programmaMacchineGridStatsChanged'));
             },
             onFilterChanged: () => {
-                window.dispatchEvent(new CustomEvent('commesseAperteGridStatsChanged'));
+                window.dispatchEvent(new CustomEvent('programmaMacchineGridStatsChanged'));
             },
             onModelUpdated: () => {
-                window.dispatchEvent(new CustomEvent('commesseAperteGridStatsChanged'));
-            },
-            onCellValueChanged: async (event) => {
-                if (event.colDef.field === 'numeroMacchina') {
-                    const id = event.data.id;
-                    const value = event.newValue;
-                    try {
-                        await fetch(`/api/Commesse/${id}/numero-macchina`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ numeroMacchina: value })
-                        });
-                        // Refresh row style
-                        gridApi.redrawRows({ rowNodes: [event.node] });
-                        // Dispatch event for Programma Macchine update
-                        window.dispatchEvent(new CustomEvent('commessaNumeroMacchinaChanged', { 
-                            detail: { id: id, numeroMacchina: value } 
-                        }));
-                    } catch (err) {
-                        console.error('Error updating numero macchina:', err);
-                    }
-                }
+                window.dispatchEvent(new CustomEvent('programmaMacchineGridStatsChanged'));
             }
         };
 
         agGrid.createGrid(gridDiv, gridOptions);
     }
 
-    function setDotNetHelper(helper) {
-        dotNetHelper = helper;
+    function updateData(data) {
+        if (gridApi) {
+            const filteredData = data.filter(row => row.numeroMacchina != null && row.numeroMacchina > 0);
+            gridApi.setGridOption('rowData', filteredData);
+        }
     }
 
     function setQuickFilter(searchText) {
@@ -270,49 +244,6 @@ window.commesseAperteGrid = (function() {
         }));
     }
 
-    function getState() {
-        if (!gridApi) return null;
-        return JSON.stringify(gridApi.getColumnState());
-    }
-
-    function resetState() {
-        if (gridApi) {
-            gridApi.resetColumnState();
-            gridApi.setFilterModel(null);
-        }
-    }
-
-    function setUiVars(fontSize, rowHeight, densityPadding, zebra, gridLines) {
-        const gridDiv = document.querySelector('.ag-theme-alpine');
-        if (gridDiv) {
-            gridDiv.style.setProperty('--ag-font-size', fontSize + 'px');
-            gridDiv.style.setProperty('--ag-row-height', rowHeight + 'px');
-            gridDiv.style.setProperty('--ag-cell-horizontal-padding', densityPadding);
-            
-            if (zebra) {
-                gridDiv.style.setProperty('--ag-odd-row-background-color', '#f9f9f9');
-            } else {
-                gridDiv.style.setProperty('--ag-odd-row-background-color', 'transparent');
-            }
-            
-            if (gridLines) {
-                gridDiv.style.setProperty('--ag-row-border-width', '1px');
-                gridDiv.style.setProperty('--ag-row-border-color', '#ddd');
-            } else {
-                gridDiv.style.setProperty('--ag-row-border-width', '0px');
-            }
-        }
-    }
-
-    function exportCsv() {
-        if (gridApi) {
-            gridApi.exportDataAsCsv({
-                fileName: 'commesse_aperte_export.csv',
-                columnSeparator: ';'
-            });
-        }
-    }
-
     function getStats() {
         if (!gridApi) return { total: 0, filtered: 0, selected: 0 };
         
@@ -323,22 +254,60 @@ window.commesseAperteGrid = (function() {
         };
     }
 
+    function exportCsv() {
+        if (gridApi) {
+            gridApi.exportDataAsCsv({
+                fileName: 'programma_macchine_export.csv',
+                columnSeparator: ';'
+            });
+        }
+    }
+
+    function resetState() {
+        if (gridApi) {
+            gridApi.resetColumnState();
+            gridApi.setFilterModel(null);
+        }
+    }
+
+    function getState() {
+        if (!gridApi) return null;
+        return JSON.stringify(gridApi.getColumnState());
+    }
+
     function toggleColumnPanel() {
         if (gridApi) {
             gridApi.openToolPanel('columns');
         }
     }
 
+    function setUiVars(fontSize, rowHeight, densityPadding, zebra, gridLines) {
+        const gridDiv = document.querySelector('#programmaMacchineGrid');
+        if (gridDiv) {
+            gridDiv.style.setProperty('--ag-font-size', fontSize + 'px');
+            gridDiv.style.setProperty('--ag-row-height', rowHeight + 'px');
+            gridDiv.style.setProperty('--ag-cell-horizontal-padding', densityPadding);
+            
+            if (gridLines) {
+                gridDiv.style.setProperty('--ag-row-border-width', '1px');
+                gridDiv.style.setProperty('--ag-row-border-color', '#ddd');
+            } else {
+                gridDiv.style.setProperty('--ag-row-border-width', '0px');
+            }
+        }
+    }
+
     return {
         init: init,
+        updateData: updateData,
         setQuickFilter: setQuickFilter,
         setColumnVisible: setColumnVisible,
         getAllColumns: getAllColumns,
-        getState: getState,
-        resetState: resetState,
-        setUiVars: setUiVars,
-        exportCsv: exportCsv,
         getStats: getStats,
-        toggleColumnPanel: toggleColumnPanel
+        exportCsv: exportCsv,
+        resetState: resetState,
+        getState: getState,
+        toggleColumnPanel: toggleColumnPanel,
+        setUiVars: setUiVars
     };
 })();

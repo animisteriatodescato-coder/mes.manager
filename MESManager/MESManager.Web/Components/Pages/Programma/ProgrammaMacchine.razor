@@ -1,9 +1,421 @@
 @page "/programma/programma-macchine"
+@using MESManager.Application.DTOs
+@using MESManager.Web.Models
+@using MESManager.Web.Services
+@using Microsoft.JSInterop
+@using System.Text.Json
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject PreferencesService PreferencesService
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
 
 <PageTitle>Programma Macchine</PageTitle>
 
-<MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mb-4" StartIcon="@Icons.Material.Filled.Add">
-    Nuovo Programma
-</MudButton>
+<div class="programma-macchine-page">
+    <div class="settings-panel">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
+            <MudText Typo="Typo.h6" data-testid="programma-macchine-title">Programma Macchine</MudText>
+            <MudSpacer />
+            
+            <MudTextField @bind-Value="searchText"
+                         Placeholder="Cerca in tutte le colonne..."
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         Style="width: 280px;"
+                         Immediate="true"
+                         DebounceInterval="280"
+                         OnDebounceIntervalElapsed="OnSearchDebounced" />
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshData">Aggiorna</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.RestartAlt" OnClick="@ResetGrid">Reset</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)">Impostazioni</MudButton>
+        </MudStack>
+        
+        @if (showSettings)
+        {
+            <MudPaper Class="pa-4 mt-2" Elevation="1">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Wrap="Wrap.Wrap">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText>Font Size:</MudText>
+                        <MudNumericField Value="@settings.FontSize" Min="10" Max="24" Step="1" 
+                                        Variant="Variant.Outlined" Margin="Margin.Dense"
+                                        ValueChanged="@(async (int val) => { settings.FontSize = val; await ApplyUiSettings(); })" 
+                                        Style="width: 80px;" />
+                    </MudStack>
+                    
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText>Row Height:</MudText>
+                        <MudNumericField Value="@settings.RowHeight" Min="25" Max="80" Step="5" 
+                                        Variant="Variant.Outlined" Margin="Margin.Dense"
+                                        ValueChanged="@(async (int val) => { settings.RowHeight = val; await ApplyUiSettings(); })" 
+                                        Style="width: 80px;" />
+                    </MudStack>
+                    
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText>Density:</MudText>
+                        <MudSelect Value="@settings.Density" 
+                                  Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  ValueChanged="@(async (string val) => { settings.Density = val; await ApplyUiSettings(); })" 
+                                  Style="width: 120px;">
+                            <MudSelectItem Value="@("Compact")">Compact</MudSelectItem>
+                            <MudSelectItem Value="@("Normal")">Normal</MudSelectItem>
+                            <MudSelectItem Value="@("Comfortable")">Comfortable</MudSelectItem>
+                        </MudSelect>
+                    </MudStack>
+                    
+                    <MudCheckBox Value="@settings.GridLines" Label="Grid Lines" Color="Color.Primary"
+                                ValueChanged="@(async (bool val) => { settings.GridLines = val; await ApplyUiSettings(); })" />
+                </MudStack>
+            </MudPaper>
+        }
+    </div>
 
-<MudText>Pagina predisposta per programmazione macchine</MudText>
+    <div id="programmaMacchineGrid" class="ag-theme-alpine" 
+         data-testid="programma-macchine-grid"
+         style="width: 100%; height: calc(100vh - 150px);">
+    </div>
+
+    <MudDialog @bind-Visible="showColumnDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Medium }">
+        <TitleContent>
+            <MudText Typo="Typo.h6">
+                <MudIcon Icon="@Icons.Material.Filled.ViewColumn" Class="mr-2" />
+                Gestione Colonne
+            </MudText>
+        </TitleContent>
+        <DialogContent>
+            <MudList T="string" Dense="true">
+                @foreach (var col in columnList)
+                {
+                    var currentCol = col;
+                    <MudListItem T="string">
+                        <MudSwitch Value="@currentCol.Visible" 
+                                   Color="Color.Primary" 
+                                   Label="@currentCol.HeaderName"
+                                   T="bool"
+                                   ValueChanged="@(async (bool val) => { currentCol.Visible = val; await OnColumnVisibilityChanged(currentCol.Field, val); })" />
+                    </MudListItem>
+                }
+            </MudList>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="@(() => showColumnDialog = false)">Chiudi</MudButton>
+        </DialogActions>
+    </MudDialog>
+
+    <MudPaper Class="footer-info pa-1 mt-2" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+            <MudText Typo="Typo.caption" Color="Color.Primary">Commesse Programmate: <strong>@totalRows</strong></MudText>
+            <MudDivider Vertical="true" FlexItem="true" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Filtrate: <strong>@filteredRows</strong></MudText>
+            <MudDivider Vertical="true" FlexItem="true" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Selezionate: <strong>@selectedRows</strong></MudText>
+            <MudDivider Vertical="true" FlexItem="true" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Ultimo aggiornamento: <strong>@lastUpdate.ToString("HH:mm:ss")</strong></MudText>
+            <MudSpacer />
+            <MudStack Row="true" Spacing="1">
+                <MudChip T="string" Size="Size.Small" Style="background-color: #e3f2fd;">Macchine Pari</MudChip>
+                <MudChip T="string" Size="Size.Small" Style="background-color: #e8f5e9;">Macchine Dispari</MudChip>
+            </MudStack>
+            <MudChip T="string" Size="Size.Small" Color="@(isLoading ? Color.Warning : Color.Success)" 
+                     Icon="@(isLoading ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.CheckCircle)">
+                @gridStatus
+            </MudChip>
+        </MudStack>
+    </MudPaper>
+</div>
+
+<style>
+    .programma-macchine-page {
+        position: relative;
+    }
+    
+    /* Gestione Colonne in dark mode */
+    @@media (prefers-color-scheme: dark) {
+        .ag-theme-alpine .ag-side-bar,
+        .ag-theme-alpine .ag-tool-panel-wrapper,
+        .ag-theme-alpine .ag-column-select-panel,
+        .ag-theme-alpine .ag-column-panel {
+            background-color: #1e1e1e !important;
+        }
+
+        .ag-theme-alpine .ag-column-select-header,
+        .ag-theme-alpine .ag-column-select-column-label,
+        .ag-theme-alpine .ag-column-select-column-group,
+        .ag-theme-alpine .ag-column-select-header-label,
+        .ag-theme-alpine .ag-filter-toolpanel-header {
+            color: #201e1e !important;
+        }
+
+        .ag-theme-alpine .ag-input-field-input,
+        .ag-theme-alpine .ag-text-field-input {
+            background-color: #2d2d2d !important;
+            color: #625454 !important;
+            border-color: #444 !important;
+        }
+    }
+</style>
+
+@code {
+    private List<CommessaDto> _commesse = new();
+    private List<CommessaDto> _allCommesse = new();
+    private GridUiSettings settings = new();
+    private bool showSettings = false;
+    private string searchText = string.Empty;
+    private bool showColumnDialog = false;
+    private List<ColumnInfo> columnList = new();
+    
+    private int totalRows = 0;
+    private int filteredRows = 0;
+    private int selectedRows = 0;
+    private DateTime lastUpdate = DateTime.MinValue;
+    private bool isLoading = false;
+    private string gridStatus = "Pronto";
+    private IJSObjectReference? jsModule;
+
+    private async Task OnSearchDebounced(string value)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.setQuickFilter", value);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error filtering grid: {ex.Message}");
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Http.BaseAddress = new Uri(Nav.BaseUri);
+        await LoadData();
+        
+        var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("programma-macchine-grid-settings");
+        if (savedSettings != null)
+        {
+            settings = savedSettings;
+        }
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        gridStatus = "Caricamento...";
+        StateHasChanged();
+        
+        _allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
+        
+        // Filter only rows with numeroMacchina assigned
+        _commesse = _allCommesse.Where(c => c.NumeroMacchina != null && c.NumeroMacchina > 0).ToList();
+        
+        totalRows = _commesse.Count;
+        filteredRows = _commesse.Count;
+        lastUpdate = DateTime.Now;
+        isLoading = false;
+        gridStatus = "Pronto";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Task.Delay(300);
+            await InitializeGrid();
+            
+            jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/stats-listener-programma.js");
+            await jsModule.InvokeVoidAsync("subscribeToStatsChanges", DotNetObjectReference.Create(this));
+        }
+    }
+
+    [JSInvokable]
+    public async Task UpdateStats()
+    {
+        try
+        {
+            var stats = await JSRuntime.InvokeAsync<GridStats>("programmaMacchineGrid.getStats");
+            totalRows = stats.Total;
+            filteredRows = stats.Filtered;
+            selectedRows = stats.Selected;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating stats: {ex.Message}");
+        }
+    }
+
+    [JSInvokable]
+    public async Task SaveGridStateFromJs()
+    {
+        await SaveGridState();
+    }
+
+    private async Task InitializeGrid()
+    {
+        try
+        {
+            var exists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.programmaMacchineGrid !== 'undefined'");
+            if (!exists)
+            {
+                Console.WriteLine("ERROR: window.programmaMacchineGrid is not defined!");
+                return;
+            }
+
+            var jsonOptions = new JsonSerializerOptions 
+            { 
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false
+            };
+            var jsonData = JsonSerializer.Serialize(_allCommesse, jsonOptions);
+
+            await JSRuntime.InvokeVoidAsync("eval", $"programmaMacchineGrid.init('programmaMacchineGrid', JSON.parse({System.Text.Json.JsonSerializer.Serialize(jsonData)}), {System.Text.Json.JsonSerializer.Serialize(settings.ColumnStateJson)})");
+            await ApplyUiSettings();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing grid: {ex.Message}");
+        }
+    }
+
+    private async Task ToggleColumnPanel()
+    {
+        try
+        {
+            columnList = await JSRuntime.InvokeAsync<List<ColumnInfo>>("programmaMacchineGrid.getAllColumns");
+            showColumnDialog = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error toggling column panel: {ex.Message}");
+        }
+    }
+
+    private async Task OnColumnVisibilityChanged(string field, bool visible)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.setColumnVisible", field, visible);
+            await SaveGridState();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error changing column visibility: {ex.Message}");
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadData();
+        
+        try
+        {
+            var jsonOptions = new JsonSerializerOptions 
+            { 
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false
+            };
+            var jsonData = JsonSerializer.Serialize(_allCommesse, jsonOptions);
+            await JSRuntime.InvokeVoidAsync("eval", $"programmaMacchineGrid.updateData(JSON.parse({System.Text.Json.JsonSerializer.Serialize(jsonData)}))");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating grid: {ex.Message}");
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task ResetGrid()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.resetState");
+            settings = new GridUiSettings();
+            await PreferencesService.RemoveAsync("programma-macchine-grid-settings");
+            await ApplyUiSettings();
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    private async Task ExportCsv()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.exportCsv");
+        }
+        catch { }
+    }
+
+    private async Task ApplyUiSettings()
+    {
+        try
+        {
+            var densityPadding = GetDensityPadding();
+            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.setUiVars", 
+                settings.FontSize, 
+                settings.RowHeight, 
+                densityPadding,
+                false, // zebra non usato (usiamo colori per macchina)
+                settings.GridLines);
+            await SaveSettings();
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    private string GetDensityPadding()
+    {
+        return settings.Density switch
+        {
+            "Compact" => "4px",
+            "Comfortable" => "12px",
+            _ => "8px"
+        };
+    }
+
+    private async Task SaveGridState()
+    {
+        await SaveSettings();
+    }
+
+    private async Task SaveSettings()
+    {
+        try
+        {
+            var state = await JSRuntime.InvokeAsync<string>("programmaMacchineGrid.getState");
+            settings.ColumnStateJson = state;
+            await PreferencesService.SetAsync("programma-macchine-grid-settings", settings);
+        }
+        catch { }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (jsModule != null)
+        {
+            await jsModule.DisposeAsync();
+        }
+        
+        try
+        {
+            await SaveSettings();
+        }
+        catch { }
+    }
+
+    private class GridStats
+    {
+        public int Total { get; set; }
+        public int Filtered { get; set; }
+        public int Selected { get; set; }
+    }
+
+    private class ColumnInfo
+    {
+        public string Field { get; set; } = string.Empty;
+        public string HeaderName { get; set; } = string.Empty;
+        public bool Visible { get; set; }
+    }
+}

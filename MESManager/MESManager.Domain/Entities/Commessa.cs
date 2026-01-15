@@ -29,6 +29,9 @@ public class Commessa
     public string? RiferimentoOrdineCliente { get; set; } // YourReference
     public string? OurReference { get; set; } // Nostro riferimento
     
+    // Programmazione Macchine
+    public int? NumeroMacchina { get; set; } // Numero macchina assegnata
+    
     // Audit
     public DateTime UltimaModifica { get; set; }
     public DateTime TimestampSync { get; set; }

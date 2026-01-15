@@ -34,9 +34,21 @@ public class CommesseController : ControllerBase
         await _service.AggiornaStatoAsync(id, request.Stato);
         return Ok();
     }
+
+    [HttpPatch("{id}/numero-macchina")]
+    public async Task<ActionResult> UpdateNumeroMacchina(Guid id, [FromBody] UpdateNumeroMacchinaRequest request)
+    {
+        await _service.AggiornaNumeroMacchinaAsync(id, request.NumeroMacchina);
+        return Ok();
+    }
 }
 
 public class UpdateStatoRequest
 {
     public string Stato { get; set; } = string.Empty;
+}
+
+public class UpdateNumeroMacchinaRequest
+{
+    public int? NumeroMacchina { get; set; }
 }
