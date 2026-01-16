@@ -4,3 +4,25 @@
 <PageTitle>Gantt Macchine</PageTitle>
 
 <MudAlert Severity="Severity.Info">Pagina predisposta per integrazione libreria Gantt</MudAlert>
+
+<div id="gantt-chart" style="width: 100%; height: 500px;"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Example Gantt library initialization
+        const tasks = [
+            { id: 1, name: "Task 1", start: "2026-01-16", end: "2026-01-18" },
+            { id: 2, name: "Task 2", start: "2026-01-17", end: "2026-01-19" }
+        ];
+
+        const gantt = new Gantt("#gantt-chart", tasks, {
+            view_modes: ['Day', 'Week', 'Month'],
+            bar_height: 20,
+            padding: 18
+        });
+    });
+</script>
+
+<!-- Include the Gantt library -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.min.js"></script>
