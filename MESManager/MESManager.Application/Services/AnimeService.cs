@@ -65,6 +65,19 @@ namespace MESManager.Application.Services
             entity.IdArticolo = dto.IdArticolo;
             entity.MacchineSuDisponibili = dto.MacchineSuDisponibili;
             entity.TrasmettiTutto = dto.TrasmettiTutto;
+            entity.Colla = dto.Colla;
+            entity.Sabbia = dto.Sabbia;
+            entity.Vernice = dto.Vernice;
+            entity.Cliente = dto.Cliente;
+            entity.TogliereSparo = dto.TogliereSparo;
+            entity.QuantitaPiano = dto.QuantitaPiano;
+            entity.NumeroPiani = dto.NumeroPiani;
+            entity.Figure = dto.Figure;
+            entity.Piastra = dto.Piastra;
+            entity.Maschere = dto.Maschere;
+            entity.Incollata = dto.Incollata;
+            entity.Assemblata = dto.Assemblata;
+            entity.ArmataL = dto.ArmataL;
             
             await _repo.UpdateAsync(entity);
             return MapToDto(entity);
@@ -99,6 +112,19 @@ namespace MESManager.Application.Services
                 IdArticolo = entity.IdArticolo,
                 MacchineSuDisponibili = entity.MacchineSuDisponibili,
                 TrasmettiTutto = entity.TrasmettiTutto,
+                Colla = entity.Colla,
+                Sabbia = entity.Sabbia,
+                Vernice = entity.Vernice,
+                Cliente = entity.Cliente,
+                TogliereSparo = entity.TogliereSparo,
+                QuantitaPiano = entity.QuantitaPiano,
+                NumeroPiani = entity.NumeroPiani,
+                Figure = entity.Figure,
+                Piastra = entity.Piastra,
+                Maschere = entity.Maschere,
+                Incollata = entity.Incollata,
+                Assemblata = entity.Assemblata,
+                ArmataL = entity.ArmataL,
                 DataImportazione = entity.DataImportazione
             };
         }
@@ -127,6 +153,19 @@ namespace MESManager.Application.Services
                 IdArticolo = dto.IdArticolo,
                 MacchineSuDisponibili = dto.MacchineSuDisponibili,
                 TrasmettiTutto = dto.TrasmettiTutto,
+                Colla = dto.Colla,
+                Sabbia = dto.Sabbia,
+                Vernice = dto.Vernice,
+                Cliente = dto.Cliente,
+                TogliereSparo = dto.TogliereSparo,
+                QuantitaPiano = dto.QuantitaPiano,
+                NumeroPiani = dto.NumeroPiani,
+                Figure = dto.Figure,
+                Piastra = dto.Piastra,
+                Maschere = dto.Maschere,
+                Incollata = dto.Incollata,
+                Assemblata = dto.Assemblata,
+                ArmataL = dto.ArmataL,
                 DataImportazione = dto.DataImportazione
             };
         }

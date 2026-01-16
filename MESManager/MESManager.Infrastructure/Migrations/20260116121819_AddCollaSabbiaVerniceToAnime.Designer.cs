@@ -4,6 +4,7 @@ using MESManager.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MESManager.Infrastructure.Migrations
 {
     [DbContext(typeof(MesManagerDbContext))]
-    partial class MesManagerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260116121819_AddCollaSabbiaVerniceToAnime")]
+    partial class AddCollaSabbiaVerniceToAnime
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,16 +39,7 @@ namespace MESManager.Infrastructure.Migrations
                     b.Property<int?>("Altezza")
                         .HasColumnType("int");
 
-                    b.Property<string>("ArmataL")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Assemblata")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Ciclo")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Cliente")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CodiceAnime")
@@ -71,17 +65,11 @@ namespace MESManager.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Figure")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int?>("IdArticolo")
                         .HasColumnType("int");
 
                     b.Property<int?>("Imballo")
                         .HasColumnType("int");
-
-                    b.Property<string>("Incollata")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("Larghezza")
                         .HasColumnType("int");
@@ -89,31 +77,16 @@ namespace MESManager.Infrastructure.Migrations
                     b.Property<string>("MacchineSuDisponibili")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Maschere")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("NumeroPiani")
-                        .HasColumnType("int");
-
                     b.Property<string>("Peso")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Piastra")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("Profondita")
                         .HasColumnType("int");
 
-                    b.Property<int?>("QuantitaPiano")
-                        .HasColumnType("int");
-
                     b.Property<string>("Sabbia")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TogliereSparo")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("TrasmettiTutto")
@@ -125,8 +98,8 @@ namespace MESManager.Infrastructure.Migrations
                     b.Property<string>("UnitaMisura")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UtenteModificaRecord")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime?>("UtenteModificaRecord")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Vernice")
                         .HasColumnType("nvarchar(max)");

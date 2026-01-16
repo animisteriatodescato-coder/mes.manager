@@ -167,7 +167,9 @@ public partial class MainLayout : IDisposable
             "statistiche/ordini" => "Statistiche Ordini",
             
             // Impostazioni
+            "impostazioni/gantt" => "Gantt Macchine",
             "impostazioni/calendario" => "Calendario",
+            "impostazioni/tabelle" => "Tabelle",
             "impostazioni/utenti" => "Utenti",
             "impostazioni/operatori" => "Operatori",
             "impostazioni/generali" => "Impostazioni Generali",

@@ -13,7 +13,7 @@ namespace MESManager.Domain.Entities
         
         public DateTime? DataModificaRecord { get; set; }
         
-        public DateTime? UtenteModificaRecord { get; set; }
+        public string? UtenteModificaRecord { get; set; }
         
         public string? UnitaMisura { get; set; }
         
@@ -44,6 +44,32 @@ namespace MESManager.Domain.Entities
         public string? MacchineSuDisponibili { get; set; }
         
         public bool TrasmettiTutto { get; set; }
+        
+        public string? Colla { get; set; }
+        
+        public string? Sabbia { get; set; }
+        
+        public string? Vernice { get; set; }
+        
+        public string? Cliente { get; set; }
+        
+        public string? TogliereSparo { get; set; }
+        
+        public int? QuantitaPiano { get; set; }
+        
+        public int? NumeroPiani { get; set; }
+        
+        public string? Figure { get; set; }
+        
+        public string? Piastra { get; set; }
+        
+        public string? Maschere { get; set; }
+        
+        public string? Incollata { get; set; }
+        
+        public string? Assemblata { get; set; }
+        
+        public string? ArmataL { get; set; }
         
         // Timestamp di importazione
         public DateTime DataImportazione { get; set; }

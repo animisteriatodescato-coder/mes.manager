@@ -25,6 +25,12 @@ namespace MESManager.Infrastructure.Repositories
             return await _context.Anime.FindAsync(id);
         }
 
+        public async Task<Anime?> GetByCodiceArticoloAsync(string codiceArticolo)
+        {
+            return await _context.Anime
+                .FirstOrDefaultAsync(a => a.CodiceArticolo == codiceArticolo);
+        }
+
         public async Task AddAsync(Anime entity)
         {
             _context.Anime.Add(entity);

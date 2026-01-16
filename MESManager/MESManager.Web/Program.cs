@@ -13,6 +13,10 @@ using MESManager.Web.Services;
 using MESManager.Application.Services;
 using MESManager.Application.Interfaces;
 using Syncfusion.Blazor;
+using OfficeOpenXml;
+
+// Configura licenza EPPlus per uso non commerciale
+ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,6 +49,7 @@ builder.Services.AddScoped(sp => new HttpClient
 // Custom Services
 builder.Services.AddScoped<PreferencesService>();
 builder.Services.AddScoped<AnimeImportService>();
+builder.Services.AddScoped<AnimeExcelImportService>();
 builder.Services.AddScoped<IPianificazioneService, PianificazioneService>();
 builder.Services.AddHttpClient<PlcDataService>(client =>
 {

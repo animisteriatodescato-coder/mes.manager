@@ -8,6 +8,7 @@ namespace MESManager.Application.Interfaces
     {
         Task<List<Anime>> GetAllAsync();
         Task<Anime?> GetByIdAsync(int id);
+        Task<Anime?> GetByCodiceArticoloAsync(string codiceArticolo);
         Task AddAsync(Anime entity);
         Task UpdateAsync(Anime entity);
         Task<bool> DeleteAsync(int id);
