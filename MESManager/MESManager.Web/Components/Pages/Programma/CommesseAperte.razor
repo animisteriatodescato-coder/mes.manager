@@ -198,7 +198,6 @@
     {
         PageToolbarService.SetActivePage("commesse-aperte", this);
         
-        Http.BaseAddress = new Uri(Nav.BaseUri);
         Console.WriteLine("Fetching commesse from API...");
         var allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
         

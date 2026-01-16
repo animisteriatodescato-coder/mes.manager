@@ -311,7 +311,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Http.BaseAddress = new Uri(Nav.BaseUri);
         await LoadData();
         
         _timer = new System.Threading.Timer(async _ =>

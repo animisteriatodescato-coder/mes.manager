@@ -205,7 +205,6 @@
     {
         PageToolbarService.SetActivePage("commesse", this);
         
-        Http.BaseAddress = new Uri(Nav.BaseUri);
         Console.WriteLine("Fetching commesse from API...");
         _commesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
         Console.WriteLine($"Fetched {_commesse.Count} commesse");

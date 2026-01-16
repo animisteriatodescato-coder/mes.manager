@@ -161,7 +161,6 @@
     {
         PageToolbarService.SetActivePage("clienti", this);
         
-        Http.BaseAddress = new Uri(Nav.BaseUri);
         _clienti = await Http.GetFromJsonAsync<List<ClienteDto>>("api/Clienti") ?? new();
         
         var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("clienti-grid-settings");

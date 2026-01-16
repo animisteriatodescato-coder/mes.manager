@@ -37,7 +37,10 @@ builder.Services.AddMudServices();
 builder.Services.AddSyncfusionBlazor();
 
 // HttpClient per Blazor
-builder.Services.AddHttpClient();
+builder.Services.AddScoped(sp => new HttpClient
+{
+    BaseAddress = new Uri("http://localhost:5156/")
+});
 
 // Custom Services
 builder.Services.AddScoped<PreferencesService>();

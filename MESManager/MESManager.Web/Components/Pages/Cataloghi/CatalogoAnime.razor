@@ -163,7 +163,6 @@
     {
         PageToolbarService.SetActivePage("anime", this);
         
-        Http.BaseAddress = new Uri(Nav.BaseUri);
         _anime = await Http.GetFromJsonAsync<List<AnimeDto>>("api/Anime") ?? new();
         
         var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("anime-grid-settings");
@@ -300,7 +299,7 @@
         StateHasChanged();
     }
 
-    private async Task UpdateGridStats()
+    private void UpdateGridStats()
     {
         totalRows = 0; // Da aggiornare con il conteggio reale
         filteredRows = totalRows; // Da aggiornare con il filtro reale

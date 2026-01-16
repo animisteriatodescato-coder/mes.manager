@@ -178,7 +178,6 @@
         
         StateHasChanged();
         
-        Http.BaseAddress = new Uri(Nav.BaseUri);
         _articoli = await Http.GetFromJsonAsync<List<ArticoloDto>>("api/Articoli") ?? new();
         
         totalRows = _articoli.Count;

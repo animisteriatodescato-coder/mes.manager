@@ -1,0 +1,13 @@
+@page "/produzione/plc-realtime"
+@using MESManager.Application.DTOs
+@using MESManager.Web.Models
+@using MESManager.Web.Services
+@using Microsoft.JSInterop
+@inject NavigationManager Nav
+@inject PreferencesService PreferencesService
+@inject IJSRuntime JSRuntime
+@inject ISnackbar Snackbar
+@inject RealtimeStateService RealtimeService
+@inject PlcDataService PlcService
+@inject IPageToolbarService PageToolbarService
+@implements IAsyncDisposable

@@ -188,7 +188,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Http.BaseAddress = new Uri(Nav.BaseUri);
         await LoadData();
         
         var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("programma-macchine-grid-settings");

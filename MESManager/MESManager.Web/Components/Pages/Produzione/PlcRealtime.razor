@@ -148,7 +148,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Http.BaseAddress = new Uri(Nav.BaseUri);
         await LoadData();
         
         // Avvia timer per auto-refresh
@@ -298,3 +297,4 @@
         catch { }
     }
 }
+

@@ -98,8 +98,22 @@ public partial class MainLayout : IDisposable
     
     private bool IsPlcRealtimePage()
     {
-        var pageKey = PageToolbarService.GetCurrentPageKey();
-        return pageKey == "plc-realtime";
+        try
+        {
+            var currentPath = NavManager.ToBaseRelativePath(NavManager.Uri).ToLower();
+            if (!currentPath.Contains("plc-realtime"))
+            {
+                return false;
+            }
+            
+            var pageKey = PageToolbarService.GetCurrentPageKey();
+            var page = PageToolbarService.GetActivePage("plc-realtime");
+            return pageKey == "plc-realtime" && page != null;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private string GetPageTitle()
@@ -251,106 +265,118 @@ public partial class MainLayout : IDisposable
     #pragma warning disable ASP0006
     private RenderFragment RenderPlcRealtimeToolbar() => builder =>
     {
-        var page = PageToolbarService.GetActivePage("plc-realtime") as dynamic;
-        if (page == null) return;
-        
-        int seq = 0;
-        
-        // Pulsante Sincronizza Macchine
-        builder.OpenComponent<MudButton>(seq++);
-        builder.AddAttribute(seq++, "Variant", Variant.Filled);
-        builder.AddAttribute(seq++, "Color", Color.Success);
-        builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.Sync);
-        builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnPlcSyncMachines));
-        builder.AddAttribute(seq++, "Disabled", (bool)page.IsSyncing);
-        builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 =>
+        try
         {
-            int s2 = 0;
-            if ((bool)page.IsSyncing)
-            {
-                b2.OpenComponent<MudProgressCircular>(s2++);
-                b2.AddAttribute(s2++, "Size", Size.Small);
-                b2.AddAttribute(s2++, "Indeterminate", true);
-                b2.AddAttribute(s2++, "Class", "mr-2");
-                b2.CloseComponent();
-                
-                b2.OpenElement(s2++, "span");
-                b2.AddContent(s2++, "Sincronizzazione...");
-                b2.CloseElement();
-            }
-            else
-            {
-                b2.OpenElement(s2++, "span");
-                b2.AddContent(s2++, "Sincronizza Macchine");
-                b2.CloseElement();
-            }
-        }));
-        builder.CloseComponent();
-        
-        // Switch Auto-refresh
-        builder.OpenComponent<MudSwitch<bool>>(seq++);
-        builder.AddAttribute(seq++, "Value", (bool)page.AutoRefreshEnabled);
-        builder.AddAttribute(seq++, "ValueChanged", EventCallback.Factory.Create<bool>(this, _ => OnPlcToggleAutoRefresh()));
-        builder.AddAttribute(seq++, "Color", Color.Primary);
-        builder.AddAttribute(seq++, "Label", "Auto-refresh");
-        builder.CloseComponent();
-        
-        // Testo intervallo (se auto-refresh è attivo)
-        if ((bool)page.AutoRefreshEnabled)
-        {
-            builder.OpenComponent<MudText>(seq++);
-            builder.AddAttribute(seq++, "Typo", Typo.caption);
-            builder.AddAttribute(seq++, "Class", "mr-2");
+            var page = PageToolbarService.GetActivePage("plc-realtime") as dynamic;
+            if (page == null) return;
+            
+            int seq = 0;
+            
+            // Pulsante Sincronizza Macchine
+            builder.OpenComponent<MudButton>(seq++);
+            builder.AddAttribute(seq++, "Variant", Variant.Filled);
+            builder.AddAttribute(seq++, "Color", Color.Success);
+            builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.Sync);
+            builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnPlcSyncMachines));
+            builder.AddAttribute(seq++, "Disabled", (bool)page.IsSyncing);
             builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 =>
             {
-                b2.AddContent(0, $"Ogni {(int)page.RefreshInterval} s");
+                int s2 = 0;
+                if ((bool)page.IsSyncing)
+                {
+                    b2.OpenComponent<MudProgressCircular>(s2++);
+                    b2.AddAttribute(s2++, "Size", Size.Small);
+                    b2.AddAttribute(s2++, "Indeterminate", true);
+                    b2.AddAttribute(s2++, "Class", "mr-2");
+                    b2.CloseComponent();
+                    
+                    b2.OpenElement(s2++, "span");
+                    b2.AddContent(s2++, "Sincronizzazione...");
+                    b2.CloseElement();
+                }
+                else
+                {
+                    b2.OpenElement(s2++, "span");
+                    b2.AddContent(s2++, "Sincronizza Macchine");
+                    b2.CloseElement();
+                }
             }));
             builder.CloseComponent();
+            
+            // Switch Auto-refresh
+            builder.OpenComponent<MudSwitch<bool>>(seq++);
+            builder.AddAttribute(seq++, "Checked", (bool)page.AutoRefreshEnabled);
+            builder.AddAttribute(seq++, "CheckedChanged", EventCallback.Factory.Create<bool>(this, _ => OnPlcToggleAutoRefresh()));
+            builder.AddAttribute(seq++, "Color", Color.Primary);
+            builder.AddAttribute(seq++, "Label", "Auto-refresh");
+            builder.CloseComponent();
+            
+            // Testo intervallo (se auto-refresh è attivo)
+            if ((bool)page.AutoRefreshEnabled)
+            {
+                builder.OpenComponent<MudText>(seq++);
+                builder.AddAttribute(seq++, "Typo", Typo.caption);
+                builder.AddAttribute(seq++, "Class", "mr-2");
+                builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 =>
+                {
+                    b2.AddContent(0, $"Ogni {(int)page.RefreshInterval} s");
+                }));
+                builder.CloseComponent();
+            }
+            
+            // Campo di ricerca
+            builder.OpenComponent<MudTextField<string>>(seq++);
+            builder.AddAttribute(seq++, "Value", (string)page.SearchText);
+            builder.AddAttribute(seq++, "ValueChanged", EventCallback.Factory.Create<string>(this, async (value) =>
+            {
+                _toolbarSearchText = value;
+                await OnToolbarSearch(value);
+            }));
+            builder.AddAttribute(seq++, "Placeholder", "Cerca...");
+            builder.AddAttribute(seq++, "Variant", Variant.Outlined);
+            builder.AddAttribute(seq++, "Margin", Margin.Dense);
+            builder.AddAttribute(seq++, "Style", "width: 200px; background-color: white; color: black;");
+            builder.AddAttribute(seq++, "Immediate", true);
+            builder.AddAttribute(seq++, "DebounceInterval", 280);
+            builder.AddAttribute(seq++, "OnDebounceIntervalElapsed", EventCallback.Factory.Create<string>(this, OnToolbarSearch));
+            builder.CloseComponent();
+            
+            // Pulsante Colonne
+            builder.OpenComponent<MudButton>(seq++);
+            builder.AddAttribute(seq++, "Variant", Variant.Text);
+            builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.ViewColumn);
+            builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnToolbarToggleColumns));
+            builder.AddAttribute(seq++, "Color", Color.Inherit);
+            builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 => b2.AddContent(0, "Colonne")));
+            builder.CloseComponent();
+            
+            // Pulsante Reset
+            builder.OpenComponent<MudButton>(seq++);
+            builder.AddAttribute(seq++, "Variant", Variant.Text);
+            builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.Refresh);
+            builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnToolbarReset));
+            builder.AddAttribute(seq++, "Color", Color.Inherit);
+            builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 => b2.AddContent(0, "Reset")));
+            builder.CloseComponent();
+            
+            // Pulsante Impostazioni
+            builder.OpenComponent<MudButton>(seq++);
+            builder.AddAttribute(seq++, "Variant", Variant.Text);
+            builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.Settings);
+            builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnToolbarToggleSettings));
+            builder.AddAttribute(seq++, "Color", Color.Inherit);
+            builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 => b2.AddContent(0, "Impostazioni")));
+            builder.CloseComponent();
         }
-        
-        // Campo di ricerca
-        builder.OpenComponent<MudTextField<string>>(seq++);
-        builder.AddAttribute(seq++, "Value", (string)page.SearchText);
-        builder.AddAttribute(seq++, "ValueChanged", EventCallback.Factory.Create<string>(this, async (value) =>
+        catch (ObjectDisposedException)
         {
-            _toolbarSearchText = value;
-            await OnToolbarSearch(value);
-        }));
-        builder.AddAttribute(seq++, "Placeholder", "Cerca...");
-        builder.AddAttribute(seq++, "Variant", Variant.Outlined);
-        builder.AddAttribute(seq++, "Margin", Margin.Dense);
-        builder.AddAttribute(seq++, "Style", "width: 200px; background-color: white; color: black;");
-        builder.AddAttribute(seq++, "Immediate", true);
-        builder.AddAttribute(seq++, "DebounceInterval", 280);
-        builder.AddAttribute(seq++, "OnDebounceIntervalElapsed", EventCallback.Factory.Create<string>(this, OnToolbarSearch));
-        builder.CloseComponent();
-        
-        // Pulsante Colonne
-        builder.OpenComponent<MudButton>(seq++);
-        builder.AddAttribute(seq++, "Variant", Variant.Text);
-        builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.ViewColumn);
-        builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnToolbarToggleColumns));
-        builder.AddAttribute(seq++, "Color", Color.Inherit);
-        builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 => b2.AddContent(0, "Colonne")));
-        builder.CloseComponent();
-        
-        // Pulsante Reset
-        builder.OpenComponent<MudButton>(seq++);
-        builder.AddAttribute(seq++, "Variant", Variant.Text);
-        builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.Refresh);
-        builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnToolbarReset));
-        builder.AddAttribute(seq++, "Color", Color.Inherit);
-        builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 => b2.AddContent(0, "Reset")));
-        builder.CloseComponent();
-        
-        // Pulsante Impostazioni
-        builder.OpenComponent<MudButton>(seq++);
-        builder.AddAttribute(seq++, "Variant", Variant.Text);
-        builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.Settings);
-        builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnToolbarToggleSettings));
-        builder.AddAttribute(seq++, "Color", Color.Inherit);
-        builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 => b2.AddContent(0, "Impostazioni")));
-        builder.CloseComponent();
+            // Pagina disposta durante il render, ignora silenziosamente
+            return;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MainLayout] Error rendering PlcRealtime toolbar: {ex.Message}");
+        }
     };
     #pragma warning restore ASP0006
     
