@@ -11,16 +11,15 @@
 
 <MudPaper Class="pa-4 mb-4">
     <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary">
-        <MudButton OnClick="@(() => ChangeViewMode("Quarter Day"))">Quarti Giorno</MudButton>
-        <MudButton OnClick="@(() => ChangeViewMode("Half Day"))">Mezze Giornate</MudButton>
-        <MudButton OnClick="@(() => ChangeViewMode("Day"))">Giorni</MudButton>
-        <MudButton OnClick="@(() => ChangeViewMode("Week"))">Settimane</MudButton>
-        <MudButton OnClick="@(() => ChangeViewMode("Month"))">Mesi</MudButton>
+        <MudButton OnClick="@RefreshGantt">Aggiorna</MudButton>
     </MudButtonGroup>
+    <MudText Typo="Typo.caption" Class="mt-2" Color="Color.Secondary">
+        Trascina le commesse per spostarle tra le macchine o modificarne la durata
+    </MudText>
 </MudPaper>
 
 <MudPaper Class="pa-4">
-    <div id="gantt-chart" style="width: 100%; height: 600px; overflow: auto;"></div>
+    <div id="gantt-chart" style="width: 100%; height: 600px;"></div>
 </MudPaper>
 
 @code {
@@ -33,8 +32,8 @@
         }
     }
 
-    private async Task ChangeViewMode(string mode)
+    private async Task RefreshGantt()
     {
-        await JS.InvokeVoidAsync("GanttMacchine.changeViewMode", mode);
+        await JS.InvokeVoidAsync("GanttMacchine.refresh");
     }
 }

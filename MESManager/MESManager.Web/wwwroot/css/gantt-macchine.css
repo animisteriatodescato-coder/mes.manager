@@ -1,74 +1,61 @@
-/* Custom styles for Gantt Macchine */
-.gantt .bar-wrapper .bar {
-    transition: all 0.3s ease;
+/* Custom styles for Vis-Timeline Gantt Macchine */
+
+/* Timeline container */
+#gantt-chart {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
 }
 
-.gantt .bar-wrapper .bar:hover {
-    opacity: 0.8;
-    cursor: pointer;
-}
-
-/* Custom colors for different machines */
-.gantt .bar-wrapper.macchina-1 .bar {
-    fill: #2196F3 !important;
-}
-
-.gantt .bar-wrapper.macchina-2 .bar {
-    fill: #4CAF50 !important;
-}
-
-.gantt .bar-wrapper.macchina-3 .bar {
-    fill: #FF9800 !important;
-}
-
-.gantt .bar-wrapper.macchina-1 .bar-progress {
-    fill: #1976D2 !important;
-}
-
-.gantt .bar-wrapper.macchina-2 .bar-progress {
-    fill: #388E3C !important;
-}
-
-.gantt .bar-wrapper.macchina-3 .bar-progress {
-    fill: #F57C00 !important;
-}
-
-/* Grid styling */
-.gantt .grid-background {
-    fill: #fafafa;
-}
-
-.gantt .grid-row:nth-child(even) {
-    fill: #f5f5f5;
-}
-
-.gantt .grid-row:hover {
-    fill: #e8e8e8;
-}
-
-/* Better text visibility */
-.gantt .bar-label {
-    fill: white;
+/* Timeline items (commesse) */
+.vis-item {
+    border-radius: 4px;
+    border: none;
     font-weight: 500;
-    font-size: 12px;
+    font-size: 14px;
 }
 
-/* Scrollbar styling for better UX */
-#gantt-chart::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+.vis-item.vis-selected {
+    border: 2px solid #333;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-#gantt-chart::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
+/* Timeline groups (machines) */
+.vis-label {
+    font-weight: 500;
+    color: #424242;
+    padding: 8px;
 }
 
-#gantt-chart::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 4px;
+.vis-labelset .vis-label {
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #e0e0e0;
 }
 
-#gantt-chart::-webkit-scrollbar-thumb:hover {
-    background: #555;
+/* Timeline axis */
+.vis-time-axis .vis-text {
+    color: #424242;
+    font-weight: 500;
 }
+
+.vis-time-axis .vis-grid.vis-minor {
+    border-color: #ececec;
+}
+
+.vis-time-axis .vis-grid.vis-major {
+    border-color: #bdbdbd;
+}
+
+/* Current time marker */
+.vis-current-time {
+    background-color: #E91E63;
+    width: 2px;
+}
+
+/* Hover effects */
+.vis-item:hover {
+    opacity: 0.9;
+    cursor: move;
+}
+
+
+

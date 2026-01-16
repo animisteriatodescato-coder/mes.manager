@@ -13,9 +13,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/styles/ag-theme-alpine.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/styles/ag-theme-alpine-dark.css" />
     
-    <!-- Frappe Gantt CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.css" />
-    <link rel="stylesheet" href="/css/gantt-macchine.css?v=1" />
+    <!-- Vis-Timeline CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" />
+    <link rel="stylesheet" href="/css/gantt-macchine.css?v=5" />
     
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet @rendermode="InteractiveServer" />
@@ -23,14 +23,15 @@
 
 <body>
     <Routes @rendermode="InteractiveServer" />
-    <script src="_framework/blazor.web.js"></script>
+    
+    <!-- MudBlazor JS -->
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     
     <!-- AG Grid Community JS -->
     <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/dist/ag-grid-community.min.js"></script>
     
-    <!-- Frappe Gantt JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.min.js"></script>
+    <!-- Vis-Timeline JS -->
+    <script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
     
     <!-- Custom Grid Scripts -->
     <script src="/lib/ag-grid/commesse-grid.js?v=9"></script>
@@ -41,7 +42,10 @@
     <script src="/js/articoli-grid.js?v=1"></script>
     <script src="/js/clienti-grid.js?v=1"></script>
     <script src="/js/anime-grid.js?v=1"></script>
-    <script src="/js/gantt/gantt-macchine.js?v=3"></script>
+    <script src="/js/gantt/gantt-macchine.js?v=11"></script>
+    
+    <!-- Blazor framework - loaded last to ensure all scripts are available -->
+    <script src="_framework/blazor.web.js"></script>
 </body>
 
 </html>
