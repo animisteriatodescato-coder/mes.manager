@@ -1,9 +1,13 @@
 // Gantt Macchine - Vis-Timeline chart for machine scheduling with drag & drop
 window.GanttMacchine = {
     timeline: null,
+    settings: null,
     
-    initialize: function(elementId) {
+    initialize: function(elementId, settings) {
         console.log('Initializing Vis-Timeline chart for element:', elementId);
+        console.log('Settings received:', settings);
+        
+        this.settings = settings || {};
         
         // Check if vis library is loaded
         if (typeof vis === 'undefined') {
@@ -19,19 +23,21 @@ window.GanttMacchine = {
         
         console.log('Container found:', container);
 
-        // Define groups (one per machine)
-        const groups = [
-            { id: 'machine_01', content: 'Macchina 01' },
-            { id: 'machine_02', content: 'Macchina 02' },
-            { id: 'machine_03', content: 'Macchina 03' }
-        ];
+        // Define groups from settings (machines)
+        const groups = this.settings.machines && this.settings.machines.length > 0
+            ? this.settings.machines.map(m => ({ id: m.id, content: m.nome }))
+            : [
+                { id: 'machine_01', content: 'Macchina 01' },
+                { id: 'machine_02', content: 'Macchina 02' },
+                { id: 'machine_03', content: 'Macchina 03' }
+            ];
 
         // Define items (commesse) with progress - multiple items can be on the same group (machine)
         const items = [
-            // Commesse for Macchina 01
+            // Commesse for first machine
             { 
                 id: 1, 
-                group: 'machine_01', 
+                group: groups[0].id, 
                 content: 'C001 (65%)', 
                 start: '2026-01-16', 
                 end: '2026-01-18', 
@@ -40,45 +46,39 @@ window.GanttMacchine = {
             },
             { 
                 id: 2, 
-                group: 'machine_01', 
+                group: groups[0].id, 
                 content: 'C002 (30%)', 
                 start: '2026-01-19', 
                 end: '2026-01-21', 
                 className: 'commessa-item',
                 style: 'background: linear-gradient(to right, #4CAF50 30%, rgba(76, 175, 80, 0.3) 30%); color: white;'
-            },
-            
-            // Commesse for Macchina 02
-            { 
+            }
+        ];
+        
+        // Add more sample items if we have more machines
+        if (groups.length > 1) {
+            items.push({ 
                 id: 3, 
-                group: 'machine_02', 
+                group: groups[1].id, 
                 content: 'C003 (80%)', 
                 start: '2026-01-16', 
                 end: '2026-01-20', 
                 className: 'commessa-item',
                 style: 'background: linear-gradient(to right, #FF9800 80%, rgba(255, 152, 0, 0.3) 80%); color: white;'
-            },
-            { 
+            });
+        }
+        
+        if (groups.length > 2) {
+            items.push({ 
                 id: 4, 
-                group: 'machine_02', 
+                group: groups[2].id, 
                 content: 'C004 (15%)', 
-                start: '2026-01-20', 
-                end: '2026-01-23', 
-                className: 'commessa-item',
-                style: 'background: linear-gradient(to right, #9C27B0 15%, rgba(156, 39, 176, 0.3) 15%); color: white;'
-            },
-            
-            // Commesse for Macchina 03
-            { 
-                id: 5, 
-                group: 'machine_03', 
-                content: 'C005 (45%)', 
                 start: '2026-01-17', 
                 end: '2026-01-22', 
                 className: 'commessa-item',
-                style: 'background: linear-gradient(to right, #F44336 45%, rgba(244, 67, 54, 0.3) 45%); color: white;'
-            }
-        ];
+                style: 'background: linear-gradient(to right, #F44336 15%, rgba(244, 67, 54, 0.3) 15%); color: white;'
+            });
+        }
 
         // Configuration options
         const options = {

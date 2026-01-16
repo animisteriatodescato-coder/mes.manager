@@ -1,0 +1,360 @@
+@page "/impostazioni/gantt"
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@inject IMacchinaAppService MacchinaService
+@inject ICalendarioLavoroAppService CalendarioService
+@inject IImpostazioniGanttAppService ImpostazioniGanttService
+@inject ISnackbar Snackbar
+
+<PageTitle>Impostazioni Gantt Macchine</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-4">Impostazioni Gantt Macchine</MudText>
+
+    @if (isLoading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Class="mt-4">
+            <!-- Tab Macchine -->
+            <MudTabPanel Text="Gestione Macchine" Icon="@Icons.Material.Filled.Settings">
+                <MudPaper Class="pa-4 mt-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">Macchine da visualizzare nel Gantt</MudText>
+                    
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Success" 
+                              StartIcon="@Icons.Material.Filled.Add"
+                              Class="mb-4" 
+                              OnClick="AggiungiMacchina">
+                        Aggiungi Macchina
+                    </MudButton>
+                    
+                    <MudTable Items="@macchine" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Codice</MudTh>
+                            <MudTh>Nome</MudTh>
+                            <MudTh>Visualizza nel Gantt</MudTh>
+                            <MudTh>Ordine</MudTh>
+                            <MudTh>Azioni</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Codice">@context.Codice</MudTd>
+                            <MudTd DataLabel="Nome">@context.Nome</MudTd>
+                            <MudTd DataLabel="Visualizza nel Gantt">
+                                <MudSwitch @bind-Value="context.AttivaInGantt" Color="Color.Primary" />
+                            </MudTd>
+                            <MudTd DataLabel="Ordine">
+                                <MudNumericField @bind-Value="context.OrdineVisualizazione" Min="0" Max="100" />
+                            </MudTd>
+                            <MudTd DataLabel="Azioni">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                              Color="Color.Primary" 
+                                              Size="Size.Small" 
+                                              OnClick="@(() => ModificaMacchina(context))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                              Color="Color.Error" 
+                                              Size="Size.Small" 
+                                              OnClick="@(() => EliminaMacchina(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Primary" 
+                              Class="mt-4" 
+                              OnClick="SalvaMacchineAsync">
+                        Salva Modifiche Macchine
+                    </MudButton>
+                </MudPaper>
+            </MudTabPanel>
+
+            <!-- Tab Calendario -->
+            <MudTabPanel Text="Calendario Lavoro" Icon="@Icons.Material.Filled.CalendarMonth">
+                <MudPaper Class="pa-4 mt-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">Giorni lavorativi</MudText>
+                    
+                    <MudGrid>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox @bind-Value="calendario.Lunedi" Label="Lunedì" Color="Color.Primary" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox @bind-Value="calendario.Martedi" Label="Martedì" Color="Color.Primary" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox @bind-Value="calendario.Mercoledi" Label="Mercoledì" Color="Color.Primary" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox @bind-Value="calendario.Giovedi" Label="Giovedì" Color="Color.Primary" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox @bind-Value="calendario.Venerdi" Label="Venerdì" Color="Color.Primary" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox @bind-Value="calendario.Sabato" Label="Sabato" Color="Color.Primary" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox @bind-Value="calendario.Domenica" Label="Domenica" Color="Color.Primary" />
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudDivider Class="my-4" />
+
+                    <MudText Typo="Typo.h6" Class="mb-3">Orario di lavoro</MudText>
+                    
+                    <MudGrid>
+                        <MudItem xs="12" sm="6">
+                            <MudTimePicker Label="Ora Inizio" 
+                                          @bind-Time="oraInizio" 
+                                          AmPm="false" 
+                                          Color="Color.Primary" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTimePicker Label="Ora Fine" 
+                                          @bind-Time="oraFine" 
+                                          AmPm="false" 
+                                          Color="Color.Primary" />
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Primary" 
+                              Class="mt-4" 
+                              OnClick="SalvaCalendarioAsync">
+                        Salva Calendario
+                    </MudButton>
+                </MudPaper>
+            </MudTabPanel>
+
+            <!-- Tab Attrezzaggio -->
+            <MudTabPanel Text="Tempo Attrezzaggio" Icon="@Icons.Material.Filled.Build">
+                <MudPaper Class="pa-4 mt-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">Configurazione tempo di attrezzaggio</MudText>
+                    
+                    <MudSwitch @bind-Value="impostazioniGantt.AbilitaTempoAttrezzaggio" 
+                              Label="Abilita tempo di attrezzaggio" 
+                              Color="Color.Primary" 
+                              Class="mb-4" />
+
+                    @if (impostazioniGantt.AbilitaTempoAttrezzaggio)
+                    {
+                        <MudNumericField @bind-Value="impostazioniGantt.TempoAttrezzaggioMinutiDefault" 
+                                        Label="Tempo attrezzaggio di default (minuti)" 
+                                        Min="0" 
+                                        Max="480" 
+                                        Step="5" 
+                                        Variant="Variant.Outlined" />
+                    }
+
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Primary" 
+                              Class="mt-4" 
+                              OnClick="SalvaImpostazioniGanttAsync">
+                        Salva Impostazioni Attrezzaggio
+                    </MudButton>
+                </MudPaper>
+            </MudTabPanel>
+        </MudTabs>
+    }
+</MudContainer>
+
+<MudDialog @bind-Visible="dialogMacchinaVisible" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true }">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            @(isNuovaMacchina ? "Nuova Macchina" : "Modifica Macchina")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="macchinaCorrente.Codice" 
+                     Label="Codice" 
+                     Variant="Variant.Outlined" 
+                     Required="true"
+                     Class="mb-4" />
+        
+        <MudTextField @bind-Value="macchinaCorrente.Nome" 
+                     Label="Nome" 
+                     Variant="Variant.Outlined" 
+                     Required="true"
+                     Class="mb-4" />
+        
+        <MudSwitch @bind-Value="macchinaCorrente.AttivaInGantt" 
+                  Label="Visualizza nel Gantt" 
+                  Color="Color.Primary" 
+                  Class="mb-4" />
+        
+        <MudNumericField @bind-Value="macchinaCorrente.OrdineVisualizazione" 
+                        Label="Ordine visualizzazione" 
+                        Min="0" 
+                        Max="100" 
+                        Variant="Variant.Outlined" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => dialogMacchinaVisible = false)">Annulla</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SalvaMacchinaDialogAsync">Salva</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private bool isLoading = true;
+    private List<MacchinaDto> macchine = new();
+    private CalendarioLavoroDto calendario = new();
+    private ImpostazioniGanttDto impostazioniGantt = new();
+    
+    private TimeSpan? oraInizio;
+    private TimeSpan? oraFine;
+
+    private bool dialogMacchinaVisible = false;
+    private MacchinaDto macchinaCorrente = new();
+    private bool isNuovaMacchina = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CaricaDatiAsync();
+    }
+
+    private async Task CaricaDatiAsync()
+    {
+        isLoading = true;
+        try
+        {
+            macchine = await MacchinaService.GetListaAsync();
+            
+            var calendarioDb = await CalendarioService.GetAsync();
+            if (calendarioDb != null)
+            {
+                calendario = calendarioDb;
+                oraInizio = calendario.OraInizio.ToTimeSpan();
+                oraFine = calendario.OraFine.ToTimeSpan();
+            }
+            
+            var impostazioniDb = await ImpostazioniGanttService.GetAsync();
+            if (impostazioniDb != null)
+            {
+                impostazioniGantt = impostazioniDb;
+            }
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void AggiungiMacchina()
+    {
+        macchinaCorrente = new MacchinaDto
+        {
+            AttivaInGantt = true,
+            OrdineVisualizazione = macchine.Count > 0 ? macchine.Max(m => m.OrdineVisualizazione) + 1 : 1
+        };
+        isNuovaMacchina = true;
+        dialogMacchinaVisible = true;
+    }
+
+    private void ModificaMacchina(MacchinaDto macchina)
+    {
+        macchinaCorrente = new MacchinaDto
+        {
+            Id = macchina.Id,
+            Codice = macchina.Codice,
+            Nome = macchina.Nome,
+            AttivaInGantt = macchina.AttivaInGantt,
+            OrdineVisualizazione = macchina.OrdineVisualizazione
+        };
+        isNuovaMacchina = false;
+        dialogMacchinaVisible = true;
+    }
+
+    private async Task SalvaMacchinaDialogAsync()
+    {
+        try
+        {
+            if (isNuovaMacchina)
+            {
+                var nuovaMacchina = await MacchinaService.CreaAsync(macchinaCorrente);
+                macchine.Add(nuovaMacchina);
+                Snackbar.Add("Macchina aggiunta con successo!", Severity.Success);
+            }
+            else
+            {
+                await MacchinaService.AggiornaAsync(macchinaCorrente.Id, macchinaCorrente);
+                var macchina = macchine.FirstOrDefault(m => m.Id == macchinaCorrente.Id);
+                if (macchina != null)
+                {
+                    macchina.Codice = macchinaCorrente.Codice;
+                    macchina.Nome = macchinaCorrente.Nome;
+                    macchina.AttivaInGantt = macchinaCorrente.AttivaInGantt;
+                    macchina.OrdineVisualizazione = macchinaCorrente.OrdineVisualizazione;
+                }
+                Snackbar.Add("Macchina modificata con successo!", Severity.Success);
+            }
+            dialogMacchinaVisible = false;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nel salvataggio della macchina: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task EliminaMacchina(MacchinaDto macchina)
+    {
+        try
+        {
+            await MacchinaService.EliminaAsync(macchina.Id);
+            macchine.Remove(macchina);
+            Snackbar.Add("Macchina eliminata con successo!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nell'eliminazione della macchina: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SalvaMacchineAsync()
+    {
+        try
+        {
+            foreach (var macchina in macchine)
+            {
+                await MacchinaService.AggiornaAsync(macchina.Id, macchina);
+            }
+            Snackbar.Add("Macchine salvate con successo!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nel salvataggio delle macchine: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SalvaCalendarioAsync()
+    {
+        try
+        {
+            if (oraInizio.HasValue && oraFine.HasValue)
+            {
+                calendario.OraInizio = TimeOnly.FromTimeSpan(oraInizio.Value);
+                calendario.OraFine = TimeOnly.FromTimeSpan(oraFine.Value);
+            }
+            
+            await CalendarioService.SalvaAsync(calendario);
+            Snackbar.Add("Calendario salvato con successo!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nel salvataggio del calendario: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SalvaImpostazioniGanttAsync()
+    {
+        try
+        {
+            await ImpostazioniGanttService.SalvaAsync(impostazioniGantt);
+            Snackbar.Add("Impostazioni attrezzaggio salvate con successo!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nel salvataggio delle impostazioni: {ex.Message}", Severity.Error);
+        }
+    }
+}

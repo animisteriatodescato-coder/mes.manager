@@ -26,6 +26,8 @@ public class MesManagerDbContext : DbContext
     public DbSet<SyncState> SyncStates => Set<SyncState>();
     public DbSet<Anime> Anime => Set<Anime>();
     public DbSet<ImpostazioniProduzione> ImpostazioniProduzione => Set<ImpostazioniProduzione>();
+    public DbSet<CalendarioLavoro> CalendarioLavoro => Set<CalendarioLavoro>();
+    public DbSet<ImpostazioniGantt> ImpostazioniGantt => Set<ImpostazioniGantt>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

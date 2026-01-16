@@ -32,6 +32,8 @@ public static class DependencyInjection
         services.AddScoped<IAnimeService, AnimeService>();
         services.AddScoped<IPlcAppService, PlcAppService>();
         services.AddScoped<IOperatoreAppService, OperatoreAppService>();
+        services.AddScoped<ICalendarioLavoroAppService, CalendarioLavoroAppService>();
+        services.AddScoped<IImpostazioniGanttAppService, ImpostazioniGanttAppService>();
         // Aggiungi altri servizi qui quando implementati
 
         return services;

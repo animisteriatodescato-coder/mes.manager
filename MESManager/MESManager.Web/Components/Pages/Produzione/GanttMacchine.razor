@@ -1,6 +1,11 @@
 @page "/produzione/gantt-macchine"
 @layout MainLayout
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
 @inject IJSRuntime JS
+@inject IMacchinaAppService MacchinaService
+@inject ICalendarioLavoroAppService CalendarioService
+@inject IImpostazioniGanttAppService ImpostazioniGanttService
 
 <PageTitle>Gantt Macchine</PageTitle>
 
@@ -23,12 +28,38 @@
 </MudPaper>
 
 @code {
+    private List<MacchinaDto> macchine = new();
+    private CalendarioLavoroDto? calendario;
+    private ImpostazioniGanttDto? impostazioniGantt;
+
+    protected override async Task OnInitializedAsync()
+    {
+        macchine = await MacchinaService.GetListaAsync();
+        calendario = await CalendarioService.GetAsync();
+        impostazioniGantt = await ImpostazioniGanttService.GetAsync();
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await Task.Delay(100); // Give the DOM a moment to settle
-            await JS.InvokeVoidAsync("GanttMacchine.initialize", "gantt-chart");
+            await Task.Delay(100);
+            
+            // Passa le macchine e le impostazioni al JavaScript
+            var macchineAttive = macchine
+                .Where(m => m.AttivaInGantt)
+                .OrderBy(m => m.OrdineVisualizazione)
+                .Select(m => new { m.Id, m.Nome })
+                .ToList();
+            
+            var settings = new
+            {
+                machines = macchineAttive,
+                calendar = calendario,
+                setupTime = impostazioniGantt
+            };
+            
+            await JS.InvokeVoidAsync("GanttMacchine.initialize", "gantt-chart", settings);
         }
     }
 

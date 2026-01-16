@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using MESManager.Application.DTOs;
 
 namespace MESManager.Application.Services

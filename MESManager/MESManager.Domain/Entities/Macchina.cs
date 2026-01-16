@@ -8,6 +8,8 @@ public class Macchina
     public string Codice { get; set; } = string.Empty;
     public string Nome { get; set; } = string.Empty;
     public StatoMacchina Stato { get; set; }
+    public bool AttivaInGantt { get; set; } = true;
+    public int OrdineVisualizazione { get; set; } = 0;
     
     // Navigazioni
     public ICollection<EventoPLC> EventiPLC { get; set; } = new List<EventoPLC>();

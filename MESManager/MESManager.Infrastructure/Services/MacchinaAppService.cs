@@ -22,7 +22,9 @@ public class MacchinaAppService : IMacchinaAppService
             {
                 Id = m.Id,
                 Codice = m.Codice,
-                Nome = m.Nome
+                Nome = m.Nome,
+                AttivaInGantt = m.AttivaInGantt,
+                OrdineVisualizazione = m.OrdineVisualizazione
             })
             .ToListAsync();
     }
@@ -36,7 +38,9 @@ public class MacchinaAppService : IMacchinaAppService
         {
             Id = macchina.Id,
             Codice = macchina.Codice,
-            Nome = macchina.Nome
+            Nome = macchina.Nome,
+            AttivaInGantt = macchina.AttivaInGantt,
+            OrdineVisualizazione = macchina.OrdineVisualizazione
         };
     }
     
@@ -45,7 +49,9 @@ public class MacchinaAppService : IMacchinaAppService
         var macchina = new Macchina
         {
             Codice = dto.Codice,
-            Nome = dto.Nome
+            Nome = dto.Nome,
+            AttivaInGantt = dto.AttivaInGantt,
+            OrdineVisualizazione = dto.OrdineVisualizazione
         };
         
         _context.Macchine.Add(macchina);
@@ -55,7 +61,9 @@ public class MacchinaAppService : IMacchinaAppService
         {
             Id = macchina.Id,
             Codice = macchina.Codice,
-            Nome = macchina.Nome
+            Nome = macchina.Nome,
+            AttivaInGantt = macchina.AttivaInGantt,
+            OrdineVisualizazione = macchina.OrdineVisualizazione
         };
     }
     
@@ -66,6 +74,8 @@ public class MacchinaAppService : IMacchinaAppService
         
         macchina.Codice = dto.Codice;
         macchina.Nome = dto.Nome;
+        macchina.AttivaInGantt = dto.AttivaInGantt;
+        macchina.OrdineVisualizazione = dto.OrdineVisualizazione;
         
         await _context.SaveChangesAsync();
         
@@ -73,7 +83,9 @@ public class MacchinaAppService : IMacchinaAppService
         {
             Id = macchina.Id,
             Codice = macchina.Codice,
-            Nome = macchina.Nome
+            Nome = macchina.Nome,
+            AttivaInGantt = macchina.AttivaInGantt,
+            OrdineVisualizazione = macchina.OrdineVisualizazione
         };
     }
     
