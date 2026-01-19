@@ -84,53 +84,8 @@ window.GanttMacchine = {
             
             console.log('Items created from real data:', items);
         } else {
-            console.warn('No real tasks data, using sample data');
-            
-            // Fallback sample data
-            items = [
-                { 
-                    id: 1, 
-                    group: groups[0].id, 
-                    content: 'C001 (65%)', 
-                    start: '2026-01-16', 
-                    end: '2026-01-18', 
-                    className: 'commessa-item',
-                    style: 'background: linear-gradient(to right, #2196F3 65%, rgba(33, 150, 243, 0.3) 65%); color: white;'
-                },
-                { 
-                    id: 2, 
-                    group: groups[0].id, 
-                    content: 'C002 (30%)', 
-                    start: '2026-01-19', 
-                    end: '2026-01-21', 
-                    className: 'commessa-item',
-                    style: 'background: linear-gradient(to right, #4CAF50 30%, rgba(76, 175, 80, 0.3) 30%); color: white;'
-                }
-            ];
-            
-            if (groups.length > 1) {
-                items.push({ 
-                    id: 3, 
-                    group: groups[1].id, 
-                    content: 'C003 (80%)', 
-                    start: '2026-01-16', 
-                    end: '2026-01-20', 
-                    className: 'commessa-item',
-                    style: 'background: linear-gradient(to right, #FF9800 80%, rgba(255, 152, 0, 0.3) 80%); color: white;'
-                });
-            }
-            
-            if (groups.length > 2) {
-                items.push({ 
-                    id: 4, 
-                    group: groups[2].id, 
-                    content: 'C004 (15%)', 
-                    start: '2026-01-17', 
-                    end: '2026-01-22', 
-                    className: 'commessa-item',
-                    style: 'background: linear-gradient(to right, #F44336 15%, rgba(244, 67, 54, 0.3) 15%); color: white;'
-                });
-            }
+            console.warn('No tasks data available - Gantt will be empty');
+            items = [];
         }
 
         // Configuration options
