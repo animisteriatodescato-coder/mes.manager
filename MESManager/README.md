@@ -38,12 +38,12 @@ Servizio Windows per elaborazioni background:
 
 ### Produzione
 - `/produzione/dashboard` - Dashboard produzione in tempo reale
-- `/produzione/gantt-macchine` - Diagramma Gantt macchine
 - `/produzione/plc-realtime` - Dati PLC in tempo reale
 - `/produzione/plc-storico` - Storico dati PLC con filtri data
 - `/produzione/incollaggio` - Gestione processo incollaggio
 
 ### Programma
+- `/programma/gantt-macchine` - Diagramma Gantt pianificazione macchine
 - `/programma/commesse-aperte` - Elenco commesse aperte
 - `/programma/programma-macchine` - Programmazione macchine
 

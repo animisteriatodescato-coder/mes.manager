@@ -1,8 +1,9 @@
-@page "/produzione/gantt-macchine"
+@page "/programma/gantt-macchine"
 @layout MainLayout
 @using MESManager.Application.DTOs
 @using MESManager.Application.Interfaces
 @inject IJSRuntime JS
+@inject HttpClient Http
 @inject IMacchinaAppService MacchinaService
 @inject ICalendarioLavoroAppService CalendarioService
 @inject IImpostazioniGanttAppService ImpostazioniGanttService
@@ -19,7 +20,7 @@
         <MudButton OnClick="@RefreshGantt">Aggiorna</MudButton>
     </MudButtonGroup>
     <MudText Typo="Typo.caption" Class="mt-2" Color="Color.Secondary">
-        Trascina le commesse per spostarle tra le macchine o modificarne la durata
+        Carica i dati reali delle commesse programmate da Programma Macchine
     </MudText>
 </MudPaper>
 
@@ -31,12 +32,32 @@
     private List<MacchinaDto> macchine = new();
     private CalendarioLavoroDto? calendario;
     private ImpostazioniGanttDto? impostazioniGantt;
+    private List<CommessaGanttDto> commesseGantt = new();
 
     protected override async Task OnInitializedAsync()
     {
         macchine = await MacchinaService.GetListaAsync();
         calendario = await CalendarioService.GetAsync();
         impostazioniGantt = await ImpostazioniGanttService.GetAsync();
+        
+        // Carica le commesse pianificate
+        await LoadCommesseGantt();
+    }
+    
+    private async Task LoadCommesseGantt()
+    {
+        try
+        {
+            var response = await Http.GetAsync("api/pianificazione");
+            if (response.IsSuccessStatusCode)
+            {
+                commesseGantt = await response.Content.ReadFromJsonAsync<List<CommessaGanttDto>>() ?? new();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Errore nel caricamento delle commesse: {ex.Message}");
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -45,18 +66,33 @@
         {
             await Task.Delay(100);
             
-            // Passa le macchine e le impostazioni al JavaScript
+            // Passa le macchine, le impostazioni e le commesse al JavaScript
             var macchineAttive = macchine
                 .Where(m => m.AttivaInGantt)
                 .OrderBy(m => m.OrdineVisualizazione)
-                .Select(m => new { m.Id, m.Nome })
+                .Select(m => new { m.Id, m.Nome, m.Codice })
                 .ToList();
             
             var settings = new
             {
                 machines = macchineAttive,
                 calendar = calendario,
-                setupTime = impostazioniGantt
+                setupTime = impostazioniGantt,
+                tasks = commesseGantt.Select(c => new
+                {
+                    id = c.Id,
+                    codice = c.Codice,
+                    description = c.Description,
+                    numeroMacchina = c.NumeroMacchina,
+                    nomeMacchina = c.NomeMacchina,
+                    quantita = c.QuantitaRichiesta,
+                    dataInizio = c.DataInizioPrevisione,
+                    dataFine = c.DataFinePrevisione,
+                    durataMinuti = c.DurataPrevistaMinuti,
+                    stato = c.Stato,
+                    coloreStato = c.ColoreStato,
+                    percentualeCompletamento = c.PercentualeCompletamento
+                }).ToList()
             };
             
             await JS.InvokeVoidAsync("GanttMacchine.initialize", "gantt-chart", settings);
@@ -65,6 +101,7 @@
 
     private async Task RefreshGantt()
     {
-        await JS.InvokeVoidAsync("GanttMacchine.refresh");
+        await LoadCommesseGantt();
+        await JS.InvokeVoidAsync("GanttMacchine.refresh", commesseGantt);
     }
 }

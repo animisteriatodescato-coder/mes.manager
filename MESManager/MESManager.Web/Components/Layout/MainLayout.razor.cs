@@ -125,12 +125,12 @@ public partial class MainLayout : IDisposable
             
             // Produzione
             "produzione/dashboard" => "Dashboard Produzione",
-            "produzione/gantt-macchine" => "Gantt Macchine",
             "produzione/plc-realtime" => "PLC Realtime",
             "produzione/plc-storico" => "PLC Storico",
             "produzione/incollaggio" => "Incollaggio",
             
             // Programma
+            "programma/gantt-macchine" => "Gantt Macchine",
             "programma/commesse-aperte" => "Commesse Aperte",
             "programma/programma-macchine" => "Programma Macchine",
             
@@ -396,13 +396,13 @@ public partial class MainLayout : IDisposable
             "Produzione" => new List<MenuItem>
             {
                 new("Dashboard", "/produzione/dashboard"),
-                new("Gantt Macchine", "/produzione/gantt-macchine"),
                 new("PLC Realtime", "/produzione/plc-realtime"),
                 new("PLC Storico", "/produzione/plc-storico"),
                 new("Incollaggio", "/produzione/incollaggio")
             },
             "Programma" => new List<MenuItem>
             {
+                new("Gantt Macchine", "/programma/gantt-macchine"),
                 new("Commesse Aperte", "/programma/commesse-aperte"),
                 new("Programma Macchine", "/programma/programma-macchine")
             },
