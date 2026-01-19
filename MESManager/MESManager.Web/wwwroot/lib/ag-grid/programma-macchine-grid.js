@@ -144,11 +144,23 @@ window.programmaMacchineGrid = (function() {
                 filter: true
             },
             getRowStyle: params => {
+                const style = {};
+                
                 if (params.data && params.data.numeroMacchina != null && params.data.numeroMacchina > 0) {
                     const color = getMachineColor(params.data.numeroMacchina);
-                    return { backgroundColor: color };
+                    style.backgroundColor = color;
+                    
+                    // Aggiungi bordo superiore nero se la macchina è diversa dalla riga precedente
+                    const rowIndex = params.node.rowIndex;
+                    if (rowIndex > 0) {
+                        const prevNode = params.api.getDisplayedRowAtIndex(rowIndex - 1);
+                        if (prevNode && prevNode.data && prevNode.data.numeroMacchina !== params.data.numeroMacchina) {
+                            style.borderTop = '2px solid #000';
+                        }
+                    }
                 }
-                return null;
+                
+                return style;
             },
             sideBar: {
                 toolPanels: [
@@ -297,6 +309,83 @@ window.programmaMacchineGrid = (function() {
         }
     }
 
+    function generatePrintTable() {
+        if (!gridApi) return;
+
+        const printDiv = document.getElementById('printableCommesse');
+        if (!printDiv) return;
+
+        // Ottieni le colonne visibili
+        const visibleColumns = gridApi.getColumns()
+            .filter(col => col.isVisible() && col.getColId() !== 'ag-Grid-AutoColumn');
+
+        // Ottieni tutte le righe visualizzate (filtrate e ordinate)
+        const rowData = [];
+        gridApi.forEachNodeAfterFilterAndSort(node => {
+            if (node.data) {
+                rowData.push(node.data);
+            }
+        });
+
+        // Genera HTML per la tabella
+        let html = '<h2 style="text-align: center; margin-bottom: 20px;">Programma Macchine</h2>';
+        html += '<table style="width: 100%; border-collapse: collapse; font-size: 10px;">';
+        
+        // Header
+        html += '<thead><tr style="background-color: #f0f0f0;">';
+        visibleColumns.forEach(col => {
+            const colDef = col.getColDef();
+            const align = colDef.type === 'numericColumn' ? 'right' : 
+                         colDef.field === 'numeroMacchina' ? 'center' : 'left';
+            const style = `border: 1px solid #ddd; padding: 4px; text-align: ${align}; font-weight: bold;`;
+            html += `<th style="${style}">${colDef.headerName}</th>`;
+        });
+        html += '</tr></thead>';
+
+        // Body
+        html += '<tbody>';
+        let previousMachine = null;
+        rowData.forEach(row => {
+            const bgColor = row.numeroMacchina % 2 === 0 ? '#e3f2fd' : '#e8f5e9';
+            const borderTop = previousMachine !== null && previousMachine !== row.numeroMacchina 
+                ? 'border-top: 2px solid #000;' : '';
+            previousMachine = row.numeroMacchina;
+            
+            html += `<tr style="background-color: ${bgColor}; ${borderTop}">`;
+            visibleColumns.forEach(col => {
+                const colDef = col.getColDef();
+                const field = colDef.field;
+                let value = row[field];
+                
+                // Formatta il valore usando il valueFormatter se presente
+                if (colDef.valueFormatter && typeof colDef.valueFormatter === 'function') {
+                    value = colDef.valueFormatter({ value: value, data: row });
+                } else if (value === null || value === undefined) {
+                    value = '';
+                }
+
+                const align = colDef.type === 'numericColumn' ? 'right' : 
+                             field === 'numeroMacchina' ? 'center' : 'left';
+                const fontWeight = field === 'numeroMacchina' ? 'font-weight: bold;' : '';
+                const style = `border: 1px solid #ddd; padding: 3px; text-align: ${align}; ${fontWeight}`;
+                html += `<td style="${style}">${value}</td>`;
+            });
+            html += '</tr>';
+        });
+        html += '</tbody>';
+        html += '</table>';
+
+        // Footer
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('it-IT');
+        const timeStr = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+        html += `<div style="margin-top: 10px; font-size: 9px; color: #666;">`;
+        html += `<p style="margin: 2px 0;">Stampa: ${dateStr} ${timeStr} | Totale commesse: ${rowData.length}</p>`;
+        html += `</div>`;
+
+        printDiv.innerHTML = html;
+    }
+
     return {
         init: init,
         updateData: updateData,
@@ -308,6 +397,7 @@ window.programmaMacchineGrid = (function() {
         resetState: resetState,
         getState: getState,
         toggleColumnPanel: toggleColumnPanel,
-        setUiVars: setUiVars
+        setUiVars: setUiVars,
+        generatePrintTable: generatePrintTable
     };
 })();
