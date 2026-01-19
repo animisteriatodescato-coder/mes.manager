@@ -23,13 +23,17 @@ window.GanttMacchine = {
         
         console.log('Container found:', container);
 
-        // Define groups from settings (machines)
+        // Define groups from settings (machines) with explicit ordering
         const groups = this.settings.machines && this.settings.machines.length > 0
-            ? this.settings.machines.map(m => ({ id: m.codice || m.id, content: m.nome }))
+            ? this.settings.machines.map(m => ({ 
+                id: m.codice || m.id, 
+                content: m.nome,
+                order: m.ordineVisualizazione || 0
+            }))
             : [
-                { id: 'M01', content: 'Macchina 01' },
-                { id: 'M02', content: 'Macchina 02' },
-                { id: 'M03', content: 'Macchina 03' }
+                { id: 'M01', content: 'Macchina 01', order: 1 },
+                { id: 'M02', content: 'Macchina 02', order: 2 },
+                { id: 'M03', content: 'Macchina 03', order: 3 }
             ];
 
         console.log('Groups created:', groups);
@@ -140,7 +144,7 @@ window.GanttMacchine = {
             },
             stack: false,  // Don't stack items - keep them on the same line
             orientation: 'top',
-            groupOrder: 'id',
+            groupOrder: 'order',  // Order groups by the 'order' property
             margin: {
                 item: 10,
                 axis: 5

@@ -70,7 +70,7 @@
             var macchineAttive = macchine
                 .Where(m => m.AttivaInGantt)
                 .OrderBy(m => m.OrdineVisualizazione)
-                .Select(m => new { m.Id, m.Nome, m.Codice })
+                .Select(m => new { m.Id, m.Nome, m.Codice, m.OrdineVisualizazione })
                 .ToList();
             
             var settings = new
