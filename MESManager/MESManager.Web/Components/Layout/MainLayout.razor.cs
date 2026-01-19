@@ -86,8 +86,7 @@ public partial class MainLayout : IDisposable
         // Escludi pagine che hanno toolbar personalizzate
         var currentPath = NavManager.ToBaseRelativePath(NavManager.Uri).ToLower();
         if (currentPath.Contains("plc-realtime") || 
-            currentPath.Contains("plc-storico") ||
-            currentPath.Contains("mes-stato"))
+            currentPath.Contains("plc-storico"))
         {
             return false;
         }
@@ -127,7 +126,6 @@ public partial class MainLayout : IDisposable
             // Produzione
             "produzione/dashboard" => "Dashboard Produzione",
             "produzione/gantt-macchine" => "Gantt Macchine",
-            "produzione/mes-stato" => "MES Stato Realtime",
             "produzione/plc-realtime" => "PLC Realtime",
             "produzione/plc-storico" => "PLC Storico",
             "produzione/incollaggio" => "Incollaggio",
@@ -135,7 +133,6 @@ public partial class MainLayout : IDisposable
             // Programma
             "programma/commesse-aperte" => "Commesse Aperte",
             "programma/programma-macchine" => "Programma Macchine",
-            "programma/stampa" => "Stampa Programma",
             
             // Cataloghi
             "cataloghi/commesse" => "Catalogo Commesse",
@@ -148,13 +145,6 @@ public partial class MainLayout : IDisposable
             // Manutenzioni
             "manutenzioni/alert" => "Alert Manutenzioni",
             "manutenzioni/catalogo" => "Catalogo Manutenzioni",
-            
-            // Tabelle
-            "tabelle/vernici" => "Tabella Vernici",
-            "tabelle/sabbie" => "Tabella Sabbie",
-            "tabelle/imballi" => "Tabella Imballi",
-            "tabelle/operatori" => "Tabella Operatori",
-            "tabelle/colle" => "Tabella Colle",
             
             // Sync
             "sync/gantt" => "Sync Gantt",
@@ -407,7 +397,6 @@ public partial class MainLayout : IDisposable
             {
                 new("Dashboard", "/produzione/dashboard"),
                 new("Gantt Macchine", "/produzione/gantt-macchine"),
-                new("MES Stato", "/produzione/mes-stato"),
                 new("PLC Realtime", "/produzione/plc-realtime"),
                 new("PLC Storico", "/produzione/plc-storico"),
                 new("Incollaggio", "/produzione/incollaggio")
@@ -415,8 +404,7 @@ public partial class MainLayout : IDisposable
             "Programma" => new List<MenuItem>
             {
                 new("Commesse Aperte", "/programma/commesse-aperte"),
-                new("Programma Macchine", "/programma/programma-macchine"),
-                new("Stampa", "/programma/stampa")
+                new("Programma Macchine", "/programma/programma-macchine")
             },
             "Cataloghi" => new List<MenuItem>
             {
@@ -431,14 +419,6 @@ public partial class MainLayout : IDisposable
             {
                 new("Alert", "/manutenzioni/alert"),
                 new("Catalogo", "/manutenzioni/catalogo")
-            },
-            "Tabelle" => new List<MenuItem>
-            {
-                new("Vernici", "/tabelle/vernici"),
-                new("Sabbie", "/tabelle/sabbie"),
-                new("Imballi", "/tabelle/imballi"),
-                new("Operatori", "/tabelle/operatori"),
-                new("Colle", "/tabelle/colle")
             },
             "Sync" => new List<MenuItem>
             {

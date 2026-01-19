@@ -31,7 +31,6 @@
                 <MudMenuItem OnClick="@(() => SetCategory("Programma"))">Programma</MudMenuItem>
                 <MudMenuItem OnClick="@(() => SetCategory("Cataloghi"))">Cataloghi</MudMenuItem>
                 <MudMenuItem OnClick="@(() => SetCategory("Manutenzioni"))">Manutenzioni</MudMenuItem>
-                <MudMenuItem OnClick="@(() => SetCategory("Tabelle"))">Tabelle</MudMenuItem>
                 <MudMenuItem OnClick="@(() => SetCategory("Sync"))">Sync</MudMenuItem>
                 <MudMenuItem OnClick="@(() => SetCategory("Statistiche"))">Statistiche</MudMenuItem>
                 <MudMenuItem OnClick="@(() => SetCategory("Impostazioni"))">Impostazioni</MudMenuItem>
@@ -67,7 +66,6 @@
             <MudNavGroup Title="Produzione" Icon="@Icons.Material.Filled.Factory" Expanded="true">
                 <MudNavLink Href="/produzione/dashboard">Dashboard</MudNavLink>
                 <MudNavLink Href="/produzione/gantt-macchine">Gantt Macchine</MudNavLink>
-                <MudNavLink Href="/produzione/mes-stato">MES Stato Realtime</MudNavLink>
                 <MudNavLink Href="/produzione/plc-realtime">PLC Realtime</MudNavLink>
                 <MudNavLink Href="/produzione/plc-storico">PLC Storico</MudNavLink>
                 <MudNavLink Href="/produzione/incollaggio">Incollaggio</MudNavLink>
@@ -76,7 +74,6 @@
             <MudNavGroup Title="Programma" Icon="@Icons.Material.Filled.Schedule">
                 <MudNavLink Href="/programma/commesse-aperte">Commesse Aperte</MudNavLink>
                 <MudNavLink Href="/programma/programma-macchine">Programma Macchine</MudNavLink>
-                <MudNavLink Href="/programma/stampa">Stampa Programma</MudNavLink>
             </MudNavGroup>
             
             <MudNavGroup Title="Cataloghi" Icon="@Icons.Material.Filled.LibraryBooks">
@@ -91,14 +88,6 @@
             <MudNavGroup Title="Manutenzioni" Icon="@Icons.Material.Filled.Build">
                 <MudNavLink Href="/manutenzioni/alert">Alert</MudNavLink>
                 <MudNavLink Href="/manutenzioni/catalogo">Catalogo</MudNavLink>
-            </MudNavGroup>
-            
-            <MudNavGroup Title="Tabelle" Icon="@Icons.Material.Filled.TableChart">
-                <MudNavLink Href="/tabelle/vernici">Vernici</MudNavLink>
-                <MudNavLink Href="/tabelle/sabbie">Sabbie</MudNavLink>
-                <MudNavLink Href="/tabelle/imballi">Imballi</MudNavLink>
-                <MudNavLink Href="/tabelle/operatori">Operatori</MudNavLink>
-                <MudNavLink Href="/tabelle/colle">Colle</MudNavLink>
             </MudNavGroup>
             
             <MudNavGroup Title="Sync" Icon="@Icons.Material.Filled.Sync">

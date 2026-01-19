@@ -39,7 +39,6 @@ Servizio Windows per elaborazioni background:
 ### Produzione
 - `/produzione/dashboard` - Dashboard produzione in tempo reale
 - `/produzione/gantt-macchine` - Diagramma Gantt macchine
-- `/produzione/mes-stato` - Stato MES realtime con card macchine
 - `/produzione/plc-realtime` - Dati PLC in tempo reale
 - `/produzione/plc-storico` - Storico dati PLC con filtri data
 - `/produzione/incollaggio` - Gestione processo incollaggio
@@ -47,7 +46,6 @@ Servizio Windows per elaborazioni background:
 ### Programma
 - `/programma/commesse-aperte` - Elenco commesse aperte
 - `/programma/programma-macchine` - Programmazione macchine
-- `/programma/stampa` - Stampa/PDF programma produzione
 
 ### Cataloghi
 - `/cataloghi/commesse` - Anagrafica commesse
@@ -59,13 +57,6 @@ Servizio Windows per elaborazioni background:
 ### Manutenzioni
 - `/manutenzioni/alert` - Alert manutenzioni programmate
 - `/manutenzioni/catalogo` - Catalogo interventi manutenzione
-
-### Tabelle
-- `/tabelle/vernici` - Anagrafica vernici
-- `/tabelle/sabbie` - Anagrafica sabbie
-- `/tabelle/imballi` - Anagrafica imballi
-- `/tabelle/operatori` - Anagrafica operatori
-- `/tabelle/colle` - Anagrafica colle
 
 ### Sync
 - `/sync/mago` - Sincronizzazione con gestionale Mago
