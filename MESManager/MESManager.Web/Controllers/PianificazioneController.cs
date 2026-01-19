@@ -193,6 +193,18 @@ public class PianificazioneController : ControllerBase
             impostazioni.TempoSetupMinuti
         );
 
+        // Calcola DataFinePrevisione se mancante ma presente DataInizioPrevisione
+        DateTime? dataFinePrevisione = commessa.DataFinePrevisione;
+        if (commessa.DataInizioPrevisione.HasValue && !dataFinePrevisione.HasValue && durataMinuti > 0)
+        {
+            dataFinePrevisione = _pianificazioneService.CalcolaDataFinePrevista(
+                commessa.DataInizioPrevisione.Value,
+                durataMinuti,
+                impostazioni.OreLavorativeGiornaliere,
+                impostazioni.GiorniLavorativiSettimanali
+            );
+        }
+
         return new CommessaGanttDto
         {
             Id = commessa.Id,
@@ -201,7 +213,7 @@ public class PianificazioneController : ControllerBase
             NumeroMacchina = commessa.NumeroMacchina,
             NomeMacchina = commessa.NumeroMacchina.HasValue ? $"Macchina {commessa.NumeroMacchina}" : null,
             DataInizioPrevisione = commessa.DataInizioPrevisione,
-            DataFinePrevisione = commessa.DataFinePrevisione,
+            DataFinePrevisione = dataFinePrevisione,
             DataInizioProduzione = commessa.DataInizioProduzione,
             DataFineProduzione = commessa.DataFineProduzione,
             QuantitaRichiesta = commessa.QuantitaRichiesta,
