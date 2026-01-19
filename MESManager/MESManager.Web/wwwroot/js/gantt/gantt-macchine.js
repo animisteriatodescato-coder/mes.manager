@@ -25,59 +25,108 @@ window.GanttMacchine = {
 
         // Define groups from settings (machines)
         const groups = this.settings.machines && this.settings.machines.length > 0
-            ? this.settings.machines.map(m => ({ id: m.id, content: m.nome }))
+            ? this.settings.machines.map(m => ({ id: m.codice || m.id, content: m.nome }))
             : [
-                { id: 'machine_01', content: 'Macchina 01' },
-                { id: 'machine_02', content: 'Macchina 02' },
-                { id: 'machine_03', content: 'Macchina 03' }
+                { id: 'M01', content: 'Macchina 01' },
+                { id: 'M02', content: 'Macchina 02' },
+                { id: 'M03', content: 'Macchina 03' }
             ];
 
-        // Define items (commesse) with progress - multiple items can be on the same group (machine)
-        const items = [
-            // Commesse for first machine
-            { 
-                id: 1, 
-                group: groups[0].id, 
-                content: 'C001 (65%)', 
-                start: '2026-01-16', 
-                end: '2026-01-18', 
-                className: 'commessa-item',
-                style: 'background: linear-gradient(to right, #2196F3 65%, rgba(33, 150, 243, 0.3) 65%); color: white;'
-            },
-            { 
-                id: 2, 
-                group: groups[0].id, 
-                content: 'C002 (30%)', 
-                start: '2026-01-19', 
-                end: '2026-01-21', 
-                className: 'commessa-item',
-                style: 'background: linear-gradient(to right, #4CAF50 30%, rgba(76, 175, 80, 0.3) 30%); color: white;'
+        console.log('Groups created:', groups);
+
+        // Define items (commesse) from real data
+        let items = [];
+        
+        if (this.settings.tasks && this.settings.tasks.length > 0) {
+            console.log('Processing real tasks:', this.settings.tasks);
+            
+            // Create a lookup map: numeroMacchina -> machineGroup
+            const machineMap = new Map();
+            this.settings.machines.forEach(m => {
+                // Extract number from codice (e.g., "M01" -> 1, "M02" -> 2)
+                const match = m.codice.match(/\d+/);
+                if (match) {
+                    const numMacchina = parseInt(match[0], 10);
+                    machineMap.set(numMacchina, m.codice || m.id);
+                }
+            });
+            
+            console.log('Machine number mapping:', Array.from(machineMap.entries()));
+            
+            items = this.settings.tasks
+                .filter(task => task.dataInizio && task.dataFine && task.numeroMacchina)
+                .map(task => {
+                    // Find the correct machine group using numeroMacchina
+                    const groupId = machineMap.get(task.numeroMacchina) || groups[0]?.id;
+                    
+                    console.log(`Task ${task.codice}: numeroMacchina=${task.numeroMacchina} -> groupId=${groupId}`);
+                    
+                    // Calculate progress color
+                    const progress = task.percentualeCompletamento || 0;
+                    const baseColor = this.getStatusColor(task.stato);
+                    const progressStyle = `background: linear-gradient(to right, ${baseColor} ${progress}%, rgba(${this.hexToRgb(baseColor)}, 0.3) ${progress}%); color: white;`;
+                    
+                    return {
+                        id: task.id,
+                        group: groupId,
+                        content: `${task.codice} (${Math.round(progress)}%)`,
+                        start: new Date(task.dataInizio),
+                        end: new Date(task.dataFine),
+                        className: 'commessa-item',
+                        style: progressStyle,
+                        title: `${task.description || task.codice}\nQuantità: ${task.quantita}\nStato: ${task.stato}`
+                    };
+                });
+            
+            console.log('Items created from real data:', items);
+        } else {
+            console.warn('No real tasks data, using sample data');
+            
+            // Fallback sample data
+            items = [
+                { 
+                    id: 1, 
+                    group: groups[0].id, 
+                    content: 'C001 (65%)', 
+                    start: '2026-01-16', 
+                    end: '2026-01-18', 
+                    className: 'commessa-item',
+                    style: 'background: linear-gradient(to right, #2196F3 65%, rgba(33, 150, 243, 0.3) 65%); color: white;'
+                },
+                { 
+                    id: 2, 
+                    group: groups[0].id, 
+                    content: 'C002 (30%)', 
+                    start: '2026-01-19', 
+                    end: '2026-01-21', 
+                    className: 'commessa-item',
+                    style: 'background: linear-gradient(to right, #4CAF50 30%, rgba(76, 175, 80, 0.3) 30%); color: white;'
+                }
+            ];
+            
+            if (groups.length > 1) {
+                items.push({ 
+                    id: 3, 
+                    group: groups[1].id, 
+                    content: 'C003 (80%)', 
+                    start: '2026-01-16', 
+                    end: '2026-01-20', 
+                    className: 'commessa-item',
+                    style: 'background: linear-gradient(to right, #FF9800 80%, rgba(255, 152, 0, 0.3) 80%); color: white;'
+                });
             }
-        ];
-        
-        // Add more sample items if we have more machines
-        if (groups.length > 1) {
-            items.push({ 
-                id: 3, 
-                group: groups[1].id, 
-                content: 'C003 (80%)', 
-                start: '2026-01-16', 
-                end: '2026-01-20', 
-                className: 'commessa-item',
-                style: 'background: linear-gradient(to right, #FF9800 80%, rgba(255, 152, 0, 0.3) 80%); color: white;'
-            });
-        }
-        
-        if (groups.length > 2) {
-            items.push({ 
-                id: 4, 
-                group: groups[2].id, 
-                content: 'C004 (15%)', 
-                start: '2026-01-17', 
-                end: '2026-01-22', 
-                className: 'commessa-item',
-                style: 'background: linear-gradient(to right, #F44336 15%, rgba(244, 67, 54, 0.3) 15%); color: white;'
-            });
+            
+            if (groups.length > 2) {
+                items.push({ 
+                    id: 4, 
+                    group: groups[2].id, 
+                    content: 'C004 (15%)', 
+                    start: '2026-01-17', 
+                    end: '2026-01-22', 
+                    className: 'commessa-item',
+                    style: 'background: linear-gradient(to right, #F44336 15%, rgba(244, 67, 54, 0.3) 15%); color: white;'
+                });
+            }
         }
 
         // Configuration options
@@ -96,8 +145,8 @@ window.GanttMacchine = {
                 item: 10,
                 axis: 5
             },
-            start: '2026-01-15',
-            end: '2026-01-25'
+            start: items.length > 0 ? new Date(Math.min(...items.map(i => new Date(i.start)))) : '2026-01-15',
+            end: items.length > 0 ? new Date(Math.max(...items.map(i => new Date(i.end)))) : '2026-01-25'
         };
 
         // Create Timeline
@@ -135,6 +184,25 @@ window.GanttMacchine = {
         });
 
         console.log('Vis-Timeline chart initialized successfully');
+    },
+    
+    getStatusColor: function(stato) {
+        const statusColors = {
+            'InProgrammazione': '#2196F3',
+            'Programmata': '#4CAF50',
+            'InCorso': '#FF9800',
+            'Completata': '#9E9E9E',
+            'Sospesa': '#F44336',
+            'Default': '#607D8B'
+        };
+        return statusColors[stato] || statusColors['Default'];
+    },
+    
+    hexToRgb: function(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? 
+            `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : 
+            '96, 125, 139';
     },
     
     updateTasks: function(items, groups) {
