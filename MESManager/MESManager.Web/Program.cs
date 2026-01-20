@@ -20,6 +20,12 @@ ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Carica configurazione database condivisa dalla root del progetto
+builder.Configuration.AddJsonFile(
+    Path.Combine(Directory.GetParent(builder.Environment.ContentRootPath)!.FullName, "appsettings.Database.json"),
+    optional: false,
+    reloadOnChange: true);
+
 // Abilita i controller API con JSON camelCase
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -27,8 +33,9 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 
-// Configurazione Connection String
-var connectionString = "Server=localhost\\SQLEXPRESS01;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;";
+// Legge la connection string dal file condiviso
+var connectionString = builder.Configuration.GetConnectionString("MESManagerDb")
+    ?? throw new InvalidOperationException("Connection string 'MESManagerDb' not found in appsettings.Database.json");
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

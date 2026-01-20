@@ -7,8 +7,15 @@ using Microsoft.Extensions.Hosting;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-// Configurazione Connection String
-var connectionString = "Server=localhost\\SQLEXPRESS01;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;";
+// Carica configurazione database condivisa dalla root del progetto
+builder.Configuration.AddJsonFile(
+    Path.Combine(Directory.GetParent(builder.Environment.ContentRootPath)!.FullName, "appsettings.Database.json"),
+    optional: false,
+    reloadOnChange: true);
+
+// Configurazione Connection String dal file condiviso
+var connectionString = builder.Configuration.GetConnectionString("MESManagerDb")
+    ?? throw new InvalidOperationException("Connection string 'MESManagerDb' not found in appsettings.Database.json");
 
 // Infrastructure e DbContext
 builder.Services.AddInfrastructure(connectionString);
