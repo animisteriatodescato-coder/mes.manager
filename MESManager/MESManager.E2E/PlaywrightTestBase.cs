@@ -29,7 +29,7 @@ public class PlaywrightTestBase : IAsyncLifetime
             StartInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = $"run --no-build --urls {BaseUrl}",
+                Arguments = $"run --urls {BaseUrl}",
                 WorkingDirectory = projectPath,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
