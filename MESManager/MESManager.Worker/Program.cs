@@ -8,7 +8,7 @@ using Microsoft.Extensions.Hosting;
 var builder = Host.CreateApplicationBuilder(args);
 
 // Configurazione Connection String
-var connectionString = "Server=localhost\\SQLEXPRESS;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;";
+var connectionString = "Server=localhost\\SQLEXPRESS01;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;";
 
 // Infrastructure e DbContext
 builder.Services.AddInfrastructure(connectionString);

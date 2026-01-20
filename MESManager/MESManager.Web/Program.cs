@@ -28,7 +28,7 @@ builder.Services.AddControllers()
     });
 
 // Configurazione Connection String
-var connectionString = "Server=localhost\\SQLEXPRESS;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;";
+var connectionString = "Server=localhost\\SQLEXPRESS01;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;";
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

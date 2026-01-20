@@ -10,7 +10,7 @@ public class MesManagerDbContextFactory : IDesignTimeDbContextFactory<MesManager
     {
         var optionsBuilder = new DbContextOptionsBuilder<MesManagerDbContext>();
         // Usa la stessa connection string della tua applicazione
-        optionsBuilder.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;",
+        optionsBuilder.UseSqlServer("Server=localhost\\SQLEXPRESS01;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;",
             sqlOptions => sqlOptions.EnableRetryOnFailure(
                 maxRetryCount: 5,
                 maxRetryDelay: TimeSpan.FromSeconds(30),
