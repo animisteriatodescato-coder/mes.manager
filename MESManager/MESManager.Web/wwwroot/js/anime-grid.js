@@ -54,8 +54,7 @@ window.animeGrid = (function() {
             headerName: 'Utente Modifica', 
             sortable: true, 
             filter: true, 
-            width: 150,
-            valueFormatter: params => params.value ? new Date(params.value).toLocaleDateString('it-IT') : ''
+            width: 150
         },
         { 
             field: 'dataImportazione', 
