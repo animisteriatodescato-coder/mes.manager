@@ -164,12 +164,17 @@
         PageToolbarService.SetActivePage("anime", this);
         
         _anime = await Http.GetFromJsonAsync<List<AnimeDto>>("api/Anime") ?? new();
+        Console.WriteLine($"CatalogoAnime loaded {_anime.Count} anime from API");
         
-        var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("anime-grid-settings");
-        if (savedSettings != null)
-        {
-            settings = savedSettings;
-        }
+        // FIX P9: NON caricare savedSettings per forzare tutte le colonne visibili
+        // var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("anime-grid-settings");
+        // if (savedSettings != null)
+        // {
+        //     settings = savedSettings;
+        // }
+        
+        // Forza reset preferenze colonne all'avvio
+        await PreferencesService.RemoveAsync("anime-grid-settings");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -193,7 +198,8 @@
             }
 
             // Simply initialize the grid - no need to check if already initialized
-            await JSRuntime.InvokeVoidAsync("animeGrid.init", "animeGrid", _anime, settings.ColumnStateJson);
+            // NON caricare le preferenze colonne per mostrare sempre tutte le colonne
+            await JSRuntime.InvokeVoidAsync("animeGrid.init", "animeGrid", _anime, null);
             await ApplyUiSettings();
         }
         catch (Exception ex)

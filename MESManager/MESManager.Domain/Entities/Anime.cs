@@ -73,5 +73,10 @@ namespace MESManager.Domain.Entities
         
         // Timestamp di importazione
         public DateTime DataImportazione { get; set; }
+        
+        // Tracking modifiche locali
+        public bool ModificatoLocalmente { get; set; } = false;
+        public DateTime? DataUltimaModificaLocale { get; set; }
+        public string? UtenteUltimaModificaLocale { get; set; }
     }
 }

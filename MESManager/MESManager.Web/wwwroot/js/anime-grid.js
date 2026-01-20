@@ -3,58 +3,104 @@ window.animeGrid = (function() {
     let isGridInitialized = false;
 
     const columnDefs = [
-        { field: 'id', headerName: 'ID', sortable: true, filter: true, width: 80 },
-        { field: 'ubicazione', headerName: 'Ubicazione', sortable: true, filter: true, width: 150 },
-        { field: 'cliente', headerName: 'Cliente', sortable: true, filter: true, width: 150 },
-        { field: 'codiceArticolo', headerName: 'Codice', sortable: true, filter: true, width: 150 },
-        { field: 'descrizioneArticolo', headerName: 'Descrizione Articolo', sortable: true, filter: true, width: 250 },
-        { field: 'codiceCassa', headerName: 'Codice Cassa', sortable: true, filter: true, width: 120 },
-        { field: 'codiceAnime', headerName: 'Codice Anima', sortable: true, filter: true, width: 120 },
-        { field: 'unitaMisura', headerName: 'Unità Misura', sortable: true, filter: true, width: 100 },
-        { field: 'imballo', headerName: 'Imballo', sortable: true, filter: true, width: 100 },
-        { field: 'note', headerName: 'Note', sortable: true, filter: true, width: 200 },
-        { field: 'macchineSuDisponibili', headerName: 'Macchine Disponibili', sortable: true, filter: true, width: 200 },
-        { field: 'sabbia', headerName: 'Sabbia', sortable: true, filter: true, width: 150 },
-        { field: 'togliereSparo', headerName: 'Togliere Sparo', sortable: true, filter: true, width: 130 },
-        { field: 'vernice', headerName: 'Vernice', sortable: true, filter: true, width: 150 },
-        { field: 'colla', headerName: 'Colla', sortable: true, filter: true, width: 150 },
-        { field: 'quantitaPiano', headerName: 'Quantità Piano', sortable: true, filter: true, width: 120 },
-        { field: 'numeroPiani', headerName: 'Numero Piani', sortable: true, filter: true, width: 120 },
-        { field: 'ciclo', headerName: 'Ciclo', sortable: true, filter: true, width: 150 },
-        { field: 'peso', headerName: 'Peso', sortable: true, filter: true, width: 100 },
-        { field: 'figure', headerName: 'Figure', sortable: true, filter: true, width: 120 },
-        { field: 'piastra', headerName: 'Piastra', sortable: true, filter: true, width: 120 },
-        { field: 'maschere', headerName: 'Maschere', sortable: true, filter: true, width: 120 },
-        { field: 'incollata', headerName: 'Incollata', sortable: true, filter: true, width: 120 },
-        { field: 'assemblata', headerName: 'Assemblata', sortable: true, filter: true, width: 120 },
-        { field: 'armataL', headerName: 'Armata L', sortable: true, filter: true, width: 120 },
-        { field: 'larghezza', headerName: 'Larghezza', sortable: true, filter: true, width: 100 },
-        { field: 'altezza', headerName: 'Altezza', sortable: true, filter: true, width: 100 },
-        { field: 'profondita', headerName: 'Profondità', sortable: true, filter: true, width: 100 },
-        { field: 'idArticolo', headerName: 'ID Articolo', sortable: true, filter: true, width: 100 },
+        // READONLY - da sync commesse
+        { field: 'id', headerName: 'ID', sortable: true, filter: true, width: 80, editable: false },
+        { field: 'codiceArticolo', headerName: 'Codice', sortable: true, filter: true, width: 150, editable: false, cellStyle: {backgroundColor: '#f5f5f5'} },
+        { field: 'descrizioneArticolo', headerName: 'Descrizione Articolo', sortable: true, filter: true, width: 250, editable: false, cellStyle: {backgroundColor: '#f5f5f5'} },
+        { field: 'cliente', headerName: 'Cliente', sortable: true, filter: true, width: 150, editable: false, cellStyle: {backgroundColor: '#f5f5f5'} },
+        
+        // EDITABLE - campi modificabili
+        { field: 'ubicazione', headerName: 'Ubicazione', sortable: true, filter: true, width: 150, editable: true },
+        { field: 'codiceCassa', headerName: 'Codice Cassa', sortable: true, filter: true, width: 120, editable: true },
+        { field: 'codiceAnime', headerName: 'Codice Anima', sortable: true, filter: true, width: 120, editable: true },
+        { field: 'unitaMisura', headerName: 'Unità Misura', sortable: true, filter: true, width: 100, editable: true },
+        
+        // Imballo - simple text editor
+        { 
+            field: 'imballo', 
+            headerName: 'Imballo', 
+            sortable: true, 
+            filter: true, 
+            width: 150, 
+            editable: true
+        },
+        
+        { field: 'note', headerName: 'Note', sortable: true, filter: true, width: 200, editable: true, cellEditor: 'agLargeTextCellEditor' },
+        { field: 'macchineSuDisponibili', headerName: 'Macchine Disponibili', sortable: true, filter: true, width: 200, editable: true },
+        
+        // Sabbia - simple text editor
+        { 
+            field: 'sabbia', 
+            headerName: 'Sabbia', 
+            sortable: true, 
+            filter: true, 
+            width: 150, 
+            editable: true
+        },
+        
+        { field: 'togliereSparo', headerName: 'Togliere Sparo', sortable: true, filter: true, width: 130, editable: true },
+        
+        // Vernice - simple text editor
+        { 
+            field: 'vernice', 
+            headerName: 'Vernice', 
+            sortable: true, 
+            filter: true, 
+            width: 150, 
+            editable: true
+        },
+        
+        // Colla - simple text editor
+        { 
+            field: 'colla', 
+            headerName: 'Colla', 
+            sortable: true, 
+            filter: true, 
+            width: 150, 
+            editable: true
+        },
+        
+        { field: 'quantitaPiano', headerName: 'Quantità Piano', sortable: true, filter: true, width: 120, editable: true, cellEditor: 'agNumberCellEditor' },
+        { field: 'numeroPiani', headerName: 'Numero Piani', sortable: true, filter: true, width: 120, editable: true, cellEditor: 'agNumberCellEditor' },
+        { field: 'ciclo', headerName: 'Ciclo', sortable: true, filter: true, width: 150, editable: true },
+        { field: 'peso', headerName: 'Peso', sortable: true, filter: true, width: 100, editable: true },
+        { field: 'figure', headerName: 'Figure', sortable: true, filter: true, width: 120, editable: true },
+        { field: 'piastra', headerName: 'Piastra', sortable: true, filter: true, width: 120, editable: true },
+        { field: 'maschere', headerName: 'Maschere', sortable: true, filter: true, width: 120, editable: true },
+        { field: 'incollata', headerName: 'Incollata', sortable: true, filter: true, width: 120, editable: true },
+        { field: 'assemblata', headerName: 'Assemblata', sortable: true, filter: true, width: 120, editable: true },
+        { field: 'armataL', headerName: 'Armata L', sortable: true, filter: true, width: 120, editable: true },
+        { field: 'larghezza', headerName: 'Larghezza', sortable: true, filter: true, width: 100, editable: true, cellEditor: 'agNumberCellEditor' },
+        { field: 'altezza', headerName: 'Altezza', sortable: true, filter: true, width: 100, editable: true, cellEditor: 'agNumberCellEditor' },
+        { field: 'profondita', headerName: 'Profondità', sortable: true, filter: true, width: 100, editable: true, cellEditor: 'agNumberCellEditor' },
+        
+        { field: 'idArticolo', headerName: 'ID Articolo', sortable: true, filter: true, width: 100, editable: false },
         { 
             field: 'trasmettiTutto', 
             headerName: 'Trasmetti Tutto', 
             sortable: true, 
             filter: true, 
             width: 130,
-            valueFormatter: params => params.value ? 'Sì' : 'No'
+            valueFormatter: params => params.value ? 'Sì' : 'No',
+            editable: false
         },
-        { field: 'allegato', headerName: 'Allegato', sortable: true, filter: true, width: 150 },
+        { field: 'allegato', headerName: 'Allegato', sortable: true, filter: true, width: 150, editable: true },
         { 
             field: 'dataModificaRecord', 
             headerName: 'Data Modifica', 
             sortable: true, 
             filter: true, 
             width: 150,
-            valueFormatter: params => params.value ? new Date(params.value).toLocaleDateString('it-IT') : ''
+            valueFormatter: params => params.value ? new Date(params.value).toLocaleDateString('it-IT') : '',
+            editable: false
         },
         { 
             field: 'utenteModificaRecord', 
             headerName: 'Utente Modifica', 
             sortable: true, 
             filter: true, 
-            width: 150
+            width: 150,
+            editable: false
         },
         { 
             field: 'dataImportazione', 
@@ -62,16 +108,22 @@ window.animeGrid = (function() {
             sortable: true, 
             filter: true, 
             width: 180,
-            valueFormatter: params => params.value ? new Date(params.value).toLocaleString('it-IT') : ''
+            valueFormatter: params => params.value ? new Date(params.value).toLocaleString('it-IT') : '',
+            editable: false
         }
     ];
 
-    function init(gridId, data, savedColumnState) {
+    async function init(gridId, data, savedColumnState) {
         const gridDiv = document.getElementById(gridId);
         if (!gridDiv) {
-            console.error('Grid element not found:', gridId);
+            console.error('Grid div not found:', gridId);
             return;
         }
+
+        // Ignora savedColumnState per forzare tutte le colonne visibili
+        savedColumnState = null;
+        localStorage.removeItem('anime-grid-settings');
+        console.log('Column state FORCED to null - all columns will be visible');
 
         // Distruggi la griglia esistente se presente
         if (gridApi) {
@@ -122,6 +174,28 @@ window.animeGrid = (function() {
             },
             onModelUpdated: () => {
                 window.dispatchEvent(new CustomEvent('animeGridStatsChanged'));
+            },
+            onCellValueChanged: async (event) => {
+                // Salva automaticamente modifica su API
+                console.log('Cell value changed:', event.colDef.field, '=', event.newValue);
+                
+                try {
+                    const response = await fetch(`/api/Anime/${event.data.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(event.data)
+                    });
+                    
+                    if (response.ok) {
+                        console.log('✓ Anime updated successfully');
+                    } else {
+                        console.error('Failed to update anime:', response.statusText);
+                    }
+                } catch (err) {
+                    console.error('Error updating anime:', err);
+                }
             }
         };
 
@@ -169,6 +243,12 @@ window.animeGrid = (function() {
 
     function resetState() {
         if (gridApi) {
+            // Mostra tutte le colonne
+            const allColumns = gridApi.getColumns();
+            const allColIds = allColumns.map(col => col.getColId());
+            gridApi.setColumnsVisible(allColIds, true);
+            
+            // Reset dello stato
             gridApi.resetColumnState();
             gridApi.setFilterModel(null);
         }
@@ -182,7 +262,6 @@ window.animeGrid = (function() {
         }
         
         try {
-            // Verifica che gridApi sia ancora valido
             gridApi.getColumnState();
         } catch (e) {
             console.error('toggleColumnPanel: gridApi is destroyed or invalid', e);
@@ -255,7 +334,6 @@ window.animeGrid = (function() {
             label.textContent = col.colId;
             label.style.cssText = `cursor: pointer; font-size: 14px; user-select: none; color: ${isDarkMode ? '#e0e0e0' : '#333'};`;
 
-            // Gestisci il cambio di visibilità
             checkbox.addEventListener('change', (e) => {
                 gridApi.setColumnsVisible([col.colId], e.target.checked);
             });
@@ -308,7 +386,6 @@ window.animeGrid = (function() {
         overlay.appendChild(panel);
         document.body.appendChild(overlay);
 
-        // Chiudi cliccando sull'overlay
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
                 overlay.remove();

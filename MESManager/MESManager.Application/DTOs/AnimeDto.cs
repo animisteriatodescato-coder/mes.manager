@@ -36,5 +36,10 @@ namespace MESManager.Application.DTOs
         public string? Assemblata { get; set; }
         public string? ArmataL { get; set; }
         public DateTime DataImportazione { get; set; }
+        
+        // Tracking modifiche locali
+        public bool ModificatoLocalmente { get; set; }
+        public DateTime? DataUltimaModificaLocale { get; set; }
+        public string? UtenteUltimaModificaLocale { get; set; }
     }
 }

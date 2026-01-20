@@ -4,6 +4,7 @@ using MESManager.Domain.Enums;
 using MESManager.Infrastructure.Data;
 using MESManager.Sync.Backup;
 using MESManager.Sync.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace MESManager.Sync.Services;
 
@@ -12,15 +13,18 @@ public class SyncCommesseService
     private readonly MagoRepository _magoRepo;
     private readonly MesManagerDbContext _context;
     private readonly JsonBackupService _backup;
+    private readonly ILogger<SyncCommesseService> _logger;
 
     public SyncCommesseService(
         MagoRepository magoRepo,
         MesManagerDbContext context,
-        JsonBackupService backup)
+        JsonBackupService backup,
+        ILogger<SyncCommesseService> logger)
     {
         _magoRepo = magoRepo;
         _context = context;
         _backup = backup;
+        _logger = logger;
     }
 
     public async Task<LogSyncEntry> SyncAsync(CancellationToken cancellationToken = default)
@@ -53,6 +57,27 @@ public class SyncCommesseService
 
                 var articolo = await _context.Articoli
                     .FirstOrDefaultAsync(a => a.Codice == commessaMago.Item, cancellationToken);
+                
+                // NUOVA LOGICA: Aggiungi anime se codiceArticolo non presente
+                var anime = await _context.Anime
+                    .FirstOrDefaultAsync(a => a.CodiceArticolo == commessaMago.Item, cancellationToken);
+                
+                if (anime == null && !string.IsNullOrWhiteSpace(commessaMago.Item))
+                {
+                    _logger.LogInformation("Articolo {Codice} non presente in catalogo anime - creazione automatica", commessaMago.Item);
+                    
+                    anime = new Anime
+                    {
+                        CodiceArticolo = commessaMago.Item,
+                        DescrizioneArticolo = commessaMago.Description ?? string.Empty,
+                        Cliente = commessaMago.CompanyName,
+                        DataImportazione = DateTime.Now,
+                        ModificatoLocalmente = false
+                    };
+                    
+                    _context.Anime.Add(anime);
+                    _logger.LogInformation("✓ Anime creata: {Codice} - {Descrizione}", anime.CodiceArticolo, anime.DescrizioneArticolo);
+                }
 
                 // Usa la combinazione InternalOrdNo + Item come chiave univoca (come PlcMagoSync)
                 var codiceCommessa = $"{commessaMago.InternalOrdNo}-{commessaMago.Item}";

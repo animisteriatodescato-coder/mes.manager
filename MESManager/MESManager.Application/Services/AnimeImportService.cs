@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using MESManager.Application.Interfaces;
 using MESManager.Domain.Entities;
+using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace MESManager.Application.Services
 {
@@ -12,26 +14,37 @@ namespace MESManager.Application.Services
     {
         private readonly string _ganttConnectionString = "Server=192.168.1.230\\SQLEXPRESS;Database=Gantt;User Id=sa;Password=password.123;TrustServerCertificate=True;";
         private readonly IAnimeRepository _animeRepository;
+        private readonly ILogger<AnimeImportService> _logger;
 
-        public AnimeImportService(IAnimeRepository animeRepository)
+        public AnimeImportService(IAnimeRepository animeRepository, ILogger<AnimeImportService> logger)
         {
             _animeRepository = animeRepository;
+            _logger = logger;
         }
 
         public async Task<int> ImportFromGanttAsync()
         {
+            var sw = Stopwatch.StartNew();
+            _logger.LogInformation("=== START ANIME SYNC FROM GANTT ===");
+            _logger.LogInformation("Connection: Server=192.168.1.230\\SQLEXPRESS, Database=Gantt");
+            
             var articoli = await ReadArticoliFromGanttAsync();
+            _logger.LogInformation("Read {Count} anime from Gantt DB", articoli.Count);
+            
             var importedCount = 0;
             var updatedCount = 0;
+            var skippedCount = 0;
 
             foreach (var articolo in articoli)
             {
-                articolo.DataImportazione = DateTime.Now;
-                
-                // Cerca se esiste già un record con lo stesso CodiceArticolo
-                var existingAnime = await _animeRepository.GetByCodiceArticoloAsync(articolo.CodiceArticolo);
+                try
+                {
+                    articolo.DataImportazione = DateTime.Now;
+                    
+                    // Cerca se esiste già un record con lo stesso CodiceArticolo
+                    var existingAnime = await _animeRepository.GetByCodiceArticoloAsync(articolo.CodiceArticolo);
 
-                if (existingAnime != null)
+                    if (existingAnime != null)
                 {
                     // Aggiorna il record esistente con tutti i nuovi dati
                     existingAnime.DescrizioneArticolo = articolo.DescrizioneArticolo;
@@ -79,8 +92,23 @@ namespace MESManager.Application.Services
                     await _animeRepository.AddAsync(articolo);
                     importedCount++;
                 }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to import/update anime CodiceArticolo={Codice}", articolo.CodiceArticolo);
+                    skippedCount++;
+                }
             }
 
+            sw.Stop();
+            _logger.LogInformation("=== END ANIME SYNC === Inserted={Inserted}, Updated={Updated}, Skipped={Skipped}, Duration={Duration}ms",
+                importedCount, updatedCount, skippedCount, sw.ElapsedMilliseconds);
+            
+            if (importedCount == 0 && updatedCount == 0)
+            {
+                _logger.LogError("SYNC COMPLETED BUT ZERO RECORDS INSERTED/UPDATED - POSSIBLE BUG");
+            }
+            
             return importedCount + updatedCount;
         }
 
@@ -92,8 +120,10 @@ namespace MESManager.Application.Services
             {
                 await conn.OpenAsync();
                 
+                // NOTA: Rimuovere TOP per sincronizzare TUTTI gli articoli, non solo i primi 1000
+                // Oppure aggiungere WHERE DataModificaRecord > @LastSyncDate per sync incrementale
                 var query = @"
-                    SELECT TOP (1000) 
+                    SELECT 
                         [IdArticolo],
                         [CodiceArticolo],
                         [DescrizioneArticolo],
@@ -128,6 +158,8 @@ namespace MESManager.Application.Services
                         ISNULL([ArmataL], '') as [ArmataL]
                     FROM [dbo].[tbArticoli]
                     ORDER BY [IdArticolo]";
+                
+                _logger.LogDebug("Executing SQL query on Gantt DB (no TOP limit)");
                 
                 var cmd = new SqlCommand(query, conn);
                 

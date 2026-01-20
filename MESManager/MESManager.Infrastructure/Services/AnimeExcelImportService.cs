@@ -21,6 +21,9 @@ public class AnimeExcelImportService
     {
         try
         {
+            _logger.LogInformation("=== START EXCEL IMPORT ===");
+            _logger.LogInformation("DataSource: Excel Stream, Database: {Database}", _context.Database.GetDbConnection().Database);
+            
             var animeList = new List<Anime>();
 
             using (var package = new ExcelPackage(fileStream))

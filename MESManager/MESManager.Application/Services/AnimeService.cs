@@ -79,6 +79,11 @@ namespace MESManager.Application.Services
             entity.Assemblata = dto.Assemblata;
             entity.ArmataL = dto.ArmataL;
             
+            // Tracking modifiche locali
+            entity.ModificatoLocalmente = dto.ModificatoLocalmente;
+            entity.DataUltimaModificaLocale = dto.DataUltimaModificaLocale;
+            entity.UtenteUltimaModificaLocale = dto.UtenteUltimaModificaLocale;
+            
             await _repo.UpdateAsync(entity);
             return MapToDto(entity);
         }
@@ -90,6 +95,7 @@ namespace MESManager.Application.Services
 
         private AnimeDto MapToDto(Anime entity)
         {
+            // Mapping manuale - ATTENZIONE: aggiungere ogni nuovo campo a entity
             return new AnimeDto
             {
                 Id = entity.Id,
@@ -125,7 +131,10 @@ namespace MESManager.Application.Services
                 Incollata = entity.Incollata,
                 Assemblata = entity.Assemblata,
                 ArmataL = entity.ArmataL,
-                DataImportazione = entity.DataImportazione
+                DataImportazione = entity.DataImportazione,
+                ModificatoLocalmente = entity.ModificatoLocalmente,
+                DataUltimaModificaLocale = entity.DataUltimaModificaLocale,
+                UtenteUltimaModificaLocale = entity.UtenteUltimaModificaLocale
             };
         }
 
@@ -166,7 +175,10 @@ namespace MESManager.Application.Services
                 Incollata = dto.Incollata,
                 Assemblata = dto.Assemblata,
                 ArmataL = dto.ArmataL,
-                DataImportazione = dto.DataImportazione
+                DataImportazione = dto.DataImportazione,
+                ModificatoLocalmente = dto.ModificatoLocalmente,
+                DataUltimaModificaLocale = dto.DataUltimaModificaLocale,
+                UtenteUltimaModificaLocale = dto.UtenteUltimaModificaLocale
             };
         }
     }
