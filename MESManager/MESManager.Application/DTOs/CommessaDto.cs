@@ -55,4 +55,23 @@ public class CommessaDto
     public string? CodiceAnime { get; set; }
     public string? MacchineSuDisponibili { get; set; }
     public bool? TrasmettiTutto { get; set; }
+    
+    // Campi aggiuntivi per etichetta
+    public string? Sabbia { get; set; }
+    public string? SabbiaDescrizione { get; set; }
+    public string? Vernice { get; set; }
+    public string? VerniceDescrizione { get; set; }
+    public string? Colla { get; set; }
+    public string? CollaDescrizione { get; set; }
+    public int? QuantitaPiano { get; set; }
+    public int? NumeroPiani { get; set; }
+    public string? ClienteAnime { get; set; }
+    
+    // Quantità calcolata per etichetta (QuantitaPiano * NumeroPiani)
+    public int? QuantitaEtichetta => (QuantitaPiano ?? 0) * (NumeroPiani ?? 0);
+    
+    // Flag per verificare se i dati etichetta sono completi
+    public bool DatiEtichettaCompleti => 
+        !string.IsNullOrEmpty(CodiceAnime) && 
+        !string.IsNullOrEmpty(ClienteRagioneSociale);
 }

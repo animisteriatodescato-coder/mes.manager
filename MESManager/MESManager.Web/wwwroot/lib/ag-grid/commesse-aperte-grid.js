@@ -2,7 +2,35 @@ window.commesseAperteGrid = (function() {
     let gridApi = null;
     let dotNetHelper = null;
 
+    // Funzione per verificare se i dati etichetta sono completi
+    function hasDatiEtichettaCompleti(data) {
+        return data && 
+               data.codiceAnime && 
+               data.clienteRagioneSociale;
+    }
+
     const columnDefs = [
+        {
+            field: 'stampaEtichetta',
+            headerName: '',
+            width: 50,
+            pinned: 'left',
+            sortable: false,
+            filter: false,
+            suppressMenu: true,
+            cellRenderer: params => {
+                const hasData = hasDatiEtichettaCompleti(params.data);
+                const icon = hasData ? '🖨️' : '⚠️';
+                const title = hasData ? 'Stampa Etichetta' : 'Dati incompleti - Clicca per dettagli';
+                const color = hasData ? '#1976d2' : '#ff9800';
+                return `<button class="print-label-btn" style="border:none;background:transparent;cursor:pointer;font-size:18px;color:${color}" title="${title}">${icon}</button>`;
+            },
+            onCellClicked: params => {
+                if (dotNetHelper) {
+                    dotNetHelper.invokeMethodAsync('OnPrintLabelClick', params.data);
+                }
+            }
+        },
         { 
             field: 'numeroMacchina', 
             headerName: 'MA', 
@@ -127,6 +155,24 @@ window.commesseAperteGrid = (function() {
             width: 120,
             hide: true,
             valueFormatter: params => params.value === true ? 'Sì' : params.value === false ? 'No' : ''
+        },
+        // Campi etichetta
+        { field: 'sabbiaDescrizione', headerName: 'Sabbia', sortable: true, filter: true, width: 120, hide: true },
+        { field: 'verniceDescrizione', headerName: 'Vernice', sortable: true, filter: true, width: 150, hide: true },
+        { field: 'quantitaPiano', headerName: 'Qtà Piano', sortable: true, filter: 'agNumberColumnFilter', width: 100, hide: true },
+        { field: 'numeroPiani', headerName: 'N. Piani', sortable: true, filter: 'agNumberColumnFilter', width: 100, hide: true },
+        { 
+            field: 'quantitaEtichetta', 
+            headerName: 'Qtà Etichetta', 
+            sortable: true, 
+            filter: 'agNumberColumnFilter', 
+            width: 120, 
+            hide: true,
+            valueGetter: params => {
+                const qp = params.data?.quantitaPiano || 0;
+                const np = params.data?.numeroPiani || 0;
+                return qp * np;
+            }
         }
     ];
 
@@ -217,6 +263,12 @@ window.commesseAperteGrid = (function() {
             },
             onModelUpdated: () => {
                 window.dispatchEvent(new CustomEvent('commesseAperteGridStatsChanged'));
+            },
+            onRowDoubleClicked: (event) => {
+                // Doppio click: naviga a Catalogo Anime per modificare i dati
+                if (dotNetHelper && event.data && event.data.articoloCodice) {
+                    dotNetHelper.invokeMethodAsync('OnRowDoubleClick', event.data.articoloCodice);
+                }
             },
             onCellValueChanged: async (event) => {
                 if (event.colDef.field === 'numeroMacchina') {
@@ -332,6 +384,7 @@ window.commesseAperteGrid = (function() {
 
     return {
         init: init,
+        setDotNetHelper: setDotNetHelper,
         setQuickFilter: setQuickFilter,
         setColumnVisible: setColumnVisible,
         getAllColumns: getAllColumns,

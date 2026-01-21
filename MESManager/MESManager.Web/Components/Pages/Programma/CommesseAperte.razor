@@ -108,6 +108,136 @@
         </DialogActions>
     </MudDialog>
 
+    @* Dialog Stampa Etichetta *@
+    <MudDialog @bind-Visible="showLabelDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true }">
+        <TitleContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center">
+                <MudIcon Icon="@Icons.Material.Filled.Print" Class="mr-2" Color="Color.Primary" />
+                <MudText Typo="Typo.h6">Stampa Etichetta</MudText>
+            </MudStack>
+        </TitleContent>
+        <DialogContent>
+            @if (selectedCommessaForLabel != null)
+            {
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">Modifica Quantità</MudText>
+                            <MudNumericField @bind-Value="labelQuantita" 
+                                           Label="Quantità Etichetta" 
+                                           Variant="Variant.Outlined"
+                                           Min="1"
+                                           HelperText="@($"Totale ordine: {selectedCommessaForLabel.QuantitaRichiesta}")" />
+                            <MudText Typo="Typo.caption" Class="mt-2" Color="Color.Secondary">
+                                Calcolata: @((selectedCommessaForLabel.QuantitaPiano ?? 0) * (selectedCommessaForLabel.NumeroPiani ?? 0)) 
+                                (Piano: @(selectedCommessaForLabel.QuantitaPiano ?? 0) × Piani: @(selectedCommessaForLabel.NumeroPiani ?? 0))
+                            </MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">Riepilogo Dati</MudText>
+                            <MudSimpleTable Dense="true" Hover="true">
+                                <tbody>
+                                    <tr><td><strong>Cliente</strong></td><td>@(selectedCommessaForLabel.ClienteRagioneSociale ?? "N/D")</td></tr>
+                                    <tr><td><strong>Codice Anima</strong></td><td>@(selectedCommessaForLabel.CodiceAnime ?? "N/D")</td></tr>
+                                    <tr><td><strong>Numero Ordine</strong></td><td>@(selectedCommessaForLabel.InternalOrdNo ?? "N/D")</td></tr>
+                                    <tr><td><strong>Sabbia</strong></td><td>@(selectedCommessaForLabel.SabbiaDescrizione ?? "N/D")</td></tr>
+                                    <tr><td><strong>Vernice</strong></td><td>@(selectedCommessaForLabel.VerniceDescrizione ?? "N/D")</td></tr>
+                                </tbody>
+                            </MudSimpleTable>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">Anteprima Etichetta (2 copie per pagina)</MudText>
+                        <div id="label-preview-container" class="label-preview-wrapper">
+                            @for (int i = 0; i < 2; i++)
+                            {
+                                <div class="label-card">
+                                    <div class="label-header">
+                                        <div class="company-name">ANIMISTERIA TODESCATO</div>
+                                    </div>
+                                    <div class="label-row client-row">
+                                        <span class="label-field-name">CLIENTE</span>
+                                        <span class="label-field-value">@(selectedCommessaForLabel.ClienteRagioneSociale ?? "")</span>
+                                    </div>
+                                    <div class="label-row code-row">
+                                        <span class="label-field-name">CODICE ANIMA</span>
+                                        <span class="label-code">@(selectedCommessaForLabel.CodiceAnime ?? "")</span>
+                                    </div>
+                                    <div class="label-row order-row">
+                                        <span class="label-field-name">NUMERO ORDINE</span>
+                                        <span class="label-field-value order-number">@(selectedCommessaForLabel.InternalOrdNo ?? "")</span>
+                                    </div>
+                                    <div class="label-details-grid">
+                                        <div class="detail-left">
+                                            <div class="detail-item">
+                                                <span class="detail-label">SABBIA:</span>
+                                                <span class="detail-value">@(selectedCommessaForLabel.SabbiaDescrizione ?? "")</span>
+                                            </div>
+                                            <div class="detail-item">
+                                                <span class="detail-label">DATA:</span>
+                                                <span class="detail-value">@DateTime.Now.ToString("dd/MM/yyyy")</span>
+                                            </div>
+                                            <div class="detail-item">
+                                                <span class="detail-label">VERNICE:</span>
+                                                <span class="detail-value">@(selectedCommessaForLabel.VerniceDescrizione ?? "")</span>
+                                            </div>
+                                        </div>
+                                        <div class="detail-right">
+                                            <span class="qty-label">QUANTITA'</span>
+                                            <span class="qty-value">@labelQuantita</span>
+                                        </div>
+                                    </div>
+                                    <div class="label-footer">
+                                        <span class="operator-label">OPERATORE:</span>
+                                        <div class="operator-box"></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </MudItem>
+                </MudGrid>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="@(() => showLabelDialog = false)" Variant="Variant.Text">Annulla</MudButton>
+            <MudButton OnClick="@PrintLabel" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Print">Stampa</MudButton>
+        </DialogActions>
+    </MudDialog>
+
+    @* Dialog Dati Mancanti *@
+    <MudDialog @bind-Visible="showMissingDataDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Small }">
+        <TitleContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center">
+                <MudIcon Icon="@Icons.Material.Filled.Warning" Class="mr-2" Color="Color.Warning" />
+                <MudText Typo="Typo.h6">Dati Incompleti</MudText>
+            </MudStack>
+        </TitleContent>
+        <DialogContent>
+            <MudAlert Severity="Severity.Warning" Class="mb-3">
+                Per stampare l'etichetta sono necessari i seguenti dati mancanti:
+            </MudAlert>
+            <MudList T="string" Dense="true">
+                @foreach (var campo in campiMancanti)
+                {
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.Error" IconColor="Color.Error">
+                        @campo
+                    </MudListItem>
+                }
+            </MudList>
+            <MudText Typo="Typo.body2" Class="mt-3">
+                Doppio click sulla riga per aprire il Catalogo Anime e inserire i dati mancanti.
+            </MudText>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="@(() => showMissingDataDialog = false)" Variant="Variant.Text">Chiudi</MudButton>
+            <MudButton OnClick="@GoToAnime" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit">
+                Vai a Catalogo Anime
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+
     <MudPaper Class="footer-info pa-1 mt-2" Elevation="1">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
             <MudText Typo="Typo.caption" Color="Color.Success">Totale Aperte: <strong>@totalRows</strong></MudText>
@@ -164,6 +294,197 @@
             border-color: #444 !important;
         }
     }
+
+    /* Stili Etichetta Moderna */
+    .label-preview-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+        background: #f5f5f5;
+        border-radius: 8px;
+    }
+
+    .label-card {
+        background: white;
+        border: 3px solid #1a1a1a;
+        border-radius: 0;
+        padding: 0;
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+        font-family: 'Arial Black', Arial, sans-serif;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .label-header {
+        background: #1a1a1a;
+        color: white;
+        padding: 12px 16px;
+        text-align: center;
+    }
+
+    .company-name {
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1px;
+    }
+
+    .label-row {
+        border-bottom: 2px solid #1a1a1a;
+        padding: 8px 16px;
+    }
+
+    .client-row {
+        background: #f8f8f8;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .label-field-name {
+        font-size: 11px;
+        font-weight: 700;
+        color: #666;
+        min-width: 80px;
+    }
+
+    .label-field-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+
+    .code-row {
+        background: #fff3cd;
+        text-align: center;
+        padding: 12px 16px;
+    }
+
+    .code-row .label-field-name {
+        display: block;
+        font-size: 12px;
+        color: #856404;
+        margin-bottom: 4px;
+    }
+
+    .label-code {
+        font-size: 36px;
+        font-weight: 900;
+        color: #1a1a1a;
+        letter-spacing: 2px;
+    }
+
+    .order-row {
+        background: #e3f2fd;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .order-number {
+        color: #1565c0;
+        font-size: 18px;
+    }
+
+    .label-details-grid {
+        display: flex;
+        border-bottom: 2px solid #1a1a1a;
+    }
+
+    .detail-left {
+        flex: 1;
+        padding: 12px 16px;
+        border-right: 2px solid #1a1a1a;
+    }
+
+    .detail-item {
+        margin-bottom: 8px;
+    }
+
+    .detail-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .detail-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #666;
+        display: block;
+    }
+
+    .detail-value {
+        font-size: 14px;
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+
+    .detail-right {
+        width: 140px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #e8f5e9;
+        padding: 12px;
+    }
+
+    .qty-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #2e7d32;
+    }
+
+    .qty-value {
+        font-size: 56px;
+        font-weight: 900;
+        color: #1b5e20;
+        line-height: 1;
+    }
+
+    .label-footer {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #fafafa;
+    }
+
+    .operator-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #666;
+    }
+
+    .operator-box {
+        flex: 1;
+        height: 28px;
+        border: 2px solid #1a1a1a;
+        background: white;
+    }
+
+    /* Stili per stampa */
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+        
+        #printable-label, #printable-label * {
+            visibility: visible;
+        }
+        
+        #printable-label {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+        
+        .label-card {
+            page-break-inside: avoid;
+            margin-bottom: 20px;
+        }
+    }
 </style>
 
 @code {
@@ -181,6 +502,14 @@
     private bool isLoading = false;
     private string gridStatus = "Pronto";
     private IJSObjectReference? jsModule;
+    
+    // Variabili per stampa etichetta
+    private bool showLabelDialog = false;
+    private bool showMissingDataDialog = false;
+    private CommessaDto? selectedCommessaForLabel;
+    private int labelQuantita = 1;
+    private List<string> campiMancanti = new();
+    private string? currentArticoloCodice;
 
     private async Task OnSearchDebounced(string value)
     {
@@ -280,6 +609,10 @@
             Console.WriteLine($"Serialized JSON preview: {preview}");
 
             await JSRuntime.InvokeVoidAsync("eval", $"commesseAperteGrid.init('commesseAperteGrid', JSON.parse({System.Text.Json.JsonSerializer.Serialize(jsonData)}), {System.Text.Json.JsonSerializer.Serialize(settings.ColumnStateJson)})");
+            
+            // Registra il DotNetHelper per i callback JS
+            await JSRuntime.InvokeVoidAsync("commesseAperteGrid.setDotNetHelper", DotNetObjectReference.Create(this));
+            
             await ApplyUiSettings();
         }
         catch (Exception ex)
@@ -287,6 +620,224 @@
             Console.WriteLine($"Error initializing grid: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
+    }
+
+    [JSInvokable]
+    public void OnPrintLabelClick(CommessaDto commessa)
+    {
+        selectedCommessaForLabel = commessa;
+        currentArticoloCodice = commessa.ArticoloCodice;
+        
+        // Verifica dati completi
+        campiMancanti.Clear();
+        if (string.IsNullOrEmpty(commessa.CodiceAnime))
+            campiMancanti.Add("Codice Anima");
+        if (string.IsNullOrEmpty(commessa.ClienteRagioneSociale))
+            campiMancanti.Add("Cliente (Ragione Sociale)");
+        
+        if (campiMancanti.Count > 0)
+        {
+            showMissingDataDialog = true;
+        }
+        else
+        {
+            // Calcola quantità iniziale
+            var qp = commessa.QuantitaPiano ?? 0;
+            var np = commessa.NumeroPiani ?? 0;
+            labelQuantita = qp * np > 0 ? qp * np : 1;
+            showLabelDialog = true;
+        }
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void OnRowDoubleClick(string articoloCodice)
+    {
+        currentArticoloCodice = articoloCodice;
+        Nav.NavigateTo($"/cataloghi/anime?search={Uri.EscapeDataString(articoloCodice)}");
+    }
+
+    private void GoToAnime()
+    {
+        showMissingDataDialog = false;
+        if (!string.IsNullOrEmpty(currentArticoloCodice))
+        {
+            Nav.NavigateTo($"/cataloghi/anime?search={Uri.EscapeDataString(currentArticoloCodice)}");
+        }
+        else
+        {
+            Nav.NavigateTo("/cataloghi/anime");
+        }
+    }
+
+    private async Task PrintLabel()
+    {
+        if (selectedCommessaForLabel == null) return;
+        
+        // Genera HTML per stampa
+        var printHtml = GeneratePrintHtml();
+        
+        // Apri finestra di stampa
+        await JSRuntime.InvokeVoidAsync("eval", $@"
+            (function() {{
+                var printWindow = window.open('', '_blank', 'width=800,height=600');
+                printWindow.document.write({System.Text.Json.JsonSerializer.Serialize(printHtml)});
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(function() {{
+                    printWindow.print();
+                }}, 500);
+            }})();
+        ");
+        
+        showLabelDialog = false;
+    }
+
+    private string GeneratePrintHtml()
+    {
+        var c = selectedCommessaForLabel!;
+        var oggi = DateTime.Now.ToString("dd/MM/yyyy");
+        
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Etichetta - {c.CodiceAnime}</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{ font-family: 'Arial Black', Arial, sans-serif; padding: 20px; }}
+        .page {{ display: flex; flex-direction: column; gap: 30px; }}
+        .label-card {{
+            background: white;
+            border: 3px solid #1a1a1a;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            page-break-inside: avoid;
+        }}
+        .label-header {{
+            background: #1a1a1a;
+            color: white;
+            padding: 12px 16px;
+            text-align: center;
+        }}
+        .company-name {{ font-size: 22px; font-weight: 900; letter-spacing: 1px; }}
+        .label-row {{ border-bottom: 2px solid #1a1a1a; padding: 8px 16px; }}
+        .client-row {{ background: #f8f8f8; display: flex; align-items: center; gap: 12px; }}
+        .label-field-name {{ font-size: 11px; font-weight: 700; color: #666; min-width: 100px; }}
+        .label-field-value {{ font-size: 16px; font-weight: 700; color: #1a1a1a; }}
+        .code-row {{ background: #fff3cd; text-align: center; padding: 12px 16px; }}
+        .code-row .label-field-name {{ display: block; font-size: 12px; color: #856404; margin-bottom: 4px; }}
+        .label-code {{ font-size: 36px; font-weight: 900; color: #1a1a1a; letter-spacing: 2px; }}
+        .order-row {{ background: #e3f2fd; display: flex; align-items: center; gap: 12px; }}
+        .order-number {{ color: #1565c0; font-size: 18px; }}
+        .label-details-grid {{ display: flex; border-bottom: 2px solid #1a1a1a; }}
+        .detail-left {{ flex: 1; padding: 12px 16px; border-right: 2px solid #1a1a1a; }}
+        .detail-item {{ margin-bottom: 8px; }}
+        .detail-label {{ font-size: 11px; font-weight: 700; color: #666; display: block; }}
+        .detail-value {{ font-size: 14px; font-weight: 700; color: #1a1a1a; }}
+        .detail-right {{ width: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #e8f5e9; padding: 12px; }}
+        .qty-label {{ font-size: 12px; font-weight: 700; color: #2e7d32; }}
+        .qty-value {{ font-size: 56px; font-weight: 900; color: #1b5e20; line-height: 1; }}
+        .label-footer {{ padding: 12px 16px; display: flex; align-items: center; gap: 12px; background: #fafafa; }}
+        .operator-label {{ font-size: 11px; font-weight: 700; color: #666; }}
+        .operator-box {{ flex: 1; height: 28px; border: 2px solid #1a1a1a; background: white; }}
+        @@media print {{
+            body {{ padding: 0; }}
+            .label-card {{ margin-bottom: 30px; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class='page'>
+        <!-- Etichetta 1 -->
+        <div class='label-card'>
+            <div class='label-header'>
+                <div class='company-name'>ANIMISTERIA TODESCATO</div>
+            </div>
+            <div class='label-row client-row'>
+                <span class='label-field-name'>CLIENTE</span>
+                <span class='label-field-value'>{System.Web.HttpUtility.HtmlEncode(c.ClienteRagioneSociale ?? "")}</span>
+            </div>
+            <div class='label-row code-row'>
+                <span class='label-field-name'>CODICE ANIMA</span>
+                <span class='label-code'>{System.Web.HttpUtility.HtmlEncode(c.CodiceAnime ?? "")}</span>
+            </div>
+            <div class='label-row order-row'>
+                <span class='label-field-name'>NUMERO ORDINE</span>
+                <span class='label-field-value order-number'>{System.Web.HttpUtility.HtmlEncode(c.InternalOrdNo ?? "")}</span>
+            </div>
+            <div class='label-details-grid'>
+                <div class='detail-left'>
+                    <div class='detail-item'>
+                        <span class='detail-label'>SABBIA:</span>
+                        <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.SabbiaDescrizione ?? "")}</span>
+                    </div>
+                    <div class='detail-item'>
+                        <span class='detail-label'>DATA:</span>
+                        <span class='detail-value'>{oggi}</span>
+                    </div>
+                    <div class='detail-item'>
+                        <span class='detail-label'>VERNICE:</span>
+                        <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.VerniceDescrizione ?? "")}</span>
+                    </div>
+                </div>
+                <div class='detail-right'>
+                    <span class='qty-label'>QUANTITA'</span>
+                    <span class='qty-value'>{labelQuantita}</span>
+                </div>
+            </div>
+            <div class='label-footer'>
+                <span class='operator-label'>OPERATORE:</span>
+                <div class='operator-box'></div>
+            </div>
+        </div>
+        <!-- Etichetta 2 (copia) -->
+        <div class='label-card'>
+            <div class='label-header'>
+                <div class='company-name'>ANIMISTERIA TODESCATO</div>
+            </div>
+            <div class='label-row client-row'>
+                <span class='label-field-name'>CLIENTE</span>
+                <span class='label-field-value'>{System.Web.HttpUtility.HtmlEncode(c.ClienteRagioneSociale ?? "")}</span>
+            </div>
+            <div class='label-row code-row'>
+                <span class='label-field-name'>CODICE ANIMA</span>
+                <span class='label-code'>{System.Web.HttpUtility.HtmlEncode(c.CodiceAnime ?? "")}</span>
+            </div>
+            <div class='label-row order-row'>
+                <span class='label-field-name'>NUMERO ORDINE</span>
+                <span class='label-field-value order-number'>{System.Web.HttpUtility.HtmlEncode(c.InternalOrdNo ?? "")}</span>
+            </div>
+            <div class='label-details-grid'>
+                <div class='detail-left'>
+                    <div class='detail-item'>
+                        <span class='detail-label'>SABBIA:</span>
+                        <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.SabbiaDescrizione ?? "")}</span>
+                    </div>
+                    <div class='detail-item'>
+                        <span class='detail-label'>DATA:</span>
+                        <span class='detail-value'>{oggi}</span>
+                    </div>
+                    <div class='detail-item'>
+                        <span class='detail-label'>VERNICE:</span>
+                        <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.VerniceDescrizione ?? "")}</span>
+                    </div>
+                </div>
+                <div class='detail-right'>
+                    <span class='qty-label'>QUANTITA'</span>
+                    <span class='qty-value'>{labelQuantita}</span>
+                </div>
+            </div>
+            <div class='label-footer'>
+                <span class='operator-label'>OPERATORE:</span>
+                <div class='operator-box'></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>";
     }
 
     private async Task ToggleColumnPanel()

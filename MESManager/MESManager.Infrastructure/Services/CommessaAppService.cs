@@ -11,6 +11,19 @@ public class CommessaAppService : ICommessaAppService
 {
     private readonly MesManagerDbContext _context;
     
+    // Lookup tables statiche (stesse di AnimeService)
+    private static readonly Dictionary<string, string> VerniceLookup = new()
+    {
+        { "-1", "" },
+        { "-2", "YELLOW COVER" },
+        { "-3", "CASTING COVER ZR" },
+        { "-4", "CASTING COVER RK" },
+        { "-5", "CASTINGCOVER 2001" },
+        { "-6", "ARCOPAL 9030" },
+        { "-7", "HYDRO COVER 22 Z" },
+        { "-8", "FGR 55" }
+    };
+    
     public CommessaAppService(MesManagerDbContext context)
     {
         _context = context;
@@ -97,7 +110,18 @@ public class CommessaAppService : ICommessaAppService
                 CodiceCassa = anime?.CodiceCassa,
                 CodiceAnime = anime?.CodiceAnime,
                 MacchineSuDisponibili = anime?.MacchineSuDisponibili,
-                TrasmettiTutto = anime?.TrasmettiTutto
+                TrasmettiTutto = anime?.TrasmettiTutto,
+                
+                // Campi aggiuntivi per etichetta
+                Sabbia = anime?.Sabbia,
+                SabbiaDescrizione = anime?.Sabbia, // Sabbia usa già la descrizione come codice
+                Vernice = anime?.Vernice,
+                VerniceDescrizione = !string.IsNullOrEmpty(anime?.Vernice) && VerniceLookup.TryGetValue(anime.Vernice, out var vernDesc) ? vernDesc : anime?.Vernice,
+                Colla = anime?.Colla,
+                CollaDescrizione = anime?.Colla, // Per ora usiamo il codice
+                QuantitaPiano = anime?.QuantitaPiano,
+                NumeroPiani = anime?.NumeroPiani,
+                ClienteAnime = anime?.Cliente
             };
         }).ToList();
     }
