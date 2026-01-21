@@ -89,7 +89,8 @@ window.articoliGrid = (function() {
             defaultColDef: {
                 resizable: true,
                 sortable: true,
-                filter: true
+                filter: true,
+                suppressMenu: true
             },
             enableRangeSelection: true,
             enableCellTextSelection: true,

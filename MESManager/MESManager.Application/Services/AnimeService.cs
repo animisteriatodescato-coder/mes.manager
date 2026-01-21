@@ -122,7 +122,6 @@ namespace MESManager.Application.Services
             entity.NumeroPiani = dto.NumeroPiani;
             entity.Figure = dto.Figure;
             entity.Maschere = dto.Maschere;
-            entity.Incollata = dto.Incollata;
             entity.Assemblata = dto.Assemblata;
             entity.ArmataL = dto.ArmataL;
             
@@ -179,7 +178,6 @@ namespace MESManager.Application.Services
                 NumeroPiani = entity.NumeroPiani,
                 Figure = entity.Figure,
                 Maschere = entity.Maschere,
-                Incollata = entity.Incollata,
                 Assemblata = entity.Assemblata,
                 ArmataL = entity.ArmataL,
                 DataImportazione = entity.DataImportazione,
@@ -233,7 +231,6 @@ namespace MESManager.Application.Services
                 NumeroPiani = dto.NumeroPiani,
                 Figure = dto.Figure,
                 Maschere = dto.Maschere,
-                Incollata = dto.Incollata,
                 Assemblata = dto.Assemblata,
                 ArmataL = dto.ArmataL,
                 DataImportazione = dto.DataImportazione,

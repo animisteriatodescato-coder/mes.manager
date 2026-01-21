@@ -149,7 +149,8 @@ window.commesseAperteGrid = (function() {
             defaultColDef: {
                 resizable: true,
                 sortable: true,
-                filter: true
+                filter: true,
+                suppressMenu: true
             },
             getRowStyle: params => {
                 if (params.data && params.data.numeroMacchina != null && params.data.numeroMacchina > 0) {

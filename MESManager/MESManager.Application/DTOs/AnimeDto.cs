@@ -36,7 +36,6 @@ namespace MESManager.Application.DTOs
         public int? NumeroPiani { get; set; }
         public string? Figure { get; set; }
         public string? Maschere { get; set; }
-        public string? Incollata { get; set; }
         public string? Assemblata { get; set; }
         public string? ArmataL { get; set; }
         public DateTime DataImportazione { get; set; }

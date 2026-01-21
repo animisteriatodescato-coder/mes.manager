@@ -141,7 +141,8 @@ window.programmaMacchineGrid = (function() {
             defaultColDef: {
                 resizable: true,
                 sortable: true,
-                filter: true
+                filter: true,
+                suppressMenu: true
             },
             getRowStyle: params => {
                 const style = {};

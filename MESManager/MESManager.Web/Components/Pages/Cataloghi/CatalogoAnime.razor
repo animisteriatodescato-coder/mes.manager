@@ -326,7 +326,8 @@
                 if (index >= 0)
                 {
                     _anime[index] = updatedAnime;
-                    await JSRuntime.InvokeVoidAsync("animeGrid.updateData", _anime);
+                    // Passa l'ID per mantenere la selezione sulla riga modificata
+                    await JSRuntime.InvokeVoidAsync("animeGrid.updateData", _anime, updatedAnime.Id);
                     Snackbar.Add("Anima aggiornata con successo", Severity.Success);
                 }
             }

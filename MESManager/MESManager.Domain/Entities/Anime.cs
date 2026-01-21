@@ -63,8 +63,6 @@ namespace MESManager.Domain.Entities
         
         public string? Maschere { get; set; }
         
-        public string? Incollata { get; set; }
-        
         public string? Assemblata { get; set; }
         
         public string? ArmataL { get; set; }

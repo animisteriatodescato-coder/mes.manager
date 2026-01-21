@@ -75,7 +75,6 @@ namespace MESManager.Application.Services
                     existingAnime.NumeroPiani = articolo.NumeroPiani;
                     existingAnime.Figure = articolo.Figure;
                     existingAnime.Maschere = articolo.Maschere;
-                    existingAnime.Incollata = articolo.Incollata;
                     existingAnime.Assemblata = articolo.Assemblata;
                     existingAnime.ArmataL = articolo.ArmataL;
                     
@@ -151,7 +150,6 @@ namespace MESManager.Application.Services
                         [NumeroPiani],
                         ISNULL([Figure], '') as [Figure],
                         ISNULL([Maschere], '') as [Maschere],
-                        ISNULL([Incollata], '') as [Incollata],
                         ISNULL([Assemblata], '') as [Assemblata],
                         ISNULL([ArmataL], '') as [ArmataL]
                     FROM [dbo].[tbArticoli]
@@ -195,9 +193,8 @@ namespace MESManager.Application.Services
                             NumeroPiani = reader.IsDBNull(25) ? null : ParseInt32(reader.GetValue(25)),
                             Figure = reader.IsDBNull(26) ? null : reader.GetValue(26).ToString(),
                             Maschere = reader.IsDBNull(27) ? null : reader.GetValue(27).ToString(),
-                            Incollata = reader.IsDBNull(28) ? null : reader.GetValue(28).ToString(),
-                            Assemblata = reader.IsDBNull(29) ? null : reader.GetValue(29).ToString(),
-                            ArmataL = reader.IsDBNull(30) ? null : reader.GetValue(30).ToString()
+                            Assemblata = reader.IsDBNull(28) ? null : reader.GetValue(28).ToString(),
+                            ArmataL = reader.IsDBNull(29) ? null : reader.GetValue(29).ToString()
                         };
                         
                         result.Add(anime);

@@ -98,7 +98,8 @@ window.commesseGrid = (function() {
             defaultColDef: {
                 resizable: true,
                 sortable: true,
-                filter: true
+                filter: true,
+                suppressMenu: true
             },
             sideBar: {
                 toolPanels: [

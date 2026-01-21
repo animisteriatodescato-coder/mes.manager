@@ -92,7 +92,8 @@ window.commesseGrid = (function() {
             defaultColDef: {
                 resizable: true,
                 sortable: true,
-                filter: true
+                filter: true,
+                suppressMenu: true
             },
             headerHeight: 24,
             rowHeight: 28,

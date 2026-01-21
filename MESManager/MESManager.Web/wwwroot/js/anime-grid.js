@@ -40,7 +40,6 @@ window.animeGrid = (function() {
         { field: 'peso', headerName: 'Peso', sortable: true, filter: true, width: 100, editable: true },
         { field: 'figure', headerName: 'Figure', sortable: true, filter: true, width: 120, editable: true },
         { field: 'maschere', headerName: 'Maschere', sortable: true, filter: true, width: 120, editable: true },
-        { field: 'incollata', headerName: 'Incollata', sortable: true, filter: true, width: 120, editable: true },
         { field: 'assemblata', headerName: 'Assemblata', sortable: true, filter: true, width: 120, editable: true },
         { field: 'armataL', headerName: 'Armata L', sortable: true, filter: true, width: 120, editable: true },
         { field: 'larghezza', headerName: 'Larghezza', sortable: true, filter: true, width: 100, editable: true, cellEditor: 'agNumberCellEditor' },
@@ -118,7 +117,8 @@ window.animeGrid = (function() {
             defaultColDef: {
                 resizable: true,
                 sortable: true,
-                filter: true
+                filter: true,
+                suppressMenu: true
             },
             headerHeight: 24,
             rowHeight: 28,
@@ -192,10 +192,22 @@ window.animeGrid = (function() {
         return isGridInitialized;
     }
 
-    function updateData(data) {
+    function updateData(data, selectedId) {
         if (gridApi) {
             console.log('Updating grid data with:', data);
             gridApi.setGridOption('rowData', data);
+            
+            // Se è specificato un ID, riseleziona la riga corrispondente
+            if (selectedId) {
+                setTimeout(() => {
+                    gridApi.forEachNode(node => {
+                        if (node.data && node.data.id === selectedId) {
+                            node.setSelected(true);
+                            gridApi.ensureNodeVisible(node, 'middle');
+                        }
+                    });
+                }, 50);
+            }
         }
     }
 

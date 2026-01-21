@@ -71,7 +71,6 @@ public class AnimeExcelImportService
                             Peso = ParseString(worksheet, row, headers, "Peso"),
                             Figure = ParseString(worksheet, row, headers, "Figure"),
                             Maschere = ParseString(worksheet, row, headers, "Maschere"),
-                            Incollata = ParseString(worksheet, row, headers, "Incollata"),
                             Assemblata = ParseString(worksheet, row, headers, "Assemblata"),
                             ArmataL = ParseString(worksheet, row, headers, "Armata L"),
                             MacchineSuDisponibili = ParseString(worksheet, row, headers, "Macchine Disponibili Descrizione"),
@@ -165,9 +164,6 @@ public class AnimeExcelImportService
                     
                     if (string.IsNullOrWhiteSpace(existing.Maschere) && !string.IsNullOrWhiteSpace(excelAnime.Maschere))
                         existing.Maschere = excelAnime.Maschere;
-                    
-                    if (string.IsNullOrWhiteSpace(existing.Incollata) && !string.IsNullOrWhiteSpace(excelAnime.Incollata))
-                        existing.Incollata = excelAnime.Incollata;
                     
                     if (string.IsNullOrWhiteSpace(existing.Assemblata) && !string.IsNullOrWhiteSpace(excelAnime.Assemblata))
                         existing.Assemblata = excelAnime.Assemblata;

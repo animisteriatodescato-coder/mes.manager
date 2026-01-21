@@ -244,7 +244,8 @@ window.plcRealtimeGrid = (function () {
             defaultColDef: {
                 sortable: true,
                 filter: true,
-                resizable: true
+                resizable: true,
+                suppressMenu: true
             },
             getRowId: (params) => params.data.macchinaId, // Usa macchinaId come chiave univoca
             enableRangeSelection: true,

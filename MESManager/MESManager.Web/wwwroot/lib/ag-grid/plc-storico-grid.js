@@ -201,7 +201,8 @@ window.plcStoricoGrid = (function () {
                 sortable: true,
                 filter: true,
                 resizable: true,
-                floatingFilter: false
+                floatingFilter: false,
+                suppressMenu: true
             },
             suppressMenuHide: true,
             enableRangeSelection: true,
