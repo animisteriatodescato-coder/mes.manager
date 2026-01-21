@@ -26,7 +26,7 @@ window.animeGrid = (function() {
         // Sabbia - mostra descrizione
         { field: 'sabbiaDescrizione', headerName: 'Sabbia', sortable: true, filter: true, width: 120, editable: false },
         
-        { field: 'togliereSparo', headerName: 'Togliere Sparo', sortable: true, filter: true, width: 130, editable: true },
+        { field: 'togliereSparo', headerName: 'Tog.Sparo', sortable: true, filter: true, width: 100, editable: false, valueFormatter: params => params.value === '1' ? 'Sì' : (params.value === '0' ? 'No' : '') },
         
         // Vernice - mostra descrizione
         { field: 'verniceDescrizione', headerName: 'Vernice', sortable: true, filter: true, width: 150, editable: false },

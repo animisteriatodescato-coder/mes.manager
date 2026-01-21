@@ -136,7 +136,11 @@
                     <MudTextField @bind-Value="Anime.Maschere" Label="Maschere" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
                 <MudItem xs="2">
-                    <MudTextField @bind-Value="Anime.TogliereSparo" Label="Tog.Sparo" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudSelect @bind-Value="Anime.TogliereSparo" Label="Tog.Sparo" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                        <MudSelectItem Value="@((string?)null)">-</MudSelectItem>
+                        <MudSelectItem Value="@("0")">No</MudSelectItem>
+                        <MudSelectItem Value="@("1")">Sì</MudSelectItem>
+                    </MudSelect>
                 </MudItem>
                 <MudItem xs="2">
                     <MudTextField @bind-Value="Anime.ArmataL" Label="Armata L" Variant="Variant.Outlined" Margin="Margin.Dense" />
