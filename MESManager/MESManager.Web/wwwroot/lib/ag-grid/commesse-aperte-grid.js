@@ -204,6 +204,15 @@ window.commesseAperteGrid = (function() {
             console.error('Grid element not found:', gridId);
             return;
         }
+        
+        // Destroy existing grid if it exists to prevent duplication
+        if (gridApi) {
+            console.log('Destroying existing grid before reinitializing...');
+            gridApi.destroy();
+            gridApi = null;
+            // Clear the grid container
+            gridDiv.innerHTML = '';
+        }
 
         console.log('Initializing commesse aperte grid with data:', data);
         console.log('Data length:', data ? data.length : 'null');
@@ -454,9 +463,26 @@ window.commesseAperteGrid = (function() {
             gridApi.openToolPanel('columns');
         }
     }
+    
+    function reinit(jsonData) {
+        console.log('Reinitializing grid with fresh data...');
+        const data = JSON.parse(jsonData);
+        const savedState = getState();
+        init('commesseAperteGrid', data, savedState);
+    }
+    
+    function updateRowData(jsonData) {
+        console.log('Updating grid row data...');
+        const data = JSON.parse(jsonData);
+        if (gridApi) {
+            gridApi.setRowData(data);
+        }
+    }
 
     return {
         init: init,
+        reinit: reinit,
+        updateRowData: updateRowData,
         setDotNetHelper: setDotNetHelper,
         setQuickFilter: setQuickFilter,
         setColumnVisible: setColumnVisible,

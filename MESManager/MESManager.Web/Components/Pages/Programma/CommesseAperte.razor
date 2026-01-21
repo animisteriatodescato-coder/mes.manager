@@ -573,6 +573,53 @@
         {
             settings = savedSettings;
         }
+        
+        // Listen for navigation changes to refresh data when returning to this page
+        Nav.LocationChanged += OnLocationChanged;
+    }
+    
+    private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        // Check if we're on the commesse-aperte page
+        if (e.Location.Contains("/programma/commesse-aperte"))
+        {
+            Console.WriteLine("Returned to commesse-aperte page, refreshing data...");
+            await RefreshGridData();
+        }
+    }
+    
+    private async Task RefreshGridData()
+    {
+        try
+        {
+            await LoadData();
+            await ReinitializeGrid();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error refreshing grid data: {ex.Message}");
+        }
+    }
+    
+    private async Task ReinitializeGrid()
+    {
+        try
+        {
+            var jsonOptions = new JsonSerializerOptions 
+            { 
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false
+            };
+            var jsonData = JsonSerializer.Serialize(_commesse, jsonOptions);
+            
+            // Call reinit method which will destroy old grid first
+            await JSRuntime.InvokeVoidAsync("commesseAperteGrid.reinit", jsonData);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reinitializing grid: {ex.Message}");
+        }
     }
 
     private async Task LoadData()
@@ -1097,6 +1144,9 @@
     public async ValueTask DisposeAsync()
     {
         PageToolbarService.SetActivePage("commesse-aperte", null);
+        
+        // Unsubscribe from navigation events
+        Nav.LocationChanged -= OnLocationChanged;
         
         if (jsModule != null)
         {
