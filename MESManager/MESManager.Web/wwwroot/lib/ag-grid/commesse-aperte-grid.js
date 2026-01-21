@@ -38,19 +38,41 @@ window.commesseAperteGrid = (function() {
             filter: true, 
             width: 120, 
             pinned: 'left',
-            editable: true,
-            cellEditor: 'agSelectCellEditor',
-            cellEditorParams: params => {
+            editable: false,
+            cellRenderer: params => {
                 const raw = params.data?.macchineSuDisponibili || '';
-                const macchine = raw.split(',').map(s => s.trim()).filter(s => s.length > 0);
-                return { values: macchine };
-            },
-            cellStyle: params => {
-                if (params.value != null && params.value !== '') {
-                    return { backgroundColor: '#e3f2fd', fontWeight: 'bold', textAlign: 'center' };
+                const macchine = raw.split(/[\s,]+/).map(s => s.trim()).filter(s => s.length > 0);
+                
+                if (macchine.length === 0) {
+                    return '<span style="color:#999">-</span>';
                 }
-                return { textAlign: 'center' };
-            }
+                
+                const currentValue = params.value || '';
+                const selectId = `ma-select-${params.data.id}`;
+                
+                let options = '<option value="">-</option>';
+                macchine.forEach(m => {
+                    const formatted = m.padStart(2, '0');
+                    const selected = currentValue === m ? 'selected' : '';
+                    options += `<option value="${m}" ${selected}>${formatted}</option>`;
+                });
+                
+                const bgColor = currentValue ? '#e3f2fd' : 'transparent';
+                const fontWeight = currentValue ? 'bold' : 'normal';
+                
+                return `<select id="${selectId}" 
+                    style="width:100%; height:100%; border:none; background:${bgColor}; 
+                           font-weight:${fontWeight}; text-align:center; cursor:pointer; 
+                           font-size:inherit; padding:2px;"
+                    size="1"
+                    data-commessa-id="${params.data.id}">
+                    ${options}
+                </select>`;
+            },
+            onCellClicked: (event) => {
+                event.event.stopPropagation();
+            },
+            cellStyle: { padding: 0 }
         },
         { field: 'codice', headerName: 'Codice', sortable: true, filter: true, width: 180, pinned: 'left' },
         { field: 'internalOrdNo', headerName: 'Num. Ordine', sortable: true, filter: true, width: 130 },
@@ -242,6 +264,39 @@ window.commesseAperteGrid = (function() {
                         console.warn('Failed to restore column state:', e);
                     }
                 }
+                
+                // Attach change handlers to machine selects
+                setTimeout(() => {
+                    document.querySelectorAll('select[data-commessa-id]').forEach(select => {
+                        select.addEventListener('change', async (e) => {
+                            const commessaId = e.target.getAttribute('data-commessa-id');
+                            const newValue = e.target.value;
+                            try {
+                                await fetch(`/api/Commesse/${commessaId}/numero-macchina`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ numeroMacchina: newValue })
+                                });
+                                
+                                // Update row data
+                                const rowNode = gridApi.getRowNode(commessaId);
+                                if (rowNode) {
+                                    rowNode.setDataValue('numeroMacchina', newValue);
+                                }
+                                
+                                // Refresh row style
+                                gridApi.redrawRows();
+                                
+                                // Dispatch event
+                                window.dispatchEvent(new CustomEvent('commessaNumeroMacchinaChanged', { 
+                                    detail: { id: commessaId, numeroMacchina: newValue } 
+                                }));
+                            } catch (err) {
+                                console.error('Error updating numero macchina:', err);
+                            }
+                        });
+                    });
+                }, 100);
             },
             onColumnMoved: () => {
                 window.dispatchEvent(new CustomEvent('commesseAperteGridStateChanged'));
@@ -265,31 +320,49 @@ window.commesseAperteGrid = (function() {
                 window.dispatchEvent(new CustomEvent('commesseAperteGridStatsChanged'));
             },
             onRowDoubleClicked: (event) => {
+                // Skip navigation if double-clicking on machine select
+                if (event.column && event.column.getColId() === 'numeroMacchina') {
+                    return;
+                }
                 // Doppio click: naviga a Catalogo Anime per modificare i dati
                 if (dotNetHelper && event.data && event.data.articoloCodice) {
                     dotNetHelper.invokeMethodAsync('OnRowDoubleClick', event.data.articoloCodice);
                 }
             },
             onCellValueChanged: async (event) => {
+                // Machine select changes are handled in onGridReady
                 if (event.colDef.field === 'numeroMacchina') {
-                    const id = event.data.id;
-                    const value = event.newValue;
-                    try {
-                        await fetch(`/api/Commesse/${id}/numero-macchina`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ numeroMacchina: value })
-                        });
-                        // Refresh row style
-                        gridApi.redrawRows({ rowNodes: [event.node] });
-                        // Dispatch event for Programma Macchine update
-                        window.dispatchEvent(new CustomEvent('commessaNumeroMacchinaChanged', { 
-                            detail: { id: id, numeroMacchina: value } 
-                        }));
-                    } catch (err) {
-                        console.error('Error updating numero macchina:', err);
-                    }
+                    return;
                 }
+            },
+            onModelUpdated: () => {
+                // Re-attach select handlers after grid updates
+                setTimeout(() => {
+                    document.querySelectorAll('select[data-commessa-id]').forEach(select => {
+                        if (!select.hasAttribute('data-listener-attached')) {
+                            select.setAttribute('data-listener-attached', 'true');
+                            select.addEventListener('change', async (e) => {
+                                const commessaId = e.target.getAttribute('data-commessa-id');
+                                const newValue = e.target.value;
+                                try {
+                                    await fetch(`/api/Commesse/${commessaId}/numero-macchina`, {
+                                        method: 'PATCH',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ numeroMacchina: newValue })
+                                    });
+                                    
+                                    gridApi.redrawRows();
+                                    
+                                    window.dispatchEvent(new CustomEvent('commessaNumeroMacchinaChanged', { 
+                                        detail: { id: commessaId, numeroMacchina: newValue } 
+                                    }));
+                                } catch (err) {
+                                    console.error('Error updating numero macchina:', err);
+                                }
+                            });
+                        }
+                    });
+                }, 50);
             }
         };
 
