@@ -2,6 +2,7 @@
 @using MESManager.Application.DTOs
 @using MESManager.Web.Models
 @using MESManager.Web.Services
+@using MESManager.Web.Components.Dialogs
 @using Microsoft.JSInterop
 @using System.Text.Json
 @inject HttpClient Http
@@ -9,6 +10,8 @@
 @inject PreferencesService PreferencesService
 @inject IJSRuntime JSRuntime
 @inject IPageToolbarService PageToolbarService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 @implements IAsyncDisposable
 
 <PageTitle>Commesse Aperte</PageTitle>
@@ -564,7 +567,17 @@
     protected override async Task OnInitializedAsync()
     {
         PageToolbarService.SetActivePage("commesse-aperte", this);
+        await LoadData();
         
+        var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("commesse-aperte-grid-settings");
+        if (savedSettings != null)
+        {
+            settings = savedSettings;
+        }
+    }
+
+    private async Task LoadData()
+    {
         Console.WriteLine("Fetching commesse from API...");
         var allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
         
@@ -574,12 +587,6 @@
         
         totalRows = _commesse.Count;
         lastUpdate = DateTime.Now;
-        
-        var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("commesse-aperte-grid-settings");
-        if (savedSettings != null)
-        {
-            settings = savedSettings;
-        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -722,10 +729,52 @@
     }
 
     [JSInvokable]
-    public void OnRowDoubleClick(string articoloCodice)
+    public async Task OnRowDoubleClick(string articoloCodice)
     {
         currentArticoloCodice = articoloCodice;
-        Nav.NavigateTo($"/cataloghi/anime?search={Uri.EscapeDataString(articoloCodice)}");
+        
+        try
+        {
+            // Carica l'AnimeDto dal codice articolo
+            var anime = await Http.GetFromJsonAsync<AnimeDto>($"/api/Anime/by-codice/{Uri.EscapeDataString(articoloCodice)}");
+            
+            if (anime == null)
+            {
+                Snackbar.Add($"Anima con codice {articoloCodice} non trovata", Severity.Warning);
+                return;
+            }
+            
+            var parameters = new DialogParameters<AnimeEditDialog>
+            {
+                { x => x.Anime, anime }
+            };
+            
+            var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Large,
+                FullWidth = true,
+                CloseButton = true,
+                CloseOnEscapeKey = true
+            };
+            
+            var dialog = await DialogService.ShowAsync<AnimeEditDialog>("Modifica Anima", parameters, options);
+            var result = await dialog.Result;
+            
+            if (result != null && !result.Canceled && result.Data is AnimeDto updatedAnime)
+            {
+                // Ricarica i dati della commessa per aggiornare i campi modificati
+                await LoadData();
+                await InitializeGrid();
+                Snackbar.Add("Anima aggiornata con successo", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error opening edit dialog: {ex.Message}");
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+        
+        StateHasChanged();
     }
 
     private void GoToAnime()

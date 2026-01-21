@@ -67,6 +67,15 @@ public class AnimeController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("by-codice/{codiceArticolo}")]
+    public async Task<ActionResult<AnimeDto>> GetByCodiceArticolo(string codiceArticolo)
+    {
+        var result = await _service.GetByCodiceArticoloAsync(codiceArticolo);
+        if (result == null)
+            return NotFound();
+        return Ok(result);
+    }
+
     [HttpPost("import")]
     public async Task<ActionResult<int>> ImportFromGantt()
     {

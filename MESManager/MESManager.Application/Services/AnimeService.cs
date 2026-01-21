@@ -66,6 +66,14 @@ namespace MESManager.Application.Services
             await EnsureMacchineCacheAsync();
             return MapToDto(entity);
         }
+
+        public async Task<AnimeDto?> GetByCodiceArticoloAsync(string codiceArticolo)
+        {
+            var entity = await _repo.GetByCodiceArticoloAsync(codiceArticolo);
+            if (entity == null) return null;
+            await EnsureMacchineCacheAsync();
+            return MapToDto(entity);
+        }
         
         private async Task EnsureMacchineCacheAsync()
         {
