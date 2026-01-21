@@ -11,21 +11,69 @@ namespace MESManager.Application.Services
     public class AnimeService : IAnimeService
     {
         private readonly IAnimeRepository _repo;
-        public AnimeService(IAnimeRepository repo)
+        private readonly IMacchinaAppService _macchinaService;
+        
+        // Lookup tables statiche
+        private static readonly Dictionary<string, string> CollaLookup = new()
+        {
+            { "-1", "BIANCA" },
+            { "-2", "A CALDO" },
+            { "-3", "ROSSA S.G" }
+        };
+        
+        private static readonly Dictionary<string, string> VerniceLookup = new()
+        {
+            { "-1", "" },
+            { "-2", "YELLOW COVER" },
+            { "-3", "CASTING COVER ZR" },
+            { "-4", "CASTING COVER RK" },
+            { "-5", "CASTINGCOVER 2001" },
+            { "-6", "ARCOPAL 9030" },
+            { "-7", "HYDRO COVER 22 Z" },
+            { "-8", "FGR 55" }
+        };
+        
+        private static readonly Dictionary<int, string> ImballoLookup = new()
+        {
+            { -1, "CASSA GRANDE" },
+            { -2, "CASSA PICCOLA" },
+            { -3, "CASSA LUNGA" },
+            { -4, "PIANALE EURO" },
+            { -5, "PIANALE QUADRATO" },
+            { -6, "CARRELLI A PIANI" },
+            { -7, "CARRELLI GRANDI" }
+        };
+        
+        private Dictionary<string, string>? _macchineCache;
+        
+        public AnimeService(IAnimeRepository repo, IMacchinaAppService macchinaService)
         {
             _repo = repo;
+            _macchinaService = macchinaService;
         }
 
         public async Task<List<AnimeDto>> GetAllAsync()
         {
             var entities = await _repo.GetAllAsync();
+            await EnsureMacchineCacheAsync();
             return entities.Select(x => MapToDto(x)).ToList();
         }
 
         public async Task<AnimeDto?> GetByIdAsync(int id)
         {
             var entity = await _repo.GetByIdAsync(id);
-            return entity == null ? null : MapToDto(entity);
+            if (entity == null) return null;
+            await EnsureMacchineCacheAsync();
+            return MapToDto(entity);
+        }
+        
+        private async Task EnsureMacchineCacheAsync()
+        {
+            if (_macchineCache == null)
+            {
+                var macchine = await _macchinaService.GetListaAsync();
+                _macchineCache = macchine.ToDictionary(m => m.Codice, m => m.Nome);
+            }
         }
 
         public async Task<AnimeDto> AddAsync(AnimeDto dto)
@@ -107,6 +155,7 @@ namespace MESManager.Application.Services
                 Altezza = entity.Altezza,
                 Profondita = entity.Profondita,
                 Imballo = entity.Imballo,
+                ImballoDescrizione = entity.Imballo.HasValue && ImballoLookup.TryGetValue(entity.Imballo.Value, out var imbDesc) ? imbDesc : null,
                 Note = entity.Note,
                 Allegato = entity.Allegato,
                 Peso = entity.Peso,
@@ -116,10 +165,14 @@ namespace MESManager.Application.Services
                 CodiceAnime = entity.CodiceAnime,
                 IdArticolo = entity.IdArticolo,
                 MacchineSuDisponibili = entity.MacchineSuDisponibili,
+                MacchineSuDisponibiliDescrizione = GetMacchineDescrizione(entity.MacchineSuDisponibili),
                 TrasmettiTutto = entity.TrasmettiTutto,
                 Colla = entity.Colla,
+                CollaDescrizione = !string.IsNullOrEmpty(entity.Colla) && CollaLookup.TryGetValue(entity.Colla, out var collaDesc) ? collaDesc : entity.Colla,
                 Sabbia = entity.Sabbia,
+                SabbiaDescrizione = entity.Sabbia, // Sabbia usa già la descrizione come codice
                 Vernice = entity.Vernice,
+                VerniceDescrizione = !string.IsNullOrEmpty(entity.Vernice) && VerniceLookup.TryGetValue(entity.Vernice, out var vernDesc) ? vernDesc : entity.Vernice,
                 Cliente = entity.Cliente,
                 TogliereSparo = entity.TogliereSparo,
                 QuantitaPiano = entity.QuantitaPiano,
@@ -134,6 +187,17 @@ namespace MESManager.Application.Services
                 DataUltimaModificaLocale = entity.DataUltimaModificaLocale,
                 UtenteUltimaModificaLocale = entity.UtenteUltimaModificaLocale
             };
+        }
+        
+        private string? GetMacchineDescrizione(string? codici)
+        {
+            if (string.IsNullOrWhiteSpace(codici) || _macchineCache == null) return null;
+            
+            var nomi = codici.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(c => _macchineCache.TryGetValue(c.Trim(), out var nome) ? nome : c.Trim())
+                .ToList();
+            
+            return nomi.Any() ? string.Join(", ", nomi) : null;
         }
 
         private Anime MapToEntity(AnimeDto dto)

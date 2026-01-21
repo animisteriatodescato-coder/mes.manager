@@ -12,6 +12,7 @@ namespace MESManager.Application.DTOs
         public int? Altezza { get; set; }
         public int? Profondita { get; set; }
         public int? Imballo { get; set; }
+        public string? ImballoDescrizione { get; set; }  // Descrizione lookup
         public string? Note { get; set; }
         public string? Allegato { get; set; }
         public string? Peso { get; set; }
@@ -21,10 +22,14 @@ namespace MESManager.Application.DTOs
         public string? CodiceAnime { get; set; }
         public int? IdArticolo { get; set; }
         public string? MacchineSuDisponibili { get; set; }
+        public string? MacchineSuDisponibiliDescrizione { get; set; }  // Descrizione lookup
         public bool TrasmettiTutto { get; set; }
         public string? Colla { get; set; }
+        public string? CollaDescrizione { get; set; }  // Descrizione lookup
         public string? Sabbia { get; set; }
+        public string? SabbiaDescrizione { get; set; }  // Descrizione lookup
         public string? Vernice { get; set; }
+        public string? VerniceDescrizione { get; set; }  // Descrizione lookup
         public string? Cliente { get; set; }
         public string? TogliereSparo { get; set; }
         public int? QuantitaPiano { get; set; }

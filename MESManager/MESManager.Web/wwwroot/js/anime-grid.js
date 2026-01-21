@@ -15,53 +15,27 @@ window.animeGrid = (function() {
         { field: 'codiceAnime', headerName: 'Codice Anima', sortable: true, filter: true, width: 120, editable: true },
         { field: 'unitaMisura', headerName: 'Unità Misura', sortable: true, filter: true, width: 100, editable: true },
         
-        // Imballo - simple text editor
-        { 
-            field: 'imballo', 
-            headerName: 'Imballo', 
-            sortable: true, 
-            filter: true, 
-            width: 150, 
-            editable: true
-        },
+        // Imballo - mostra descrizione
+        { field: 'imballoDescrizione', headerName: 'Imballo', sortable: true, filter: true, width: 150, editable: false },
         
         { field: 'note', headerName: 'Note', sortable: true, filter: true, width: 200, editable: true, cellEditor: 'agLargeTextCellEditor' },
-        { field: 'macchineSuDisponibili', headerName: 'Macchine Disponibili', sortable: true, filter: true, width: 200, editable: true },
         
-        // Sabbia - simple text editor
-        { 
-            field: 'sabbia', 
-            headerName: 'Sabbia', 
-            sortable: true, 
-            filter: true, 
-            width: 150, 
-            editable: true
-        },
+        // Macchine - mostra descrizione (nomi macchine)
+        { field: 'macchineSuDisponibiliDescrizione', headerName: 'Macchine', sortable: true, filter: true, width: 150, editable: false },
+        
+        // Sabbia - mostra descrizione
+        { field: 'sabbiaDescrizione', headerName: 'Sabbia', sortable: true, filter: true, width: 120, editable: false },
         
         { field: 'togliereSparo', headerName: 'Togliere Sparo', sortable: true, filter: true, width: 130, editable: true },
         
-        // Vernice - simple text editor
-        { 
-            field: 'vernice', 
-            headerName: 'Vernice', 
-            sortable: true, 
-            filter: true, 
-            width: 150, 
-            editable: true
-        },
+        // Vernice - mostra descrizione
+        { field: 'verniceDescrizione', headerName: 'Vernice', sortable: true, filter: true, width: 150, editable: false },
         
-        // Colla - simple text editor
-        { 
-            field: 'colla', 
-            headerName: 'Colla', 
-            sortable: true, 
-            filter: true, 
-            width: 150, 
-            editable: true
-        },
+        // Colla - mostra descrizione
+        { field: 'collaDescrizione', headerName: 'Colla', sortable: true, filter: true, width: 120, editable: false },
         
-        { field: 'quantitaPiano', headerName: 'Quantità Piano', sortable: true, filter: true, width: 120, editable: true, cellEditor: 'agNumberCellEditor' },
-        { field: 'numeroPiani', headerName: 'Numero Piani', sortable: true, filter: true, width: 120, editable: true, cellEditor: 'agNumberCellEditor' },
+        { field: 'quantitaPiano', headerName: 'Qta Piano', sortable: true, filter: true, width: 100, editable: true, cellEditor: 'agNumberCellEditor' },
+        { field: 'numeroPiani', headerName: 'N.Piani', sortable: true, filter: true, width: 90, editable: true, cellEditor: 'agNumberCellEditor' },
         { field: 'ciclo', headerName: 'Ciclo', sortable: true, filter: true, width: 150, editable: true },
         { field: 'peso', headerName: 'Peso', sortable: true, filter: true, width: 100, editable: true },
         { field: 'figure', headerName: 'Figure', sortable: true, filter: true, width: 120, editable: true },
