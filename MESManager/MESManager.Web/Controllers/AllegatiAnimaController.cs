@@ -18,6 +18,31 @@ namespace MESManager.Web.Controllers
         }
 
         /// <summary>
+        /// Recupera tutti gli allegati per un'anima per CodiceArticolo
+        /// </summary>
+        [HttpGet("codice/{codiceArticolo}")]
+        public async Task<ActionResult<AllegatiAnimaResponse>> GetAllegatiByCodice(string codiceArticolo)
+        {
+            _logger.LogInformation("GET /api/AllegatiAnima/codice/{CodiceArticolo} - START", codiceArticolo);
+            
+            try
+            {
+                var result = await _allegatiService.GetAllegatiByCodiceArticoloAsync(codiceArticolo);
+                
+                _logger.LogInformation(
+                    "GET /api/AllegatiAnima/codice/{CodiceArticolo} - OK: Foto={FotoCount}, Documenti={DocCount}",
+                    codiceArticolo, result.TotaleFoto, result.TotaleDocumenti);
+                
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GET /api/AllegatiAnima/codice/{CodiceArticolo} - ERROR", codiceArticolo);
+                return StatusCode(500, "Errore nel recupero degli allegati");
+            }
+        }
+
+        /// <summary>
         /// Recupera tutti gli allegati per un'anima (IdArchivio)
         /// </summary>
         [HttpGet("{idArchivio:int}")]
@@ -76,6 +101,83 @@ namespace MESManager.Web.Controllers
             {
                 _logger.LogError(ex, "GET /api/AllegatiAnima/file/{Id} - ERROR", id);
                 return StatusCode(500, "Errore nel recupero del file");
+            }
+        }
+
+        /// <summary>
+        /// Upload di un nuovo allegato
+        /// </summary>
+        [HttpPost("upload/{codiceArticolo}")]
+        public async Task<ActionResult<AllegatoAnimaDto>> UploadAllegato(
+            string codiceArticolo, 
+            IFormFile file, 
+            [FromQuery] string? descrizione = null)
+        {
+            _logger.LogInformation("POST /api/AllegatiAnima/upload/{CodiceArticolo} - START, File={FileName}, Size={Size}", 
+                codiceArticolo, file?.FileName, file?.Length);
+            
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("Nessun file caricato");
+            }
+
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var contenuto = ms.ToArray();
+
+                var estensione = Path.GetExtension(file.FileName).ToLowerInvariant();
+                var isFoto = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" }.Contains(estensione);
+
+                var result = await _allegatiService.UploadAllegatoAsync(
+                    codiceArticolo, 
+                    file.FileName, 
+                    contenuto, 
+                    descrizione, 
+                    isFoto);
+
+                if (result == null)
+                {
+                    return StatusCode(500, "Errore nel salvataggio dell'allegato");
+                }
+
+                _logger.LogInformation("POST /api/AllegatiAnima/upload/{CodiceArticolo} - OK, NewId={Id}", 
+                    codiceArticolo, result.Id);
+                
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "POST /api/AllegatiAnima/upload/{CodiceArticolo} - ERROR", codiceArticolo);
+                return StatusCode(500, "Errore nel caricamento del file");
+            }
+        }
+
+        /// <summary>
+        /// Elimina un allegato
+        /// </summary>
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> DeleteAllegato(int id)
+        {
+            _logger.LogInformation("DELETE /api/AllegatiAnima/{Id} - START", id);
+            
+            try
+            {
+                var result = await _allegatiService.DeleteAllegatoAsync(id);
+                
+                if (!result)
+                {
+                    return NotFound("Allegato non trovato");
+                }
+
+                _logger.LogInformation("DELETE /api/AllegatiAnima/{Id} - OK", id);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DELETE /api/AllegatiAnima/{Id} - ERROR", id);
+                return StatusCode(500, "Errore nell'eliminazione dell'allegato");
             }
         }
     }

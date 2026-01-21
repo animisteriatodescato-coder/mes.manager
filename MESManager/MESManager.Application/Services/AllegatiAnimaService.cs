@@ -11,6 +11,9 @@ namespace MESManager.Application.Services
         private readonly string _ganttConnectionString = "Server=192.168.1.230\\SQLEXPRESS;Database=Gantt;User Id=sa;Password=password.123;TrustServerCertificate=True;";
         private readonly ILogger<AllegatiAnimaService> _logger;
         
+        // Path base per salvare gli allegati
+        private const string AllegatiBasePath = @"P:\Documenti\AA SCHEDE PRODUZIONE\foto cel";
+        
         private static readonly HashSet<string> FotoExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
             ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".tif"
@@ -23,8 +26,24 @@ namespace MESManager.Application.Services
 
         public async Task<AllegatiAnimaResponse> GetAllegatiByIdArchivioAsync(int idArchivio)
         {
+            return await GetAllegatiInternalAsync(idArchivio, null);
+        }
+
+        public async Task<AllegatiAnimaResponse> GetAllegatiByCodiceArticoloAsync(string codiceArticolo)
+        {
+            // Prova a parsare il codice articolo come intero per cercare per IdArchivio
+            if (int.TryParse(codiceArticolo, out var idArchivio))
+            {
+                return await GetAllegatiInternalAsync(idArchivio, codiceArticolo);
+            }
+            return await GetAllegatiInternalAsync(null, codiceArticolo);
+        }
+
+        private async Task<AllegatiAnimaResponse> GetAllegatiInternalAsync(int? idArchivio, string? codiceArticolo)
+        {
             var sw = Stopwatch.StartNew();
-            _logger.LogInformation("GetAllegatiByIdArchivioAsync START - IdArchivio={IdArchivio}", idArchivio);
+            _logger.LogInformation("GetAllegatiInternalAsync START - IdArchivio={IdArchivio}, CodiceArticolo={CodiceArticolo}", 
+                idArchivio, codiceArticolo);
             
             var response = new AllegatiAnimaResponse();
             var allegati = new List<AllegatoAnimaDto>();
@@ -34,14 +53,17 @@ namespace MESManager.Application.Services
                 using var conn = new SqlConnection(_ganttConnectionString);
                 await conn.OpenAsync();
 
+                // Cerca per IdArchivio o per CodiceArticolo nel path
                 var query = @"
                     SELECT Id, Archivio, IdArchivio, Allegato, DescrizioneAllegato, Priorita
                     FROM [dbo].[Allegati]
-                    WHERE Archivio = 'ARTICO' AND IdArchivio = @IdArchivio
+                    WHERE Archivio = 'ARTICO' 
+                      AND (IdArchivio = @IdArchivio OR Allegato LIKE @CodicePattern)
                     ORDER BY Priorita";
 
                 using var cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@IdArchivio", idArchivio);
+                cmd.Parameters.AddWithValue("@IdArchivio", idArchivio ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@CodicePattern", $"%{codiceArticolo ?? "NOMATCH"}%");
 
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
@@ -73,16 +95,138 @@ namespace MESManager.Application.Services
 
                 sw.Stop();
                 _logger.LogInformation(
-                    "GetAllegatiByIdArchivioAsync END - IdArchivio={IdArchivio}, Foto={FotoCount}, Documenti={DocCount}, Duration={Duration}ms",
-                    idArchivio, response.TotaleFoto, response.TotaleDocumenti, sw.ElapsedMilliseconds);
+                    "GetAllegatiInternalAsync END - IdArchivio={IdArchivio}, CodiceArticolo={CodiceArticolo}, Foto={FotoCount}, Documenti={DocCount}, Duration={Duration}ms",
+                    idArchivio, codiceArticolo, response.TotaleFoto, response.TotaleDocumenti, sw.ElapsedMilliseconds);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetAllegatiByIdArchivioAsync ERROR - IdArchivio={IdArchivio}", idArchivio);
+                _logger.LogError(ex, "GetAllegatiInternalAsync ERROR - IdArchivio={IdArchivio}, CodiceArticolo={CodiceArticolo}", 
+                    idArchivio, codiceArticolo);
                 throw;
             }
 
             return response;
+        }
+
+        public async Task<AllegatoAnimaDto?> UploadAllegatoAsync(string codiceArticolo, string nomeFile, byte[] contenuto, string? descrizione, bool isFoto)
+        {
+            _logger.LogInformation("UploadAllegatoAsync START - CodiceArticolo={CodiceArticolo}, NomeFile={NomeFile}, Size={Size}bytes, IsFoto={IsFoto}",
+                codiceArticolo, nomeFile, contenuto.Length, isFoto);
+
+            try
+            {
+                // Genera nome file univoco
+                var estensione = Path.GetExtension(nomeFile);
+                var nomeFileUnivoco = $"{codiceArticolo}_{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid():N}{estensione}";
+                var pathCompleto = Path.Combine(AllegatiBasePath, nomeFileUnivoco);
+
+                // Salva il file su disco
+                var directory = Path.GetDirectoryName(pathCompleto);
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+                await File.WriteAllBytesAsync(pathCompleto, contenuto);
+
+                _logger.LogInformation("File saved to disk: {Path}", pathCompleto);
+
+                // Inserisci record nel DB
+                using var conn = new SqlConnection(_ganttConnectionString);
+                await conn.OpenAsync();
+
+                // Ottieni prossima priorità
+                var maxPrioritaCmd = new SqlCommand(
+                    "SELECT ISNULL(MAX(Priorita), 0) FROM [dbo].[Allegati] WHERE Archivio = 'ARTICO' AND IdArchivio = @IdArchivio",
+                    conn);
+                
+                int.TryParse(codiceArticolo, out var idArchivio);
+                maxPrioritaCmd.Parameters.AddWithValue("@IdArchivio", idArchivio);
+                var maxPriorita = (int)(await maxPrioritaCmd.ExecuteScalarAsync() ?? 0);
+
+                var insertQuery = @"
+                    INSERT INTO [dbo].[Allegati] (Archivio, IdArchivio, Allegato, DescrizioneAllegato, Priorita)
+                    OUTPUT INSERTED.Id
+                    VALUES ('ARTICO', @IdArchivio, @Allegato, @Descrizione, @Priorita)";
+
+                using var cmd = new SqlCommand(insertQuery, conn);
+                cmd.Parameters.AddWithValue("@IdArchivio", idArchivio);
+                cmd.Parameters.AddWithValue("@Allegato", pathCompleto);
+                cmd.Parameters.AddWithValue("@Descrizione", descrizione ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Priorita", maxPriorita + 1);
+
+                var newId = (int)await cmd.ExecuteScalarAsync();
+
+                _logger.LogInformation("UploadAllegatoAsync END - NewId={NewId}, Path={Path}", newId, pathCompleto);
+
+                return new AllegatoAnimaDto
+                {
+                    Id = newId,
+                    Archivio = "ARTICO",
+                    IdArchivio = idArchivio,
+                    PathCompleto = pathCompleto,
+                    NomeFile = nomeFileUnivoco,
+                    Descrizione = descrizione,
+                    Priorita = maxPriorita + 1,
+                    Estensione = estensione.ToLowerInvariant(),
+                    IsFoto = isFoto,
+                    UrlProxy = $"/api/AllegatiAnima/file/{newId}"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "UploadAllegatoAsync ERROR - CodiceArticolo={CodiceArticolo}, NomeFile={NomeFile}", 
+                    codiceArticolo, nomeFile);
+                throw;
+            }
+        }
+
+        public async Task<bool> DeleteAllegatoAsync(int id)
+        {
+            _logger.LogInformation("DeleteAllegatoAsync START - Id={Id}", id);
+
+            try
+            {
+                // Prima ottieni il path per eliminare il file
+                var allegato = await GetAllegatoByIdAsync(id);
+                if (allegato == null)
+                {
+                    _logger.LogWarning("DeleteAllegatoAsync - Allegato not found: Id={Id}", id);
+                    return false;
+                }
+
+                // Elimina dal DB
+                using var conn = new SqlConnection(_ganttConnectionString);
+                await conn.OpenAsync();
+
+                using var cmd = new SqlCommand("DELETE FROM [dbo].[Allegati] WHERE Id = @Id", conn);
+                cmd.Parameters.AddWithValue("@Id", id);
+                var rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+                if (rowsAffected > 0)
+                {
+                    // Prova a eliminare il file fisico (non critico se fallisce)
+                    try
+                    {
+                        if (File.Exists(allegato.PathCompleto))
+                        {
+                            File.Delete(allegato.PathCompleto);
+                            _logger.LogInformation("File deleted: {Path}", allegato.PathCompleto);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Could not delete physical file: {Path}", allegato.PathCompleto);
+                    }
+                }
+
+                _logger.LogInformation("DeleteAllegatoAsync END - Id={Id}, Deleted={Deleted}", id, rowsAffected > 0);
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DeleteAllegatoAsync ERROR - Id={Id}", id);
+                throw;
+            }
         }
 
         public async Task<byte[]?> GetFileContentAsync(string path)
