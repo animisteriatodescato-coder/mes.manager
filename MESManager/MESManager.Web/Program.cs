@@ -1,6 +1,7 @@
 using MESManager.Web.Components;
 using MESManager.Infrastructure;
 using MESManager.Infrastructure.Services;
+using MESManager.Infrastructure.Repositories;
 using MESManager.Sync;
 using MESManager.Sync.Configuration;
 using MudBlazor.Services;
@@ -58,6 +59,8 @@ builder.Services.AddScoped<PreferencesService>();
 builder.Services.AddScoped<AnimeImportService>();
 builder.Services.AddScoped<AnimeExcelImportService>();
 builder.Services.AddScoped<AllegatiAnimaService>();
+builder.Services.AddScoped<IAllegatoArticoloRepository, AllegatoArticoloRepository>();
+builder.Services.AddScoped<IAllegatoArticoloService, AllegatoArticoloService>();
 builder.Services.AddScoped<IPianificazioneService, PianificazioneService>();
 builder.Services.AddHttpClient<PlcDataService>(client =>
 {

@@ -28,6 +28,7 @@ public class MesManagerDbContext : DbContext
     public DbSet<ImpostazioniProduzione> ImpostazioniProduzione => Set<ImpostazioniProduzione>();
     public DbSet<CalendarioLavoro> CalendarioLavoro => Set<CalendarioLavoro>();
     public DbSet<ImpostazioniGantt> ImpostazioniGantt => Set<ImpostazioniGantt>();
+    public DbSet<AllegatoArticolo> AllegatiArticoli => Set<AllegatoArticolo>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -100,5 +101,15 @@ public class MesManagerDbContext : DbContext
         modelBuilder.Entity<SyncState>()
             .HasIndex(s => s.Modulo)
             .IsUnique();
+
+        // Indici per AllegatiArticoli
+        modelBuilder.Entity<AllegatoArticolo>()
+            .HasIndex(a => a.CodiceArticolo);
+        
+        modelBuilder.Entity<AllegatoArticolo>()
+            .HasIndex(a => new { a.Archivio, a.IdArchivio });
+        
+        modelBuilder.Entity<AllegatoArticolo>()
+            .HasIndex(a => a.IdGanttOriginale);
     }
 }

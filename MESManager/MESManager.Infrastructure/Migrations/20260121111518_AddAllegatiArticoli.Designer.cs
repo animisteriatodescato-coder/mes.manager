@@ -4,6 +4,7 @@ using MESManager.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MESManager.Infrastructure.Migrations
 {
     [DbContext(typeof(MesManagerDbContext))]
-    partial class MesManagerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260121111518_AddAllegatiArticoli")]
+    partial class AddAllegatiArticoli
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -56,7 +59,7 @@ namespace MESManager.Infrastructure.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
 
-                    b.Property<int?>("IdArchivio")
+                    b.Property<int>("IdArchivio")
                         .HasColumnType("int");
 
                     b.Property<int?>("IdGanttOriginale")
