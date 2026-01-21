@@ -214,19 +214,36 @@ window.animeGrid = (function() {
 
     function updateData(data, selectedId) {
         if (gridApi) {
-            console.log('Updating grid data with:', data);
-            gridApi.setGridOption('rowData', data);
+            console.log('Updating grid data, selectedId:', selectedId);
             
-            // Se è specificato un ID, riseleziona la riga corrispondente
+            // Se è specificato un ID, prova ad aggiornare solo quella riga
             if (selectedId) {
-                setTimeout(() => {
-                    gridApi.forEachNode(node => {
-                        if (node.data && node.data.id === selectedId) {
+                let rowUpdated = false;
+                gridApi.forEachNode(node => {
+                    if (node.data && node.data.id === selectedId) {
+                        // Trova i dati aggiornati nell'array
+                        const updatedData = data.find(item => item.id === selectedId);
+                        if (updatedData) {
+                            console.log('Updating single row with data:', updatedData);
+                            node.setData(updatedData);
                             node.setSelected(true);
                             gridApi.ensureNodeVisible(node, 'middle');
+                            // Forza il refresh della riga per aggiornare il rendering
+                            gridApi.refreshCells({ rowNodes: [node], force: true });
+                            rowUpdated = true;
                         }
-                    });
-                }, 50);
+                    }
+                });
+                
+                // Se non è riuscito ad aggiornare la singola riga, aggiorna tutta la griglia
+                if (!rowUpdated) {
+                    console.log('Row not found, updating all data');
+                    gridApi.setGridOption('rowData', data);
+                }
+            } else {
+                // Nessun ID specificato, aggiorna tutta la griglia
+                console.log('No selectedId, updating all grid data');
+                gridApi.setGridOption('rowData', data);
             }
         }
     }
