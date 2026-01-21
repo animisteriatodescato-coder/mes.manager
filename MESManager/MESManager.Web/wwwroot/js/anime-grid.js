@@ -416,6 +416,16 @@ window.animeGrid = (function() {
         }
     }
 
+    function getStats() {
+        if (!gridApi) return { total: 0, filtered: 0, selected: 0 };
+        
+        return {
+            total: gridApi.getModel().getRowCount(),
+            filtered: gridApi.getDisplayedRowCount(),
+            selected: gridApi.getSelectedRows().length
+        };
+    }
+
     function registerDotNetRef(dotNetRef) {
         window.animeGridDotNetRef = dotNetRef;
         console.log('DotNet reference registered for anime grid');
@@ -441,6 +451,7 @@ window.animeGrid = (function() {
         toggleColumnPanel: toggleColumnPanel,
         setUiVars: setUiVars,
         exportCsv: exportCsv,
+        getStats: getStats,
         registerDotNetRef: registerDotNetRef,
         getSelectedRow: getSelectedRow
     };
