@@ -556,8 +556,16 @@
         macchineSelezionate.Clear();
         if (!string.IsNullOrWhiteSpace(Anime.MacchineSuDisponibili))
         {
+            // Se ci sono macchine già salvate, caricale
             foreach (var codice in Anime.MacchineSuDisponibili.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries))
                 macchineSelezionate.Add(codice.Trim());
+        }
+        else
+        {
+            // Se non ci sono macchine salvate, seleziona tutte di default
+            foreach (var m in macchineDisponibili) 
+                macchineSelezionate.Add(m.Codice);
+            AggiornaMacchineString();
         }
     }
     
