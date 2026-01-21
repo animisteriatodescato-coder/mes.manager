@@ -169,15 +169,11 @@
         _anime = await Http.GetFromJsonAsync<List<AnimeDto>>("api/Anime") ?? new();
         Console.WriteLine($"CatalogoAnime loaded {_anime.Count} anime from API");
         
-        // FIX P9: NON caricare savedSettings per forzare tutte le colonne visibili
-        // var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("anime-grid-settings");
-        // if (savedSettings != null)
-        // {
-        //     settings = savedSettings;
-        // }
-        
-        // Forza reset preferenze colonne all'avvio
-        await PreferencesService.RemoveAsync("anime-grid-settings");
+        var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("anime-grid-settings");
+        if (savedSettings != null)
+        {
+            settings = savedSettings;
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -200,8 +196,7 @@
                 return;
             }
 
-            // Simply initialize the grid - no need to check if already initialized
-            // NON caricare le preferenze colonne per mostrare sempre tutte le colonne
+            // Inizializza la grid - lo stato delle colonne viene caricato da localStorage automaticamente
             await JSRuntime.InvokeVoidAsync("animeGrid.init", "animeGrid", _anime, null);
             
             // Registra DotNetObjectReference per callback JS->Blazor (double-click)

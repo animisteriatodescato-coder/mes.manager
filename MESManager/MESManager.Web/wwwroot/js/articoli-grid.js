@@ -80,8 +80,12 @@ window.articoliGrid = (function() {
             isGridInitialized = false;
         }
 
-        console.log('Initializing grid with data:', data);
+        console.log('Initializing articoli grid with data:', data);
         console.log('Data length:', data ? data.length : 'null');
+        
+        if (!data || data.length === 0) {
+            console.warn('WARNING: Initializing articoli grid with empty data!');
+        }
 
         const gridOptions = {
             columnDefs: columnDefs,

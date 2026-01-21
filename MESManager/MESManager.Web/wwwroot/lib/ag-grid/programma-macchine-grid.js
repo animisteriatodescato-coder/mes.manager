@@ -132,8 +132,9 @@ window.programmaMacchineGrid = (function() {
             return;
         }
 
-        // Filter only rows with numeroMacchina assigned
-        const filteredData = data.filter(row => row.numeroMacchina != null && row.numeroMacchina > 0);
+        // Filter only rows with numeroMacchina assigned (numeroMacchina is a string)
+        const filteredData = data.filter(row => row.numeroMacchina != null && row.numeroMacchina !== '');
+        console.log('init: received', data.length, 'rows, filtered to', filteredData.length, 'with machine');
 
         const gridOptions = {
             columnDefs: columnDefs,
@@ -229,7 +230,9 @@ window.programmaMacchineGrid = (function() {
 
     function updateData(data) {
         if (gridApi) {
-            const filteredData = data.filter(row => row.numeroMacchina != null && row.numeroMacchina > 0);
+            // numeroMacchina is a string, filter by non-empty value
+            const filteredData = data.filter(row => row.numeroMacchina != null && row.numeroMacchina !== '');
+            console.log('updateData: received', data.length, 'rows, filtered to', filteredData.length, 'with machine');
             gridApi.setGridOption('rowData', filteredData);
         }
     }

@@ -181,7 +181,7 @@
         _articoli = await Http.GetFromJsonAsync<List<ArticoloDto>>("api/Articoli") ?? new();
         
         totalRows = _articoli.Count;
-        filteredRows = totalRows;
+        filteredRows = _articoli.Count;
         lastUpdate = DateTime.Now;
         isLoading = false;
         gridStatus = "Pronto";
@@ -199,7 +199,12 @@
     {
         if (firstRender)
         {
-            await Task.Delay(300);
+            // Aspetta che i dati siano caricati prima di inizializzare la griglia
+            if (_articoli == null || _articoli.Count == 0)
+            {
+                Console.WriteLine("WARNING: Grid initialized with empty data in CatalogoArticoli");
+            }
+            await Task.Delay(100);
             await InitializeGrid();
             
             // Avvia timer per aggiornare le statistiche

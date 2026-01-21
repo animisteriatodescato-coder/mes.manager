@@ -9,6 +9,15 @@ export function subscribeToStatsChanges(dotNetReference) {
         }
     });
 
+    // Ascolta cambi di selezione macchina dalle Commesse Aperte
+    window.addEventListener('commessaNumeroMacchinaChanged', async (e) => {
+        console.log('Received commessaNumeroMacchinaChanged event:', e.detail);
+        if (dotNetRef) {
+            // Notifica il componente Blazor per ricaricare i dati
+            await dotNetRef.invokeMethodAsync('OnMachineSelectionChanged', e.detail.id, e.detail.numeroMacchina);
+        }
+    });
+
     // Auto-salva stato quando cambia struttura grid
     let saveTimeout;
     window.addEventListener('programmaMacchineGridStateChanged', async () => {

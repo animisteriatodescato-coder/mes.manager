@@ -541,6 +541,9 @@
     private bool isLoading = false;
     private string gridStatus = "Pronto";
     private IJSObjectReference? jsModule;
+    private bool _isGridInitialized = false;
+    private bool _isDataLoaded = false;
+    private bool _isLoadingData = false;
     
     // Variabili per stampa etichetta
     private bool showLabelDialog = false;
@@ -566,25 +569,21 @@
     protected override async Task OnInitializedAsync()
     {
         PageToolbarService.SetActivePage("commesse-aperte", this);
+        
+        isLoading = true;
+        gridStatus = "Caricamento...";
+        _isDataLoaded = false;
+        
         await LoadData();
+        
+        _isDataLoaded = true;
+        isLoading = false;
+        gridStatus = "Pronto";
         
         var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("commesse-aperte-grid-settings");
         if (savedSettings != null)
         {
             settings = savedSettings;
-        }
-        
-        // Listen for navigation changes to refresh data when returning to this page
-        Nav.LocationChanged += OnLocationChanged;
-    }
-    
-    private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
-    {
-        // Check if we're on the commesse-aperte page
-        if (e.Location.Contains("/programma/commesse-aperte"))
-        {
-            Console.WriteLine("Returned to commesse-aperte page, refreshing data...");
-            await RefreshGridData();
         }
     }
     
@@ -622,28 +621,62 @@
         }
     }
 
-    private async Task LoadData()
+    private async Task LoadData(bool force = false)
     {
-        Console.WriteLine("Fetching commesse from API...");
-        var allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
+        if (_isLoadingData && !force)
+        {
+            Console.WriteLine("LoadData already in progress, skipping...");
+            return;
+        }
         
-        // Filtra solo le commesse aperte
-        _commesse = allCommesse.Where(c => c.Stato == "Aperta").ToList();
-        Console.WriteLine($"Fetched {allCommesse.Count} commesse, filtered to {_commesse.Count} aperte");
+        _isLoadingData = true;
         
-        totalRows = _commesse.Count;
-        lastUpdate = DateTime.Now;
+        try
+        {
+            Console.WriteLine("Fetching commesse from API...");
+            var allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
+            
+            // Filtra solo le commesse aperte
+            _commesse = allCommesse.Where(c => c.Stato == "Aperta").ToList();
+            Console.WriteLine($"Fetched {allCommesse.Count} commesse, filtered to {_commesse.Count} aperte");
+            
+            totalRows = _commesse.Count;
+            filteredRows = _commesse.Count;
+            lastUpdate = DateTime.Now;
+        }
+        finally
+        {
+            _isLoadingData = false;
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await Task.Delay(300);
-            await InitializeGrid();
+            // Aspetta che i dati siano caricati con un loop (max 30 secondi)
+            int maxWait = 150; // 150 * 200ms = 30 secondi
+            int waited = 0;
+            while (!_isDataLoaded && waited < maxWait)
+            {
+                await Task.Delay(200);
+                waited++;
+            }
             
-            jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/stats-listener.js");
-            await jsModule.InvokeVoidAsync("subscribeToStatsChanges", DotNetObjectReference.Create(this));
+            if (_isDataLoaded && _commesse != null && _commesse.Count > 0 && !_isGridInitialized)
+            {
+                _isGridInitialized = true;
+                Console.WriteLine($"CommesseAperte: Initializing grid with {_commesse.Count} rows");
+                await Task.Delay(100);
+                await InitializeGrid();
+                
+                jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/stats-listener.js");
+                await jsModule.InvokeVoidAsync("subscribeToStatsChanges", DotNetObjectReference.Create(this));
+            }
+            else if (!_isDataLoaded)
+            {
+                Console.WriteLine("CommesseAperte: Timeout waiting for data");
+            }
         }
     }
 
@@ -1145,12 +1178,13 @@
     {
         PageToolbarService.SetActivePage("commesse-aperte", null);
         
-        // Unsubscribe from navigation events
-        Nav.LocationChanged -= OnLocationChanged;
-        
         if (jsModule != null)
         {
-            await jsModule.DisposeAsync();
+            try
+            {
+                await jsModule.DisposeAsync();
+            }
+            catch { }
         }
         
         try

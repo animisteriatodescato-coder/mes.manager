@@ -172,6 +172,9 @@
     private bool isLoading = false;
     private string gridStatus = "Pronto";
     private IJSObjectReference? jsModule;
+    private bool _isGridInitialized = false;
+    private bool _isDataLoaded = false;
+    private bool _isLoadingData = false;
 
     private async Task OnSearchDebounced(string value)
     {
@@ -187,7 +190,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _isDataLoaded = false;
         await LoadData();
+        _isDataLoaded = true;
         
         var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("programma-macchine-grid-settings");
         if (savedSettings != null)
@@ -196,33 +201,67 @@
         }
     }
 
-    private async Task LoadData()
+    private async Task LoadData(bool force = false)
     {
-        isLoading = true;
-        gridStatus = "Caricamento...";
-        StateHasChanged();
+        if (_isLoadingData && !force)
+        {
+            Console.WriteLine("LoadData already in progress, skipping...");
+            return;
+        }
         
-        _allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
+        _isLoadingData = true;
         
-        // Filter only open commesse with numeroMacchina assigned
-        _commesse = _allCommesse.Where(c => c.Stato == "Aperta" && !string.IsNullOrEmpty(c.NumeroMacchina)).ToList();
-        
-        totalRows = _commesse.Count;
-        filteredRows = _commesse.Count;
-        lastUpdate = DateTime.Now;
-        isLoading = false;
-        gridStatus = "Pronto";
+        try
+        {
+            isLoading = true;
+            gridStatus = "Caricamento...";
+            StateHasChanged();
+            
+            _allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
+            
+            // Filter only open commesse with numeroMacchina assigned
+            _commesse = _allCommesse.Where(c => c.Stato == "Aperta" && !string.IsNullOrEmpty(c.NumeroMacchina)).ToList();
+            Console.WriteLine($"ProgrammaMacchine: Loaded {_allCommesse.Count} total, filtered to {_commesse.Count} with machine");
+            
+            totalRows = _commesse.Count;
+            filteredRows = _commesse.Count;
+            lastUpdate = DateTime.Now;
+            isLoading = false;
+            gridStatus = "Pronto";
+        }
+        finally
+        {
+            _isLoadingData = false;
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await Task.Delay(300);
-            await InitializeGrid();
+            // Aspetta che i dati siano caricati con un loop (max 30 secondi)
+            int maxWait = 150; // 150 * 200ms = 30 secondi
+            int waited = 0;
+            while (!_isDataLoaded && waited < maxWait)
+            {
+                await Task.Delay(200);
+                waited++;
+            }
             
-            jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/stats-listener-programma.js");
-            await jsModule.InvokeVoidAsync("subscribeToStatsChanges", DotNetObjectReference.Create(this));
+            if (_isDataLoaded && !_isGridInitialized)
+            {
+                _isGridInitialized = true;
+                Console.WriteLine($"ProgrammaMacchine: Initializing grid with {_commesse.Count} rows");
+                await Task.Delay(100);
+                await InitializeGrid();
+                
+                jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/stats-listener-programma.js");
+                await jsModule.InvokeVoidAsync("subscribeToStatsChanges", DotNetObjectReference.Create(this));
+            }
+            else if (!_isDataLoaded)
+            {
+                Console.WriteLine("ProgrammaMacchine: Timeout waiting for data");
+            }
         }
     }
 
@@ -247,6 +286,14 @@
     public async Task SaveGridStateFromJs()
     {
         await SaveGridState();
+    }
+
+    [JSInvokable]
+    public async Task OnMachineSelectionChanged(string commessaId, string? numeroMacchina)
+    {
+        Console.WriteLine($"Machine selection changed: {commessaId} -> {numeroMacchina}");
+        // Ricarica i dati per riflettere le modifiche
+        await RefreshData();
     }
 
     private async Task InitializeGrid()
@@ -304,7 +351,8 @@
 
     private async Task RefreshData()
     {
-        await LoadData();
+        Console.WriteLine("RefreshData called");
+        await LoadData(force: true);
         
         try
         {
@@ -314,7 +362,8 @@
                 WriteIndented = false
             };
             var jsonData = JsonSerializer.Serialize(_commesse, jsonOptions);
-            await JSRuntime.InvokeVoidAsync("eval", $"programmaMacchineGrid.updateData(JSON.parse({System.Text.Json.JsonSerializer.Serialize(jsonData)}))");
+            Console.WriteLine($"RefreshData: updating grid with {_commesse.Count} rows");
+            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.updateData", _commesse);
         }
         catch (Exception ex)
         {
@@ -328,13 +377,17 @@
     {
         try
         {
+            Console.WriteLine("ResetGrid called");
             await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.resetState");
             settings = new GridUiSettings();
             await PreferencesService.RemoveAsync("programma-macchine-grid-settings");
             await ApplyUiSettings();
             StateHasChanged();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error resetting grid: {ex.Message}");
+        }
     }
 
     private async Task ExportCsv()
@@ -408,7 +461,11 @@
     {
         if (jsModule != null)
         {
-            await jsModule.DisposeAsync();
+            try
+            {
+                await jsModule.DisposeAsync();
+            }
+            catch { }
         }
         
         try

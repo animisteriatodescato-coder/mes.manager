@@ -41,20 +41,30 @@ window.commesseAperteGrid = (function() {
             editable: false,
             cellRenderer: params => {
                 const raw = params.data?.macchineSuDisponibili || '';
-                const macchine = raw.split(/[\s,]+/).map(s => s.trim()).filter(s => s.length > 0);
+                // Split per ottenere i codici disponibili (M001, M002, etc.)
+                const macchine = raw.split(';').map(s => s.trim()).filter(s => s.length > 0);
                 
                 if (macchine.length === 0) {
                     return '<span style="color:#999">-</span>';
                 }
                 
-                const currentValue = params.value || '';
+                let currentValue = params.value || '';
+                
+                // Normalizza il valore corrente: se è un numero (1,2,3...) convertilo in codice (M001, M002, M003...)
+                if (currentValue && /^\d+$/.test(currentValue)) {
+                    const num = parseInt(currentValue);
+                    currentValue = 'M' + num.toString().padStart(3, '0');
+                }
+                
                 const selectId = `ma-select-${params.data.id}`;
                 
                 let options = '<option value="">-</option>';
-                macchine.forEach(m => {
-                    const formatted = m.padStart(2, '0');
-                    const selected = currentValue === m ? 'selected' : '';
-                    options += `<option value="${m}" ${selected}>${formatted}</option>`;
+                macchine.forEach(codice => {
+                    // Estrai il numero dal codice (M001 -> 001 -> 1 -> 01)
+                    const numero = codice.replace(/^M0*/, ''); // Rimuove M e zeri iniziali
+                    const nome = numero.padStart(2, '0'); // 01, 02, 03, etc.
+                    const selected = currentValue === codice ? 'selected' : '';
+                    options += `<option value="${codice}" ${selected}>${nome}</option>`;
                 });
                 
                 const bgColor = currentValue ? '#e3f2fd' : 'transparent';
@@ -198,12 +208,93 @@ window.commesseAperteGrid = (function() {
         }
     ];
 
+    // Funzione per gestire i cambi di selezione macchina
+    function attachMachineSelectHandlers() {
+        document.querySelectorAll('select[data-commessa-id]').forEach(select => {
+            if (select.hasAttribute('data-listener-attached')) return;
+            select.setAttribute('data-listener-attached', 'true');
+            
+            select.addEventListener('change', async (e) => {
+                const commessaId = e.target.getAttribute('data-commessa-id');
+                const newValue = e.target.value;
+                const selectEl = e.target;
+                
+                console.log(`Updating machine for commessa ${commessaId} to ${newValue}`);
+                
+                try {
+                    const response = await fetch(`/api/Commesse/${commessaId}/numero-macchina`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ numeroMacchina: newValue })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    console.log(`✓ Machine updated successfully for ${commessaId}`);
+                    
+                    // Update row data directly
+                    const rowNode = gridApi.getRowNode(commessaId);
+                    if (rowNode) {
+                        rowNode.data.numeroMacchina = newValue;
+                        
+                        // Refresh the specific row
+                        gridApi.refreshCells({
+                            rowNodes: [rowNode],
+                            force: true
+                        });
+                        
+                        // Re-attach listener after cell refresh (the select was recreated)
+                        setTimeout(() => {
+                            const newSelect = document.getElementById(`ma-select-${commessaId}`);
+                            if (newSelect) {
+                                newSelect.removeAttribute('data-listener-attached');
+                                attachMachineSelectHandlers();
+                            }
+                        }, 50);
+                        
+                        // Flash the row to indicate success
+                        gridApi.flashCells({
+                            rowNodes: [rowNode],
+                            flashDuration: 500
+                        });
+                    } else {
+                        console.warn('Row node not found for:', commessaId);
+                        // Fallback: redraw all rows
+                        gridApi.redrawRows();
+                    }
+                    
+                    // Dispatch event for other components
+                    window.dispatchEvent(new CustomEvent('commessaNumeroMacchinaChanged', { 
+                        detail: { id: commessaId, numeroMacchina: newValue } 
+                    }));
+                    
+                } catch (err) {
+                    console.error('Error updating numero macchina:', err);
+                    alert('Errore durante il salvataggio della macchina: ' + err.message);
+                    // Revert the select to previous value
+                    selectEl.value = selectEl.dataset.previousValue || '';
+                }
+            });
+            
+            // Store current value for revert on error
+            select.addEventListener('focus', (e) => {
+                e.target.dataset.previousValue = e.target.value;
+            });
+        });
+    }
+
     function init(gridId, data, savedColumnState) {
         const gridDiv = document.getElementById(gridId);
         if (!gridDiv) {
             console.error('Grid element not found:', gridId);
             return;
         }
+        
+        // Carica stato colonne da localStorage
+        const savedState = localStorage.getItem('commesse-aperte-grid-columnState');
+        console.log('Loading column state from localStorage:', savedState ? 'found' : 'not found');
         
         // Destroy existing grid if it exists to prevent duplication
         if (gridApi) {
@@ -260,15 +351,19 @@ window.commesseAperteGrid = (function() {
             rowHeight: 28,
             animateRows: true,
             rowSelection: 'single',
+            getRowId: (params) => params.data.id,
             onGridReady: (params) => {
                 gridApi = params.api;
                 console.log('Commesse Aperte Grid ready, rowData count:', gridApi.getDisplayedRowCount());
-                if (savedColumnState) {
+                
+                // Ripristina stato colonne se disponibile
+                if (savedState) {
                     try {
                         gridApi.applyColumnState({
-                            state: JSON.parse(savedColumnState),
+                            state: JSON.parse(savedState),
                             applyOrder: true
                         });
+                        console.log('✓ Column state restored');
                     } catch (e) {
                         console.warn('Failed to restore column state:', e);
                     }
@@ -276,47 +371,24 @@ window.commesseAperteGrid = (function() {
                 
                 // Attach change handlers to machine selects
                 setTimeout(() => {
-                    document.querySelectorAll('select[data-commessa-id]').forEach(select => {
-                        select.addEventListener('change', async (e) => {
-                            const commessaId = e.target.getAttribute('data-commessa-id');
-                            const newValue = e.target.value;
-                            try {
-                                await fetch(`/api/Commesse/${commessaId}/numero-macchina`, {
-                                    method: 'PATCH',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ numeroMacchina: newValue })
-                                });
-                                
-                                // Update row data
-                                const rowNode = gridApi.getRowNode(commessaId);
-                                if (rowNode) {
-                                    rowNode.setDataValue('numeroMacchina', newValue);
-                                }
-                                
-                                // Refresh row style
-                                gridApi.redrawRows();
-                                
-                                // Dispatch event
-                                window.dispatchEvent(new CustomEvent('commessaNumeroMacchinaChanged', { 
-                                    detail: { id: commessaId, numeroMacchina: newValue } 
-                                }));
-                            } catch (err) {
-                                console.error('Error updating numero macchina:', err);
-                            }
-                        });
-                    });
+                    attachMachineSelectHandlers();
                 }, 100);
             },
-            onColumnMoved: () => {
+            onColumnMoved: (params) => {
+                if (params.finished) saveColumnState();
                 window.dispatchEvent(new CustomEvent('commesseAperteGridStateChanged'));
             },
-            onColumnResized: () => {
+            onColumnResized: (params) => {
+                if (params.finished) saveColumnState();
                 window.dispatchEvent(new CustomEvent('commesseAperteGridStateChanged'));
             },
             onColumnVisible: () => {
+                saveColumnState();
                 window.dispatchEvent(new CustomEvent('commesseAperteGridStateChanged'));
             },
+            onColumnPinned: () => saveColumnState(),
             onSortChanged: () => {
+                saveColumnState();
                 window.dispatchEvent(new CustomEvent('commesseAperteGridStateChanged'));
             },
             onSelectionChanged: () => {
@@ -347,35 +419,20 @@ window.commesseAperteGrid = (function() {
             onModelUpdated: () => {
                 // Re-attach select handlers after grid updates
                 setTimeout(() => {
-                    document.querySelectorAll('select[data-commessa-id]').forEach(select => {
-                        if (!select.hasAttribute('data-listener-attached')) {
-                            select.setAttribute('data-listener-attached', 'true');
-                            select.addEventListener('change', async (e) => {
-                                const commessaId = e.target.getAttribute('data-commessa-id');
-                                const newValue = e.target.value;
-                                try {
-                                    await fetch(`/api/Commesse/${commessaId}/numero-macchina`, {
-                                        method: 'PATCH',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ numeroMacchina: newValue })
-                                    });
-                                    
-                                    gridApi.redrawRows();
-                                    
-                                    window.dispatchEvent(new CustomEvent('commessaNumeroMacchinaChanged', { 
-                                        detail: { id: commessaId, numeroMacchina: newValue } 
-                                    }));
-                                } catch (err) {
-                                    console.error('Error updating numero macchina:', err);
-                                }
-                            });
-                        }
-                    });
+                    attachMachineSelectHandlers();
                 }, 50);
             }
         };
 
         agGrid.createGrid(gridDiv, gridOptions);
+    }
+
+    function saveColumnState() {
+        if (gridApi) {
+            const columnState = gridApi.getColumnState();
+            localStorage.setItem('commesse-aperte-grid-columnState', JSON.stringify(columnState));
+            console.log('Column state saved to localStorage');
+        }
     }
 
     function setDotNetHelper(helper) {
@@ -414,6 +471,8 @@ window.commesseAperteGrid = (function() {
         if (gridApi) {
             gridApi.resetColumnState();
             gridApi.setFilterModel(null);
+            localStorage.removeItem('commesse-aperte-grid-columnState');
+            console.log('Column state reset and cleared from localStorage');
         }
     }
 

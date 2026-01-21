@@ -112,10 +112,9 @@ window.animeGrid = (function() {
             return;
         }
 
-        // Ignora savedColumnState per forzare tutte le colonne visibili
-        savedColumnState = null;
-        localStorage.removeItem('anime-grid-settings');
-        console.log('Column state FORCED to null - all columns will be visible');
+        // Carica stato colonne da localStorage
+        const savedState = localStorage.getItem('anime-grid-columnState');
+        console.log('Loading column state from localStorage:', savedState ? 'found' : 'not found');
 
         // Distruggi la griglia esistente se presente
         if (gridApi) {
@@ -148,17 +147,29 @@ window.animeGrid = (function() {
                 gridApi = params.api;
                 isGridInitialized = true;
                 console.log('Grid ready, rowData count:', gridApi.getDisplayedRowCount());
-                if (savedColumnState) {
+                
+                // Ripristina stato colonne se disponibile
+                if (savedState) {
                     try {
                         gridApi.applyColumnState({
-                            state: JSON.parse(savedColumnState),
+                            state: JSON.parse(savedState),
                             applyOrder: true
                         });
+                        console.log('✓ Column state restored');
                     } catch (e) {
                         console.warn('Failed to restore column state:', e);
                     }
                 }
             },
+            onColumnVisible: () => saveColumnState(),
+            onColumnResized: (params) => {
+                if (params.finished) saveColumnState();
+            },
+            onColumnMoved: (params) => {
+                if (params.finished) saveColumnState();
+            },
+            onColumnPinned: () => saveColumnState(),
+            onSortChanged: () => saveColumnState(),
             onSelectionChanged: () => {
                 window.dispatchEvent(new CustomEvent('animeGridStatsChanged'));
             },
@@ -202,6 +213,14 @@ window.animeGrid = (function() {
         agGrid.createGrid(gridDiv, gridOptions);
     }
 
+    function saveColumnState() {
+        if (gridApi) {
+            const columnState = gridApi.getColumnState();
+            localStorage.setItem('anime-grid-columnState', JSON.stringify(columnState));
+            console.log('Column state saved to localStorage');
+        }
+    }
+
     function setQuickFilter(searchText) {
         if (gridApi) {
             gridApi.setGridOption('quickFilterText', searchText);
@@ -225,12 +244,21 @@ window.animeGrid = (function() {
                         const updatedData = data.find(item => item.id === selectedId);
                         if (updatedData) {
                             console.log('Updating single row with data:', updatedData);
+                            // Aggiorna i dati del nodo
                             node.setData(updatedData);
+                            // Seleziona e rendi visibile
                             node.setSelected(true);
                             gridApi.ensureNodeVisible(node, 'middle');
-                            // Forza il refresh della riga per aggiornare il rendering
-                            gridApi.refreshCells({ rowNodes: [node], force: true });
+                            // IMPORTANTE: Forza il refresh completo della riga
+                            gridApi.refreshCells({ 
+                                rowNodes: [node], 
+                                force: true,
+                                suppressFlash: false 
+                            });
+                            // Trigger anche il flash per evidenziare la modifica
+                            gridApi.flashCells({ rowNodes: [node] });
                             rowUpdated = true;
+                            console.log('✓ Row updated successfully');
                         }
                     }
                 });
@@ -280,6 +308,10 @@ window.animeGrid = (function() {
             // Reset dello stato
             gridApi.resetColumnState();
             gridApi.setFilterModel(null);
+            
+            // Rimuovi stato salvato da localStorage
+            localStorage.removeItem('anime-grid-columnState');
+            console.log('Column state reset and cleared from localStorage');
         }
     }
 
