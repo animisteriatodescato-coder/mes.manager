@@ -1,11 +1,16 @@
 using Microsoft.Playwright;
 using Xunit;
+using Xunit.Abstractions;
 using static Microsoft.Playwright.Assertions;
 
 namespace MESManager.E2E;
 
 public class MESManagerE2ETests : PlaywrightTestBase
 {
+    public MESManagerE2ETests(ITestOutputHelper output) : base(output)
+    {
+    }
+
     // ========================================
     // TEST CORE - Sempre eseguiti
     // ========================================

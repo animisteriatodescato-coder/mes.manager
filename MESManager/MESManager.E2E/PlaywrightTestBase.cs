@@ -1,6 +1,7 @@
 using Microsoft.Playwright;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using Xunit.Abstractions;
 
 namespace MESManager.E2E;
 
@@ -11,10 +12,16 @@ public class PlaywrightTestBase : IAsyncLifetime
     protected IBrowserContext Context { get; private set; } = null!;
     protected IPage Page { get; private set; } = null!;
     protected string BaseUrl => "http://127.0.0.1:5156";
+    protected ITestOutputHelper _output { get; private set; }
     
     private readonly List<string> _consoleErrors = new();
     private readonly List<string> _pageErrors = new();
     private Process? _webAppProcess;
+
+    public PlaywrightTestBase(ITestOutputHelper output)
+    {
+        _output = output;
+    }
     
     private static readonly bool IsHeaded = Environment.GetEnvironmentVariable("PLAYWRIGHT_HEADED") == "1";
     private static readonly int SlowMo = int.TryParse(Environment.GetEnvironmentVariable("PLAYWRIGHT_SLOWMO"), out var slowmo) ? slowmo : 0;
