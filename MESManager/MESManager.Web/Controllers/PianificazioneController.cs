@@ -211,7 +211,7 @@ public class PianificazioneController : ControllerBase
             Codice = commessa.Codice,
             Description = commessa.Description ?? "",
             NumeroMacchina = commessa.NumeroMacchina,
-            NomeMacchina = commessa.NumeroMacchina.HasValue ? $"Macchina {commessa.NumeroMacchina}" : null,
+            NomeMacchina = !string.IsNullOrEmpty(commessa.NumeroMacchina) ? $"Macchina {commessa.NumeroMacchina}" : null,
             DataInizioPrevisione = commessa.DataInizioPrevisione,
             DataFinePrevisione = dataFinePrevisione,
             DataInizioProduzione = commessa.DataInizioProduzione,
@@ -254,5 +254,5 @@ public class PianificazioneController : ControllerBase
 public class AggiornaPianificazioneRequest
 {
     public DateTime? DataInizioPrevisione { get; set; }
-    public int? NumeroMacchina { get; set; }
+    public string? NumeroMacchina { get; set; }
 }

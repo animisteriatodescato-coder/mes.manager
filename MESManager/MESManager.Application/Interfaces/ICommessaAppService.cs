@@ -9,6 +9,6 @@ public interface ICommessaAppService
     Task<CommessaDto> CreaAsync(CommessaDto dto);
     Task<CommessaDto> AggiornaAsync(Guid id, CommessaDto dto);
     Task AggiornaStatoAsync(Guid id, string stato);
-    Task AggiornaNumeroMacchinaAsync(Guid id, int? numeroMacchina);
+    Task AggiornaNumeroMacchinaAsync(Guid id, string? numeroMacchina);
     Task EliminaAsync(Guid id);
 }

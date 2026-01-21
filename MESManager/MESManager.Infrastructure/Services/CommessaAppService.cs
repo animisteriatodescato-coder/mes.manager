@@ -200,7 +200,7 @@ public class CommessaAppService : ICommessaAppService
         await _context.SaveChangesAsync();
     }
 
-    public async Task AggiornaNumeroMacchinaAsync(Guid id, int? numeroMacchina)
+    public async Task AggiornaNumeroMacchinaAsync(Guid id, string? numeroMacchina)
     {
         var commessa = await _context.Commesse.FindAsync(id);
         if (commessa == null) throw new Exception("Commessa non trovata");

@@ -5,7 +5,7 @@ public class CommessaGanttDto
     public Guid Id { get; set; }
     public string Codice { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public int? NumeroMacchina { get; set; }
+    public string? NumeroMacchina { get; set; }
     public string? NomeMacchina { get; set; }
     
     // Date pianificazione

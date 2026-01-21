@@ -35,18 +35,18 @@ window.commesseAperteGrid = (function() {
             field: 'numeroMacchina', 
             headerName: 'MA', 
             sortable: true, 
-            filter: 'agNumberColumnFilter', 
-            width: 70, 
+            filter: true, 
+            width: 120, 
             pinned: 'left',
             editable: true,
-            cellEditor: 'agNumberCellEditor',
-            cellEditorParams: {
-                min: 0,
-                max: 99,
-                precision: 0
+            cellEditor: 'agSelectCellEditor',
+            cellEditorParams: params => {
+                const raw = params.data?.macchineSuDisponibili || '';
+                const macchine = raw.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                return { values: macchine };
             },
             cellStyle: params => {
-                if (params.value != null && params.value > 0) {
+                if (params.value != null && params.value !== '') {
                     return { backgroundColor: '#e3f2fd', fontWeight: 'bold', textAlign: 'center' };
                 }
                 return { textAlign: 'center' };
@@ -199,7 +199,7 @@ window.commesseAperteGrid = (function() {
                 suppressMenu: true
             },
             getRowStyle: params => {
-                if (params.data && params.data.numeroMacchina != null && params.data.numeroMacchina > 0) {
+                if (params.data && params.data.numeroMacchina != null && params.data.numeroMacchina !== '') {
                     return { backgroundColor: '#e3f2fd' };
                 }
                 return null;

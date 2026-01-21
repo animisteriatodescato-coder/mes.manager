@@ -205,7 +205,7 @@
         _allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
         
         // Filter only open commesse with numeroMacchina assigned
-        _commesse = _allCommesse.Where(c => c.Stato == "Aperta" && c.NumeroMacchina != null && c.NumeroMacchina > 0).ToList();
+        _commesse = _allCommesse.Where(c => c.Stato == "Aperta" && !string.IsNullOrEmpty(c.NumeroMacchina)).ToList();
         
         totalRows = _commesse.Count;
         filteredRows = _commesse.Count;

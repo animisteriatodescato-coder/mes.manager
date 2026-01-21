@@ -34,7 +34,7 @@ public class CommessaDto
     public string? OurReference { get; set; }
     
     // Programmazione Macchine
-    public int? NumeroMacchina { get; set; }
+    public string? NumeroMacchina { get; set; }
     
     // Audit
     public DateTime UltimaModifica { get; set; }

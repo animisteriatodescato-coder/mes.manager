@@ -30,7 +30,7 @@ public class Commessa
     public string? OurReference { get; set; } // Nostro riferimento
     
     // Programmazione Macchine
-    public int? NumeroMacchina { get; set; } // Numero macchina assegnata
+    public string? NumeroMacchina { get; set; } // Codice macchina assegnata dal catalogo anime
     
     // Pianificazione produzione (per diagramma Gantt)
     public DateTime? DataInizioPrevisione { get; set; } // Data/ora inizio prevista

@@ -50,5 +50,5 @@ public class UpdateStatoRequest
 
 public class UpdateNumeroMacchinaRequest
 {
-    public int? NumeroMacchina { get; set; }
+    public string? NumeroMacchina { get; set; }
 }
