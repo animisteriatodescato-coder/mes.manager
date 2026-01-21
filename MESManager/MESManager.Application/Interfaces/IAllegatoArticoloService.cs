@@ -56,4 +56,9 @@ public interface IAllegatoArticoloService
     /// Conta allegati importati da Gantt
     /// </summary>
     Task<int> CountImportatiDaGanttAsync();
+
+    /// <summary>
+    /// Ottiene il conteggio foto/documenti per ogni articolo (per arricchire griglia catalogo)
+    /// </summary>
+    Task<Dictionary<string, (int Foto, int Documenti)>> GetConteggioPerArticoloAsync();
 }

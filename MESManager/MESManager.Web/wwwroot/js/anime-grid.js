@@ -58,6 +58,26 @@ window.animeGrid = (function() {
         },
         { field: 'allegato', headerName: 'Allegato', sortable: true, filter: true, width: 150, editable: true },
         { 
+            field: 'numeroFoto', 
+            headerName: 'N.Foto', 
+            sortable: true, 
+            filter: true, 
+            width: 90,
+            editable: false,
+            cellStyle: params => params.value > 0 ? { backgroundColor: '#e8f5e9', fontWeight: 'bold' } : null,
+            valueFormatter: params => params.value || 0
+        },
+        { 
+            field: 'numeroDocumenti', 
+            headerName: 'N.Doc', 
+            sortable: true, 
+            filter: true, 
+            width: 90,
+            editable: false,
+            cellStyle: params => params.value > 0 ? { backgroundColor: '#e3f2fd', fontWeight: 'bold' } : null,
+            valueFormatter: params => params.value || 0
+        },
+        { 
             field: 'dataModificaRecord', 
             headerName: 'Data Modifica', 
             sortable: true, 

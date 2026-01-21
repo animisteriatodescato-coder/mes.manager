@@ -373,6 +373,11 @@ public class AllegatoArticoloService : IAllegatoArticoloService
         return await _repository.CountImportatiDaGanttAsync();
     }
 
+    public async Task<Dictionary<string, (int Foto, int Documenti)>> GetConteggioPerArticoloAsync()
+    {
+        return await _repository.GetConteggioPerArticoloAsync();
+    }
+
     private AllegatoArticoloDto MapToDto(AllegatoArticolo entity)
     {
         return new AllegatoArticoloDto

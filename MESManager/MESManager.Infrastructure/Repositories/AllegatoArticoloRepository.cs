@@ -135,4 +135,23 @@ public class AllegatoArticoloRepository : IAllegatoArticoloRepository
             .ThenBy(a => a.NomeFile)
             .ToListAsync();
     }
+
+    public async Task<Dictionary<string, (int Foto, int Documenti)>> GetConteggioPerArticoloAsync()
+    {
+        var result = await _context.AllegatiArticoli
+            .Where(a => a.CodiceArticolo != null)
+            .GroupBy(a => a.CodiceArticolo!)
+            .Select(g => new
+            {
+                CodiceArticolo = g.Key,
+                Foto = g.Count(a => a.TipoFile == "Foto"),
+                Documenti = g.Count(a => a.TipoFile == "Documento")
+            })
+            .ToListAsync();
+
+        return result.ToDictionary(
+            x => x.CodiceArticolo,
+            x => (x.Foto, x.Documenti)
+        );
+    }
 }

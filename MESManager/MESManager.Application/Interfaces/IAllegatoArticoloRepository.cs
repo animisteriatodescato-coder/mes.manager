@@ -66,4 +66,9 @@ public interface IAllegatoArticoloRepository
     /// Ottiene solo i documenti per un articolo
     /// </summary>
     Task<IEnumerable<AllegatoArticolo>> GetDocumentiByCodiceArticoloAsync(string codiceArticolo);
+
+    /// <summary>
+    /// Ottiene il conteggio foto/documenti raggruppato per CodiceArticolo
+    /// </summary>
+    Task<Dictionary<string, (int Foto, int Documenti)>> GetConteggioPerArticoloAsync();
 }

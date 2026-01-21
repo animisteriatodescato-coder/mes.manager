@@ -163,4 +163,21 @@ public class AllegatiArticoliController : ControllerBase
             CaricatiLocalmente = totale - importati
         });
     }
+
+    /// <summary>
+    /// Ottiene il conteggio foto/documenti per ogni articolo
+    /// </summary>
+    [HttpGet("conteggio")]
+    public async Task<ActionResult<Dictionary<string, object>>> GetConteggio()
+    {
+        var conteggi = await _service.GetConteggioPerArticoloAsync();
+        
+        // Converti in un formato JSON-friendly
+        var result = conteggi.ToDictionary(
+            x => x.Key,
+            x => new { Foto = x.Value.Foto, Documenti = x.Value.Documenti }
+        );
+        
+        return Ok(result);
+    }
 }

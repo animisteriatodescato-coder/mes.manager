@@ -14,17 +14,20 @@ public class AnimeController : ControllerBase
     private readonly IAnimeService _service;
     private readonly AnimeImportService _importService;
     private readonly AnimeExcelImportService _excelImportService;
+    private readonly IAllegatoArticoloService _allegatoService;
     private readonly ILogger<AnimeController> _logger;
     
     public AnimeController(
         IAnimeService service, 
         AnimeImportService importService, 
         AnimeExcelImportService excelImportService,
+        IAllegatoArticoloService allegatoService,
         ILogger<AnimeController> logger)
     {
         _service = service;
         _importService = importService;
         _excelImportService = excelImportService;
+        _allegatoService = allegatoService;
         _logger = logger;
     }
 
@@ -33,6 +36,18 @@ public class AnimeController : ControllerBase
     {
         _logger.LogInformation("GET /api/Anime - fetching all anime");
         var result = await _service.GetAllAsync();
+        
+        // Arricchisci con conteggio foto/documenti
+        var conteggi = await _allegatoService.GetConteggioPerArticoloAsync();
+        foreach (var anime in result)
+        {
+            if (conteggi.TryGetValue(anime.CodiceArticolo, out var counts))
+            {
+                anime.NumeroFoto = counts.Foto;
+                anime.NumeroDocumenti = counts.Documenti;
+            }
+        }
+        
         _logger.LogInformation("GET /api/Anime - returning {Count} anime", result.Count);
         
         if (result.Count == 0)

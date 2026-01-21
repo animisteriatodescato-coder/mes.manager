@@ -44,5 +44,9 @@ namespace MESManager.Application.DTOs
         public bool ModificatoLocalmente { get; set; }
         public DateTime? DataUltimaModificaLocale { get; set; }
         public string? UtenteUltimaModificaLocale { get; set; }
+        
+        // Statistiche foto dall'archivio
+        public int NumeroFoto { get; set; }
+        public int NumeroDocumenti { get; set; }
     }
 }
