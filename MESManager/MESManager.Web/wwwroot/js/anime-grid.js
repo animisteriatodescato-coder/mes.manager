@@ -65,7 +65,6 @@ window.animeGrid = (function() {
         { field: 'ciclo', headerName: 'Ciclo', sortable: true, filter: true, width: 150, editable: true },
         { field: 'peso', headerName: 'Peso', sortable: true, filter: true, width: 100, editable: true },
         { field: 'figure', headerName: 'Figure', sortable: true, filter: true, width: 120, editable: true },
-        { field: 'piastra', headerName: 'Piastra', sortable: true, filter: true, width: 120, editable: true },
         { field: 'maschere', headerName: 'Maschere', sortable: true, filter: true, width: 120, editable: true },
         { field: 'incollata', headerName: 'Incollata', sortable: true, filter: true, width: 120, editable: true },
         { field: 'assemblata', headerName: 'Assemblata', sortable: true, filter: true, width: 120, editable: true },
@@ -195,6 +194,13 @@ window.animeGrid = (function() {
                     }
                 } catch (err) {
                     console.error('Error updating anime:', err);
+                }
+            },
+            onRowDoubleClicked: (event) => {
+                console.log('Row double-clicked:', event.data);
+                // Invoca il callback Blazor per aprire il dialog di modifica
+                if (window.animeGridDotNetRef) {
+                    window.animeGridDotNetRef.invokeMethodAsync('OnRowDoubleClicked', event.data);
                 }
             }
         };
@@ -424,6 +430,19 @@ window.animeGrid = (function() {
         }
     }
 
+    function registerDotNetRef(dotNetRef) {
+        window.animeGridDotNetRef = dotNetRef;
+        console.log('DotNet reference registered for anime grid');
+    }
+
+    function getSelectedRow() {
+        if (gridApi) {
+            const selectedRows = gridApi.getSelectedRows();
+            return selectedRows.length > 0 ? selectedRows[0] : null;
+        }
+        return null;
+    }
+
     return {
         init: init,
         setQuickFilter: setQuickFilter,
@@ -435,6 +454,8 @@ window.animeGrid = (function() {
         resetState: resetState,
         toggleColumnPanel: toggleColumnPanel,
         setUiVars: setUiVars,
-        exportCsv: exportCsv
+        exportCsv: exportCsv,
+        registerDotNetRef: registerDotNetRef,
+        getSelectedRow: getSelectedRow
     };
 })();

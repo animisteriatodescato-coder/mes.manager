@@ -61,8 +61,6 @@ namespace MESManager.Domain.Entities
         
         public string? Figure { get; set; }
         
-        public string? Piastra { get; set; }
-        
         public string? Maschere { get; set; }
         
         public string? Incollata { get; set; }

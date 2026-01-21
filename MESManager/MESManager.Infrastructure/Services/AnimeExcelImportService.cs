@@ -70,7 +70,6 @@ public class AnimeExcelImportService
                             Ciclo = ParseString(worksheet, row, headers, "Ciclo"),
                             Peso = ParseString(worksheet, row, headers, "Peso"),
                             Figure = ParseString(worksheet, row, headers, "Figure"),
-                            Piastra = ParseString(worksheet, row, headers, "Piastra"),
                             Maschere = ParseString(worksheet, row, headers, "Maschere"),
                             Incollata = ParseString(worksheet, row, headers, "Incollata"),
                             Assemblata = ParseString(worksheet, row, headers, "Assemblata"),
@@ -163,9 +162,6 @@ public class AnimeExcelImportService
                     
                     if (string.IsNullOrWhiteSpace(existing.Figure) && !string.IsNullOrWhiteSpace(excelAnime.Figure))
                         existing.Figure = excelAnime.Figure;
-                    
-                    if (string.IsNullOrWhiteSpace(existing.Piastra) && !string.IsNullOrWhiteSpace(excelAnime.Piastra))
-                        existing.Piastra = excelAnime.Piastra;
                     
                     if (string.IsNullOrWhiteSpace(existing.Maschere) && !string.IsNullOrWhiteSpace(excelAnime.Maschere))
                         existing.Maschere = excelAnime.Maschere;

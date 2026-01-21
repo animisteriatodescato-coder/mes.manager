@@ -73,7 +73,6 @@ namespace MESManager.Application.Services
             entity.QuantitaPiano = dto.QuantitaPiano;
             entity.NumeroPiani = dto.NumeroPiani;
             entity.Figure = dto.Figure;
-            entity.Piastra = dto.Piastra;
             entity.Maschere = dto.Maschere;
             entity.Incollata = dto.Incollata;
             entity.Assemblata = dto.Assemblata;
@@ -126,7 +125,6 @@ namespace MESManager.Application.Services
                 QuantitaPiano = entity.QuantitaPiano,
                 NumeroPiani = entity.NumeroPiani,
                 Figure = entity.Figure,
-                Piastra = entity.Piastra,
                 Maschere = entity.Maschere,
                 Incollata = entity.Incollata,
                 Assemblata = entity.Assemblata,
@@ -170,7 +168,6 @@ namespace MESManager.Application.Services
                 QuantitaPiano = dto.QuantitaPiano,
                 NumeroPiani = dto.NumeroPiani,
                 Figure = dto.Figure,
-                Piastra = dto.Piastra,
                 Maschere = dto.Maschere,
                 Incollata = dto.Incollata,
                 Assemblata = dto.Assemblata,

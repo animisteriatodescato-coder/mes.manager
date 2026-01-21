@@ -74,7 +74,6 @@ namespace MESManager.Application.Services
                     existingAnime.QuantitaPiano = articolo.QuantitaPiano;
                     existingAnime.NumeroPiani = articolo.NumeroPiani;
                     existingAnime.Figure = articolo.Figure;
-                    existingAnime.Piastra = articolo.Piastra;
                     existingAnime.Maschere = articolo.Maschere;
                     existingAnime.Incollata = articolo.Incollata;
                     existingAnime.Assemblata = articolo.Assemblata;
@@ -151,7 +150,6 @@ namespace MESManager.Application.Services
                         [QuantitaPiano],
                         [NumeroPiani],
                         ISNULL([Figure], '') as [Figure],
-                        ISNULL([Piastra], '') as [Piastra],
                         ISNULL([Maschere], '') as [Maschere],
                         ISNULL([Incollata], '') as [Incollata],
                         ISNULL([Assemblata], '') as [Assemblata],
@@ -196,11 +194,10 @@ namespace MESManager.Application.Services
                             QuantitaPiano = reader.IsDBNull(24) ? null : ParseInt32(reader.GetValue(24)),
                             NumeroPiani = reader.IsDBNull(25) ? null : ParseInt32(reader.GetValue(25)),
                             Figure = reader.IsDBNull(26) ? null : reader.GetValue(26).ToString(),
-                            Piastra = reader.IsDBNull(27) ? null : reader.GetValue(27).ToString(),
-                            Maschere = reader.IsDBNull(28) ? null : reader.GetValue(28).ToString(),
-                            Incollata = reader.IsDBNull(29) ? null : reader.GetValue(29).ToString(),
-                            Assemblata = reader.IsDBNull(30) ? null : reader.GetValue(30).ToString(),
-                            ArmataL = reader.IsDBNull(31) ? null : reader.GetValue(31).ToString()
+                            Maschere = reader.IsDBNull(27) ? null : reader.GetValue(27).ToString(),
+                            Incollata = reader.IsDBNull(28) ? null : reader.GetValue(28).ToString(),
+                            Assemblata = reader.IsDBNull(29) ? null : reader.GetValue(29).ToString(),
+                            ArmataL = reader.IsDBNull(30) ? null : reader.GetValue(30).ToString()
                         };
                         
                         result.Add(anime);

@@ -30,7 +30,6 @@ namespace MESManager.Application.DTOs
         public int? QuantitaPiano { get; set; }
         public int? NumeroPiani { get; set; }
         public string? Figure { get; set; }
-        public string? Piastra { get; set; }
         public string? Maschere { get; set; }
         public string? Incollata { get; set; }
         public string? Assemblata { get; set; }
