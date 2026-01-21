@@ -175,34 +175,31 @@
                                                 <img src="@labelFotoUrl" alt="Foto articolo" />
                                             </div>
                                         }
-                                        <div class="details-section">
-                                            <div class="detail-item">
-                                                <span class="detail-label">SABBIA:</span>
-                                                <span class="detail-value">@(selectedCommessaForLabel.SabbiaDescrizione ?? "")</span>
+                                        <div class="right-panel">
+                                            <div class="details-section">
+                                                <div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">SABBIA:</span>
+                                                        <span class="detail-value">@(selectedCommessaForLabel.SabbiaDescrizione ?? "")</span>
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">DATA:</span>
+                                                        <span class="detail-value">@DateTime.Now.ToString("dd/MM/yyyy")</span>
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">VERNICE:</span>
+                                                        <span class="detail-value">@(selectedCommessaForLabel.VerniceDescrizione ?? "")</span>
+                                                    </div>
+                                                </div>
+                                                <div class="operator-item">
+                                                    <span class="operator-label">OPERATORE:</span>
+                                                    <div class="operator-box"></div>
+                                                </div>
                                             </div>
-                                            <div class="detail-item">
-                                                <span class="detail-label">DATA:</span>
-                                                <span class="detail-value">@DateTime.Now.ToString("dd/MM/yyyy")</span>
+                                            <div class="qty-section">
+                                                <span class="qty-label">QUANTITA'</span>
+                                                <span class="qty-value">@labelQuantita</span>
                                             </div>
-                                            <div class="detail-item">
-                                                <span class="detail-label">VERNICE:</span>
-                                                <span class="detail-value">@(selectedCommessaForLabel.VerniceDescrizione ?? "")</span>
-                                            </div>
-                                        </div>
-                                        <div class="qty-section">
-                                            <span class="qty-label">QUANTITA'</span>
-                                            <span class="qty-value">@labelQuantita</span>
-                                            <span class="qty-total">(tot. lotto: @(selectedCommessaForLabel.QuantitaRichiesta))</span>
-                                        </div>
-                                    </div>
-                                    <div class="label-footer">
-                                        <div class="footer-left">
-                                            <span class="footer-label">ORDINE:</span>
-                                            <span class="footer-value">@(selectedCommessaForLabel.InternalOrdNo ?? "")</span>
-                                        </div>
-                                        <div class="footer-right">
-                                            <span class="footer-label">OPERATORE:</span>
-                                            <div class="operator-box"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -373,69 +370,97 @@
     .code-row {
         text-align: center;
         padding: 8px 15px;
-        background: #f0f0f0;
     }
 
     .code-row .label-field-name {
         display: block;
-        font-size: 11px;
+        font-size: 10px;
         color: #000;
-        margin-bottom: 3px;
+        margin-bottom: 4px;
+        font-weight: 400;
     }
 
     .label-code {
-        font-size: 38px;
+        font-size: 72px;
         font-weight: 900;
         color: #000;
-        letter-spacing: 3px;
+        letter-spacing: 2px;
+        line-height: 1;
     }
 
     .label-main-content {
         display: flex;
+        flex: 1;
         border-bottom: 2px solid #000;
-        min-height: 120px;
     }
 
     .photo-section {
-        width: 280px;
+        width: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 8px;
+        padding: 10px;
         border-right: 2px solid #000;
         background: #fafafa;
     }
 
     .photo-section img {
         max-width: 100%;
-        max-height: 110px;
+        max-height: 100%;
         object-fit: contain;
+    }
+
+    .right-panel {
+        width: 50%;
+        display: flex;
     }
 
     .details-section {
         flex: 1;
-        padding: 10px 15px;
+        padding: 12px 15px;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: space-between;
         border-right: 2px solid #000;
     }
 
     .detail-item {
-        margin-bottom: 5px;
+        margin-bottom: 8px;
     }
 
     .detail-label {
-        font-size: 11px;
-        font-weight: 700;
+        font-size: 10px;
+        font-weight: 400;
         color: #000;
-        display: block;
+        display: inline;
     }
 
     .detail-value {
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 700;
         color: #000;
+        display: inline;
+        margin-left: 5px;
+    }
+
+    .operator-item {
+        margin-top: auto;
+        padding-top: 10px;
+    }
+
+    .operator-item .operator-label {
+        font-size: 10px;
+        font-weight: 400;
+        color: #000;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .operator-item .operator-box {
+        width: 100%;
+        height: 28px;
+        border: 2px solid #000;
+        background: white;
     }
 
     .qty-section {
@@ -444,71 +469,23 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 10px;
+        padding: 15px 10px;
     }
 
     .qty-label {
-        font-size: 12px;
-        font-weight: 700;
+        font-size: 11px;
+        font-weight: 400;
         color: #000;
         display: block;
+        margin-bottom: 8px;
+        text-align: center;
     }
 
     .qty-value {
-        font-size: 52px;
+        font-size: 90px;
         font-weight: 900;
         color: #000;
-        line-height: 1;
-    }
-
-    .qty-total {
-        font-size: 10px;
-        font-weight: 400;
-        color: #666;
-        display: block;
-    }
-
-    .label-footer {
-        padding: 8px 15px;
-        display: flex;
-        align-items: center;
-        gap: 20px;
-    }
-
-    .footer-left {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .footer-right {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .footer-label {
-        font-size: 12px;
-        font-weight: 700;
-        color: #000;
-    }
-
-    .footer-value {
-        font-size: 16px;
-        font-weight: 900;
-        color: #000;
-    }
-
-    .operator-box {
-        flex: 1;
-        height: 28px;
-        border: 2px solid #000;
-        background: white;
-    }
-        height: 24px;
-        border: 2px solid #000;
-        background: white;
+        line-height: 0.9;
     }
 
     /* Stili per stampa */
@@ -846,7 +823,7 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            gap: 8mm;
+            gap: 6mm;
         }}
         .label-card {{
             background: white;
@@ -858,18 +835,18 @@
         }}
         .label-header {{
             border-bottom: 3px solid #000;
-            padding: 8px 15px;
+            padding: 6px 15px;
             text-align: center;
         }}
-        .company-name {{ font-size: 28px; font-weight: 900; letter-spacing: 2px; color: #000; }}
-        .label-row {{ border-bottom: 2px solid #000; padding: 5px 15px; }}
-        .client-row {{ display: flex; align-items: center; gap: 15px; }}
-        .label-field-name {{ font-size: 12px; font-weight: 700; color: #000; min-width: 70px; }}
-        .label-field-value {{ font-size: 18px; font-weight: 700; color: #000; }}
+        .company-name {{ font-size: 28px; font-weight: 900; letter-spacing: 1px; color: #000; }}
+        .label-row {{ border-bottom: 2px solid #000; padding: 6px 12px; }}
+        .client-row {{ display: flex; align-items: center; gap: 40px; }}
+        .label-field-name {{ font-size: 11px; font-weight: 400; color: #000; min-width: 60px; }}
+        .label-field-value {{ font-size: 16px; font-weight: 700; color: #000; }}
         .client-name {{ font-size: 22px; font-weight: 900; }}
-        .code-row {{ text-align: center; padding: 6px 15px; background: #f0f0f0; }}
-        .code-row .label-field-name {{ display: block; font-size: 11px; color: #000; margin-bottom: 2px; }}
-        .label-code {{ font-size: 42px; font-weight: 900; color: #000; letter-spacing: 3px; }}
+        .code-row {{ text-align: center; padding: 8px 15px; }}
+        .code-row .label-field-name {{ display: block; font-size: 10px; color: #000; margin-bottom: 4px; font-weight: 400; }}
+        .label-code {{ font-size: 72px; font-weight: 900; color: #000; letter-spacing: 2px; line-height: 1; }}
         .label-main-content {{
             flex: 1;
             display: flex;
@@ -877,55 +854,49 @@
             min-height: 0;
         }}
         .photo-section {{
-            width: 280px;
+            width: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 10px;
+            padding: 8px;
             border-right: 2px solid #000;
             background: #fafafa;
-            overflow: hidden;
         }}
         .photo-section img {{
             max-width: 100%;
-            max-height: 140px;
+            max-height: 100%;
             object-fit: contain;
+        }}
+        .right-panel {{
+            width: 50%;
+            display: flex;
         }}
         .details-section {{
             flex: 1;
-            padding: 10px 15px;
+            padding: 12px 15px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
             border-right: 2px solid #000;
         }}
-        .detail-item {{ margin-bottom: 5px; }}
-        .detail-label {{ font-size: 12px; font-weight: 700; color: #000; display: block; }}
-        .detail-value {{ font-size: 15px; font-weight: 700; color: #000; }}
+        .detail-item {{ margin-bottom: 8px; }}
+        .detail-label {{ font-size: 10px; font-weight: 400; color: #000; display: inline; }}
+        .detail-value {{ font-size: 13px; font-weight: 700; color: #000; display: inline; margin-left: 5px; }}
+        .operator-item {{ margin-top: auto; padding-top: 10px; }}
+        .operator-label {{ font-size: 10px; font-weight: 400; color: #000; display: block; margin-bottom: 4px; }}
+        .operator-box {{ width: 100%; height: 28px; border: 2px solid #000; background: white; }}
         .qty-section {{
             width: 140px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 10px;
+            padding: 15px 10px;
         }}
-        .qty-label {{ font-size: 12px; font-weight: 700; color: #000; display: block; }}
-        .qty-value {{ font-size: 56px; font-weight: 900; color: #000; line-height: 1; }}
-        .qty-total {{ font-size: 10px; font-weight: 400; color: #666; display: block; }}
-        .label-footer {{
-            padding: 6px 15px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }}
-        .footer-left {{ display: flex; align-items: center; gap: 8px; }}
-        .footer-right {{ flex: 1; display: flex; align-items: center; gap: 8px; }}
-        .footer-label {{ font-size: 12px; font-weight: 700; color: #000; }}
-        .footer-value {{ font-size: 16px; font-weight: 900; color: #000; }}
-        .operator-box {{ flex: 1; height: 26px; border: 2px solid #000; background: white; }}
+        .qty-label {{ font-size: 11px; font-weight: 400; color: #000; display: block; margin-bottom: 8px; text-align: center; }}
+        .qty-value {{ font-size: 90px; font-weight: 900; color: #000; line-height: 0.9; }}
         @@media print {{
-            .page {{ height: 100%; gap: 6mm; }}
+            .page {{ height: 100%; gap: 5mm; }}
             .label-card {{ page-break-inside: avoid; }}
         }}
     </style>
@@ -947,34 +918,31 @@
             </div>
             <div class='label-main-content'>
                 {fotoHtml}
-                <div class='details-section'>
-                    <div class='detail-item'>
-                        <span class='detail-label'>SABBIA:</span>
-                        <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.SabbiaDescrizione ?? "")}</span>
+                <div class='right-panel'>
+                    <div class='details-section'>
+                        <div>
+                            <div class='detail-item'>
+                                <span class='detail-label'>SABBIA:</span>
+                                <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.SabbiaDescrizione ?? "")}</span>
+                            </div>
+                            <div class='detail-item'>
+                                <span class='detail-label'>DATA:</span>
+                                <span class='detail-value'>{oggi}</span>
+                            </div>
+                            <div class='detail-item'>
+                                <span class='detail-label'>VERNICE:</span>
+                                <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.VerniceDescrizione ?? "")}</span>
+                            </div>
+                        </div>
+                        <div class='operator-item'>
+                            <span class='operator-label'>OPERATORE:</span>
+                            <div class='operator-box'></div>
+                        </div>
                     </div>
-                    <div class='detail-item'>
-                        <span class='detail-label'>DATA:</span>
-                        <span class='detail-value'>{oggi}</span>
+                    <div class='qty-section'>
+                        <span class='qty-label'>QUANTITA'</span>
+                        <span class='qty-value'>{labelQuantita}</span>
                     </div>
-                    <div class='detail-item'>
-                        <span class='detail-label'>VERNICE:</span>
-                        <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.VerniceDescrizione ?? "")}</span>
-                    </div>
-                </div>
-                <div class='qty-section'>
-                    <span class='qty-label'>QUANTITA'</span>
-                    <span class='qty-value'>{labelQuantita}</span>
-                    <span class='qty-total'>(tot. lotto: {totaleLotto})</span>
-                </div>
-            </div>
-            <div class='label-footer'>
-                <div class='footer-left'>
-                    <span class='footer-label'>ORDINE:</span>
-                    <span class='footer-value'>{System.Web.HttpUtility.HtmlEncode(c.InternalOrdNo ?? "")}</span>
-                </div>
-                <div class='footer-right'>
-                    <span class='footer-label'>OPERATORE:</span>
-                    <div class='operator-box'></div>
                 </div>
             </div>
         </div>
@@ -993,34 +961,31 @@
             </div>
             <div class='label-main-content'>
                 {fotoHtml}
-                <div class='details-section'>
-                    <div class='detail-item'>
-                        <span class='detail-label'>SABBIA:</span>
-                        <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.SabbiaDescrizione ?? "")}</span>
+                <div class='right-panel'>
+                    <div class='details-section'>
+                        <div>
+                            <div class='detail-item'>
+                                <span class='detail-label'>SABBIA:</span>
+                                <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.SabbiaDescrizione ?? "")}</span>
+                            </div>
+                            <div class='detail-item'>
+                                <span class='detail-label'>DATA:</span>
+                                <span class='detail-value'>{oggi}</span>
+                            </div>
+                            <div class='detail-item'>
+                                <span class='detail-label'>VERNICE:</span>
+                                <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.VerniceDescrizione ?? "")}</span>
+                            </div>
+                        </div>
+                        <div class='operator-item'>
+                            <span class='operator-label'>OPERATORE:</span>
+                            <div class='operator-box'></div>
+                        </div>
                     </div>
-                    <div class='detail-item'>
-                        <span class='detail-label'>DATA:</span>
-                        <span class='detail-value'>{oggi}</span>
+                    <div class='qty-section'>
+                        <span class='qty-label'>QUANTITA'</span>
+                        <span class='qty-value'>{labelQuantita}</span>
                     </div>
-                    <div class='detail-item'>
-                        <span class='detail-label'>VERNICE:</span>
-                        <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.VerniceDescrizione ?? "")}</span>
-                    </div>
-                </div>
-                <div class='qty-section'>
-                    <span class='qty-label'>QUANTITA'</span>
-                    <span class='qty-value'>{labelQuantita}</span>
-                    <span class='qty-total'>(tot. lotto: {totaleLotto})</span>
-                </div>
-            </div>
-            <div class='label-footer'>
-                <div class='footer-left'>
-                    <span class='footer-label'>ORDINE:</span>
-                    <span class='footer-value'>{System.Web.HttpUtility.HtmlEncode(c.InternalOrdNo ?? "")}</span>
-                </div>
-                <div class='footer-right'>
-                    <span class='footer-label'>OPERATORE:</span>
-                    <div class='operator-box'></div>
                 </div>
             </div>
         </div>
