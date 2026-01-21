@@ -11,8 +11,24 @@ namespace MESManager.Application.Services
         private readonly string _ganttConnectionString = "Server=192.168.1.230\\SQLEXPRESS;Database=Gantt;User Id=sa;Password=password.123;TrustServerCertificate=True;";
         private readonly ILogger<AllegatiAnimaService> _logger;
         
-        // Path base per salvare gli allegati
-        private const string AllegatiBasePath = @"P:\Documenti\AA SCHEDE PRODUZIONE\foto cel";
+        // Path base per salvare gli allegati - usa cartella locale accessibile
+        // In produzione questo sarà configurato via appsettings
+        private static readonly string AllegatiBasePath = GetAllegatiBasePath();
+        
+        private static string GetAllegatiBasePath()
+        {
+            // Prova prima il path di rete, altrimenti usa cartella locale
+            var networkPath = @"P:\Documenti\AA SCHEDE PRODUZIONE\foto cel";
+            if (Directory.Exists(Path.GetDirectoryName(networkPath) ?? networkPath))
+            {
+                return networkPath;
+            }
+            
+            // Fallback a cartella locale
+            var localPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "uploads", "allegati");
+            Directory.CreateDirectory(localPath);
+            return localPath;
+        }
         
         private static readonly HashSet<string> FotoExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -22,6 +38,7 @@ namespace MESManager.Application.Services
         public AllegatiAnimaService(ILogger<AllegatiAnimaService> logger)
         {
             _logger = logger;
+            _logger.LogInformation("AllegatiAnimaService initialized. AllegatiBasePath={Path}", AllegatiBasePath);
         }
 
         public async Task<AllegatiAnimaResponse> GetAllegatiByIdArchivioAsync(int idArchivio)
