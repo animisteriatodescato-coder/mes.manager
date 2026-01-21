@@ -183,17 +183,18 @@
                                                         <span class="detail-value">@(selectedCommessaForLabel.SabbiaDescrizione ?? "")</span>
                                                     </div>
                                                     <div class="detail-item">
-                                                        <span class="detail-label">DATA:</span>
-                                                        <span class="detail-value">@DateTime.Now.ToString("dd/MM/yyyy")</span>
-                                                    </div>
-                                                    <div class="detail-item">
                                                         <span class="detail-label">VERNICE:</span>
                                                         <span class="detail-value">@(selectedCommessaForLabel.VerniceDescrizione ?? "")</span>
                                                     </div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">DATA:</span>
+                                                        <span class="detail-value">@DateTime.Now.ToString("dd/MM/yyyy")</span>
+                                                    </div>
                                                 </div>
                                                 <div class="qty-item">
-                                                    <span class="qty-label">QUANTITA' / @(selectedCommessaForLabel.QuantitaRichiesta) - @(selectedCommessaForLabel.CodiceAnime ?? "")</span>
+                                                    <span class="qty-label">QUANTITA' / @(selectedCommessaForLabel.QuantitaRichiesta)</span>
                                                     <span class="qty-value">@labelQuantita</span>
+                                                    <span class="qty-code">Commessa n. @(selectedCommessaForLabel.InternalOrdNo ?? "")</span>
                                                 </div>
                                                 <div class="operator-item">
                                                     <span class="operator-label">OPERATORE:</span>
@@ -326,13 +327,12 @@
     }
 
     .label-header {
-        border-bottom: 3px solid #000;
         padding: 4px 10px;
         text-align: center;
     }
 
     .company-name {
-        font-size: 28px;
+        font-size: 32px;
         font-weight: 900;
         letter-spacing: 2px;
         color: #000;
@@ -346,12 +346,24 @@
     .client-row {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 15px;
+        position: relative;
+    }
+
+    .client-row .label-field-name {
+        position: absolute;
+        left: 0;
+    }
+
+    .client-row .client-name {
+        flex: 1;
+        text-align: center;
     }
 
     .label-field-name {
         font-size: 12px;
-        font-weight: 700;
+        font-weight: 400;
         color: #000;
         min-width: 70px;
     }
@@ -363,7 +375,7 @@
     }
 
     .client-name {
-        font-size: 22px;
+        font-size: 26px;
         font-weight: 900;
     }
 
@@ -480,6 +492,14 @@
         color: #000;
         line-height: 0.9;
         display: block;
+    }
+
+    .qty-item .qty-code {
+        font-size: 8px;
+        font-weight: 100;
+        color: #000;
+        display: block;
+        margin-top: 2px;
     }
 
     /* Stili per stampa */
@@ -810,14 +830,14 @@
     <title>Etichetta - {c.CodiceAnime}</title>
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        @@page {{ size: A4 portrait; margin: 8mm; }}
+        @@page {{ size: A4 portrait; margin: 0.5mm; }}
         html, body {{ height: 100%; }}
         body {{ font-family: 'Arial Black', Arial, sans-serif; }}
         .page {{
             display: flex;
             flex-direction: column;
             height: 100vh;
-            gap: 6mm;
+            gap: 3mm;
         }}
         .label-card {{
             background: white;
@@ -828,16 +848,17 @@
             page-break-inside: avoid;
         }}
         .label-header {{
-            border-bottom: 3px solid #000;
             padding: 4px 10px;
             text-align: center;
         }}
-        .company-name {{ font-size: 28px; font-weight: 900; letter-spacing: 1px; color: #000; }}
+        .company-name {{ font-size: 32px; font-weight: 900; letter-spacing: 1px; color: #000; }}
         .label-row {{ border-bottom: 2px solid #000; padding: 3px 10px; }}
-        .client-row {{ display: flex; align-items: center; gap: 40px; }}
+        .client-row {{ display: flex; align-items: center; justify-content: space-between; gap: 40px; position: relative; }}
+        .client-row .label-field-name {{ position: absolute; left: 0; }}
+        .client-row .client-name {{ flex: 1; text-align: center; }}
         .label-field-name {{ font-size: 11px; font-weight: 400; color: #000; min-width: 60px; }}
         .label-field-value {{ font-size: 16px; font-weight: 700; color: #000; }}
-        .client-name {{ font-size: 22px; font-weight: 900; }}
+        .client-name {{ font-size: 26px; font-weight: 900; }}
         .code-row {{ text-align: center; padding: 4px 10px; }}
         .code-row .label-field-name {{ display: block; font-size: 10px; color: #000; margin-bottom: 2px; font-weight: 400; }}
         .label-code {{ font-size: 72px; font-weight: 900; color: #000; letter-spacing: 2px; line-height: 1; }}
@@ -880,6 +901,7 @@
         .qty-item {{ margin-top: 6px; text-align: right; }}
         .qty-item .qty-label {{ font-size: 11px; font-weight: 400; color: #000; display: inline; margin-right: 8px; }}
         .qty-item .qty-value {{ font-size: 90px; font-weight: 900; color: #000; line-height: 0.9; display: block; }}
+        .qty-item .qty-code {{ font-size: 8px; font-weight: 100; color: #000; display: block; margin-top: 2px; }}
         @@media print {{
             .page {{ height: 100%; gap: 5mm; }}
             .label-card {{ page-break-inside: avoid; }}
@@ -911,17 +933,18 @@
                                 <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.SabbiaDescrizione ?? "")}</span>
                             </div>
                             <div class='detail-item'>
-                                <span class='detail-label'>DATA:</span>
-                                <span class='detail-value'>{oggi}</span>
-                            </div>
-                            <div class='detail-item'>
                                 <span class='detail-label'>VERNICE:</span>
                                 <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.VerniceDescrizione ?? "")}</span>
                             </div>
+                            <div class='detail-item'>
+                                <span class='detail-label'>DATA:</span>
+                                <span class='detail-value'>{oggi}</span>
+                            </div>
                         </div>
                         <div class='qty-item'>
-                            <span class='qty-label'>QUANTITA' / {totaleLotto} - {System.Web.HttpUtility.HtmlEncode(c.CodiceAnime ?? "")}</span>
+                            <span class='qty-label'>QUANTITA' / {totaleLotto}</span>
                             <span class='qty-value'>{labelQuantita}</span>
+                            <span class='qty-code'>Commessa n. {System.Web.HttpUtility.HtmlEncode(c.InternalOrdNo ?? "")}</span>
                         </div>
                         <div class='operator-item'>
                             <span class='operator-label'>OPERATORE:</span>
@@ -954,17 +977,18 @@
                                 <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.SabbiaDescrizione ?? "")}</span>
                             </div>
                             <div class='detail-item'>
-                                <span class='detail-label'>DATA:</span>
-                                <span class='detail-value'>{oggi}</span>
-                            </div>
-                            <div class='detail-item'>
                                 <span class='detail-label'>VERNICE:</span>
                                 <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.VerniceDescrizione ?? "")}</span>
                             </div>
+                            <div class='detail-item'>
+                                <span class='detail-label'>DATA:</span>
+                                <span class='detail-value'>{oggi}</span>
+                            </div>
                         </div>
                         <div class='qty-item'>
-                            <span class='qty-label'>QUANTITA' / {totaleLotto} - {System.Web.HttpUtility.HtmlEncode(c.CodiceAnime ?? "")}</span>
+                            <span class='qty-label'>QUANTITA' / {totaleLotto}</span>
                             <span class='qty-value'>{labelQuantita}</span>
+                            <span class='qty-code'>Commessa n. {System.Web.HttpUtility.HtmlEncode(c.InternalOrdNo ?? "")}</span>
                         </div>
                         <div class='operator-item'>
                             <span class='operator-label'>OPERATORE:</span>
