@@ -191,6 +191,7 @@ window.programmaMacchineGrid = (function() {
             rowSelection: 'single',
             onGridReady: (params) => {
                 gridApi = params.api;
+                console.log('onGridReady: gridApi set');
                 if (savedColumnState) {
                     try {
                         gridApi.applyColumnState({
@@ -225,15 +226,25 @@ window.programmaMacchineGrid = (function() {
             }
         };
 
-        agGrid.createGrid(gridDiv, gridOptions);
+        // agGrid.createGrid returns the API in AG Grid 32+
+        const api = agGrid.createGrid(gridDiv, gridOptions);
+        if (api) {
+            gridApi = api;
+            console.log('Grid created, gridApi set from createGrid return value');
+        } else {
+            console.log('Grid created, waiting for onGridReady for gridApi');
+        }
     }
 
     function updateData(data) {
+        console.log('updateData called with', data?.length, 'rows, gridApi exists:', !!gridApi);
         if (gridApi) {
             // numeroMacchina is a string, filter by non-empty value
             const filteredData = data.filter(row => row.numeroMacchina != null && row.numeroMacchina !== '');
-            console.log('updateData: received', data.length, 'rows, filtered to', filteredData.length, 'with machine');
+            console.log('updateData: filtered to', filteredData.length, 'with machine');
             gridApi.setGridOption('rowData', filteredData);
+        } else {
+            console.error('updateData: gridApi is null, cannot update data');
         }
     }
 
@@ -280,9 +291,13 @@ window.programmaMacchineGrid = (function() {
     }
 
     function resetState() {
+        console.log('resetState called, gridApi exists:', !!gridApi);
         if (gridApi) {
             gridApi.resetColumnState();
             gridApi.setFilterModel(null);
+            console.log('resetState: done');
+        } else {
+            console.error('resetState: gridApi is null');
         }
     }
 
