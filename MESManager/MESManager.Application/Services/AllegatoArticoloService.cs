@@ -163,6 +163,22 @@ public class AllegatoArticoloService : IAllegatoArticoloService
         return true;
     }
 
+    public async Task<bool> UpdatePrioritaAsync(int id, int priorita)
+    {
+        var allegato = await _repository.GetByIdAsync(id);
+        if (allegato == null)
+        {
+            _logger.LogWarning("UpdatePrioritaAsync: Allegato Id={Id} not found", id);
+            return false;
+        }
+        
+        allegato.Priorita = priorita;
+        await _repository.UpdateAsync(allegato);
+        _logger.LogInformation("Allegato priorità updated: Id={Id}, Priorita={Priorita}", id, priorita);
+        
+        return true;
+    }
+
     public async Task<(byte[] Content, string ContentType, string FileName)?> GetFileContentAsync(int id)
     {
         var allegato = await _repository.GetByIdAsync(id);

@@ -7,7 +7,7 @@
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 
-<MudDialog Style="max-width: 950px;">
+<MudDialog Style="max-width: 1200px;">
     <TitleContent>
         <MudStack Row="true" AlignItems="AlignItems.Center">
             <MudIcon Icon="@Icons.Material.Filled.Edit" />
@@ -15,7 +15,10 @@
         </MudStack>
     </TitleContent>
     <DialogContent>
-        <MudStack Spacing="1">
+        <MudGrid Spacing="2">
+            <!-- COLONNA SINISTRA: DATI -->
+            <MudItem xs="8">
+                <MudStack Spacing="1">
             <!-- IDENTIFICAZIONE -->
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                 <MudIcon Icon="@Icons.Material.Filled.Badge" Size="Size.Small" Color="Color.Primary" />
@@ -203,105 +206,109 @@
 
             <MudDivider Class="my-1" />
 
-            <!-- ALLEGATI -->
+            <!-- DOCUMENTI (nella colonna sinistra) -->
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                <MudIcon Icon="@Icons.Material.Filled.AttachFile" Size="Size.Small" Color="Color.Primary" />
-                <MudText Typo="Typo.caption" Color="Color.Primary"><b>ALLEGATI</b></MudText>
-                @if (isLoadingAllegati)
-                {
-                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
-                }
-                else
-                {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Default">@allegatiResponse.Foto.Count foto, @allegatiResponse.Documenti.Count doc</MudChip>
-                }
+                <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Color="Color.Warning" />
+                <MudText Typo="Typo.caption" Color="Color.Warning"><b>DOCUMENTI (@allegatiResponse.Documenti.Count)</b></MudText>
                 <MudSpacer />
-                <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.CloudDownload" OnClick="ImportaDaGantt" Disabled="@isImportingFromGantt">
-                    @if (isImportingFromGantt) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-1" /> } Gantt
-                </MudButton>
-                <MudFileUpload T="IBrowserFile" Accept=".jpg,.jpeg,.png,.gif,.bmp,.webp" OnFilesChanged="OnFotoUpload" Style="margin: 0;">
-                    <ActivatorContent>
-                        <MudButton Variant="Variant.Text" Color="Color.Info" Size="Size.Small" StartIcon="@Icons.Material.Filled.AddAPhoto">Foto</MudButton>
-                    </ActivatorContent>
-                </MudFileUpload>
                 <MudFileUpload T="IBrowserFile" Accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" OnFilesChanged="OnDocumentoUpload" Style="margin: 0;">
                     <ActivatorContent>
-                        <MudButton Variant="Variant.Text" Color="Color.Warning" Size="Size.Small" StartIcon="@Icons.Material.Filled.NoteAdd">Doc</MudButton>
+                        <MudButton Variant="Variant.Text" Color="Color.Warning" Size="Size.Small" StartIcon="@Icons.Material.Filled.NoteAdd">Aggiungi</MudButton>
                     </ActivatorContent>
                 </MudFileUpload>
             </MudStack>
-            
-            @if (isUploadingAllegato)
+            @if (allegatiResponse.Documenti.Any())
             {
-                <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
-            }
-            
-            <MudGrid Spacing="2">
-                <!-- FOTO -->
-                <MudItem xs="6">
-                    <MudPaper Elevation="1" Class="pa-2" Style="min-height: 100px;">
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-2">
-                            <MudIcon Icon="@Icons.Material.Filled.PhotoLibrary" Size="Size.Small" Color="Color.Info" />
-                            <MudText Typo="Typo.caption" Color="Color.Info"><b>FOTO (@allegatiResponse.Foto.Count)</b></MudText>
-                        </MudStack>
-                        @if (allegatiResponse.Foto.Any())
-                        {
-                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
-                                @foreach (var foto in allegatiResponse.Foto)
-                                {
-                                    <MudTooltip Text="@(foto.Descrizione ?? foto.NomeFile)">
-                                        <MudCard Style="width: 80px; position: relative;">
-                                            <MudCardMedia Image="@foto.FileUrl" Height="60" Style="cursor: pointer;" @onclick="() => OpenFotoInNewTab(foto)" />
-                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
-                                                Style="position: absolute; top: 0; right: 0; background: rgba(255,255,255,0.8);"
-                                                OnClick="() => DeleteAllegato(foto)" />
-                                            <MudCardContent Class="pa-1">
-                                                <MudText Typo="Typo.caption" Style="font-size: 0.65rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@foto.NomeFile</MudText>
-                                            </MudCardContent>
-                                        </MudCard>
-                                    </MudTooltip>
-                                }
+                <MudList T="AllegatoArticoloDto" Dense="true">
+                    @foreach (var doc in allegatiResponse.Documenti)
+                    {
+                        <MudListItem Icon="@GetDocIcon(doc.Estensione)" IconColor="Color.Default">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.caption">@(doc.Descrizione ?? doc.NomeFile)</MudText>
+                                <MudStack Row="true" Spacing="0">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small" Href="@doc.FileUrl" Target="_blank" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteAllegato(doc)" />
+                                </MudStack>
                             </MudStack>
-                        }
-                        else
+                        </MudListItem>
+                    }
+                </MudList>
+            }
+            else
+            {
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-2">Nessun documento</MudText>
+            }
+                </MudStack>
+            </MudItem>
+
+            <!-- COLONNA DESTRA: FOTO -->
+            <MudItem xs="4">
+                <MudPaper Elevation="1" Class="pa-3" Style="height: 100%;">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.PhotoLibrary" Size="Size.Small" Color="Color.Info" />
+                        <MudText Typo="Typo.subtitle2" Color="Color.Info"><b>FOTO (@allegatiResponse.Foto.Count)</b></MudText>
+                        @if (isLoadingAllegati)
                         {
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Nessuna foto - Clicca "Foto" per aggiungere</MudText>
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" />
                         }
-                    </MudPaper>
-                </MudItem>
-                
-                <!-- DOCUMENTI -->
-                <MudItem xs="6">
-                    <MudPaper Elevation="1" Class="pa-2" Style="min-height: 100px;">
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-2">
-                            <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Color="Color.Warning" />
-                            <MudText Typo="Typo.caption" Color="Color.Warning"><b>DOCUMENTI (@allegatiResponse.Documenti.Count)</b></MudText>
-                        </MudStack>
-                        @if (allegatiResponse.Documenti.Any())
-                        {
-                            <MudList T="AllegatoArticoloDto" Dense="true">
-                                @foreach (var doc in allegatiResponse.Documenti)
-                                {
-                                    <MudListItem Icon="@GetDocIcon(doc.Estensione)" IconColor="Color.Default">
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.CloudDownload" OnClick="ImportaDaGantt" Disabled="@isImportingFromGantt">
+                            @if (isImportingFromGantt) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-1" /> } Gantt
+                        </MudButton>
+                        <MudFileUpload T="IBrowserFile" Accept=".jpg,.jpeg,.png,.gif,.bmp,.webp" OnFilesChanged="OnFotoUpload" Style="margin: 0;">
+                            <ActivatorContent>
+                                <MudButton Variant="Variant.Text" Color="Color.Info" Size="Size.Small" StartIcon="@Icons.Material.Filled.AddAPhoto">Aggiungi</MudButton>
+                            </ActivatorContent>
+                        </MudFileUpload>
+                    </MudStack>
+                    
+                    @if (isUploadingAllegato)
+                    {
+                        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-2" />
+                    }
+                    
+                    @if (allegatiResponse.Foto.Any())
+                    {
+                        <MudStack Spacing="2">
+                            @foreach (var foto in allegatiResponse.Foto)
+                            {
+                                <MudCard Elevation="2">
+                                    <MudCardMedia Image="@foto.FileUrl" Height="180" Style="cursor: pointer;" @onclick="() => OpenFotoInNewTab(foto)" />
+                                    <MudCardContent Class="pa-2">
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                            <MudText Typo="Typo.caption">@(doc.Descrizione ?? doc.NomeFile)</MudText>
-                                            <MudStack Row="true" Spacing="0">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small" Href="@doc.FileUrl" Target="_blank" />
-                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteAllegato(doc)" />
-                                            </MudStack>
+                                            <MudSelect T="int" Value="@foto.Priorita" ValueChanged="@((int p) => UpdatePriorita(foto, p))" 
+                                                       Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" 
+                                                       Style="max-width: 90px;" Label="Prior.">
+                                                <MudSelectItem Value="1">1</MudSelectItem>
+                                                <MudSelectItem Value="2">2</MudSelectItem>
+                                                <MudSelectItem Value="3">3</MudSelectItem>
+                                                <MudSelectItem Value="4">4</MudSelectItem>
+                                                <MudSelectItem Value="5">5</MudSelectItem>
+                                            </MudSelect>
+                                            <MudTooltip Text="@foto.NomeFile">
+                                                <MudText Typo="Typo.caption" Style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;">
+                                                    @(foto.Descrizione ?? foto.NomeFile)
+                                                </MudText>
+                                            </MudTooltip>
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteAllegato(foto)" />
                                         </MudStack>
-                                    </MudListItem>
-                                }
-                            </MudList>
-                        }
-                        else
-                        {
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Nessun documento - Clicca "Doc" per aggiungere</MudText>
-                        }
-                    </MudPaper>
-                </MudItem>
-            </MudGrid>
-        </MudStack>
+                                    </MudCardContent>
+                                </MudCard>
+                            }
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center" Class="mt-4">
+                            Nessuna foto disponibile
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
+                            Clicca "Aggiungi" o "Gantt" per importare foto
+                        </MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
     </DialogContent>
     <DialogActions>
         <!-- TRACKING inline con i pulsanti -->
@@ -509,6 +516,30 @@
     private async Task OpenFotoInNewTab(AllegatoArticoloDto foto)
     {
         await JS.InvokeVoidAsync("open", foto.FileUrl, "_blank");
+    }
+    
+    private async Task UpdatePriorita(AllegatoArticoloDto foto, int newPriorita)
+    {
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"/api/allegati-articoli/{foto.Id}/priorita", newPriorita);
+            if (response.IsSuccessStatusCode)
+            {
+                foto.Priorita = newPriorita;
+                // Riordina le foto per priorità
+                allegatiResponse.Foto = allegatiResponse.Foto.OrderBy(f => f.Priorita).ThenBy(f => f.NomeFile).ToList();
+                Snackbar.Add($"Priorità aggiornata a {newPriorita}", Severity.Success);
+                StateHasChanged();
+            }
+            else
+            {
+                Snackbar.Add("Errore aggiornamento priorità", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
     }
     
     private string GetDocIcon(string estensione) => estensione.ToLowerInvariant() switch

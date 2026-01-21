@@ -28,6 +28,11 @@ public interface IAllegatoArticoloService
     Task<bool> DeleteAsync(int id);
 
     /// <summary>
+    /// Aggiorna la priorità di un allegato
+    /// </summary>
+    Task<bool> UpdatePrioritaAsync(int id, int priorita);
+
+    /// <summary>
     /// Ottiene il contenuto binario di un file
     /// </summary>
     Task<(byte[] Content, string ContentType, string FileName)?> GetFileContentAsync(int id);

@@ -109,6 +109,21 @@ public class AllegatiArticoliController : ControllerBase
     }
 
     /// <summary>
+    /// Aggiorna la priorità di un allegato
+    /// </summary>
+    [HttpPut("{id:int}/priorita")]
+    public async Task<IActionResult> UpdatePriorita(int id, [FromBody] int priorita)
+    {
+        _logger.LogInformation("PUT allegati-articoli/{Id}/priorita = {Priorita}", id, priorita);
+        
+        var success = await _service.UpdatePrioritaAsync(id, priorita);
+        if (!success)
+            return NotFound();
+        
+        return NoContent();
+    }
+
+    /// <summary>
     /// Importa allegati da Gantt per un articolo specifico
     /// </summary>
     [HttpPost("import/{codiceArticolo}")]
