@@ -149,7 +149,7 @@
                         </MudPaper>
                     </MudItem>
                     <MudItem xs="12">
-                        <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">Anteprima Etichetta (2 copie per pagina)</MudText>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">Anteprima Etichetta (2 copie per pagina A4)</MudText>
                         <div id="label-preview-container" class="label-preview-wrapper">
                             @for (int i = 0; i < 2; i++)
                             {
@@ -159,18 +159,20 @@
                                     </div>
                                     <div class="label-row client-row">
                                         <span class="label-field-name">CLIENTE</span>
-                                        <span class="label-field-value">@(selectedCommessaForLabel.ClienteRagioneSociale ?? "")</span>
+                                        <span class="label-field-value client-name">@(selectedCommessaForLabel.ClienteRagioneSociale ?? "")</span>
                                     </div>
                                     <div class="label-row code-row">
                                         <span class="label-field-name">CODICE ANIMA</span>
                                         <span class="label-code">@(selectedCommessaForLabel.CodiceAnime ?? "")</span>
                                     </div>
-                                    <div class="label-row order-row">
-                                        <span class="label-field-name">NUMERO ORDINE</span>
-                                        <span class="label-field-value order-number">@(selectedCommessaForLabel.InternalOrdNo ?? "")</span>
-                                    </div>
-                                    <div class="label-details-grid">
-                                        <div class="detail-left">
+                                    <div class="label-main-content">
+                                        <div class="photo-section">
+                                            @if (!string.IsNullOrEmpty(labelFotoUrl))
+                                            {
+                                                <img src="@labelFotoUrl" alt="Foto articolo" />
+                                            }
+                                        </div>
+                                        <div class="details-section">
                                             <div class="detail-item">
                                                 <span class="detail-label">SABBIA:</span>
                                                 <span class="detail-value">@(selectedCommessaForLabel.SabbiaDescrizione ?? "")</span>
@@ -183,21 +185,22 @@
                                                 <span class="detail-label">VERNICE:</span>
                                                 <span class="detail-value">@(selectedCommessaForLabel.VerniceDescrizione ?? "")</span>
                                             </div>
-                                        </div>
-                                        @if (!string.IsNullOrEmpty(labelFotoUrl))
-                                        {
-                                            <div class="detail-center">
-                                                <img src="@labelFotoUrl" alt="Foto articolo" />
+                                            <div class="qty-section">
+                                                <span class="qty-label">QUANTITA'</span>
+                                                <span class="qty-value">@labelQuantita</span>
+                                                <span class="qty-total">(tot. lotto: @(selectedCommessaForLabel.QuantitaRichiesta))</span>
                                             </div>
-                                        }
-                                        <div class="detail-right">
-                                            <span class="qty-label">QUANTITA'</span>
-                                            <span class="qty-value">@labelQuantita</span>
                                         </div>
                                     </div>
                                     <div class="label-footer">
-                                        <span class="operator-label">OPERATORE:</span>
-                                        <div class="operator-box"></div>
+                                        <div class="footer-left">
+                                            <span class="footer-label">ORDINE:</span>
+                                            <span class="footer-value">@(selectedCommessaForLabel.InternalOrdNo ?? "")</span>
+                                        </div>
+                                        <div class="footer-right">
+                                            <span class="footer-label">OPERATORE:</span>
+                                            <div class="operator-box"></div>
+                                        </div>
                                     </div>
                                 </div>
                             }
@@ -301,12 +304,12 @@
         }
     }
 
-    /* Stili Etichetta Moderna - Bianco e Nero */
+    /* Stili Etichetta Moderna - Bianco e Nero - Ottimizzata A4 */
     .label-preview-wrapper {
         display: flex;
         flex-direction: column;
-        gap: 20px;
-        padding: 20px;
+        gap: 15px;
+        padding: 15px;
         background: #f5f5f5;
         border-radius: 8px;
     }
@@ -324,12 +327,12 @@
 
     .label-header {
         border-bottom: 3px solid #000;
-        padding: 10px 16px;
+        padding: 8px 12px;
         text-align: center;
     }
 
     .company-name {
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 900;
         letter-spacing: 1px;
         color: #000;
@@ -337,145 +340,162 @@
 
     .label-row {
         border-bottom: 2px solid #000;
-        padding: 6px 16px;
+        padding: 5px 12px;
     }
 
     .client-row {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
     }
 
     .label-field-name {
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 700;
         color: #000;
-        min-width: 100px;
+        min-width: 70px;
     }
 
     .label-field-value {
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 700;
         color: #000;
+    }
+
+    .client-name {
+        font-size: 18px;
+        font-weight: 900;
     }
 
     .code-row {
         text-align: center;
-        padding: 10px 16px;
+        padding: 6px 12px;
     }
 
     .code-row .label-field-name {
         display: block;
-        font-size: 12px;
+        font-size: 10px;
         color: #000;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
     }
 
     .label-code {
-        font-size: 36px;
+        font-size: 28px;
         font-weight: 900;
         color: #000;
         letter-spacing: 2px;
     }
 
-    .order-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .order-number {
-        color: #000;
-        font-size: 18px;
-        font-weight: 900;
-    }
-
-    .label-details-grid {
+    .label-main-content {
         display: flex;
         border-bottom: 2px solid #000;
+        min-height: 180px;
     }
 
-    .detail-left {
+    .photo-section {
         flex: 1;
-        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
         border-right: 2px solid #000;
+        background: #fafafa;
+    }
+
+    .photo-section img {
+        max-width: 100%;
+        max-height: 160px;
+        object-fit: contain;
+    }
+
+    .details-section {
+        width: 180px;
+        padding: 8px 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
     .detail-item {
-        margin-bottom: 6px;
-    }
-
-    .detail-item:last-child {
-        margin-bottom: 0;
+        margin-bottom: 4px;
     }
 
     .detail-label {
-        font-size: 11px;
+        font-size: 9px;
         font-weight: 700;
         color: #000;
         display: block;
     }
 
     .detail-value {
-        font-size: 14px;
-        font-weight: 700;
-        color: #000;
-    }
-
-    .detail-center {
-        width: 140px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 10px;
-        border-right: 2px solid #000;
-    }
-
-    .detail-center img {
-        max-width: 100%;
-        max-height: 100px;
-        object-fit: contain;
-    }
-
-    .detail-right {
-        width: 140px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 10px;
-    }
-
-    .qty-label {
         font-size: 12px;
         font-weight: 700;
         color: #000;
     }
 
+    .qty-section {
+        margin-top: auto;
+        text-align: center;
+        padding-top: 8px;
+        border-top: 1px solid #ccc;
+    }
+
+    .qty-label {
+        font-size: 10px;
+        font-weight: 700;
+        color: #000;
+        display: block;
+    }
+
     .qty-value {
-        font-size: 56px;
+        font-size: 42px;
         font-weight: 900;
         color: #000;
         line-height: 1;
     }
 
-    .label-footer {
-        padding: 10px 16px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
+    .qty-total {
+        font-size: 9px;
+        font-weight: 400;
+        color: #666;
+        display: block;
     }
 
-    .operator-label {
-        font-size: 11px;
+    .label-footer {
+        padding: 6px 12px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .footer-left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .footer-right {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .footer-label {
+        font-size: 10px;
         font-weight: 700;
+        color: #000;
+    }
+
+    .footer-value {
+        font-size: 14px;
+        font-weight: 900;
         color: #000;
     }
 
     .operator-box {
         flex: 1;
-        height: 28px;
+        height: 24px;
         border: 2px solid #000;
         background: white;
     }
@@ -749,8 +769,9 @@
         var c = selectedCommessaForLabel!;
         var oggi = DateTime.Now.ToString("dd/MM/yyyy");
         var fotoHtml = !string.IsNullOrEmpty(labelFotoUrl) 
-            ? $"<div class='detail-center'><img src='{labelFotoUrl}' alt='Foto' /></div>" 
+            ? $"<img src='{labelFotoUrl}' alt='Foto' />" 
             : "";
+        var totaleLotto = c.QuantitaRichiesta;
         
         return $@"
 <!DOCTYPE html>
@@ -760,46 +781,91 @@
     <title>Etichetta - {c.CodiceAnime}</title>
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{ font-family: 'Arial Black', Arial, sans-serif; padding: 10px; }}
-        .page {{ display: flex; flex-direction: column; gap: 20px; }}
+        @@page {{ size: A4 portrait; margin: 8mm; }}
+        html, body {{ height: 100%; }}
+        body {{ font-family: 'Arial Black', Arial, sans-serif; }}
+        .page {{
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            gap: 8mm;
+        }}
         .label-card {{
             background: white;
             border: 3px solid #000;
-            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             page-break-inside: avoid;
         }}
         .label-header {{
             border-bottom: 3px solid #000;
-            padding: 8px 12px;
+            padding: 6px 12px;
             text-align: center;
         }}
-        .company-name {{ font-size: 20px; font-weight: 900; letter-spacing: 1px; color: #000; }}
-        .label-row {{ border-bottom: 2px solid #000; padding: 5px 12px; }}
+        .company-name {{ font-size: 22px; font-weight: 900; letter-spacing: 1px; color: #000; }}
+        .label-row {{ border-bottom: 2px solid #000; padding: 4px 12px; }}
         .client-row {{ display: flex; align-items: center; gap: 10px; }}
-        .label-field-name {{ font-size: 10px; font-weight: 700; color: #000; min-width: 90px; }}
+        .label-field-name {{ font-size: 10px; font-weight: 700; color: #000; min-width: 70px; }}
         .label-field-value {{ font-size: 14px; font-weight: 700; color: #000; }}
-        .code-row {{ text-align: center; padding: 8px 12px; }}
+        .client-name {{ font-size: 20px; font-weight: 900; }}
+        .code-row {{ text-align: center; padding: 5px 12px; }}
         .code-row .label-field-name {{ display: block; font-size: 10px; color: #000; margin-bottom: 2px; }}
-        .label-code {{ font-size: 32px; font-weight: 900; color: #000; letter-spacing: 2px; }}
-        .order-row {{ display: flex; align-items: center; gap: 10px; }}
-        .order-number {{ color: #000; font-size: 16px; font-weight: 900; }}
-        .label-details-grid {{ display: flex; border-bottom: 2px solid #000; }}
-        .detail-left {{ flex: 1; padding: 8px 12px; border-right: 2px solid #000; }}
-        .detail-item {{ margin-bottom: 4px; }}
-        .detail-label {{ font-size: 10px; font-weight: 700; color: #000; display: block; }}
+        .label-code {{ font-size: 30px; font-weight: 900; color: #000; letter-spacing: 2px; }}
+        .label-main-content {{
+            flex: 1;
+            display: flex;
+            border-bottom: 2px solid #000;
+            min-height: 0;
+        }}
+        .photo-section {{
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            border-right: 2px solid #000;
+            background: #fafafa;
+            overflow: hidden;
+        }}
+        .photo-section img {{
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }}
+        .details-section {{
+            width: 160px;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }}
+        .detail-item {{ margin-bottom: 3px; }}
+        .detail-label {{ font-size: 9px; font-weight: 700; color: #000; display: block; }}
         .detail-value {{ font-size: 12px; font-weight: 700; color: #000; }}
-        .detail-center {{ width: 120px; display: flex; align-items: center; justify-content: center; padding: 8px; border-right: 2px solid #000; }}
-        .detail-center img {{ max-width: 100%; max-height: 80px; object-fit: contain; }}
-        .detail-right {{ width: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px; }}
-        .qty-label {{ font-size: 10px; font-weight: 700; color: #000; }}
-        .qty-value {{ font-size: 48px; font-weight: 900; color: #000; line-height: 1; }}
-        .label-footer {{ padding: 8px 12px; display: flex; align-items: center; gap: 10px; }}
-        .operator-label {{ font-size: 10px; font-weight: 700; color: #000; }}
-        .operator-box {{ flex: 1; height: 24px; border: 2px solid #000; background: white; }}
+        .qty-section {{
+            margin-top: auto;
+            text-align: center;
+            padding-top: 6px;
+            border-top: 1px solid #ccc;
+        }}
+        .qty-label {{ font-size: 9px; font-weight: 700; color: #000; display: block; }}
+        .qty-value {{ font-size: 40px; font-weight: 900; color: #000; line-height: 1; }}
+        .qty-total {{ font-size: 8px; font-weight: 400; color: #666; display: block; }}
+        .label-footer {{
+            padding: 5px 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }}
+        .footer-left {{ display: flex; align-items: center; gap: 5px; }}
+        .footer-right {{ flex: 1; display: flex; align-items: center; gap: 5px; }}
+        .footer-label {{ font-size: 9px; font-weight: 700; color: #000; }}
+        .footer-value {{ font-size: 13px; font-weight: 900; color: #000; }}
+        .operator-box {{ flex: 1; height: 22px; border: 2px solid #000; background: white; }}
         @@media print {{
-            body {{ padding: 5mm; }}
-            .page {{ gap: 15px; }}
-            .label-card {{ margin-bottom: 15px; }}
+            .page {{ height: 100%; gap: 6mm; }}
+            .label-card {{ page-break-inside: avoid; }}
         }}
     </style>
 </head>
@@ -812,18 +878,17 @@
             </div>
             <div class='label-row client-row'>
                 <span class='label-field-name'>CLIENTE</span>
-                <span class='label-field-value'>{System.Web.HttpUtility.HtmlEncode(c.ClienteRagioneSociale ?? "")}</span>
+                <span class='label-field-value client-name'>{System.Web.HttpUtility.HtmlEncode(c.ClienteRagioneSociale ?? "")}</span>
             </div>
             <div class='label-row code-row'>
                 <span class='label-field-name'>CODICE ANIMA</span>
                 <span class='label-code'>{System.Web.HttpUtility.HtmlEncode(c.CodiceAnime ?? "")}</span>
             </div>
-            <div class='label-row order-row'>
-                <span class='label-field-name'>NUMERO ORDINE</span>
-                <span class='label-field-value order-number'>{System.Web.HttpUtility.HtmlEncode(c.InternalOrdNo ?? "")}</span>
-            </div>
-            <div class='label-details-grid'>
-                <div class='detail-left'>
+            <div class='label-main-content'>
+                <div class='photo-section'>
+                    {fotoHtml}
+                </div>
+                <div class='details-section'>
                     <div class='detail-item'>
                         <span class='detail-label'>SABBIA:</span>
                         <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.SabbiaDescrizione ?? "")}</span>
@@ -836,16 +901,22 @@
                         <span class='detail-label'>VERNICE:</span>
                         <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.VerniceDescrizione ?? "")}</span>
                     </div>
-                </div>
-                {fotoHtml}
-                <div class='detail-right'>
-                    <span class='qty-label'>QUANTITA'</span>
-                    <span class='qty-value'>{labelQuantita}</span>
+                    <div class='qty-section'>
+                        <span class='qty-label'>QUANTITA'</span>
+                        <span class='qty-value'>{labelQuantita}</span>
+                        <span class='qty-total'>(tot. lotto: {totaleLotto})</span>
+                    </div>
                 </div>
             </div>
             <div class='label-footer'>
-                <span class='operator-label'>OPERATORE:</span>
-                <div class='operator-box'></div>
+                <div class='footer-left'>
+                    <span class='footer-label'>ORDINE:</span>
+                    <span class='footer-value'>{System.Web.HttpUtility.HtmlEncode(c.InternalOrdNo ?? "")}</span>
+                </div>
+                <div class='footer-right'>
+                    <span class='footer-label'>OPERATORE:</span>
+                    <div class='operator-box'></div>
+                </div>
             </div>
         </div>
         <!-- Etichetta 2 (copia) -->
@@ -855,18 +926,17 @@
             </div>
             <div class='label-row client-row'>
                 <span class='label-field-name'>CLIENTE</span>
-                <span class='label-field-value'>{System.Web.HttpUtility.HtmlEncode(c.ClienteRagioneSociale ?? "")}</span>
+                <span class='label-field-value client-name'>{System.Web.HttpUtility.HtmlEncode(c.ClienteRagioneSociale ?? "")}</span>
             </div>
             <div class='label-row code-row'>
                 <span class='label-field-name'>CODICE ANIMA</span>
                 <span class='label-code'>{System.Web.HttpUtility.HtmlEncode(c.CodiceAnime ?? "")}</span>
             </div>
-            <div class='label-row order-row'>
-                <span class='label-field-name'>NUMERO ORDINE</span>
-                <span class='label-field-value order-number'>{System.Web.HttpUtility.HtmlEncode(c.InternalOrdNo ?? "")}</span>
-            </div>
-            <div class='label-details-grid'>
-                <div class='detail-left'>
+            <div class='label-main-content'>
+                <div class='photo-section'>
+                    {fotoHtml}
+                </div>
+                <div class='details-section'>
                     <div class='detail-item'>
                         <span class='detail-label'>SABBIA:</span>
                         <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.SabbiaDescrizione ?? "")}</span>
@@ -879,16 +949,22 @@
                         <span class='detail-label'>VERNICE:</span>
                         <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.VerniceDescrizione ?? "")}</span>
                     </div>
-                </div>
-                {fotoHtml}
-                <div class='detail-right'>
-                    <span class='qty-label'>QUANTITA'</span>
-                    <span class='qty-value'>{labelQuantita}</span>
+                    <div class='qty-section'>
+                        <span class='qty-label'>QUANTITA'</span>
+                        <span class='qty-value'>{labelQuantita}</span>
+                        <span class='qty-total'>(tot. lotto: {totaleLotto})</span>
+                    </div>
                 </div>
             </div>
             <div class='label-footer'>
-                <span class='operator-label'>OPERATORE:</span>
-                <div class='operator-box'></div>
+                <div class='footer-left'>
+                    <span class='footer-label'>ORDINE:</span>
+                    <span class='footer-value'>{System.Web.HttpUtility.HtmlEncode(c.InternalOrdNo ?? "")}</span>
+                </div>
+                <div class='footer-right'>
+                    <span class='footer-label'>OPERATORE:</span>
+                    <div class='operator-box'></div>
+                </div>
             </div>
         </div>
     </div>
