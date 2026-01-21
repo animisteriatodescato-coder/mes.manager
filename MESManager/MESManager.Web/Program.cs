@@ -57,6 +57,7 @@ builder.Services.AddScoped(sp => new HttpClient
 builder.Services.AddScoped<PreferencesService>();
 builder.Services.AddScoped<AnimeImportService>();
 builder.Services.AddScoped<AnimeExcelImportService>();
+builder.Services.AddScoped<AllegatiAnimaService>();
 builder.Services.AddScoped<IPianificazioneService, PianificazioneService>();
 builder.Services.AddHttpClient<PlcDataService>(client =>
 {
