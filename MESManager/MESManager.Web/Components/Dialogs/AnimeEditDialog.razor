@@ -4,223 +4,210 @@
 @inject IMacchinaAppService MacchinaService
 @inject ISnackbar Snackbar
 
-<MudDialog Style="max-height: 90vh;">
+<MudDialog Style="max-width: 900px;">
     <TitleContent>
-        <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-2" />
-            Modifica Anima: @Anime?.CodiceArticolo
-        </MudText>
+        <MudStack Row="true" AlignItems="AlignItems.Center">
+            <MudIcon Icon="@Icons.Material.Filled.Edit" />
+            <MudText Typo="Typo.h6">Modifica Anima: @Anime?.CodiceArticolo</MudText>
+        </MudStack>
     </TitleContent>
     <DialogContent>
-        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-2" MinimumTabWidth="80px">
-            <!-- Tab 1: Identificazione -->
-            <MudTabPanel Text="Identificazione" Icon="@Icons.Material.Filled.Info">
-                <MudGrid Spacing="1">
-                    <MudItem xs="2">
-                        <MudTextField Value="@Anime.Id" Label="ID" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="3">
-                        <MudTextField Value="@Anime.CodiceArticolo" Label="Codice Articolo" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="4">
-                        <MudTextField Value="@Anime.DescrizioneArticolo" Label="Descrizione" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="3">
-                        <MudTextField Value="@Anime.Cliente" Label="Cliente" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
-                    </MudItem>
-                    
-                    <MudItem xs="3">
-                        <MudTextField @bind-Value="Anime.Ubicazione" Label="Ubicazione" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="3">
-                        <MudTextField @bind-Value="Anime.CodiceCassa" Label="Codice Cassa" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="3">
-                        <MudTextField @bind-Value="Anime.CodiceAnime" Label="Codice Anime" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="3">
-                        <MudTextField @bind-Value="Anime.UnitaMisura" Label="Unità Misura" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                </MudGrid>
-            </MudTabPanel>
+        <MudStack Spacing="2">
+            <!-- IDENTIFICAZIONE (readonly) -->
+            <MudText Typo="Typo.caption" Color="Color.Primary"><b>IDENTIFICAZIONE</b></MudText>
+            <MudGrid Spacing="1">
+                <MudItem xs="1">
+                    <MudTextField Value="@Anime.Id" Label="ID" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="2">
+                    <MudTextField Value="@Anime.CodiceArticolo" Label="Codice" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="5">
+                    <MudTextField Value="@Anime.DescrizioneArticolo" Label="Descrizione" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="2">
+                    <MudTextField Value="@Anime.Cliente" Label="Cliente" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="2">
+                    <MudTextField @bind-Value="Anime.Ubicazione" Label="Ubicazione" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+            </MudGrid>
             
-            <!-- Tab 2: Materiali -->
-            <MudTabPanel Text="Materiali" Icon="@Icons.Material.Filled.Science">
-                <MudGrid Spacing="1">
-                    <MudItem xs="3">
-                        <MudSelect @bind-Value="ImballoSelezionato" Label="Imballo" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                   AnchorOrigin="Origin.BottomCenter" Dense="true">
-                            <MudSelectItem Value="@((int?)null)">(nessuno)</MudSelectItem>
-                            @foreach (var item in imballoOptions)
-                            {
-                                <MudSelectItem Value="@(int.TryParse(item.Codice, out var v) ? (int?)v : null)">
-                                    @item.Codice - @item.Descrizione
-                                </MudSelectItem>
-                            }
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem xs="3">
-                        <MudSelect @bind-Value="Anime.Colla" Label="Colla" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                   AnchorOrigin="Origin.BottomCenter" Dense="true">
-                            <MudSelectItem Value="@((string?)null)">(nessuna)</MudSelectItem>
-                            @foreach (var item in collaOptions)
-                            {
-                                <MudSelectItem Value="@item.Codice">@item.Codice - @item.Descrizione</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem xs="3">
-                        <MudSelect @bind-Value="Anime.Sabbia" Label="Sabbia" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                   AnchorOrigin="Origin.BottomCenter" Dense="true">
-                            <MudSelectItem Value="@((string?)null)">(nessuna)</MudSelectItem>
-                            @foreach (var item in sabbiaOptions)
-                            {
-                                <MudSelectItem Value="@item.Codice">@(string.IsNullOrEmpty(item.Codice) ? "(nessuna)" : $"{item.Codice} - {item.Descrizione}")</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem xs="3">
-                        <MudSelect @bind-Value="Anime.Vernice" Label="Vernice" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                   AnchorOrigin="Origin.BottomCenter" Dense="true">
-                            <MudSelectItem Value="@((string?)null)">(nessuna)</MudSelectItem>
-                            @foreach (var item in verniceOptions)
-                            {
-                                <MudSelectItem Value="@item.Codice">@item.Codice - @item.Descrizione</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </MudItem>
-                </MudGrid>
-            </MudTabPanel>
-            
-            <!-- Tab 3: Produzione -->
-            <MudTabPanel Text="Produzione" Icon="@Icons.Material.Filled.Factory">
-                <MudGrid Spacing="1">
-                    <MudItem xs="2">
-                        <MudNumericField @bind-Value="Anime.QuantitaPiano" Label="Qta/Piano" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="2">
-                        <MudNumericField @bind-Value="Anime.NumeroPiani" Label="N.Piani" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="2">
-                        <MudTextField @bind-Value="Anime.Ciclo" Label="Ciclo" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="2">
-                        <MudTextField @bind-Value="Anime.Peso" Label="Peso" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="2">
-                        <MudTextField @bind-Value="Anime.Figure" Label="Figure" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="2">
-                        <MudTextField @bind-Value="Anime.Maschere" Label="Maschere" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                    
-                    <MudItem xs="2">
-                        <MudSelect @bind-Value="Anime.Incollata" Label="Incollata" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
-                            <MudSelectItem Value="@((string?)null)">-</MudSelectItem>
-                            <MudSelectItem Value="@("Sì")">Sì</MudSelectItem>
-                            <MudSelectItem Value="@("No")">No</MudSelectItem>
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem xs="2">
-                        <MudSelect @bind-Value="Anime.Assemblata" Label="Assemblata" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
-                            <MudSelectItem Value="@((string?)null)">-</MudSelectItem>
-                            <MudSelectItem Value="@("Sì")">Sì</MudSelectItem>
-                            <MudSelectItem Value="@("No")">No</MudSelectItem>
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem xs="2">
-                        <MudTextField @bind-Value="Anime.ArmataL" Label="Armata L" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="2">
-                        <MudTextField @bind-Value="Anime.TogliereSparo" Label="Tog.Sparo" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="2">
-                        <MudNumericField @bind-Value="Anime.Larghezza" Label="Larghezza" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="2">
-                        <MudNumericField @bind-Value="Anime.Altezza" Label="Altezza" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                    
-                    <MudItem xs="2">
-                        <MudNumericField @bind-Value="Anime.Profondita" Label="Profondità" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="4">
-                        <MudTextField @bind-Value="Anime.Allegato" Label="Allegato" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                    </MudItem>
-                </MudGrid>
-            </MudTabPanel>
-            
-            <!-- Tab 4: Macchine -->
-            <MudTabPanel Text="Macchine" Icon="@Icons.Material.Filled.PrecisionManufacturing">
-                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
-                    Macchine disponibili per questa anima (colonna "MA" delle commesse aperte)
-                </MudText>
-                <MudStack Row="true" Spacing="1" Class="mb-2">
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.SelectAll" 
-                               OnClick="SelezionaTutteLeMacchine">Seleziona Tutto</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Deselect" 
-                               OnClick="DeselezionaTutteLeMacchine">Deseleziona Tutto</MudButton>
-                </MudStack>
-                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
-                    @foreach (var macchina in macchineDisponibili)
-                    {
-                        <MudCheckBox T="bool" 
-                                     Value="@macchineSelezionate.Contains(macchina.Codice)"
-                                     ValueChanged="@((bool val) => ToggleMacchina(macchina.Codice, val))"
-                                     Label="@macchina.Nome"
-                                     Color="Color.Primary"
-                                     Dense="true"
-                                     Size="Size.Small" />
-                    }
-                </MudStack>
-            </MudTabPanel>
-            
-            <!-- Tab 5: Note -->
-            <MudTabPanel Text="Note" Icon="@Icons.Material.Filled.Notes">
-                <MudGrid Spacing="1">
-                    <MudItem xs="12">
-                        <MudTextField @bind-Value="Anime.Note" Label="Note" Variant="Variant.Outlined" Lines="3" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="6">
-                        <MudSwitch @bind-Value="Anime.TrasmettiTutto" Label="Trasmetti Tutto" Color="Color.Primary" />
-                    </MudItem>
-                    
-                    <!-- Sezione Tracking -->
-                    <MudItem xs="12" Class="mt-2">
-                        <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-1">
-                            <MudIcon Icon="@Icons.Material.Filled.History" Size="Size.Small" Class="mr-1" />
-                            Tracking
-                        </MudText>
-                    </MudItem>
-                    <MudItem xs="3">
-                        <MudTextField Value="@(Anime.DataImportazione.ToString("dd/MM/yyyy HH:mm"))" Label="Data Import" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="3">
-                        <MudTextField Value="@(Anime.DataModificaRecord?.ToString("dd/MM/yyyy HH:mm") ?? "-")" Label="Data Modifica" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="3">
-                        <MudTextField Value="@(Anime.UtenteModificaRecord ?? "-")" Label="Utente" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
-                    </MudItem>
-                    <MudItem xs="3">
-                        <MudChip T="string" Color="@(Anime.ModificatoLocalmente ? Color.Warning : Color.Default)" Size="Size.Small">
-                            @(Anime.ModificatoLocalmente ? "Modificato" : "Da Mago")
-                        </MudChip>
-                    </MudItem>
-                </MudGrid>
-            </MudTabPanel>
-        </MudTabs>
+            <MudGrid Spacing="1">
+                <MudItem xs="3">
+                    <MudTextField @bind-Value="Anime.CodiceCassa" Label="Codice Cassa" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="3">
+                    <MudTextField @bind-Value="Anime.CodiceAnime" Label="Codice Anime" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="2">
+                    <MudTextField @bind-Value="Anime.UnitaMisura" Label="Unità Misura" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="4">
+                    <MudTextField @bind-Value="Anime.Allegato" Label="Allegato" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+            </MudGrid>
+
+            <MudDivider Class="my-1" />
+
+            <!-- MATERIALI -->
+            <MudText Typo="Typo.caption" Color="Color.Primary"><b>MATERIALI</b></MudText>
+            <MudGrid Spacing="1">
+                <MudItem xs="3">
+                    <MudSelect @bind-Value="ImballoSelezionato" Label="Imballo" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                        <MudSelectItem Value="@((int?)null)">-</MudSelectItem>
+                        @foreach (var item in imballoOptions)
+                        {
+                            <MudSelectItem Value="@(int.TryParse(item.Codice, out var v) ? (int?)v : null)">@item.Codice - @item.Descrizione</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="3">
+                    <MudSelect @bind-Value="Anime.Colla" Label="Colla" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                        <MudSelectItem Value="@((string?)null)">-</MudSelectItem>
+                        @foreach (var item in collaOptions)
+                        {
+                            <MudSelectItem Value="@item.Codice">@item.Codice - @item.Descrizione</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="3">
+                    <MudSelect @bind-Value="Anime.Sabbia" Label="Sabbia" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                        <MudSelectItem Value="@((string?)null)">-</MudSelectItem>
+                        @foreach (var item in sabbiaOptions)
+                        {
+                            <MudSelectItem Value="@item.Codice">@(string.IsNullOrEmpty(item.Codice) ? "-" : $"{item.Codice} - {item.Descrizione}")</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="3">
+                    <MudSelect @bind-Value="Anime.Vernice" Label="Vernice" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                        <MudSelectItem Value="@((string?)null)">-</MudSelectItem>
+                        @foreach (var item in verniceOptions)
+                        {
+                            <MudSelectItem Value="@item.Codice">@item.Codice - @item.Descrizione</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+
+            <MudDivider Class="my-1" />
+
+            <!-- PRODUZIONE -->
+            <MudText Typo="Typo.caption" Color="Color.Primary"><b>PRODUZIONE</b></MudText>
+            <MudGrid Spacing="1">
+                <MudItem xs="1">
+                    <MudNumericField @bind-Value="Anime.QuantitaPiano" Label="Qta/Piano" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="1">
+                    <MudNumericField @bind-Value="Anime.NumeroPiani" Label="N.Piani" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="2">
+                    <MudTextField @bind-Value="Anime.Ciclo" Label="Ciclo" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="1">
+                    <MudTextField @bind-Value="Anime.Peso" Label="Peso" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="1">
+                    <MudTextField @bind-Value="Anime.Figure" Label="Figure" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="2">
+                    <MudTextField @bind-Value="Anime.Maschere" Label="Maschere" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="2">
+                    <MudTextField @bind-Value="Anime.TogliereSparo" Label="Tog.Sparo" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="2">
+                    <MudTextField @bind-Value="Anime.ArmataL" Label="Armata L" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+            </MudGrid>
+            <MudGrid Spacing="1">
+                <MudItem xs="2">
+                    <MudSelect @bind-Value="Anime.Incollata" Label="Incollata" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                        <MudSelectItem Value="@((string?)null)">-</MudSelectItem>
+                        <MudSelectItem Value="@("Sì")">Sì</MudSelectItem>
+                        <MudSelectItem Value="@("No")">No</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="2">
+                    <MudSelect @bind-Value="Anime.Assemblata" Label="Assemblata" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                        <MudSelectItem Value="@((string?)null)">-</MudSelectItem>
+                        <MudSelectItem Value="@("Sì")">Sì</MudSelectItem>
+                        <MudSelectItem Value="@("No")">No</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="2">
+                    <MudNumericField @bind-Value="Anime.Larghezza" Label="Larghezza" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="2">
+                    <MudNumericField @bind-Value="Anime.Altezza" Label="Altezza" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="2">
+                    <MudNumericField @bind-Value="Anime.Profondita" Label="Profondità" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="2">
+                    <MudSwitch @bind-Value="Anime.TrasmettiTutto" Label="Trasm.Tutto" Color="Color.Primary" />
+                </MudItem>
+            </MudGrid>
+
+            <MudDivider Class="my-1" />
+
+            <!-- MACCHINE -->
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudText Typo="Typo.caption" Color="Color.Primary"><b>MACCHINE</b></MudText>
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="SelezionaTutteLeMacchine">Tutte</MudButton>
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="DeselezionaTutteLeMacchine">Nessuna</MudButton>
+            </MudStack>
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="0">
+                @foreach (var macchina in macchineDisponibili)
+                {
+                    <MudCheckBox T="bool" 
+                                 Value="@macchineSelezionate.Contains(macchina.Codice)"
+                                 ValueChanged="@((bool val) => ToggleMacchina(macchina.Codice, val))"
+                                 Label="@macchina.Nome"
+                                 Color="Color.Primary"
+                                 Dense="true"
+                                 Size="Size.Small"
+                                 Style="min-width: 60px;" />
+                }
+            </MudStack>
+
+            <MudDivider Class="my-1" />
+
+            <!-- NOTE -->
+            <MudText Typo="Typo.caption" Color="Color.Primary"><b>NOTE</b></MudText>
+            <MudTextField @bind-Value="Anime.Note" Label="Note" Variant="Variant.Outlined" Lines="2" Margin="Margin.Dense" />
+
+            <MudDivider Class="my-1" />
+
+            <!-- TRACKING -->
+            <MudText Typo="Typo.caption" Color="Color.Secondary"><b>TRACKING</b></MudText>
+            <MudGrid Spacing="1">
+                <MudItem xs="3">
+                    <MudTextField Value="@(Anime.DataImportazione.ToString("dd/MM/yy HH:mm"))" Label="Import" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="3">
+                    <MudTextField Value="@(Anime.DataModificaRecord?.ToString("dd/MM/yy HH:mm") ?? "-")" Label="Modifica" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="3">
+                    <MudTextField Value="@(Anime.UtenteModificaRecord ?? "-")" Label="Utente" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="3">
+                    <MudChip T="string" Color="@(Anime.ModificatoLocalmente ? Color.Warning : Color.Default)" Size="Size.Small">
+                        @(Anime.ModificatoLocalmente ? "Modificato" : "Da Mago")
+                    </MudChip>
+                </MudItem>
+            </MudGrid>
+        </MudStack>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Annulla</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" OnClick="Save">
-            Salva
-        </MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" OnClick="Save">Salva</MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
-    
     [Parameter] public AnimeDto Anime { get; set; } = new();
     
     private List<TabellaItem> collaOptions = new();
@@ -230,11 +217,7 @@
     private List<MacchinaDto> macchineDisponibili = new();
     private HashSet<string> macchineSelezionate = new();
     
-    private int? ImballoSelezionato
-    {
-        get => Anime.Imballo;
-        set => Anime.Imballo = value;
-    }
+    private int? ImballoSelezionato { get => Anime.Imballo; set => Anime.Imballo = value; }
     
     protected override async Task OnInitializedAsync()
     {
@@ -252,10 +235,7 @@
             imballoOptions = await Http.GetFromJsonAsync<List<TabellaItem>>("/api/Tabelle/imballo") ?? new();
             macchineDisponibili = await MacchinaService.GetListaAsync();
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading options: {ex.Message}");
-        }
+        catch (Exception ex) { Console.WriteLine($"Error loading options: {ex.Message}"); }
     }
     
     private void ParseMacchineSelezionate()
@@ -263,44 +243,28 @@
         macchineSelezionate.Clear();
         if (!string.IsNullOrWhiteSpace(Anime.MacchineSuDisponibili))
         {
-            var codici = Anime.MacchineSuDisponibili.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var codice in codici)
-            {
+            foreach (var codice in Anime.MacchineSuDisponibili.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries))
                 macchineSelezionate.Add(codice.Trim());
-            }
         }
     }
     
     private void ToggleMacchina(string codice, bool selected)
     {
-        if (selected)
-            macchineSelezionate.Add(codice);
-        else
-            macchineSelezionate.Remove(codice);
-        
+        if (selected) macchineSelezionate.Add(codice);
+        else macchineSelezionate.Remove(codice);
         AggiornaMacchineString();
     }
     
     private void SelezionaTutteLeMacchine()
     {
         macchineSelezionate.Clear();
-        foreach (var m in macchineDisponibili)
-        {
-            macchineSelezionate.Add(m.Codice);
-        }
+        foreach (var m in macchineDisponibili) macchineSelezionate.Add(m.Codice);
         AggiornaMacchineString();
     }
     
-    private void DeselezionaTutteLeMacchine()
-    {
-        macchineSelezionate.Clear();
-        AggiornaMacchineString();
-    }
+    private void DeselezionaTutteLeMacchine() { macchineSelezionate.Clear(); AggiornaMacchineString(); }
     
-    private void AggiornaMacchineString()
-    {
-        Anime.MacchineSuDisponibili = string.Join(";", macchineSelezionate.OrderBy(x => x));
-    }
+    private void AggiornaMacchineString() => Anime.MacchineSuDisponibili = string.Join(";", macchineSelezionate.OrderBy(x => x));
     
     private async Task Save()
     {
@@ -308,30 +272,18 @@
         {
             Anime.ModificatoLocalmente = true;
             Anime.DataUltimaModificaLocale = DateTime.Now;
-            
             var response = await Http.PutAsJsonAsync($"/api/Anime/{Anime.Id}", Anime);
             if (response.IsSuccessStatusCode)
             {
-                Snackbar.Add("Anima salvata con successo!", Severity.Success);
+                Snackbar.Add("Anima salvata!", Severity.Success);
                 MudDialog.Close(DialogResult.Ok(Anime));
             }
-            else
-            {
-                var error = await response.Content.ReadAsStringAsync();
-                Snackbar.Add($"Errore nel salvataggio: {error}", Severity.Error);
-            }
+            else Snackbar.Add($"Errore: {await response.Content.ReadAsStringAsync()}", Severity.Error);
         }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
-        }
+        catch (Exception ex) { Snackbar.Add($"Errore: {ex.Message}", Severity.Error); }
     }
     
     private void Cancel() => MudDialog.Cancel();
     
-    public class TabellaItem
-    {
-        public string Codice { get; set; } = string.Empty;
-        public string Descrizione { get; set; } = string.Empty;
-    }
+    public class TabellaItem { public string Codice { get; set; } = ""; public string Descrizione { get; set; } = ""; }
 }
