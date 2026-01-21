@@ -184,6 +184,12 @@
                                                 <span class="detail-value">@(selectedCommessaForLabel.VerniceDescrizione ?? "")</span>
                                             </div>
                                         </div>
+                                        @if (!string.IsNullOrEmpty(labelFotoUrl))
+                                        {
+                                            <div class="detail-center">
+                                                <img src="@labelFotoUrl" alt="Foto articolo" />
+                                            </div>
+                                        }
                                         <div class="detail-right">
                                             <span class="qty-label">QUANTITA'</span>
                                             <span class="qty-value">@labelQuantita</span>
@@ -295,7 +301,7 @@
         }
     }
 
-    /* Stili Etichetta Moderna */
+    /* Stili Etichetta Moderna - Bianco e Nero */
     .label-preview-wrapper {
         display: flex;
         flex-direction: column;
@@ -307,20 +313,18 @@
 
     .label-card {
         background: white;
-        border: 3px solid #1a1a1a;
+        border: 3px solid #000;
         border-radius: 0;
         padding: 0;
         width: 100%;
-        max-width: 500px;
         margin: 0 auto;
         font-family: 'Arial Black', Arial, sans-serif;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
     .label-header {
-        background: #1a1a1a;
-        color: white;
-        padding: 12px 16px;
+        border-bottom: 3px solid #000;
+        padding: 10px 16px;
         text-align: center;
     }
 
@@ -328,15 +332,15 @@
         font-size: 22px;
         font-weight: 900;
         letter-spacing: 1px;
+        color: #000;
     }
 
     .label-row {
-        border-bottom: 2px solid #1a1a1a;
-        padding: 8px 16px;
+        border-bottom: 2px solid #000;
+        padding: 6px 16px;
     }
 
     .client-row {
-        background: #f8f8f8;
         display: flex;
         align-items: center;
         gap: 12px;
@@ -345,61 +349,60 @@
     .label-field-name {
         font-size: 11px;
         font-weight: 700;
-        color: #666;
-        min-width: 80px;
+        color: #000;
+        min-width: 100px;
     }
 
     .label-field-value {
         font-size: 16px;
         font-weight: 700;
-        color: #1a1a1a;
+        color: #000;
     }
 
     .code-row {
-        background: #fff3cd;
         text-align: center;
-        padding: 12px 16px;
+        padding: 10px 16px;
     }
 
     .code-row .label-field-name {
         display: block;
         font-size: 12px;
-        color: #856404;
+        color: #000;
         margin-bottom: 4px;
     }
 
     .label-code {
         font-size: 36px;
         font-weight: 900;
-        color: #1a1a1a;
+        color: #000;
         letter-spacing: 2px;
     }
 
     .order-row {
-        background: #e3f2fd;
         display: flex;
         align-items: center;
         gap: 12px;
     }
 
     .order-number {
-        color: #1565c0;
+        color: #000;
         font-size: 18px;
+        font-weight: 900;
     }
 
     .label-details-grid {
         display: flex;
-        border-bottom: 2px solid #1a1a1a;
+        border-bottom: 2px solid #000;
     }
 
     .detail-left {
         flex: 1;
-        padding: 12px 16px;
-        border-right: 2px solid #1a1a1a;
+        padding: 10px 16px;
+        border-right: 2px solid #000;
     }
 
     .detail-item {
-        margin-bottom: 8px;
+        margin-bottom: 6px;
     }
 
     .detail-item:last-child {
@@ -409,14 +412,30 @@
     .detail-label {
         font-size: 11px;
         font-weight: 700;
-        color: #666;
+        color: #000;
         display: block;
     }
 
     .detail-value {
         font-size: 14px;
         font-weight: 700;
-        color: #1a1a1a;
+        color: #000;
+    }
+
+    .detail-center {
+        width: 140px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        border-right: 2px solid #000;
+    }
+
+    .detail-center img {
+        max-width: 100%;
+        max-height: 100px;
+        object-fit: contain;
     }
 
     .detail-right {
@@ -425,41 +444,39 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: #e8f5e9;
-        padding: 12px;
+        padding: 10px;
     }
 
     .qty-label {
         font-size: 12px;
         font-weight: 700;
-        color: #2e7d32;
+        color: #000;
     }
 
     .qty-value {
         font-size: 56px;
         font-weight: 900;
-        color: #1b5e20;
+        color: #000;
         line-height: 1;
     }
 
     .label-footer {
-        padding: 12px 16px;
+        padding: 10px 16px;
         display: flex;
         align-items: center;
         gap: 12px;
-        background: #fafafa;
     }
 
     .operator-label {
         font-size: 11px;
         font-weight: 700;
-        color: #666;
+        color: #000;
     }
 
     .operator-box {
         flex: 1;
         height: 28px;
-        border: 2px solid #1a1a1a;
+        border: 2px solid #000;
         background: white;
     }
 
@@ -510,6 +527,7 @@
     private int labelQuantita = 1;
     private List<string> campiMancanti = new();
     private string? currentArticoloCodice;
+    private string? labelFotoUrl; // URL foto con priorità 2
 
     private async Task OnSearchDebounced(string value)
     {
@@ -623,10 +641,11 @@
     }
 
     [JSInvokable]
-    public void OnPrintLabelClick(CommessaDto commessa)
+    public async Task OnPrintLabelClick(CommessaDto commessa)
     {
         selectedCommessaForLabel = commessa;
         currentArticoloCodice = commessa.ArticoloCodice;
+        labelFotoUrl = null;
         
         // Verifica dati completi
         campiMancanti.Clear();
@@ -645,9 +664,41 @@
             var qp = commessa.QuantitaPiano ?? 0;
             var np = commessa.NumeroPiani ?? 0;
             labelQuantita = qp * np > 0 ? qp * np : 1;
+            
+            // Carica foto con priorità 2
+            await LoadLabelFotoAsync(commessa.ArticoloCodice);
+            
             showLabelDialog = true;
         }
         StateHasChanged();
+    }
+    
+    private async Task LoadLabelFotoAsync(string? codiceArticolo)
+    {
+        if (string.IsNullOrEmpty(codiceArticolo))
+        {
+            labelFotoUrl = null;
+            return;
+        }
+        
+        try
+        {
+            var allegati = await Http.GetFromJsonAsync<AllegatiArticoloResponse>($"/api/allegati-articoli/articolo/{Uri.EscapeDataString(codiceArticolo)}");
+            if (allegati?.Foto != null)
+            {
+                // Cerca foto con priorità 2, altrimenti prende la prima foto
+                var foto = allegati.Foto.FirstOrDefault(f => f.Priorita == 2) ?? allegati.Foto.FirstOrDefault();
+                if (foto != null)
+                {
+                    labelFotoUrl = $"/api/allegati-articoli/{foto.Id}/file";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading label foto: {ex.Message}");
+            labelFotoUrl = null;
+        }
     }
 
     [JSInvokable]
@@ -697,6 +748,9 @@
     {
         var c = selectedCommessaForLabel!;
         var oggi = DateTime.Now.ToString("dd/MM/yyyy");
+        var fotoHtml = !string.IsNullOrEmpty(labelFotoUrl) 
+            ? $"<div class='detail-center'><img src='{labelFotoUrl}' alt='Foto' /></div>" 
+            : "";
         
         return $@"
 <!DOCTYPE html>
@@ -706,46 +760,46 @@
     <title>Etichetta - {c.CodiceAnime}</title>
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{ font-family: 'Arial Black', Arial, sans-serif; padding: 20px; }}
-        .page {{ display: flex; flex-direction: column; gap: 30px; }}
+        body {{ font-family: 'Arial Black', Arial, sans-serif; padding: 10px; }}
+        .page {{ display: flex; flex-direction: column; gap: 20px; }}
         .label-card {{
             background: white;
-            border: 3px solid #1a1a1a;
+            border: 3px solid #000;
             width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
             page-break-inside: avoid;
         }}
         .label-header {{
-            background: #1a1a1a;
-            color: white;
-            padding: 12px 16px;
+            border-bottom: 3px solid #000;
+            padding: 8px 12px;
             text-align: center;
         }}
-        .company-name {{ font-size: 22px; font-weight: 900; letter-spacing: 1px; }}
-        .label-row {{ border-bottom: 2px solid #1a1a1a; padding: 8px 16px; }}
-        .client-row {{ background: #f8f8f8; display: flex; align-items: center; gap: 12px; }}
-        .label-field-name {{ font-size: 11px; font-weight: 700; color: #666; min-width: 100px; }}
-        .label-field-value {{ font-size: 16px; font-weight: 700; color: #1a1a1a; }}
-        .code-row {{ background: #fff3cd; text-align: center; padding: 12px 16px; }}
-        .code-row .label-field-name {{ display: block; font-size: 12px; color: #856404; margin-bottom: 4px; }}
-        .label-code {{ font-size: 36px; font-weight: 900; color: #1a1a1a; letter-spacing: 2px; }}
-        .order-row {{ background: #e3f2fd; display: flex; align-items: center; gap: 12px; }}
-        .order-number {{ color: #1565c0; font-size: 18px; }}
-        .label-details-grid {{ display: flex; border-bottom: 2px solid #1a1a1a; }}
-        .detail-left {{ flex: 1; padding: 12px 16px; border-right: 2px solid #1a1a1a; }}
-        .detail-item {{ margin-bottom: 8px; }}
-        .detail-label {{ font-size: 11px; font-weight: 700; color: #666; display: block; }}
-        .detail-value {{ font-size: 14px; font-weight: 700; color: #1a1a1a; }}
-        .detail-right {{ width: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #e8f5e9; padding: 12px; }}
-        .qty-label {{ font-size: 12px; font-weight: 700; color: #2e7d32; }}
-        .qty-value {{ font-size: 56px; font-weight: 900; color: #1b5e20; line-height: 1; }}
-        .label-footer {{ padding: 12px 16px; display: flex; align-items: center; gap: 12px; background: #fafafa; }}
-        .operator-label {{ font-size: 11px; font-weight: 700; color: #666; }}
-        .operator-box {{ flex: 1; height: 28px; border: 2px solid #1a1a1a; background: white; }}
+        .company-name {{ font-size: 20px; font-weight: 900; letter-spacing: 1px; color: #000; }}
+        .label-row {{ border-bottom: 2px solid #000; padding: 5px 12px; }}
+        .client-row {{ display: flex; align-items: center; gap: 10px; }}
+        .label-field-name {{ font-size: 10px; font-weight: 700; color: #000; min-width: 90px; }}
+        .label-field-value {{ font-size: 14px; font-weight: 700; color: #000; }}
+        .code-row {{ text-align: center; padding: 8px 12px; }}
+        .code-row .label-field-name {{ display: block; font-size: 10px; color: #000; margin-bottom: 2px; }}
+        .label-code {{ font-size: 32px; font-weight: 900; color: #000; letter-spacing: 2px; }}
+        .order-row {{ display: flex; align-items: center; gap: 10px; }}
+        .order-number {{ color: #000; font-size: 16px; font-weight: 900; }}
+        .label-details-grid {{ display: flex; border-bottom: 2px solid #000; }}
+        .detail-left {{ flex: 1; padding: 8px 12px; border-right: 2px solid #000; }}
+        .detail-item {{ margin-bottom: 4px; }}
+        .detail-label {{ font-size: 10px; font-weight: 700; color: #000; display: block; }}
+        .detail-value {{ font-size: 12px; font-weight: 700; color: #000; }}
+        .detail-center {{ width: 120px; display: flex; align-items: center; justify-content: center; padding: 8px; border-right: 2px solid #000; }}
+        .detail-center img {{ max-width: 100%; max-height: 80px; object-fit: contain; }}
+        .detail-right {{ width: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px; }}
+        .qty-label {{ font-size: 10px; font-weight: 700; color: #000; }}
+        .qty-value {{ font-size: 48px; font-weight: 900; color: #000; line-height: 1; }}
+        .label-footer {{ padding: 8px 12px; display: flex; align-items: center; gap: 10px; }}
+        .operator-label {{ font-size: 10px; font-weight: 700; color: #000; }}
+        .operator-box {{ flex: 1; height: 24px; border: 2px solid #000; background: white; }}
         @@media print {{
-            body {{ padding: 0; }}
-            .label-card {{ margin-bottom: 30px; }}
+            body {{ padding: 5mm; }}
+            .page {{ gap: 15px; }}
+            .label-card {{ margin-bottom: 15px; }}
         }}
     </style>
 </head>
@@ -783,6 +837,7 @@
                         <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.VerniceDescrizione ?? "")}</span>
                     </div>
                 </div>
+                {fotoHtml}
                 <div class='detail-right'>
                     <span class='qty-label'>QUANTITA'</span>
                     <span class='qty-value'>{labelQuantita}</span>
@@ -825,6 +880,7 @@
                         <span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.VerniceDescrizione ?? "")}</span>
                     </div>
                 </div>
+                {fotoHtml}
                 <div class='detail-right'>
                     <span class='qty-label'>QUANTITA'</span>
                     <span class='qty-value'>{labelQuantita}</span>
