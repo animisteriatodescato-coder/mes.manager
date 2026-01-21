@@ -12,11 +12,20 @@ window.programmaMacchineGrid = (function() {
             field: 'numeroMacchina', 
             headerName: 'MA', 
             sortable: true, 
-            filter: 'agNumberColumnFilter', 
+            filter: true, 
             width: 70, 
             pinned: 'left',
             sort: 'asc',
-            cellStyle: { fontWeight: 'bold', textAlign: 'center' }
+            cellStyle: { fontWeight: 'bold', textAlign: 'center' },
+            valueFormatter: params => {
+                if (!params.value) return '';
+                // Convert M001 to 01, M002 to 02, etc.
+                const match = params.value.match(/^M0*(\d+)$/);
+                if (match) {
+                    return match[1].padStart(2, '0');
+                }
+                return params.value;
+            }
         },
         { field: 'codice', headerName: 'Codice', sortable: true, filter: true, width: 180, pinned: 'left' },
         { field: 'internalOrdNo', headerName: 'Num. Ordine', sortable: true, filter: true, width: 130 },
@@ -119,10 +128,18 @@ window.programmaMacchineGrid = (function() {
         }
     ];
 
+    // Estrae il numero dalla macchina (M001 -> 1, M002 -> 2)
+    function getMachineNumber(numeroMacchina) {
+        if (!numeroMacchina) return 0;
+        const match = numeroMacchina.toString().match(/^M?(\d+)$/);
+        return match ? parseInt(match[1], 10) : 0;
+    }
+
     // Calcola il colore basato sul numero macchina (alternando tra azzurro e verde)
     function getMachineColor(numeroMacchina) {
-        if (numeroMacchina == null || numeroMacchina <= 0) return null;
-        return numeroMacchina % 2 === 0 ? machineColors.even : machineColors.odd;
+        const num = getMachineNumber(numeroMacchina);
+        if (num === 0) return null;
+        return num % 2 === 0 ? machineColors.even : machineColors.odd;
     }
 
     function init(gridId, data, savedColumnState) {
@@ -148,16 +165,18 @@ window.programmaMacchineGrid = (function() {
             getRowStyle: params => {
                 const style = {};
                 
-                if (params.data && params.data.numeroMacchina != null && params.data.numeroMacchina > 0) {
+                if (params.data && params.data.numeroMacchina != null && params.data.numeroMacchina !== '') {
                     const color = getMachineColor(params.data.numeroMacchina);
-                    style.backgroundColor = color;
+                    if (color) {
+                        style.backgroundColor = color;
+                    }
                     
                     // Aggiungi bordo superiore nero se la macchina è diversa dalla riga precedente
                     const rowIndex = params.node.rowIndex;
                     if (rowIndex > 0) {
                         const prevNode = params.api.getDisplayedRowAtIndex(rowIndex - 1);
                         if (prevNode && prevNode.data && prevNode.data.numeroMacchina !== params.data.numeroMacchina) {
-                            style.borderTop = '2px solid #000';
+                            style.borderTop = '3px solid #000';
                         }
                     }
                 }
@@ -365,9 +384,10 @@ window.programmaMacchineGrid = (function() {
         html += '<tbody>';
         let previousMachine = null;
         rowData.forEach(row => {
-            const bgColor = row.numeroMacchina % 2 === 0 ? '#e3f2fd' : '#e8f5e9';
+            const machineNum = getMachineNumber(row.numeroMacchina);
+            const bgColor = machineNum % 2 === 0 ? '#e3f2fd' : '#e8f5e9';
             const borderTop = previousMachine !== null && previousMachine !== row.numeroMacchina 
-                ? 'border-top: 2px solid #000;' : '';
+                ? 'border-top: 3px solid #000;' : '';
             previousMachine = row.numeroMacchina;
             
             html += `<tr style="background-color: ${bgColor}; ${borderTop}">`;
