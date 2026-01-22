@@ -243,9 +243,13 @@
             
             _allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
             
-            // Filter only open commesse with numeroMacchina assigned
-            _commesse = _allCommesse.Where(c => c.Stato == "Aperta" && !string.IsNullOrEmpty(c.NumeroMacchina)).ToList();
-            Console.WriteLine($"ProgrammaMacchine: Loaded {_allCommesse.Count} total, filtered to {_commesse.Count} with machine");
+            // Filter only open commesse with numeroMacchina assigned and not archived
+            _commesse = _allCommesse.Where(c => 
+                c.Stato == "Aperta" && 
+                !string.IsNullOrEmpty(c.NumeroMacchina) &&
+                c.StatoProgramma != "Archiviata"
+            ).ToList();
+            Console.WriteLine($"ProgrammaMacchine: Loaded {_allCommesse.Count} total, filtered to {_commesse.Count} with machine (excluding archived)");
             
             totalRows = _commesse.Count;
             filteredRows = _commesse.Count;

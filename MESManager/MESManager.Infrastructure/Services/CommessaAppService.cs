@@ -85,6 +85,10 @@ public class CommessaAppService : ICommessaAppService
                 DataConsegna = c.DataConsegna,
                 Stato = c.Stato.ToString(),
                 
+                // Stato programma interno
+                StatoProgramma = c.StatoProgramma.ToString(),
+                DataCambioStatoProgramma = c.DataCambioStatoProgramma,
+                
                 // Riferimenti
                 RiferimentoOrdineCliente = c.RiferimentoOrdineCliente,
                 OurReference = c.OurReference,
@@ -205,8 +209,94 @@ public class CommessaAppService : ICommessaAppService
         var commessa = await _context.Commesse.FindAsync(id);
         if (commessa == null) throw new Exception("Commessa non trovata");
         
+        var vecchioNumeroMacchina = commessa.NumeroMacchina;
         commessa.NumeroMacchina = numeroMacchina;
+        
+        // Se assegno una macchina e lo stato è NonProgrammata, passa automaticamente a Programmata
+        if (!string.IsNullOrEmpty(numeroMacchina) && commessa.StatoProgramma == StatoProgramma.NonProgrammata)
+        {
+            var statoPrecedente = commessa.StatoProgramma;
+            commessa.StatoProgramma = StatoProgramma.Programmata;
+            commessa.DataCambioStatoProgramma = DateTime.Now;
+            
+            // Crea record storico per il cambio automatico
+            var storico = new StoricoProgrammazione
+            {
+                Id = Guid.NewGuid(),
+                CommessaId = id,
+                StatoPrecedente = statoPrecedente,
+                StatoNuovo = StatoProgramma.Programmata,
+                DataModifica = DateTime.Now,
+                Note = $"Cambio automatico per assegnazione macchina {numeroMacchina}"
+            };
+            _context.StoricoProgrammazione.Add(storico);
+        }
+        
+        commessa.UltimaModifica = DateTime.Now;
         await _context.SaveChangesAsync();
+    }
+
+    public async Task AggiornaStatoProgrammaAsync(Guid id, string statoProgramma, string? note = null, string? utente = null)
+    {
+        var commessa = await _context.Commesse.FindAsync(id);
+        if (commessa == null) throw new Exception("Commessa non trovata");
+        
+        var nuovoStato = Enum.Parse<StatoProgramma>(statoProgramma);
+        var statoPrecedente = commessa.StatoProgramma;
+        
+        // Se passo a NonProgrammata o Archiviata, rimuovo la macchina assegnata
+        if (nuovoStato == StatoProgramma.NonProgrammata || nuovoStato == StatoProgramma.Archiviata)
+        {
+            if (!string.IsNullOrEmpty(commessa.NumeroMacchina))
+            {
+                note = (note ?? "") + $" [Rimossa macchina {commessa.NumeroMacchina}]";
+                commessa.NumeroMacchina = null;
+            }
+        }
+        
+        // Crea record storico
+        var storico = new StoricoProgrammazione
+        {
+            Id = Guid.NewGuid(),
+            CommessaId = id,
+            StatoPrecedente = statoPrecedente,
+            StatoNuovo = nuovoStato,
+            DataModifica = DateTime.Now,
+            UtenteModifica = utente,
+            Note = note
+        };
+        _context.StoricoProgrammazione.Add(storico);
+        
+        // Aggiorna commessa
+        commessa.StatoProgramma = nuovoStato;
+        commessa.DataCambioStatoProgramma = DateTime.Now;
+        commessa.UltimaModifica = DateTime.Now;
+        
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<List<StoricoProgrammazioneDto>> GetStoricoProgrammazioneAsync(Guid commessaId)
+    {
+        var storico = await _context.StoricoProgrammazione
+            .Where(s => s.CommessaId == commessaId)
+            .OrderByDescending(s => s.DataModifica)
+            .ToListAsync();
+        
+        // Ottiene il codice commessa
+        var commessa = await _context.Commesse.FindAsync(commessaId);
+        var codiceCommessa = commessa?.Codice;
+        
+        return storico.Select(s => new StoricoProgrammazioneDto
+        {
+            Id = s.Id,
+            CommessaId = s.CommessaId,
+            NumeroCommessa = codiceCommessa,
+            StatoPrecedente = s.StatoPrecedente.ToString(),
+            StatoNuovo = s.StatoNuovo.ToString(),
+            DataModifica = s.DataModifica,
+            UtenteModifica = s.UtenteModifica,
+            Note = s.Note
+        }).ToList();
     }
 
     public async Task EliminaAsync(Guid id)

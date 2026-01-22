@@ -8,6 +8,21 @@ window.programmaMacchineGrid = (function() {
     };
 
     const columnDefs = [
+        {
+            field: 'storico',
+            headerName: '',
+            width: 50,
+            pinned: 'left',
+            sortable: false,
+            filter: false,
+            suppressMenu: true,
+            cellRenderer: params => {
+                return `<button class="storico-btn" style="border:none;background:transparent;cursor:pointer;font-size:16px;color:#9c27b0" title="Visualizza Storico Programmazione">📋</button>`;
+            },
+            onCellClicked: params => {
+                showStoricoProgrammazione(params.data.id, params.data.codice || params.data.numeroCommessa);
+            }
+        },
         { 
             field: 'numeroMacchina', 
             headerName: 'MA', 
@@ -80,10 +95,50 @@ window.programmaMacchineGrid = (function() {
         },
         { 
             field: 'stato', 
-            headerName: 'Stato', 
+            headerName: 'Stato Mago', 
             sortable: true, 
             filter: true, 
             width: 120
+        },
+        { 
+            field: 'statoProgramma', 
+            headerName: 'Stato Programma', 
+            sortable: true, 
+            filter: true, 
+            width: 160,
+            cellRenderer: params => {
+                const stati = [
+                    { value: 'NonProgrammata', label: 'Non Programmata', color: '#9e9e9e', bg: '#f5f5f5' },
+                    { value: 'Programmata', label: 'Programmata', color: '#1976d2', bg: '#e3f2fd' },
+                    { value: 'InProduzione', label: 'In Produzione', color: '#ff9800', bg: '#fff3e0' },
+                    { value: 'Completata', label: 'Completata', color: '#4caf50', bg: '#e8f5e9' },
+                    { value: 'Archiviata', label: 'Archiviata', color: '#616161', bg: '#eeeeee' }
+                ];
+                
+                const currentValue = params.value || 'NonProgrammata';
+                const selectId = `stato-programma-pm-${params.data.id}`;
+                
+                let options = '';
+                stati.forEach(s => {
+                    const selected = currentValue === s.value ? 'selected' : '';
+                    options += `<option value="${s.value}" ${selected} style="color:${s.color}">${s.label}</option>`;
+                });
+                
+                const currentStato = stati.find(s => s.value === currentValue) || stati[0];
+                
+                return `<select id="${selectId}" 
+                    style="width:100%; height:100%; border:none; background:${currentStato.bg}; 
+                           color:${currentStato.color}; font-weight:bold; text-align:center; cursor:pointer; 
+                           font-size:inherit; padding:2px;"
+                    data-commessa-id="${params.data.id}"
+                    data-field="statoProgramma">
+                    ${options}
+                </select>`;
+            },
+            onCellClicked: (event) => {
+                event.event.stopPropagation();
+            },
+            cellStyle: { padding: 0 }
         },
         { field: 'riferimentoOrdineCliente', headerName: 'Rif. Cliente', sortable: true, filter: true, width: 150 },
         { field: 'ourReference', headerName: 'Ns. Riferimento', sortable: true, filter: true, width: 150 },
@@ -140,6 +195,76 @@ window.programmaMacchineGrid = (function() {
         const num = getMachineNumber(numeroMacchina);
         if (num === 0) return null;
         return num % 2 === 0 ? machineColors.even : machineColors.odd;
+    }
+
+    // Funzione per mostrare lo storico programmazione in un dialog
+    async function showStoricoProgrammazione(commessaId, codiceCommessa) {
+        try {
+            const response = await fetch(`/api/Commesse/${commessaId}/storico-programmazione`);
+            if (!response.ok) throw new Error('Errore nel recupero dello storico');
+            
+            const storico = await response.json();
+            
+            // Crea il dialog overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'storico-dialog-overlay';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;justify-content:center;align-items:center;';
+            
+            // Contenuto del dialog
+            let tableRows = '';
+            if (storico.length === 0) {
+                tableRows = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#666;">Nessuna modifica registrata</td></tr>';
+            } else {
+                storico.forEach(s => {
+                    const data = new Date(s.dataModifica).toLocaleString('it-IT');
+                    tableRows += `<tr>
+                        <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${data}</td>
+                        <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${s.statoPrecedente}</td>
+                        <td style="padding:8px;border-bottom:1px solid #e0e0e0;">→</td>
+                        <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${s.statoNuovo}</td>
+                        <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${s.note || '-'}</td>
+                    </tr>`;
+                });
+            }
+            
+            overlay.innerHTML = `
+                <div style="background:white;border-radius:8px;max-width:700px;width:90%;max-height:80vh;overflow:auto;box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+                    <div style="padding:16px 20px;background:#9c27b0;color:white;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;">
+                        <h3 style="margin:0;font-size:18px;">📋 Storico Programmazione - ${codiceCommessa}</h3>
+                        <button id="close-storico-btn" style="border:none;background:transparent;color:white;font-size:24px;cursor:pointer;padding:0;line-height:1;">&times;</button>
+                    </div>
+                    <div style="padding:20px;">
+                        <table style="width:100%;border-collapse:collapse;">
+                            <thead>
+                                <tr style="background:#f5f5f5;">
+                                    <th style="padding:10px;text-align:left;border-bottom:2px solid #9c27b0;">Data</th>
+                                    <th style="padding:10px;text-align:left;border-bottom:2px solid #9c27b0;">Da</th>
+                                    <th style="padding:10px;text-align:center;border-bottom:2px solid #9c27b0;width:30px;"></th>
+                                    <th style="padding:10px;text-align:left;border-bottom:2px solid #9c27b0;">A</th>
+                                    <th style="padding:10px;text-align:left;border-bottom:2px solid #9c27b0;">Note</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            // Gestione chiusura
+            const closeBtn = document.getElementById('close-storico-btn');
+            closeBtn.addEventListener('click', () => overlay.remove());
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.remove();
+            });
+            
+        } catch (err) {
+            console.error('Error loading storico:', err);
+            alert('Errore nel caricamento dello storico: ' + err.message);
+        }
     }
 
     function init(gridId, data, savedColumnState) {
@@ -242,6 +367,14 @@ window.programmaMacchineGrid = (function() {
             },
             onModelUpdated: () => {
                 window.dispatchEvent(new CustomEvent('programmaMacchineGridStatsChanged'));
+            },
+            onRowDataUpdated: () => {
+                // Attach handlers for statoProgramma selects after row data is updated
+                setTimeout(() => attachStatoProgrammaHandlers(), 100);
+            },
+            onFirstDataRendered: () => {
+                // Attach handlers for statoProgramma selects after first render
+                setTimeout(() => attachStatoProgrammaHandlers(), 100);
             }
         };
 
@@ -306,6 +439,76 @@ window.programmaMacchineGrid = (function() {
                 fileName: 'programma_macchine_export.csv',
                 columnSeparator: ';'
             });
+        }
+    }
+
+    // Funzione per gestire i cambi di stato programma
+    function attachStatoProgrammaHandlers() {
+        document.querySelectorAll('select[data-commessa-id][data-field="statoProgramma"]').forEach(select => {
+            if (select.hasAttribute('data-listener-attached')) return;
+            select.setAttribute('data-listener-attached', 'true');
+            
+            select.addEventListener('change', async (e) => {
+                const commessaId = e.target.getAttribute('data-commessa-id');
+                const newValue = e.target.value;
+                const selectEl = e.target;
+                
+                console.log(`Updating statoProgramma for commessa ${commessaId} to ${newValue}`);
+                
+                try {
+                    const response = await fetch(`/api/Commesse/${commessaId}/stato-programma`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ statoProgramma: newValue })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    console.log(`✓ statoProgramma updated successfully for ${commessaId}`);
+                    
+                    // Dispatch event for other components
+                    window.dispatchEvent(new CustomEvent('commessaStatoProgrammaChanged', { 
+                        detail: { id: commessaId, statoProgramma: newValue } 
+                    }));
+                    
+                    // Ricarica tutti i dati per riflettere cambiamenti automatici
+                    await refreshGridData();
+                    
+                } catch (err) {
+                    console.error('Error updating statoProgramma:', err);
+                    alert(`Errore durante il salvataggio: ${err.message}`);
+                    selectEl.value = selectEl.dataset.previousValue || 'NonProgrammata';
+                }
+            });
+            
+            // Store current value for revert on error
+            select.addEventListener('focus', (e) => {
+                e.target.dataset.previousValue = e.target.value;
+            });
+        });
+    }
+
+    // Funzione per ricaricare i dati della griglia
+    async function refreshGridData() {
+        try {
+            const response = await fetch('/api/Commesse');
+            if (!response.ok) throw new Error('Failed to fetch');
+            const allData = await response.json();
+            // Filtra solo commesse con macchina assegnata e stato != Archiviata
+            const filteredData = allData.filter(c => 
+                c.numeroMacchina != null && 
+                c.numeroMacchina !== '' && 
+                c.statoProgramma !== 'Archiviata'
+            );
+            if (gridApi) {
+                gridApi.setGridOption('rowData', filteredData);
+                console.log(`Grid refreshed with ${filteredData.length} rows`);
+                setTimeout(() => attachStatoProgrammaHandlers(), 100);
+            }
+        } catch (err) {
+            console.error('Error refreshing grid data:', err);
         }
     }
 

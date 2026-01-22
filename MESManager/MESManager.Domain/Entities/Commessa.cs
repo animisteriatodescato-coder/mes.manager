@@ -38,6 +38,10 @@ public class Commessa
     public DateTime? DataInizioProduzione { get; set; } // Data/ora inizio effettivo
     public DateTime? DataFineProduzione { get; set; } // Data/ora fine effettivo
     
+    // Stato programma interno (NON sovrascrive lo stato Mago)
+    public StatoProgramma StatoProgramma { get; set; } = StatoProgramma.NonProgrammata;
+    public DateTime? DataCambioStatoProgramma { get; set; }
+    
     // Audit
     public DateTime UltimaModifica { get; set; }
     public DateTime TimestampSync { get; set; }
@@ -45,4 +49,5 @@ public class Commessa
     // Navigazioni
     public Articolo? Articolo { get; set; }
     public Cliente? Cliente { get; set; }
+    public ICollection<StoricoProgrammazione> StoricoProgrammazione { get; set; } = new List<StoricoProgrammazione>();
 }

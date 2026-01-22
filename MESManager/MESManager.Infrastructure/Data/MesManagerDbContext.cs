@@ -29,6 +29,7 @@ public class MesManagerDbContext : DbContext
     public DbSet<CalendarioLavoro> CalendarioLavoro => Set<CalendarioLavoro>();
     public DbSet<ImpostazioniGantt> ImpostazioniGantt => Set<ImpostazioniGantt>();
     public DbSet<AllegatoArticolo> AllegatiArticoli => Set<AllegatoArticolo>();
+    public DbSet<StoricoProgrammazione> StoricoProgrammazione => Set<StoricoProgrammazione>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -111,5 +112,23 @@ public class MesManagerDbContext : DbContext
         
         modelBuilder.Entity<AllegatoArticolo>()
             .HasIndex(a => a.IdGanttOriginale);
+
+        // Relazione 1:N Commessa-StoricoProgrammazione
+        modelBuilder.Entity<StoricoProgrammazione>()
+            .HasOne(s => s.Commessa)
+            .WithMany(c => c.StoricoProgrammazione)
+            .HasForeignKey(s => s.CommessaId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Indice per query veloci su storico
+        modelBuilder.Entity<StoricoProgrammazione>()
+            .HasIndex(s => s.CommessaId);
+        
+        modelBuilder.Entity<StoricoProgrammazione>()
+            .HasIndex(s => s.DataModifica);
+
+        // Indice per filtrare commesse per StatoProgramma
+        modelBuilder.Entity<Commessa>()
+            .HasIndex(c => c.StatoProgramma);
     }
 }

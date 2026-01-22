@@ -29,6 +29,10 @@ public class CommessaDto
     public DateTime? DataConsegna { get; set; }
     public string? Stato { get; set; }
     
+    // Stato programma interno (gestito localmente)
+    public string? StatoProgramma { get; set; }
+    public DateTime? DataCambioStatoProgramma { get; set; }
+    
     // Riferimenti
     public string? RiferimentoOrdineCliente { get; set; }
     public string? OurReference { get; set; }
