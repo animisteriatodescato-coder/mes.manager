@@ -61,22 +61,22 @@
             <MudText Typo="Typo.h6">Menu</MudText>
         </MudDrawerHeader>
         <MudNavMenu>
-            <MudNavLink Href="/" Icon="@Icons.Material.Filled.Dashboard">Home</MudNavLink>
+            <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary">Home</MudNavLink>
             
-            <MudNavGroup Title="Produzione" Icon="@Icons.Material.Filled.Factory" Expanded="true">
+            <MudNavGroup Title="Programma Irene" Icon="@Icons.Material.Filled.Favorite" IconColor="Color.Error" Expanded="true">
+                <MudNavLink Href="/programma/programma-macchine">Programma</MudNavLink>
+                <MudNavLink Href="/programma/commesse-aperte">Commesse</MudNavLink>
+                <MudNavLink Href="/programma/gantt-macchine">Gantt</MudNavLink>
+            </MudNavGroup>
+            
+            <MudNavGroup Title="Produzione" Icon="@Icons.Material.Filled.Factory" IconColor="Color.Warning">
                 <MudNavLink Href="/produzione/dashboard">Dashboard</MudNavLink>
                 <MudNavLink Href="/produzione/plc-realtime">PLC Realtime</MudNavLink>
                 <MudNavLink Href="/produzione/plc-storico">PLC Storico</MudNavLink>
                 <MudNavLink Href="/produzione/incollaggio">Incollaggio</MudNavLink>
             </MudNavGroup>
             
-            <MudNavGroup Title="Programma" Icon="@Icons.Material.Filled.Schedule">
-                <MudNavLink Href="/programma/gantt-macchine">Gantt Macchine</MudNavLink>
-                <MudNavLink Href="/programma/commesse-aperte">Commesse Aperte</MudNavLink>
-                <MudNavLink Href="/programma/programma-macchine">Programma Macchine</MudNavLink>
-            </MudNavGroup>
-            
-            <MudNavGroup Title="Cataloghi" Icon="@Icons.Material.Filled.LibraryBooks">
+            <MudNavGroup Title="Cataloghi" Icon="@Icons.Material.Filled.LibraryBooks" IconColor="Color.Info">
                 <MudNavLink Href="/cataloghi/commesse">Commesse</MudNavLink>
                 <MudNavLink Href="/cataloghi/anime">Anime</MudNavLink>
                 <MudNavLink Href="/cataloghi/articoli">Articoli</MudNavLink>
@@ -85,26 +85,24 @@
                 <MudNavLink Href="/cataloghi/foto">Foto</MudNavLink>
             </MudNavGroup>
             
-            <MudNavGroup Title="Manutenzioni" Icon="@Icons.Material.Filled.Build">
+            <MudNavGroup Title="Manutenzioni" Icon="@Icons.Material.Filled.Build" IconColor="Color.Secondary">
                 <MudNavLink Href="/manutenzioni/alert">Alert</MudNavLink>
                 <MudNavLink Href="/manutenzioni/catalogo">Catalogo</MudNavLink>
             </MudNavGroup>
             
-            <MudNavGroup Title="Sync" Icon="@Icons.Material.Filled.Sync">
+            <MudNavGroup Title="Sync" Icon="@Icons.Material.Filled.Sync" IconColor="Color.Success">
                 <MudNavLink Href="/sync/gantt">Gantt</MudNavLink>
                 <MudNavLink Href="/sync/mago">Mago</MudNavLink>
                 <MudNavLink Href="/sync/macchine">Macchine</MudNavLink>
-                <MudNavLink Href="/sync/google">Google</MudNavLink>
             </MudNavGroup>
             
-            <MudNavGroup Title="Statistiche" Icon="@Icons.Material.Filled.BarChart">
+            <MudNavGroup Title="Statistiche" Icon="@Icons.Material.Filled.BarChart" IconColor="Color.Tertiary">
                 <MudNavLink Href="/statistiche/produzione">Produzione</MudNavLink>
                 <MudNavLink Href="/statistiche/ordini">Ordini</MudNavLink>
             </MudNavGroup>
             
-            <MudNavGroup Title="Impostazioni" Icon="@Icons.Material.Filled.Settings">
+            <MudNavGroup Title="Impostazioni" Icon="@Icons.Material.Filled.Settings" IconColor="Color.Dark">
                 <MudNavLink Href="/impostazioni/gantt">Gantt Macchine</MudNavLink>
-                <MudNavLink Href="/impostazioni/calendario">Calendario</MudNavLink>
                 <MudNavLink Href="/impostazioni/tabelle">Tabelle</MudNavLink>
                 <MudNavLink Href="/impostazioni/utenti">Utenti</MudNavLink>
                 <MudNavLink Href="/impostazioni/operatori">Operatori</MudNavLink>
