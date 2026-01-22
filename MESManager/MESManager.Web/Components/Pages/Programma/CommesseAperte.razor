@@ -118,7 +118,7 @@
     </MudDialog>
 
     @* Dialog Stampa Etichetta *@
-    <MudDialog @bind-Visible="showLabelDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true }">
+    <MudDialog @bind-Visible="showLabelDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true }" Style="max-width:80vw;">
         <TitleContent>
             <MudStack Row="true" AlignItems="AlignItems.Center">
                 <MudIcon Icon="@Icons.Material.Filled.Print" Class="mr-2" Color="Color.Primary" />
