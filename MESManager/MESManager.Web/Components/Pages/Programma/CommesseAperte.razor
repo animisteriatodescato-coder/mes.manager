@@ -926,6 +926,7 @@
             ? $"<div class='photo-section'><img src='{labelFotoUrl}' alt='Foto' /></div>" 
             : "";
         var totaleLotto = c.QuantitaRichiesta;
+        var noPhotoClass = hasFoto ? "" : " no-photo";
         
         return $@"
 <!DOCTYPE html>
@@ -990,6 +991,13 @@
             width: 45%;
             display: flex;
         }}
+        /* Quando non c'è foto, il pannello destro prende tutto lo spazio e allinea a destra */
+        .label-main-content.no-photo {{
+            justify-content: flex-end;
+        }}
+        .label-main-content.no-photo .right-panel {{
+            width: 45%;
+        }}
         .details-section {{
             flex: 1;
             padding: 6px 10px;
@@ -1028,7 +1036,7 @@
                 <span class='label-field-name'>CODICE ANIMA</span>
                 <span class='label-code'>{System.Web.HttpUtility.HtmlEncode(c.CodiceAnime ?? "")}</span>
             </div>
-            <div class='label-main-content'>
+            <div class='label-main-content{noPhotoClass}'>
                 {fotoHtml}
                 <div class='right-panel'>
                     <div class='details-section'>
@@ -1072,7 +1080,7 @@
                 <span class='label-field-name'>CODICE ANIMA</span>
                 <span class='label-code'>{System.Web.HttpUtility.HtmlEncode(c.CodiceAnime ?? "")}</span>
             </div>
-            <div class='label-main-content'>
+            <div class='label-main-content{noPhotoClass}'>
                 {fotoHtml}
                 <div class='right-panel'>
                     <div class='details-section'>
