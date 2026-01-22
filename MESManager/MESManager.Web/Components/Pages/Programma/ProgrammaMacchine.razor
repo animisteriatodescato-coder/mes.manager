@@ -137,12 +137,35 @@
     }
 
     @@media print {
-        .programma-macchine-page {
+        /* Hide everything on the page */
+        .programma-macchine-page,
+        .settings-panel,
+        .footer-info,
+        #programmaMacchineGrid,
+        .mud-dialog,
+        .mud-dialog-overlay {
             display: none !important;
         }
         
+        /* Show only the printable div */
         #printableCommesse {
             display: block !important;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: white !important;
+            color: black !important;
+            z-index: 99999;
+        }
+
+        /* Force colors for table cells during printing */
+        #printableCommesse table,
+        #printableCommesse th,
+        #printableCommesse td,
+        #printableCommesse tr {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         
         @@page {

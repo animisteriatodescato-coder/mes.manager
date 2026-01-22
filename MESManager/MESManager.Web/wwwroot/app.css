@@ -49,3 +49,60 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+/* ========================================
+   Print Media Styles - Global
+   Ensures only printable content is shown
+   ======================================== */
+@media print {
+    /* Force light mode colors for printing */
+    body {
+        background: white !important;
+        color: black !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Hide MudBlazor layout elements */
+    .mud-appbar,
+    .mud-drawer,
+    .mud-drawer-overlay,
+    .mud-popover-provider,
+    .mud-dialog-provider,
+    .mud-snackbar-provider,
+    .mud-overlay,
+    header,
+    nav {
+        display: none !important;
+    }
+
+    /* Ensure main content takes full width */
+    .mud-main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+
+    .mud-layout {
+        display: block !important;
+    }
+
+    .mud-container {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Force light background on all elements during print */
+    * {
+        background-color: transparent !important;
+    }
+
+    /* Allow specific print elements to have background colors */
+    .print-allow-bg,
+    #printableCommesse,
+    #printableCommesse * {
+        background-color: inherit !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}

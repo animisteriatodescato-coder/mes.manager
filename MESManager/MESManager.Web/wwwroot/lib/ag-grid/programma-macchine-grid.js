@@ -365,17 +365,26 @@ window.programmaMacchineGrid = (function() {
             }
         });
 
-        // Genera HTML per la tabella
-        let html = '<h2 style="text-align: center; margin-bottom: 20px;">Programma Macchine</h2>';
-        html += '<table style="width: 100%; border-collapse: collapse; font-size: 10px;">';
+        // Data e ora di stampa
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('it-IT');
+        const timeStr = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+        // Genera HTML per la tabella con stile esplicito per stampa
+        let html = '<div style="background: white; color: black; padding: 10px; font-family: Arial, sans-serif;">';
+        html += `<div style="text-align: center; margin-bottom: 15px;">`;
+        html += `<h2 style="margin: 0 0 5px 0; color: black;">Programma Macchine</h2>`;
+        html += `<p style="margin: 0; font-size: 12px; color: #666;">Data stampa: ${dateStr} ${timeStr}</p>`;
+        html += `</div>`;
+        html += '<table style="width: 100%; border-collapse: collapse; font-size: 10px; background: white;">';
         
         // Header
-        html += '<thead><tr style="background-color: #f0f0f0;">';
+        html += '<thead><tr style="background-color: #f0f0f0; -webkit-print-color-adjust: exact; print-color-adjust: exact;">';
         visibleColumns.forEach(col => {
             const colDef = col.getColDef();
             const align = colDef.type === 'numericColumn' ? 'right' : 
                          colDef.field === 'numeroMacchina' ? 'center' : 'left';
-            const style = `border: 1px solid #ddd; padding: 4px; text-align: ${align}; font-weight: bold;`;
+            const style = `border: 1px solid #ddd; padding: 4px; text-align: ${align}; font-weight: bold; background-color: #f0f0f0; -webkit-print-color-adjust: exact; print-color-adjust: exact;`;
             html += `<th style="${style}">${colDef.headerName}</th>`;
         });
         html += '</tr></thead>';
@@ -390,7 +399,7 @@ window.programmaMacchineGrid = (function() {
                 ? 'border-top: 3px solid #000;' : '';
             previousMachine = row.numeroMacchina;
             
-            html += `<tr style="background-color: ${bgColor}; ${borderTop}">`;
+            html += `<tr style="background-color: ${bgColor}; ${borderTop} -webkit-print-color-adjust: exact; print-color-adjust: exact;">`;
             visibleColumns.forEach(col => {
                 const colDef = col.getColDef();
                 const field = colDef.field;
@@ -406,7 +415,7 @@ window.programmaMacchineGrid = (function() {
                 const align = colDef.type === 'numericColumn' ? 'right' : 
                              field === 'numeroMacchina' ? 'center' : 'left';
                 const fontWeight = field === 'numeroMacchina' ? 'font-weight: bold;' : '';
-                const style = `border: 1px solid #ddd; padding: 3px; text-align: ${align}; ${fontWeight}`;
+                const style = `border: 1px solid #ddd; padding: 3px; text-align: ${align}; ${fontWeight} background-color: ${bgColor}; -webkit-print-color-adjust: exact; print-color-adjust: exact;`;
                 html += `<td style="${style}">${value}</td>`;
             });
             html += '</tr>';
@@ -414,13 +423,11 @@ window.programmaMacchineGrid = (function() {
         html += '</tbody>';
         html += '</table>';
 
-        // Footer
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('it-IT');
-        const timeStr = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-        html += `<div style="margin-top: 10px; font-size: 9px; color: #666;">`;
-        html += `<p style="margin: 2px 0;">Stampa: ${dateStr} ${timeStr} | Totale commesse: ${rowData.length}</p>`;
+        // Footer - già incluso data e ora nell'header, aggiungiamo solo il totale
+        html += `<div style="margin-top: 10px; font-size: 9px; color: #666; text-align: right;">`;
+        html += `<p style="margin: 2px 0;">Totale commesse: ${rowData.length}</p>`;
         html += `</div>`;
+        html += '</div>'; // Chiude il div wrapper principale
 
         printDiv.innerHTML = html;
     }
