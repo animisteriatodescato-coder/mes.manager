@@ -31,6 +31,12 @@
                          Immediate="true"
                          DebounceInterval="280"
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
+            <MudSwitch Value="@showArchived" 
+                       Color="Color.Warning" 
+                       Label="Mostra Archiviate" 
+                       T="bool"
+                       ValueChanged="@OnShowArchivedChanged" />
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshGridData">Aggiorna</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
             <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
@@ -544,6 +550,7 @@
     private bool _isGridInitialized = false;
     private bool _isDataLoaded = false;
     private bool _isLoadingData = false;
+    private bool showArchived = false;
     
     // Variabili per stampa etichetta
     private bool showLabelDialog = false;
@@ -564,6 +571,16 @@
         {
             Console.WriteLine($"Error filtering grid: {ex.Message}");
         }
+    }
+
+    private async Task OnShowArchivedChanged(bool value)
+    {
+        showArchived = value;
+        // Imposta la variabile globale JavaScript per il refresh
+        await JSRuntime.InvokeVoidAsync("eval", $"window.commesseAperteShowArchived = {value.ToString().ToLower()}");
+        await LoadData(true);
+        await ReinitializeGrid();
+        StateHasChanged();
     }
 
     protected override async Task OnInitializedAsync()
@@ -636,9 +653,17 @@
             Console.WriteLine("Fetching commesse from API...");
             var allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
             
-            // Filtra solo le commesse aperte
-            _commesse = allCommesse.Where(c => c.Stato == "Aperta").ToList();
-            Console.WriteLine($"Fetched {allCommesse.Count} commesse, filtered to {_commesse.Count} aperte");
+            // Filtra solo le commesse aperte, e opzionalmente esclude archiviate
+            if (showArchived)
+            {
+                _commesse = allCommesse.Where(c => c.Stato == "Aperta").ToList();
+                Console.WriteLine($"Fetched {allCommesse.Count} commesse, filtered to {_commesse.Count} aperte (including archived)");
+            }
+            else
+            {
+                _commesse = allCommesse.Where(c => c.Stato == "Aperta" && c.StatoProgramma != "Archiviata").ToList();
+                Console.WriteLine($"Fetched {allCommesse.Count} commesse, filtered to {_commesse.Count} aperte (excluding archived)");
+            }
             
             totalRows = _commesse.Count;
             filteredRows = _commesse.Count;

@@ -391,6 +391,15 @@
         try
         {
             await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.setColumnVisible", field, visible);
+            
+            // Sincronizza anche la colonna stampa quando si attiva la visibilità
+            var col = columnList.FirstOrDefault(c => c.Field == field);
+            if (col != null && visible)
+            {
+                col.PrintVisible = true;
+                await SavePrintColumnSettings();
+            }
+            
             await SaveGridState();
         }
         catch (Exception ex)
@@ -593,15 +602,31 @@
         try
         {
             var savedPrintColumns = await PreferencesService.GetAsync<List<string>>("programma-macchine-print-columns");
-            if (savedPrintColumns != null && savedPrintColumns.Any())
+            if (savedPrintColumns != null)
             {
+                // Se ci sono impostazioni salvate, usa quelle
                 foreach (var col in columnList)
                 {
                     col.PrintVisible = savedPrintColumns.Contains(col.Field);
                 }
             }
+            else
+            {
+                // Se non ci sono impostazioni salvate, sincronizza con visibilità
+                foreach (var col in columnList)
+                {
+                    col.PrintVisible = col.Visible;
+                }
+            }
         }
-        catch { }
+        catch 
+        {
+            // In caso di errore, sincronizza con visibilità
+            foreach (var col in columnList)
+            {
+                col.PrintVisible = col.Visible;
+            }
+        }
     }
 
     private async Task SelectAllPrintColumns()

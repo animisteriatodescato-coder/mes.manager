@@ -31,6 +31,7 @@ window.programmaMacchineGrid = (function() {
             width: 70, 
             pinned: 'left',
             sort: 'asc',
+            sortIndex: 0,
             cellStyle: { fontWeight: 'bold', textAlign: 'center' },
             valueFormatter: params => {
                 if (!params.value) return '';
@@ -91,6 +92,8 @@ window.programmaMacchineGrid = (function() {
             sortable: true, 
             filter: true, 
             width: 120,
+            sort: 'asc',
+            sortIndex: 1,
             valueFormatter: params => params.value ? new Date(params.value).toLocaleDateString('it-IT') : ''
         },
         { 
@@ -818,16 +821,22 @@ window.programmaMacchineGrid = (function() {
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { 
-            background-color: #ffffff !important; 
-            background: #ffffff !important;
-            color: #000000 !important; 
+            background-color: white !important; 
+            background: white !important;
+            color: black !important; 
             font-family: Arial, sans-serif;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            color-adjust: exact !important;
         }
         @page { 
             size: landscape; 
-            margin: 10mm; 
+            margin: 10mm;
+            background: white !important;
+        }
+        @media print {
+            html, body { background: white !important; background-color: white !important; }
+            * { background-color: inherit; }
         }
         h2 { text-align: center; margin-bottom: 5px; color: #000; }
         .print-date { text-align: center; font-size: 12px; color: #666; margin-bottom: 15px; }

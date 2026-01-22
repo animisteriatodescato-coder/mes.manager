@@ -90,7 +90,8 @@ window.commesseAperteGrid = (function() {
                            font-weight:${fontWeight}; text-align:center; cursor:pointer; 
                            font-size:inherit; padding:2px;"
                     size="1"
-                    data-commessa-id="${params.data.id}">
+                    data-commessa-id="${params.data.id}"
+                    data-field="numeroMacchina">
                     ${options}
                 </select>`;
             },
@@ -167,7 +168,7 @@ window.commesseAperteGrid = (function() {
             headerName: 'Stato Programma', 
             sortable: true, 
             filter: true, 
-            width: 160,
+            width: 180,
             cellRenderer: params => {
                 const stati = [
                     { value: 'NonProgrammata', label: 'Non Programmata', color: '#9e9e9e', bg: '#f5f5f5' },
@@ -178,29 +179,65 @@ window.commesseAperteGrid = (function() {
                 ];
                 
                 const currentValue = params.value || 'NonProgrammata';
-                const selectId = `stato-programma-select-${params.data.id}`;
-                
-                let options = '';
-                stati.forEach(s => {
-                    const selected = currentValue === s.value ? 'selected' : '';
-                    options += `<option value="${s.value}" ${selected} style="color:${s.color}">${s.label}</option>`;
-                });
-                
                 const currentStato = stati.find(s => s.value === currentValue) || stati[0];
                 
-                return `<select id="${selectId}" 
-                    style="width:100%; height:100%; border:none; background:${currentStato.bg}; 
-                           color:${currentStato.color}; font-weight:bold; text-align:center; cursor:pointer; 
-                           font-size:inherit; padding:2px;"
-                    data-commessa-id="${params.data.id}"
-                    data-field="statoProgramma">
-                    ${options}
-                </select>`;
+                // Se è archiviata, mostra pulsante Ripristina
+                if (currentValue === 'Archiviata') {
+                    return `<span style="display:flex; align-items:center; justify-content:space-between; width:100%; height:100%; background:${currentStato.bg}; padding: 0 5px;">
+                        <span style="color:${currentStato.color}; font-weight:bold; font-size:inherit;">
+                            ${currentStato.label}
+                        </span>
+                        <button class="btn-ripristina" 
+                                style="background:#1976d2; color:white; border:none; border-radius:3px; 
+                                       padding:2px 8px; cursor:pointer; font-size:11px; font-weight:bold;">
+                            Ripristina
+                        </button>
+                    </span>`;
+                }
+                
+                // Solo visualizzazione - lo stato si gestisce da Programma Macchine
+                return `<span style="display:block; width:100%; height:100%; background:${currentStato.bg}; 
+                           color:${currentStato.color}; font-weight:bold; text-align:center; 
+                           line-height:28px; font-size:inherit;">
+                    ${currentStato.label}
+                </span>`;
             },
-            onCellClicked: (event) => {
-                event.event.stopPropagation();
-            },
-            cellStyle: { padding: 0 }
+            cellStyle: { padding: 0 },
+            onCellClicked: async params => {
+                // Gestisce il click sul pulsante Ripristina
+                if (params.event.target.classList.contains('btn-ripristina')) {
+                    const commessaId = params.data.id;
+                    
+                    if (!confirm('Ripristinare questa commessa a stato "Programmata"?')) return;
+                    
+                    const btn = params.event.target;
+                    try {
+                        btn.disabled = true;
+                        btn.textContent = '...';
+                        
+                        const response = await fetch(`/api/Commesse/${commessaId}/stato-programma`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ statoProgramma: 'Programmata' })
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        
+                        console.log(`✓ Commessa ${commessaId} ripristinata a Programmata`);
+                        
+                        // Ricarica i dati
+                        await refreshGridData();
+                        
+                    } catch (err) {
+                        console.error(`Error restoring commessa:`, err);
+                        alert(`Errore durante il ripristino: ${err.message}`);
+                        btn.disabled = false;
+                        btn.textContent = 'Ripristina';
+                    }
+                }
+            }
         },
         { field: 'riferimentoOrdineCliente', headerName: 'Rif. Cliente', sortable: true, filter: true, width: 150 },
         { field: 'ourReference', headerName: 'Ns. Riferimento', sortable: true, filter: true, width: 150 },
@@ -271,44 +308,35 @@ window.commesseAperteGrid = (function() {
             
             select.addEventListener('change', async (e) => {
                 const commessaId = e.target.getAttribute('data-commessa-id');
-                const field = e.target.getAttribute('data-field') || 'numeroMacchina';
                 const newValue = e.target.value;
                 const selectEl = e.target;
                 
-                console.log(`Updating ${field} for commessa ${commessaId} to ${newValue}`);
+                console.log(`Updating numeroMacchina for commessa ${commessaId} to ${newValue}`);
                 
                 try {
-                    let response;
-                    if (field === 'statoProgramma') {
-                        response = await fetch(`/api/Commesse/${commessaId}/stato-programma`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ statoProgramma: newValue })
-                        });
-                    } else {
-                        response = await fetch(`/api/Commesse/${commessaId}/numero-macchina`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ numeroMacchina: newValue })
-                        });
-                    }
+                    // Aggiorna solo il numero macchina - lo stato si gestisce da Programma Macchine
+                    const response = await fetch(`/api/Commesse/${commessaId}/numero-macchina`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ numeroMacchina: newValue })
+                    });
                     
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
                     
-                    console.log(`✓ ${field} updated successfully for ${commessaId}`);
+                    console.log(`✓ numeroMacchina updated successfully for ${commessaId}`);
                     
                     // Dispatch event for Blazor to refresh data
                     window.dispatchEvent(new CustomEvent('commessaFieldChanged', { 
-                        detail: { id: commessaId, field: field, value: newValue } 
+                        detail: { id: commessaId, field: 'numeroMacchina', value: newValue } 
                     }));
                     
-                    // Ricarica tutti i dati per riflettere cambiamenti automatici (es. rimozione macchina)
+                    // Ricarica tutti i dati per riflettere cambiamenti automatici (stato Programmata)
                     await refreshGridData();
                     
                 } catch (err) {
-                    console.error(`Error updating ${field}:`, err);
+                    console.error(`Error updating numeroMacchina:`, err);
                     alert(`Errore durante il salvataggio: ${err.message}`);
                     // Revert the select to previous value
                     selectEl.value = selectEl.dataset.previousValue || '';
@@ -325,15 +353,23 @@ window.commesseAperteGrid = (function() {
     // Funzione per ricaricare i dati della griglia
     async function refreshGridData() {
         try {
+            console.log('refreshGridData: starting...');
             const response = await fetch('/api/Commesse');
             if (!response.ok) throw new Error('Failed to fetch');
             const allData = await response.json();
-            // Filtra solo commesse aperte
-            const filteredData = allData.filter(c => c.stato === 'Aperta');
+            // Filtra solo commesse aperte, rispettando il toggle showArchived
+            const showArchived = window.commesseAperteShowArchived || false;
+            const filteredData = showArchived 
+                ? allData.filter(c => c.stato === 'Aperta')
+                : allData.filter(c => c.stato === 'Aperta' && c.statoProgramma !== 'Archiviata');
             if (gridApi) {
                 gridApi.setGridOption('rowData', filteredData);
-                console.log(`Grid refreshed with ${filteredData.length} rows`);
-                setTimeout(() => attachMachineSelectHandlers(), 100);
+                console.log(`Grid refreshed with ${filteredData.length} rows (showArchived: ${showArchived})`);
+                // Attendi che la griglia sia renderizzata prima di attaccare gli handler
+                setTimeout(() => {
+                    attachMachineSelectHandlers();
+                    console.log('Handlers re-attached after refresh');
+                }, 200);
             }
         } catch (err) {
             console.error('Error refreshing grid data:', err);
@@ -524,6 +560,17 @@ window.commesseAperteGrid = (function() {
             },
             onModelUpdated: () => {
                 window.dispatchEvent(new CustomEvent('commesseAperteGridStatsChanged'));
+                // Re-attach select handlers after grid updates
+                setTimeout(() => {
+                    attachMachineSelectHandlers();
+                }, 100);
+            },
+            onRowDataUpdated: () => {
+                // Re-attach select handlers after row data changes
+                console.log('onRowDataUpdated triggered');
+                setTimeout(() => {
+                    attachMachineSelectHandlers();
+                }, 150);
             },
             onRowDoubleClicked: (event) => {
                 // Skip navigation if double-clicking on machine select
@@ -540,12 +587,6 @@ window.commesseAperteGrid = (function() {
                 if (event.colDef.field === 'numeroMacchina') {
                     return;
                 }
-            },
-            onModelUpdated: () => {
-                // Re-attach select handlers after grid updates
-                setTimeout(() => {
-                    attachMachineSelectHandlers();
-                }, 50);
             }
         };
 
