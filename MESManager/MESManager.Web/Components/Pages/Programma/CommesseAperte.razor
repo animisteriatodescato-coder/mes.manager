@@ -135,8 +135,10 @@
                             <MudNumericField @bind-Value="labelQuantita" 
                                            Label="Quantità Etichetta" 
                                            Variant="Variant.Outlined"
-                                           Min="1"
+                                           Min="0"
+                                           Disabled="@labelQuantitaVuota"
                                            HelperText="@($"Totale ordine: {selectedCommessaForLabel.QuantitaRichiesta}")" />
+                            <MudCheckBox @bind-Value="labelQuantitaVuota" Label="Lascia quantità vuota" Color="Color.Secondary" Class="mt-2" />
                             <MudText Typo="Typo.caption" Class="mt-2" Color="Color.Secondary">
                                 Calcolata: @((selectedCommessaForLabel.QuantitaPiano ?? 0) * (selectedCommessaForLabel.NumeroPiani ?? 0)) 
                                 (Piano: @(selectedCommessaForLabel.QuantitaPiano ?? 0) × Piani: @(selectedCommessaForLabel.NumeroPiani ?? 0))
@@ -199,7 +201,7 @@
                                                 </div>
                                                 <div class="qty-item">
                                                     <span class="qty-label">QUANTITA' / @(selectedCommessaForLabel.QuantitaRichiesta)</span>
-                                                    <span class="qty-value">@labelQuantita</span>
+                                                    <span class="qty-value">@(labelQuantitaVuota ? "___" : labelQuantita.ToString())</span>
                                                     <span class="qty-code">Commessa n. @(selectedCommessaForLabel.InternalOrdNo ?? "")</span>
                                                 </div>
                                                 <div class="operator-item">
@@ -218,6 +220,7 @@
         </DialogContent>
         <DialogActions>
             <MudButton OnClick="@(() => showLabelDialog = false)" Variant="Variant.Text">Annulla</MudButton>
+            <MudButton OnClick="@PrintEmptyLabel" Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.EditNote">Stampa Vuota</MudButton>
             <MudButton OnClick="@PrintLabel" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Print">Stampa</MudButton>
         </DialogActions>
     </MudDialog>
@@ -557,6 +560,7 @@
     private bool showMissingDataDialog = false;
     private CommessaDto? selectedCommessaForLabel;
     private int labelQuantita = 1;
+    private bool labelQuantitaVuota = false;
     private List<string> campiMancanti = new();
     private string? currentArticoloCodice;
     private string? labelFotoUrl; // URL foto con priorità 2
@@ -795,6 +799,7 @@
             var qp = commessa.QuantitaPiano ?? 0;
             var np = commessa.NumeroPiani ?? 0;
             labelQuantita = qp * np > 0 ? qp * np : 1;
+            labelQuantitaVuota = false; // Reset checkbox
             
             // Carica foto con priorità 2
             await LoadLabelFotoAsync(commessa.ArticoloCodice);
@@ -927,6 +932,7 @@
             : "";
         var totaleLotto = c.QuantitaRichiesta;
         var noPhotoClass = hasFoto ? "" : " no-photo";
+        var quantitaDisplay = labelQuantitaVuota ? "___" : labelQuantita.ToString();
         
         return $@"
 <!DOCTYPE html>
@@ -1056,7 +1062,7 @@
                         </div>
                         <div class='qty-item'>
                             <span class='qty-label'>QUANTITA' / {totaleLotto}</span>
-                            <span class='qty-value'>{labelQuantita}</span>
+                            <span class='qty-value'>{quantitaDisplay}</span>
                             <span class='qty-code'>Commessa n. {System.Web.HttpUtility.HtmlEncode(c.InternalOrdNo ?? "")}</span>
                         </div>
                         <div class='operator-item'>
@@ -1100,8 +1106,199 @@
                         </div>
                         <div class='qty-item'>
                             <span class='qty-label'>QUANTITA' / {totaleLotto}</span>
-                            <span class='qty-value'>{labelQuantita}</span>
+                            <span class='qty-value'>{quantitaDisplay}</span>
                             <span class='qty-code'>Commessa n. {System.Web.HttpUtility.HtmlEncode(c.InternalOrdNo ?? "")}</span>
+                        </div>
+                        <div class='operator-item'>
+                            <span class='operator-label'>OPERATORE:</span>
+                            <div class='operator-box'></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>";
+    }
+
+    private async Task PrintEmptyLabel()
+    {
+        var printHtml = GenerateEmptyPrintHtml();
+        
+        await JSRuntime.InvokeVoidAsync("eval", $@"
+            (function() {{
+                var printWindow = window.open('', '_blank', 'width=800,height=600');
+                printWindow.document.write({System.Text.Json.JsonSerializer.Serialize(printHtml)});
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(function() {{
+                    printWindow.print();
+                }}, 500);
+            }})();
+        ");
+        
+        showLabelDialog = false;
+    }
+
+    private string GenerateEmptyPrintHtml()
+    {
+        var oggi = DateTime.Now.ToString("dd/MM/yyyy");
+        
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Etichetta Vuota</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        @@page {{ size: A4 portrait; margin: 0.5mm; }}
+        html, body {{ height: 100%; }}
+        body {{ font-family: 'Arial Black', Arial, sans-serif; }}
+        .page {{
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            gap: 3mm;
+        }}
+        .label-card {{
+            background: white;
+            border: 3px solid #000;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            page-break-inside: avoid;
+        }}
+        .label-header {{
+            padding: 4px 10px;
+            text-align: center;
+        }}
+        .company-name {{ font-size: 32px; font-weight: 900; letter-spacing: 1px; color: #000; }}
+        .label-row {{ border-bottom: 2px solid #000; padding: 3px 10px; }}
+        .client-row {{ display: flex; align-items: center; justify-content: space-between; gap: 40px; position: relative; }}
+        .client-row .label-field-name {{ position: absolute; left: 0; }}
+        .client-row .client-name {{ flex: 1; text-align: center; }}
+        .label-field-name {{ font-size: 11px; font-weight: 400; color: #000; min-width: 60px; }}
+        .label-field-value {{ font-size: 16px; font-weight: 700; color: #000; }}
+        .client-name {{ font-size: 26px; font-weight: 900; }}
+        .code-row {{ text-align: center; padding: 4px 10px; }}
+        .code-row .label-field-name {{ display: block; font-size: 10px; color: #000; margin-bottom: 2px; font-weight: 400; }}
+        .label-code {{ font-size: 72px; font-weight: 900; color: #000; letter-spacing: 2px; line-height: 1; }}
+        .label-main-content {{
+            flex: 1;
+            display: flex;
+            border-bottom: 2px solid #000;
+            min-height: 0;
+            justify-content: flex-end;
+        }}
+        .right-panel {{
+            width: 45%;
+            display: flex;
+        }}
+        .details-section {{
+            flex: 1;
+            padding: 6px 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }}
+        .detail-item {{ margin-bottom: 4px; }}
+        .detail-label {{ font-size: 10px; font-weight: 400; color: #000; display: inline; }}
+        .detail-value {{ font-size: 13px; font-weight: 700; color: #000; display: inline; margin-left: 5px; }}
+        .empty-line {{ border-bottom: 1px solid #000; min-width: 150px; display: inline-block; }}
+        .operator-item {{ margin-top: auto; padding-top: 4px; }}
+        .operator-label {{ font-size: 10px; font-weight: 400; color: #000; display: block; margin-bottom: 4px; }}
+        .operator-box {{ width: 100%; height: 28px; border: 2px solid #000; background: white; }}
+        .qty-item {{ margin-top: 6px; text-align: right; }}
+        .qty-item .qty-label {{ font-size: 11px; font-weight: 400; color: #000; display: inline; margin-right: 8px; }}
+        .qty-item .qty-value {{ font-size: 90px; font-weight: 900; color: #000; line-height: 0.9; display: block; }}
+        .qty-item .qty-code {{ font-size: 8px; font-weight: 100; color: #000; display: block; margin-top: 2px; }}
+        @@media print {{
+            .page {{ height: 100%; gap: 5mm; }}
+            .label-card {{ page-break-inside: avoid; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class='page'>
+        <!-- Etichetta 1 -->
+        <div class='label-card'>
+            <div class='label-header'>
+                <div class='company-name'>ANIMISTERIA TODESCATO</div>
+            </div>
+            <div class='label-row client-row'>
+                <span class='label-field-name'>CLIENTE</span>
+                <span class='label-field-value client-name'><span class='empty-line'>&nbsp;</span></span>
+            </div>
+            <div class='label-row code-row'>
+                <span class='label-field-name'>CODICE ANIMA</span>
+                <span class='label-code'>____________</span>
+            </div>
+            <div class='label-main-content'>
+                <div class='right-panel'>
+                    <div class='details-section'>
+                        <div>
+                            <div class='detail-item'>
+                                <span class='detail-label'>SABBIA:</span>
+                                <span class='detail-value'><span class='empty-line'>&nbsp;</span></span>
+                            </div>
+                            <div class='detail-item'>
+                                <span class='detail-label'>VERNICE:</span>
+                                <span class='detail-value'><span class='empty-line'>&nbsp;</span></span>
+                            </div>
+                            <div class='detail-item'>
+                                <span class='detail-label'>DATA:</span>
+                                <span class='detail-value'>{oggi}</span>
+                            </div>
+                        </div>
+                        <div class='qty-item'>
+                            <span class='qty-label'>QUANTITA' / ___</span>
+                            <span class='qty-value'>___</span>
+                            <span class='qty-code'>Commessa n. ___________</span>
+                        </div>
+                        <div class='operator-item'>
+                            <span class='operator-label'>OPERATORE:</span>
+                            <div class='operator-box'></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Etichetta 2 (copia) -->
+        <div class='label-card'>
+            <div class='label-header'>
+                <div class='company-name'>ANIMISTERIA TODESCATO</div>
+            </div>
+            <div class='label-row client-row'>
+                <span class='label-field-name'>CLIENTE</span>
+                <span class='label-field-value client-name'><span class='empty-line'>&nbsp;</span></span>
+            </div>
+            <div class='label-row code-row'>
+                <span class='label-field-name'>CODICE ANIMA</span>
+                <span class='label-code'>____________</span>
+            </div>
+            <div class='label-main-content'>
+                <div class='right-panel'>
+                    <div class='details-section'>
+                        <div>
+                            <div class='detail-item'>
+                                <span class='detail-label'>SABBIA:</span>
+                                <span class='detail-value'><span class='empty-line'>&nbsp;</span></span>
+                            </div>
+                            <div class='detail-item'>
+                                <span class='detail-label'>VERNICE:</span>
+                                <span class='detail-value'><span class='empty-line'>&nbsp;</span></span>
+                            </div>
+                            <div class='detail-item'>
+                                <span class='detail-label'>DATA:</span>
+                                <span class='detail-value'>{oggi}</span>
+                            </div>
+                        </div>
+                        <div class='qty-item'>
+                            <span class='qty-label'>QUANTITA' / ___</span>
+                            <span class='qty-value'>___</span>
+                            <span class='qty-code'>Commessa n. ___________</span>
                         </div>
                         <div class='operator-item'>
                             <span class='operator-label'>OPERATORE:</span>
