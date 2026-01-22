@@ -58,7 +58,7 @@ public class SyncCommesseService
                 var articolo = await _context.Articoli
                     .FirstOrDefaultAsync(a => a.Codice == commessaMago.Item, cancellationToken);
                 
-                // NUOVA LOGICA: Aggiungi anime se codiceArticolo non presente
+                // NUOVA LOGICA: Aggiungi anime se codiceArticolo non presente, oppure aggiorna cliente
                 var anime = await _context.Anime
                     .FirstOrDefaultAsync(a => a.CodiceArticolo == commessaMago.Item, cancellationToken);
                 
@@ -77,6 +77,18 @@ public class SyncCommesseService
                     
                     _context.Anime.Add(anime);
                     _logger.LogInformation("✓ Anime creata: {Codice} - {Descrizione}", anime.CodiceArticolo, anime.DescrizioneArticolo);
+                }
+                else if (anime != null && !string.IsNullOrWhiteSpace(commessaMago.CompanyName))
+                {
+                    // Sincronizza il cliente dell'anime con la ragione sociale della commessa
+                    if (anime.Cliente != commessaMago.CompanyName)
+                    {
+                        var oldCliente = anime.Cliente;
+                        anime.Cliente = commessaMago.CompanyName;
+                        _context.Anime.Update(anime);
+                        _logger.LogInformation("✓ Cliente anime aggiornato: {Codice} - da '{OldCliente}' a '{NewCliente}'", 
+                            anime.CodiceArticolo, oldCliente ?? "(vuoto)", commessaMago.CompanyName);
+                    }
                 }
 
                 // Usa la combinazione InternalOrdNo + Item come chiave univoca (come PlcMagoSync)
