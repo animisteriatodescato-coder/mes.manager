@@ -55,25 +55,30 @@ h1:focus {
    Ensures only printable content is shown
    ======================================== */
 @media print {
-    /* Force light mode colors for printing */
-    body {
-        background: white !important;
-        color: black !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    /* Hide MudBlazor layout elements */
+    /* Hide MudBlazor layout elements completely */
     .mud-appbar,
     .mud-drawer,
+    .mud-drawer-content,
     .mud-drawer-overlay,
+    .mud-navmenu,
+    .mud-nav-group,
+    .mud-nav-link,
     .mud-popover-provider,
     .mud-dialog-provider,
     .mud-snackbar-provider,
     .mud-overlay,
+    .mud-layout > header,
+    .mud-layout > nav,
     header,
-    nav {
+    nav,
+    aside {
         display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
     }
 
     /* Ensure main content takes full width */
@@ -92,16 +97,11 @@ h1:focus {
         margin: 0 !important;
     }
 
-    /* Force light background on all elements during print */
-    * {
-        background-color: transparent !important;
-    }
-
     /* Allow specific print elements to have background colors */
-    .print-allow-bg,
-    #printableCommesse,
-    #printableCommesse * {
-        background-color: inherit !important;
+    #printableCommesse table,
+    #printableCommesse th,
+    #printableCommesse td,
+    #printableCommesse tr {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }

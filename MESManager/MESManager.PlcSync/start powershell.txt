@@ -1,0 +1,4 @@
+Start-Process powershell -WindowStyle Hidden -ArgumentList '-NoProfile -Command "cd C:\Dev\MESManager\MESManager.PlcSync; dotnet run"'
+
+verifica con
+Get-Process dotnet

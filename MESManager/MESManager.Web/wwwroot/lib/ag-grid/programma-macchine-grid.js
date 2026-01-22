@@ -432,6 +432,283 @@ window.programmaMacchineGrid = (function() {
         printDiv.innerHTML = html;
     }
 
+    function printInNewWindow() {
+        if (!gridApi) return;
+
+        // Ottieni le colonne visibili
+        const visibleColumns = gridApi.getColumns()
+            .filter(col => col.isVisible() && col.getColId() !== 'ag-Grid-AutoColumn');
+
+        // Ottieni tutte le righe visualizzate (filtrate e ordinate)
+        const rowData = [];
+        gridApi.forEachNodeAfterFilterAndSort(node => {
+            if (node.data) {
+                rowData.push(node.data);
+            }
+        });
+
+        // Data e ora di stampa
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('it-IT');
+        const timeStr = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+        // Costruisci HTML completo per la finestra di stampa
+        let html = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Programma Macchine - Stampa</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { 
+            background-color: #ffffff !important; 
+            background: #ffffff !important;
+            color: #000000 !important; 
+            font-family: Arial, sans-serif;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        @page { 
+            size: landscape; 
+            margin: 10mm; 
+        }
+        @media print {
+            html, body { 
+                background-color: #ffffff !important; 
+                background: #ffffff !important;
+            }
+        }
+        h2 { text-align: center; margin-bottom: 5px; color: #000; }
+        .print-date { text-align: center; font-size: 12px; color: #666; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 10px; background-color: #ffffff; }
+        th { 
+            border: 1px solid #ddd; 
+            padding: 4px; 
+            font-weight: bold; 
+            background-color: #f0f0f0 !important; 
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        td { border: 1px solid #ddd; padding: 3px; }
+        .footer { margin-top: 10px; font-size: 9px; color: #666; text-align: right; }
+        .machine-even { background-color: #e3f2fd !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .machine-odd { background-color: #e8f5e9 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .machine-separator { border-top: 3px solid #000 !important; }
+        .center { text-align: center; }
+        .right { text-align: right; }
+        .bold { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Programma Macchine</h2>
+    <p class="print-date">Data stampa: ${dateStr} ${timeStr}</p>
+    <table>
+        <thead>
+            <tr>`;
+
+        // Header columns
+        visibleColumns.forEach(col => {
+            const colDef = col.getColDef();
+            const alignClass = colDef.type === 'numericColumn' ? 'right' : 
+                              colDef.field === 'numeroMacchina' ? 'center' : '';
+            html += `<th class="${alignClass}">${colDef.headerName}</th>`;
+        });
+
+        html += `</tr>
+        </thead>
+        <tbody>`;
+
+        // Body rows
+        let previousMachine = null;
+        rowData.forEach(row => {
+            const machineNum = getMachineNumber(row.numeroMacchina);
+            const colorClass = machineNum % 2 === 0 ? 'machine-even' : 'machine-odd';
+            const separatorClass = previousMachine !== null && previousMachine !== row.numeroMacchina ? 'machine-separator' : '';
+            previousMachine = row.numeroMacchina;
+            
+            html += `<tr class="${colorClass} ${separatorClass}">`;
+            visibleColumns.forEach(col => {
+                const colDef = col.getColDef();
+                const field = colDef.field;
+                let value = row[field];
+                
+                // Formatta il valore usando il valueFormatter se presente
+                if (colDef.valueFormatter && typeof colDef.valueFormatter === 'function') {
+                    value = colDef.valueFormatter({ value: value, data: row });
+                } else if (value === null || value === undefined) {
+                    value = '';
+                }
+
+                const alignClass = colDef.type === 'numericColumn' ? 'right' : 
+                                  field === 'numeroMacchina' ? 'center bold' : '';
+                html += `<td class="${alignClass}">${value}</td>`;
+            });
+            html += '</tr>';
+        });
+
+        html += `</tbody>
+    </table>
+    <div class="footer">
+        <p>Totale commesse: ${rowData.length}</p>
+    </div>
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 300);
+        };
+    </script>
+</body>
+</html>`;
+
+        // Apri nuova finestra e stampa
+        const printWindow = window.open('', '_blank', 'width=1200,height=800');
+        if (printWindow) {
+            printWindow.document.write(html);
+            printWindow.document.close();
+        }
+    }
+
+    function printViaIframe() {
+        if (!gridApi) return;
+
+        // Ottieni le colonne visibili
+        const visibleColumns = gridApi.getColumns()
+            .filter(col => col.isVisible() && col.getColId() !== 'ag-Grid-AutoColumn');
+
+        // Ottieni tutte le righe visualizzate (filtrate e ordinate)
+        const rowData = [];
+        gridApi.forEachNodeAfterFilterAndSort(node => {
+            if (node.data) {
+                rowData.push(node.data);
+            }
+        });
+
+        // Data e ora di stampa
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('it-IT');
+        const timeStr = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+        // Costruisci HTML per l'iframe
+        let html = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Programma Macchine - Stampa</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { 
+            background-color: #ffffff !important; 
+            background: #ffffff !important;
+            color: #000000 !important; 
+            font-family: Arial, sans-serif;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        @page { 
+            size: landscape; 
+            margin: 10mm; 
+        }
+        h2 { text-align: center; margin-bottom: 5px; color: #000; }
+        .print-date { text-align: center; font-size: 12px; color: #666; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 10px; background-color: #ffffff; }
+        th { 
+            border: 1px solid #ddd; 
+            padding: 4px; 
+            font-weight: bold; 
+            background-color: #f0f0f0 !important; 
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        td { border: 1px solid #ddd; padding: 3px; }
+        .footer { margin-top: 10px; font-size: 9px; color: #666; text-align: right; }
+        .machine-even { background-color: #e3f2fd !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .machine-odd { background-color: #e8f5e9 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .machine-separator { border-top: 3px solid #000 !important; }
+        .center { text-align: center; }
+        .right { text-align: right; }
+        .bold { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Programma Macchine</h2>
+    <p class="print-date">Data stampa: ${dateStr} ${timeStr}</p>
+    <table>
+        <thead>
+            <tr>`;
+
+        // Header columns
+        visibleColumns.forEach(col => {
+            const colDef = col.getColDef();
+            const alignClass = colDef.type === 'numericColumn' ? 'right' : 
+                              colDef.field === 'numeroMacchina' ? 'center' : '';
+            html += `<th class="${alignClass}">${colDef.headerName}</th>`;
+        });
+
+        html += `</tr>
+        </thead>
+        <tbody>`;
+
+        // Body rows
+        let previousMachine = null;
+        rowData.forEach(row => {
+            const machineNum = getMachineNumber(row.numeroMacchina);
+            const colorClass = machineNum % 2 === 0 ? 'machine-even' : 'machine-odd';
+            const separatorClass = previousMachine !== null && previousMachine !== row.numeroMacchina ? 'machine-separator' : '';
+            previousMachine = row.numeroMacchina;
+            
+            html += `<tr class="${colorClass} ${separatorClass}">`;
+            visibleColumns.forEach(col => {
+                const colDef = col.getColDef();
+                const field = colDef.field;
+                let value = row[field];
+                
+                if (colDef.valueFormatter && typeof colDef.valueFormatter === 'function') {
+                    value = colDef.valueFormatter({ value: value, data: row });
+                } else if (value === null || value === undefined) {
+                    value = '';
+                }
+
+                const alignClass = colDef.type === 'numericColumn' ? 'right' : 
+                                  field === 'numeroMacchina' ? 'center bold' : '';
+                html += `<td class="${alignClass}">${value}</td>`;
+            });
+            html += '</tr>';
+        });
+
+        html += `</tbody>
+    </table>
+    <div class="footer">
+        <p>Totale commesse: ${rowData.length}</p>
+    </div>
+</body>
+</html>`;
+
+        // Crea un iframe nascosto, inserisce il contenuto e stampa
+        let iframe = document.getElementById('printIframe');
+        if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.id = 'printIframe';
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = 'none';
+            iframe.style.left = '-9999px';
+            document.body.appendChild(iframe);
+        }
+
+        const iframeDoc = iframe.contentWindow || iframe.contentDocument;
+        const doc = iframeDoc.document || iframeDoc;
+        
+        doc.open();
+        doc.write(html);
+        doc.close();
+
+        // Attendi che il contenuto sia caricato, poi stampa
+        setTimeout(() => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+        }, 250);
+    }
+
     return {
         init: init,
         updateData: updateData,
@@ -444,6 +721,8 @@ window.programmaMacchineGrid = (function() {
         getState: getState,
         toggleColumnPanel: toggleColumnPanel,
         setUiVars: setUiVars,
-        generatePrintTable: generatePrintTable
+        generatePrintTable: generatePrintTable,
+        printInNewWindow: printInNewWindow,
+        printViaIframe: printViaIframe
     };
 })();

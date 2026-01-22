@@ -137,7 +137,7 @@
     }
 
     @@media print {
-        /* Hide everything on the page */
+        /* Hide the page content */
         .programma-macchine-page,
         .settings-panel,
         .footer-info,
@@ -150,13 +150,14 @@
         /* Show only the printable div */
         #printableCommesse {
             display: block !important;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: white !important;
-            color: black !important;
-            z-index: 99999;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            z-index: 999999 !important;
+            padding: 10mm !important;
+            box-sizing: border-box !important;
         }
 
         /* Force colors for table cells during printing */
@@ -170,7 +171,7 @@
         
         @@page {
             size: landscape;
-            margin: 10mm;
+            margin: 5mm;
         }
     }
 </style>
@@ -426,10 +427,8 @@
     {
         try
         {
-            // Genera la tabella di stampa dinamicamente dalla griglia
-            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.generatePrintTable");
-            // Apri la finestra di stampa
-            await JSRuntime.InvokeVoidAsync("eval", "window.print()");
+            // Usa un iframe nascosto per stampare, così non interferisce con la pagina principale
+            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.printViaIframe");
         }
         catch (Exception ex)
         {
