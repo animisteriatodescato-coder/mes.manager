@@ -1,0 +1,84 @@
+@using MESManager.Application.Interfaces
+@using MESManager.Application.Services
+@using MESManager.Domain.Entities
+@inject IUtenteAppService UtenteService
+@inject CurrentUserService CurrentUser
+@inject IJSRuntime JS
+
+<MudSelect T="Guid?" 
+           Value="_selectedUserId"
+           ValueChanged="OnUserChanged"
+           Label="Utente"
+           Variant="Variant.Outlined" 
+           Dense="true"
+           Margin="Margin.Dense"
+           Class="mr-4"
+           Style="min-width: 150px; max-width: 200px; background-color: var(--mud-palette-background);">
+    @foreach (var utente in _utenti)
+    {
+        <MudSelectItem T="Guid?" Value="@utente.Id">@utente.Nome</MudSelectItem>
+    }
+</MudSelect>
+
+@code {
+    private List<UtenteApp> _utenti = new();
+    private Guid? _selectedUserId;
+    private bool _initialized;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUtenti();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialized)
+        {
+            _initialized = true;
+            
+            // Carica utente salvato da localStorage
+            var savedUserId = await JS.InvokeAsync<string?>("localStorage.getItem", "selectedUserId");
+            if (!string.IsNullOrEmpty(savedUserId) && Guid.TryParse(savedUserId, out var userId))
+            {
+                var utente = _utenti.FirstOrDefault(u => u.Id == userId);
+                if (utente != null)
+                {
+                    _selectedUserId = userId;
+                    CurrentUser.SetCurrentUser(utente);
+                    StateHasChanged();
+                    return;
+                }
+            }
+            
+            // Se nessun utente selezionato, seleziona il primo
+            if (_selectedUserId == null && _utenti.Any())
+            {
+                var primo = _utenti.First();
+                _selectedUserId = primo.Id;
+                CurrentUser.SetCurrentUser(primo);
+                await JS.InvokeVoidAsync("localStorage.setItem", "selectedUserId", primo.Id.ToString());
+                StateHasChanged();
+            }
+        }
+    }
+    
+    private async Task LoadUtenti()
+    {
+        var utenti = await UtenteService.GetAllAsync();
+        _utenti = utenti.Where(u => u.Attivo).OrderBy(u => u.Ordine).ToList();
+    }
+    
+    private async Task OnUserChanged(Guid? userId)
+    {
+        if (userId.HasValue)
+        {
+            _selectedUserId = userId;
+            var utente = _utenti.FirstOrDefault(u => u.Id == userId.Value);
+            if (utente != null)
+            {
+                CurrentUser.SetCurrentUser(utente);
+                await JS.InvokeVoidAsync("localStorage.setItem", "selectedUserId", userId.Value.ToString());
+            }
+        }
+    }
+}

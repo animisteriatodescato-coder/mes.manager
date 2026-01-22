@@ -1,7 +1,18 @@
 @page "/"
 @layout MainLayout
+@using MESManager.Web.Components.Shared
 
 <PageTitle>Dashboard - MESManager</PageTitle>
+
+<MudPaper Class="pa-6 mb-6" Elevation="3">
+    <MudGrid>
+        <MudItem xs="12" Class="d-flex justify-center align-center">
+            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Large" Class="mr-3" Color="Color.Primary" />
+            <MudText Typo="Typo.h5" Class="mr-4">Seleziona Utente:</MudText>
+            <UserSelector />
+        </MudItem>
+    </MudGrid>
+</MudPaper>
 
 <MudText Typo="Typo.h3" Class="mb-4">Dashboard Produzione</MudText>
 <MudGrid>

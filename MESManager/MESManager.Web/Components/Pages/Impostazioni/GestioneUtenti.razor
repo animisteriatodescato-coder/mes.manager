@@ -1,9 +1,184 @@
 @page "/impostazioni/utenti"
+@using MESManager.Application.Interfaces
+@using MESManager.Domain.Entities
+@inject IUtenteAppService UtenteService
+@inject ISnackbar Snackbar
 
 <PageTitle>Gestione Utenti</PageTitle>
 
-<MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mb-4" StartIcon="@Icons.Material.Filled.PersonAdd">
-    Nuovo Utente
-</MudButton>
+<MudText Typo="Typo.h4" Class="mb-4">Gestione Utenti App</MudText>
 
-<MudText>Pagina predisposta per gestione utenti e ruoli Identity</MudText>
+<MudPaper Class="pa-4 mb-4">
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="4">
+            <MudTextField @bind-Value="_nuovoNome" 
+                          Label="Nome Nuovo Utente" 
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@Icons.Material.Filled.Person" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="2" Class="d-flex align-end">
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       StartIcon="@Icons.Material.Filled.PersonAdd"
+                       OnClick="AggiungiUtente"
+                       Disabled="@(string.IsNullOrWhiteSpace(_nuovoNome))">
+                Aggiungi
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MudTable Items="@_utenti" Hover="true" Dense="true" Striped="true" Elevation="2">
+    <HeaderContent>
+        <MudTh>Ordine</MudTh>
+        <MudTh>Nome</MudTh>
+        <MudTh>Attivo</MudTh>
+        <MudTh>Data Creazione</MudTh>
+        <MudTh>Ultima Modifica</MudTh>
+        <MudTh>Azioni</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Ordine">
+            <MudNumericField T="int" 
+                             Value="@context.Ordine" 
+                             ValueChanged="@((int o) => CambiaOrdine(context, o))"
+                             Min="1" 
+                             Variant="Variant.Text" 
+                             Style="width: 60px;" />
+        </MudTd>
+        <MudTd DataLabel="Nome">
+            @if (_inModifica == context.Id)
+            {
+                <MudTextField @bind-Value="_nomeModifica" 
+                              Variant="Variant.Text" 
+                              Style="width: 150px;" />
+            }
+            else
+            {
+                @context.Nome
+            }
+        </MudTd>
+        <MudTd DataLabel="Attivo">
+            <MudSwitch T="bool" 
+                       Value="@context.Attivo"
+                       ValueChanged="@((bool a) => CambiaAttivo(context, a))"
+                       Color="Color.Success" />
+        </MudTd>
+        <MudTd DataLabel="Data Creazione">@context.DataCreazione.ToString("dd/MM/yyyy HH:mm")</MudTd>
+        <MudTd DataLabel="Ultima Modifica">@context.UltimaModifica.ToString("dd/MM/yyyy HH:mm")</MudTd>
+        <MudTd DataLabel="Azioni">
+            @if (_inModifica == context.Id)
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.Check" 
+                               Color="Color.Success" 
+                               Size="Size.Small" 
+                               OnClick="@(() => SalvaModifica(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                               Color="Color.Error" 
+                               Size="Size.Small" 
+                               OnClick="AnnullaModifica" />
+            }
+            else
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                               Color="Color.Primary" 
+                               Size="Size.Small" 
+                               OnClick="@(() => IniziModifica(context))" />
+            }
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<UtenteApp> _utenti = new();
+    private string _nuovoNome = string.Empty;
+    private Guid? _inModifica;
+    private string _nomeModifica = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CaricaUtenti();
+    }
+
+    private async Task CaricaUtenti()
+    {
+        var utenti = await UtenteService.GetAllAsync();
+        _utenti = utenti.OrderBy(u => u.Ordine).ToList();
+    }
+
+    private async Task AggiungiUtente()
+    {
+        if (string.IsNullOrWhiteSpace(_nuovoNome))
+            return;
+
+        var nomeUpperCase = _nuovoNome.Trim().ToUpperInvariant();
+        
+        // Verifica duplicato
+        if (_utenti.Any(u => u.Nome.Equals(nomeUpperCase, StringComparison.OrdinalIgnoreCase)))
+        {
+            Snackbar.Add($"Esiste già un utente con nome '{nomeUpperCase}'", Severity.Warning);
+            return;
+        }
+
+        await UtenteService.CreateAsync(nomeUpperCase);
+        _nuovoNome = string.Empty;
+        await CaricaUtenti();
+        Snackbar.Add($"Utente '{nomeUpperCase}' creato con successo", Severity.Success);
+    }
+
+    private void IniziModifica(UtenteApp utente)
+    {
+        _inModifica = utente.Id;
+        _nomeModifica = utente.Nome;
+    }
+
+    private void AnnullaModifica()
+    {
+        _inModifica = null;
+        _nomeModifica = string.Empty;
+    }
+
+    private async Task SalvaModifica(UtenteApp utente)
+    {
+        if (string.IsNullOrWhiteSpace(_nomeModifica))
+        {
+            Snackbar.Add("Il nome non può essere vuoto", Severity.Warning);
+            return;
+        }
+
+        var nomeUpperCase = _nomeModifica.Trim().ToUpperInvariant();
+        
+        // Verifica duplicato (escludi l'utente corrente)
+        if (_utenti.Any(u => u.Id != utente.Id && u.Nome.Equals(nomeUpperCase, StringComparison.OrdinalIgnoreCase)))
+        {
+            Snackbar.Add($"Esiste già un utente con nome '{nomeUpperCase}'", Severity.Warning);
+            return;
+        }
+
+        utente.Nome = nomeUpperCase;
+        await UtenteService.UpdateAsync(utente);
+        
+        _inModifica = null;
+        _nomeModifica = string.Empty;
+        await CaricaUtenti();
+        Snackbar.Add("Utente aggiornato con successo", Severity.Success);
+    }
+
+    private async Task CambiaOrdine(UtenteApp utente, int nuovoOrdine)
+    {
+        utente.Ordine = nuovoOrdine;
+        await UtenteService.UpdateAsync(utente);
+        await CaricaUtenti();
+    }
+
+    private async Task CambiaAttivo(UtenteApp utente, bool attivo)
+    {
+        utente.Attivo = attivo;
+        await UtenteService.UpdateAsync(utente);
+        await CaricaUtenti();
+        
+        var stato = attivo ? "attivato" : "disattivato";
+        Snackbar.Add($"Utente '{utente.Nome}' {stato}", Severity.Info);
+    }
+}

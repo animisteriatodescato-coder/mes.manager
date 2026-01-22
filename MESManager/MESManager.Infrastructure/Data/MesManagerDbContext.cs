@@ -30,6 +30,8 @@ public class MesManagerDbContext : DbContext
     public DbSet<ImpostazioniGantt> ImpostazioniGantt => Set<ImpostazioniGantt>();
     public DbSet<AllegatoArticolo> AllegatiArticoli => Set<AllegatoArticolo>();
     public DbSet<StoricoProgrammazione> StoricoProgrammazione => Set<StoricoProgrammazione>();
+    public DbSet<UtenteApp> UtentiApp => Set<UtenteApp>();
+    public DbSet<PreferenzaUtente> PreferenzeUtente => Set<PreferenzaUtente>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -130,5 +132,22 @@ public class MesManagerDbContext : DbContext
         // Indice per filtrare commesse per StatoProgramma
         modelBuilder.Entity<Commessa>()
             .HasIndex(c => c.StatoProgramma);
+
+        // Configurazione UtenteApp
+        modelBuilder.Entity<UtenteApp>()
+            .HasIndex(u => u.Nome)
+            .IsUnique();
+
+        // Relazione 1:N UtenteApp-PreferenzaUtente
+        modelBuilder.Entity<PreferenzaUtente>()
+            .HasOne(p => p.UtenteApp)
+            .WithMany(u => u.Preferenze)
+            .HasForeignKey(p => p.UtenteAppId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Indice composto per ricerca veloce preferenze
+        modelBuilder.Entity<PreferenzaUtente>()
+            .HasIndex(p => new { p.UtenteAppId, p.Chiave })
+            .IsUnique();
     }
 }
