@@ -28,7 +28,7 @@
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshData">Aggiorna</MudButton>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.RestartAlt" OnClick="@ResetGrid">Reset</MudButton>
+            <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Print" OnClick="@PrintCommesse">Stampa</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)">Impostazioni</MudButton>
@@ -397,20 +397,58 @@
         StateHasChanged();
     }
 
-    private async Task ResetGrid()
+    private async Task FixGridState()
     {
         try
         {
-            Console.WriteLine("ResetGrid called");
-            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.resetState");
-            settings = new GridUiSettings();
-            await PreferencesService.RemoveAsync("programma-macchine-grid-settings");
-            await ApplyUiSettings();
-            StateHasChanged();
+            Console.WriteLine("FixGridState called");
+            // Salva lo stato attuale della griglia come stato "fixed"
+            var gridState = await JSRuntime.InvokeAsync<string>("programmaMacchineGrid.getState");
+            await PreferencesService.SetAsync("programma-macchine-grid-fixed-state", gridState);
+            await PreferencesService.SetAsync("programma-macchine-grid-fixed-settings", JsonSerializer.Serialize(settings));
+            Console.WriteLine("Grid state fixed successfully");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error resetting grid: {ex.Message}");
+            Console.WriteLine($"Error fixing grid state: {ex.Message}");
+        }
+    }
+
+    private async Task ResetToFixedState()
+    {
+        try
+        {
+            Console.WriteLine("ResetToFixedState called");
+            // Ripristina lo stato salvato con Fix
+            var fixedState = await PreferencesService.GetAsync<string>("programma-macchine-grid-fixed-state");
+            var fixedSettings = await PreferencesService.GetAsync<string>("programma-macchine-grid-fixed-settings");
+            
+            if (!string.IsNullOrEmpty(fixedState))
+            {
+                await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.setState", fixedState);
+            }
+            else
+            {
+                // Se non c'è stato salvato, resetta allo stato default
+                await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.resetState");
+            }
+            
+            if (!string.IsNullOrEmpty(fixedSettings))
+            {
+                settings = JsonSerializer.Deserialize<GridUiSettings>(fixedSettings) ?? new GridUiSettings();
+            }
+            else
+            {
+                settings = new GridUiSettings();
+            }
+            
+            await ApplyUiSettings();
+            StateHasChanged();
+            Console.WriteLine("Grid reset to fixed state successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error resetting to fixed state: {ex.Message}");
         }
     }
 

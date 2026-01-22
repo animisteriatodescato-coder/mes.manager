@@ -325,6 +325,17 @@ window.programmaMacchineGrid = (function() {
         return JSON.stringify(gridApi.getColumnState());
     }
 
+    function setState(stateJson) {
+        if (!gridApi || !stateJson) return;
+        try {
+            const state = JSON.parse(stateJson);
+            gridApi.applyColumnState({ state: state, applyOrder: true });
+            console.log('setState: applied successfully');
+        } catch (e) {
+            console.error('setState: error parsing state', e);
+        }
+    }
+
     function toggleColumnPanel() {
         if (gridApi) {
             gridApi.openToolPanel('columns');
@@ -719,6 +730,7 @@ window.programmaMacchineGrid = (function() {
         exportCsv: exportCsv,
         resetState: resetState,
         getState: getState,
+        setState: setState,
         toggleColumnPanel: toggleColumnPanel,
         setUiVars: setUiVars,
         generatePrintTable: generatePrintTable,

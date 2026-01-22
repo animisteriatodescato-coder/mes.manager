@@ -1,0 +1,53 @@
+@inject IDialogService DialogService
+
+<MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Fix/Reset Menu" Dense="true">
+    <ActivatorContent>
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.RestartAlt" EndIcon="@Icons.Material.Filled.ArrowDropDown">
+            Reset
+        </MudButton>
+    </ActivatorContent>
+    <ChildContent>
+        <MudMenuItem Icon="@Icons.Material.Filled.PushPin" OnClick="@OnFixClicked">Fix - Salva stato attuale</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Restore" OnClick="@OnResetClicked">Reset - Ripristina stato salvato</MudMenuItem>
+    </ChildContent>
+</MudMenu>
+
+@code {
+    [Parameter]
+    public EventCallback OnFix { get; set; }
+
+    [Parameter]
+    public EventCallback OnReset { get; set; }
+
+    private async Task OnFixClicked()
+    {
+        var parameters = new DialogParameters<ConfirmDialog>();
+        parameters.Add(x => x.ContentText, "Vuoi salvare lo stato attuale come stato di riferimento?");
+        parameters.Add(x => x.ButtonText, "Salva");
+        parameters.Add(x => x.Color, Color.Primary);
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Conferma Fix", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await OnFix.InvokeAsync();
+        }
+    }
+
+    private async Task OnResetClicked()
+    {
+        var parameters = new DialogParameters<ConfirmDialog>();
+        parameters.Add(x => x.ContentText, "Vuoi ripristinare lo stato salvato?");
+        parameters.Add(x => x.ButtonText, "Ripristina");
+        parameters.Add(x => x.Color, Color.Warning);
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Conferma Reset", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await OnReset.InvokeAsync();
+        }
+    }
+}

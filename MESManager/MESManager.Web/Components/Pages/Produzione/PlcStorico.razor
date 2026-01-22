@@ -56,7 +56,7 @@
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
             
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@ResetGrid">Reset</MudButton>
+            <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
         </MudStack>
     </div>
 
@@ -169,13 +169,30 @@
         catch { }
     }
 
-    private async Task ResetGrid()
+    private async Task FixGridState()
     {
         try
         {
-            await PreferencesService.RemoveAsync("plc-storico-grid-columns");
-            await JSRuntime.InvokeVoidAsync("plcStoricoGrid.resetGrid");
-            Nav.NavigateTo(Nav.Uri, forceLoad: true);
+            var gridState = await JSRuntime.InvokeAsync<string>("plcStoricoGrid.getColumnState");
+            await PreferencesService.SetAsync("plc-storico-grid-fixed-state", gridState);
+        }
+        catch { }
+    }
+
+    private async Task ResetToFixedState()
+    {
+        try
+        {
+            var fixedState = await PreferencesService.GetAsync<string>("plc-storico-grid-fixed-state");
+            
+            if (!string.IsNullOrEmpty(fixedState))
+            {
+                await JSRuntime.InvokeVoidAsync("plcStoricoGrid.setColumnState", fixedState);
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("plcStoricoGrid.resetGrid");
+            }
         }
         catch { }
     }

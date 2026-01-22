@@ -148,6 +148,17 @@ window.clientiGrid = (function() {
         return JSON.stringify(gridApi.getColumnState());
     }
 
+    function setState(stateJson) {
+        if (!gridApi || !stateJson) return;
+        try {
+            const state = JSON.parse(stateJson);
+            gridApi.applyColumnState({ state: state, applyOrder: true });
+            console.log('setState: applied successfully');
+        } catch (e) {
+            console.error('setState: error parsing state', e);
+        }
+    }
+
     function resetState() {
         if (gridApi) {
             gridApi.resetColumnState();
@@ -317,6 +328,7 @@ window.clientiGrid = (function() {
         setColumnVisible: setColumnVisible,
         getAllColumns: getAllColumns,
         getState: getState,
+        setState: setState,
         resetState: resetState,
         toggleColumnPanel: toggleColumnPanel,
         setUiVars: setUiVars,

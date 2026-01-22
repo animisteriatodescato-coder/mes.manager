@@ -28,7 +28,7 @@
                          DebounceInterval="280"
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@ResetGrid">Reset</MudButton>
+            <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)">Impostazioni</MudButton>
         </MudStack>
@@ -224,13 +224,42 @@
         catch { }
     }
 
-    private async Task ResetGrid()
+    private async Task FixGridState()
     {
         try
         {
-            await JSRuntime.InvokeVoidAsync("animeGrid.resetState");
-            settings = new GridUiSettings();
-            await PreferencesService.RemoveAsync("anime-grid-settings");
+            var gridState = await JSRuntime.InvokeAsync<string>("animeGrid.getState");
+            await PreferencesService.SetAsync("anime-grid-fixed-state", gridState);
+            await PreferencesService.SetAsync("anime-grid-fixed-settings", JsonSerializer.Serialize(settings));
+        }
+        catch { }
+    }
+
+    private async Task ResetToFixedState()
+    {
+        try
+        {
+            var fixedState = await PreferencesService.GetAsync<string>("anime-grid-fixed-state");
+            var fixedSettings = await PreferencesService.GetAsync<string>("anime-grid-fixed-settings");
+            
+            if (!string.IsNullOrEmpty(fixedState))
+            {
+                await JSRuntime.InvokeVoidAsync("animeGrid.setState", fixedState);
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("animeGrid.resetState");
+            }
+            
+            if (!string.IsNullOrEmpty(fixedSettings))
+            {
+                settings = JsonSerializer.Deserialize<GridUiSettings>(fixedSettings) ?? new GridUiSettings();
+            }
+            else
+            {
+                settings = new GridUiSettings();
+            }
+            
             await ApplyUiSettings();
             StateHasChanged();
         }
@@ -345,7 +374,7 @@
     }
     
     public async Task ToggleColumnPanel_Public() => await ToggleColumnPanel();
-    public async Task ResetGrid_Public() => await ResetGrid();
+    public async Task ResetGrid_Public() => await ResetToFixedState();
     public async Task ExportCsv_Public() => await ExportCsv();
     public void ToggleSettings_Public()
     {

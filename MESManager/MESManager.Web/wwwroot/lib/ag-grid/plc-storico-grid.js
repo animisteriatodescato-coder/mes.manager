@@ -340,12 +340,24 @@ window.plcStoricoGrid = (function () {
         return null;
     }
 
+    function setColumnState(stateJson) {
+        if (!gridApi || !stateJson) return;
+        try {
+            const state = JSON.parse(stateJson);
+            gridApi.applyColumnState({ state: state, applyOrder: true });
+            console.log('setColumnState: applied successfully');
+        } catch (e) {
+            console.error('setColumnState: error parsing state', e);
+        }
+    }
+
     return {
         init,
         updateData,
         setQuickFilter,
         toggleColumnPanel,
         resetGrid,
-        getColumnState
+        getColumnState,
+        setColumnState
     };
 })();
