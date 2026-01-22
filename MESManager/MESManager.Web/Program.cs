@@ -21,11 +21,17 @@ ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Carica configurazione database condivisa dalla root del progetto
-builder.Configuration.AddJsonFile(
-    Path.Combine(Directory.GetParent(builder.Environment.ContentRootPath)!.FullName, "appsettings.Database.json"),
-    optional: false,
-    reloadOnChange: true);
+// Carica configurazione database:
+// - In sviluppo: cerca nella directory padre (root della solution)
+// - In produzione: cerca nella stessa directory dell'app
+var dbConfigPath = builder.Environment.IsProduction()
+    ? Path.Combine(builder.Environment.ContentRootPath, "appsettings.Database.json")
+    : Path.Combine(Directory.GetParent(builder.Environment.ContentRootPath)!.FullName, "appsettings.Database.json");
+
+if (File.Exists(dbConfigPath))
+{
+    builder.Configuration.AddJsonFile(dbConfigPath, optional: false, reloadOnChange: true);
+}
 
 // Abilita i controller API con JSON camelCase
 builder.Services.AddControllers()
