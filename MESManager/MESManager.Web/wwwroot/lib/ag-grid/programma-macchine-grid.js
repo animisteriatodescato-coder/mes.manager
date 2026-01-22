@@ -782,12 +782,20 @@ window.programmaMacchineGrid = (function() {
         }
     }
 
-    function printViaIframe() {
+    function printViaIframe(printColumnFields) {
         if (!gridApi) return;
 
         // Ottieni le colonne visibili
-        const visibleColumns = gridApi.getColumns()
+        let visibleColumns = gridApi.getColumns()
             .filter(col => col.isVisible() && col.getColId() !== 'ag-Grid-AutoColumn');
+
+        // Se sono specificate colonne per la stampa, filtra solo quelle
+        if (printColumnFields && Array.isArray(printColumnFields) && printColumnFields.length > 0) {
+            visibleColumns = visibleColumns.filter(col => {
+                const field = col.getColDef().field;
+                return printColumnFields.includes(field);
+            });
+        }
 
         // Ottieni tutte le righe visualizzate (filtrate e ordinate)
         const rowData = [];

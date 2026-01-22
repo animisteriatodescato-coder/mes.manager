@@ -78,7 +78,7 @@
          style="width: 100%; height: calc(100vh - 150px);">
     </div>
 
-    <MudDialog @bind-Visible="showColumnDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Medium }">
+    <MudDialog @bind-Visible="showColumnDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true }">
         <TitleContent>
             <MudText Typo="Typo.h6">
                 <MudIcon Icon="@Icons.Material.Filled.ViewColumn" Class="mr-2" />
@@ -86,21 +86,41 @@
             </MudText>
         </TitleContent>
         <DialogContent>
-            <MudList T="string" Dense="true">
-                @foreach (var col in columnList)
-                {
-                    var currentCol = col;
-                    <MudListItem T="string">
-                        <MudSwitch Value="@currentCol.Visible" 
-                                   Color="Color.Primary" 
-                                   Label="@currentCol.HeaderName"
-                                   T="bool"
-                                   ValueChanged="@(async (bool val) => { currentCol.Visible = val; await OnColumnVisibilityChanged(currentCol.Field, val); })" />
-                    </MudListItem>
-                }
-            </MudList>
+            <MudSimpleTable Dense="true" Hover="true" Style="max-height: 400px; overflow-y: auto;">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">Colonna</th>
+                        <th style="width: 25%; text-align: center;"><MudIcon Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" /> Visibile</th>
+                        <th style="width: 25%; text-align: center;"><MudIcon Icon="@Icons.Material.Filled.Print" Size="Size.Small" /> Stampa</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var col in columnList)
+                    {
+                        var currentCol = col;
+                        <tr>
+                            <td>@currentCol.HeaderName</td>
+                            <td style="text-align: center;">
+                                <MudSwitch Value="@currentCol.Visible" 
+                                           Color="Color.Primary" 
+                                           T="bool"
+                                           ValueChanged="@(async (bool val) => { currentCol.Visible = val; await OnColumnVisibilityChanged(currentCol.Field, val); })" />
+                            </td>
+                            <td style="text-align: center;">
+                                <MudSwitch Value="@currentCol.PrintVisible" 
+                                           Color="Color.Secondary" 
+                                           T="bool"
+                                           ValueChanged="@(async (bool val) => { currentCol.PrintVisible = val; await SavePrintColumnSettings(); })" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
         </DialogContent>
         <DialogActions>
+            <MudButton Variant="Variant.Text" OnClick="@SelectAllPrintColumns">Seleziona Tutte Stampa</MudButton>
+            <MudButton Variant="Variant.Text" OnClick="@DeselectAllPrintColumns">Deseleziona Tutte Stampa</MudButton>
+            <MudSpacer />
             <MudButton OnClick="@(() => showColumnDialog = false)">Chiudi</MudButton>
         </DialogActions>
     </MudDialog>
@@ -356,6 +376,8 @@
         try
         {
             columnList = await JSRuntime.InvokeAsync<List<ColumnInfo>>("programmaMacchineGrid.getAllColumns");
+            // Carica le impostazioni di stampa salvate
+            await LoadPrintColumnSettings();
             showColumnDialog = true;
         }
         catch (Exception ex)
@@ -469,8 +491,10 @@
     {
         try
         {
+            // Ottieni le colonne da stampare
+            var printColumns = await PreferencesService.GetAsync<List<string>>("programma-macchine-print-columns");
             // Usa un iframe nascosto per stampare, così non interferisce con la pagina principale
-            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.printViaIframe");
+            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.printViaIframe", printColumns);
         }
         catch (Exception ex)
         {
@@ -551,5 +575,52 @@
         public string Field { get; set; } = string.Empty;
         public string HeaderName { get; set; } = string.Empty;
         public bool Visible { get; set; }
+        public bool PrintVisible { get; set; } = true;
+    }
+
+    private async Task SavePrintColumnSettings()
+    {
+        try
+        {
+            var printColumns = columnList.Where(c => c.PrintVisible).Select(c => c.Field).ToList();
+            await PreferencesService.SetAsync("programma-macchine-print-columns", printColumns);
+        }
+        catch { }
+    }
+
+    private async Task LoadPrintColumnSettings()
+    {
+        try
+        {
+            var savedPrintColumns = await PreferencesService.GetAsync<List<string>>("programma-macchine-print-columns");
+            if (savedPrintColumns != null && savedPrintColumns.Any())
+            {
+                foreach (var col in columnList)
+                {
+                    col.PrintVisible = savedPrintColumns.Contains(col.Field);
+                }
+            }
+        }
+        catch { }
+    }
+
+    private async Task SelectAllPrintColumns()
+    {
+        foreach (var col in columnList)
+        {
+            col.PrintVisible = true;
+        }
+        await SavePrintColumnSettings();
+        StateHasChanged();
+    }
+
+    private async Task DeselectAllPrintColumns()
+    {
+        foreach (var col in columnList)
+        {
+            col.PrintVisible = false;
+        }
+        await SavePrintColumnSettings();
+        StateHasChanged();
     }
 }
