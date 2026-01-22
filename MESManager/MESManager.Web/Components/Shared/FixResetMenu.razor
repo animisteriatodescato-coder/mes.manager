@@ -1,14 +1,21 @@
 @inject IDialogService DialogService
 
-<MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Fix/Reset Menu" Dense="true">
+<MudMenu Dense="true" AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft">
     <ActivatorContent>
-        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.RestartAlt" EndIcon="@Icons.Material.Filled.ArrowDropDown">
+        <MudButton Variant="Variant.Outlined" 
+                   StartIcon="@Icons.Material.Filled.RestartAlt" 
+                   EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                   Size="Size.Small">
             Reset
         </MudButton>
     </ActivatorContent>
     <ChildContent>
-        <MudMenuItem Icon="@Icons.Material.Filled.PushPin" OnClick="@OnFixClicked">Fix - Salva stato attuale</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.Restore" OnClick="@OnResetClicked">Reset - Ripristina stato salvato</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.PushPin" OnClick="@OnFixClicked">
+            Fix - Salva stato attuale
+        </MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Restore" OnClick="@OnResetClicked">
+            Reset - Ripristina stato salvato
+        </MudMenuItem>
     </ChildContent>
 </MudMenu>
 
