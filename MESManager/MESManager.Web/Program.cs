@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using MESManager.Infrastructure.Data;
 using MESManager.Web.Hubs;
 using MESManager.Web.Services;
+using MESManager.Web.Security;
 using MESManager.Application.Services;
 using MESManager.Application.Interfaces;
 using MESManager.Application.Configuration;
@@ -25,33 +26,39 @@ var builder = WebApplication.CreateBuilder(args);
 // ============================================
 // CONFIGURAZIONE SICURA DELLE CREDENZIALI
 // ============================================
-// Carica le credenziali dal file secrets (NON committato in git)
+// Le credenziali sono criptate con DPAPI (Windows Data Protection)
+// e possono essere decriptate solo da questo utente su questa macchina.
 // Ordine di caricamento (ultimo vince):
 // 1. appsettings.json (base)
 // 2. appsettings.{Environment}.json
-// 3. appsettings.Database.json (legacy, da rimuovere)
-// 4. appsettings.Secrets.json (credenziali reali - NON in git)
-// 5. Variabili d'ambiente (per produzione/container)
+// 3. appsettings.Secrets.encrypted (CRIPTATO - preferito)
+// 4. appsettings.Secrets.json (in chiaro - fallback)
+// 5. appsettings.Database.json (legacy)
+// 6. Variabili d'ambiente (per produzione/container)
 
-var secretsPath = builder.Environment.IsProduction()
-    ? Path.Combine(builder.Environment.ContentRootPath, "appsettings.Secrets.json")
-    : Path.Combine(Directory.GetParent(builder.Environment.ContentRootPath)!.FullName, "appsettings.Secrets.json");
+var solutionRoot = builder.Environment.IsProduction()
+    ? builder.Environment.ContentRootPath
+    : Directory.GetParent(builder.Environment.ContentRootPath)!.FullName;
 
-if (File.Exists(secretsPath))
+// Prima prova con file criptato (più sicuro)
+var encryptedSecretsPath = Path.Combine(solutionRoot, "appsettings.Secrets.encrypted");
+var secretsPath = Path.Combine(solutionRoot, "appsettings.Secrets.json");
+var dbConfigPath = Path.Combine(solutionRoot, "appsettings.Database.json");
+
+if (File.Exists(encryptedSecretsPath))
 {
+    // Decripta e carica in memoria (nessun file temporaneo su disco)
+    builder.Configuration.AddEncryptedSecrets(encryptedSecretsPath);
+}
+else if (File.Exists(secretsPath))
+{
+    // Fallback a file in chiaro (sviluppo iniziale)
     builder.Configuration.AddJsonFile(secretsPath, optional: false, reloadOnChange: true);
 }
-else
+else if (File.Exists(dbConfigPath))
 {
-    // Fallback al vecchio file (per retrocompatibilità)
-    var dbConfigPath = builder.Environment.IsProduction()
-        ? Path.Combine(builder.Environment.ContentRootPath, "appsettings.Database.json")
-        : Path.Combine(Directory.GetParent(builder.Environment.ContentRootPath)!.FullName, "appsettings.Database.json");
-
-    if (File.Exists(dbConfigPath))
-    {
-        builder.Configuration.AddJsonFile(dbConfigPath, optional: false, reloadOnChange: true);
-    }
+    // Legacy fallback
+    builder.Configuration.AddJsonFile(dbConfigPath, optional: false, reloadOnChange: true);
 }
 
 // Configura DatabaseConfiguration per la DI

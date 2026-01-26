@@ -2,11 +2,13 @@
 # MESManager Security .gitignore
 # =========================
 
-# Credenziali e segreti
+# Credenziali e segreti (in chiaro e criptati)
 appsettings.Secrets.json
 appsettings.*.Secrets.json
-secrets.json
+appsettings.Secrets.encrypted
 *.secrets.json
+*.secrets.encrypted
+secrets.json
 
 # User Secrets (già ignorati di default, ma per sicurezza)
 secrets/

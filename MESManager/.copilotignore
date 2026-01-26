@@ -1,0 +1,37 @@
+# ===========================================
+# COPILOT IGNORE - File esclusi da GitHub Copilot
+# ===========================================
+# Questi file NON saranno letti da Copilot Chat
+# per proteggere credenziali e dati sensibili.
+# ===========================================
+
+# File con credenziali
+appsettings.Secrets.json
+appsettings.*.Secrets.json
+**/appsettings.Secrets.json
+secrets.json
+*.secrets.json
+
+# File di configurazione database legacy
+appsettings.Database.json
+
+# File di produzione con credenziali
+appsettings.Production.json
+
+# Script con potenziali credenziali
+test-sql-connection.ps1
+test-mago-connection.csx
+migrate-database-to-production.ps1
+create-fab-user.ps1
+copy-data-from-production.ps1
+
+# Log files (potrebbero contenere info sensibili)
+*.log
+logs/
+
+# Chiavi e certificati
+*.pem
+*.key
+*.pfx
+*.p12
+*.cer
