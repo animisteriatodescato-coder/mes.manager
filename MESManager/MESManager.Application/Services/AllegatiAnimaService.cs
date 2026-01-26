@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using MESManager.Application.Configuration;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
 
@@ -8,7 +10,7 @@ namespace MESManager.Application.Services
 {
     public class AllegatiAnimaService : IAllegatiAnimaService
     {
-        private readonly string _ganttConnectionString = "Server=192.168.1.230\\SQLEXPRESS;Database=Gantt;User Id=sa;Password=password.123;TrustServerCertificate=True;";
+        private readonly string _ganttConnectionString;
         private readonly ILogger<AllegatiAnimaService> _logger;
         
         // Path base per salvare gli allegati - usa cartella locale accessibile
@@ -35,9 +37,10 @@ namespace MESManager.Application.Services
             ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".tif"
         };
 
-        public AllegatiAnimaService(ILogger<AllegatiAnimaService> logger)
+        public AllegatiAnimaService(ILogger<AllegatiAnimaService> logger, IOptions<DatabaseConfiguration> dbConfig)
         {
             _logger = logger;
+            _ganttConnectionString = dbConfig.Value.GanttDb;
             _logger.LogInformation("AllegatiAnimaService initialized. AllegatiBasePath={Path}", AllegatiBasePath);
         }
 

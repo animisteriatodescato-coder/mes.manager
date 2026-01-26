@@ -13,6 +13,7 @@ using MESManager.Web.Hubs;
 using MESManager.Web.Services;
 using MESManager.Application.Services;
 using MESManager.Application.Interfaces;
+using MESManager.Application.Configuration;
 using Syncfusion.Blazor;
 using OfficeOpenXml;
 
@@ -21,17 +22,46 @@ ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Carica configurazione database:
-// - In sviluppo: cerca nella directory padre (root della solution)
-// - In produzione: cerca nella stessa directory dell'app
-var dbConfigPath = builder.Environment.IsProduction()
-    ? Path.Combine(builder.Environment.ContentRootPath, "appsettings.Database.json")
-    : Path.Combine(Directory.GetParent(builder.Environment.ContentRootPath)!.FullName, "appsettings.Database.json");
+// ============================================
+// CONFIGURAZIONE SICURA DELLE CREDENZIALI
+// ============================================
+// Carica le credenziali dal file secrets (NON committato in git)
+// Ordine di caricamento (ultimo vince):
+// 1. appsettings.json (base)
+// 2. appsettings.{Environment}.json
+// 3. appsettings.Database.json (legacy, da rimuovere)
+// 4. appsettings.Secrets.json (credenziali reali - NON in git)
+// 5. Variabili d'ambiente (per produzione/container)
 
-if (File.Exists(dbConfigPath))
+var secretsPath = builder.Environment.IsProduction()
+    ? Path.Combine(builder.Environment.ContentRootPath, "appsettings.Secrets.json")
+    : Path.Combine(Directory.GetParent(builder.Environment.ContentRootPath)!.FullName, "appsettings.Secrets.json");
+
+if (File.Exists(secretsPath))
 {
-    builder.Configuration.AddJsonFile(dbConfigPath, optional: false, reloadOnChange: true);
+    builder.Configuration.AddJsonFile(secretsPath, optional: false, reloadOnChange: true);
 }
+else
+{
+    // Fallback al vecchio file (per retrocompatibilità)
+    var dbConfigPath = builder.Environment.IsProduction()
+        ? Path.Combine(builder.Environment.ContentRootPath, "appsettings.Database.json")
+        : Path.Combine(Directory.GetParent(builder.Environment.ContentRootPath)!.FullName, "appsettings.Database.json");
+
+    if (File.Exists(dbConfigPath))
+    {
+        builder.Configuration.AddJsonFile(dbConfigPath, optional: false, reloadOnChange: true);
+    }
+}
+
+// Configura DatabaseConfiguration per la DI
+builder.Services.Configure<DatabaseConfiguration>(options =>
+{
+    options.MESManagerDb = builder.Configuration.GetConnectionString("MESManagerDb") ?? "";
+    options.MagoDb = builder.Configuration.GetConnectionString("MagoDb") 
+                     ?? builder.Configuration["Mago:ConnectionString"] ?? "";
+    options.GanttDb = builder.Configuration.GetConnectionString("GanttDb") ?? "";
+});
 
 // Abilita i controller API con JSON camelCase
 builder.Services.AddControllers()
@@ -42,7 +72,7 @@ builder.Services.AddControllers()
 
 // Legge la connection string dal file condiviso
 var connectionString = builder.Configuration.GetConnectionString("MESManagerDb")
-    ?? throw new InvalidOperationException("Connection string 'MESManagerDb' not found in appsettings.Database.json");
+    ?? throw new InvalidOperationException("Connection string 'MESManagerDb' not found. Please create appsettings.Secrets.json from template.");
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -96,11 +126,18 @@ builder.Services.AddDbContext<MesManagerDbContext>(options =>
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
-    options.Password.RequireDigit = false;
-    options.Password.RequireLowercase = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequiredLength = 6;
+    // Policy password più sicura
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = false; // Opzionale per usabilità
+    options.Password.RequiredLength = 8;
+    options.Password.RequiredUniqueChars = 4;
+    
+    // Lockout per prevenire brute force
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
 })
     .AddEntityFrameworkStores<MesManagerDbContext>()
     .AddDefaultTokenProviders();

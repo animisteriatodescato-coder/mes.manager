@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,7 @@ namespace MESManager.Web.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize] // Richiede autenticazione per tutti gli endpoint
 public class OperatoriController : ControllerBase
 {
     private readonly IOperatoreAppService _operatoreService;

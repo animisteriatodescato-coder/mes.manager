@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MESManager.Sync.Services;
 
@@ -5,6 +6,7 @@ namespace MESManager.Web.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] // Richiede autenticazione per tutti gli endpoint
 public class SyncController : ControllerBase
 {
     private readonly ISyncCoordinator _syncCoordinator;

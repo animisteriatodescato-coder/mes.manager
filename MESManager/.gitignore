@@ -1,0 +1,81 @@
+# =========================
+# MESManager Security .gitignore
+# =========================
+
+# Credenziali e segreti
+appsettings.Secrets.json
+appsettings.*.Secrets.json
+secrets.json
+*.secrets.json
+
+# User Secrets (già ignorati di default, ma per sicurezza)
+secrets/
+
+# File di configurazione locali con credenziali
+appsettings.Local.json
+appsettings.*.Local.json
+
+# Log files (potrebbero contenere info sensibili)
+*.log
+logs/
+app.log
+app.error.log
+web-run.log
+
+# Build outputs
+bin/
+obj/
+publish/
+out/
+
+# IDE
+.vs/
+.vscode/settings.json
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet
+*.nupkg
+.nuget/
+packages/
+
+# Test results
+TestResults/
+*.trx
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+
+# Coverage
+coverage/
+*.coverage
+*.coveragexml
+
+# Excel temp files
+~$*.xlsx
+~$*.xls
+
+# Risultati temporanei
+risultato-*.txt
+api-result.txt

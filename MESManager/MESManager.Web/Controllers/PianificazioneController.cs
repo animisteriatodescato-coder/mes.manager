@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MESManager.Infrastructure.Data;
@@ -10,6 +11,7 @@ namespace MESManager.Web.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] // Richiede autenticazione per tutti gli endpoint
 public class PianificazioneController : ControllerBase
 {
     private readonly MesManagerDbContext _context;

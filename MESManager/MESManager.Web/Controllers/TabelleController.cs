@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MESManager.Web.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] // Richiede autenticazione per tutti gli endpoint
     public class TabelleController : ControllerBase
     {
         /// <summary>

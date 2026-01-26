@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MESManager.Application.Services;
 using MESManager.Application.DTOs;
@@ -6,6 +7,7 @@ namespace MESManager.Web.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize] // Richiede autenticazione per tutti gli endpoint
     public class AllegatiAnimaController : ControllerBase
     {
         private readonly AllegatiAnimaService _allegatiService;

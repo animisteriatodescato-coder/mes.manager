@@ -1,12 +1,19 @@
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Options;
+using MESManager.Application.Configuration;
 using MESManager.Application.DTOs;
 
 namespace MESManager.Application.Services
 {
     public class ArticoloCatalogoService
     {
-        private readonly string _connectionString = "Server=192.168.1.230\\SQLEXPRESS;Database=Gantt;User Id=sa;Password=password.123;";
+        private readonly string _connectionString;
+
+        public ArticoloCatalogoService(IOptions<DatabaseConfiguration> dbConfig)
+        {
+            _connectionString = dbConfig.Value.GanttDb;
+        }
 
         public List<ArticoloCatalogoDto> GetCatalogoArticoli()
         {

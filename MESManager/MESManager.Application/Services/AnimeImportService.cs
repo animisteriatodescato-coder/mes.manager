@@ -3,30 +3,37 @@ using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
+using MESManager.Application.Configuration;
 using MESManager.Application.Interfaces;
 using MESManager.Domain.Entities;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Diagnostics;
 
 namespace MESManager.Application.Services
 {
     public class AnimeImportService
     {
-        private readonly string _ganttConnectionString = "Server=192.168.1.230\\SQLEXPRESS;Database=Gantt;User Id=sa;Password=password.123;TrustServerCertificate=True;";
+        private readonly string _ganttConnectionString;
         private readonly IAnimeRepository _animeRepository;
         private readonly ILogger<AnimeImportService> _logger;
 
-        public AnimeImportService(IAnimeRepository animeRepository, ILogger<AnimeImportService> logger)
+        public AnimeImportService(
+            IAnimeRepository animeRepository, 
+            ILogger<AnimeImportService> logger,
+            IOptions<DatabaseConfiguration> dbConfig)
         {
             _animeRepository = animeRepository;
             _logger = logger;
+            _ganttConnectionString = dbConfig.Value.GanttDb;
         }
 
         public async Task<int> ImportFromGanttAsync()
         {
             var sw = Stopwatch.StartNew();
             _logger.LogInformation("=== START ANIME SYNC FROM GANTT ===");
-            _logger.LogInformation("Connection: Server=192.168.1.230\\SQLEXPRESS, Database=Gantt");
+            // Non loggare la connection string completa per sicurezza
+            _logger.LogInformation("Connecting to Gantt database...");
             
             var articoli = await ReadArticoliFromGanttAsync();
             _logger.LogInformation("Read {Count} anime from Gantt DB", articoli.Count);
