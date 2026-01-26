@@ -11,6 +11,7 @@ namespace MESManager.Infrastructure.Services;
 public class PreferenzeUtenteService : IPreferenzeUtenteService
 {
     private readonly MesManagerDbContext _context;
+    private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
     public PreferenzeUtenteService(MesManagerDbContext context)
     {
@@ -19,65 +20,105 @@ public class PreferenzeUtenteService : IPreferenzeUtenteService
 
     public async Task<string?> GetAsync(Guid utenteId, string chiave)
     {
-        var preferenza = await _context.PreferenzeUtente
-            .FirstOrDefaultAsync(p => p.UtenteAppId == utenteId && p.Chiave == chiave);
-        
-        return preferenza?.ValoreJson;
+        await _semaphore.WaitAsync();
+        try
+        {
+            var preferenza = await _context.PreferenzeUtente
+                .FirstOrDefaultAsync(p => p.UtenteAppId == utenteId && p.Chiave == chiave);
+            
+            return preferenza?.ValoreJson;
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
     public async Task<Dictionary<string, string>> GetAllAsync(Guid utenteId)
     {
-        return await _context.PreferenzeUtente
-            .Where(p => p.UtenteAppId == utenteId)
-            .ToDictionaryAsync(p => p.Chiave, p => p.ValoreJson);
+        await _semaphore.WaitAsync();
+        try
+        {
+            return await _context.PreferenzeUtente
+                .Where(p => p.UtenteAppId == utenteId)
+                .ToDictionaryAsync(p => p.Chiave, p => p.ValoreJson);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
     public async Task SaveAsync(Guid utenteId, string chiave, string valoreJson)
     {
-        var preferenza = await _context.PreferenzeUtente
-            .FirstOrDefaultAsync(p => p.UtenteAppId == utenteId && p.Chiave == chiave);
-
-        if (preferenza == null)
+        await _semaphore.WaitAsync();
+        try
         {
-            preferenza = new PreferenzaUtente
+            var preferenza = await _context.PreferenzeUtente
+                .FirstOrDefaultAsync(p => p.UtenteAppId == utenteId && p.Chiave == chiave);
+
+            if (preferenza == null)
             {
-                Id = Guid.NewGuid(),
-                UtenteAppId = utenteId,
-                Chiave = chiave,
-                ValoreJson = valoreJson,
-                DataCreazione = DateTime.Now,
-                UltimaModifica = DateTime.Now
-            };
-            _context.PreferenzeUtente.Add(preferenza);
-        }
-        else
-        {
-            preferenza.ValoreJson = valoreJson;
-            preferenza.UltimaModifica = DateTime.Now;
-        }
+                preferenza = new PreferenzaUtente
+                {
+                    Id = Guid.NewGuid(),
+                    UtenteAppId = utenteId,
+                    Chiave = chiave,
+                    ValoreJson = valoreJson,
+                    DataCreazione = DateTime.Now,
+                    UltimaModifica = DateTime.Now
+                };
+                _context.PreferenzeUtente.Add(preferenza);
+            }
+            else
+            {
+                preferenza.ValoreJson = valoreJson;
+                preferenza.UltimaModifica = DateTime.Now;
+            }
 
-        await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
     public async Task<bool> DeleteAsync(Guid utenteId, string chiave)
     {
-        var preferenza = await _context.PreferenzeUtente
-            .FirstOrDefaultAsync(p => p.UtenteAppId == utenteId && p.Chiave == chiave);
-        
-        if (preferenza == null) return false;
+        await _semaphore.WaitAsync();
+        try
+        {
+            var preferenza = await _context.PreferenzeUtente
+                .FirstOrDefaultAsync(p => p.UtenteAppId == utenteId && p.Chiave == chiave);
+            
+            if (preferenza == null) return false;
 
-        _context.PreferenzeUtente.Remove(preferenza);
-        await _context.SaveChangesAsync();
-        return true;
+            _context.PreferenzeUtente.Remove(preferenza);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
     public async Task DeleteAllAsync(Guid utenteId)
     {
-        var preferenze = await _context.PreferenzeUtente
-            .Where(p => p.UtenteAppId == utenteId)
-            .ToListAsync();
+        await _semaphore.WaitAsync();
+        try
+        {
+            var preferenze = await _context.PreferenzeUtente
+                .Where(p => p.UtenteAppId == utenteId)
+                .ToListAsync();
 
-        _context.PreferenzeUtente.RemoveRange(preferenze);
-        await _context.SaveChangesAsync();
+            _context.PreferenzeUtente.RemoveRange(preferenze);
+            await _context.SaveChangesAsync();
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 }
