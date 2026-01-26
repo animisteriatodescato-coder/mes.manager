@@ -78,6 +78,9 @@
             {
                 CurrentUser.SetCurrentUser(utente);
                 await JS.InvokeVoidAsync("localStorage.setItem", "selectedUserId", userId.Value.ToString());
+                
+                // Forza refresh della pagina per ricaricare le preferenze del nuovo utente
+                await JS.InvokeVoidAsync("location.reload");
             }
         }
     }

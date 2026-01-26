@@ -1,5 +1,6 @@
 @page "/programma/commesse-aperte"
 @using MESManager.Application.DTOs
+@using MESManager.Application.Services
 @using MESManager.Web.Models
 @using MESManager.Web.Services
 @using MESManager.Web.Components.Dialogs
@@ -8,6 +9,7 @@
 @inject HttpClient Http
 @inject NavigationManager Nav
 @inject PreferencesService PreferencesService
+@inject CurrentUserService CurrentUserService
 @inject IJSRuntime JSRuntime
 @inject IPageToolbarService PageToolbarService
 @inject IDialogService DialogService
@@ -760,6 +762,10 @@
             
             var preview = jsonData.Length > 500 ? jsonData.Substring(0, 500) + "..." : jsonData;
             Console.WriteLine($"Serialized JSON preview: {preview}");
+
+            // Imposta l'utente corrente per la griglia (per salvare le preferenze per-utente)
+            var userId = CurrentUserService.CurrentUserId?.ToString() ?? "";
+            await JSRuntime.InvokeVoidAsync("commesseAperteGrid.setCurrentUser", userId);
 
             await JSRuntime.InvokeVoidAsync("eval", $"commesseAperteGrid.init('commesseAperteGrid', JSON.parse({System.Text.Json.JsonSerializer.Serialize(jsonData)}), {System.Text.Json.JsonSerializer.Serialize(settings.ColumnStateJson)})");
             

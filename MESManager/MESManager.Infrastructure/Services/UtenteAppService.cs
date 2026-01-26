@@ -6,20 +6,23 @@ using MESManager.Infrastructure.Data;
 namespace MESManager.Infrastructure.Services;
 
 /// <summary>
-/// Servizio per la gestione degli utenti app
+/// Servizio per la gestione degli utenti app.
+/// Usa IDbContextFactory per creare un nuovo contesto per ogni operazione,
+/// evitando problemi di concorrenza in Blazor Server.
 /// </summary>
 public class UtenteAppService : IUtenteAppService
 {
-    private readonly MesManagerDbContext _context;
+    private readonly IDbContextFactory<MesManagerDbContext> _contextFactory;
 
-    public UtenteAppService(MesManagerDbContext context)
+    public UtenteAppService(IDbContextFactory<MesManagerDbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     public async Task<List<UtenteApp>> GetAllAsync()
     {
-        return await _context.UtentiApp
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.UtentiApp
             .Where(u => u.Attivo)
             .OrderBy(u => u.Ordine)
             .ThenBy(u => u.Nome)
@@ -28,18 +31,21 @@ public class UtenteAppService : IUtenteAppService
 
     public async Task<UtenteApp?> GetByIdAsync(Guid id)
     {
-        return await _context.UtentiApp.FindAsync(id);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.UtentiApp.FindAsync(id);
     }
 
     public async Task<UtenteApp?> GetByNomeAsync(string nome)
     {
-        return await _context.UtentiApp
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.UtentiApp
             .FirstOrDefaultAsync(u => u.Nome.ToUpper() == nome.ToUpper());
     }
 
     public async Task<UtenteApp> CreateAsync(string nome)
     {
-        var maxOrdine = await _context.UtentiApp.MaxAsync(u => (int?)u.Ordine) ?? 0;
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var maxOrdine = await context.UtentiApp.MaxAsync(u => (int?)u.Ordine) ?? 0;
         
         var utente = new UtenteApp
         {
@@ -51,15 +57,16 @@ public class UtenteAppService : IUtenteAppService
             UltimaModifica = DateTime.Now
         };
 
-        _context.UtentiApp.Add(utente);
-        await _context.SaveChangesAsync();
+        context.UtentiApp.Add(utente);
+        await context.SaveChangesAsync();
         
         return utente;
     }
 
     public async Task<UtenteApp?> UpdateAsync(Guid id, string nome, bool attivo, int ordine)
     {
-        var utente = await _context.UtentiApp.FindAsync(id);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var utente = await context.UtentiApp.FindAsync(id);
         if (utente == null) return null;
 
         utente.Nome = nome.ToUpper();
@@ -67,34 +74,37 @@ public class UtenteAppService : IUtenteAppService
         utente.Ordine = ordine;
         utente.UltimaModifica = DateTime.Now;
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return utente;
     }
 
     public async Task<UtenteApp?> UpdateAsync(UtenteApp utenteUpdate)
     {
-        var utente = await _context.UtentiApp.FindAsync(utenteUpdate.Id);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var utente = await context.UtentiApp.FindAsync(utenteUpdate.Id);
         if (utente == null) return null;
 
         utente.Nome = utenteUpdate.Nome.ToUpper();
         utente.Attivo = utenteUpdate.Attivo;
         utente.Ordine = utenteUpdate.Ordine;
+        utente.Colore = utenteUpdate.Colore;
         utente.UltimaModifica = DateTime.Now;
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return utente;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        var utente = await _context.UtentiApp.FindAsync(id);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var utente = await context.UtentiApp.FindAsync(id);
         if (utente == null) return false;
 
         // Soft delete - disattiva invece di eliminare
         utente.Attivo = false;
         utente.UltimaModifica = DateTime.Now;
         
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return true;
     }
 }

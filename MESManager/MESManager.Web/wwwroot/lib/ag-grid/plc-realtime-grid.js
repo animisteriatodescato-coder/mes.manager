@@ -1,5 +1,17 @@
 window.plcRealtimeGrid = (function () {
     let gridApi = null;
+    let currentUserId = null;
+
+    function getStorageKey() {
+        return currentUserId 
+            ? `plc-realtime-grid-columns-${currentUserId}`
+            : 'plc-realtime-grid-columns';
+    }
+
+    function setCurrentUser(userId) {
+        currentUserId = userId;
+        console.log('PLC Realtime grid user set to:', userId);
+    }
 
     function init(containerId, rowData, savedColumnState) {
         const container = document.getElementById(containerId);
@@ -260,7 +272,8 @@ window.plcRealtimeGrid = (function () {
                 let stateToRestore = savedColumnState;
                 if (!stateToRestore) {
                     try {
-                        stateToRestore = localStorage.getItem('plc-realtime-grid-columns');
+                        const storageKey = getStorageKey();
+                        stateToRestore = localStorage.getItem(storageKey);
                     } catch (e) {
                         console.error('Error reading from localStorage:', e);
                     }
@@ -309,7 +322,8 @@ window.plcRealtimeGrid = (function () {
         if (gridApi) {
             try {
                 const state = gridApi.getColumnState();
-                localStorage.setItem('plc-realtime-grid-columns', JSON.stringify(state));
+                const storageKey = getStorageKey();
+                localStorage.setItem(storageKey, JSON.stringify(state));
             } catch (e) {
                 console.error('Error saving grid state:', e);
             }
@@ -403,7 +417,8 @@ window.plcRealtimeGrid = (function () {
         if (gridApi) {
             gridApi.resetColumnState();
             try {
-                localStorage.removeItem('plc-realtime-grid-columns');
+                const storageKey = getStorageKey();
+                localStorage.removeItem(storageKey);
             } catch (e) {
                 console.error('Error clearing localStorage:', e);
             }
@@ -449,6 +464,7 @@ window.plcRealtimeGrid = (function () {
         toggleColumnPanel,
         resetGrid,
         applySettings,
-        getColumnState
+        getColumnState,
+        setCurrentUser
     };
 })();

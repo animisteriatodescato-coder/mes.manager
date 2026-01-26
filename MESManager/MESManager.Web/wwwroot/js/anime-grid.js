@@ -1,6 +1,18 @@
 window.animeGrid = (function() {
     let gridApi = null;
     let isGridInitialized = false;
+    let currentUserId = null;
+
+    function getStorageKey() {
+        return currentUserId 
+            ? `anime-grid-columnState-${currentUserId}`
+            : 'anime-grid-columnState';
+    }
+
+    function setCurrentUser(userId) {
+        currentUserId = userId;
+        console.log('Anime grid user set to:', userId);
+    }
 
     const columnDefs = [
         // READONLY - da sync commesse
@@ -112,9 +124,10 @@ window.animeGrid = (function() {
             return;
         }
 
-        // Carica stato colonne da localStorage
-        const savedState = localStorage.getItem('anime-grid-columnState');
-        console.log('Loading column state from localStorage:', savedState ? 'found' : 'not found');
+        // Carica stato colonne da localStorage (chiave per-utente)
+        const storageKey = getStorageKey();
+        const savedState = localStorage.getItem(storageKey);
+        console.log('Loading column state from localStorage:', storageKey, savedState ? 'found' : 'not found');
 
         // Distruggi la griglia esistente se presente
         if (gridApi) {
@@ -216,8 +229,9 @@ window.animeGrid = (function() {
     function saveColumnState() {
         if (gridApi) {
             const columnState = gridApi.getColumnState();
-            localStorage.setItem('anime-grid-columnState', JSON.stringify(columnState));
-            console.log('Column state saved to localStorage');
+            const storageKey = getStorageKey();
+            localStorage.setItem(storageKey, JSON.stringify(columnState));
+            console.log('Column state saved to localStorage:', storageKey);
         }
     }
 
@@ -321,8 +335,9 @@ window.animeGrid = (function() {
             gridApi.setFilterModel(null);
             
             // Rimuovi stato salvato da localStorage
-            localStorage.removeItem('anime-grid-columnState');
-            console.log('Column state reset and cleared from localStorage');
+            const storageKey = getStorageKey();
+            localStorage.removeItem(storageKey);
+            console.log('Column state reset and cleared from localStorage:', storageKey);
         }
     }
 
@@ -534,6 +549,7 @@ window.animeGrid = (function() {
         exportCsv: exportCsv,
         getStats: getStats,
         registerDotNetRef: registerDotNetRef,
-        getSelectedRow: getSelectedRow
+        getSelectedRow: getSelectedRow,
+        setCurrentUser: setCurrentUser
     };
 })();

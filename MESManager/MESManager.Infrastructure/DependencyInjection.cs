@@ -20,6 +20,14 @@ public static class DependencyInjection
                     maxRetryDelay: TimeSpan.FromSeconds(30),
                     errorNumbersToAdd: null)));
 
+        // DbContextFactory per operazioni thread-safe
+        services.AddDbContextFactory<MesManagerDbContext>(options =>
+            options.UseSqlServer(connectionString, sqlOptions => 
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(30),
+                    errorNumbersToAdd: null)), ServiceLifetime.Scoped);
+
         // Repositories
         services.AddScoped<IAnimeRepository, AnimeRepository>();
 

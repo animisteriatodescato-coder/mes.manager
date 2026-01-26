@@ -1,6 +1,18 @@
 window.commesseAperteGrid = (function() {
     let gridApi = null;
     let dotNetHelper = null;
+    let currentUserId = null;
+
+    function getStorageKey() {
+        return currentUserId 
+            ? `commesse-aperte-grid-columnState-${currentUserId}`
+            : 'commesse-aperte-grid-columnState';
+    }
+
+    function setCurrentUser(userId) {
+        currentUserId = userId;
+        console.log('Grid user set to:', userId);
+    }
 
     // Funzione per verificare se i dati etichetta sono completi
     function hasDatiEtichettaCompleti(data) {
@@ -453,9 +465,10 @@ window.commesseAperteGrid = (function() {
             return;
         }
         
-        // Carica stato colonne da localStorage
-        const savedState = localStorage.getItem('commesse-aperte-grid-columnState');
-        console.log('Loading column state from localStorage:', savedState ? 'found' : 'not found');
+        // Carica stato colonne da localStorage (usando chiave per-utente)
+        const storageKey = getStorageKey();
+        const savedState = localStorage.getItem(storageKey);
+        console.log('Loading column state from localStorage:', storageKey, savedState ? 'found' : 'not found');
         
         // Destroy existing grid if it exists to prevent duplication
         if (gridApi) {
@@ -596,8 +609,9 @@ window.commesseAperteGrid = (function() {
     function saveColumnState() {
         if (gridApi) {
             const columnState = gridApi.getColumnState();
-            localStorage.setItem('commesse-aperte-grid-columnState', JSON.stringify(columnState));
-            console.log('Column state saved to localStorage');
+            const storageKey = getStorageKey();
+            localStorage.setItem(storageKey, JSON.stringify(columnState));
+            console.log('Column state saved to localStorage:', storageKey);
         }
     }
 
@@ -648,8 +662,9 @@ window.commesseAperteGrid = (function() {
         if (gridApi) {
             gridApi.resetColumnState();
             gridApi.setFilterModel(null);
-            localStorage.removeItem('commesse-aperte-grid-columnState');
-            console.log('Column state reset and cleared from localStorage');
+            const storageKey = getStorageKey();
+            localStorage.removeItem(storageKey);
+            console.log('Column state reset and cleared from localStorage:', storageKey);
         }
     }
 
@@ -720,6 +735,7 @@ window.commesseAperteGrid = (function() {
         reinit: reinit,
         updateRowData: updateRowData,
         setDotNetHelper: setDotNetHelper,
+        setCurrentUser: setCurrentUser,
         setQuickFilter: setQuickFilter,
         setColumnVisible: setColumnVisible,
         getAllColumns: getAllColumns,

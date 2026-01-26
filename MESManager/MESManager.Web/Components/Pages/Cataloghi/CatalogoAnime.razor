@@ -2,12 +2,14 @@
 @using MESManager.Web.Models
 @using MESManager.Web.Services
 @using MESManager.Application.DTOs
+@using MESManager.Application.Services
 @using MESManager.Web.Components.Dialogs
 @using Microsoft.JSInterop
 @using System.Text.Json
 @inject HttpClient Http
 @inject NavigationManager Nav
 @inject PreferencesService PreferencesService
+@inject CurrentUserService CurrentUserService
 @inject IJSRuntime JSRuntime
 @inject IPageToolbarService PageToolbarService
 @inject ISnackbar Snackbar
@@ -196,6 +198,10 @@
                 return;
             }
 
+            // Imposta l'utente corrente per la griglia (per salvare le preferenze per-utente)
+            var userId = CurrentUserService.CurrentUserId?.ToString() ?? "";
+            await JSRuntime.InvokeVoidAsync("animeGrid.setCurrentUser", userId);
+            
             // Inizializza la grid - lo stato delle colonne viene caricato da localStorage automaticamente
             await JSRuntime.InvokeVoidAsync("animeGrid.init", "animeGrid", _anime, null);
             
