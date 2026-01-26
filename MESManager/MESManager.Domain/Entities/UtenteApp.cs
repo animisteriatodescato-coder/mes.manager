@@ -14,6 +14,12 @@ public class UtenteApp
     public string Nome { get; set; } = string.Empty;
     
     /// <summary>
+    /// Colore identificativo dell'utente (hex: #FF5733)
+    /// Visualizzato come riga sotto l'header quando utente è selezionato
+    /// </summary>
+    public string? Colore { get; set; }
+    
+    /// <summary>
     /// Se l'utente è attivo e visibile nel dropdown
     /// </summary>
     public bool Attivo { get; set; } = true;

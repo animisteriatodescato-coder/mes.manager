@@ -42,6 +42,9 @@
                        OnClick="@ToggleTheme" />
     </MudAppBar>
     
+    @* Indicatore colore utente corrente *@
+    <UserColorIndicator />
+    
     @* Sottomenu dinamico per categoria *@
     @if (!string.IsNullOrEmpty(_currentCategory))
     {

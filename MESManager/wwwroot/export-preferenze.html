@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esporta Preferenze localStorage</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1976d2;
+            border-bottom: 3px solid #1976d2;
+            padding-bottom: 10px;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-left: 4px solid #2196f3;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background: #1565c0;
+        }
+        .button.success {
+            background: #4caf50;
+        }
+        .button.success:hover {
+            background: #45a049;
+        }
+        textarea {
+            width: 100%;
+            min-height: 400px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .stats {
+            background: #fff3e0;
+            padding: 15px;
+            border-left: 4px solid #ff9800;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .success-msg {
+            background: #c8e6c9;
+            padding: 15px;
+            border-left: 4px solid #4caf50;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .user-colors {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .user-color {
+            padding: 10px 20px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Esportazione Preferenze localStorage → SQL</h1>
+        
+        <div class="info">
+            <strong>📋 Istruzioni:</strong>
+            <ol>
+                <li>Assicurati di aver configurato tutte le griglie come desiderato sul PC locale</li>
+                <li>Clicca il pulsante "Estrai Preferenze" qui sotto</li>
+                <li>Le preferenze verranno estratte dal localStorage del browser</li>
+                <li>Verrà generato automaticamente lo script SQL per i 3 utenti</li>
+                <li>Copia lo script SQL ed eseguilo sul server database</li>
+            </ol>
+        </div>
+
+        <div class="user-colors">
+            <div class="user-color" style="background: #E91E63;">IRENE</div>
+            <div class="user-color" style="background: #2196F3;">FABIO</div>
+            <div class="user-color" style="background: #4CAF50;">GIULIA</div>
+        </div>
+
+        <button class="button" onclick="estraiPreferenze()">📦 Estrai Preferenze da localStorage</button>
+        <button class="button success" onclick="copiaSQL()" id="btnCopia" style="display:none;">📋 Copia SQL</button>
+
+        <div id="stats" style="display:none;"></div>
+        <div id="success" style="display:none;"></div>
+
+        <textarea id="output" placeholder="Lo script SQL apparirà qui..."></textarea>
+    </div>
+
+    <script>
+        let sqlScript = '';
+
+        function estraiPreferenze() {
+            try {
+                // Estrai tutte le chiavi che contengono 'grid'
+                const preferences = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.includes('grid') || key.includes('plc'))) {
+                        preferences[key] = localStorage.getItem(key);
+                    }
+                }
+
+                const preferencesCount = Object.keys(preferences).length;
+                
+                if (preferencesCount === 0) {
+                    alert('⚠️ Nessuna preferenza trovata nel localStorage!\n\nAssicurati di aver configurato almeno una griglia.');
+                    return;
+                }
+
+                // Genera SQL
+                sqlScript = generaSQL(preferences);
+                document.getElementById('output').value = sqlScript;
+                
+                // Mostra statistiche
+                document.getElementById('stats').innerHTML = `
+                    <div class="stats">
+                        <strong>📊 Statistiche:</strong><br>
+                        • Preferenze trovate: ${preferencesCount}<br>
+                        • Utenti configurati: 3 (IRENE, FABIO, GIULIA)<br>
+                        • Totale INSERT: ${preferencesCount * 3}<br>
+                        • Dimensione script: ${(sqlScript.length / 1024).toFixed(2)} KB
+                    </div>
+                `;
+                document.getElementById('stats').style.display = 'block';
+                
+                document.getElementById('success').innerHTML = `
+                    <div class="success-msg">
+                        ✅ <strong>Script SQL generato con successo!</strong><br>
+                        Copia lo script qui sotto ed eseguilo sul database del server.
+                    </div>
+                `;
+                document.getElementById('success').style.display = 'block';
+                
+                document.getElementById('btnCopia').style.display = 'inline-block';
+
+            } catch (error) {
+                alert('❌ Errore durante l\'estrazione: ' + error.message);
+            }
+        }
+
+        function generaSQL(preferences) {
+            const now = new Date().toLocaleString('it-IT');
+            const utenti = [
+                { Nome: 'IRENE', Colore: '#E91E63' },
+                { Nome: 'FABIO', Colore: '#2196F3' },
+                { Nome: 'GIULIA', Colore: '#4CAF50' }
+            ];
+
+            let sql = `-- =====================================================================
+-- Script di inizializzazione preferenze utenti
+-- Generato il: ${now}
+-- Preferenze estratte: ${Object.keys(preferences).length}
+-- =====================================================================
+
+-- Aggiorna colori utenti se già esistono
+UPDATE UtentiApp SET Colore = '#E91E63' WHERE Nome = 'IRENE';
+UPDATE UtentiApp SET Colore = '#2196F3' WHERE Nome = 'FABIO';
+UPDATE UtentiApp SET Colore = '#4CAF50' WHERE Nome = 'GIULIA';
+
+-- Inserisci utenti se non esistono
+IF NOT EXISTS (SELECT 1 FROM UtentiApp WHERE Nome = 'IRENE')
+    INSERT INTO UtentiApp (Id, Nome, Colore, Attivo, Ordine, DataCreazione, UltimaModifica)
+    VALUES (NEWID(), 'IRENE', '#E91E63', 1, 1, GETDATE(), GETDATE());
+
+IF NOT EXISTS (SELECT 1 FROM UtentiApp WHERE Nome = 'FABIO')
+    INSERT INTO UtentiApp (Id, Nome, Colore, Attivo, Ordine, DataCreazione, UltimaModifica)
+    VALUES (NEWID(), 'FABIO', '#2196F3', 1, 2, GETDATE(), GETDATE());
+
+IF NOT EXISTS (SELECT 1 FROM UtentiApp WHERE Nome = 'GIULIA')
+    INSERT INTO UtentiApp (Id, Nome, Colore, Attivo, Ordine, DataCreazione, UltimaModifica)
+    VALUES (NEWID(), 'GIULIA', '#4CAF50', 1, 3, GETDATE(), GETDATE());
+
+-- =====================================================================
+-- Inserimento preferenze griglie per ogni utente
+-- =====================================================================
+
+`;
+
+            utenti.forEach(utente => {
+                sql += `\n-- Preferenze per utente: ${utente.Nome}\n`;
+                sql += `DECLARE @UtenteId${utente.Nome} UNIQUEIDENTIFIER = (SELECT Id FROM UtentiApp WHERE Nome = '${utente.Nome}');\n\n`;
+
+                Object.entries(preferences).forEach(([chiave, valore]) => {
+                    const valoreEscaped = valore.replace(/'/g, "''");
+                    
+                    sql += `-- Preferenza: ${chiave}\n`;
+                    sql += `IF NOT EXISTS (SELECT 1 FROM PreferenzeUtente WHERE UtenteAppId = @UtenteId${utente.Nome} AND Chiave = '${chiave}')\n`;
+                    sql += `BEGIN\n`;
+                    sql += `    INSERT INTO PreferenzeUtente (Id, UtenteAppId, Chiave, ValoreJson, DataCreazione, UltimaModifica)\n`;
+                    sql += `    VALUES (\n`;
+                    sql += `        NEWID(),\n`;
+                    sql += `        @UtenteId${utente.Nome},\n`;
+                    sql += `        '${chiave}',\n`;
+                    sql += `        '${valoreEscaped}',\n`;
+                    sql += `        GETDATE(),\n`;
+                    sql += `        GETDATE()\n`;
+                    sql += `    );\n`;
+                    sql += `END\n`;
+                    sql += `ELSE\n`;
+                    sql += `BEGIN\n`;
+                    sql += `    UPDATE PreferenzeUtente\n`;
+                    sql += `    SET ValoreJson = '${valoreEscaped}',\n`;
+                    sql += `        UltimaModifica = GETDATE()\n`;
+                    sql += `    WHERE UtenteAppId = @UtenteId${utente.Nome} AND Chiave = '${chiave}';\n`;
+                    sql += `END\n\n`;
+                });
+
+                sql += '\n';
+            });
+
+            sql += `
+-- =====================================================================
+-- Verifica
+-- =====================================================================
+SELECT 
+    u.Nome AS Utente,
+    u.Colore,
+    COUNT(p.Id) AS NumeroPreferenze
+FROM UtentiApp u
+LEFT JOIN PreferenzeUtente p ON u.Id = p.UtenteAppId
+WHERE u.Nome IN ('IRENE', 'FABIO', 'GIULIA')
+GROUP BY u.Nome, u.Colore
+ORDER BY u.Ordine;
+
+PRINT 'Preferenze inizializzate con successo!';
+`;
+
+            return sql;
+        }
+
+        function copiaSQL() {
+            const textarea = document.getElementById('output');
+            textarea.select();
+            document.execCommand('copy');
+            
+            const btn = document.getElementById('btnCopia');
+            const originalText = btn.textContent;
+            btn.textContent = '✓ Copiato!';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

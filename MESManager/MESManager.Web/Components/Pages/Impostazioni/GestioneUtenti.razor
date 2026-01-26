@@ -29,14 +29,15 @@
     </MudGrid>
 </MudPaper>
 
-<MudTable Items="@_utenti" Hover="true" Dense="true" Striped="true" Elevation="2">
+<MudTable Items="@_utenti" Hover="true" Dense="true" Striped="true" Elevation="2" Style="overflow-x: hidden;">
     <HeaderContent>
-        <MudTh>Ordine</MudTh>
-        <MudTh>Nome</MudTh>
-        <MudTh>Attivo</MudTh>
+        <MudTh Style="width: 80px;">Ordine</MudTh>
+        <MudTh Style="width: 120px;">Nome</MudTh>
+        <MudTh Style="width: 200px;">Colore</MudTh>
+        <MudTh Style="width: 80px;">Attivo</MudTh>
         <MudTh>Data Creazione</MudTh>
         <MudTh>Ultima Modifica</MudTh>
-        <MudTh>Azioni</MudTh>
+        <MudTh Style="width: 80px;">Azioni</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Ordine">
@@ -58,6 +59,17 @@
             {
                 @context.Nome
             }
+        </MudTd>
+        <MudTd DataLabel="Colore">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <div style="width: 40px; height: 30px; background-color: @(context.Colore ?? "#1976d2"); border-radius: 4px; border: 1px solid #888; cursor: pointer;"
+                     @onclick="@(() => ApriColorPicker(context))"></div>
+                <MudButton Size="Size.Small" 
+                           Variant="Variant.Outlined" 
+                           OnClick="@(() => ApriColorPicker(context))">
+                    Cambia
+                </MudButton>
+            </MudStack>
         </MudTd>
         <MudTd DataLabel="Attivo">
             <MudSwitch T="bool" 
@@ -90,11 +102,41 @@
     </RowTemplate>
 </MudTable>
 
+@* Dialog per selezione colore *@
+<MudDialog @bind-Visible="_colorDialogVisible" Options="@(new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Seleziona Colore per @_utenteColoreCorrente?.Nome</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudColorPicker @bind-Value="_coloreSelezionato"
+                        PickerVariant="PickerVariant.Static"
+                        ColorPickerView="ColorPickerView.Spectrum"
+                        DisableToolbar="false"
+                        DisableAlpha="true"
+                        DisableColorField="false"
+                        DisablePreview="false"
+                        DisableSliders="false"
+                        DisableInputs="false"
+                        Style="width: 100%;" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="ChiudiColorPicker">Annulla</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="ConfermaColore">Conferma</MudButton>
+    </DialogActions>
+</MudDialog>
+
 @code {
     private List<UtenteApp> _utenti = new();
     private string _nuovoNome = string.Empty;
     private Guid? _inModifica;
     private string _nomeModifica = string.Empty;
+    private System.Threading.SemaphoreSlim _coloreLock = new System.Threading.SemaphoreSlim(1,1);
+    private Dictionary<Guid, MudBlazor.Utilities.MudColor> _coloriUtenti = new();
+    
+    // Dialog colore
+    private bool _colorDialogVisible = false;
+    private UtenteApp? _utenteColoreCorrente;
+    private MudBlazor.Utilities.MudColor _coloreSelezionato = new MudBlazor.Utilities.MudColor("#1976d2");
 
     protected override async Task OnInitializedAsync()
     {
@@ -105,6 +147,13 @@
     {
         var utenti = await UtenteService.GetAllAsync();
         _utenti = utenti.OrderBy(u => u.Ordine).ToList();
+        
+        // Inizializza il dizionario dei colori
+        _coloriUtenti.Clear();
+        foreach (var u in _utenti)
+        {
+            _coloriUtenti[u.Id] = new MudBlazor.Utilities.MudColor(u.Colore ?? "#1976d2");
+        }
     }
 
     private async Task AggiungiUtente()
@@ -180,5 +229,44 @@
         
         var stato = attivo ? "attivato" : "disattivato";
         Snackbar.Add($"Utente '{utente.Nome}' {stato}", Severity.Info);
+    }
+
+    private void ApriColorPicker(UtenteApp utente)
+    {
+        _utenteColoreCorrente = utente;
+        _coloreSelezionato = new MudBlazor.Utilities.MudColor(utente.Colore ?? "#1976d2");
+        _colorDialogVisible = true;
+    }
+
+    private void ChiudiColorPicker()
+    {
+        _colorDialogVisible = false;
+        _utenteColoreCorrente = null;
+    }
+
+    private async Task ConfermaColore()
+    {
+        if (_utenteColoreCorrente == null) return;
+        
+        await _coloreLock.WaitAsync();
+        try
+        {
+            _utenteColoreCorrente.Colore = _coloreSelezionato.ToString();
+            await UtenteService.UpdateAsync(_utenteColoreCorrente);
+            await CaricaUtenti();
+            Snackbar.Add($"Colore per '{_utenteColoreCorrente.Nome}' aggiornato", Severity.Success);
+        }
+        finally
+        {
+            _coloreLock.Release();
+        }
+        
+        _colorDialogVisible = false;
+        _utenteColoreCorrente = null;
+    }
+
+    public void Dispose()
+    {
+        _coloreLock?.Dispose();
     }
 }

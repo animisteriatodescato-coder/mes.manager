@@ -1,0 +1,38 @@
+@using MESManager.Application.Services
+@inject CurrentUserService CurrentUser
+
+@if (CurrentUser.HasUser && !string.IsNullOrEmpty(CurrentUser.CurrentUser?.Colore))
+{
+    <div class="user-color-indicator" style="background-color: @CurrentUser.CurrentUser.Colore;"></div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Sottoscrivi all'evento di cambio utente per aggiornare la UI
+        CurrentUser.OnUserChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        CurrentUser.OnUserChanged -= StateHasChanged;
+    }
+}
+
+<style>
+    .user-color-indicator {
+        position: fixed;
+        top: var(--mud-appbar-height, 64px);
+        left: 0;
+        right: 0;
+        height: 5px;
+        z-index: 1299; /* Sotto l'appbar ma sopra il contenuto */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        transition: background-color 0.3s ease;
+    }
+
+    /* Quando il drawer è aperto, lascia spazio */
+    .mud-drawer-open-responsive-md-left ~ .user-color-indicator {
+        left: var(--mud-drawer-width-left, 240px);
+    }
+</style>
