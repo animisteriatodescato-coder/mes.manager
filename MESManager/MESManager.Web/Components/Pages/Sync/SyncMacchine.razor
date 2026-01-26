@@ -2,25 +2,85 @@
 @using MESManager.Application.DTOs
 @using MESManager.Application.Interfaces
 @using MESManager.Infrastructure.Services
-@using MESManager.Infrastructure.Data
-@using Microsoft.EntityFrameworkCore
-@implements IDisposable
+@implements IAsyncDisposable
 @inject IPlcAppService PlcService
 @inject IPlcSyncCoordinator SyncCoordinator
-@inject IDbContextFactory<MesManagerDbContext> DbContextFactory
 @inject ISnackbar Snackbar
 
 <PageTitle>Sync Macchine</PageTitle>
 
 <MudGrid>
-    <MudItem xs="12" md="6">
+    @* CONTROLLO SYNC *@
+    <MudItem xs="12" md="4">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6" Class="mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.Settings" Class="mr-2" />
+                Controllo Sincronizzazione
+            </MudText>
+            
+            <MudStack Spacing="3">
+                <MudNumericField T="int" 
+                                @bind-Value="_intervalSeconds" 
+                                Label="Intervallo (secondi)"
+                                Min="5" Max="300"
+                                Step="5"
+                                Variant="Variant.Outlined"
+                                Adornment="Adornment.End"
+                                AdornmentText="sec"
+                                Disabled="@_isRunning"
+                                HelperText="Da 5 a 300 secondi" />
+                
+                @if (!_isRunning)
+                {
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Success" 
+                              StartIcon="@Icons.Material.Filled.PlayArrow"
+                              OnClick="StartSync"
+                              FullWidth="true"
+                              Size="Size.Large">
+                        AVVIA SYNC
+                    </MudButton>
+                }
+                else
+                {
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Error" 
+                              StartIcon="@Icons.Material.Filled.Stop"
+                              OnClick="StopSync"
+                              FullWidth="true"
+                              Size="Size.Large">
+                        FERMA SYNC
+                    </MudButton>
+                }
+                
+                @if (_isRunning)
+                {
+                    <MudAlert Severity="Severity.Success" Dense="true">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <span>Prossima sync tra <strong>@_secondsToNext</strong> sec</span>
+                            <MudProgressCircular Size="Size.Small" Value="@GetProgressValue()" Color="Color.Success" />
+                        </MudStack>
+                    </MudAlert>
+                }
+                
+                @if (_isSyncing)
+                {
+                    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+                    <MudText Typo="Typo.caption" Align="Align.Center">Sincronizzazione in corso...</MudText>
+                }
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+
+    @* STATO MACCHINE *@
+    <MudItem xs="12" md="8">
         <MudPaper Class="pa-4">
             <MudText Typo="Typo.h6" Class="mb-4">
                 <MudIcon Icon="@Icons.Material.Filled.Router" Class="mr-2" />
                 Stato Macchine PLC
             </MudText>
             
-            @if (_macchineRealtime != null && _macchineRealtime.Any())
+            @if (_macchineRealtime.Any())
             {
                 <MudSimpleTable Dense="true" Hover="true">
                     <thead>
@@ -34,8 +94,6 @@
                     <tbody>
                         @foreach (var m in _macchineRealtime.OrderBy(x => x.MacchinaNumero))
                         {
-                            var isOnline = m.IsConnessa;
-                            var timeSinceUpdate = DateTime.Now - m.UltimoAggiornamento;
                             <tr>
                                 <td><strong>@m.MacchinaNumero</strong></td>
                                 <td>
@@ -49,7 +107,7 @@
                                     }
                                 </td>
                                 <td>
-                                    @if (isOnline)
+                                    @if (m.IsConnessa)
                                     {
                                         <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">Online</MudChip>
                                     }
@@ -62,7 +120,7 @@
                                     @if (m.UltimoAggiornamento > DateTime.MinValue)
                                     {
                                         <span title="@m.UltimoAggiornamento.ToString("dd/MM/yyyy HH:mm:ss")">
-                                            @FormatTimeAgo(timeSinceUpdate)
+                                            @FormatTimeAgo(DateTime.Now - m.UltimoAggiornamento)
                                         </span>
                                     }
                                     else
@@ -80,11 +138,6 @@
                     <MudChip T="string" Size="Size.Small" Color="Color.Error">@_macchineRealtime.Count(m => !m.IsConnessa) Offline</MudChip>
                 </MudStack>
             }
-            else if (_loading)
-            {
-                <MudProgressCircular Indeterminate="true" Size="Size.Small" />
-                <MudText Typo="Typo.caption" Class="ml-2">Caricamento...</MudText>
-            }
             else
             {
                 <MudAlert Severity="Severity.Info">Nessuna macchina trovata</MudAlert>
@@ -92,364 +145,208 @@
         </MudPaper>
     </MudItem>
 
-    <MudItem xs="12" md="6">
+    @* LOG SINCRONIZZAZIONI *@
+    <MudItem xs="12">
         <MudPaper Class="pa-4">
             <MudText Typo="Typo.h6" Class="mb-4">
-                <MudIcon Icon="@Icons.Material.Filled.Sync" Class="mr-2" />
-                Azioni Sincronizzazione
+                <MudIcon Icon="@Icons.Material.Filled.List" Class="mr-2" />
+                Log Sincronizzazioni
             </MudText>
             
-            <MudStack Spacing="2">
-                <MudButton Variant="Variant.Filled" 
-                          Color="Color.Primary" 
-                          StartIcon="@Icons.Material.Filled.Refresh"
-                          OnClick="@(async () => await CaricaDatiAsync())"
-                          Disabled="@_syncing"
-                          FullWidth="true">
-                    Aggiorna Stato
-                </MudButton>
-                
-                <MudDivider />
-                
-                <MudButton Variant="Variant.Filled" 
-                          Color="Color.Success" 
-                          StartIcon="@Icons.Material.Filled.SyncAlt"
-                          OnClick="@(async () => await SyncTutteMacchineAsync())"
-                          Disabled="@_syncing"
-                          FullWidth="true"
-                          Size="Size.Large">
-                    @if (_syncing)
-                    {
-                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-                        <span>Sincronizzazione in corso...</span>
-                    }
-                    else
-                    {
-                        <span>Sincronizza Tutte le Macchine</span>
-                    }
-                </MudButton>
-            </MudStack>
-            
-            @if (_syncing)
+            @if (_syncLogs.Any())
             {
-                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mt-4" />
+                <MudSimpleTable Dense="true" Hover="true" Style="max-height: 300px; overflow-y: auto;">
+                    <thead>
+                        <tr>
+                            <th style="width: 150px;">Orario</th>
+                            <th>Risultato</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in _syncLogs)
+                        {
+                            <tr>
+                                <td>@log.Timestamp.ToString("HH:mm:ss")</td>
+                                <td>
+                                    @if (log.IsSuccess)
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" Class="mr-1" />
+                                    }
+                                    else
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Size="Size.Small" Class="mr-1" />
+                                    }
+                                    @log.Message
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
             }
-            
-            @if (_ultimaSync.HasValue)
+            else
             {
-                <MudAlert Severity="Severity.Info" Class="mt-4">
-                    <MudText Typo="Typo.caption">
-                        Ultima sincronizzazione: <strong>@_ultimaSync.Value.ToString("dd/MM/yyyy HH:mm:ss")</strong>
-                    </MudText>
-                </MudAlert>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Nessun log disponibile. Avvia la sincronizzazione.</MudText>
             }
-        </MudPaper>
-        
-        @* Sezione Auto-Sync *@
-        <MudPaper Class="pa-4 mt-4">
-            <MudText Typo="Typo.h6" Class="mb-4">
-                <MudIcon Icon="@Icons.Material.Filled.Timer" Class="mr-2" />
-                Sincronizzazione Automatica
-            </MudText>
-            
-            <MudStack Spacing="3">
-                <MudSwitch T="bool" 
-                          @bind-Value="_autoSyncEnabled" 
-                          Color="Color.Success"
-                          Label="@(_autoSyncEnabled ? "Auto-Sync ATTIVO" : "Auto-Sync disattivato")"
-                          @bind-Value:after="OnAutoSyncToggle" />
-                
-                <MudNumericField T="int" 
-                                @bind-Value="_autoSyncIntervalSeconds" 
-                                Label="Intervallo (secondi)"
-                                Min="5" Max="300"
-                                Step="5"
-                                Variant="Variant.Outlined"
-                                Adornment="Adornment.End"
-                                AdornmentText="sec"
-                                Disabled="@_autoSyncEnabled"
-                                HelperText="Minimo 5 sec, massimo 5 min" />
-                
-                @if (_autoSyncEnabled)
-                {
-                    <MudAlert Severity="Severity.Success" Dense="true">
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                            <span>
-                                <MudIcon Icon="@Icons.Material.Filled.PlayCircle" Size="Size.Small" Class="mr-1" />
-                                Prossimo aggiornamento tra <strong>@_countdown</strong> secondi
-                            </span>
-                            <MudProgressCircular Size="Size.Small" Value="@_progressValue" Color="Color.Success" />
-                        </MudStack>
-                    </MudAlert>
-                }
-                else
-                {
-                    <MudAlert Severity="Severity.Warning" Dense="true">
-                        <MudIcon Icon="@Icons.Material.Filled.PauseCircle" Size="Size.Small" Class="mr-1" />
-                        Sincronizzazione automatica non attiva
-                    </MudAlert>
-                }
-            </MudStack>
         </MudPaper>
     </MudItem>
 </MudGrid>
 
-@if (_lastSyncResults != null && _lastSyncResults.Any())
-{
-    <MudPaper Class="pa-4 mt-4">
-        <MudText Typo="Typo.h6" Class="mb-2">
-            <MudIcon Icon="@Icons.Material.Filled.Assessment" Class="mr-2" />
-            Ultimo Risultato Sincronizzazione
-        </MudText>
-        
-        <MudGrid>
-            <MudItem xs="4">
-                <MudCard>
-                    <MudCardContent Class="text-center">
-                        <MudText Typo="Typo.h4" Color="Color.Success">@_lastSyncResults.Count(r => r.Successo)</MudText>
-                        <MudText Typo="Typo.body2">Successi</MudText>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-            <MudItem xs="4">
-                <MudCard>
-                    <MudCardContent Class="text-center">
-                        <MudText Typo="Typo.h4" Color="Color.Error">@_lastSyncResults.Count(r => !r.Successo)</MudText>
-                        <MudText Typo="Typo.body2">Errori</MudText>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-            <MudItem xs="4">
-                <MudCard>
-                    <MudCardContent Class="text-center">
-                        <MudText Typo="Typo.h4" Color="Color.Info">@_lastSyncResults.Sum(r => r.RecordAggiornati)</MudText>
-                        <MudText Typo="Typo.body2">Record Aggiornati</MudText>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-        </MudGrid>
-        
-        @if (_lastSyncResults.Any(r => !r.Successo))
-        {
-            <MudAlert Severity="Severity.Error" Class="mt-3">
-                <MudText Typo="Typo.subtitle2">Errori rilevati:</MudText>
-                <MudList T="string" Dense="true">
-                    @foreach (var err in _lastSyncResults.Where(r => !r.Successo))
-                    {
-                        <MudListItem Icon="@Icons.Material.Filled.Warning">
-                            <strong>@err.MacchinaCodiceMacchina</strong>: @err.MessaggioErrore
-                        </MudListItem>
-                    }
-                </MudList>
-            </MudAlert>
-        }
-    </MudPaper>
-}
-
-<MudPaper Class="pa-4 mt-4">
-    <MudText Typo="Typo.h6" Class="mb-4">
-        <MudIcon Icon="@Icons.Material.Filled.History" Class="mr-2" />
-        Storico Sincronizzazioni
-    </MudText>
-    
-    @if (_syncHistory != null && _syncHistory.Any())
-    {
-        <MudTable Items="@_syncHistory" Dense="true" Hover="true">
-            <HeaderContent>
-                <MudTh>Data/Ora</MudTh>
-                <MudTh>Macchina</MudTh>
-                <MudTh>Esito</MudTh>
-                <MudTh>Record</MudTh>
-                <MudTh>Errore</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Data/Ora">@context.DataOra.ToString("dd/MM/yyyy HH:mm:ss")</MudTd>
-                <MudTd DataLabel="Macchina"><MudChip T="string" Size="Size.Small">@context.MacchinaCodiceMacchina</MudChip></MudTd>
-                <MudTd DataLabel="Esito">
-                    @if (context.Successo)
-                    {
-                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
-                    }
-                    else
-                    {
-                        <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Size="Size.Small" />
-                    }
-                </MudTd>
-                <MudTd DataLabel="Record">@context.RecordAggiornati</MudTd>
-                <MudTd DataLabel="Errore">
-                    @if (!string.IsNullOrEmpty(context.MessaggioErrore))
-                    {
-                        <MudTooltip Text="@context.MessaggioErrore">
-                            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Color="Color.Warning" />
-                        </MudTooltip>
-                    }
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
-    }
-    else
-    {
-        <MudAlert Severity="Severity.Info">Nessuna sincronizzazione eseguita in questa sessione</MudAlert>
-    }
-</MudPaper>
-
 @code {
+    // Stato
     private List<PlcRealtimeDto> _macchineRealtime = new();
-    private List<PlcSyncResultDto> _lastSyncResults = new();
-    private List<PlcSyncResultDto> _syncHistory = new();
-    private bool _loading = false;
-    private bool _syncing = false;
-    private DateTime? _ultimaSync;
+    private List<SyncLogEntry> _syncLogs = new();
+    private bool _isRunning = false;
+    private bool _isSyncing = false;
+    private int _intervalSeconds = 30;
+    private int _secondsToNext = 0;
     
-    // Auto-sync
-    private bool _autoSyncEnabled = false;
-    private int _autoSyncIntervalSeconds = 30;
-    private int _countdown = 0;
-    private double _progressValue = 0;
-    private System.Threading.Timer? _autoSyncTimer;
-    private System.Threading.Timer? _countdownTimer;
+    // Timer
+    private PeriodicTimer? _syncTimer;
+    private PeriodicTimer? _countdownTimer;
+    private CancellationTokenSource? _cts;
 
     protected override async Task OnInitializedAsync()
     {
-        await CaricaDatiAsync();
+        await LoadMacchineAsync();
     }
 
-    private void OnAutoSyncToggle()
+    private async Task LoadMacchineAsync()
     {
-        if (_autoSyncEnabled)
-        {
-            StartAutoSync();
-        }
-        else
-        {
-            StopAutoSync();
-        }
-    }
-
-    private void StartAutoSync()
-    {
-        _countdown = _autoSyncIntervalSeconds;
-        _progressValue = 100;
-        
-        // Timer principale per la sincronizzazione
-        _autoSyncTimer = new System.Threading.Timer(async _ =>
-        {
-            await InvokeAsync(async () =>
-            {
-                if (!_syncing && _autoSyncEnabled)
-                {
-                    await SyncTutteMacchineAsync();
-                    _countdown = _autoSyncIntervalSeconds;
-                    _progressValue = 100;
-                }
-            });
-        }, null, TimeSpan.FromSeconds(_autoSyncIntervalSeconds), TimeSpan.FromSeconds(_autoSyncIntervalSeconds));
-        
-        // Timer per il countdown visuale (ogni secondo)
-        _countdownTimer = new System.Threading.Timer(_ =>
-        {
-            InvokeAsync(() =>
-            {
-                if (_autoSyncEnabled && _countdown > 0)
-                {
-                    _countdown--;
-                    _progressValue = (double)_countdown / _autoSyncIntervalSeconds * 100;
-                    StateHasChanged();
-                }
-            });
-        }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
-        
-        Snackbar.Add($"Auto-sync attivato: ogni {_autoSyncIntervalSeconds} secondi", Severity.Success);
-    }
-
-    private void StopAutoSync()
-    {
-        _autoSyncTimer?.Dispose();
-        _autoSyncTimer = null;
-        _countdownTimer?.Dispose();
-        _countdownTimer = null;
-        _countdown = 0;
-        _progressValue = 0;
-        
-        Snackbar.Add("Auto-sync disattivato", Severity.Info);
-    }
-
-    private async Task CaricaDatiAsync()
-    {
-        _loading = true;
-        StateHasChanged();
-
         try
         {
             _macchineRealtime = await PlcService.GetRealtimeDataAsync();
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Errore caricamento dati: {ex.Message}", Severity.Error);
-            Console.WriteLine($"[CaricaDatiAsync] Errore: {ex}");
-        }
-        finally
-        {
-            _loading = false;
-            StateHasChanged();
+            Snackbar.Add($"Errore caricamento: {ex.Message}", Severity.Error);
         }
     }
 
-    private async Task SyncTutteMacchineAsync()
+    private void StartSync()
     {
-        _syncing = true;
+        _isRunning = true;
+        _secondsToNext = _intervalSeconds;
+        _cts = new CancellationTokenSource();
+        
+        // Timer countdown (ogni secondo)
+        _ = RunCountdownAsync(_cts.Token);
+        
+        // Timer sync
+        _ = RunSyncLoopAsync(_cts.Token);
+        
+        AddLog(true, $"Sync avviata - intervallo {_intervalSeconds} sec");
+        Snackbar.Add($"Sincronizzazione avviata ogni {_intervalSeconds} secondi", Severity.Success);
+    }
+
+    private void StopSync()
+    {
+        _isRunning = false;
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
+        
+        AddLog(true, "Sync fermata");
+        Snackbar.Add("Sincronizzazione fermata", Severity.Info);
         StateHasChanged();
+    }
+
+    private async Task RunCountdownAsync(CancellationToken ct)
+    {
+        _countdownTimer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        
+        try
+        {
+            while (await _countdownTimer.WaitForNextTickAsync(ct))
+            {
+                if (_secondsToNext > 0)
+                    _secondsToNext--;
+                    
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException) { }
+        finally
+        {
+            _countdownTimer?.Dispose();
+        }
+    }
+
+    private async Task RunSyncLoopAsync(CancellationToken ct)
+    {
+        _syncTimer = new PeriodicTimer(TimeSpan.FromSeconds(_intervalSeconds));
+        
+        // Prima sync immediata
+        await ExecuteSyncAsync();
+        
+        try
+        {
+            while (await _syncTimer.WaitForNextTickAsync(ct))
+            {
+                _secondsToNext = _intervalSeconds;
+                await ExecuteSyncAsync();
+            }
+        }
+        catch (OperationCanceledException) { }
+        finally
+        {
+            _syncTimer?.Dispose();
+        }
+    }
+
+    private async Task ExecuteSyncAsync()
+    {
+        if (_isSyncing) return;
+        
+        _isSyncing = true;
+        await InvokeAsync(StateHasChanged);
 
         try
         {
-            Snackbar.Add("Avvio sincronizzazione macchine PLC...", Severity.Info);
-            
             var results = await SyncCoordinator.SyncTutteMacchineAsync();
-            
-            _lastSyncResults = results.Select(r => new PlcSyncResultDto
-            {
-                MacchinaId = r.MacchinaId,
-                MacchinaCodiceMacchina = r.MacchinaCodiceMacchina,
-                Successo = r.Successo,
-                RecordAggiornati = r.RecordAggiornati,
-                MessaggioErrore = r.MessaggioErrore,
-                DataOra = r.DataOra
-            }).ToList();
-            
-            // Aggiungi allo storico
-            _syncHistory.InsertRange(0, _lastSyncResults);
-            if (_syncHistory.Count > 50) // Mantieni solo ultimi 50 record
-            {
-                _syncHistory = _syncHistory.Take(50).ToList();
-            }
-            
-            _ultimaSync = DateTime.Now;
-            
             var successi = results.Count(r => r.Successo);
             var errori = results.Count(r => !r.Successo);
             
             if (errori > 0)
             {
-                Snackbar.Add($"Sincronizzazione completata: {successi} OK, {errori} errori", Severity.Warning);
+                AddLog(false, $"Sync: {successi} OK, {errori} errori");
             }
             else
             {
-                Snackbar.Add($"Sincronizzazione completata: {successi} macchine sincronizzate", Severity.Success);
+                AddLog(true, $"Sync completata: {successi} macchine");
             }
             
-            // Ricarica dati realtime
-            await CaricaDatiAsync();
+            // Ricarica stato macchine
+            await LoadMacchineAsync();
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Errore sincronizzazione: {ex.Message}", Severity.Error);
-            Console.WriteLine($"[SyncTutteMacchineAsync] Errore: {ex}");
+            AddLog(false, $"Errore: {ex.Message}");
         }
         finally
         {
-            _syncing = false;
-            StateHasChanged();
+            _isSyncing = false;
+            await InvokeAsync(StateHasChanged);
         }
+    }
+
+    private void AddLog(bool success, string message)
+    {
+        _syncLogs.Insert(0, new SyncLogEntry
+        {
+            Timestamp = DateTime.Now,
+            IsSuccess = success,
+            Message = message
+        });
+        
+        // Mantieni solo ultimi 50 log
+        if (_syncLogs.Count > 50)
+            _syncLogs.RemoveAt(_syncLogs.Count - 1);
+    }
+
+    private double GetProgressValue()
+    {
+        if (_intervalSeconds == 0) return 0;
+        return (double)_secondsToNext / _intervalSeconds * 100;
     }
 
     private string FormatTimeAgo(TimeSpan timeSpan)
@@ -463,8 +360,19 @@
         return $"{(int)timeSpan.TotalDays} giorni fa";
     }
 
-    public void Dispose()
+    public ValueTask DisposeAsync()
     {
-        StopAutoSync();
+        _cts?.Cancel();
+        _syncTimer?.Dispose();
+        _countdownTimer?.Dispose();
+        _cts?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    private class SyncLogEntry
+    {
+        public DateTime Timestamp { get; set; }
+        public bool IsSuccess { get; set; }
+        public string Message { get; set; } = string.Empty;
     }
 }

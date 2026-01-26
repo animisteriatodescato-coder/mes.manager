@@ -117,8 +117,6 @@ builder.Services.AddHttpClient<PlcDataService>(client =>
     client.BaseAddress = new Uri("http://localhost:5156/");
 });
 builder.Services.AddScoped<IPlcSyncCoordinator, PlcSyncCoordinator>();
-builder.Services.AddSingleton<PlcAutoSyncService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<PlcAutoSyncService>());
 builder.Services.AddSingleton<IPageToolbarService, PageToolbarService>();
 builder.Services.AddScoped<AppBarContentService>();
 
