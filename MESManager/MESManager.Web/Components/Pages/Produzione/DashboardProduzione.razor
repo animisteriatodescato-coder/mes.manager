@@ -176,6 +176,26 @@
         box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3) !important;
     }
 
+    .machine-card.status-manuale {
+        border: 4px solid #616161;
+        background: radial-gradient(circle at center, #ffffff 0%, rgba(97, 97, 97, 0.12) 100%) !important;
+        box-shadow: 0 4px 12px rgba(97, 97, 97, 0.3) !important;
+    }
+
+    .machine-card.status-non-connessa {
+        border: 4px solid #bdbdbd;
+        background: radial-gradient(circle at center, #fafafa 0%, rgba(189, 189, 189, 0.15) 100%) !important;
+        box-shadow: 0 4px 12px rgba(189, 189, 189, 0.2) !important;
+        opacity: 0.85;
+    }
+
+    .machine-card.status-non-connessa .machine-number {
+        background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
     .machine-number {
         font-weight: 800;
         font-size: 3rem;
@@ -346,8 +366,10 @@
     {
         if (string.IsNullOrEmpty(stato)) return "";
         
+        if (stato.Contains("NON CONNESSA")) return "status-non-connessa";
         if (stato.Contains("EMERGENZA")) return "status-emergenza";
         if (stato.Contains("ALLARME")) return "status-allarme";
+        if (stato.Contains("MANUALE")) return "status-manuale";
         if (stato.Contains("AUTOMATICO") || stato.Contains("CICLO")) return "status-automatico";
         
         return "";
@@ -357,9 +379,10 @@
     {
         if (string.IsNullOrEmpty(stato)) return Color.Default;
         
+        if (stato.Contains("NON CONNESSA")) return Color.Default;
         if (stato.Contains("EMERGENZA")) return Color.Error;
         if (stato.Contains("ALLARME")) return Color.Warning;
-        if (stato.Contains("MANUALE")) return Color.Default;
+        if (stato.Contains("MANUALE")) return Color.Dark;
         if (stato.Contains("AUTOMATICO") || stato.Contains("CICLO")) return Color.Success;
         
         return Color.Default;
@@ -369,6 +392,7 @@
     {
         if (string.IsNullOrEmpty(stato)) return "N/A";
         
+        if (stato.Contains("NON CONNESSA")) return "OFFLINE";
         if (stato.Contains("EMERGENZA")) return "EMERGENZA";
         if (stato.Contains("ALLARME")) return "ALLARME";
         if (stato.Contains("MANUALE")) return "MANUALE";

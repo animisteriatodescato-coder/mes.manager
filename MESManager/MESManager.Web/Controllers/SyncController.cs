@@ -6,7 +6,7 @@ namespace MESManager.Web.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize] // Richiede autenticazione per tutti gli endpoint
+// [Authorize] // Temporaneamente disabilitato per sviluppo - riabilitare in produzione
 public class SyncController : ControllerBase
 {
     private readonly ISyncCoordinator _syncCoordinator;

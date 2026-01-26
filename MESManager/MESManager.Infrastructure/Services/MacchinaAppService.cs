@@ -24,7 +24,8 @@ public class MacchinaAppService : IMacchinaAppService
                 Codice = m.Codice,
                 Nome = m.Nome,
                 AttivaInGantt = m.AttivaInGantt,
-                OrdineVisualizazione = m.OrdineVisualizazione
+                OrdineVisualizazione = m.OrdineVisualizazione,
+                IndirizzoPLC = m.IndirizzoPLC
             })
             .ToListAsync();
     }
@@ -40,7 +41,8 @@ public class MacchinaAppService : IMacchinaAppService
             Codice = macchina.Codice,
             Nome = macchina.Nome,
             AttivaInGantt = macchina.AttivaInGantt,
-            OrdineVisualizazione = macchina.OrdineVisualizazione
+            OrdineVisualizazione = macchina.OrdineVisualizazione,
+            IndirizzoPLC = macchina.IndirizzoPLC
         };
     }
     
@@ -51,7 +53,8 @@ public class MacchinaAppService : IMacchinaAppService
             Codice = dto.Codice,
             Nome = dto.Nome,
             AttivaInGantt = dto.AttivaInGantt,
-            OrdineVisualizazione = dto.OrdineVisualizazione
+            OrdineVisualizazione = dto.OrdineVisualizazione,
+            IndirizzoPLC = dto.IndirizzoPLC
         };
         
         _context.Macchine.Add(macchina);
@@ -63,7 +66,8 @@ public class MacchinaAppService : IMacchinaAppService
             Codice = macchina.Codice,
             Nome = macchina.Nome,
             AttivaInGantt = macchina.AttivaInGantt,
-            OrdineVisualizazione = macchina.OrdineVisualizazione
+            OrdineVisualizazione = macchina.OrdineVisualizazione,
+            IndirizzoPLC = macchina.IndirizzoPLC
         };
     }
     
@@ -76,6 +80,7 @@ public class MacchinaAppService : IMacchinaAppService
         macchina.Nome = dto.Nome;
         macchina.AttivaInGantt = dto.AttivaInGantt;
         macchina.OrdineVisualizazione = dto.OrdineVisualizazione;
+        macchina.IndirizzoPLC = dto.IndirizzoPLC;
         
         await _context.SaveChangesAsync();
         
@@ -85,7 +90,8 @@ public class MacchinaAppService : IMacchinaAppService
             Codice = macchina.Codice,
             Nome = macchina.Nome,
             AttivaInGantt = macchina.AttivaInGantt,
-            OrdineVisualizazione = macchina.OrdineVisualizazione
+            OrdineVisualizazione = macchina.OrdineVisualizazione,
+            IndirizzoPLC = macchina.IndirizzoPLC
         };
     }
     

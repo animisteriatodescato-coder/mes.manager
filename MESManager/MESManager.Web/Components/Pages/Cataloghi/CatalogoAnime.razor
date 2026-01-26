@@ -29,6 +29,7 @@
                          Immediate="true"
                          DebounceInterval="280"
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshGridData">Aggiorna</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
             <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
@@ -151,6 +152,8 @@
     private DateTime lastUpdate = DateTime.MinValue;
     private bool isLoading = false;
     private string gridStatus = "Pronto";
+    private bool _isDataLoaded = false;
+    private bool _isGridInitialized = false;
 
     private async Task OnSearchDebounced(string value)
     {
@@ -168,8 +171,15 @@
     {
         PageToolbarService.SetActivePage("anime", this);
         
+        isLoading = true;
+        gridStatus = "Caricamento...";
+        
         _anime = await Http.GetFromJsonAsync<List<AnimeDto>>("api/Anime") ?? new();
         Console.WriteLine($"CatalogoAnime loaded {_anime.Count} anime from API");
+        
+        _isDataLoaded = true;
+        isLoading = false;
+        gridStatus = "Pronto";
         
         var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("anime-grid-settings");
         if (savedSettings != null)
@@ -182,8 +192,53 @@
     {
         if (firstRender)
         {
-            await Task.Delay(300);
-            await InitializeGrid();
+            // Aspetta che i dati siano caricati con un loop (max 30 secondi)
+            int maxWait = 150; // 150 * 200ms = 30 secondi
+            int waited = 0;
+            while (!_isDataLoaded && waited < maxWait)
+            {
+                await Task.Delay(200);
+                waited++;
+            }
+            
+            if (_isDataLoaded && !_isGridInitialized)
+            {
+                _isGridInitialized = true;
+                Console.WriteLine($"CatalogoAnime: Initializing grid with {_anime.Count} rows");
+                await Task.Delay(100);
+                await InitializeGrid();
+            }
+            else if (!_isDataLoaded)
+            {
+                Console.WriteLine("CatalogoAnime: Timeout waiting for data");
+            }
+        }
+    }
+
+    private async Task RefreshGridData()
+    {
+        try
+        {
+            isLoading = true;
+            gridStatus = "Aggiornamento...";
+            StateHasChanged();
+            
+            _anime = await Http.GetFromJsonAsync<List<AnimeDto>>("api/Anime") ?? new();
+            Console.WriteLine($"CatalogoAnime refreshed {_anime.Count} anime from API");
+            
+            await JSRuntime.InvokeVoidAsync("animeGrid.updateData", _anime, null);
+            await UpdateGridStats();
+            
+            isLoading = false;
+            gridStatus = "Pronto";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error refreshing grid data: {ex.Message}");
+            isLoading = false;
+            gridStatus = "Errore";
+            StateHasChanged();
         }
     }
 

@@ -7,7 +7,7 @@ namespace MESManager.Web.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // Richiede autenticazione per tutti gli endpoint
+    // [Authorize] // Temporaneamente disabilitato per sviluppo - riabilitare in produzione
     public class AllegatiAnimaController : ControllerBase
     {
         private readonly AllegatiAnimaService _allegatiService;

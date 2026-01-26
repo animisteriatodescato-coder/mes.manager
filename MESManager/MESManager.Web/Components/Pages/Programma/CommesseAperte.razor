@@ -694,7 +694,7 @@
                 waited++;
             }
             
-            if (_isDataLoaded && _commesse != null && _commesse.Count > 0 && !_isGridInitialized)
+            if (_isDataLoaded && !_isGridInitialized)
             {
                 _isGridInitialized = true;
                 Console.WriteLine($"CommesseAperte: Initializing grid with {_commesse.Count} rows");

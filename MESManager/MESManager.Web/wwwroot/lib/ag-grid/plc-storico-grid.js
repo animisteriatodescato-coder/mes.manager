@@ -99,9 +99,10 @@ window.plcStoricoGrid = (function () {
                 filter: true, 
                 resizable: true,
                 cellStyle: params => {
+                    if (params.value === 'NON CONNESSA') return { backgroundColor: '#e0e0e0', color: '#757575', fontWeight: 'bold', fontStyle: 'italic' };
                     if (params.value === 'EMERGENZA') return { backgroundColor: '#f44336', color: 'white', fontWeight: 'bold' };
                     if (params.value === 'ALLARME') return { backgroundColor: '#ff9800', color: 'white', fontWeight: 'bold' };
-                    if (params.value === 'MANUALE') return { backgroundColor: '#9e9e9e', color: 'white', fontWeight: 'bold' };
+                    if (params.value === 'MANUALE') return { backgroundColor: '#616161', color: 'white', fontWeight: 'bold' };
                     if (params.value && params.value.includes('AUTOMATICO')) return { backgroundColor: '#4caf50', color: 'white', fontWeight: 'bold' };
                     if (params.value && params.value.includes('CICLO')) return { backgroundColor: '#2196f3', color: 'white', fontWeight: 'bold' };
                     return null;

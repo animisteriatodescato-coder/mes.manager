@@ -6,6 +6,16 @@ public class PlcRealtimeDto
     public string MacchinaNumero { get; set; } = string.Empty;
     public string MacchianaNome { get; set; } = string.Empty;
     
+    /// <summary>
+    /// Indirizzo IP del PLC associato alla macchina.
+    /// </summary>
+    public string? IndirizzoPLC { get; set; }
+    
+    /// <summary>
+    /// Indica se la macchina è connessa (ha IP e dati recenti).
+    /// </summary>
+    public bool IsConnessa { get; set; } = true;
+    
     public int CicliFatti { get; set; }
     public int QuantitaDaProdurre { get; set; }
     public int CicliScarti { get; set; }

@@ -85,6 +85,13 @@ var connectionString = builder.Configuration.GetConnectionString("MESManagerDb")
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Abilita errori dettagliati per Blazor Server (solo in Development)
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddServerSideBlazor()
+        .AddCircuitOptions(options => options.DetailedErrors = true);
+}
+
 // MudBlazor
 builder.Services.AddMudServices();
 
@@ -110,6 +117,8 @@ builder.Services.AddHttpClient<PlcDataService>(client =>
     client.BaseAddress = new Uri("http://localhost:5156/");
 });
 builder.Services.AddScoped<IPlcSyncCoordinator, PlcSyncCoordinator>();
+builder.Services.AddSingleton<PlcAutoSyncService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<PlcAutoSyncService>());
 builder.Services.AddSingleton<IPageToolbarService, PageToolbarService>();
 builder.Services.AddScoped<AppBarContentService>();
 

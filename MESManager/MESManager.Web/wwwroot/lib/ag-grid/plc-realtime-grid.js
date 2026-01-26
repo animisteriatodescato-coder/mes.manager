@@ -38,6 +38,36 @@ window.plcRealtimeGrid = (function () {
                 filter: true, 
                 resizable: true 
             },
+            {
+                field: 'isConnessa',
+                headerName: 'Connessione',
+                width: 120,
+                sortable: true,
+                filter: true,
+                resizable: true,
+                cellRenderer: params => {
+                    if (params.value === true) {
+                        return `<span style="color: #4caf50; font-weight: bold;">● Online</span>`;
+                    } else {
+                        return `<span style="color: #bdbdbd; font-weight: bold;">○ Offline</span>`;
+                    }
+                }
+            },
+            {
+                field: 'indirizzoPLC',
+                headerName: 'IP PLC',
+                width: 130,
+                sortable: true,
+                filter: true,
+                resizable: true,
+                hide: true,
+                cellRenderer: params => {
+                    if (params.value) {
+                        return `<span style="font-family: monospace;">${params.value}</span>`;
+                    }
+                    return `<span style="color: #bdbdbd; font-style: italic;">N/A</span>`;
+                }
+            },
             { 
                 field: 'statoMacchina', 
                 headerName: 'Stato', 
@@ -46,9 +76,10 @@ window.plcRealtimeGrid = (function () {
                 filter: true, 
                 resizable: true,
                 cellStyle: params => {
+                    if (params.value === 'NON CONNESSA') return { backgroundColor: '#e0e0e0', color: '#757575', fontWeight: 'bold', fontStyle: 'italic' };
                     if (params.value === 'EMERGENZA') return { backgroundColor: '#f44336', color: 'white', fontWeight: 'bold' };
                     if (params.value === 'ALLARME') return { backgroundColor: '#ff9800', color: 'white', fontWeight: 'bold' };
-                    if (params.value === 'MANUALE') return { backgroundColor: '#9e9e9e', color: 'white', fontWeight: 'bold' };
+                    if (params.value === 'MANUALE') return { backgroundColor: '#616161', color: 'white', fontWeight: 'bold' };
                     if (params.value && params.value.includes('AUTOMATICO')) return { backgroundColor: '#4caf50', color: 'white', fontWeight: 'bold' };
                     if (params.value && params.value.includes('CICLO')) return { backgroundColor: '#2196f3', color: 'white', fontWeight: 'bold' };
                     return null;

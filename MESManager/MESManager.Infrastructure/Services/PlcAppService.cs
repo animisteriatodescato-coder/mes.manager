@@ -14,6 +14,12 @@ public class PlcAppService : IPlcAppService
         _context = context;
     }
 
+    /// <summary>
+    /// Timeout in minuti per considerare una macchina disconnessa.
+    /// Se l'ultimo aggiornamento è più vecchio di questo valore, la macchina è considerata non connessa.
+    /// </summary>
+    private const int CONNECTION_TIMEOUT_MINUTES = 2;
+
     public async Task<List<PlcRealtimeDto>> GetRealtimeDataAsync()
     {
         var query = await _context.PLCRealtime
@@ -22,28 +28,42 @@ public class PlcAppService : IPlcAppService
             .OrderBy(p => p.Macchina.Codice)
             .ToListAsync();
 
-        return query.Select(p => new PlcRealtimeDto
-        {
-            MacchinaId = p.MacchinaId,
-            MacchinaNumero = int.TryParse(p.Macchina.Codice.Replace("M", ""), out int num) ? num.ToString("D2") : p.Macchina.Codice,
-            MacchianaNome = p.Macchina.Codice,
+        var now = DateTime.Now;
+
+        return query.Select(p => {
+            // Determina se la macchina è connessa
+            var haIp = !string.IsNullOrWhiteSpace(p.Macchina.IndirizzoPLC);
+            var datiRecenti = (now - p.DataUltimoAggiornamento).TotalMinutes <= CONNECTION_TIMEOUT_MINUTES;
+            var isConnessa = haIp && datiRecenti;
             
-            CicliFatti = p.CicliFatti,
-            QuantitaDaProdurre = p.QuantitaDaProdurre,
-            CicliScarti = p.CicliScarti,
-            BarcodeLavorazione = p.BarcodeLavorazione,
+            // Se non connessa, imposta stato speciale
+            var statoMacchina = isConnessa ? p.StatoMacchina : "NON CONNESSA";
             
-            NumeroOperatore = p.NumeroOperatore > 0 ? p.NumeroOperatore : (int?)null,
-            NomeOperatore = p.Operatore != null ? $"{p.Operatore.Nome} {p.Operatore.Cognome}" : (p.NumeroOperatore > 0 ? p.NumeroOperatore.ToString() : null),
-            
-            TempoMedioRilevato = p.TempoMedioRilevato,
-            TempoMedio = p.TempoMedio,
-            Figure = p.Figure,
-            
-            StatoMacchina = p.StatoMacchina,
-            QuantitaRaggiunta = p.QuantitaRaggiunta,
-            
-            UltimoAggiornamento = p.DataUltimoAggiornamento
+            return new PlcRealtimeDto
+            {
+                MacchinaId = p.MacchinaId,
+                MacchinaNumero = int.TryParse(p.Macchina.Codice.Replace("M", ""), out int num) ? num.ToString("D2") : p.Macchina.Codice,
+                MacchianaNome = p.Macchina.Codice,
+                IndirizzoPLC = p.Macchina.IndirizzoPLC,
+                IsConnessa = isConnessa,
+                
+                CicliFatti = p.CicliFatti,
+                QuantitaDaProdurre = p.QuantitaDaProdurre,
+                CicliScarti = p.CicliScarti,
+                BarcodeLavorazione = p.BarcodeLavorazione,
+                
+                NumeroOperatore = p.NumeroOperatore > 0 ? p.NumeroOperatore : (int?)null,
+                NomeOperatore = p.Operatore != null ? $"{p.Operatore.Nome} {p.Operatore.Cognome}" : (p.NumeroOperatore > 0 ? p.NumeroOperatore.ToString() : null),
+                
+                TempoMedioRilevato = p.TempoMedioRilevato,
+                TempoMedio = p.TempoMedio,
+                Figure = p.Figure,
+                
+                StatoMacchina = statoMacchina,
+                QuantitaRaggiunta = p.QuantitaRaggiunta,
+                
+                UltimoAggiornamento = p.DataUltimoAggiornamento
+            };
         }).ToList();
     }
 

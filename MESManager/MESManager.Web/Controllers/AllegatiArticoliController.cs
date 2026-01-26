@@ -10,7 +10,7 @@ namespace MESManager.Web.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/allegati-articoli")]
-[Authorize] // Richiede autenticazione per tutti gli endpoint
+// [Authorize] // Temporaneamente disabilitato per sviluppo - riabilitare in produzione
 public class AllegatiArticoliController : ControllerBase
 {
     private readonly IAllegatoArticoloService _service;

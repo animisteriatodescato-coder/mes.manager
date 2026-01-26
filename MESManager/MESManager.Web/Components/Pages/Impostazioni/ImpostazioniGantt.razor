@@ -35,6 +35,7 @@
                         <HeaderContent>
                             <MudTh>Codice</MudTh>
                             <MudTh>Nome</MudTh>
+                            <MudTh>Indirizzo IP PLC</MudTh>
                             <MudTh>Visualizza nel Gantt</MudTh>
                             <MudTh>Ordine</MudTh>
                             <MudTh>Azioni</MudTh>
@@ -42,6 +43,16 @@
                         <RowTemplate>
                             <MudTd DataLabel="Codice">@context.Codice</MudTd>
                             <MudTd DataLabel="Nome">@context.Nome</MudTd>
+                            <MudTd DataLabel="Indirizzo IP PLC">
+                                @if (!string.IsNullOrWhiteSpace(context.IndirizzoPLC))
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Lan">@context.IndirizzoPLC</MudChip>
+                                }
+                                else
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Default">Non configurato</MudChip>
+                                }
+                            </MudTd>
                             <MudTd DataLabel="Visualizza nel Gantt">
                                 <MudSwitch @bind-Value="context.AttivaInGantt" Color="Color.Primary" />
                             </MudTd>
@@ -178,6 +189,15 @@
                      Required="true"
                      Class="mb-4" />
         
+        <MudTextField @bind-Value="macchinaCorrente.IndirizzoPLC" 
+                     Label="Indirizzo IP PLC" 
+                     Variant="Variant.Outlined" 
+                     Placeholder="es. 192.168.1.100"
+                     HelperText="Lasciare vuoto se la macchina non ha PLC connesso"
+                     Adornment="Adornment.Start"
+                     AdornmentIcon="@Icons.Material.Filled.Lan"
+                     Class="mb-4" />
+        
         <MudSwitch @bind-Value="macchinaCorrente.AttivaInGantt" 
                   Label="Visualizza nel Gantt" 
                   Color="Color.Primary" 
@@ -258,6 +278,7 @@
             Id = macchina.Id,
             Codice = macchina.Codice,
             Nome = macchina.Nome,
+            IndirizzoPLC = macchina.IndirizzoPLC,
             AttivaInGantt = macchina.AttivaInGantt,
             OrdineVisualizazione = macchina.OrdineVisualizazione
         };
@@ -283,6 +304,7 @@
                 {
                     macchina.Codice = macchinaCorrente.Codice;
                     macchina.Nome = macchinaCorrente.Nome;
+                    macchina.IndirizzoPLC = macchinaCorrente.IndirizzoPLC;
                     macchina.AttivaInGantt = macchinaCorrente.AttivaInGantt;
                     macchina.OrdineVisualizazione = macchinaCorrente.OrdineVisualizazione;
                 }
