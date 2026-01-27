@@ -46,7 +46,7 @@ Esempi:
 
 #### Server Remoto (con autenticazione Windows)
 ```json
-"MESManagerDb": "Server=NOME_SERVER\\SQLEXPRESS;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;"
+"MESManagerDb": "Server=NOME_SERVER\\SQLEXPRESS01;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;"
 ```
 
 ### Connection Strings Disponibili
@@ -106,9 +106,9 @@ Quando passi in produzione, **copia** il file `appsettings.Database.json` sul se
 ```json
 {
   "ConnectionStrings": {
-    "MESManagerDb": "Server=PROD_SERVER\\SQLEXPRESS;Database=MESManager;User Id=app_user;Password=secure_password;TrustServerCertificate=True;",
-    "MagoDb": "Data Source=192.168.1.72\\SQLEXPRESS;Initial Catalog=TODESCATO_NET;User Id=Gantt;Password=Gantt2019;TrustServerCertificate=True;Connection Timeout=30;",
-    "GanttDb": "Server=192.168.1.230\\SQLEXPRESS;Database=Gantt;User Id=fab;Password=fabpwd;TrustServerCertificate=True;"
+    "MESManagerDb": "Server=PROD_SERVER\\SQLEXPRESS01;Database=MESManager;User Id=app_user;Password=secure_password;TrustServerCertificate=True;",
+    "MagoDb": "Data Source=192.168.1.72\\SQLEXPRESS01;Initial Catalog=TODESCATO_NET;User Id=Gantt;Password=Gantt2019;TrustServerCertificate=True;Connection Timeout=30;",
+    "GanttDb": "Server=192.168.1.230\\SQLEXPRESS01;Database=Gantt;User Id=fab;Password=fabpwd;TrustServerCertificate=True;"
   }
 }
 ```

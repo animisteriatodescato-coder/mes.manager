@@ -6,8 +6,8 @@ try {
     Add-Type -AssemblyName "System.Data"
     
     # Connessione come sa
-    Write-Host "1. Connessione al server 192.168.1.230\SQLEXPRESS come sa..." -ForegroundColor Yellow
-    $connString = "Server=192.168.1.230\SQLEXPRESS;Database=master;Trusted_Connection=True;TrustServerCertificate=True;"
+    Write-Host "1. Connessione al server 192.168.1.230\SQLEXPRESS01 come sa..." -ForegroundColor Yellow
+    $connString = "Server=192.168.1.230\SQLEXPRESS01;Database=master;Trusted_Connection=True;TrustServerCertificate=True;"
     $conn = New-Object System.Data.SqlClient.SqlConnection($connString)
     $conn.Open()
     Write-Host "   OK Connesso al server" -ForegroundColor Green
@@ -88,7 +88,7 @@ WHERE dp.name = 'FAB'
     Write-Host "=== UTENTE FAB CREATO CON SUCCESSO ===" -ForegroundColor Green
     Write-Host ""
     Write-Host "CONFIGURAZIONE:" -ForegroundColor Yellow
-    Write-Host "  Server: 192.168.1.230\SQLEXPRESS" -ForegroundColor White
+    Write-Host "  Server: 192.168.1.230\SQLEXPRESS01" -ForegroundColor White
     Write-Host "  Database: MESManager_Dev" -ForegroundColor White
     Write-Host "  User Id: FAB" -ForegroundColor White
     Write-Host "  Password: password.123" -ForegroundColor White
@@ -97,7 +97,7 @@ WHERE dp.name = 'FAB'
     
     # Test connessione con nuovo utente
     Write-Host "6. Test connessione con utente FAB..." -ForegroundColor Yellow
-    $testConnString = "Server=192.168.1.230\SQLEXPRESS;Database=MESManager_Dev;User Id=FAB;Password=password.123;TrustServerCertificate=True;"
+    $testConnString = "Server=192.168.1.230\SQLEXPRESS01;Database=MESManager_Dev;User Id=FAB;Password=password.123;TrustServerCertificate=True;"
     $testConn = New-Object System.Data.SqlClient.SqlConnection($testConnString)
     $testConn.Open()
     

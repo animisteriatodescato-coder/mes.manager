@@ -101,7 +101,7 @@ Write-Host ""
 Write-Host "6. Test connessione al database..." -ForegroundColor Yellow
 try {
     Add-Type -AssemblyName "System.Data"
-    $connString = "Server=localhost\SQLEXPRESS;Database=master;Integrated Security=True;TrustServerCertificate=True;Connection Timeout=10;"
+    $connString = "Server=localhost\SQLEXPRESS01;Database=master;Integrated Security=True;TrustServerCertificate=True;Connection Timeout=10;"
     $conn = New-Object System.Data.SqlClient.SqlConnection($connString)
     $conn.Open()
     

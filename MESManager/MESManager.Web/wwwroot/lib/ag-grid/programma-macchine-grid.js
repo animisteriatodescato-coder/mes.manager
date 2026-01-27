@@ -20,17 +20,15 @@ window.programmaMacchineGrid = (function() {
         {
             field: 'drag',
             headerName: '',
-            width: 40,
+            width: 50,
             pinned: 'left',
             rowDrag: true,
             sortable: false,
             filter: false,
             suppressMenu: true,
             suppressCellFlash: true,
-            cellClass: 'drag-handle-cell',
-            cellRenderer: params => {
-                return '<span class="drag-handle" title="Trascina per riordinare">☰</span>';
-            }
+            lockPosition: 'left',
+            cellClass: 'drag-handle-cell'
         },
         {
             field: 'storico',
@@ -260,16 +258,25 @@ window.programmaMacchineGrid = (function() {
 
     // Gestisce il movimento durante il drag
     function onRowDragMove(event) {
-        const movingNode = event.node;
-        const overNode = event.overNode;
-        
-        if (!overNode || movingNode === overNode) {
-            clearDropMarkers();
-            return;
-        }
+        try {
+            const movingNode = event.node;
+            const overNode = event.overNode;
+            
+            if (!overNode || !movingNode) {
+                clearDropMarkers();
+                return;
+            }
+            
+            // Non permettere drop sulla stessa riga
+            if (movingNode.id === overNode.id) {
+                clearDropMarkers();
+                return;
+            }
         
         const dropPos = getDropPosition(event.event, overNode);
-        const isMachineChange = movingNode.data.numeroMacchina !== overNode.data.numeroMacchina;
+        if (!dropPos) return;
+        
+        const isMachineChange = movingNode.data?.numeroMacchina !== overNode.data?.numeroMacchina;
         
         // Aggiorna marker solo se cambiato
         if (dragOverRowNode !== overNode || dragOverPosition !== dropPos) {
@@ -291,6 +298,9 @@ window.programmaMacchineGrid = (function() {
             dragOverRowNode = overNode;
             dragOverPosition = dropPos;
         }
+        } catch (e) {
+            // Ignora errori durante il drag move
+        }
     }
 
     // Pulisce i marker quando il drag esce dalla griglia
@@ -302,17 +312,28 @@ window.programmaMacchineGrid = (function() {
     async function onRowDragEnd(event) {
         clearDropMarkers();
         
-        const movingNode = event.node;
-        const overNode = event.overNode;
-        
-        if (!overNode || movingNode === overNode) {
-            console.log('Drop annullato: nessun target valido');
-            return;
-        }
-        
-        const dropPos = getDropPosition(event.event, overNode);
-        const movingData = movingNode.data;
-        const overData = overNode.data;
+        try {
+            const movingNode = event.node;
+            const overNode = event.overNode;
+            
+            if (!overNode || !movingNode || movingNode.id === overNode.id) {
+                console.log('Drop annullato: nessun target valido');
+                return;
+            }
+            
+            const dropPos = getDropPosition(event.event, overNode);
+            if (!dropPos) {
+                console.log('Drop annullato: posizione non determinabile');
+                return;
+            }
+            
+            const movingData = movingNode.data;
+            const overData = overNode.data;
+            
+            if (!movingData || !overData) {
+                console.log('Drop annullato: dati mancanti');
+                return;
+            }
         
         // Determina la macchina di destinazione
         const nuovoNumeroMacchina = overData.numeroMacchina;
@@ -398,6 +419,9 @@ window.programmaMacchineGrid = (function() {
         } catch (err) {
             console.error('Errore durante il riordino:', err);
             alert(`Errore durante il salvataggio: ${err.message}`);
+        }
+        } catch (dragErr) {
+            console.error('Errore durante il drag:', dragErr);
         }
     }
 
@@ -538,9 +562,12 @@ window.programmaMacchineGrid = (function() {
             headerHeight: 24,
             rowHeight: 28,
             animateRows: true,
-            rowSelection: 'single',
+            rowSelection: null, // Disabilita completamente la selezione
+            suppressRowClickSelection: true, // Evita selezione riga al click
+            suppressCellFocus: true, // Disabilita focus delle celle
             rowDragManaged: false, // Usiamo gestione manuale per calcolare posizione
             rowDragEntireRow: false, // Drag solo dalla colonna handle
+            rowDragMultiRow: false, // Non permettere drag di più righe
             suppressMoveWhenRowDragging: false,
             onRowDragMove: onRowDragMove,
             onRowDragEnd: onRowDragEnd,

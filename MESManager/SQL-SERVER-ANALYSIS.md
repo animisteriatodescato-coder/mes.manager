@@ -4,7 +4,7 @@
 
 ## Problema Rilevato
 
-L'applicazione MESManager non riusciva ad avviarsi a causa di errori di connessione al database locale `localhost\SQLEXPRESS`.
+L'applicazione MESManager non riusciva ad avviarsi a causa di errori di connessione al database locale `localhost\SQLEXPRESS01`.
 
 ## Analisi Completa
 
@@ -43,9 +43,9 @@ net start "MSSQL$SQLEXPRESS"
 
 | Server | Database | Stato | Note |
 |--------|----------|-------|------|
-| 192.168.1.72\SQLEXPRESS | TODESCATO_NET | ✅ OK | Server Mago - 60 commesse |
-| 192.168.1.230\SQLEXPRESS | Gantt | ✅ OK | Server Gantt |
-| 192.168.1.230\SQLEXPRESS | MESManager | ✅ OK | **Database creato con migrations** |
+| 192.168.1.72\SQLEXPRESS01 | TODESCATO_NET | ✅ OK | Server Mago - 60 commesse |
+| 192.168.1.230\SQLEXPRESS01 | Gantt | ✅ OK | Server Gantt |
+| 192.168.1.230\SQLEXPRESS01 | MESManager | ✅ OK | **Database creato con migrations** |
 
 ## Soluzione Implementata
 
@@ -56,7 +56,7 @@ Modificati i seguenti file per usare il server Gantt remoto invece di localhost:
 #### 1. MESManager.Web\Program.cs
 ```csharp
 // PRIMA:
-var connectionString = "Server=localhost\\SQLEXPRESS;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;";
+var connectionString = "Server=localhost\\SQLEXPRESS01;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;";
 
 // DOPO:
 var connectionString = "Server=192.168.1.230\\SQLEXPRESS01;Database=MESManager_Prod;User Id=fab;Password=fabpwd;TrustServerCertificate=True;Connection Timeout=30;";
@@ -65,7 +65,7 @@ var connectionString = "Server=192.168.1.230\\SQLEXPRESS01;Database=MESManager_P
 #### 2. MESManager.Infrastructure\MesManagerDbContextFactory.cs
 ```csharp
 // PRIMA:
-optionsBuilder.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;",
+optionsBuilder.UseSqlServer("Server=localhost\\SQLEXPRESS01;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;",
 
 // DOPO:
 optionsBuilder.UseSqlServer("Server=192.168.1.230\\SQLEXPRESS01;Database=MESManager_Prod;User Id=fab;Password=fabpwd;TrustServerCertificate=True;",
@@ -79,7 +79,7 @@ dotnet ef database update --startup-project ..\MESManager.Web\MESManager.Web.csp
 ```
 
 **Risultato:** 
-- ✅ Database MESManager creato su 192.168.1.230\SQLEXPRESS
+- ✅ Database MESManager creato su 192.168.1.230\SQLEXPRESS01
 - ✅ Applicate 16 migrations
 - ✅ Create 20 tabelle
 
@@ -114,9 +114,9 @@ Script creato: `test-sql-connection.ps1`
 
 ### Risultati Finali
 ```
-✗ localhost\SQLEXPRESS (MESManager) - FALLITO (servizio fermo/corrotto)
-✅ 192.168.1.72\SQLEXPRESS (Mago) - OK
-✅ 192.168.1.230\SQLEXPRESS (Gantt + MESManager) - OK
+✗ localhost\SQLEXPRESS01 (MESManager) - FALLITO (servizio fermo/corrotto)
+✅ 192.168.1.72\SQLEXPRESS01 (Mago) - OK
+✅ 192.168.1.230\SQLEXPRESS01 (Gantt + MESManager) - OK
 ```
 
 ## Stato Attuale
@@ -126,7 +126,7 @@ Script creato: `test-sql-connection.ps1`
 L'applicazione web è stata avviata correttamente su:
 http://localhost:5156
 
-Database: 192.168.1.230\SQLEXPRESS (MESManager)
+Database: 192.168.1.230\SQLEXPRESS01 (MESManager)
 ```
 
 ## Opzioni per il Futuro
@@ -155,7 +155,7 @@ Se vuoi ripristinare SQL Server locale:
 
 4. **Aggiornare connection string**
    - Modificare Program.cs e MesManagerDbContextFactory.cs
-   - Usare: `Server=localhost\\SQLEXPRESS;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;`
+   - Usare: `Server=localhost\\SQLEXPRESS01;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;`
 
 5. **Ricreare database**
    ```bash

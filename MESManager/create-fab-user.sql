@@ -1,5 +1,5 @@
 -- Script per creare utente FAB con accesso solo a MESManager_Dev
--- Eseguire su SQL Server 192.168.1.230\SQLEXPRESS come sa
+-- Eseguire su SQL Server 192.168.1.230\SQLEXPRESS01 come sa
 
 USE [master]
 GO

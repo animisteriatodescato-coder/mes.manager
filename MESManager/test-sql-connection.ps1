@@ -6,8 +6,8 @@ Add-Type -AssemblyName "System.Data"
 Write-Host "`n=== TEST CONNESSIONE SQL SERVER ===" -ForegroundColor Cyan
 
 # Test 1: SQL Server locale (MESManager)
-Write-Host "`n1. Testing localhost\SQLEXPRESS (MESManager)..." -ForegroundColor Yellow
-$localConnString = "Server=localhost\SQLEXPRESS;Database=MESManager;Integrated Security=True;TrustServerCertificate=True;"
+Write-Host "`n1. Testing localhost\SQLEXPRESS01 (MESManager)..." -ForegroundColor Yellow
+$localConnString = "Server=localhost\SQLEXPRESS01;Database=MESManager;Integrated Security=True;TrustServerCertificate=True;"
 
 try {
     $conn = New-Object System.Data.SqlClient.SqlConnection($localConnString)
@@ -29,8 +29,8 @@ catch {
 }
 
 # Test 2: SQL Server remoto (Mago)
-Write-Host "`n2. Testing 192.168.1.72\SQLEXPRESS (Mago)..." -ForegroundColor Yellow
-$magoConnString = "Data Source=192.168.1.72\SQLEXPRESS;Initial Catalog=TODESCATO_NET;User Id=Gantt;Password=Gantt2019;TrustServerCertificate=True;Connection Timeout=30;"
+Write-Host "`n2. Testing 192.168.1.72\SQLEXPRESS01 (Mago)..." -ForegroundColor Yellow
+$magoConnString = "Data Source=192.168.1.72\SQLEXPRESS01;Initial Catalog=TODESCATO_NET;User Id=Gantt;Password=Gantt2019;TrustServerCertificate=True;Connection Timeout=30;"
 
 try {
     $conn = New-Object System.Data.SqlClient.SqlConnection($magoConnString)
@@ -53,8 +53,8 @@ catch {
 }
 
 # Test 3: SQL Server remoto (Gantt)
-Write-Host "`n3. Testing 192.168.1.230\SQLEXPRESS (Gantt)..." -ForegroundColor Yellow
-$ganttConnString = "Server=192.168.1.230\SQLEXPRESS;Database=Gantt;User Id=fab;Password=fabpwd;TrustServerCertificate=True;"
+Write-Host "`n3. Testing 192.168.1.230\SQLEXPRESS01 (Gantt)..." -ForegroundColor Yellow
+$ganttConnString = "Server=192.168.1.230\SQLEXPRESS01;Database=Gantt;User Id=fab;Password=fabpwd;TrustServerCertificate=True;"
 
 try {
     $conn = New-Object System.Data.SqlClient.SqlConnection($ganttConnString)

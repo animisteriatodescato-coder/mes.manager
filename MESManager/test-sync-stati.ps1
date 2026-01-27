@@ -18,17 +18,17 @@ Remove-Job -Job $job
 
 # Verifica i log
 Write-Host "`n=== LOG SINCRONIZZAZIONE ===" -ForegroundColor Cyan
-sqlcmd -S "localhost\SQLEXPRESS" -d MESManager -E -C -Q "SELECT TOP 1 Modulo, CONVERT(VARCHAR(20), DataOra, 120) AS DataOra, Nuovi, Aggiornati, Ignorati, Errori, MessaggioErrore FROM LogSync WHERE Modulo = 'Commesse' ORDER BY DataOra DESC" -W -s "|"
+sqlcmd -S "localhost\SQLEXPRESS01" -d MESManager -E -C -Q "SELECT TOP 1 Modulo, CONVERT(VARCHAR(20), DataOra, 120) AS DataOra, Nuovi, Aggiornati, Ignorati, Errori, MessaggioErrore FROM LogSync WHERE Modulo = 'Commesse' ORDER BY DataOra DESC" -W -s "|"
 
 # Verifica distribuzione stati
 Write-Host "`n=== DISTRIBUZIONE STATI ===" -ForegroundColor Cyan
-sqlcmd -S "localhost\SQLEXPRESS" -d MESManager -E -C -Q "SELECT Stato, COUNT(*) AS NumeroCommesse FROM Commesse GROUP BY Stato ORDER BY Stato" -W -s "|"
+sqlcmd -S "localhost\SQLEXPRESS01" -d MESManager -E -C -Q "SELECT Stato, COUNT(*) AS NumeroCommesse FROM Commesse GROUP BY Stato ORDER BY Stato" -W -s "|"
 
 # Verifica alcune commesse specifiche
 Write-Host "`n=== CAMPIONE COMMESSE APERTE (Stato 1) ===" -ForegroundColor Cyan
-sqlcmd -S "localhost\SQLEXPRESS" -d MESManager -E -C -Q "SELECT TOP 5 Codice, Stato FROM Commesse WHERE Stato = 1" -W -s "|"
+sqlcmd -S "localhost\SQLEXPRESS01" -d MESManager -E -C -Q "SELECT TOP 5 Codice, Stato FROM Commesse WHERE Stato = 1" -W -s "|"
 
 Write-Host "`n=== CAMPIONE COMMESSE CHIUSE (Stato 4) ===" -ForegroundColor Cyan
-sqlcmd -S "localhost\SQLEXPRESS" -d MESManager -E -C -Q "SELECT TOP 5 Codice, Stato FROM Commesse WHERE Stato = 4" -W -s "|"
+sqlcmd -S "localhost\SQLEXPRESS01" -d MESManager -E -C -Q "SELECT TOP 5 Codice, Stato FROM Commesse WHERE Stato = 4" -W -s "|"
 
 Write-Host "`nSincronizzazione completata!" -ForegroundColor Green

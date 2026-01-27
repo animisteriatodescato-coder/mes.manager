@@ -40,12 +40,12 @@ Apri `appsettings.Secrets.json` e inserisci le credenziali reali:
 ```json
 {
   "ConnectionStrings": {
-    "MESManagerDb": "Server=TUO_SERVER\\SQLEXPRESS;Database=MESManager;User Id=TUO_USER;Password=TUA_PASSWORD;TrustServerCertificate=True;",
-    "MagoDb": "Data Source=SERVER_MAGO\\SQLEXPRESS;Initial Catalog=NOME_DB;User Id=USER;Password=PASSWORD;TrustServerCertificate=True;",
-    "GanttDb": "Server=SERVER_GANTT\\SQLEXPRESS;Database=Gantt;User Id=USER;Password=PASSWORD;TrustServerCertificate=True;"
+    "MESManagerDb": "Server=TUO_SERVER\\SQLEXPRESS01;Database=MESManager;User Id=TUO_USER;Password=TUA_PASSWORD;TrustServerCertificate=True;",
+    "MagoDb": "Data Source=SERVER_MAGO\\SQLEXPRESS01;Initial Catalog=NOME_DB;User Id=USER;Password=PASSWORD;TrustServerCertificate=True;",
+    "GanttDb": "Server=SERVER_GANTT\\SQLEXPRESS01;Database=Gantt;User Id=USER;Password=PASSWORD;TrustServerCertificate=True;"
   },
   "Mago": {
-    "ConnectionString": "Data Source=SERVER_MAGO\\SQLEXPRESS;Initial Catalog=NOME_DB;User Id=USER;Password=PASSWORD;TrustServerCertificate=True;"
+    "ConnectionString": "Data Source=SERVER_MAGO\\SQLEXPRESS01;Initial Catalog=NOME_DB;User Id=USER;Password=PASSWORD;TrustServerCertificate=True;"
   }
 }
 ```

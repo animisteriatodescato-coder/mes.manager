@@ -3,7 +3,7 @@
 
 $sourceSA = "sa"
 $sourcePassword = "password.123"
-$sourceServer = "192.168.1.230\SQLEXPRESS"
+$sourceServer = "192.168.1.230\SQLEXPRESS01"
 $sourceDB = "MESManager"
 $destDB = "MESManager_Dev"
 $destUser = "FAB"
