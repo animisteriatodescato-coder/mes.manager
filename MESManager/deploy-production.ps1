@@ -82,16 +82,14 @@ function Deploy-Target {
     
     Write-Step "Deploying $TargetName"
     
-    # 1. Build
+    # 1. Build (framework-dependent - .NET 8 è installato sul server)
     if (-not $SkipBuild) {
-        Write-Host "Building $TargetName..." -ForegroundColor Yellow
+        Write-Host "Building $TargetName (framework-dependent)..." -ForegroundColor Yellow
         $buildArgs = @(
             'publish', $config.Project,
             '-c', 'Release',
             '-r', 'win-x64',
-            '--self-contained', 'true',
-            '/p:PublishSingleFile=true',
-            '/p:IncludeNativeLibrariesForSelfExtract=true',
+            '--self-contained', 'false',
             '/p:DebugType=none',
             '/p:DebugSymbols=false',
             '--output', $publishPath
