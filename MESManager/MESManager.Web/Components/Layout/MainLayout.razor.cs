@@ -234,25 +234,7 @@ public partial class MainLayout : IDisposable
         }
     }
     
-    // Metodi specifici per PLC Realtime
-    private async Task OnPlcSyncMachines()
-    {
-        var page = PageToolbarService.GetActivePage("plc-realtime") as dynamic;
-        if (page != null)
-        {
-            await page.SincronizzaMacchine_Public();
-        }
-    }
-    
-    private void OnPlcToggleAutoRefresh()
-    {
-        var page = PageToolbarService.GetActivePage("plc-realtime") as dynamic;
-        if (page != null)
-        {
-            page.ToggleAutoRefresh_Public();
-            StateHasChanged();
-        }
-    }
+    // Metodi specifici per PLC Realtime - RIMOSSI: sync e autorefresh ora sono solo in /sync/macchine
     
     #pragma warning disable ASP0006
     private RenderFragment RenderPlcRealtimeToolbar() => builder =>
@@ -263,58 +245,6 @@ public partial class MainLayout : IDisposable
             if (page == null) return;
             
             int seq = 0;
-            
-            // Pulsante Sincronizza Macchine
-            builder.OpenComponent<MudButton>(seq++);
-            builder.AddAttribute(seq++, "Variant", Variant.Filled);
-            builder.AddAttribute(seq++, "Color", Color.Success);
-            builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.Sync);
-            builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnPlcSyncMachines));
-            builder.AddAttribute(seq++, "Disabled", (bool)page.IsSyncing);
-            builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 =>
-            {
-                int s2 = 0;
-                if ((bool)page.IsSyncing)
-                {
-                    b2.OpenComponent<MudProgressCircular>(s2++);
-                    b2.AddAttribute(s2++, "Size", Size.Small);
-                    b2.AddAttribute(s2++, "Indeterminate", true);
-                    b2.AddAttribute(s2++, "Class", "mr-2");
-                    b2.CloseComponent();
-                    
-                    b2.OpenElement(s2++, "span");
-                    b2.AddContent(s2++, "Sincronizzazione...");
-                    b2.CloseElement();
-                }
-                else
-                {
-                    b2.OpenElement(s2++, "span");
-                    b2.AddContent(s2++, "Sincronizza Macchine");
-                    b2.CloseElement();
-                }
-            }));
-            builder.CloseComponent();
-            
-            // Switch Auto-refresh
-            builder.OpenComponent<MudSwitch<bool>>(seq++);
-            builder.AddAttribute(seq++, "Checked", (bool)page.AutoRefreshEnabled);
-            builder.AddAttribute(seq++, "CheckedChanged", EventCallback.Factory.Create<bool>(this, _ => OnPlcToggleAutoRefresh()));
-            builder.AddAttribute(seq++, "Color", Color.Primary);
-            builder.AddAttribute(seq++, "Label", "Auto-refresh");
-            builder.CloseComponent();
-            
-            // Testo intervallo (se auto-refresh è attivo)
-            if ((bool)page.AutoRefreshEnabled)
-            {
-                builder.OpenComponent<MudText>(seq++);
-                builder.AddAttribute(seq++, "Typo", Typo.caption);
-                builder.AddAttribute(seq++, "Class", "mr-2");
-                builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 =>
-                {
-                    b2.AddContent(0, $"Ogni {(int)page.RefreshInterval} s");
-                }));
-                builder.CloseComponent();
-            }
             
             // Campo di ricerca
             builder.OpenComponent<MudTextField<string>>(seq++);

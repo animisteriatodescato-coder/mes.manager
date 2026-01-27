@@ -13,8 +13,10 @@ public class PlcSyncWorker : BackgroundService
     private readonly PlcReaderService _readerService;
     private readonly PlcSyncService _syncService;
     private readonly PlcStatusWriterService _statusWriter;
+    private readonly IHostApplicationLifetime _appLifetime;
     private PlcSyncSettings _settings = null!;
     private PlcServiceStatus? _dbSettings;
+    private bool _isShuttingDown = false;
 
     public PlcSyncWorker(
         ILogger<PlcSyncWorker> logger,
@@ -22,7 +24,8 @@ public class PlcSyncWorker : BackgroundService
         PlcConnectionService connectionService,
         PlcReaderService readerService,
         PlcSyncService syncService,
-        PlcStatusWriterService statusWriter)
+        PlcStatusWriterService statusWriter,
+        IHostApplicationLifetime appLifetime)
     {
         _logger = logger;
         _configuration = configuration;
@@ -30,6 +33,16 @@ public class PlcSyncWorker : BackgroundService
         _readerService = readerService;
         _syncService = syncService;
         _statusWriter = statusWriter;
+        _appLifetime = appLifetime;
+        
+        // Registra handler per shutdown graceful
+        _appLifetime.ApplicationStopping.Register(OnApplicationStopping);
+    }
+
+    private void OnApplicationStopping()
+    {
+        _isShuttingDown = true;
+        _logger.LogWarning("⚠️ Ricevuto segnale di shutdown - Chiusura connessioni PLC in corso...");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -153,10 +166,23 @@ public class PlcSyncWorker : BackgroundService
             }
         }
 
-        // Servizio in arresto
-        await _statusWriter.LogInfoAsync("Servizio in arresto");
+        // Servizio in arresto - Graceful shutdown
+        _logger.LogWarning("🛑 PlcSyncWorker in fase di shutdown...");
+        
+        try
+        {
+            // Chiudi tutte le connessioni PLC in modo ordinato
+            _connectionService.DisconnectAll();
+            _logger.LogInformation("✅ Connessioni PLC chiuse correttamente");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore durante chiusura connessioni PLC");
+        }
+        
+        await _statusWriter.LogInfoAsync("Servizio arrestato correttamente (graceful shutdown)");
         await _statusWriter.MarkStoppedAsync(CancellationToken.None);
-        _logger.LogInformation("PlcSyncWorker arrestato");
+        _logger.LogInformation("✅ PlcSyncWorker arrestato correttamente");
     }
 
     private async Task<List<PlcMachineConfig>> LoadMachineConfigsAsync()

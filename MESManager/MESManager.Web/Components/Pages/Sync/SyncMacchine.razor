@@ -2,14 +2,63 @@
 @using MESManager.Application.DTOs
 @using MESManager.Application.Interfaces
 @using MESManager.Infrastructure.Services
+@using MESManager.Web.Services
 @implements IAsyncDisposable
 @inject IPlcAppService PlcService
 @inject IPlcStatusService StatusService
+@inject PlcDataService PlcDataService
 @inject ISnackbar Snackbar
 
 <PageTitle>Sync Macchine PLC</PageTitle>
 
 <MudGrid>
+    @* PULSANTE SYNC MANUALE - IN EVIDENZA *@
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                <MudStack>
+                    <MudText Typo="Typo.h5" Style="color: white;">
+                        <MudIcon Icon="@Icons.Material.Filled.Sync" Class="mr-2" />
+                        Sincronizzazione Manuale
+                    </MudText>
+                    <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.8);">
+                        Legge i dati direttamente da tutti i PLC e aggiorna il database
+                    </MudText>
+                </MudStack>
+                
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Success"
+                          Size="Size.Large"
+                          StartIcon="@Icons.Material.Filled.PlayArrow"
+                          OnClick="SyncAllMachinesAsync"
+                          Disabled="@_isSyncing"
+                          Style="min-width: 200px;">
+                    @if (_isSyncing)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                        <span>Sincronizzazione...</span>
+                    }
+                    else
+                    {
+                        <span>SINCRONIZZA ORA</span>
+                    }
+                </MudButton>
+            </MudStack>
+            
+            @* Risultati ultima sync *@
+            @if (_lastSyncResults.Any())
+            {
+                <MudDivider Class="my-3" Style="border-color: rgba(255,255,255,0.3);" />
+                <MudText Typo="Typo.subtitle2" Style="color: white;">
+                    Ultima sincronizzazione: @_lastSyncTime?.ToString("HH:mm:ss") - 
+                    @(_lastSyncResults.Count(r => r.Successo)) OK, 
+                    @(_lastSyncResults.Count(r => !r.Successo)) errori,
+                    @(_lastSyncResults.Sum(r => r.RecordAggiornati)) record aggiornati
+                </MudText>
+            }
+        </MudPaper>
+    </MudItem>
+
     @* STATO SERVIZIO PLCSYNC *@
     <MudItem xs="12" md="4">
         <MudPaper Class="pa-4">
@@ -341,6 +390,11 @@
     private List<PlcRealtimeDto> _macchineRealtime = new();
     private List<PlcSyncLogDto> _syncLogs = new();
     
+    // Sincronizzazione manuale
+    private bool _isSyncing = false;
+    private List<PlcSyncResultDto> _lastSyncResults = new();
+    private DateTime? _lastSyncTime;
+    
     // Impostazioni
     private int _pollingInterval = 30;
     private bool _enableRealtime = true;
@@ -374,6 +428,47 @@
         
         // Avvia auto-refresh
         StartAutoRefresh();
+    }
+
+    private async Task SyncAllMachinesAsync()
+    {
+        _isSyncing = true;
+        StateHasChanged();
+        
+        try
+        {
+            Snackbar.Add("Avvio sincronizzazione manuale...", Severity.Info);
+            
+            _lastSyncResults = await PlcDataService.SyncAllMachinesAsync();
+            _lastSyncTime = DateTime.Now;
+            
+            var totaleAggiornati = _lastSyncResults.Sum(r => r.RecordAggiornati);
+            var errori = _lastSyncResults.Where(r => !r.Successo).ToList();
+            
+            if (errori.Any())
+            {
+                var messaggiErrore = string.Join(", ", errori.Take(3).Select(e => $"{e.MacchinaCodiceMacchina}: {e.MessaggioErrore}"));
+                if (errori.Count > 3) messaggiErrore += $" (+{errori.Count - 3} altri)";
+                Snackbar.Add($"Sync completata con {errori.Count} errori: {messaggiErrore}", Severity.Warning);
+            }
+            else
+            {
+                Snackbar.Add($"Sincronizzazione completata! {totaleAggiornati} record aggiornati", Severity.Success);
+            }
+            
+            // Ricarica i dati
+            await LoadMacchineAsync();
+            await LoadLogsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore sincronizzazione: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSyncing = false;
+            StateHasChanged();
+        }
     }
 
     private void StartAutoRefresh()

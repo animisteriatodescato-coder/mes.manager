@@ -34,7 +34,13 @@ builder.Services.AddHostedService<SyncMagoWorker>();
 // Support Windows Service
 builder.Services.AddWindowsService(options =>
 {
-    options.ServiceName = "MESManager Worker";
+    options.ServiceName = "MESManager.Worker";
+});
+
+// Configura timeout di shutdown più lungo per completare sync in corso
+builder.Services.Configure<HostOptions>(options =>
+{
+    options.ShutdownTimeout = TimeSpan.FromSeconds(30);
 });
 
 var host = builder.Build();

@@ -1,6 +1,7 @@
 using MESManager.Domain.Entities;
 using MESManager.Infrastructure.Data;
 using MESManager.Sync.Services;
+using Microsoft.Extensions.Hosting;
 
 namespace MESManager.Worker;
 
@@ -8,14 +9,29 @@ public class SyncMagoWorker : BackgroundService
 {
     private readonly ILogger<SyncMagoWorker> _logger;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IHostApplicationLifetime _appLifetime;
     private readonly TimeSpan _intervallo = TimeSpan.FromHours(1);
+    private bool _isSyncing = false;
 
     public SyncMagoWorker(
         ILogger<SyncMagoWorker> logger,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        IHostApplicationLifetime appLifetime)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
+        _appLifetime = appLifetime;
+        
+        // Registra handler per shutdown graceful
+        _appLifetime.ApplicationStopping.Register(OnApplicationStopping);
+    }
+
+    private void OnApplicationStopping()
+    {
+        if (_isSyncing)
+        {
+            _logger.LogWarning("⚠️ Shutdown richiesto durante sync Mago in corso - attendere completamento...");
+        }
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -31,6 +47,7 @@ public class SyncMagoWorker : BackgroundService
         {
             try
             {
+                _isSyncing = true;
                 _logger.LogInformation("Inizio sincronizzazione Mago alle {time}", DateTimeOffset.Now);
 
                 using var scope = _serviceProvider.CreateScope();
@@ -56,16 +73,31 @@ public class SyncMagoWorker : BackgroundService
                 // I log sono già salvati dal SyncCoordinator
 
                 _logger.LogInformation("Sincronizzazione Mago completata alle {time}", DateTimeOffset.Now);
+                _isSyncing = false;
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                _logger.LogInformation("⏹️ Sync Mago interrotta per shutdown");
+                _isSyncing = false;
+                break;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Errore durante la sincronizzazione Mago");
+                _isSyncing = false;
             }
 
             // Attendi il prossimo intervallo
-            await timer.WaitForNextTickAsync(stoppingToken);
+            try
+            {
+                await timer.WaitForNextTickAsync(stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
         }
 
-        _logger.LogInformation("SyncMagoWorker arrestato");
+        _logger.LogInformation("✅ SyncMagoWorker arrestato correttamente");
     }
 }

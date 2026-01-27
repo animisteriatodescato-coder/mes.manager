@@ -77,15 +77,35 @@ public class PlcConnectionService
         return _machineStates.TryGetValue(macchinaId, out var state) ? state : null;
     }
 
-    public void Dispose()
+    /// <summary>
+    /// Disconnette tutte le macchine PLC in modo ordinato (graceful shutdown).
+    /// </summary>
+    public void DisconnectAll()
     {
-        foreach (var state in _machineStates.Values)
+        _logger.LogInformation("🔌 Disconnessione di {Count} macchine PLC...", _machineStates.Count);
+        
+        foreach (var (macchinaId, state) in _machineStates)
         {
             try
             {
-                state.Client.Disconnect();
+                if (state.Client.Connected)
+                {
+                    state.Client.Disconnect();
+                    _logger.LogDebug("Disconnesso PLC {MacchinaId}", macchinaId);
+                }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Errore disconnessione PLC {MacchinaId}", macchinaId);
+            }
         }
+        
+        _machineStates.Clear();
+        _logger.LogInformation("✅ Tutte le connessioni PLC sono state chiuse");
+    }
+
+    public void Dispose()
+    {
+        DisconnectAll();
     }
 }

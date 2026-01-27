@@ -32,5 +32,17 @@ builder.Services.AddSingleton<PlcStatusWriterService>();
 // Worker
 builder.Services.AddHostedService<PlcSyncWorker>();
 
+// Supporto Windows Service per graceful shutdown
+builder.Services.AddWindowsService(options =>
+{
+    options.ServiceName = "MESManager.PlcSync";
+});
+
+// Configura timeout di shutdown più lungo per chiudere connessioni PLC
+builder.Services.Configure<HostOptions>(options =>
+{
+    options.ShutdownTimeout = TimeSpan.FromSeconds(30);
+});
+
 var host = builder.Build();
 host.Run();

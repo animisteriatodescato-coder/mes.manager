@@ -109,7 +109,7 @@ function Deploy-Target {
         throw "Publish path not found: $publishPath. Run without -SkipBuild."
     }
     
-    # 3. Stop servizio remoto (se Windows Service)
+    # 3. Stop servizio remoto (se Windows Service) con attesa graceful
     if ($config.ServiceName) {
         Write-Host "Stopping service $($config.ServiceName) on $Server..." -ForegroundColor Yellow
         if ($WhatIf) {
@@ -118,8 +118,36 @@ function Deploy-Target {
             try {
                 Invoke-Command -ComputerName $Server -ScriptBlock {
                     param($svc)
-                    Stop-Service -Name $svc -Force -ErrorAction SilentlyContinue
-                    Start-Sleep -Seconds 2
+                    
+                    $service = Get-Service -Name $svc -ErrorAction SilentlyContinue
+                    if ($service -and $service.Status -eq 'Running') {
+                        Write-Host "  Invio segnale di stop al servizio $svc..."
+                        Stop-Service -Name $svc -Force -ErrorAction SilentlyContinue
+                        
+                        # Attendi graceful shutdown (max 30 secondi)
+                        $timeout = 30
+                        $elapsed = 0
+                        while ($elapsed -lt $timeout) {
+                            Start-Sleep -Seconds 2
+                            $elapsed += 2
+                            $service = Get-Service -Name $svc -ErrorAction SilentlyContinue
+                            if ($service.Status -eq 'Stopped') {
+                                Write-Host "  Servizio $svc fermato correttamente dopo $elapsed secondi"
+                                break
+                            }
+                            Write-Host "  Attesa shutdown... ($elapsed/$timeout sec)"
+                        }
+                        
+                        # Se ancora non è fermo, forza kill
+                        if ($service.Status -ne 'Stopped') {
+                            Write-Host "  ⚠️ Timeout - forzo terminazione processo..."
+                            $processName = $svc -replace '\.', ''
+                            Get-Process -Name "*$processName*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+                            Start-Sleep -Seconds 3
+                        }
+                    } else {
+                        Write-Host "  Servizio $svc non in esecuzione"
+                    }
                 } -ArgumentList $config.ServiceName -ErrorAction SilentlyContinue
             } catch {
                 Write-Warning "Could not stop service: $_"
@@ -207,7 +235,7 @@ function Deploy-Target {
         }
     }
     
-    # 5. Restart servizio
+    # 5. Restart servizio con verifica avvio
     if ($config.ServiceName) {
         Write-Host "Starting service $($config.ServiceName)..." -ForegroundColor Yellow
         if ($WhatIf) {
@@ -216,7 +244,25 @@ function Deploy-Target {
             try {
                 Invoke-Command -ComputerName $Server -ScriptBlock {
                     param($svc)
+                    
+                    # Avvia il servizio
                     Start-Service -Name $svc -ErrorAction SilentlyContinue
+                    
+                    # Attendi che il servizio sia effettivamente in esecuzione (max 20 sec)
+                    $timeout = 20
+                    $elapsed = 0
+                    while ($elapsed -lt $timeout) {
+                        Start-Sleep -Seconds 2
+                        $elapsed += 2
+                        $service = Get-Service -Name $svc -ErrorAction SilentlyContinue
+                        if ($service.Status -eq 'Running') {
+                            Write-Host "  ✅ Servizio $svc avviato correttamente"
+                            return
+                        }
+                        Write-Host "  Attesa avvio... ($elapsed/$timeout sec) - Stato: $($service.Status)"
+                    }
+                    
+                    Write-Host "  ⚠️ Servizio potrebbe non essersi avviato correttamente"
                 } -ArgumentList $config.ServiceName -ErrorAction SilentlyContinue
             } catch {
                 Write-Warning "Could not start service: $_"
