@@ -124,6 +124,47 @@
                             Versione: @_serviceStatus.ServiceVersion
                         </MudText>
                     }
+                    
+                    @* Pulsante Avvia/Stop Servizio *@
+                    @if (_serviceStatus.IsAlive)
+                    {
+                        <MudButton Variant="Variant.Outlined" 
+                                  Color="Color.Error"
+                                  Size="Size.Small"
+                                  StartIcon="@Icons.Material.Filled.Stop"
+                                  OnClick="StopServiceAsync"
+                                  Disabled="@_isControllingService"
+                                  FullWidth="true"
+                                  Class="mt-2">
+                            @if (_isControllingService)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-1" />
+                            }
+                            Ferma Servizio
+                        </MudButton>
+                    }
+                    else
+                    {
+                        @* Servizio OFFLINE - mostra pulsante Avvia *@
+                        <MudButton Variant="Variant.Filled" 
+                                  Color="Color.Success"
+                                  Size="Size.Medium"
+                                  StartIcon="@Icons.Material.Filled.PlayArrow"
+                                  OnClick="StartServiceAsync"
+                                  Disabled="@_isControllingService"
+                                  FullWidth="true"
+                                  Class="mt-3">
+                            @if (_isControllingService)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                <span>Avvio in corso...</span>
+                            }
+                            else
+                            {
+                                <span>AVVIA SERVIZIO</span>
+                            }
+                        </MudButton>
+                    }
                 </MudStack>
             }
             else
@@ -135,6 +176,26 @@
                 <MudText Typo="Typo.body2" Class="mt-2 mud-text-secondary">
                     Il servizio PlcSync deve essere in esecuzione per sincronizzare i dati dai PLC.
                 </MudText>
+                
+                @* Pulsante Avvia Servizio *@
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Success"
+                          Size="Size.Medium"
+                          StartIcon="@Icons.Material.Filled.PlayArrow"
+                          OnClick="StartServiceAsync"
+                          Disabled="@_isControllingService"
+                          FullWidth="true"
+                          Class="mt-3">
+                    @if (_isControllingService)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                        <span>Avvio in corso...</span>
+                    }
+                    else
+                    {
+                        <span>AVVIA SERVIZIO PLCSYNC</span>
+                    }
+                </MudButton>
             }
             
             @* Prossimo refresh *@
@@ -390,6 +451,9 @@
     private List<PlcRealtimeDto> _macchineRealtime = new();
     private List<PlcSyncLogDto> _syncLogs = new();
     
+    // Controllo servizio
+    private bool _isControllingService = false;
+    
     // Sincronizzazione manuale
     private bool _isSyncing = false;
     private List<PlcSyncResultDto> _lastSyncResults = new();
@@ -606,6 +670,72 @@
         if (timeSpan.TotalHours < 24)
             return $"{(int)timeSpan.TotalHours}h fa";
         return $"{(int)timeSpan.TotalDays}g fa";
+    }
+
+    private async Task StartServiceAsync()
+    {
+        _isControllingService = true;
+        StateHasChanged();
+
+        try
+        {
+            Snackbar.Add("Avvio servizio PlcSync...", Severity.Info);
+            
+            var result = await PlcDataService.StartPlcSyncServiceAsync();
+            
+            if (result.Success)
+            {
+                Snackbar.Add(result.Message, Severity.Success);
+                
+                // Aspetta che il servizio si inizializzi e aggiorni lo stato
+                await Task.Delay(3000);
+                await RefreshStatusAsync();
+            }
+            else
+            {
+                Snackbar.Add($"Errore avvio: {result.Message}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isControllingService = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task StopServiceAsync()
+    {
+        _isControllingService = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await PlcDataService.StopPlcSyncServiceAsync();
+            
+            if (result.Success)
+            {
+                Snackbar.Add(result.Message, Severity.Success);
+                await Task.Delay(1000);
+                await RefreshStatusAsync();
+            }
+            else
+            {
+                Snackbar.Add($"Errore arresto: {result.Message}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isControllingService = false;
+            StateHasChanged();
+        }
     }
 
     public ValueTask DisposeAsync()

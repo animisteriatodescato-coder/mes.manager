@@ -95,6 +95,7 @@ public class CommessaAppService : ICommessaAppService
                 
                 // Programmazione Macchine
                 NumeroMacchina = c.NumeroMacchina,
+                OrdineSequenza = c.OrdineSequenza,
                 
                 // Audit
                 UltimaModifica = c.UltimaModifica,
@@ -297,6 +298,84 @@ public class CommessaAppService : ICommessaAppService
             UtenteModifica = s.UtenteModifica,
             Note = s.Note
         }).ToList();
+    }
+
+    public async Task RiordinaCommessaAsync(Guid commessaId, string nuovoNumeroMacchina, int nuovaPosizioneIndex)
+    {
+        var commessa = await _context.Commesse.FindAsync(commessaId);
+        if (commessa == null) throw new Exception("Commessa non trovata");
+
+        var vecchioNumeroMacchina = commessa.NumeroMacchina;
+        var cambioMacchina = vecchioNumeroMacchina != nuovoNumeroMacchina;
+
+        // 1. Aggiorna la macchina e lo stato se necessario
+        commessa.NumeroMacchina = nuovoNumeroMacchina;
+        commessa.UltimaModifica = DateTime.Now;
+
+        // Se assegno una macchina e lo stato è NonProgrammata, passa automaticamente a Programmata
+        if (!string.IsNullOrEmpty(nuovoNumeroMacchina) && commessa.StatoProgramma == StatoProgramma.NonProgrammata)
+        {
+            var statoPrecedente = commessa.StatoProgramma;
+            commessa.StatoProgramma = StatoProgramma.Programmata;
+            commessa.DataCambioStatoProgramma = DateTime.Now;
+
+            var storico = new StoricoProgrammazione
+            {
+                Id = Guid.NewGuid(),
+                CommessaId = commessaId,
+                StatoPrecedente = statoPrecedente,
+                StatoNuovo = StatoProgramma.Programmata,
+                DataModifica = DateTime.Now,
+                Note = $"Cambio automatico per riordinamento su macchina {nuovoNumeroMacchina}"
+            };
+            _context.StoricoProgrammazione.Add(storico);
+        }
+
+        // 2. Ricalcola OrdineSequenza per la macchina di DESTINAZIONE
+        var commesseDestinazione = await _context.Commesse
+            .Where(c => c.NumeroMacchina == nuovoNumeroMacchina && c.Id != commessaId)
+            .OrderBy(c => c.OrdineSequenza)
+            .ThenBy(c => c.DataConsegna)
+            .ToListAsync();
+
+        // Inserisce la commessa nella posizione corretta
+        var listaOrdinata = new List<Commessa>();
+        for (int i = 0; i < commesseDestinazione.Count; i++)
+        {
+            if (i == nuovaPosizioneIndex)
+            {
+                listaOrdinata.Add(commessa);
+            }
+            listaOrdinata.Add(commesseDestinazione[i]);
+        }
+        // Se la posizione è alla fine o oltre
+        if (nuovaPosizioneIndex >= commesseDestinazione.Count)
+        {
+            listaOrdinata.Add(commessa);
+        }
+
+        // Assegna ordineSequenza sequenziale
+        for (int i = 0; i < listaOrdinata.Count; i++)
+        {
+            listaOrdinata[i].OrdineSequenza = i + 1;
+        }
+
+        // 3. Se cambio macchina, ricalcola anche OrdineSequenza per macchina di ORIGINE
+        if (cambioMacchina && !string.IsNullOrEmpty(vecchioNumeroMacchina))
+        {
+            var commesseOrigine = await _context.Commesse
+                .Where(c => c.NumeroMacchina == vecchioNumeroMacchina && c.Id != commessaId)
+                .OrderBy(c => c.OrdineSequenza)
+                .ThenBy(c => c.DataConsegna)
+                .ToListAsync();
+
+            for (int i = 0; i < commesseOrigine.Count; i++)
+            {
+                commesseOrigine[i].OrdineSequenza = i + 1;
+            }
+        }
+
+        await _context.SaveChangesAsync();
     }
 
     public async Task EliminaAsync(Guid id)

@@ -31,6 +31,7 @@ public class Commessa
     
     // Programmazione Macchine
     public string? NumeroMacchina { get; set; } // Codice macchina assegnata dal catalogo anime
+    public int OrdineSequenza { get; set; } // Ordine di esecuzione sulla macchina per drag&drop
     
     // Pianificazione produzione (per diagramma Gantt)
     public DateTime? DataInizioPrevisione { get; set; } // Data/ora inizio prevista

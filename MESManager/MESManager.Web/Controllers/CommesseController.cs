@@ -57,6 +57,20 @@ public class CommesseController : ControllerBase
         var result = await _service.GetStoricoProgrammazioneAsync(id);
         return Ok(result);
     }
+
+    [HttpPost("riordina")]
+    public async Task<ActionResult> Riordina([FromBody] RiordinaCommessaRequest request)
+    {
+        try
+        {
+            await _service.RiordinaCommessaAsync(request.CommessaId, request.NuovoNumeroMacchina, request.NuovaPosizioneIndex);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 }
 
 public class UpdateStatoRequest
@@ -74,4 +88,11 @@ public class UpdateStatoProgrammaRequest
     public string StatoProgramma { get; set; } = string.Empty;
     public string? Note { get; set; }
     public string? Utente { get; set; }
+}
+
+public class RiordinaCommessaRequest
+{
+    public Guid CommessaId { get; set; }
+    public string NuovoNumeroMacchina { get; set; } = string.Empty;
+    public int NuovaPosizioneIndex { get; set; }
 }

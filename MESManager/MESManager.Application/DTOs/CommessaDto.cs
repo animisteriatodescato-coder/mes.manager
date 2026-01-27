@@ -39,6 +39,7 @@ public class CommessaDto
     
     // Programmazione Macchine
     public string? NumeroMacchina { get; set; }
+    public int OrdineSequenza { get; set; } // Ordine di esecuzione sulla macchina
     
     // Audit
     public DateTime UltimaModifica { get; set; }

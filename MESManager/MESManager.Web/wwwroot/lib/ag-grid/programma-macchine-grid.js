@@ -1,5 +1,7 @@
 window.programmaMacchineGrid = (function() {
     let gridApi = null;
+    let dragOverRowNode = null;
+    let dragOverPosition = null; // 'above' o 'below'
 
     // Colori alternati per le macchine (azzurro e verde pallido)
     const machineColors = {
@@ -7,7 +9,29 @@ window.programmaMacchineGrid = (function() {
         odd: '#e8f5e9'   // verde pallido
     };
 
+    // Colori per il drop target
+    const dropColors = {
+        above: '#ffeb3b', // giallo per inserimento sopra
+        below: '#4caf50', // verde per inserimento sotto
+        machineChange: '#ff9800' // arancione per cambio macchina
+    };
+
     const columnDefs = [
+        {
+            field: 'drag',
+            headerName: '',
+            width: 40,
+            pinned: 'left',
+            rowDrag: true,
+            sortable: false,
+            filter: false,
+            suppressMenu: true,
+            suppressCellFlash: true,
+            cellClass: 'drag-handle-cell',
+            cellRenderer: params => {
+                return '<span class="drag-handle" title="Trascina per riordinare">☰</span>';
+            }
+        },
         {
             field: 'storico',
             headerName: '',
@@ -87,13 +111,22 @@ window.programmaMacchineGrid = (function() {
         },
         { field: 'uoM', headerName: 'U.M.', sortable: true, filter: true, width: 80 },
         { 
+            field: 'ordineSequenza', 
+            headerName: 'Ord.', 
+            sortable: true, 
+            filter: true, 
+            width: 70,
+            sort: 'asc',
+            sortIndex: 1,
+            type: 'numericColumn',
+            cellStyle: { textAlign: 'center', fontWeight: 'bold', color: '#1976d2' }
+        },
+        { 
             field: 'dataConsegna', 
             headerName: 'Data Consegna', 
             sortable: true, 
             filter: true, 
             width: 120,
-            sort: 'asc',
-            sortIndex: 1,
             valueFormatter: params => params.value ? new Date(params.value).toLocaleDateString('it-IT') : ''
         },
         { 
@@ -199,6 +232,176 @@ window.programmaMacchineGrid = (function() {
         if (num === 0) return null;
         return num % 2 === 0 ? machineColors.even : machineColors.odd;
     }
+
+    // ==================== DRAG & DROP FUNCTIONS ====================
+    
+    // Rimuove tutti i marker visivi di drop
+    function clearDropMarkers() {
+        document.querySelectorAll('.drop-marker-above, .drop-marker-below, .drop-target-machine-change').forEach(el => {
+            el.classList.remove('drop-marker-above', 'drop-marker-below', 'drop-target-machine-change');
+        });
+        dragOverRowNode = null;
+        dragOverPosition = null;
+    }
+
+    // Calcola se il mouse è nella metà superiore o inferiore della riga
+    function getDropPosition(event, rowNode) {
+        if (!rowNode || !event) return null;
+        
+        const rowElement = document.querySelector(`[row-id="${rowNode.id}"]`);
+        if (!rowElement) return null;
+        
+        const rect = rowElement.getBoundingClientRect();
+        const mouseY = event.y;
+        const rowMiddle = rect.top + rect.height / 2;
+        
+        return mouseY < rowMiddle ? 'above' : 'below';
+    }
+
+    // Gestisce il movimento durante il drag
+    function onRowDragMove(event) {
+        const movingNode = event.node;
+        const overNode = event.overNode;
+        
+        if (!overNode || movingNode === overNode) {
+            clearDropMarkers();
+            return;
+        }
+        
+        const dropPos = getDropPosition(event.event, overNode);
+        const isMachineChange = movingNode.data.numeroMacchina !== overNode.data.numeroMacchina;
+        
+        // Aggiorna marker solo se cambiato
+        if (dragOverRowNode !== overNode || dragOverPosition !== dropPos) {
+            clearDropMarkers();
+            
+            const rowElement = document.querySelector(`[row-id="${overNode.id}"]`);
+            if (rowElement) {
+                if (dropPos === 'above') {
+                    rowElement.classList.add('drop-marker-above');
+                } else {
+                    rowElement.classList.add('drop-marker-below');
+                }
+                
+                if (isMachineChange) {
+                    rowElement.classList.add('drop-target-machine-change');
+                }
+            }
+            
+            dragOverRowNode = overNode;
+            dragOverPosition = dropPos;
+        }
+    }
+
+    // Pulisce i marker quando il drag esce dalla griglia
+    function onRowDragLeave(event) {
+        clearDropMarkers();
+    }
+
+    // Gestisce la fine del drag (drop)
+    async function onRowDragEnd(event) {
+        clearDropMarkers();
+        
+        const movingNode = event.node;
+        const overNode = event.overNode;
+        
+        if (!overNode || movingNode === overNode) {
+            console.log('Drop annullato: nessun target valido');
+            return;
+        }
+        
+        const dropPos = getDropPosition(event.event, overNode);
+        const movingData = movingNode.data;
+        const overData = overNode.data;
+        
+        // Determina la macchina di destinazione
+        const nuovoNumeroMacchina = overData.numeroMacchina;
+        const isMachineChange = movingData.numeroMacchina !== nuovoNumeroMacchina;
+        
+        console.log(`Drop: ${movingData.codice} -> ${nuovoNumeroMacchina}, posizione: ${dropPos}, cambio macchina: ${isMachineChange}`);
+        
+        // Calcola la nuova posizione index
+        // Trova tutte le righe della macchina di destinazione INCLUSA quella che stiamo spostando
+        const allRowsWithMoving = [];
+        gridApi.forEachNodeAfterFilterAndSort(node => {
+            if (node.data.numeroMacchina === nuovoNumeroMacchina) {
+                allRowsWithMoving.push(node);
+            }
+        });
+        
+        // Trova la posizione dell'overNode nella lista completa
+        const overNodeIndexInFull = allRowsWithMoving.findIndex(node => node.data.id === overData.id);
+        const movingNodeIndexInFull = allRowsWithMoving.findIndex(node => node.data.id === movingData.id);
+        
+        // Calcola l'indice target nella lista SENZA la riga che stiamo spostando
+        let targetIndex;
+        
+        if (isMachineChange) {
+            // Cambio macchina: l'overNode non cambia posizione
+            targetIndex = overNodeIndexInFull;
+            if (dropPos === 'below') {
+                targetIndex = targetIndex + 1;
+            }
+        } else {
+            // Stessa macchina: dobbiamo considerare che rimuovendo la riga gli indici cambiano
+            // Rimuovi logicamente la riga che stiamo spostando
+            const indexWithoutMoving = overNodeIndexInFull > movingNodeIndexInFull 
+                ? overNodeIndexInFull - 1 
+                : overNodeIndexInFull;
+            
+            if (dropPos === 'above') {
+                targetIndex = indexWithoutMoving;
+            } else {
+                targetIndex = indexWithoutMoving + 1;
+            }
+        }
+        
+        // Se non trovato (caso raro), metti in fondo
+        if (targetIndex < 0) {
+            targetIndex = allRowsWithMoving.length - (isMachineChange ? 0 : 1);
+        }
+        
+        console.log(`Nuova posizione index: ${targetIndex} (${dropPos} rispetto a ${overData.codice}, overIdx=${overNodeIndexInFull}, movingIdx=${movingNodeIndexInFull})`);
+        
+        // Chiama l'API per salvare
+        try {
+            const response = await fetch('/api/Commesse/riordina', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    commessaId: movingData.id,
+                    nuovoNumeroMacchina: nuovoNumeroMacchina,
+                    nuovaPosizioneIndex: targetIndex
+                })
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || `HTTP ${response.status}`);
+            }
+            
+            console.log('✓ Riordino salvato con successo');
+            
+            // Ricarica i dati per riflettere il nuovo ordine
+            await refreshGridData();
+            
+            // Notifica cambio
+            window.dispatchEvent(new CustomEvent('commessaRiordinata', { 
+                detail: { 
+                    commessaId: movingData.id, 
+                    nuovoNumeroMacchina: nuovoNumeroMacchina,
+                    nuovaPosizioneIndex: targetIndex,
+                    cambioMacchina: isMachineChange
+                } 
+            }));
+            
+        } catch (err) {
+            console.error('Errore durante il riordino:', err);
+            alert(`Errore durante il salvataggio: ${err.message}`);
+        }
+    }
+
+    // ==================== END DRAG & DROP ====================
 
     // Funzione per mostrare lo storico programmazione in un dialog
     async function showStoricoProgrammazione(commessaId, codiceCommessa) {
@@ -336,6 +539,12 @@ window.programmaMacchineGrid = (function() {
             rowHeight: 28,
             animateRows: true,
             rowSelection: 'single',
+            rowDragManaged: false, // Usiamo gestione manuale per calcolare posizione
+            rowDragEntireRow: false, // Drag solo dalla colonna handle
+            suppressMoveWhenRowDragging: false,
+            onRowDragMove: onRowDragMove,
+            onRowDragEnd: onRowDragEnd,
+            onRowDragLeave: onRowDragLeave,
             onGridReady: (params) => {
                 gridApi = params.api;
                 console.log('onGridReady: gridApi set');

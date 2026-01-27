@@ -188,8 +188,69 @@ public class PlcDataService
         }
     }
 
+    /// <summary>
+    /// Avvia il servizio PlcSync
+    /// </summary>
+    public async Task<ServiceControlResult> StartPlcSyncServiceAsync()
+    {
+        try
+        {
+            var response = await _http.PostAsync("api/Plc/service/start", null);
+            var result = await response.Content.ReadFromJsonAsync<ServiceControlResult>();
+            return result ?? new ServiceControlResult { Success = false, Message = "Risposta vuota" };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore avvio servizio PlcSync");
+            return new ServiceControlResult { Success = false, Message = ex.Message };
+        }
+    }
+
+    /// <summary>
+    /// Ferma il servizio PlcSync
+    /// </summary>
+    public async Task<ServiceControlResult> StopPlcSyncServiceAsync()
+    {
+        try
+        {
+            var response = await _http.PostAsync("api/Plc/service/stop", null);
+            var result = await response.Content.ReadFromJsonAsync<ServiceControlResult>();
+            return result ?? new ServiceControlResult { Success = false, Message = "Risposta vuota" };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore arresto servizio PlcSync");
+            return new ServiceControlResult { Success = false, Message = ex.Message };
+        }
+    }
+
+    /// <summary>
+    /// Verifica lo stato del servizio PlcSync
+    /// </summary>
+    public async Task<ServiceControlResult> GetPlcSyncServiceStatusAsync()
+    {
+        try
+        {
+            var result = await _http.GetFromJsonAsync<ServiceControlResult>("api/Plc/service/status");
+            return result ?? new ServiceControlResult { Success = false, Message = "Risposta vuota" };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore verifica stato servizio PlcSync");
+            return new ServiceControlResult { Success = false, Message = ex.Message };
+        }
+    }
+
     public void Dispose()
     {
         _timer?.Dispose();
     }
+}
+
+public class ServiceControlResult
+{
+    public bool Success { get; set; }
+    public string Message { get; set; } = "";
+    public bool IsRunning { get; set; }
+    public int? ProcessId { get; set; }
 }
