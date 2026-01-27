@@ -53,12 +53,20 @@ $Targets = @{
     }
 }
 
-# File da NON copiare (sicurezza)
+# File e cartelle da NON copiare (sicurezza + ottimizzazione dimensioni)
 $ExcludeFiles = @(
     "appsettings.Secrets.json",
     "appsettings.Secrets.encrypted",
     "appsettings.Database.json",
-    "*.log"
+    "appsettings.Development.json",
+    "*.log",
+    "*.pdb"
+)
+
+# Cartelle da NON copiare (non necessarie per produzione)
+$ExcludeFolders = @(
+    "SyncBackups",          # Backup di sync locali - 20+ MB
+    "de", "es", "fr", "ja", "ko", "pt-BR", "ru", "zh-Hans", "zh-Hant"  # Localizzazioni non usate
 )
 
 function Write-Step {
@@ -84,6 +92,8 @@ function Deploy-Target {
             '--self-contained', 'true',
             '/p:PublishSingleFile=true',
             '/p:IncludeNativeLibrariesForSelfExtract=true',
+            '/p:DebugType=none',
+            '/p:DebugSymbols=false',
             '--output', $publishPath
         )
         
@@ -119,9 +129,34 @@ function Deploy-Target {
         }
     }
     
-    # 4. Copia file (ESCLUDENDO file sensibili)
+    # 3.5 Pulizia file vecchi (mantieni solo config)
+    Write-Host "Cleaning old files (preserving configs)..." -ForegroundColor Yellow
+    $preserveFiles = @("appsettings.Secrets.json", "appsettings.Database.json", "appsettings.Production.json", "web.config", "restart-mesmanager.ps1")
+    
+    if (-not $WhatIf -and (Test-Path $config.RemotePath)) {
+        # Rimuovi DLL e PDB vecchi
+        Get-ChildItem -Path $config.RemotePath -Filter "*.dll" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+        Get-ChildItem -Path $config.RemotePath -Filter "*.pdb" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+        
+        # Rimuovi cartelle di localizzazione non usate
+        foreach ($folder in $ExcludeFolders) {
+            $folderPath = Join-Path $config.RemotePath $folder
+            if (Test-Path $folderPath) {
+                Remove-Item $folderPath -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+        
+        # Rimuovi SyncBackups se esiste in wwwroot
+        $syncBackups = Join-Path $config.RemotePath "wwwroot\SyncBackups"
+        if (Test-Path $syncBackups) {
+            Remove-Item $syncBackups -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+    
+    # 4. Copia file (ESCLUDENDO file sensibili e non necessari)
     Write-Host "Copying files to $($config.RemotePath)..." -ForegroundColor Yellow
-    Write-Host "  (Excluding: $($ExcludeFiles -join ', '))" -ForegroundColor Gray
+    Write-Host "  (Excluding files: $($ExcludeFiles -join ', '))" -ForegroundColor Gray
+    Write-Host "  (Excluding folders: $($ExcludeFolders -join ', '))" -ForegroundColor Gray
     
     if ($WhatIf) {
         Write-Host "[WhatIf] Copy-Item $publishPath\* -> $($config.RemotePath)" -ForegroundColor Gray
@@ -131,16 +166,30 @@ function Deploy-Target {
             New-Item -ItemType Directory -Path $config.RemotePath -Force | Out-Null
         }
         
-        # Copia file escludendo quelli sensibili
+        # Copia file escludendo quelli sensibili e cartelle non necessarie
         Get-ChildItem -Path $publishPath -Recurse | Where-Object {
             $file = $_
             $exclude = $false
+            
+            # Escludi file per pattern
             foreach ($pattern in $ExcludeFiles) {
                 if ($file.Name -like $pattern) {
                     $exclude = $true
                     break
                 }
             }
+            
+            # Escludi cartelle specifiche (e tutto il loro contenuto)
+            if (-not $exclude) {
+                $relativePath = $file.FullName.Substring($publishPath.Length).TrimStart('\', '/')
+                foreach ($folder in $ExcludeFolders) {
+                    if ($relativePath -like "$folder*" -or $relativePath -like "*\$folder*" -or $relativePath -like "*/$folder*") {
+                        $exclude = $true
+                        break
+                    }
+                }
+            }
+            
             -not $exclude
         } | ForEach-Object {
             $relativePath = $_.FullName.Substring($publishPath.Length)
