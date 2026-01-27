@@ -24,16 +24,17 @@ public class PlcServiceStatusDto
     public int MachinesConnected { get; set; }
     
     /// <summary>
-    /// True se LastHeartbeat è negli ultimi 30 secondi
+    /// True se LastHeartbeat è negli ultimi 30 secondi.
+    /// Nota: LastHeartbeat è salvato in UTC, quindi confrontiamo con UtcNow.
     /// </summary>
     public bool IsAlive => LastHeartbeat.HasValue && 
-                           (DateTime.Now - LastHeartbeat.Value).TotalSeconds < 30;
+                           (DateTime.UtcNow - LastHeartbeat.Value).TotalSeconds < 30;
     
     /// <summary>
-    /// Tempo dall'ultimo heartbeat
+    /// Tempo dall'ultimo heartbeat (confronto UTC)
     /// </summary>
     public TimeSpan? TimeSinceHeartbeat => LastHeartbeat.HasValue 
-        ? DateTime.Now - LastHeartbeat.Value 
+        ? DateTime.UtcNow - LastHeartbeat.Value 
         : null;
 }
 

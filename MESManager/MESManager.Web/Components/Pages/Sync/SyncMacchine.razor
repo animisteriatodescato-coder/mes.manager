@@ -83,7 +83,7 @@
                         {
                             <MudStack Row="true" AlignItems="AlignItems.Center">
                                 <MudIcon Icon="@Icons.Material.Filled.Error" />
-                                <span><strong>OFFLINE</strong> - Ultimo heartbeat: @(_serviceStatus.LastHeartbeat?.ToString("HH:mm:ss") ?? "Mai")</span>
+                                <span><strong>OFFLINE</strong> - Ultimo heartbeat: @(_serviceStatus.LastHeartbeat?.ToLocalTime().ToString("HH:mm:ss") ?? "Mai")</span>
                             </MudStack>
                         }
                     </MudAlert>

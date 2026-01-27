@@ -105,10 +105,13 @@ public class PlcSyncWorker : BackgroundService
         int settingsReloadInterval = 10; // Ricarica impostazioni ogni 10 cicli
 
         // Loop principale
-        while (!stoppingToken.IsCancellationRequested)
+        while (!stoppingToken.IsCancellationRequested && !_isShuttingDown)
         {
             try
             {
+                // Aggiorna heartbeat all'inizio del ciclo (anche se le connessioni falliscono)
+                await _statusWriter.UpdateHeartbeatAsync(enabledCount, 0, incrementSyncCount: false, stoppingToken);
+                
                 var connectedMachines = 0;
                 
                 foreach (var machine in machines.Where(m => m.Enabled))
@@ -141,7 +144,7 @@ public class PlcSyncWorker : BackgroundService
 
                 syncCycleCount++;
 
-                // Aggiorna heartbeat e statistiche
+                // Aggiorna heartbeat finale con conteggio connessioni e incrementa sync count
                 await _statusWriter.UpdateHeartbeatAsync(enabledCount, connectedMachines, incrementSyncCount: true, stoppingToken);
 
                 // Ogni N cicli, ricarica le impostazioni dal database per hot-reload
