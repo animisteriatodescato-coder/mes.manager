@@ -121,6 +121,9 @@ builder.Services.AddScoped<IPlcStatusService, PlcStatusService>();
 builder.Services.AddSingleton<IPageToolbarService, PageToolbarService>();
 builder.Services.AddScoped<AppBarContentService>();
 
+// Servizio Singleton per gestione stato real-time PLC (avviato automaticamente)
+builder.Services.AddSingleton<RealtimeStateService>();
+
 // Infrastructure e DbContext
 builder.Services.AddInfrastructure(connectionString);
 
@@ -182,11 +185,15 @@ app.UseAuthorization();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// SignalR Hub
+// SignalR Hub per dati PLC real-time
 app.MapHub<RealtimeHub>("/hubs/realtime");
 
 // API Controllers
 app.MapControllers();
+
+// Avvia il servizio di polling PLC real-time
+var realtimeService = app.Services.GetRequiredService<RealtimeStateService>();
+realtimeService.Start();
 
 app.Run();
 

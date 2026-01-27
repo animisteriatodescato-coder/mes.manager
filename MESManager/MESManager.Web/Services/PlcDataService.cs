@@ -152,6 +152,42 @@ public class PlcDataService
         }
     }
 
+    /// <summary>
+    /// Sincronizza una singola macchina PLC.
+    /// </summary>
+    public async Task<PlcSyncResultDto> SyncMachineAsync(Guid macchinaId)
+    {
+        try
+        {
+            _logger.LogInformation("Avvio sincronizzazione macchina {MacchinaId}", macchinaId);
+            var response = await _http.PostAsync($"api/Plc/sync/{macchinaId}", null);
+            response.EnsureSuccessStatusCode();
+            
+            var result = await response.Content.ReadFromJsonAsync<PlcSyncResultDto>();
+            
+            // Refresh automatico dopo sync
+            await Task.Delay(300);
+            await LoadRealtimeDataAsync();
+            
+            return result ?? new PlcSyncResultDto 
+            { 
+                MacchinaId = macchinaId, 
+                Successo = false, 
+                MessaggioErrore = "Risposta vuota dal server" 
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore sincronizzazione macchina {MacchinaId}", macchinaId);
+            return new PlcSyncResultDto 
+            { 
+                MacchinaId = macchinaId, 
+                Successo = false, 
+                MessaggioErrore = ex.Message 
+            };
+        }
+    }
+
     public void Dispose()
     {
         _timer?.Dispose();
