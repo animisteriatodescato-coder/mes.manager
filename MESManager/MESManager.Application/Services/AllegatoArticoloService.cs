@@ -46,7 +46,7 @@ public class AllegatoArticoloService : IAllegatoArticoloService
         
         // Connection string per Gantt - usa SQL Authentication
         _ganttConnectionString = configuration.GetConnectionString("GanttConnection") 
-            ?? "Server=192.168.1.230\\SQLEXPRESS;Database=Gantt;User Id=sa;Password=password.123;TrustServerCertificate=True;";
+            ?? "Server=192.168.1.230\\SQLEXPRESS;Database=Gantt;User Id=fab;Password=fabpwd;TrustServerCertificate=True;";
         
         _logger.LogInformation("AllegatoArticoloService initialized. BasePath={Path}", _allegatiBasePath);
     }

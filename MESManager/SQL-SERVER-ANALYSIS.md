@@ -59,7 +59,7 @@ Modificati i seguenti file per usare il server Gantt remoto invece di localhost:
 var connectionString = "Server=localhost\\SQLEXPRESS;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;";
 
 // DOPO:
-var connectionString = "Server=192.168.1.230\\SQLEXPRESS;Database=MESManager;User Id=sa;Password=password.123;TrustServerCertificate=True;Connection Timeout=30;";
+var connectionString = "Server=192.168.1.230\\SQLEXPRESS01;Database=MESManager_Prod;User Id=fab;Password=fabpwd;TrustServerCertificate=True;Connection Timeout=30;";
 ```
 
 #### 2. MESManager.Infrastructure\MesManagerDbContextFactory.cs
@@ -68,7 +68,7 @@ var connectionString = "Server=192.168.1.230\\SQLEXPRESS;Database=MESManager;Use
 optionsBuilder.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=MESManager;Trusted_Connection=True;TrustServerCertificate=True;",
 
 // DOPO:
-optionsBuilder.UseSqlServer("Server=192.168.1.230\\SQLEXPRESS;Database=MESManager;User Id=sa;Password=password.123;TrustServerCertificate=True;",
+optionsBuilder.UseSqlServer("Server=192.168.1.230\\SQLEXPRESS01;Database=MESManager_Prod;User Id=fab;Password=fabpwd;TrustServerCertificate=True;",
 ```
 
 ### Database Creato

@@ -27,6 +27,7 @@ builder.Services.AddDbContextFactory<MesManagerDbContext>(options =>
 builder.Services.AddSingleton<PlcConnectionService>();
 builder.Services.AddSingleton<PlcReaderService>();
 builder.Services.AddSingleton<PlcSyncService>();
+builder.Services.AddSingleton<PlcStatusWriterService>();
 
 // Worker
 builder.Services.AddHostedService<PlcSyncWorker>();

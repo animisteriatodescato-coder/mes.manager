@@ -54,7 +54,7 @@ catch {
 
 # Test 3: SQL Server remoto (Gantt)
 Write-Host "`n3. Testing 192.168.1.230\SQLEXPRESS (Gantt)..." -ForegroundColor Yellow
-$ganttConnString = "Server=192.168.1.230\SQLEXPRESS;Database=Gantt;User Id=sa;Password=password.123;TrustServerCertificate=True;"
+$ganttConnString = "Server=192.168.1.230\SQLEXPRESS;Database=Gantt;User Id=fab;Password=fabpwd;TrustServerCertificate=True;"
 
 try {
     $conn = New-Object System.Data.SqlClient.SqlConnection($ganttConnString)

@@ -7,7 +7,7 @@ try {
     
     # Connessione come sa
     Write-Host "1. Connessione al server 192.168.1.230\SQLEXPRESS come sa..." -ForegroundColor Yellow
-    $connString = "Server=192.168.1.230\SQLEXPRESS;Database=master;User Id=sa;Password=password.123;TrustServerCertificate=True;"
+    $connString = "Server=192.168.1.230\SQLEXPRESS;Database=master;Trusted_Connection=True;TrustServerCertificate=True;"
     $conn = New-Object System.Data.SqlClient.SqlConnection($connString)
     $conn.Open()
     Write-Host "   OK Connesso al server" -ForegroundColor Green

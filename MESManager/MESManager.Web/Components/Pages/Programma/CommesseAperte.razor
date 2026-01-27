@@ -316,14 +316,16 @@
         }
     }
 
-    /* Stili Etichetta Moderna - Bianco e Nero - Ottimizzata A4 */
+    /* Stili Etichetta Moderna - Bianco e Nero - Ottimizzata A4 (ridotta del 33%) */
     .label-preview-wrapper {
         display: flex;
         flex-direction: column;
         gap: 15px;
-        padding: 15px;
+        padding: 15px 50px;
         background: #f5f5f5;
         border-radius: 8px;
+        max-width: 66%;
+        margin: 0 auto;
     }
 
     .label-card {
@@ -933,8 +935,10 @@
         var c = selectedCommessaForLabel!;
         var oggi = DateTime.Now.ToString("dd/MM/yyyy");
         var hasFoto = !string.IsNullOrEmpty(labelFotoUrl);
+        // Costruisci URL assoluto per la foto (necessario per la finestra di stampa)
+        var absoluteFotoUrl = hasFoto ? $"{Nav.BaseUri.TrimEnd('/')}{labelFotoUrl}" : "";
         var fotoHtml = hasFoto 
-            ? $"<div class='photo-section'><img src='{labelFotoUrl}' alt='Foto' /></div>" 
+            ? $"<div class='photo-section'><img src='{absoluteFotoUrl}' alt='Foto' /></div>" 
             : "";
         var totaleLotto = c.QuantitaRichiesta;
         var noPhotoClass = hasFoto ? "" : " no-photo";
@@ -948,7 +952,7 @@
     <title>Etichetta - {c.CodiceAnime}</title>
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        @@page {{ size: A4 portrait; margin: 0.5mm; }}
+        @@page {{ size: A4 portrait; margin: 5mm 35mm; }}
         html, body {{ height: 100%; }}
         body {{ font-family: 'Arial Black', Arial, sans-serif; }}
         .page {{
@@ -1159,7 +1163,7 @@
     <title>Etichetta Vuota</title>
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        @@page {{ size: A4 portrait; margin: 0.5mm; }}
+        @@page {{ size: A4 portrait; margin: 5mm 35mm; }}
         html, body {{ height: 100%; }}
         body {{ font-family: 'Arial Black', Arial, sans-serif; }}
         .page {{

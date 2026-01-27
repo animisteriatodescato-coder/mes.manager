@@ -32,6 +32,8 @@ public class MesManagerDbContext : DbContext
     public DbSet<StoricoProgrammazione> StoricoProgrammazione => Set<StoricoProgrammazione>();
     public DbSet<UtenteApp> UtentiApp => Set<UtenteApp>();
     public DbSet<PreferenzaUtente> PreferenzeUtente => Set<PreferenzaUtente>();
+    public DbSet<PlcServiceStatus> PlcServiceStatus => Set<PlcServiceStatus>();
+    public DbSet<PlcSyncLog> PlcSyncLogs => Set<PlcSyncLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -149,5 +151,25 @@ public class MesManagerDbContext : DbContext
         modelBuilder.Entity<PreferenzaUtente>()
             .HasIndex(p => new { p.UtenteAppId, p.Chiave })
             .IsUnique();
+
+        // PlcServiceStatus - riga unica
+        modelBuilder.Entity<PlcServiceStatus>()
+            .HasKey(p => p.Id);
+        
+        // PlcSyncLog - indici per query veloci
+        modelBuilder.Entity<PlcSyncLog>()
+            .HasIndex(l => l.Timestamp);
+        
+        modelBuilder.Entity<PlcSyncLog>()
+            .HasIndex(l => l.MacchinaId);
+        
+        modelBuilder.Entity<PlcSyncLog>()
+            .HasIndex(l => l.Level);
+        
+        modelBuilder.Entity<PlcSyncLog>()
+            .HasOne(l => l.Macchina)
+            .WithMany()
+            .HasForeignKey(l => l.MacchinaId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

@@ -13,9 +13,9 @@ if (-not (Test-Path $dir)) {
 
 $secrets = @{
     DatabaseConfiguration = @{
-        MESManagerDb = "Server=192.168.1.72;Database=MESManager;User Id=FAB;Password=password.123;TrustServerCertificate=True;"
-        MagoDb       = "Server=192.168.1.230;Database=Mago;User Id=sa;Password=password.123;TrustServerCertificate=True;"
-        GanttDb      = "Server=192.168.1.72;Database=Gantt2019;User Id=sa;Password=Gantt2019;TrustServerCertificate=True;"
+        MESManagerDb = "Server=192.168.1.230\\SQLEXPRESS01;Database=MESManager_Prod;User Id=fab;Password=fabpwd;TrustServerCertificate=True;"
+        MagoDb       = "Data Source=192.168.1.72\\SQLEXPRESS;Initial Catalog=TODESCATO_NET;User Id=Gantt;Password=Gantt2019;TrustServerCertificate=True;"
+        GanttDb      = "Server=192.168.1.230\\SQLEXPRESS;Database=Gantt;User Id=fab;Password=fabpwd;TrustServerCertificate=True;"
     }
 }
 

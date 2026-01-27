@@ -41,7 +41,7 @@ Esempi:
 
 #### Server Remoto (con autenticazione SQL)
 ```json
-"MESManagerDb": "Server=192.168.1.230\\SQLEXPRESS;Database=MESManager;User Id=sa;Password=password.123;TrustServerCertificate=True;"
+"MESManagerDb": "Server=192.168.1.230\\SQLEXPRESS01;Database=MESManager_Prod;User Id=fab;Password=fabpwd;TrustServerCertificate=True;"
 ```
 
 #### Server Remoto (con autenticazione Windows)
@@ -108,7 +108,7 @@ Quando passi in produzione, **copia** il file `appsettings.Database.json` sul se
   "ConnectionStrings": {
     "MESManagerDb": "Server=PROD_SERVER\\SQLEXPRESS;Database=MESManager;User Id=app_user;Password=secure_password;TrustServerCertificate=True;",
     "MagoDb": "Data Source=192.168.1.72\\SQLEXPRESS;Initial Catalog=TODESCATO_NET;User Id=Gantt;Password=Gantt2019;TrustServerCertificate=True;Connection Timeout=30;",
-    "GanttDb": "Server=192.168.1.230\\SQLEXPRESS;Database=Gantt;User Id=sa;Password=password.123;TrustServerCertificate=True;"
+    "GanttDb": "Server=192.168.1.230\\SQLEXPRESS;Database=Gantt;User Id=fab;Password=fabpwd;TrustServerCertificate=True;"
   }
 }
 ```

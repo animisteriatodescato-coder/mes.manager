@@ -86,11 +86,9 @@ namespace MESManager.E2E
             var ______ = sample.QuantitaPiano;
             var _______ = sample.NumeroPiani;
             var ________ = sample.Figure;
-            var _________ = sample.Piastra;
-            var __________ = sample.Maschere;
-            var ___________ = sample.Incollata;
-            var ____________ = sample.Assemblata;
-            var _____________ = sample.ArmataL;
+            var _________ = sample.Maschere;
+            var __________ = sample.Assemblata;
+            var ___________ = sample.ArmataL;
             
             _output.WriteLine("✓ All critical fields are present in DTO");
         }
