@@ -96,9 +96,9 @@
         {
             await JSRuntime.InvokeVoidAsync("plcStoricoGrid.setQuickFilter", value);
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error filtering grid: {ex.Message}");
+            // Error filtering grid
         }
     }
 
@@ -111,9 +111,9 @@
                 var savedColumnState = await PreferencesService.GetAsync<string>("plc-storico-grid-columns");
                 await JSRuntime.InvokeVoidAsync("plcStoricoGrid.init", "plcStoricoGrid", _data, savedColumnState);
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"Error initializing grid: {ex.Message}");
+                // Error initializing grid
             }
         }
     }
@@ -126,9 +126,9 @@
             _data = ApplyFilter(_allData);
             await RefreshGrid();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error loading data: {ex.Message}");
+            // Error loading data
         }
     }
 
@@ -154,9 +154,9 @@
         {
             await JSRuntime.InvokeVoidAsync("plcStoricoGrid.updateData", _data);
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error refreshing grid: {ex.Message}");
+            // Error refreshing grid
         }
     }
 

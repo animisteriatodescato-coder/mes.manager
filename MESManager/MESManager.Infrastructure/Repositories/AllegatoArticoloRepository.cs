@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MESManager.Application.Interfaces;
+using MESManager.Domain.Constants;
 using MESManager.Domain.Entities;
 using MESManager.Infrastructure.Data;
 
@@ -13,12 +14,6 @@ public class AllegatoArticoloRepository : IAllegatoArticoloRepository
 {
     private readonly MesManagerDbContext _context;
     private readonly ILogger<AllegatoArticoloRepository> _logger;
-
-    // Estensioni considerate foto
-    private static readonly HashSet<string> FotoExtensions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".tif"
-    };
 
     public AllegatoArticoloRepository(MesManagerDbContext context, ILogger<AllegatoArticoloRepository> logger)
     {

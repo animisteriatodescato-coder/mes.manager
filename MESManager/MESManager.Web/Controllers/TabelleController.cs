@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MESManager.Domain.Constants;
 
 namespace MESManager.Web.Controllers
 {
@@ -12,83 +13,36 @@ namespace MESManager.Web.Controllers
         /// Restituisce la lista delle opzioni Colla
         /// </summary>
         [HttpGet("colla")]
-        public ActionResult<List<TabellaItemDto>> GetColla()
+        public ActionResult<List<LookupItem>> GetColla()
         {
-            var items = new List<TabellaItemDto>
-            {
-                new() { Codice = "-1", Descrizione = "BIANCA" },
-                new() { Codice = "-2", Descrizione = "A CALDO" },
-                new() { Codice = "-3", Descrizione = "ROSSA S.G" }
-            };
-            return Ok(items);
+            return Ok(LookupTables.ToList(LookupTables.Colla));
         }
 
         /// <summary>
         /// Restituisce la lista delle opzioni Vernice
         /// </summary>
         [HttpGet("vernice")]
-        public ActionResult<List<TabellaItemDto>> GetVernice()
+        public ActionResult<List<LookupItem>> GetVernice()
         {
-            var items = new List<TabellaItemDto>
-            {
-                new() { Codice = "-1", Descrizione = "" },
-                new() { Codice = "-2", Descrizione = "YELLOW COVER" },
-                new() { Codice = "-3", Descrizione = "CASTING COVER ZR" },
-                new() { Codice = "-4", Descrizione = "CASTING COVER RK" },
-                new() { Codice = "-5", Descrizione = "CASTINGCOVER 2001" },
-                new() { Codice = "-6", Descrizione = "ARCOPAL 9030" },
-                new() { Codice = "-7", Descrizione = "HYDRO COVER 22 Z" },
-                new() { Codice = "-8", Descrizione = "FGR 55" }
-            };
-            return Ok(items);
+            return Ok(LookupTables.ToList(LookupTables.Vernice));
         }
 
         /// <summary>
         /// Restituisce la lista delle opzioni Sabbia
         /// </summary>
         [HttpGet("sabbia")]
-        public ActionResult<List<TabellaItemDto>> GetSabbia()
+        public ActionResult<List<LookupItem>> GetSabbia()
         {
-            var items = new List<TabellaItemDto>
-            {
-                new() { Codice = "", Descrizione = "(nessuna)" },
-                new() { Codice = "310/60", Descrizione = "310/60" },
-                new() { Codice = "33BD600X", Descrizione = "33BD600X" },
-                new() { Codice = "360/10", Descrizione = "360/10" },
-                new() { Codice = "44/10", Descrizione = "SCARANELLO" },
-                new() { Codice = "C1/30D", Descrizione = "C1/30D" },
-                new() { Codice = "CP35B", Descrizione = "CP35B" },
-                new() { Codice = "NB30B", Descrizione = "NB30B" },
-                new() { Codice = "OLIVINA", Descrizione = "OLIVINA" },
-                new() { Codice = "UP30B", Descrizione = "UP30B" }
-            };
-            return Ok(items);
+            return Ok(LookupTables.ToList(LookupTables.Sabbia));
         }
 
         /// <summary>
         /// Restituisce la lista delle opzioni Imballo
         /// </summary>
         [HttpGet("imballo")]
-        public ActionResult<List<TabellaItemDto>> GetImballo()
+        public ActionResult<List<LookupItem>> GetImballo()
         {
-            var items = new List<TabellaItemDto>
-            {
-                new() { Codice = "-1", Descrizione = "CASSA GRANDE" },
-                new() { Codice = "-2", Descrizione = "CASSA PICCOLA" },
-                new() { Codice = "-3", Descrizione = "CASSA LUNGA" },
-                new() { Codice = "-4", Descrizione = "PIANALE EURO" },
-                new() { Codice = "-5", Descrizione = "PIANALE QUADRATO" },
-                new() { Codice = "-6", Descrizione = "CARRELLI A PIANI" },
-                new() { Codice = "-7", Descrizione = "CARRELLI GRANDI" },
-                new() { Codice = "-8", Descrizione = "SCATOLE" }
-            };
-            return Ok(items);
+            return Ok(LookupTables.ToList(LookupTables.Imballo));
         }
-    }
-
-    public class TabellaItemDto
-    {
-        public string Codice { get; set; } = string.Empty;
-        public string Descrizione { get; set; } = string.Empty;
     }
 }

@@ -371,7 +371,7 @@
             imballoOptions = await Http.GetFromJsonAsync<List<TabellaItem>>("/api/Tabelle/imballo") ?? new();
             macchineDisponibili = await MacchinaService.GetListaAsync();
         }
-        catch (Exception ex) { Console.WriteLine($"Error loading options: {ex.Message}"); }
+        catch { /* Error loading options */ }
     }
     
     private async Task CaricaAllegatiAsync()
@@ -385,9 +385,9 @@
                 allegatiResponse = await Http.GetFromJsonAsync<AllegatiArticoloResponse>($"/api/allegati-articoli/articolo/{Anime.CodiceArticolo}") ?? new();
             }
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error loading allegati: {ex.Message}");
+            // Error loading allegati
             allegatiResponse = new AllegatiArticoloResponse();
         }
         finally

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using MESManager.Application.Configuration;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
+using MESManager.Domain.Constants;
 
 namespace MESManager.Application.Services
 {
@@ -12,36 +13,14 @@ namespace MESManager.Application.Services
     {
         private readonly string _ganttConnectionString;
         private readonly ILogger<AllegatiAnimaService> _logger;
-        
-        // Path base per salvare gli allegati - usa cartella locale accessibile
-        // In produzione questo sarà configurato via appsettings
-        private static readonly string AllegatiBasePath = GetAllegatiBasePath();
-        
-        private static string GetAllegatiBasePath()
-        {
-            // Prova prima il path di rete, altrimenti usa cartella locale
-            var networkPath = @"P:\Documenti\AA SCHEDE PRODUZIONE\foto cel";
-            if (Directory.Exists(Path.GetDirectoryName(networkPath) ?? networkPath))
-            {
-                return networkPath;
-            }
-            
-            // Fallback a cartella locale
-            var localPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "uploads", "allegati");
-            Directory.CreateDirectory(localPath);
-            return localPath;
-        }
-        
-        private static readonly HashSet<string> FotoExtensions = new(StringComparer.OrdinalIgnoreCase)
-        {
-            ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".tif"
-        };
+        private readonly string _allegatiBasePath;
 
         public AllegatiAnimaService(ILogger<AllegatiAnimaService> logger, IOptions<DatabaseConfiguration> dbConfig)
         {
             _logger = logger;
             _ganttConnectionString = dbConfig.Value.GanttDb;
-            _logger.LogInformation("AllegatiAnimaService initialized. AllegatiBasePath={Path}", AllegatiBasePath);
+            _allegatiBasePath = FileConstants.GetAllegatiBasePath();
+            _logger.LogInformation("AllegatiAnimaService initialized. AllegatiBasePath={Path}", _allegatiBasePath);
         }
 
         public async Task<AllegatiAnimaResponse> GetAllegatiByIdArchivioAsync(int idArchivio)
@@ -91,7 +70,7 @@ namespace MESManager.Application.Services
                     var pathCompleto = reader.GetString(3);
                     var nomeFile = Path.GetFileName(pathCompleto);
                     var estensione = Path.GetExtension(nomeFile).ToLowerInvariant();
-                    var isFoto = FotoExtensions.Contains(estensione);
+                    var isFoto = FileConstants.FotoExtensions.Contains(estensione);
 
                     var allegato = new AllegatoAnimaDto
                     {
@@ -138,7 +117,7 @@ namespace MESManager.Application.Services
                 // Genera nome file univoco
                 var estensione = Path.GetExtension(nomeFile);
                 var nomeFileUnivoco = $"{codiceArticolo}_{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid():N}{estensione}";
-                var pathCompleto = Path.Combine(AllegatiBasePath, nomeFileUnivoco);
+                var pathCompleto = Path.Combine(_allegatiBasePath, nomeFileUnivoco);
 
                 // Salva il file su disco
                 var directory = Path.GetDirectoryName(pathCompleto);
@@ -329,7 +308,7 @@ namespace MESManager.Application.Services
                         Descrizione = reader.IsDBNull(4) ? null : reader.GetString(4),
                         Priorita = reader.IsDBNull(5) ? 0 : reader.GetInt32(5),
                         Estensione = estensione,
-                        IsFoto = FotoExtensions.Contains(estensione)
+                        IsFoto = FileConstants.FotoExtensions.Contains(estensione)
                     };
                 }
 

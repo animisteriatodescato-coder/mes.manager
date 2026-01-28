@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MESManager.Application.DTOs;
 using MESManager.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,17 +27,14 @@ public class MacchineController : ControllerBase
             {
                 Id = m.Id,
                 Codice = m.Codice,
-                Nome = m.Nome
+                Nome = m.Nome,
+                Stato = (int)m.Stato,
+                AttivaInGantt = m.AttivaInGantt,
+                OrdineVisualizazione = m.OrdineVisualizazione,
+                IndirizzoPLC = m.IndirizzoPLC
             })
             .ToListAsync();
 
         return Ok(macchine);
     }
-}
-
-public class MacchinaDto
-{
-    public Guid Id { get; set; }
-    public string Codice { get; set; } = string.Empty;
-    public string Nome { get; set; } = string.Empty;
 }

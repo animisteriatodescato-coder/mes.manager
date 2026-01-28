@@ -1,2 +1,0 @@
-Messaggio 208, livello 16, stato 1, server DELL-PC\SQLEXPRESS, riga 5
-Il nome di oggetto 'MESManager.dbo.Commesse' non è valido.

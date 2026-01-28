@@ -269,9 +269,9 @@
         {
             await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.setQuickFilter", value);
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error filtering grid: {ex.Message}");
+            // Error filtering grid
         }
     }
 
@@ -292,7 +292,6 @@
     {
         if (_isLoadingData && !force)
         {
-            Console.WriteLine("LoadData already in progress, skipping...");
             return;
         }
         
@@ -312,7 +311,6 @@
                 !string.IsNullOrEmpty(c.NumeroMacchina) &&
                 c.StatoProgramma != "Archiviata"
             ).ToList();
-            Console.WriteLine($"ProgrammaMacchine: Loaded {_allCommesse.Count} total, filtered to {_commesse.Count} with machine (excluding archived)");
             
             totalRows = _commesse.Count;
             filteredRows = _commesse.Count;
@@ -342,16 +340,11 @@
             if (_isDataLoaded && !_isGridInitialized)
             {
                 _isGridInitialized = true;
-                Console.WriteLine($"ProgrammaMacchine: Initializing grid with {_commesse.Count} rows");
                 await Task.Delay(100);
                 await InitializeGrid();
                 
                 jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/stats-listener-programma.js");
                 await jsModule.InvokeVoidAsync("subscribeToStatsChanges", DotNetObjectReference.Create(this));
-            }
-            else if (!_isDataLoaded)
-            {
-                Console.WriteLine("ProgrammaMacchine: Timeout waiting for data");
             }
         }
     }
@@ -367,9 +360,9 @@
             selectedRows = stats.Selected;
             StateHasChanged();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error updating stats: {ex.Message}");
+            // Error updating stats
         }
     }
 
@@ -382,7 +375,6 @@
     [JSInvokable]
     public async Task OnMachineSelectionChanged(string commessaId, string? numeroMacchina)
     {
-        Console.WriteLine($"Machine selection changed: {commessaId} -> {numeroMacchina}");
         // Ricarica i dati per riflettere le modifiche
         await RefreshData();
     }
@@ -394,7 +386,7 @@
             var exists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.programmaMacchineGrid !== 'undefined'");
             if (!exists)
             {
-                Console.WriteLine("ERROR: window.programmaMacchineGrid is not defined!");
+                // programmaMacchineGrid is not defined
                 return;
             }
 
@@ -408,9 +400,9 @@
             await JSRuntime.InvokeVoidAsync("eval", $"programmaMacchineGrid.init('programmaMacchineGrid', JSON.parse({System.Text.Json.JsonSerializer.Serialize(jsonData)}), {System.Text.Json.JsonSerializer.Serialize(settings.ColumnStateJson)})");
             await ApplyUiSettings();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error initializing grid: {ex.Message}");
+            // Error initializing grid
         }
     }
 
@@ -423,9 +415,9 @@
             await LoadPrintColumnSettings();
             showColumnDialog = true;
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error toggling column panel: {ex.Message}");
+            // Error toggling column panel
         }
     }
 
@@ -445,15 +437,14 @@
             
             await SaveGridState();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error changing column visibility: {ex.Message}");
+            // Error changing column visibility
         }
     }
 
     private async Task RefreshData()
     {
-        Console.WriteLine("RefreshData called");
         await LoadData(force: true);
         
         try
@@ -464,12 +455,11 @@
                 WriteIndented = false
             };
             var jsonData = JsonSerializer.Serialize(_commesse, jsonOptions);
-            Console.WriteLine($"RefreshData: updating grid with {_commesse.Count} rows");
             await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.updateData", _commesse);
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error updating grid: {ex.Message}");
+            // Error updating grid
         }
         
         StateHasChanged();
@@ -479,16 +469,14 @@
     {
         try
         {
-            Console.WriteLine("FixGridState called");
             // Salva lo stato attuale della griglia come stato "fixed"
             var gridState = await JSRuntime.InvokeAsync<string>("programmaMacchineGrid.getState");
             await PreferencesService.SetAsync("programma-macchine-grid-fixed-state", gridState);
             await PreferencesService.SetAsync("programma-macchine-grid-fixed-settings", JsonSerializer.Serialize(settings));
-            Console.WriteLine("Grid state fixed successfully");
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error fixing grid state: {ex.Message}");
+            // Error fixing grid state
         }
     }
 
@@ -496,7 +484,6 @@
     {
         try
         {
-            Console.WriteLine("ResetToFixedState called");
             // Ripristina lo stato salvato con Fix
             var fixedState = await PreferencesService.GetAsync<string>("programma-macchine-grid-fixed-state");
             var fixedSettings = await PreferencesService.GetAsync<string>("programma-macchine-grid-fixed-settings");
@@ -522,11 +509,10 @@
             
             await ApplyUiSettings();
             StateHasChanged();
-            Console.WriteLine("Grid reset to fixed state successfully");
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error resetting to fixed state: {ex.Message}");
+            // Error resetting to fixed state
         }
     }
 
@@ -548,9 +534,9 @@
             // Usa un iframe nascosto per stampare, così non interferisce con la pagina principale
             await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.printViaIframe", printColumns);
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error printing: {ex.Message}");
+            // Error printing
         }
     }
 

@@ -295,9 +295,9 @@ public partial class MainLayout : IDisposable
             // Pagina disposta durante il render, ignora silenziosamente
             return;
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"[MainLayout] Error rendering PlcRealtime toolbar: {ex.Message}");
+            // Error rendering PlcRealtime toolbar - silently ignore
         }
     };
     #pragma warning restore ASP0006

@@ -152,9 +152,9 @@
         {
             await JSRuntime.InvokeVoidAsync("clientiGrid.setQuickFilter", value);
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error filtering grid: {ex.Message}");
+            // Error filtering grid
         }
     }
 
@@ -187,17 +187,16 @@
             var exists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.clientiGrid !== 'undefined'");
             if (!exists)
             {
-                Console.WriteLine("ERROR: window.clientiGrid is not defined!");
+                // clientiGrid is not defined
                 return;
             }
 
             await JSRuntime.InvokeVoidAsync("clientiGrid.init", "clientiGrid", _clienti, settings.ColumnStateJson);
             await ApplyUiSettings();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error initializing grid: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            // Error initializing grid
         }
     }
 

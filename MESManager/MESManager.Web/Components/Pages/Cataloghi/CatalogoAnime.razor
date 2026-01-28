@@ -161,9 +161,9 @@
         {
             await JSRuntime.InvokeVoidAsync("animeGrid.setQuickFilter", value);
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error filtering grid: {ex.Message}");
+            // Error filtering grid
         }
     }
 
@@ -175,7 +175,6 @@
         gridStatus = "Caricamento...";
         
         _anime = await Http.GetFromJsonAsync<List<AnimeDto>>("api/Anime") ?? new();
-        Console.WriteLine($"CatalogoAnime loaded {_anime.Count} anime from API");
         
         _isDataLoaded = true;
         isLoading = false;
@@ -204,13 +203,8 @@
             if (_isDataLoaded && !_isGridInitialized)
             {
                 _isGridInitialized = true;
-                Console.WriteLine($"CatalogoAnime: Initializing grid with {_anime.Count} rows");
                 await Task.Delay(100);
                 await InitializeGrid();
-            }
-            else if (!_isDataLoaded)
-            {
-                Console.WriteLine("CatalogoAnime: Timeout waiting for data");
             }
         }
     }
@@ -224,7 +218,6 @@
             StateHasChanged();
             
             _anime = await Http.GetFromJsonAsync<List<AnimeDto>>("api/Anime") ?? new();
-            Console.WriteLine($"CatalogoAnime refreshed {_anime.Count} anime from API");
             
             await JSRuntime.InvokeVoidAsync("animeGrid.updateData", _anime, null);
             await UpdateGridStats();
@@ -233,9 +226,9 @@
             gridStatus = "Pronto";
             StateHasChanged();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error refreshing grid data: {ex.Message}");
+            // Error refreshing grid data
             isLoading = false;
             gridStatus = "Errore";
             StateHasChanged();
@@ -249,7 +242,7 @@
             var exists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.animeGrid !== 'undefined'");
             if (!exists)
             {
-                Console.WriteLine("ERROR: window.animeGrid is not defined!");
+                // animeGrid is not defined
                 return;
             }
 
@@ -269,10 +262,9 @@
             // Aggiorna le statistiche dopo l'inizializzazione
             await UpdateGridStats();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error initializing grid: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            // Error initializing grid
         }
     }
 
@@ -422,7 +414,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error opening edit dialog: {ex.Message}");
+            // Error opening edit dialog
             Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
         }
     }
@@ -454,9 +446,9 @@
             lastUpdate = DateTime.Now;
             StateHasChanged();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error updating stats: {ex.Message}");
+            // Error updating stats
         }
     }
 

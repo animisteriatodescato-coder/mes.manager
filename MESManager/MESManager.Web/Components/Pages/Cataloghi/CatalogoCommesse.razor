@@ -195,9 +195,9 @@
         {
             await JSRuntime.InvokeVoidAsync("commesseGrid.setQuickFilter", value);
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error filtering grid: {ex.Message}");
+            // Error filtering grid
         }
     }
 
@@ -205,9 +205,7 @@
     {
         PageToolbarService.SetActivePage("commesse", this);
         
-        Console.WriteLine("Fetching commesse from API...");
         _commesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
-        Console.WriteLine($"Fetched {_commesse.Count} commesse");
         
         totalRows = _commesse.Count;
         aperteCount = _commesse.Count(c => c.Stato == "Aperta");
@@ -246,9 +244,9 @@
             selectedRows = stats.Selected;
             StateHasChanged();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error updating stats: {ex.Message}");
+            // Error updating stats
         }
     }
 
@@ -262,20 +260,11 @@
     {
         try
         {
-            Console.WriteLine($"InitializeGrid called with {_commesse.Count} commesse");
-            
-            // DIAGNOSTICA: verifica proprietà del primo elemento
-            if (_commesse.Count > 0)
-            {
-                var first = _commesse[0];
-                Console.WriteLine($"C# Object properties - Codice: {first.Codice}, InternalOrdNo: {first.InternalOrdNo}, Line: {first.Line}, Description: {first.Description}");
-            }
-            
             // Verifica che window.commesseGrid esista
             var exists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.commesseGrid !== 'undefined'");
             if (!exists)
             {
-                Console.WriteLine("ERROR: window.commesseGrid is not defined!");
+                // commesseGrid is not defined
                 return;
             }
 
@@ -286,19 +275,14 @@
                 WriteIndented = false
             };
             var jsonData = JsonSerializer.Serialize(_commesse, jsonOptions);
-            
-            // DIAGNOSTICA: mostra un estratto del JSON serializzato
-            var preview = jsonData.Length > 500 ? jsonData.Substring(0, 500) + "..." : jsonData;
-            Console.WriteLine($"Serialized JSON preview: {preview}");
 
             // Passa il JSON come stringa e fallo parsare in JavaScript
             await JSRuntime.InvokeVoidAsync("eval", $"commesseGrid.init('commesseGrid', JSON.parse({System.Text.Json.JsonSerializer.Serialize(jsonData)}), {System.Text.Json.JsonSerializer.Serialize(settings.ColumnStateJson)})");
             await ApplyUiSettings();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error initializing grid: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            // Error initializing grid
         }
     }
 
@@ -310,9 +294,9 @@
             columnList = await JSRuntime.InvokeAsync<List<ColumnInfo>>("commesseGrid.getAllColumns");
             showColumnDialog = true;
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error toggling column panel: {ex.Message}");
+            // Error toggling column panel
         }
     }
 
@@ -323,9 +307,9 @@
             await JSRuntime.InvokeVoidAsync("commesseGrid.setColumnVisible", field, visible);
             await SaveGridState();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error changing column visibility: {ex.Message}");
+            // Error changing column visibility
         }
     }
 

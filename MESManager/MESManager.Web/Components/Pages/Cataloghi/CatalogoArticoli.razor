@@ -163,9 +163,9 @@
             await JSRuntime.InvokeVoidAsync("articoliGrid.setQuickFilter", value);
             await UpdateGridStats();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error filtering grid: {ex.Message}");
+            // Error filtering grid
         }
     }
 
@@ -200,11 +200,6 @@
     {
         if (firstRender)
         {
-            // Aspetta che i dati siano caricati prima di inizializzare la griglia
-            if (_articoli == null || _articoli.Count == 0)
-            {
-                Console.WriteLine("WARNING: Grid initialized with empty data in CatalogoArticoli");
-            }
             await Task.Delay(100);
             await InitializeGrid();
             
@@ -218,9 +213,9 @@
                         await UpdateGridStats();
                     });
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Console.WriteLine($"Error updating grid stats: {ex.Message}");
+                    // Error updating grid stats
                 }
             }, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
         }
@@ -233,7 +228,7 @@
             var exists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.articoliGrid !== 'undefined'");
             if (!exists)
             {
-                Console.WriteLine("ERROR: window.articoliGrid is not defined!");
+                // articoliGrid is not defined
                 return;
             }
 
@@ -243,10 +238,9 @@
             // Aggiorna statistiche iniziali
             await UpdateGridStats();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error initializing grid: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            // Error initializing grid
         }
     }
     
@@ -263,9 +257,9 @@
                 StateHasChanged();
             }
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error updating grid stats: {ex.Message}");
+            // Error updating grid stats
         }
     }
 

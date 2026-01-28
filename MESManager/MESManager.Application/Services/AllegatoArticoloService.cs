@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
+using MESManager.Domain.Constants;
 using MESManager.Domain.Entities;
 
 namespace MESManager.Application.Services;
@@ -18,12 +19,6 @@ public class AllegatoArticoloService : IAllegatoArticoloService
     private readonly string _allegatiBasePath;
     private readonly string _ganttConnectionString;
 
-    // Estensioni considerate foto
-    private static readonly HashSet<string> FotoExtensions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".tif"
-    };
-
     public AllegatoArticoloService(
         IAllegatoArticoloRepository repository,
         IConfiguration configuration,
@@ -33,16 +28,8 @@ public class AllegatoArticoloService : IAllegatoArticoloService
         _configuration = configuration;
         _logger = logger;
         
-        // Path base per gli allegati - con fallback locale
-        _allegatiBasePath = configuration["AllegatiBasePath"] 
-            ?? @"P:\Documenti\AA SCHEDE PRODUZIONE\foto cel";
-        
-        // Se il path di rete non è accessibile, usa cartella locale
-        if (!Directory.Exists(_allegatiBasePath))
-        {
-            _allegatiBasePath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "uploads", "allegati");
-            Directory.CreateDirectory(_allegatiBasePath);
-        }
+        // Path base per gli allegati usando FileConstants
+        _allegatiBasePath = FileConstants.GetAllegatiBasePath(configuration["AllegatiBasePath"]);
         
         // Connection string per Gantt - usa SQL Authentication
         _ganttConnectionString = configuration.GetConnectionString("GanttConnection") 
@@ -92,7 +79,7 @@ public class AllegatoArticoloService : IAllegatoArticoloService
             request.CodiceArticolo, fileName, fileSize);
         
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
-        var isFoto = FotoExtensions.Contains(extension);
+        var isFoto = FileConstants.FotoExtensions.Contains(extension);
         
         // Genera nome file univoco
         var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
@@ -274,7 +261,7 @@ public class AllegatoArticoloService : IAllegatoArticoloService
                     var pathFile = reader.GetString(reader.GetOrdinal("PathFile"));
                     var nomeFile = Path.GetFileName(pathFile); // Estrai nome file dal path
                     var extension = Path.GetExtension(nomeFile).ToLowerInvariant();
-                    var isFoto = FotoExtensions.Contains(extension);
+                    var isFoto = FileConstants.FotoExtensions.Contains(extension);
                     
                     // Determina dimensione file se accessibile
                     long? dimensione = null;

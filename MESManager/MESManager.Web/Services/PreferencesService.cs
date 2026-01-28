@@ -56,13 +56,12 @@ public class PreferencesService
                 if (utente != null)
                 {
                     _currentUserService.SetCurrentUser(utente);
-                    Console.WriteLine($"[PreferencesService] Loaded user from localStorage: {utente.Nome} (ID: {userId})");
                 }
             }
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"[PreferencesService] Error loading user from localStorage: {ex.Message}");
+            // Error loading user from localStorage - silently ignore
         }
         finally
         {
@@ -83,8 +82,6 @@ public class PreferencesService
             // Se c'è un utente selezionato, usa il database
             if (_currentUserService.HasUser && _currentUserService.CurrentUserId.HasValue)
             {
-                Console.WriteLine($"[PreferencesService] GetAsync: Loading '{key}' for user {_currentUserService.CurrentUserName} (ID: {_currentUserService.CurrentUserId})");
-                
                 var json = await _preferenzeUtenteService.GetAsync(_currentUserService.CurrentUserId.Value, key);
                 if (string.IsNullOrEmpty(json))
                     return default;
@@ -92,7 +89,6 @@ public class PreferencesService
                 return JsonSerializer.Deserialize<T>(json);
             }
 
-            Console.WriteLine($"[PreferencesService] GetAsync: No user, loading '{key}' from localStorage");
             // Altrimenti fallback a localStorage
             var localJson = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", key);
             if (string.IsNullOrEmpty(localJson))
@@ -121,12 +117,10 @@ public class PreferencesService
             // Se c'è un utente selezionato, salva nel database
             if (_currentUserService.HasUser && _currentUserService.CurrentUserId.HasValue)
             {
-                Console.WriteLine($"[PreferencesService] SetAsync: Saving '{key}' for user {_currentUserService.CurrentUserName} (ID: {_currentUserService.CurrentUserId})");
                 await _preferenzeUtenteService.SaveAsync(_currentUserService.CurrentUserId.Value, key, json);
             }
             else
             {
-                Console.WriteLine($"[PreferencesService] SetAsync: No user selected, saving '{key}' to localStorage");
                 // Altrimenti fallback a localStorage
                 await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
             }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
+using MESManager.Domain.Constants;
 using MESManager.Domain.Entities;
 
 namespace MESManager.Application.Services
@@ -12,37 +13,6 @@ namespace MESManager.Application.Services
     {
         private readonly IAnimeRepository _repo;
         private readonly IMacchinaAppService _macchinaService;
-        
-        // Lookup tables statiche
-        private static readonly Dictionary<string, string> CollaLookup = new()
-        {
-            { "-1", "BIANCA" },
-            { "-2", "A CALDO" },
-            { "-3", "ROSSA S.G" }
-        };
-        
-        private static readonly Dictionary<string, string> VerniceLookup = new()
-        {
-            { "-1", "" },
-            { "-2", "YELLOW COVER" },
-            { "-3", "CASTING COVER ZR" },
-            { "-4", "CASTING COVER RK" },
-            { "-5", "CASTINGCOVER 2001" },
-            { "-6", "ARCOPAL 9030" },
-            { "-7", "HYDRO COVER 22 Z" },
-            { "-8", "FGR 55" }
-        };
-        
-        private static readonly Dictionary<int, string> ImballoLookup = new()
-        {
-            { -1, "CASSA GRANDE" },
-            { -2, "CASSA PICCOLA" },
-            { -3, "CASSA LUNGA" },
-            { -4, "PIANALE EURO" },
-            { -5, "PIANALE QUADRATO" },
-            { -6, "CARRELLI A PIANI" },
-            { -7, "CARRELLI GRANDI" }
-        };
         
         private Dictionary<string, string>? _macchineCache;
         
@@ -162,7 +132,7 @@ namespace MESManager.Application.Services
                 Altezza = entity.Altezza,
                 Profondita = entity.Profondita,
                 Imballo = entity.Imballo,
-                ImballoDescrizione = entity.Imballo.HasValue && ImballoLookup.TryGetValue(entity.Imballo.Value, out var imbDesc) ? imbDesc : null,
+                ImballoDescrizione = entity.Imballo.HasValue && LookupTables.ImballoInt.TryGetValue(entity.Imballo.Value, out var imbDesc) ? imbDesc : null,
                 Note = entity.Note,
                 Allegato = entity.Allegato,
                 Peso = entity.Peso,
@@ -175,11 +145,11 @@ namespace MESManager.Application.Services
                 MacchineSuDisponibiliDescrizione = GetMacchineDescrizione(entity.MacchineSuDisponibili),
                 TrasmettiTutto = entity.TrasmettiTutto,
                 Colla = entity.Colla,
-                CollaDescrizione = !string.IsNullOrEmpty(entity.Colla) && CollaLookup.TryGetValue(entity.Colla, out var collaDesc) ? collaDesc : entity.Colla,
+                CollaDescrizione = !string.IsNullOrEmpty(entity.Colla) && LookupTables.Colla.TryGetValue(entity.Colla, out var collaDesc) ? collaDesc : entity.Colla,
                 Sabbia = entity.Sabbia,
                 SabbiaDescrizione = entity.Sabbia, // Sabbia usa già la descrizione come codice
                 Vernice = entity.Vernice,
-                VerniceDescrizione = !string.IsNullOrEmpty(entity.Vernice) && VerniceLookup.TryGetValue(entity.Vernice, out var vernDesc) ? vernDesc : entity.Vernice,
+                VerniceDescrizione = !string.IsNullOrEmpty(entity.Vernice) && LookupTables.Vernice.TryGetValue(entity.Vernice, out var vernDesc) ? vernDesc : entity.Vernice,
                 Cliente = entity.Cliente,
                 TogliereSparo = entity.TogliereSparo,
                 QuantitaPiano = entity.QuantitaPiano,

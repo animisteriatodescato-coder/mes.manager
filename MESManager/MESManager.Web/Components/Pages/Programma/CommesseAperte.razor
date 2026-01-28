@@ -575,9 +575,9 @@
         {
             await JSRuntime.InvokeVoidAsync("commesseAperteGrid.setQuickFilter", value);
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error filtering grid: {ex.Message}");
+            // Error filtering grid
         }
     }
 
@@ -620,9 +620,9 @@
             await ReinitializeGrid();
             StateHasChanged();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error refreshing grid data: {ex.Message}");
+            // Error refreshing grid data
         }
     }
     
@@ -640,9 +640,9 @@
             // Call reinit method which will destroy old grid first
             await JSRuntime.InvokeVoidAsync("commesseAperteGrid.reinit", jsonData);
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error reinitializing grid: {ex.Message}");
+            // Error reinitializing grid
         }
     }
 
@@ -650,7 +650,6 @@
     {
         if (_isLoadingData && !force)
         {
-            Console.WriteLine("LoadData already in progress, skipping...");
             return;
         }
         
@@ -658,19 +657,16 @@
         
         try
         {
-            Console.WriteLine("Fetching commesse from API...");
             var allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
             
             // Filtra solo le commesse aperte, e opzionalmente esclude archiviate
             if (showArchived)
             {
                 _commesse = allCommesse.Where(c => c.Stato == "Aperta").ToList();
-                Console.WriteLine($"Fetched {allCommesse.Count} commesse, filtered to {_commesse.Count} aperte (including archived)");
             }
             else
             {
                 _commesse = allCommesse.Where(c => c.Stato == "Aperta" && c.StatoProgramma != "Archiviata").ToList();
-                Console.WriteLine($"Fetched {allCommesse.Count} commesse, filtered to {_commesse.Count} aperte (excluding archived)");
             }
             
             totalRows = _commesse.Count;
@@ -699,16 +695,11 @@
             if (_isDataLoaded && !_isGridInitialized)
             {
                 _isGridInitialized = true;
-                Console.WriteLine($"CommesseAperte: Initializing grid with {_commesse.Count} rows");
                 await Task.Delay(100);
                 await InitializeGrid();
                 
                 jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/stats-listener.js");
                 await jsModule.InvokeVoidAsync("subscribeToStatsChanges", DotNetObjectReference.Create(this));
-            }
-            else if (!_isDataLoaded)
-            {
-                Console.WriteLine("CommesseAperte: Timeout waiting for data");
             }
         }
     }
@@ -724,9 +715,9 @@
             selectedRows = stats.Selected;
             StateHasChanged();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error updating stats: {ex.Message}");
+            // Error updating stats
         }
     }
 
@@ -740,18 +731,10 @@
     {
         try
         {
-            Console.WriteLine($"InitializeGrid called with {_commesse.Count} commesse aperte");
-            
-            if (_commesse.Count > 0)
-            {
-                var first = _commesse[0];
-                Console.WriteLine($"C# Object properties - Codice: {first.Codice}, InternalOrdNo: {first.InternalOrdNo}, Line: {first.Line}, Description: {first.Description}");
-            }
-            
             var exists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.commesseAperteGrid !== 'undefined'");
             if (!exists)
             {
-                Console.WriteLine("ERROR: window.commesseAperteGrid is not defined!");
+                // commesseAperteGrid is not defined
                 return;
             }
 
@@ -761,9 +744,6 @@
                 WriteIndented = false
             };
             var jsonData = JsonSerializer.Serialize(_commesse, jsonOptions);
-            
-            var preview = jsonData.Length > 500 ? jsonData.Substring(0, 500) + "..." : jsonData;
-            Console.WriteLine($"Serialized JSON preview: {preview}");
 
             // Imposta l'utente corrente per la griglia (per salvare le preferenze per-utente)
             var userId = CurrentUserService.CurrentUserId?.ToString() ?? "";
@@ -776,10 +756,9 @@
             
             await ApplyUiSettings();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error initializing grid: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            // Error initializing grid
         }
     }
 
@@ -838,9 +817,9 @@
                 }
             }
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error loading label foto: {ex.Message}");
+            // Error loading label foto
             labelFotoUrl = null;
         }
     }
@@ -887,7 +866,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error opening edit dialog: {ex.Message}");
+            // Error opening edit dialog
             Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
         }
         
@@ -1330,9 +1309,9 @@
             columnList = await JSRuntime.InvokeAsync<List<ColumnInfo>>("commesseAperteGrid.getAllColumns");
             showColumnDialog = true;
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error toggling column panel: {ex.Message}");
+            // Error toggling column panel
         }
     }
 
@@ -1343,9 +1322,9 @@
             await JSRuntime.InvokeVoidAsync("commesseAperteGrid.setColumnVisible", field, visible);
             await SaveGridState();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error changing column visibility: {ex.Message}");
+            // Error changing column visibility
         }
     }
 

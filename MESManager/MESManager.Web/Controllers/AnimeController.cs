@@ -113,13 +113,7 @@ public class AnimeController : ControllerBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Errore durante importazione Excel: {ex.Message}");
-            Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
-            }
-            
+            _logger.LogError(ex, "Errore durante importazione Excel");
             return BadRequest(new { Error = ex.Message, Details = ex.InnerException?.Message });
         }
     }
