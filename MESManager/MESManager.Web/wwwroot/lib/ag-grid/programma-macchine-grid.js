@@ -205,30 +205,20 @@ window.programmaMacchineGrid = (function() {
             width: 160,
             valueFormatter: params => params.value ? new Date(params.value).toLocaleString('it-IT') : ''
         },
-        // Anime columns
-        { field: 'unitaMisura', headerName: 'U.M. Anime', sortable: true, filter: true, width: 100, hide: true },
-        { field: 'larghezza', headerName: 'Larghezza', sortable: true, filter: 'agNumberColumnFilter', width: 100, hide: true },
-        { field: 'altezza', headerName: 'Altezza', sortable: true, filter: 'agNumberColumnFilter', width: 100, hide: true },
-        { field: 'profondita', headerName: 'Profondità', sortable: true, filter: 'agNumberColumnFilter', width: 100, hide: true },
-        { field: 'imballo', headerName: 'Imballo', sortable: true, filter: 'agNumberColumnFilter', width: 100, hide: true },
-        { field: 'noteAnime', headerName: 'Note Anime', sortable: true, filter: true, width: 200, hide: true },
-        { field: 'allegato', headerName: 'Allegato', sortable: true, filter: true, width: 150, hide: true },
-        { field: 'peso', headerName: 'Peso', sortable: true, filter: true, width: 100, hide: true },
-        { field: 'ubicazione', headerName: 'Ubicazione', sortable: true, filter: true, width: 150, hide: true },
-        { field: 'ciclo', headerName: 'Ciclo', sortable: true, filter: true, width: 150, hide: true },
-        { field: 'codiceCassa', headerName: 'Codice Cassa', sortable: true, filter: true, width: 120, hide: true },
-        { field: 'codiceAnime', headerName: 'Codice Anime', sortable: true, filter: true, width: 120, hide: true },
-        { field: 'macchineSuDisponibili', headerName: 'Macchine Disponibili', sortable: true, filter: true, width: 180, hide: true },
-        { 
-            field: 'trasmettiTutto', 
-            headerName: 'Trasmetti Tutto', 
-            sortable: true, 
-            filter: true, 
-            width: 120,
-            hide: true,
-            valueFormatter: params => params.value === true ? 'Sì' : params.value === false ? 'No' : ''
-        }
+        // Anime columns - importate da file condiviso (anime-columns-shared.js)
+        // Le colonne vengono aggiunte dinamicamente in getColumnDefs()
     ];
+
+    // Funzione per ottenere tutte le colonne incluse quelle anime condivise
+    function getColumnDefs() {
+        // Prende le colonne anime dal file condiviso se disponibile
+        if (window.animeColumnsShared && window.animeColumnsShared.getAnimeColumns) {
+            return [...columnDefs, ...window.animeColumnsShared.getAnimeColumns()];
+        }
+        // Fallback: usa colonne inline se il file condiviso non è caricato
+        console.warn('anime-columns-shared.js non caricato, uso colonne fallback');
+        return columnDefs;
+    }
 
     // Estrae il numero dalla macchina (M001 -> 1, M002 -> 2)
     function getMachineNumber(numeroMacchina) {
@@ -408,7 +398,7 @@ window.programmaMacchineGrid = (function() {
         console.log('init: received', data.length, 'rows, prepared to', preparedData.length, 'with placeholders');
 
         const gridOptions = {
-            columnDefs: columnDefs,
+            columnDefs: getColumnDefs(),
             rowData: preparedData,
             defaultColDef: {
                 resizable: true,

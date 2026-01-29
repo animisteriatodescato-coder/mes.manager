@@ -1,5 +1,36 @@
 # 📋 Changelog Versioni MESManager
 
+## v1.13 (29 Gennaio 2026)
+**Data:** 29 Gen 2026 - Integrazione Colonne Anime  
+**Status:** 🔧 In sviluppo
+
+### Modifiche
+- ✅ **Imballo Descrizione**: Ora mostra la descrizione invece del numero nelle griglie
+- ✅ **Colonne Anime Unificate**: Creato file `anime-columns-shared.js` come fonte unica per entrambe le griglie
+- ✅ **Nuovi campi CommessaDto**: Aggiunti `ImballoDescrizione`, `MacchineSuDisponibiliDescrizione`, `Figure`, `Maschere`, `Assemblata`, `ArmataL`, `TogliereSparo`
+- ✅ **CommessaAppService**: Aggiornato per popolare le descrizioni dai lookup tables
+- ✅ **No code duplication**: Commesse Aperte e Programma Macchine usano la stessa fonte per le colonne anime
+
+### File Modificati
+- `MESManager.Application/DTOs/CommessaDto.cs` - Aggiunti 7 campi mancanti
+- `MESManager.Infrastructure/Services/CommessaAppService.cs` - Popolamento descrizioni
+- `MESManager.Web/wwwroot/lib/ag-grid/anime-columns-shared.js` - NUOVO: colonne condivise
+- `MESManager.Web/wwwroot/lib/ag-grid/commesse-aperte-grid.js` - Usa colonne condivise
+- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` - Usa colonne condivise
+- `MESManager.Web/Components/App.razor` - Caricamento script condiviso
+
+---
+
+## v1.12 (29 Gennaio 2026)
+**Data:** 29 Gen 2026  
+**Status:** ✅ Commit `aa4f926`
+
+### Correzioni
+- ✅ **Column State Persistence**: Stato colonne salvato da Blazor su DB, JS ora legge da Blazor
+- ✅ **Arrow Buttons Fix**: Frecce per riordino commesse funzionanti dopo refresh
+
+---
+
 ## v1.11 (29 Gennaio 2026)
 **Data:** 29 Gen 2026 10:52 UTC  
 **Status:** ✅ Deploy completato su 192.168.1.230  

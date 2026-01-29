@@ -51,6 +51,7 @@ public class CommessaDto
     public int? Altezza { get; set; }
     public int? Profondita { get; set; }
     public int? Imballo { get; set; }
+    public string? ImballoDescrizione { get; set; }  // Descrizione lookup
     public string? NoteAnime { get; set; }
     public string? Allegato { get; set; }
     public string? Peso { get; set; }
@@ -59,6 +60,7 @@ public class CommessaDto
     public string? CodiceCassa { get; set; }
     public string? CodiceAnime { get; set; }
     public string? MacchineSuDisponibili { get; set; }
+    public string? MacchineSuDisponibiliDescrizione { get; set; }  // Descrizione lookup (nomi macchine)
     public bool? TrasmettiTutto { get; set; }
     
     // Campi aggiuntivi per etichetta
@@ -71,6 +73,13 @@ public class CommessaDto
     public int? QuantitaPiano { get; set; }
     public int? NumeroPiani { get; set; }
     public string? ClienteAnime { get; set; }
+    
+    // Campi anime aggiuntivi
+    public string? TogliereSparo { get; set; }
+    public string? Figure { get; set; }
+    public string? Maschere { get; set; }
+    public string? Assemblata { get; set; }
+    public string? ArmataL { get; set; }
     
     // Quantità calcolata per etichetta (QuantitaPiano * NumeroPiani)
     public int? QuantitaEtichetta => (QuantitaPiano ?? 0) * (NumeroPiani ?? 0);

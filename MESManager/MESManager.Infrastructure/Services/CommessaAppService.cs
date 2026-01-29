@@ -3,6 +3,7 @@ using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
 using MESManager.Domain.Entities;
 using MESManager.Domain.Enums;
+using MESManager.Domain.Constants;
 using MESManager.Infrastructure.Data;
 
 namespace MESManager.Infrastructure.Services;
@@ -107,6 +108,7 @@ public class CommessaAppService : ICommessaAppService
                 Altezza = anime?.Altezza,
                 Profondita = anime?.Profondita,
                 Imballo = anime?.Imballo,
+                ImballoDescrizione = (anime != null && anime.Imballo.HasValue && LookupTables.ImballoInt.TryGetValue(anime.Imballo.Value, out var imbDesc)) ? imbDesc : null,
                 NoteAnime = anime?.Note,
                 Allegato = anime?.Allegato,
                 Peso = anime?.Peso,
@@ -115,18 +117,26 @@ public class CommessaAppService : ICommessaAppService
                 CodiceCassa = anime?.CodiceCassa,
                 CodiceAnime = anime?.CodiceAnime,
                 MacchineSuDisponibili = anime?.MacchineSuDisponibili,
+                MacchineSuDisponibiliDescrizione = anime?.MacchineSuDisponibili, // Già contiene i nomi macchine (es. "M001;M002")
                 TrasmettiTutto = anime?.TrasmettiTutto,
                 
                 // Campi aggiuntivi per etichetta
                 Sabbia = anime?.Sabbia,
-                SabbiaDescrizione = anime?.Sabbia, // Sabbia usa già la descrizione come codice
+                SabbiaDescrizione = (anime != null && !string.IsNullOrEmpty(anime.Sabbia) && LookupTables.Sabbia.TryGetValue(anime.Sabbia, out var sabDesc)) ? sabDesc : anime?.Sabbia,
                 Vernice = anime?.Vernice,
-                VerniceDescrizione = !string.IsNullOrEmpty(anime?.Vernice) && VerniceLookup.TryGetValue(anime.Vernice, out var vernDesc) ? vernDesc : anime?.Vernice,
+                VerniceDescrizione = (anime != null && !string.IsNullOrEmpty(anime.Vernice) && VerniceLookup.TryGetValue(anime.Vernice, out var vernDesc)) ? vernDesc : anime?.Vernice,
                 Colla = anime?.Colla,
-                CollaDescrizione = anime?.Colla, // Per ora usiamo il codice
+                CollaDescrizione = (anime != null && !string.IsNullOrEmpty(anime.Colla) && LookupTables.Colla.TryGetValue(anime.Colla, out var collaDesc)) ? collaDesc : anime?.Colla,
                 QuantitaPiano = anime?.QuantitaPiano,
                 NumeroPiani = anime?.NumeroPiani,
-                ClienteAnime = anime?.Cliente
+                ClienteAnime = anime?.Cliente,
+                
+                // Campi anime aggiuntivi
+                TogliereSparo = anime?.TogliereSparo,
+                Figure = anime?.Figure,
+                Maschere = anime?.Maschere,
+                Assemblata = anime?.Assemblata,
+                ArmataL = anime?.ArmataL
             };
         }).ToList();
     }

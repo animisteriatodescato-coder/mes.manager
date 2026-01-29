@@ -251,48 +251,20 @@ window.commesseAperteGrid = (function() {
             width: 160,
             valueFormatter: params => params.value ? new Date(params.value).toLocaleString('it-IT') : ''
         },
-        // Anime columns
-        { field: 'unitaMisura', headerName: 'U.M. Anime', sortable: true, filter: true, width: 100, hide: true },
-        { field: 'larghezza', headerName: 'Larghezza', sortable: true, filter: 'agNumberColumnFilter', width: 100, hide: true },
-        { field: 'altezza', headerName: 'Altezza', sortable: true, filter: 'agNumberColumnFilter', width: 100, hide: true },
-        { field: 'profondita', headerName: 'Profondità', sortable: true, filter: 'agNumberColumnFilter', width: 100, hide: true },
-        { field: 'imballo', headerName: 'Imballo', sortable: true, filter: 'agNumberColumnFilter', width: 100, hide: true },
-        { field: 'noteAnime', headerName: 'Note Anime', sortable: true, filter: true, width: 200, hide: true },
-        { field: 'allegato', headerName: 'Allegato', sortable: true, filter: true, width: 150, hide: true },
-        { field: 'peso', headerName: 'Peso', sortable: true, filter: true, width: 100, hide: true },
-        { field: 'ubicazione', headerName: 'Ubicazione', sortable: true, filter: true, width: 150, hide: true },
-        { field: 'ciclo', headerName: 'Ciclo', sortable: true, filter: true, width: 150, hide: true },
-        { field: 'codiceCassa', headerName: 'Codice Cassa', sortable: true, filter: true, width: 120, hide: true },
-        { field: 'codiceAnime', headerName: 'Codice Anime', sortable: true, filter: true, width: 120, hide: true },
-        { field: 'macchineSuDisponibili', headerName: 'Macchine Disponibili', sortable: true, filter: true, width: 180, hide: true },
-        { 
-            field: 'trasmettiTutto', 
-            headerName: 'Trasmetti Tutto', 
-            sortable: true, 
-            filter: true, 
-            width: 120,
-            hide: true,
-            valueFormatter: params => params.value === true ? 'Sì' : params.value === false ? 'No' : ''
-        },
-        // Campi etichetta
-        { field: 'sabbiaDescrizione', headerName: 'Sabbia', sortable: true, filter: true, width: 120, hide: true },
-        { field: 'verniceDescrizione', headerName: 'Vernice', sortable: true, filter: true, width: 150, hide: true },
-        { field: 'quantitaPiano', headerName: 'Qtà Piano', sortable: true, filter: 'agNumberColumnFilter', width: 100, hide: true },
-        { field: 'numeroPiani', headerName: 'N. Piani', sortable: true, filter: 'agNumberColumnFilter', width: 100, hide: true },
-        { 
-            field: 'quantitaEtichetta', 
-            headerName: 'Qtà Etichetta', 
-            sortable: true, 
-            filter: 'agNumberColumnFilter', 
-            width: 120, 
-            hide: true,
-            valueGetter: params => {
-                const qp = params.data?.quantitaPiano || 0;
-                const np = params.data?.numeroPiani || 0;
-                return qp * np;
-            }
-        }
+        // Anime columns - importate da file condiviso (anime-columns-shared.js)
+        // Le colonne vengono aggiunte dinamicamente in getColumnDefs()
     ];
+
+    // Funzione per ottenere tutte le colonne incluse quelle anime condivise
+    function getColumnDefs() {
+        // Prende le colonne anime dal file condiviso se disponibile
+        if (window.animeColumnsShared && window.animeColumnsShared.getAnimeColumns) {
+            return [...columnDefs, ...window.animeColumnsShared.getAnimeColumns()];
+        }
+        // Fallback: usa colonne inline se il file condiviso non è caricato
+        console.warn('anime-columns-shared.js non caricato, uso colonne fallback');
+        return columnDefs;
+    }
 
     // Funzione per gestire i cambi di selezione macchina con EVENT DELEGATION
     // Usa un singolo handler sul container che intercetta tutti i change events
@@ -474,7 +446,7 @@ window.commesseAperteGrid = (function() {
         }
 
         const gridOptions = {
-            columnDefs: columnDefs,
+            columnDefs: getColumnDefs(),
             rowData: data,
             defaultColDef: {
                 resizable: true,
