@@ -48,7 +48,10 @@ var dbConfigPath = Path.Combine(solutionRoot, "appsettings.Database.json");
 if (File.Exists(encryptedSecretsPath))
 {
     // Decripta e carica in memoria (nessun file temporaneo su disco)
+    // CA1416 ignorato: l'app è Windows-only, usa DPAPI per crittografia
+#pragma warning disable CA1416
     builder.Configuration.AddEncryptedSecrets(encryptedSecretsPath);
+#pragma warning restore CA1416
 }
 else if (File.Exists(secretsPath))
 {

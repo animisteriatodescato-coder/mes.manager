@@ -22,9 +22,11 @@ public class PlcAppService : IPlcAppService
 
     public async Task<List<PlcRealtimeDto>> GetRealtimeDataAsync()
     {
+        // Filtra solo macchine con IP configurato (come da impostazioni Gantt)
         var query = await _context.PLCRealtime
             .Include(p => p.Macchina)
             .Include(p => p.Operatore)
+            .Where(p => !string.IsNullOrWhiteSpace(p.Macchina.IndirizzoPLC))
             .OrderBy(p => p.Macchina.Codice)
             .ToListAsync();
 

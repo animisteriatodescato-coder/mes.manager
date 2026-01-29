@@ -2,7 +2,7 @@
 
 > **Documento di riferimento per Copilot e sviluppatori**
 > 
-> Ultima modifica: 28 Gennaio 2026
+> Ultima modifica: 29 Gennaio 2026
 > 
 > Questo documento contiene TUTTE le informazioni necessarie per aggiornare in sicurezza la pubblicazione sul server senza creare problemi.
 

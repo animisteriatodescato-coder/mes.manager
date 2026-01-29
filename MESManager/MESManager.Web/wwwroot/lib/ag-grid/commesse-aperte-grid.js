@@ -547,13 +547,14 @@ window.commesseAperteGrid = (function() {
                 }, 150);
             },
             onRowDoubleClicked: (event) => {
-                // Skip navigation if double-clicking on machine select
-                if (event.column && event.column.getColId() === 'numeroMacchina') {
+                // Skip navigation if double-clicking on machine select or special columns
+                const colId = event.column?.getColId?.() || event.colDef?.field;
+                if (colId === 'numeroMacchina' || colId === 'stampaEtichetta' || colId === 'storico') {
                     return;
                 }
-                // Doppio click: naviga a Catalogo Anime per modificare i dati
-                // Ma NON se si è cliccato sulla colonna MA
-                if (dotNetHelper && event.data && event.data.articoloCodice && event.colDef.field !== 'numeroMacchina') {
+                // Doppio click: apri dialog modifica anima
+                if (dotNetHelper && event.data && event.data.articoloCodice) {
+                    console.log('Double click: opening anima edit for', event.data.articoloCodice);
                     dotNetHelper.invokeMethodAsync('OnRowDoubleClick', event.data.articoloCodice);
                 }
             },

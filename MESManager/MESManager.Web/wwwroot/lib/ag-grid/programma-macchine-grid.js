@@ -58,6 +58,29 @@ window.programmaMacchineGrid = (function() {
                 showStoricoProgrammazione(params.data.id, params.data.codice || params.data.numeroCommessa);
             }
         },
+        {
+            field: 'stampaEtichetta',
+            headerName: '',
+            width: 50,
+            pinned: 'left',
+            sortable: false,
+            filter: false,
+            suppressMenu: true,
+            cellRenderer: params => {
+                if (params.data.isPlaceholder) return '';
+                const hasData = params.data && params.data.codiceAnime && params.data.clienteRagioneSociale;
+                const icon = hasData ? '🖨️' : '⚠️';
+                const title = hasData ? 'Stampa Etichetta' : 'Dati incompleti - Clicca per dettagli';
+                const color = hasData ? '#1976d2' : '#ff9800';
+                return `<button class="print-label-btn" style="border:none;background:transparent;cursor:pointer;font-size:18px;color:${color}" title="${title}">${icon}</button>`;
+            },
+            onCellClicked: params => {
+                if (params.data.isPlaceholder) return;
+                if (dotNetHelper) {
+                    dotNetHelper.invokeMethodAsync('OnPrintLabelClick', params.data);
+                }
+            }
+        },
         { 
             field: 'numeroMacchina', 
             headerName: 'MA', 

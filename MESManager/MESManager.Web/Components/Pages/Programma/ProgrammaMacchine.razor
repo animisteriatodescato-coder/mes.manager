@@ -128,6 +128,146 @@
         </DialogActions>
     </MudDialog>
 
+    @* Dialog Stampa Etichetta *@
+    <MudDialog @bind-Visible="showLabelDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true }" Style="max-width:80vw;">
+        <TitleContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center">
+                <MudIcon Icon="@Icons.Material.Filled.Print" Class="mr-2" Color="Color.Primary" />
+                <MudText Typo="Typo.h6">Stampa Etichetta</MudText>
+            </MudStack>
+        </TitleContent>
+        <DialogContent>
+            @if (selectedCommessaForLabel != null)
+            {
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">Modifica Quantità</MudText>
+                            <MudNumericField @bind-Value="labelQuantita" 
+                                           Label="Quantità Etichetta" 
+                                           Variant="Variant.Outlined"
+                                           Min="0"
+                                           Disabled="@labelQuantitaVuota"
+                                           HelperText="@($"Totale ordine: {selectedCommessaForLabel.QuantitaRichiesta}")" />
+                            <MudCheckBox @bind-Value="labelQuantitaVuota" Label="Lascia quantità vuota" Color="Color.Secondary" Class="mt-2" />
+                            <MudText Typo="Typo.caption" Class="mt-2" Color="Color.Secondary">
+                                Calcolata: @((selectedCommessaForLabel.QuantitaPiano ?? 0) * (selectedCommessaForLabel.NumeroPiani ?? 0)) 
+                                (Piano: @(selectedCommessaForLabel.QuantitaPiano ?? 0) × Piani: @(selectedCommessaForLabel.NumeroPiani ?? 0))
+                            </MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">Riepilogo Dati</MudText>
+                            <MudSimpleTable Dense="true" Hover="true">
+                                <tbody>
+                                    <tr><td><strong>Cliente</strong></td><td>@(selectedCommessaForLabel.ClienteRagioneSociale ?? "N/D")</td></tr>
+                                    <tr><td><strong>Codice Anima</strong></td><td>@(selectedCommessaForLabel.CodiceAnime ?? "N/D")</td></tr>
+                                    <tr><td><strong>Numero Ordine</strong></td><td>@(selectedCommessaForLabel.InternalOrdNo ?? "N/D")</td></tr>
+                                    <tr><td><strong>Sabbia</strong></td><td>@(selectedCommessaForLabel.SabbiaDescrizione ?? "N/D")</td></tr>
+                                    <tr><td><strong>Vernice</strong></td><td>@(selectedCommessaForLabel.VerniceDescrizione ?? "N/D")</td></tr>
+                                </tbody>
+                            </MudSimpleTable>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">Anteprima Etichetta (2 copie per pagina A4)</MudText>
+                        <div id="label-preview-container" class="label-preview-wrapper">
+                            @for (int i = 0; i < 2; i++)
+                            {
+                                <div class="label-card">
+                                    <div class="label-header">
+                                        <div class="company-name">ANIMISTERIA TODESCATO</div>
+                                    </div>
+                                    <div class="label-row client-row">
+                                        <span class="label-field-name">CLIENTE</span>
+                                        <span class="label-field-value client-name">@(selectedCommessaForLabel.ClienteRagioneSociale ?? "")</span>
+                                    </div>
+                                    <div class="label-row code-row">
+                                        <span class="label-field-name">CODICE ANIMA</span>
+                                        <span class="label-code">@(selectedCommessaForLabel.CodiceAnime ?? "")</span>
+                                    </div>
+                                    <div class="label-main-content">
+                                        @if (!string.IsNullOrEmpty(labelFotoUrl))
+                                        {
+                                            <div class="photo-section">
+                                                <img src="@labelFotoUrl" alt="Foto articolo" />
+                                            </div>
+                                        }
+                                        <div class="right-panel">
+                                            <div class="details-section">
+                                                <div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">SABBIA:</span>
+                                                        <span class="detail-value">@(selectedCommessaForLabel.SabbiaDescrizione ?? "")</span>
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">VERNICE:</span>
+                                                        <span class="detail-value">@(selectedCommessaForLabel.VerniceDescrizione ?? "")</span>
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <span class="detail-label">DATA:</span>
+                                                        <span class="detail-value">@DateTime.Now.ToString("dd/MM/yyyy")</span>
+                                                    </div>
+                                                </div>
+                                                <div class="qty-item">
+                                                    <span class="qty-label">QUANTITA' / @(selectedCommessaForLabel.QuantitaRichiesta)</span>
+                                                    <span class="qty-value">@(labelQuantitaVuota ? "___" : labelQuantita.ToString())</span>
+                                                    <span class="qty-code">Commessa n. @(selectedCommessaForLabel.InternalOrdNo ?? "")</span>
+                                                </div>
+                                                <div class="operator-item">
+                                                    <span class="operator-label">OPERATORE:</span>
+                                                    <div class="operator-box"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </MudItem>
+                </MudGrid>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="@(() => showLabelDialog = false)" Variant="Variant.Text">Annulla</MudButton>
+            <MudButton OnClick="@PrintEmptyLabel" Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.EditNote">Stampa Vuota</MudButton>
+            <MudButton OnClick="@PrintLabel" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Print">Stampa</MudButton>
+        </DialogActions>
+    </MudDialog>
+
+    @* Dialog Dati Mancanti *@
+    <MudDialog @bind-Visible="showMissingDataDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Small }">
+        <TitleContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center">
+                <MudIcon Icon="@Icons.Material.Filled.Warning" Class="mr-2" Color="Color.Warning" />
+                <MudText Typo="Typo.h6">Dati Incompleti</MudText>
+            </MudStack>
+        </TitleContent>
+        <DialogContent>
+            <MudAlert Severity="Severity.Warning" Class="mb-3">
+                Per stampare l'etichetta sono necessari i seguenti dati mancanti:
+            </MudAlert>
+            <MudList T="string" Dense="true">
+                @foreach (var campo in campiMancanti)
+                {
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.Error" IconColor="Color.Error">
+                        @campo
+                    </MudListItem>
+                }
+            </MudList>
+            <MudText Typo="Typo.body2" Class="mt-3">
+                Doppio click sulla riga per aprire il Catalogo Anime e inserire i dati mancanti.
+            </MudText>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="@(() => showMissingDataDialog = false)" Variant="Variant.Text">Chiudi</MudButton>
+            <MudButton OnClick="@GoToAnimeFromMissing" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit">
+                Vai a Catalogo Anime
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+
     <MudPaper Class="footer-info pa-1 mt-2" Elevation="1">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
             <MudText Typo="Typo.caption" Color="Color.Primary">Commesse Programmate: <strong>@totalRows</strong></MudText>
@@ -159,6 +299,57 @@
     #printableCommesse {
         display: none;
     }
+
+    /* Stili Etichetta */
+    .label-preview-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px 50px;
+        background: #f5f5f5;
+        border-radius: 8px;
+        max-width: 66%;
+        margin: 0 auto;
+    }
+
+    .label-card {
+        background: white;
+        border: 3px solid #000;
+        border-radius: 0;
+        padding: 0;
+        width: 100%;
+        margin: 0 auto;
+        font-family: 'Arial Black', Arial, sans-serif;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .label-header { padding: 4px 10px; text-align: center; }
+    .company-name { font-size: 32px; font-weight: 900; letter-spacing: 2px; color: #000; }
+    .label-row { border-bottom: 2px solid #000; padding: 3px 10px; }
+    .client-row { display: flex; align-items: center; justify-content: space-between; gap: 15px; position: relative; }
+    .client-row .label-field-name { position: absolute; left: 0; }
+    .client-row .client-name { flex: 1; text-align: center; }
+    .label-field-name { font-size: 12px; font-weight: 400; color: #000; min-width: 70px; }
+    .label-field-value { font-size: 18px; font-weight: 700; color: #000; }
+    .client-name { font-size: 26px; font-weight: 900; }
+    .code-row { text-align: center; padding: 4px 10px; }
+    .code-row .label-field-name { display: block; font-size: 10px; color: #000; margin-bottom: 2px; font-weight: 400; }
+    .label-code { font-size: 72px; font-weight: 900; color: #000; letter-spacing: 2px; line-height: 1; }
+    .label-main-content { display: flex; flex: 1; border-bottom: 2px solid #000; }
+    .photo-section { width: 55%; display: flex; align-items: center; justify-content: center; padding: 5px; background: #fafafa; }
+    .photo-section img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .right-panel { width: 45%; display: flex; }
+    .details-section { flex: 1; padding: 6px 10px; display: flex; flex-direction: column; justify-content: space-between; }
+    .detail-item { margin-bottom: 4px; }
+    .detail-label { font-size: 10px; font-weight: 400; color: #000; display: inline; }
+    .detail-value { font-size: 13px; font-weight: 700; color: #000; display: inline; margin-left: 5px; }
+    .operator-item { margin-top: auto; padding-top: 4px; }
+    .operator-item .operator-label { font-size: 10px; font-weight: 400; color: #000; display: block; margin-bottom: 4px; }
+    .operator-item .operator-box { width: 100%; height: 28px; border: 2px solid #000; background: white; }
+    .qty-item { margin-top: 6px; text-align: right; }
+    .qty-item .qty-label { font-size: 11px; font-weight: 400; color: #000; display: inline; margin-right: 8px; }
+    .qty-item .qty-value { font-size: 90px; font-weight: 900; color: #000; line-height: 0.9; display: block; }
+    .qty-item .qty-code { font-size: 8px; font-weight: 100; color: #000; display: block; margin-top: 6px; }
 
     @@media print {
         /* Hide the page content */
@@ -218,6 +409,16 @@
     private int selectedRows = 0;
     private DateTime lastUpdate = DateTime.MinValue;
     private bool isLoading = false;
+    
+    // Variabili per stampa etichetta
+    private bool showLabelDialog = false;
+    private bool showMissingDataDialog = false;
+    private CommessaDto? selectedCommessaForLabel;
+    private int labelQuantita = 1;
+    private bool labelQuantitaVuota = false;
+    private List<string> campiMancanti = new();
+    private string? currentArticoloCodice;
+    private string? labelFotoUrl;
     private string gridStatus = "Pronto";
     private IJSObjectReference? jsModule;
     private bool _isGridInitialized = false;
@@ -688,5 +889,356 @@
         }
         await SavePrintColumnSettings();
         StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task OnPrintLabelClick(CommessaDto commessa)
+    {
+        selectedCommessaForLabel = commessa;
+        currentArticoloCodice = commessa.ArticoloCodice;
+        labelFotoUrl = null;
+        
+        // Verifica dati completi
+        campiMancanti.Clear();
+        if (string.IsNullOrEmpty(commessa.CodiceAnime))
+            campiMancanti.Add("Codice Anima");
+        if (string.IsNullOrEmpty(commessa.ClienteRagioneSociale))
+            campiMancanti.Add("Cliente (Ragione Sociale)");
+        
+        if (campiMancanti.Count > 0)
+        {
+            showMissingDataDialog = true;
+        }
+        else
+        {
+            // Calcola quantità iniziale
+            var qp = commessa.QuantitaPiano ?? 0;
+            var np = commessa.NumeroPiani ?? 0;
+            labelQuantita = qp * np > 0 ? qp * np : 1;
+            labelQuantitaVuota = false;
+            
+            // Carica foto con priorità 2
+            await LoadLabelFotoAsync(commessa.ArticoloCodice);
+            
+            showLabelDialog = true;
+        }
+        StateHasChanged();
+    }
+    
+    private async Task LoadLabelFotoAsync(string? codiceArticolo)
+    {
+        if (string.IsNullOrEmpty(codiceArticolo))
+        {
+            labelFotoUrl = null;
+            return;
+        }
+        
+        try
+        {
+            var allegati = await Http.GetFromJsonAsync<AllegatiArticoloResponse>($"/api/allegati-articoli/articolo/{Uri.EscapeDataString(codiceArticolo)}");
+            if (allegati?.Foto != null)
+            {
+                var foto = allegati.Foto.FirstOrDefault(f => f.Priorita == 2) ?? allegati.Foto.FirstOrDefault();
+                if (foto != null)
+                {
+                    labelFotoUrl = $"/api/allegati-articoli/{foto.Id}/file";
+                }
+            }
+        }
+        catch
+        {
+            labelFotoUrl = null;
+        }
+    }
+
+    private void GoToAnimeFromMissing()
+    {
+        showMissingDataDialog = false;
+        if (!string.IsNullOrEmpty(currentArticoloCodice))
+        {
+            Nav.NavigateTo($"/cataloghi/anime?search={Uri.EscapeDataString(currentArticoloCodice)}");
+        }
+        else
+        {
+            Nav.NavigateTo("/cataloghi/anime");
+        }
+    }
+
+    private async Task PrintLabel()
+    {
+        if (selectedCommessaForLabel == null) return;
+        
+        var printHtml = GeneratePrintHtml();
+        
+        await JSRuntime.InvokeVoidAsync("eval", $@"
+            (function() {{
+                var printWindow = window.open('', '_blank', 'width=800,height=600');
+                printWindow.document.write({System.Text.Json.JsonSerializer.Serialize(printHtml)});
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(function() {{
+                    printWindow.print();
+                }}, 500);
+            }})();
+        ");
+        
+        showLabelDialog = false;
+    }
+
+    private string GeneratePrintHtml()
+    {
+        var c = selectedCommessaForLabel!;
+        var oggi = DateTime.Now.ToString("dd/MM/yyyy");
+        var hasFoto = !string.IsNullOrEmpty(labelFotoUrl);
+        var absoluteFotoUrl = hasFoto ? $"{Nav.BaseUri.TrimEnd('/')}{labelFotoUrl}" : "";
+        var fotoHtml = hasFoto 
+            ? $"<div class='photo-section'><img src='{absoluteFotoUrl}' alt='Foto' /></div>" 
+            : "";
+        var totaleLotto = c.QuantitaRichiesta;
+        var noPhotoClass = hasFoto ? "" : " no-photo";
+        var quantitaDisplay = labelQuantitaVuota ? "___" : labelQuantita.ToString();
+        
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Etichetta - {c.CodiceAnime}</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        @@page {{ size: A4 portrait; margin: 5mm 35mm; }}
+        html, body {{ height: 100%; }}
+        body {{ font-family: 'Arial Black', Arial, sans-serif; }}
+        .page {{ display: flex; flex-direction: column; height: 100vh; gap: 3mm; }}
+        .label-card {{ background: white; border: 3px solid #000; flex: 1; display: flex; flex-direction: column; page-break-inside: avoid; }}
+        .label-header {{ padding: 4px 10px; text-align: center; }}
+        .company-name {{ font-size: 32px; font-weight: 900; letter-spacing: 1px; color: #000; }}
+        .label-row {{ border-bottom: 2px solid #000; padding: 3px 10px; }}
+        .client-row {{ display: flex; align-items: center; justify-content: space-between; gap: 40px; position: relative; }}
+        .client-row .label-field-name {{ position: absolute; left: 0; }}
+        .client-row .client-name {{ flex: 1; text-align: center; }}
+        .label-field-name {{ font-size: 11px; font-weight: 400; color: #000; min-width: 60px; }}
+        .label-field-value {{ font-size: 16px; font-weight: 700; color: #000; }}
+        .client-name {{ font-size: 26px; font-weight: 900; }}
+        .code-row {{ text-align: center; padding: 4px 10px; }}
+        .code-row .label-field-name {{ display: block; font-size: 10px; color: #000; margin-bottom: 2px; font-weight: 400; }}
+        .label-code {{ font-size: 72px; font-weight: 900; color: #000; letter-spacing: 2px; line-height: 1; }}
+        .label-main-content {{ flex: 1; display: flex; border-bottom: 2px solid #000; min-height: 0; }}
+        .photo-section {{ width: 55%; display: flex; align-items: center; justify-content: center; padding: 5px; background: #fafafa; }}
+        .photo-section img {{ max-width: 100%; max-height: 100%; object-fit: contain; }}
+        .right-panel {{ width: 45%; display: flex; }}
+        .label-main-content.no-photo {{ justify-content: flex-end; }}
+        .label-main-content.no-photo .right-panel {{ width: 45%; }}
+        .details-section {{ flex: 1; padding: 6px 10px; display: flex; flex-direction: column; justify-content: space-between; }}
+        .detail-item {{ margin-bottom: 4px; }}
+        .detail-label {{ font-size: 10px; font-weight: 400; color: #000; display: inline; }}
+        .detail-value {{ font-size: 13px; font-weight: 700; color: #000; display: inline; margin-left: 5px; }}
+        .operator-item {{ margin-top: auto; padding-top: 4px; }}
+        .operator-label {{ font-size: 10px; font-weight: 400; color: #000; display: block; margin-bottom: 4px; }}
+        .operator-box {{ width: 100%; height: 28px; border: 2px solid #000; background: white; }}
+        .qty-item {{ margin-top: 6px; text-align: right; }}
+        .qty-item .qty-label {{ font-size: 11px; font-weight: 400; color: #000; display: inline; margin-right: 8px; }}
+        .qty-item .qty-value {{ font-size: 90px; font-weight: 900; color: #000; line-height: 0.9; display: block; }}
+        .qty-item .qty-code {{ font-size: 8px; font-weight: 100; color: #000; display: block; margin-top: 6px; }}
+        @@media print {{ .page {{ height: 100%; gap: 5mm; }} .label-card {{ page-break-inside: avoid; }} }}
+    </style>
+</head>
+<body>
+    <div class='page'>
+        <div class='label-card'>
+            <div class='label-header'><div class='company-name'>ANIMISTERIA TODESCATO</div></div>
+            <div class='label-row client-row'>
+                <span class='label-field-name'>CLIENTE</span>
+                <span class='label-field-value client-name'>{System.Web.HttpUtility.HtmlEncode(c.ClienteRagioneSociale ?? "")}</span>
+            </div>
+            <div class='label-row code-row'>
+                <span class='label-field-name'>CODICE ANIMA</span>
+                <span class='label-code'>{System.Web.HttpUtility.HtmlEncode(c.CodiceAnime ?? "")}</span>
+            </div>
+            <div class='label-main-content{noPhotoClass}'>
+                {fotoHtml}
+                <div class='right-panel'>
+                    <div class='details-section'>
+                        <div>
+                            <div class='detail-item'><span class='detail-label'>SABBIA:</span><span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.SabbiaDescrizione ?? "")}</span></div>
+                            <div class='detail-item'><span class='detail-label'>VERNICE:</span><span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.VerniceDescrizione ?? "")}</span></div>
+                            <div class='detail-item'><span class='detail-label'>DATA:</span><span class='detail-value'>{oggi}</span></div>
+                        </div>
+                        <div class='qty-item'>
+                            <span class='qty-label'>QUANTITA' / {totaleLotto}</span>
+                            <span class='qty-value'>{quantitaDisplay}</span>
+                            <span class='qty-code'>Commessa n. {System.Web.HttpUtility.HtmlEncode(c.InternalOrdNo ?? "")}</span>
+                        </div>
+                        <div class='operator-item'><span class='operator-label'>OPERATORE:</span><div class='operator-box'></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class='label-card'>
+            <div class='label-header'><div class='company-name'>ANIMISTERIA TODESCATO</div></div>
+            <div class='label-row client-row'>
+                <span class='label-field-name'>CLIENTE</span>
+                <span class='label-field-value client-name'>{System.Web.HttpUtility.HtmlEncode(c.ClienteRagioneSociale ?? "")}</span>
+            </div>
+            <div class='label-row code-row'>
+                <span class='label-field-name'>CODICE ANIMA</span>
+                <span class='label-code'>{System.Web.HttpUtility.HtmlEncode(c.CodiceAnime ?? "")}</span>
+            </div>
+            <div class='label-main-content{noPhotoClass}'>
+                {fotoHtml}
+                <div class='right-panel'>
+                    <div class='details-section'>
+                        <div>
+                            <div class='detail-item'><span class='detail-label'>SABBIA:</span><span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.SabbiaDescrizione ?? "")}</span></div>
+                            <div class='detail-item'><span class='detail-label'>VERNICE:</span><span class='detail-value'>{System.Web.HttpUtility.HtmlEncode(c.VerniceDescrizione ?? "")}</span></div>
+                            <div class='detail-item'><span class='detail-label'>DATA:</span><span class='detail-value'>{oggi}</span></div>
+                        </div>
+                        <div class='qty-item'>
+                            <span class='qty-label'>QUANTITA' / {totaleLotto}</span>
+                            <span class='qty-value'>{quantitaDisplay}</span>
+                            <span class='qty-code'>Commessa n. {System.Web.HttpUtility.HtmlEncode(c.InternalOrdNo ?? "")}</span>
+                        </div>
+                        <div class='operator-item'><span class='operator-label'>OPERATORE:</span><div class='operator-box'></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>";
+    }
+
+    private async Task PrintEmptyLabel()
+    {
+        var printHtml = GenerateEmptyPrintHtml();
+        
+        await JSRuntime.InvokeVoidAsync("eval", $@"
+            (function() {{
+                var printWindow = window.open('', '_blank', 'width=800,height=600');
+                printWindow.document.write({System.Text.Json.JsonSerializer.Serialize(printHtml)});
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(function() {{
+                    printWindow.print();
+                }}, 500);
+            }})();
+        ");
+        
+        showLabelDialog = false;
+    }
+
+    private string GenerateEmptyPrintHtml()
+    {
+        var oggi = DateTime.Now.ToString("dd/MM/yyyy");
+        
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Etichetta Vuota</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        @@page {{ size: A4 portrait; margin: 5mm 35mm; }}
+        html, body {{ height: 100%; }}
+        body {{ font-family: 'Arial Black', Arial, sans-serif; }}
+        .page {{ display: flex; flex-direction: column; height: 100vh; gap: 3mm; }}
+        .label-card {{ background: white; border: 3px solid #000; flex: 1; display: flex; flex-direction: column; page-break-inside: avoid; }}
+        .label-header {{ padding: 4px 10px; text-align: center; }}
+        .company-name {{ font-size: 32px; font-weight: 900; letter-spacing: 1px; color: #000; }}
+        .label-row {{ border-bottom: 2px solid #000; padding: 3px 10px; }}
+        .client-row {{ display: flex; align-items: center; justify-content: space-between; gap: 40px; position: relative; }}
+        .client-row .label-field-name {{ position: absolute; left: 0; }}
+        .client-row .client-name {{ flex: 1; text-align: center; }}
+        .label-field-name {{ font-size: 11px; font-weight: 400; color: #000; min-width: 60px; }}
+        .client-name {{ font-size: 26px; font-weight: 900; }}
+        .code-row {{ text-align: center; padding: 4px 10px; }}
+        .code-row .label-field-name {{ display: block; font-size: 10px; color: #000; margin-bottom: 2px; font-weight: 400; }}
+        .label-code {{ font-size: 72px; font-weight: 900; color: #000; letter-spacing: 2px; line-height: 1; }}
+        .label-main-content {{ flex: 1; display: flex; border-bottom: 2px solid #000; min-height: 0; justify-content: flex-end; }}
+        .right-panel {{ width: 45%; display: flex; }}
+        .details-section {{ flex: 1; padding: 6px 10px; display: flex; flex-direction: column; justify-content: space-between; }}
+        .detail-item {{ margin-bottom: 4px; }}
+        .detail-label {{ font-size: 10px; font-weight: 400; color: #000; display: inline; }}
+        .empty-line {{ border-bottom: 1px solid #000; min-width: 150px; display: inline-block; }}
+        .operator-item {{ margin-top: auto; padding-top: 4px; }}
+        .operator-label {{ font-size: 10px; font-weight: 400; color: #000; display: block; margin-bottom: 4px; }}
+        .operator-box {{ width: 100%; height: 28px; border: 2px solid #000; background: white; }}
+        .qty-item {{ margin-top: 6px; text-align: right; }}
+        .qty-item .qty-label {{ font-size: 11px; font-weight: 400; color: #000; display: inline; margin-right: 8px; }}
+        .qty-item .qty-value {{ font-size: 90px; font-weight: 900; color: #000; line-height: 0.9; display: block; }}
+        @@media print {{ .page {{ height: 100%; gap: 5mm; }} .label-card {{ page-break-inside: avoid; }} }}
+    </style>
+</head>
+<body>
+    <div class='page'>
+        <div class='label-card'>
+            <div class='label-header'><div class='company-name'>ANIMISTERIA TODESCATO</div></div>
+            <div class='label-row client-row'>
+                <span class='label-field-name'>CLIENTE</span>
+                <span class='label-field-value client-name'><span class='empty-line'>&nbsp;</span></span>
+            </div>
+            <div class='label-row code-row'>
+                <span class='label-field-name'>CODICE ANIMA</span>
+                <span class='label-code'><span class='empty-line' style='min-width:300px;'>&nbsp;</span></span>
+            </div>
+            <div class='label-main-content'>
+                <div class='right-panel'>
+                    <div class='details-section'>
+                        <div>
+                            <div class='detail-item'><span class='detail-label'>SABBIA:</span><span class='empty-line'></span></div>
+                            <div class='detail-item'><span class='detail-label'>VERNICE:</span><span class='empty-line'></span></div>
+                            <div class='detail-item'><span class='detail-label'>DATA:</span><span class='detail-value'>{oggi}</span></div>
+                        </div>
+                        <div class='qty-item'>
+                            <span class='qty-label'>QUANTITA' / ___</span>
+                            <span class='qty-value'>___</span>
+                        </div>
+                        <div class='operator-item'><span class='operator-label'>OPERATORE:</span><div class='operator-box'></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class='label-card'>
+            <div class='label-header'><div class='company-name'>ANIMISTERIA TODESCATO</div></div>
+            <div class='label-row client-row'>
+                <span class='label-field-name'>CLIENTE</span>
+                <span class='label-field-value client-name'><span class='empty-line'>&nbsp;</span></span>
+            </div>
+            <div class='label-row code-row'>
+                <span class='label-field-name'>CODICE ANIMA</span>
+                <span class='label-code'><span class='empty-line' style='min-width:300px;'>&nbsp;</span></span>
+            </div>
+            <div class='label-main-content'>
+                <div class='right-panel'>
+                    <div class='details-section'>
+                        <div>
+                            <div class='detail-item'><span class='detail-label'>SABBIA:</span><span class='empty-line'></span></div>
+                            <div class='detail-item'><span class='detail-label'>VERNICE:</span><span class='empty-line'></span></div>
+                            <div class='detail-item'><span class='detail-label'>DATA:</span><span class='detail-value'>{oggi}</span></div>
+                        </div>
+                        <div class='qty-item'>
+                            <span class='qty-label'>QUANTITA' / ___</span>
+                            <span class='qty-value'>___</span>
+                        </div>
+                        <div class='operator-item'><span class='operator-label'>OPERATORE:</span><div class='operator-box'></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>";
+    }
+
+    private class AllegatiArticoloResponse
+    {
+        public List<AllegatoFoto>? Foto { get; set; }
+    }
+    
+    private class AllegatoFoto
+    {
+        public Guid Id { get; set; }
+        public int Priorita { get; set; }
     }
 }

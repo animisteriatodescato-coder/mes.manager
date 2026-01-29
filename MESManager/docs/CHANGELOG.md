@@ -1,5 +1,45 @@
 # 📋 Changelog Versioni MESManager
 
+## v1.14 (29 Gennaio 2026)
+**Data:** 29 Gen 2026  
+**Status:** ✅ Deploy completato
+
+### Modifiche UI/UX
+
+#### 🎯 Dashboard e PLC Realtime - Filtro Macchine con IP
+- Le pagine Dashboard Produzione e PLC Realtime ora mostrano **solo le macchine con indirizzo IP configurato** nelle impostazioni Gantt Macchine
+- Filtro applicato in `PlcAppService.GetRealtimeDataAsync()` con `.Where(p => !string.IsNullOrWhiteSpace(p.Macchina.IndirizzoPLC))`
+
+#### 📏 Ottimizzazione Altezza Righe Tabelle
+- **PLC Storico**: Ridotta altezza header a 24px e righe a 28px per visualizzare più dati
+- **Catalogo Articoli**: Stessa ottimizzazione (headerHeight: 24, rowHeight: 28)
+- **Catalogo Clienti**: Stessa ottimizzazione (headerHeight: 24, rowHeight: 28)
+- Allineamento al layout già usato su Commesse Aperte
+
+#### 🔧 Fix Doppio Clic Modifica Anima su Commesse
+- Corretto handler `onRowDoubleClicked` che non funzionava più
+- Problema: `event.colDef.field` poteva essere undefined per alcune colonne
+- Soluzione: Uso di `event.column?.getColId?.() || event.colDef?.field` con optional chaining
+
+#### 🏷️ Pulsante Stampa Etichetta su Programma Macchine
+- Aggiunta colonna "Stampa Etichetta" con icona stampante 🖨️
+- Implementata stessa funzionalità già presente su Commesse Aperte:
+  - Dialog preview etichetta con foto articolo da API ERP
+  - Validazione campi obbligatori (Peso, Fili, Grammatura, Anime)
+  - Stampa etichetta con dati completi o vuota
+  - Redirect ad anime se dati mancanti
+
+### File Modificati
+- `MESManager.Infrastructure/Services/PlcAppService.cs` - Filtro IP macchine
+- `MESManager.Web/wwwroot/lib/ag-grid/plc-storico-grid.js` - Altezza righe ottimizzata
+- `MESManager.Web/wwwroot/js/articoli-grid.js` - Altezza righe ottimizzata
+- `MESManager.Web/wwwroot/js/clienti-grid.js` - Altezza righe ottimizzata
+- `MESManager.Web/wwwroot/lib/ag-grid/commesse-aperte-grid.js` - Fix doppio clic
+- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` - Colonna stampa etichetta
+- `MESManager.Web/Components/Pages/Programma/ProgrammaMacchine.razor` - Logica stampa etichetta
+
+---
+
 ## v1.13 (29 Gennaio 2026)
 **Data:** 29 Gen 2026 16:10 UTC  
 **Status:** ✅ Deploy completato e verificato su 192.168.1.230  

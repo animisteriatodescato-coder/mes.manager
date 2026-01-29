@@ -198,6 +198,8 @@ window.plcStoricoGrid = (function () {
         const gridOptions = {
             columnDefs: columnDefs,
             rowData: rowData,
+            headerHeight: 24,
+            rowHeight: 28,
             defaultColDef: {
                 sortable: true,
                 filter: true,

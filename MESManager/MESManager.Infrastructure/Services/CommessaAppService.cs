@@ -295,7 +295,7 @@ public class CommessaAppService : ICommessaAppService
         
         // Ottiene il codice commessa
         var commessa = await _context.Commesse.FindAsync(commessaId);
-        var codiceCommessa = commessa?.Codice;
+        var codiceCommessa = commessa?.Codice ?? string.Empty;
         
         return storico.Select(s => new StoricoProgrammazioneDto
         {

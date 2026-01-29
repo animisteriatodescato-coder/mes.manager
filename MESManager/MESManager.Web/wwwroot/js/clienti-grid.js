@@ -79,6 +79,8 @@ window.clientiGrid = (function() {
         const gridOptions = {
             columnDefs: columnDefs,
             rowData: data,
+            headerHeight: 24,
+            rowHeight: 28,
             defaultColDef: {
                 resizable: true,
                 sortable: true,

@@ -88,6 +88,15 @@ public class MesManagerDbContext : DbContext
             .HasForeignKey(c => c.MacchinaId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Configurazione precision per decimal
+        modelBuilder.Entity<Articolo>()
+            .Property(a => a.Prezzo)
+            .HasPrecision(18, 4);
+
+        modelBuilder.Entity<Commessa>()
+            .Property(c => c.QuantitaRichiesta)
+            .HasPrecision(18, 4);
+
         // Indici per performance
         modelBuilder.Entity<Articolo>()
             .HasIndex(a => a.Codice)
