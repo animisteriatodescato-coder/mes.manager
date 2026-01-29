@@ -1,7 +1,7 @@
 # 📋 Changelog Versioni MESManager
 
 ## v1.13 (29 Gennaio 2026)
-**Data:** 29 Gen 2026 - Integrazione Colonne Anime + Fix Stampa  
+**Data:** 29 Gen 2026 - Integrazione Colonne Anime + Fix Stampa + Fix Refresh  
 **Status:** ✅ Completato
 
 ### Modifiche
@@ -11,6 +11,7 @@
 - ✅ **CommessaAppService**: Aggiornato per popolare le descrizioni dai lookup tables
 - ✅ **No code duplication**: Commesse Aperte e Programma Macchine usano la stessa fonte per le colonne anime
 - ✅ **Fix Ordine Colonne Stampa**: La stampa ora rispetta l'ordine delle colonne come visualizzato nella griglia
+- ✅ **Fix Refresh Commesse Chiuse**: Dopo spostamento frecce, non appaiono più commesse chiuse da Mago
 
 ### Dettaglio Fix Stampa
 **Problema:** L'ordine delle colonne nella stampa non corrispondeva all'ordine impostato dall'utente nella griglia.
@@ -19,13 +20,23 @@
 
 **Soluzione:** Sostituito `gridApi.getColumns()` con `gridApi.getAllDisplayedColumns()` che rispetta l'ordine attuale delle colonne come visualizzato dall'utente.
 
+### Dettaglio Fix Refresh Commesse Chiuse
+**Problema:** Dopo aver spostato una commessa con le frecce ▲▼, apparivano commesse con `stato = "Chiusa"` (chiuse da Mago), che poi sparivano premendo "Aggiorna".
+
+**Causa:** La funzione JS `refreshGridData()` chiamava `/api/Commesse` e filtrava solo per `statoProgramma !== 'Archiviata'`, ma NON controllava `stato === 'Aperta'`.
+
+**Soluzione:** Aggiunto filtro `c.stato === 'Aperta'` in `refreshGridData()` per allineare il comportamento con il caricamento iniziale Blazor.
+
+**Regola acquisita:** Quando si filtra dati in più punti (Blazor + JS), **i filtri devono essere identici** per evitare discrepanze.
+
 ### File Modificati
 - `MESManager.Application/DTOs/CommessaDto.cs` - Aggiunti 7 campi mancanti
 - `MESManager.Infrastructure/Services/CommessaAppService.cs` - Popolamento descrizioni
 - `MESManager.Web/wwwroot/lib/ag-grid/anime-columns-shared.js` - NUOVO: colonne condivise
 - `MESManager.Web/wwwroot/lib/ag-grid/commesse-aperte-grid.js` - Usa colonne condivise
-- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` - Usa colonne condivise + fix stampa
+- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` - Usa colonne condivise + fix stampa + fix refresh
 - `MESManager.Web/Components/App.razor` - Caricamento script condiviso
+- `MESManager.Web/Controllers/PlcController.cs` - Rimosso warning variabile non usata
 
 ---
 

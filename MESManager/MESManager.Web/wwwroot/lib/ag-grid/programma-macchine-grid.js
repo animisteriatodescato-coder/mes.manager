@@ -693,12 +693,18 @@ window.programmaMacchineGrid = (function() {
             const response = await fetch('/api/Commesse');
             if (!response.ok) throw new Error('Failed to fetch');
             const allData = await response.json();
-            // Filtra solo commesse con macchina assegnata e stato != Archiviata
+            
+            // Filtra solo commesse:
+            // 1. Con macchina assegnata
+            // 2. Stato Mago = "Aperta" (esclude le chiuse da Mago)
+            // 3. StatoProgramma != "Archiviata"
             const filteredData = allData.filter(c => 
                 c.numeroMacchina != null && 
                 c.numeroMacchina !== '' && 
+                c.stato === 'Aperta' &&
                 c.statoProgramma !== 'Archiviata'
             );
+            
             if (gridApi) {
                 // Prepara i dati con placeholder per macchine vuote
                 const preparedData = prepareDataWithPlaceholders(filteredData);

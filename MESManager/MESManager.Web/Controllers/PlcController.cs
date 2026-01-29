@@ -218,7 +218,7 @@ public class PlcController : ControllerBase
                     process.Kill(entireProcessTree: true);
                     process.WaitForExit(5000);
                 }
-                catch (Exception ex)
+                catch
                 {
                     // Ignora errori per singoli processi
                 }
