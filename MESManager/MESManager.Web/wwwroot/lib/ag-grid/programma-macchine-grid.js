@@ -710,8 +710,14 @@ window.programmaMacchineGrid = (function() {
                 c.statoProgramma !== 'Archiviata'
             );
             if (gridApi) {
-                gridApi.setGridOption('rowData', filteredData);
-                console.log(`Grid refreshed with ${filteredData.length} rows`);
+                // Prepara i dati con placeholder per macchine vuote
+                const preparedData = prepareDataWithPlaceholders(filteredData);
+                gridApi.setGridOption('rowData', preparedData);
+                console.log(`Grid refreshed with ${preparedData.length} rows (${filteredData.length} commesse + placeholder)`);
+                
+                // Forza il re-render per aggiornare i colori alternati
+                gridApi.redrawRows();
+                
                 setTimeout(() => attachStatoProgrammaHandlers(), 100);
             }
         } catch (err) {
