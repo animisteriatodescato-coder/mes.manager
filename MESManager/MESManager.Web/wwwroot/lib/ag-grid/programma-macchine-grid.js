@@ -1,34 +1,45 @@
 window.programmaMacchineGrid = (function() {
     let gridApi = null;
-    let dragOverRowNode = null;
-    let dragOverPosition = null; // 'above' o 'below'
+    let dotNetHelper = null;
+    
+    // Lista macchine disponibili (M001-M010)
+    const allMachines = ['M001', 'M002', 'M003', 'M004', 'M005', 'M006', 'M007', 'M008', 'M009', 'M010'];
 
-    // Colori alternati per le macchine (azzurro e verde pallido)
+    // Colori alternati per le macchine (verde pallido alternato)
     const machineColors = {
-        even: '#e3f2fd', // azzurro pallido
-        odd: '#e8f5e9'   // verde pallido
-    };
-
-    // Colori per il drop target
-    const dropColors = {
-        above: '#ffeb3b', // giallo per inserimento sopra
-        below: '#4caf50', // verde per inserimento sotto
-        machineChange: '#ff9800' // arancione per cambio macchina
+        light: '#e8f5e9',  // Verde pallido
+        dark: '#c8e6c9'    // Verde leggermente più scuro
     };
 
     const columnDefs = [
         {
-            field: 'drag',
-            headerName: '',
-            width: 50,
+            field: 'ordine',
+            headerName: '↕',
+            width: 70,
             pinned: 'left',
-            rowDrag: true,
             sortable: false,
             filter: false,
             suppressMenu: true,
-            suppressCellFlash: true,
-            lockPosition: 'left',
-            cellClass: 'drag-handle-cell'
+            cellRenderer: params => {
+                // Righe placeholder (vuote) non hanno pulsanti
+                if (params.data.isPlaceholder) {
+                    return '<span style="color:#bbb;font-style:italic;font-size:11px;">(vuoto)</span>';
+                }
+                return `<div style="display:flex;gap:2px;justify-content:center;align-items:center;height:100%;">
+                    <button class="move-up-btn" style="border:none;background:#e3f2fd;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:3px;" title="Sposta su">▲</button>
+                    <button class="move-down-btn" style="border:none;background:#e3f2fd;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:3px;" title="Sposta giù">▼</button>
+                </div>`;
+            },
+            onCellClicked: async (params) => {
+                if (params.data.isPlaceholder) return;
+                
+                const target = params.event.target;
+                if (target.classList.contains('move-up-btn')) {
+                    await moveRow(params.data.id, params.data.numeroMacchina, 'up');
+                } else if (target.classList.contains('move-down-btn')) {
+                    await moveRow(params.data.id, params.data.numeroMacchina, 'down');
+                }
+            }
         },
         {
             field: 'storico',
@@ -39,9 +50,11 @@ window.programmaMacchineGrid = (function() {
             filter: false,
             suppressMenu: true,
             cellRenderer: params => {
+                if (params.data.isPlaceholder) return '';
                 return `<button class="storico-btn" style="border:none;background:transparent;cursor:pointer;font-size:16px;color:#9c27b0" title="Visualizza Storico Programmazione">📋</button>`;
             },
             onCellClicked: params => {
+                if (params.data.isPlaceholder) return;
                 showStoricoProgrammazione(params.data.id, params.data.codice || params.data.numeroCommessa);
             }
         },
@@ -224,175 +237,52 @@ window.programmaMacchineGrid = (function() {
         return match ? parseInt(match[1], 10) : 0;
     }
 
-    // Calcola il colore basato sul numero macchina (alternando tra azzurro e verde)
-    function getMachineColor(numeroMacchina) {
-        const num = getMachineNumber(numeroMacchina);
-        if (num === 0) return null;
-        return num % 2 === 0 ? machineColors.even : machineColors.odd;
-    }
-
-    // ==================== DRAG & DROP FUNCTIONS ====================
+    // ==================== MOVE UP/DOWN FUNCTIONS ====================
     
-    // Rimuove tutti i marker visivi di drop
-    function clearDropMarkers() {
-        document.querySelectorAll('.drop-marker-above, .drop-marker-below, .drop-target-machine-change').forEach(el => {
-            el.classList.remove('drop-marker-above', 'drop-marker-below', 'drop-target-machine-change');
-        });
-        dragOverRowNode = null;
-        dragOverPosition = null;
-    }
-
-    // Calcola se il mouse è nella metà superiore o inferiore della riga
-    function getDropPosition(event, rowNode) {
-        if (!rowNode || !event) return null;
-        
-        const rowElement = document.querySelector(`[row-id="${rowNode.id}"]`);
-        if (!rowElement) return null;
-        
-        const rect = rowElement.getBoundingClientRect();
-        const mouseY = event.y;
-        const rowMiddle = rect.top + rect.height / 2;
-        
-        return mouseY < rowMiddle ? 'above' : 'below';
-    }
-
-    // Gestisce il movimento durante il drag
-    function onRowDragMove(event) {
+    // Sposta una riga su o giù all'interno della stessa macchina
+    async function moveRow(commessaId, numeroMacchina, direction) {
         try {
-            const movingNode = event.node;
-            const overNode = event.overNode;
-            
-            if (!overNode || !movingNode) {
-                clearDropMarkers();
-                return;
-            }
-            
-            // Non permettere drop sulla stessa riga
-            if (movingNode.id === overNode.id) {
-                clearDropMarkers();
-                return;
-            }
-        
-        const dropPos = getDropPosition(event.event, overNode);
-        if (!dropPos) return;
-        
-        const isMachineChange = movingNode.data?.numeroMacchina !== overNode.data?.numeroMacchina;
-        
-        // Aggiorna marker solo se cambiato
-        if (dragOverRowNode !== overNode || dragOverPosition !== dropPos) {
-            clearDropMarkers();
-            
-            const rowElement = document.querySelector(`[row-id="${overNode.id}"]`);
-            if (rowElement) {
-                if (dropPos === 'above') {
-                    rowElement.classList.add('drop-marker-above');
-                } else {
-                    rowElement.classList.add('drop-marker-below');
+            // Trova tutte le commesse della stessa macchina (esclusi placeholder)
+            const machineRows = [];
+            gridApi.forEachNodeAfterFilterAndSort(node => {
+                if (node.data && node.data.numeroMacchina === numeroMacchina && !node.data.isPlaceholder) {
+                    machineRows.push(node.data);
                 }
-                
-                if (isMachineChange) {
-                    rowElement.classList.add('drop-target-machine-change');
+            });
+            
+            // Trova la posizione corrente
+            const currentIndex = machineRows.findIndex(r => r.id === commessaId);
+            if (currentIndex === -1) {
+                console.log('Commessa non trovata nella macchina');
+                return;
+            }
+            
+            // Calcola nuova posizione
+            let newIndex;
+            if (direction === 'up') {
+                if (currentIndex === 0) {
+                    console.log('Già in prima posizione');
+                    return;
                 }
-            }
-            
-            dragOverRowNode = overNode;
-            dragOverPosition = dropPos;
-        }
-        } catch (e) {
-            // Ignora errori durante il drag move
-        }
-    }
-
-    // Pulisce i marker quando il drag esce dalla griglia
-    function onRowDragLeave(event) {
-        clearDropMarkers();
-    }
-
-    // Gestisce la fine del drag (drop)
-    async function onRowDragEnd(event) {
-        clearDropMarkers();
-        
-        try {
-            const movingNode = event.node;
-            const overNode = event.overNode;
-            
-            if (!overNode || !movingNode || movingNode.id === overNode.id) {
-                console.log('Drop annullato: nessun target valido');
-                return;
-            }
-            
-            const dropPos = getDropPosition(event.event, overNode);
-            if (!dropPos) {
-                console.log('Drop annullato: posizione non determinabile');
-                return;
-            }
-            
-            const movingData = movingNode.data;
-            const overData = overNode.data;
-            
-            if (!movingData || !overData) {
-                console.log('Drop annullato: dati mancanti');
-                return;
-            }
-        
-        // Determina la macchina di destinazione
-        const nuovoNumeroMacchina = overData.numeroMacchina;
-        const isMachineChange = movingData.numeroMacchina !== nuovoNumeroMacchina;
-        
-        console.log(`Drop: ${movingData.codice} -> ${nuovoNumeroMacchina}, posizione: ${dropPos}, cambio macchina: ${isMachineChange}`);
-        
-        // Calcola la nuova posizione index
-        // Trova tutte le righe della macchina di destinazione INCLUSA quella che stiamo spostando
-        const allRowsWithMoving = [];
-        gridApi.forEachNodeAfterFilterAndSort(node => {
-            if (node.data.numeroMacchina === nuovoNumeroMacchina) {
-                allRowsWithMoving.push(node);
-            }
-        });
-        
-        // Trova la posizione dell'overNode nella lista completa
-        const overNodeIndexInFull = allRowsWithMoving.findIndex(node => node.data.id === overData.id);
-        const movingNodeIndexInFull = allRowsWithMoving.findIndex(node => node.data.id === movingData.id);
-        
-        // Calcola l'indice target nella lista SENZA la riga che stiamo spostando
-        let targetIndex;
-        
-        if (isMachineChange) {
-            // Cambio macchina: l'overNode non cambia posizione
-            targetIndex = overNodeIndexInFull;
-            if (dropPos === 'below') {
-                targetIndex = targetIndex + 1;
-            }
-        } else {
-            // Stessa macchina: dobbiamo considerare che rimuovendo la riga gli indici cambiano
-            // Rimuovi logicamente la riga che stiamo spostando
-            const indexWithoutMoving = overNodeIndexInFull > movingNodeIndexInFull 
-                ? overNodeIndexInFull - 1 
-                : overNodeIndexInFull;
-            
-            if (dropPos === 'above') {
-                targetIndex = indexWithoutMoving;
+                newIndex = currentIndex - 1;
             } else {
-                targetIndex = indexWithoutMoving + 1;
+                if (currentIndex === machineRows.length - 1) {
+                    console.log('Già in ultima posizione');
+                    return;
+                }
+                newIndex = currentIndex + 1;
             }
-        }
-        
-        // Se non trovato (caso raro), metti in fondo
-        if (targetIndex < 0) {
-            targetIndex = allRowsWithMoving.length - (isMachineChange ? 0 : 1);
-        }
-        
-        console.log(`Nuova posizione index: ${targetIndex} (${dropPos} rispetto a ${overData.codice}, overIdx=${overNodeIndexInFull}, movingIdx=${movingNodeIndexInFull})`);
-        
-        // Chiama l'API per salvare
-        try {
+            
+            console.log(`Spostamento ${direction}: ${currentIndex} -> ${newIndex}`);
+            
+            // Chiama l'API per salvare
             const response = await fetch('/api/Commesse/riordina', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    commessaId: movingData.id,
-                    nuovoNumeroMacchina: nuovoNumeroMacchina,
-                    nuovaPosizioneIndex: targetIndex
+                    commessaId: commessaId,
+                    nuovoNumeroMacchina: numeroMacchina,
+                    nuovaPosizioneIndex: newIndex
                 })
             });
             
@@ -401,31 +291,18 @@ window.programmaMacchineGrid = (function() {
                 throw new Error(error.error || `HTTP ${response.status}`);
             }
             
-            console.log('✓ Riordino salvato con successo');
+            console.log('✓ Spostamento salvato con successo');
             
-            // Ricarica i dati per riflettere il nuovo ordine
+            // Ricarica i dati
             await refreshGridData();
             
-            // Notifica cambio
-            window.dispatchEvent(new CustomEvent('commessaRiordinata', { 
-                detail: { 
-                    commessaId: movingData.id, 
-                    nuovoNumeroMacchina: nuovoNumeroMacchina,
-                    nuovaPosizioneIndex: targetIndex,
-                    cambioMacchina: isMachineChange
-                } 
-            }));
-            
         } catch (err) {
-            console.error('Errore durante il riordino:', err);
-            alert(`Errore durante il salvataggio: ${err.message}`);
-        }
-        } catch (dragErr) {
-            console.error('Errore durante il drag:', dragErr);
+            console.error('Errore durante lo spostamento:', err);
+            alert(`Errore: ${err.message}`);
         }
     }
 
-    // ==================== END DRAG & DROP ====================
+    // ==================== END MOVE FUNCTIONS ====================
 
     // Funzione per mostrare lo storico programmazione in un dialog
     async function showStoricoProgrammazione(commessaId, codiceCommessa) {
@@ -504,13 +381,35 @@ window.programmaMacchineGrid = (function() {
             return;
         }
 
-        // Filter only rows with numeroMacchina assigned (numeroMacchina is a string)
-        const filteredData = data.filter(row => row.numeroMacchina != null && row.numeroMacchina !== '');
-        console.log('init: received', data.length, 'rows, filtered to', filteredData.length, 'with machine');
+        // Aggiungi CSS per impedire la selezione del testo al doppio click
+        if (!document.getElementById('pm-grid-noselect-style')) {
+            const style = document.createElement('style');
+            style.id = 'pm-grid-noselect-style';
+            style.textContent = `
+                #${gridId} .ag-cell {
+                    user-select: none;
+                    -webkit-user-select: none;
+                    -moz-user-select: none;
+                    -ms-user-select: none;
+                }
+                .move-up-btn:hover, .move-down-btn:hover {
+                    background: #bbdefb !important;
+                }
+                .placeholder-row {
+                    color: #bbb !important;
+                    font-style: italic;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Prepara i dati con placeholder per macchine vuote
+        const preparedData = prepareDataWithPlaceholders(data);
+        console.log('init: received', data.length, 'rows, prepared to', preparedData.length, 'with placeholders');
 
         const gridOptions = {
             columnDefs: columnDefs,
-            rowData: filteredData,
+            rowData: preparedData,
             defaultColDef: {
                 resizable: true,
                 sortable: true,
@@ -520,19 +419,39 @@ window.programmaMacchineGrid = (function() {
             getRowStyle: params => {
                 const style = {};
                 
-                if (params.data && params.data.numeroMacchina != null && params.data.numeroMacchina !== '') {
-                    const color = getMachineColor(params.data.numeroMacchina);
-                    if (color) {
-                        style.backgroundColor = color;
+                if (params.data) {
+                    // Calcola il colore alternato in base al cambio macchina
+                    const rowIndex = params.node.rowIndex;
+                    let colorToggle = false;
+                    
+                    // Conta quante volte cambia la macchina prima di questa riga
+                    if (rowIndex > 0) {
+                        let prevMachine = null;
+                        for (let i = 0; i <= rowIndex; i++) {
+                            const node = params.api.getDisplayedRowAtIndex(i);
+                            if (node && node.data && node.data.numeroMacchina) {
+                                if (prevMachine !== null && prevMachine !== node.data.numeroMacchina) {
+                                    colorToggle = !colorToggle;
+                                }
+                                prevMachine = node.data.numeroMacchina;
+                            }
+                        }
                     }
                     
+                    // Applica il colore in base a quanti cambi ci sono stati
+                    style.backgroundColor = colorToggle ? machineColors.dark : machineColors.light;
+                    
                     // Aggiungi bordo superiore nero se la macchina è diversa dalla riga precedente
-                    const rowIndex = params.node.rowIndex;
                     if (rowIndex > 0) {
                         const prevNode = params.api.getDisplayedRowAtIndex(rowIndex - 1);
                         if (prevNode && prevNode.data && prevNode.data.numeroMacchina !== params.data.numeroMacchina) {
                             style.borderTop = '3px solid #000';
                         }
+                    }
+                    
+                    // Righe placeholder più sbiadite
+                    if (params.data.isPlaceholder) {
+                        style.opacity = '0.6';
                     }
                 }
                 
@@ -565,13 +484,6 @@ window.programmaMacchineGrid = (function() {
             rowSelection: null, // Disabilita completamente la selezione
             suppressRowClickSelection: true, // Evita selezione riga al click
             suppressCellFocus: true, // Disabilita focus delle celle
-            rowDragManaged: false, // Usiamo gestione manuale per calcolare posizione
-            rowDragEntireRow: false, // Drag solo dalla colonna handle
-            rowDragMultiRow: false, // Non permettere drag di più righe
-            suppressMoveWhenRowDragging: false,
-            onRowDragMove: onRowDragMove,
-            onRowDragEnd: onRowDragEnd,
-            onRowDragLeave: onRowDragLeave,
             onGridReady: (params) => {
                 gridApi = params.api;
                 console.log('onGridReady: gridApi set');
@@ -584,6 +496,15 @@ window.programmaMacchineGrid = (function() {
                     } catch (e) {
                         console.warn('Failed to restore column state:', e);
                     }
+                }
+            },
+            onRowDoubleClicked: (event) => {
+                // Non fare nulla per le righe placeholder
+                if (event.data && event.data.isPlaceholder) return;
+                
+                // Chiama il metodo .NET per aprire il dialog di modifica anima
+                if (dotNetHelper && event.data && event.data.articoloCodice) {
+                    dotNetHelper.invokeMethodAsync('OnRowDoubleClick', event.data.articoloCodice);
                 }
             },
             onColumnMoved: () => {
@@ -627,16 +548,63 @@ window.programmaMacchineGrid = (function() {
         }
     }
 
+    // Prepara i dati aggiungendo placeholder per macchine vuote
+    function prepareDataWithPlaceholders(data) {
+        // Filtra solo commesse con macchina assegnata e non archiviate
+        const commesse = data.filter(row => 
+            row.numeroMacchina != null && 
+            row.numeroMacchina !== '' &&
+            row.statoProgramma !== 'Archiviata'
+        );
+        
+        // Raggruppa per macchina
+        const byMachine = {};
+        allMachines.forEach(m => byMachine[m] = []);
+        
+        commesse.forEach(c => {
+            if (byMachine[c.numeroMacchina]) {
+                byMachine[c.numeroMacchina].push(c);
+            }
+        });
+        
+        // Ordina per ordineSequenza dentro ogni macchina
+        allMachines.forEach(m => {
+            byMachine[m].sort((a, b) => (a.ordineSequenza || 0) - (b.ordineSequenza || 0));
+        });
+        
+        // Costruisci l'array finale con placeholder per macchine vuote
+        const result = [];
+        allMachines.forEach(machine => {
+            if (byMachine[machine].length === 0) {
+                // Macchina vuota: aggiungi placeholder
+                result.push({
+                    id: `placeholder-${machine}`,
+                    numeroMacchina: machine,
+                    codice: '',
+                    isPlaceholder: true
+                });
+            } else {
+                // Macchina con commesse: aggiungile tutte
+                byMachine[machine].forEach(c => result.push(c));
+            }
+        });
+        
+        return result;
+    }
+
     function updateData(data) {
         console.log('updateData called with', data?.length, 'rows, gridApi exists:', !!gridApi);
         if (gridApi) {
-            // numeroMacchina is a string, filter by non-empty value
-            const filteredData = data.filter(row => row.numeroMacchina != null && row.numeroMacchina !== '');
-            console.log('updateData: filtered to', filteredData.length, 'with machine');
-            gridApi.setGridOption('rowData', filteredData);
+            const preparedData = prepareDataWithPlaceholders(data);
+            console.log('updateData: prepared to', preparedData.length, 'with placeholders');
+            gridApi.setGridOption('rowData', preparedData);
         } else {
             console.error('updateData: gridApi is null, cannot update data');
         }
+    }
+
+    function setDotNetHelper(helper) {
+        dotNetHelper = helper;
     }
 
     function setQuickFilter(searchText) {
@@ -845,12 +813,20 @@ window.programmaMacchineGrid = (function() {
         // Body
         html += '<tbody>';
         let previousMachine = null;
-        rowData.forEach(row => {
-            const machineNum = getMachineNumber(row.numeroMacchina);
-            const bgColor = machineNum % 2 === 0 ? '#e3f2fd' : '#e8f5e9';
-            const borderTop = previousMachine !== null && previousMachine !== row.numeroMacchina 
-                ? 'border-top: 3px solid #000;' : '';
+        let colorToggle = false;
+        rowData.forEach((row, index) => {
+            // Salta i placeholder nella stampa
+            if (row.isPlaceholder) return;
+            
+            // Alterna colore quando cambia macchina
+            if (previousMachine !== null && previousMachine !== row.numeroMacchina) {
+                colorToggle = !colorToggle;
+            }
             previousMachine = row.numeroMacchina;
+            
+            const bgColor = colorToggle ? '#c8e6c9' : '#e8f5e9';
+            const borderTop = index > 0 && rowData[index-1] && rowData[index-1].numeroMacchina !== row.numeroMacchina 
+                ? 'border-top: 3px solid #000;' : '';
             
             html += `<tr style="background-color: ${bgColor}; ${borderTop} -webkit-print-color-adjust: exact; print-color-adjust: exact;">`;
             visibleColumns.forEach(col => {
@@ -876,9 +852,12 @@ window.programmaMacchineGrid = (function() {
         html += '</tbody>';
         html += '</table>';
 
+        // Conta le righe effettive (senza placeholder)
+        const actualRowCount1 = rowData.filter(r => !r.isPlaceholder).length;
+
         // Footer - già incluso data e ora nell'header, aggiungiamo solo il totale
         html += `<div style="margin-top: 10px; font-size: 9px; color: #666; text-align: right;">`;
-        html += `<p style="margin: 2px 0;">Totale commesse: ${rowData.length}</p>`;
+        html += `<p style="margin: 2px 0;">Totale commesse: ${actualRowCount1}</p>`;
         html += `</div>`;
         html += '</div>'; // Chiude il div wrapper principale
 
@@ -943,8 +922,8 @@ window.programmaMacchineGrid = (function() {
         }
         td { border: 1px solid #ddd; padding: 3px; }
         .footer { margin-top: 10px; font-size: 9px; color: #666; text-align: right; }
-        .machine-even { background-color: #e3f2fd !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        .machine-odd { background-color: #e8f5e9 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .machine-light { background-color: #e8f5e9 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .machine-dark { background-color: #c8e6c9 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         .machine-separator { border-top: 3px solid #000 !important; }
         .center { text-align: center; }
         .right { text-align: right; }
@@ -970,13 +949,21 @@ window.programmaMacchineGrid = (function() {
         </thead>
         <tbody>`;
 
-        // Body rows
-        let previousMachine = null;
+        // Body rows - alterna colori in base al cambio macchina
+        let previousMachine2 = null;
+        let colorToggle2 = false;
         rowData.forEach(row => {
-            const machineNum = getMachineNumber(row.numeroMacchina);
-            const colorClass = machineNum % 2 === 0 ? 'machine-even' : 'machine-odd';
-            const separatorClass = previousMachine !== null && previousMachine !== row.numeroMacchina ? 'machine-separator' : '';
-            previousMachine = row.numeroMacchina;
+            // Salta i placeholder
+            if (row.isPlaceholder) return;
+            
+            // Alterna colore quando cambia macchina
+            if (previousMachine2 !== null && previousMachine2 !== row.numeroMacchina) {
+                colorToggle2 = !colorToggle2;
+            }
+            const separatorClass = previousMachine2 !== null && previousMachine2 !== row.numeroMacchina ? 'machine-separator' : '';
+            previousMachine2 = row.numeroMacchina;
+            
+            const colorClass = colorToggle2 ? 'machine-dark' : 'machine-light';
             
             html += `<tr class="${colorClass} ${separatorClass}">`;
             visibleColumns.forEach(col => {
@@ -998,10 +985,13 @@ window.programmaMacchineGrid = (function() {
             html += '</tr>';
         });
 
+        // Conta le righe effettive (senza placeholder)
+        const actualRowCount = rowData.filter(r => !r.isPlaceholder).length;
+        
         html += `</tbody>
     </table>
     <div class="footer">
-        <p>Totale commesse: ${rowData.length}</p>
+        <p>Totale commesse: ${actualRowCount}</p>
     </div>
     <script>
         window.onload = function() {
@@ -1087,8 +1077,8 @@ window.programmaMacchineGrid = (function() {
         }
         td { border: 1px solid #ddd; padding: 3px; }
         .footer { margin-top: 10px; font-size: 9px; color: #666; text-align: right; }
-        .machine-even { background-color: #e3f2fd !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        .machine-odd { background-color: #e8f5e9 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .machine-light { background-color: #e8f5e9 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .machine-dark { background-color: #c8e6c9 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         .machine-separator { border-top: 3px solid #000 !important; }
         .center { text-align: center; }
         .right { text-align: right; }
@@ -1114,13 +1104,21 @@ window.programmaMacchineGrid = (function() {
         </thead>
         <tbody>`;
 
-        // Body rows
-        let previousMachine = null;
+        // Body rows - alterna colori in base al cambio macchina
+        let previousMachine3 = null;
+        let colorToggle3 = false;
         rowData.forEach(row => {
-            const machineNum = getMachineNumber(row.numeroMacchina);
-            const colorClass = machineNum % 2 === 0 ? 'machine-even' : 'machine-odd';
-            const separatorClass = previousMachine !== null && previousMachine !== row.numeroMacchina ? 'machine-separator' : '';
-            previousMachine = row.numeroMacchina;
+            // Salta i placeholder
+            if (row.isPlaceholder) return;
+            
+            // Alterna colore quando cambia macchina
+            if (previousMachine3 !== null && previousMachine3 !== row.numeroMacchina) {
+                colorToggle3 = !colorToggle3;
+            }
+            const separatorClass = previousMachine3 !== null && previousMachine3 !== row.numeroMacchina ? 'machine-separator' : '';
+            previousMachine3 = row.numeroMacchina;
+            
+            const colorClass = colorToggle3 ? 'machine-dark' : 'machine-light';
             
             html += `<tr class="${colorClass} ${separatorClass}">`;
             visibleColumns.forEach(col => {
@@ -1141,10 +1139,13 @@ window.programmaMacchineGrid = (function() {
             html += '</tr>';
         });
 
+        // Conta le righe effettive (senza placeholder)
+        const actualRowCount3 = rowData.filter(r => !r.isPlaceholder).length;
+
         html += `</tbody>
     </table>
     <div class="footer">
-        <p>Totale commesse: ${rowData.length}</p>
+        <p>Totale commesse: ${actualRowCount3}</p>
     </div>
 </body>
 </html>`;
@@ -1191,6 +1192,7 @@ window.programmaMacchineGrid = (function() {
         setUiVars: setUiVars,
         generatePrintTable: generatePrintTable,
         printInNewWindow: printInNewWindow,
-        printViaIframe: printViaIframe
+        printViaIframe: printViaIframe,
+        setDotNetHelper: setDotNetHelper
     };
 })();

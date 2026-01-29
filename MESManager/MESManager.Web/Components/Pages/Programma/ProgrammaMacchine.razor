@@ -2,12 +2,15 @@
 @using MESManager.Application.DTOs
 @using MESManager.Web.Models
 @using MESManager.Web.Services
+@using MESManager.Web.Components.Dialogs
 @using Microsoft.JSInterop
 @using System.Text.Json
 @inject HttpClient Http
 @inject NavigationManager Nav
 @inject PreferencesService PreferencesService
 @inject IJSRuntime JSRuntime
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 @implements IAsyncDisposable
 
 <PageTitle>Programma Macchine</PageTitle>
@@ -136,8 +139,9 @@
             <MudText Typo="Typo.caption" Color="Color.Secondary">Ultimo aggiornamento: <strong>@lastUpdate.ToString("HH:mm:ss")</strong></MudText>
             <MudSpacer />
             <MudStack Row="true" Spacing="1">
-                <MudChip T="string" Size="Size.Small" Style="background-color: #e3f2fd;">Macchine Pari</MudChip>
-                <MudChip T="string" Size="Size.Small" Style="background-color: #e8f5e9;">Macchine Dispari</MudChip>
+                <MudChip T="string" Size="Size.Small" Style="background-color: #e8f5e9;">Verde Chiaro</MudChip>
+                <MudChip T="string" Size="Size.Small" Style="background-color: #c8e6c9;">Verde Scuro</MudChip>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-2">(alternati per cambio macchina)</MudText>
             </MudStack>
             <MudChip T="string" Size="Size.Small" Color="@(isLoading ? Color.Warning : Color.Success)" 
                      Icon="@(isLoading ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.CheckCircle)">
@@ -150,49 +154,6 @@
 <style>
     .programma-macchine-page {
         position: relative;
-    }
-
-    /* Drag & Drop visual feedback */
-    .drop-marker-above {
-        border-top: 3px solid #ffeb3b !important;
-        box-shadow: 0 -2px 4px rgba(255, 235, 59, 0.5);
-    }
-
-    .drop-marker-below {
-        border-bottom: 3px solid #4caf50 !important;
-        box-shadow: 0 2px 4px rgba(76, 175, 80, 0.5);
-    }
-
-    .drop-target-machine-change {
-        background-color: #fff3e0 !important;
-        outline: 2px dashed #ff9800;
-    }
-
-    /* Stile per la riga che stiamo trascinando */
-    .ag-row-dragging {
-        opacity: 0.7;
-        background-color: #e1f5fe !important;
-    }
-
-    /* Colonna drag - icona di AG-Grid */
-    .ag-row .ag-cell[col-id="drag"],
-    .drag-handle-cell {
-        cursor: grab !important;
-        user-select: none !important;
-    }
-
-    .ag-row .ag-cell[col-id="drag"]:active,
-    .drag-handle-cell:active {
-        cursor: grabbing !important;
-    }
-
-    /* Stile icona drag di AG-Grid */
-    .ag-row .ag-row-drag {
-        color: #9e9e9e;
-    }
-
-    .ag-row:hover .ag-row-drag {
-        color: #1976d2;
     }
 
     #printableCommesse {
@@ -305,15 +266,17 @@
             
             _allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
             
-            // Filter only open commesse with numeroMacchina assigned and not archived
-            _commesse = _allCommesse.Where(c => 
-                c.Stato == "Aperta" && 
+            // Filter only open commesse (la griglia JS farà ulteriori filtri per macchina e stato)
+            _commesse = _allCommesse.Where(c => c.Stato == "Aperta").ToList();
+            
+            // Conteggio delle commesse programmate (con macchina assegnata e non archiviate)
+            var programmate = _commesse.Where(c => 
                 !string.IsNullOrEmpty(c.NumeroMacchina) &&
                 c.StatoProgramma != "Archiviata"
             ).ToList();
             
-            totalRows = _commesse.Count;
-            filteredRows = _commesse.Count;
+            totalRows = programmate.Count;
+            filteredRows = programmate.Count;
             lastUpdate = DateTime.Now;
             isLoading = false;
             gridStatus = "Pronto";
@@ -379,6 +342,51 @@
         await RefreshData();
     }
 
+    [JSInvokable]
+    public async Task OnRowDoubleClick(string articoloCodice)
+    {
+        try
+        {
+            // Carica l'AnimeDto dal codice articolo
+            var anime = await Http.GetFromJsonAsync<AnimeDto>($"/api/Anime/by-codice/{Uri.EscapeDataString(articoloCodice)}");
+            
+            if (anime == null)
+            {
+                Snackbar.Add($"Anima con codice {articoloCodice} non trovata", Severity.Warning);
+                return;
+            }
+            
+            var parameters = new DialogParameters<AnimeEditDialog>
+            {
+                { x => x.Anime, anime }
+            };
+            
+            var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Large,
+                FullWidth = true,
+                CloseButton = true,
+                CloseOnEscapeKey = true
+            };
+            
+            var dialog = await DialogService.ShowAsync<AnimeEditDialog>("Modifica Anima", parameters, options);
+            var result = await dialog.Result;
+            
+            if (result != null && !result.Canceled && result.Data is AnimeDto updatedAnime)
+            {
+                // Ricarica i dati per riflettere le modifiche
+                await RefreshData();
+                Snackbar.Add("Anima aggiornata con successo", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+        
+        StateHasChanged();
+    }
+
     private async Task InitializeGrid()
     {
         try
@@ -398,6 +406,10 @@
             var jsonData = JsonSerializer.Serialize(_commesse, jsonOptions);
 
             await JSRuntime.InvokeVoidAsync("eval", $"programmaMacchineGrid.init('programmaMacchineGrid', JSON.parse({System.Text.Json.JsonSerializer.Serialize(jsonData)}), {System.Text.Json.JsonSerializer.Serialize(settings.ColumnStateJson)})");
+            
+            // Passa il DotNetReference per il doppio clic
+            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.setDotNetHelper", DotNetObjectReference.Create(this));
+            
             await ApplyUiSettings();
         }
         catch
