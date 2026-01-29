@@ -1,8 +1,8 @@
 # 📋 Changelog Versioni MESManager
 
 ## v1.13 (29 Gennaio 2026)
-**Data:** 29 Gen 2026 - Integrazione Colonne Anime  
-**Status:** 🔧 In sviluppo
+**Data:** 29 Gen 2026 - Integrazione Colonne Anime + Fix Stampa  
+**Status:** ✅ Completato
 
 ### Modifiche
 - ✅ **Imballo Descrizione**: Ora mostra la descrizione invece del numero nelle griglie
@@ -10,13 +10,21 @@
 - ✅ **Nuovi campi CommessaDto**: Aggiunti `ImballoDescrizione`, `MacchineSuDisponibiliDescrizione`, `Figure`, `Maschere`, `Assemblata`, `ArmataL`, `TogliereSparo`
 - ✅ **CommessaAppService**: Aggiornato per popolare le descrizioni dai lookup tables
 - ✅ **No code duplication**: Commesse Aperte e Programma Macchine usano la stessa fonte per le colonne anime
+- ✅ **Fix Ordine Colonne Stampa**: La stampa ora rispetta l'ordine delle colonne come visualizzato nella griglia
+
+### Dettaglio Fix Stampa
+**Problema:** L'ordine delle colonne nella stampa non corrispondeva all'ordine impostato dall'utente nella griglia.
+
+**Causa:** Le funzioni di stampa (`printViaIframe`, `printInNewWindow`, `generatePrintTable`) usavano `gridApi.getColumns()` che restituisce le colonne nell'ordine della definizione originale, non nell'ordine attuale dopo drag & drop.
+
+**Soluzione:** Sostituito `gridApi.getColumns()` con `gridApi.getAllDisplayedColumns()` che rispetta l'ordine attuale delle colonne come visualizzato dall'utente.
 
 ### File Modificati
 - `MESManager.Application/DTOs/CommessaDto.cs` - Aggiunti 7 campi mancanti
 - `MESManager.Infrastructure/Services/CommessaAppService.cs` - Popolamento descrizioni
 - `MESManager.Web/wwwroot/lib/ag-grid/anime-columns-shared.js` - NUOVO: colonne condivise
 - `MESManager.Web/wwwroot/lib/ag-grid/commesse-aperte-grid.js` - Usa colonne condivise
-- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` - Usa colonne condivise
+- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` - Usa colonne condivise + fix stampa
 - `MESManager.Web/Components/App.razor` - Caricamento script condiviso
 
 ---

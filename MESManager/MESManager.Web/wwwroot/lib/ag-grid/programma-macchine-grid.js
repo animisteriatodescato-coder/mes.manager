@@ -770,9 +770,9 @@ window.programmaMacchineGrid = (function() {
         const printDiv = document.getElementById('printableCommesse');
         if (!printDiv) return;
 
-        // Ottieni le colonne visibili
-        const visibleColumns = gridApi.getColumns()
-            .filter(col => col.isVisible() && col.getColId() !== 'ag-Grid-AutoColumn');
+        // Ottieni le colonne nell'ordine attuale della griglia (come visualizzato dall'utente)
+        const visibleColumns = gridApi.getAllDisplayedColumns()
+            .filter(col => col.getColId() !== 'ag-Grid-AutoColumn');
 
         // Ottieni tutte le righe visualizzate (filtrate e ordinate)
         const rowData = [];
@@ -863,9 +863,9 @@ window.programmaMacchineGrid = (function() {
     function printInNewWindow() {
         if (!gridApi) return;
 
-        // Ottieni le colonne visibili
-        const visibleColumns = gridApi.getColumns()
-            .filter(col => col.isVisible() && col.getColId() !== 'ag-Grid-AutoColumn');
+        // Ottieni le colonne nell'ordine attuale della griglia (come visualizzato dall'utente)
+        const visibleColumns = gridApi.getAllDisplayedColumns()
+            .filter(col => col.getColId() !== 'ag-Grid-AutoColumn');
 
         // Ottieni tutte le righe visualizzate (filtrate e ordinate)
         const rowData = [];
@@ -1010,11 +1010,13 @@ window.programmaMacchineGrid = (function() {
     function printViaIframe(printColumnFields) {
         if (!gridApi) return;
 
-        // Ottieni le colonne visibili
-        let visibleColumns = gridApi.getColumns()
-            .filter(col => col.isVisible() && col.getColId() !== 'ag-Grid-AutoColumn');
+        // Ottieni le colonne nell'ordine attuale della griglia (come visualizzato dall'utente)
+        // getAllDisplayedColumns() rispetta l'ordine delle colonne dopo drag & drop
+        let visibleColumns = gridApi.getAllDisplayedColumns()
+            .filter(col => col.getColId() !== 'ag-Grid-AutoColumn');
 
         // Se sono specificate colonne per la stampa, filtra solo quelle
+        // IMPORTANTE: manteniamo l'ordine delle colonne dalla griglia, non dall'array printColumnFields
         if (printColumnFields && Array.isArray(printColumnFields) && printColumnFields.length > 0) {
             visibleColumns = visibleColumns.filter(col => {
                 const field = col.getColDef().field;
