@@ -597,6 +597,8 @@
             if (response.IsSuccessStatusCode)
             {
                 Snackbar.Add("Anima salvata!", Severity.Success);
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(100); // Piccolo delay per permettere al rendering di completarsi
                 MudDialog.Close(DialogResult.Ok(Anime));
             }
             else Snackbar.Add($"Errore: {await response.Content.ReadAsStringAsync()}", Severity.Error);

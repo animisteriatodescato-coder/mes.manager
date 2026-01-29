@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace MESManager.Application.Configuration
 {
     /// <summary>
@@ -44,5 +46,24 @@ namespace MESManager.Application.Configuration
         /// Chiave API per autenticazione esterna (opzionale)
         /// </summary>
         public string ApiKey { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Configurazione per i percorsi dei file allegati
+    /// </summary>
+    public class FileConfiguration
+    {
+        /// <summary>
+        /// Percorso base per gli allegati (produzione)
+        /// </summary>
+        public string AllegatiBasePath { get; set; } = @"C:\Dati\Documenti\AA SCHEDE PRODUZIONE\foto cel";
+
+        /// <summary>
+        /// Mappature di percorsi di rete (formato: "P:\Documenti->C:\Dati\Documenti")
+        /// </summary>
+        public List<string> PathMappings { get; set; } = new()
+        {
+            @"P:\Documenti->C:\Dati\Documenti"
+        };
     }
 }

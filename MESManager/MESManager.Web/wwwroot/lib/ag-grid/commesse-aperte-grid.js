@@ -63,54 +63,36 @@ window.commesseAperteGrid = (function() {
             headerName: 'MA', 
             sortable: true, 
             filter: true, 
-            width: 120, 
+            width: 90, 
             pinned: 'left',
-            editable: false,
-            cellRenderer: params => {
+            editable: true,
+            singleClickEdit: true,  // Un solo click per editare
+            cellEditor: 'agSelectCellEditor',
+            cellEditorParams: params => {
                 const raw = params.data?.macchineSuDisponibili || '';
-                // Split per ottenere i codici disponibili (M001, M002, etc.)
                 const macchine = raw.split(';').map(s => s.trim()).filter(s => s.length > 0);
-                
-                if (macchine.length === 0) {
-                    return '<span style="color:#999">-</span>';
-                }
-                
-                let currentValue = params.value || '';
-                
-                // Normalizza il valore corrente: se è un numero (1,2,3...) convertilo in codice (M001, M002, M003...)
-                if (currentValue && /^\d+$/.test(currentValue)) {
-                    const num = parseInt(currentValue);
-                    currentValue = 'M' + num.toString().padStart(3, '0');
-                }
-                
-                const selectId = `ma-select-${params.data.id}`;
-                
-                let options = '<option value="">-</option>';
-                macchine.forEach(codice => {
-                    // Estrai il numero dal codice (M001 -> 001 -> 1 -> 01)
-                    const numero = codice.replace(/^M0*/, ''); // Rimuove M e zeri iniziali
-                    const nome = numero.padStart(2, '0'); // 01, 02, 03, etc.
-                    const selected = currentValue === codice ? 'selected' : '';
-                    options += `<option value="${codice}" ${selected}>${nome}</option>`;
-                });
-                
-                const bgColor = currentValue ? '#e3f2fd' : 'transparent';
-                const fontWeight = currentValue ? 'bold' : 'normal';
-                
-                return `<select id="${selectId}" 
-                    style="width:100%; height:100%; border:none; background:${bgColor}; 
-                           font-weight:${fontWeight}; text-align:center; cursor:pointer; 
-                           font-size:inherit; padding:2px;"
-                    size="1"
-                    data-commessa-id="${params.data.id}"
-                    data-field="numeroMacchina">
-                    ${options}
-                </select>`;
+                // Opzioni: vuoto + tutte le macchine disponibili
+                return { values: ['', ...macchine] };
             },
-            onCellClicked: (event) => {
-                event.event.stopPropagation();
+            valueFormatter: params => {
+                // Mostra M001 -> 01, M002 -> 02, etc.
+                if (!params.value) return '-';
+                const match = params.value.match(/M0*(\d+)/);
+                return match ? match[1].padStart(2, '0') : params.value;
             },
-            cellStyle: { padding: 0 }
+            cellStyle: params => ({
+                fontWeight: params.value ? 'bold' : 'normal',
+                backgroundColor: params.value ? '#e3f2fd' : 'transparent',
+                textAlign: 'center',
+                cursor: 'pointer'
+            }),
+            suppressKeyboardEvent: () => false,
+            onCellClicked: (params) => {
+                // Blocca propagazione per evitare apertura dialog anima
+                if (params.event) {
+                    params.event.stopPropagation();
+                }
+            }
         },
         { field: 'codice', headerName: 'Codice', sortable: true, filter: true, width: 180, pinned: 'left' },
         { field: 'internalOrdNo', headerName: 'Num. Ordine', sortable: true, filter: true, width: 130 },
@@ -312,53 +294,54 @@ window.commesseAperteGrid = (function() {
         }
     ];
 
-    // Funzione per gestire i cambi di selezione macchina e stato programma
+    // Funzione per gestire i cambi di selezione macchina con EVENT DELEGATION
+    // Usa un singolo handler sul container che intercetta tutti i change events
+    let delegationAttached = false;
+    
     function attachMachineSelectHandlers() {
-        document.querySelectorAll('select[data-commessa-id]').forEach(select => {
-            if (select.hasAttribute('data-listener-attached')) return;
-            select.setAttribute('data-listener-attached', 'true');
+        if (delegationAttached) return;
+        
+        const gridContainer = document.getElementById('commesseAperteGrid');
+        if (!gridContainer) {
+            console.log('Container griglia non trovato');
+            return;
+        }
+        
+        delegationAttached = true;
+        console.log('Event delegation attaccato al container griglia');
+        
+        gridContainer.addEventListener('change', async (e) => {
+            // Verifica che sia un select di macchina
+            if (!e.target.matches('select[data-commessa-id]')) return;
             
-            select.addEventListener('change', async (e) => {
-                const commessaId = e.target.getAttribute('data-commessa-id');
-                const newValue = e.target.value;
-                const selectEl = e.target;
+            const commessaId = e.target.getAttribute('data-commessa-id');
+            const numeroMacchina = e.target.value;
+            const selectEl = e.target;
+            
+            console.log(`>>> CHANGE: commessa ${commessaId} -> "${numeroMacchina}"`);
+            
+            try {
+                const response = await fetch(`/api/Commesse/${commessaId}/numero-macchina`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ numeroMacchina: numeroMacchina || null })
+                });
                 
-                console.log(`Updating numeroMacchina for commessa ${commessaId} to ${newValue}`);
+                console.log(`>>> Response: ${response.status}`);
                 
-                try {
-                    // Aggiorna solo il numero macchina - lo stato si gestisce da Programma Macchine
-                    const response = await fetch(`/api/Commesse/${commessaId}/numero-macchina`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ numeroMacchina: newValue })
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    
-                    console.log(`✓ numeroMacchina updated successfully for ${commessaId}`);
-                    
-                    // Dispatch event for Blazor to refresh data
-                    window.dispatchEvent(new CustomEvent('commessaFieldChanged', { 
-                        detail: { id: commessaId, field: 'numeroMacchina', value: newValue } 
-                    }));
-                    
-                    // Ricarica tutti i dati per riflettere cambiamenti automatici (stato Programmata)
-                    await refreshGridData();
-                    
-                } catch (err) {
-                    console.error(`Error updating numeroMacchina:`, err);
-                    alert(`Errore durante il salvataggio: ${err.message}`);
-                    // Revert the select to previous value
-                    selectEl.value = selectEl.dataset.previousValue || '';
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
                 }
-            });
-            
-            // Store current value for revert on error
-            select.addEventListener('focus', (e) => {
-                e.target.dataset.previousValue = e.target.value;
-            });
+                
+                console.log(`>>> OK - Salvato!`);
+                
+                // Ricarica i dati
+                await refreshGridData();
+                
+            } catch (err) {
+                console.error(`>>> ERRORE:`, err);
+                alert(`Errore: ${err.message}`);
+            }
         });
     }
 
@@ -465,10 +448,15 @@ window.commesseAperteGrid = (function() {
             return;
         }
         
-        // Carica stato colonne da localStorage (usando chiave per-utente)
+        // Prima usa lo stato passato da Blazor, poi fallback a localStorage
         const storageKey = getStorageKey();
-        const savedState = localStorage.getItem(storageKey);
-        console.log('Loading column state from localStorage:', storageKey, savedState ? 'found' : 'not found');
+        let stateToRestore = savedColumnState;
+        if (!stateToRestore) {
+            stateToRestore = localStorage.getItem(storageKey);
+            console.log('Loading column state from localStorage:', storageKey, stateToRestore ? 'found' : 'not found');
+        } else {
+            console.log('Using column state from Blazor');
+        }
         
         // Destroy existing grid if it exists to prevent duplication
         if (gridApi) {
@@ -531,10 +519,11 @@ window.commesseAperteGrid = (function() {
                 console.log('Commesse Aperte Grid ready, rowData count:', gridApi.getDisplayedRowCount());
                 
                 // Ripristina stato colonne se disponibile
-                if (savedState) {
+                if (stateToRestore) {
                     try {
+                        const state = typeof stateToRestore === 'string' ? JSON.parse(stateToRestore) : stateToRestore;
                         gridApi.applyColumnState({
-                            state: JSON.parse(savedState),
+                            state: state,
                             applyOrder: true
                         });
                         console.log('✓ Column state restored');
@@ -591,14 +580,43 @@ window.commesseAperteGrid = (function() {
                     return;
                 }
                 // Doppio click: naviga a Catalogo Anime per modificare i dati
-                if (dotNetHelper && event.data && event.data.articoloCodice) {
+                // Ma NON se si è cliccato sulla colonna MA
+                if (dotNetHelper && event.data && event.data.articoloCodice && event.colDef.field !== 'numeroMacchina') {
                     dotNetHelper.invokeMethodAsync('OnRowDoubleClick', event.data.articoloCodice);
                 }
             },
             onCellValueChanged: async (event) => {
-                // Machine select changes are handled in onGridReady
+                // Gestisci cambio macchina
                 if (event.colDef.field === 'numeroMacchina') {
-                    return;
+                    if (event.oldValue === event.newValue) return;
+                    
+                    const commessaId = event.data.id;
+                    const numeroMacchina = event.newValue || null;
+                    
+                    console.log(`Salvataggio macchina: ${commessaId} -> ${numeroMacchina}`);
+                    
+                    try {
+                        const response = await fetch(`/api/Commesse/${commessaId}/numero-macchina`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ numeroMacchina: numeroMacchina })
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        
+                        console.log('✓ Salvato con successo');
+                        
+                        // Ricarica i dati per aggiornare stato automatico
+                        await refreshGridData();
+                        
+                    } catch (err) {
+                        console.error('Errore salvataggio:', err);
+                        alert(`Errore: ${err.message}`);
+                        // Ripristina valore precedente
+                        event.node.setDataValue('numeroMacchina', event.oldValue);
+                    }
                 }
             }
         };

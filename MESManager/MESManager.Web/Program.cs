@@ -70,6 +70,15 @@ builder.Services.Configure<DatabaseConfiguration>(options =>
     options.GanttDb = builder.Configuration.GetConnectionString("GanttDb") ?? "";
 });
 
+// Configura FileConfiguration per i percorsi allegati (con valori di default)
+builder.Services.Configure<FileConfiguration>(options =>
+{
+    var section = builder.Configuration.GetSection("Files");
+    options.AllegatiBasePath = section["AllegatiBasePath"] ?? @"C:\Dati\Documenti\AA SCHEDE PRODUZIONE\foto cel";
+    var mappings = section.GetSection("PathMappings").Get<List<string>>();
+    options.PathMappings = mappings ?? new List<string> { @"P:\Documenti->C:\Dati\Documenti" };
+});
+
 // Abilita i controller API con JSON camelCase
 builder.Services.AddControllers()
     .AddJsonOptions(options =>

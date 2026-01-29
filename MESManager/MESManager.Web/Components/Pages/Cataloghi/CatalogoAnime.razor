@@ -250,8 +250,8 @@
             var userId = CurrentUserService.CurrentUserId?.ToString() ?? "";
             await JSRuntime.InvokeVoidAsync("animeGrid.setCurrentUser", userId);
             
-            // Inizializza la grid - lo stato delle colonne viene caricato da localStorage automaticamente
-            await JSRuntime.InvokeVoidAsync("animeGrid.init", "animeGrid", _anime, null);
+            // Inizializza la grid con lo stato colonne salvato nelle preferenze
+            await JSRuntime.InvokeVoidAsync("animeGrid.init", "animeGrid", _anime, settings.ColumnStateJson);
             
             // Registra DotNetObjectReference per callback JS->Blazor (double-click)
             _dotNetRef = DotNetObjectReference.Create(this);

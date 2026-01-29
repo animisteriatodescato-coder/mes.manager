@@ -1,0 +1,550 @@
+# 🚀 Guida Completa Deploy Sicuro MESManager
+
+> **Documento di riferimento per Copilot e sviluppatori**
+> 
+> Ultima modifica: 28 Gennaio 2026
+> 
+> Questo documento contiene TUTTE le informazioni necessarie per aggiornare in sicurezza la pubblicazione sul server senza creare problemi.
+
+---
+
+## 📍 Riepilogo Ambienti
+
+| Aspetto | Sviluppo (Locale) | Produzione (Server) |
+|---------|-------------------|---------------------|
+| **Macchina** | PC Sviluppo | `192.168.1.230` |
+| **Path Progetto** | `C:\Dev\MESManager\` | - |
+| **Path Publish** | `C:\Dev\MESManager\publish\` | `C:\MESManager\` |
+| **Database MES** | `localhost\SQLEXPRESS01` → `MESManager` | `192.168.1.230\SQLEXPRESS01` → `MESManager_Prod` |
+| **Ambiente .NET** | Development | Production |
+| **Porta Web** | 5156 | 5156 |
+
+---
+
+## 🏗️ Architettura Servizi sul Server
+
+```
+C:\MESManager\                    ← Root sul server
+├── MESManager.Web.exe            ← ⚠️ NON USARE - DLL vecchie nella root
+├── appsettings.*.json            ← ⚠️ Config legacy nella root
+│
+├── Web\                          ← ✅ Applicazione Web (IIS o standalone)
+│   ├── MESManager.Web.exe
+│   ├── MESManager.Web.dll
+│   ├── appsettings.json          ← Config base
+│   ├── appsettings.Production.json ← Config produzione
+│   ├── appsettings.Secrets.json  ← 🔐 CREDENZIALI (NON sovrascrivere!)
+│   ├── appsettings.Database.json ← Connection string 
+│   ├── wwwroot\                  ← File statici
+│   └── logs\                     ← Log applicazione
+│
+├── Worker\                       ← ✅ Sync con Mago ERP
+│   ├── MESManager.Worker.exe
+│   ├── appsettings.json
+│   ├── appsettings.Database.json ← 🔐 NON sovrascrivere
+│   └── runtimes\
+│
+├── PlcSync\                      ← ✅ Comunicazione PLC Siemens
+│   ├── MESManager.PlcSync.exe
+│   ├── appsettings.json          ← Config polling, macchine
+│   ├── appsettings.Database.json ← 🔐 NON sovrascrivere
+│   ├── Configuration\machines\   ← 🔐 Config macchine PLC
+│   └── Sharp7.dll                ← Driver comunicazione S7
+│
+└── logs\                         ← Log generali
+```
+
+---
+
+## 🔐 File da NON SOVRASCRIVERE MAI
+
+Questi file contengono configurazioni SPECIFICHE del server. Sovrascriverli causerebbe immediata interruzione del servizio:
+
+### ❌ File Critici - Mai Sovrascrivere
+
+| File | Motivo |
+|------|--------|
+| `*/appsettings.Secrets.json` | Contiene password produzione |
+| `*/appsettings.Database.json` | Connection string produzione (localhost sul server) |
+| `PlcSync/Configuration/machines/*.json` | Configurazione IP macchine PLC |
+| `PlcSync/appsettings.json` | Configurazione polling PLC |
+
+### ⚠️ Differenze Critiche nelle Connection String
+
+**LOCALE (appsettings.Database.json in sviluppo):**
+```json
+{
+  "MESManagerDb": "Server=localhost\\SQLEXPRESS01;Database=MESManager;...",
+  "MagoDb": "Server=192.168.1.72\\SQLEXPRESS01;...",
+  "GanttDb": "Server=192.168.1.230\\SQLEXPRESS01;..."
+}
+```
+
+**SERVER (appsettings.Database.json sul server):**
+```json
+{
+  "MESManagerDb": "Server=localhost\\SQLEXPRESS01;Database=MESManager_Prod;...",
+  "MagoDb": "Server=192.168.1.72\\SQLEXPRESS;...",
+  "GanttDb": "Server=localhost\\SQLEXPRESS01;..."  
+}
+```
+
+> ⚠️ **ATTENZIONE**: Sul server, `MESManagerDb` e `GanttDb` puntano a `localhost` perché SQL Server gira sullo stesso server!
+
+---
+
+## 📦 Componenti e Dipendenze
+
+### Progetti del Solution
+
+| Progetto | Tipo | Output | Descrizione |
+|----------|------|--------|-------------|
+| `MESManager.Web` | Blazor Server | `MESManager.Web.exe` | Interfaccia web, SignalR hub |
+| `MESManager.Worker` | Worker Service | `MESManager.Worker.exe` | Sincronizzazione con Mago ERP |
+| `MESManager.PlcSync` | Worker Service | `MESManager.PlcSync.exe` | Lettura PLC Siemens S7 |
+| `MESManager.Application` | Class Library | `MESManager.Application.dll` | Servizi, DTOs, Interfacce |
+| `MESManager.Domain` | Class Library | `MESManager.Domain.dll` | Entità, Enums, Constants |
+| `MESManager.Infrastructure` | Class Library | `MESManager.Infrastructure.dll` | EF Core, Repository, DbContext |
+| `MESManager.Sync` | Class Library | `MESManager.Sync.dll` | Logica sincronizzazione Mago |
+
+### Dipendenze Principali Esterne
+
+| Libreria | Versione | Usata da | Note |
+|----------|----------|----------|------|
+| **MudBlazor** | ~9.x | Web | UI Blazor, ~94MB |
+| **Syncfusion.Blazor.Gantt** | 27.x | Web | Gantt chart, licenza richiesta |
+| **Syncfusion.Blazor.Grids** | 27.x | Web | Griglie dati |
+| **EPPlus** | 7.x | Web, Worker | Export Excel |
+| **Sharp7** | 1.x | PlcSync | Comunicazione Siemens S7 |
+| **Microsoft.EntityFrameworkCore.SqlServer** | 9.x | Tutti | Database SQL Server |
+| **Microsoft.Data.SqlClient** | 5.x | Tutti | Driver SQL nativo |
+
+### Differenze Versioni Tra Servizi
+
+> ⚠️ I servizi possono avere versioni diverse di alcune DLL. Esempio rilevato:
+
+| DLL | Web | Worker | PlcSync |
+|-----|-----|--------|---------|
+| `Microsoft.Data.SqlClient.dll` | 5.1.5 (21MB) | 5.1.5 | 5.2.x (16MB) |
+| `Azure.Core.dll` | 1.35 | 1.35 | 1.38 |
+
+Questo è normale per publish indipendenti ma può causare problemi se le DLL vengono condivise.
+
+---
+
+## 🔄 Procedura Deploy Corretta
+
+### 1. Pre-Deploy: Verifica Stato Server
+
+```powershell
+# Connetti al server
+$cred = Get-Credential
+New-PSDrive -Name "S" -PSProvider FileSystem -Root "\\192.168.1.230\c$" -Credential $cred
+
+# Verifica processi in esecuzione
+Get-Process -ComputerName 192.168.1.230 -Name "MESManager*" -ErrorAction SilentlyContinue
+
+# Oppure sulla macchina locale verso server
+Invoke-Command -ComputerName 192.168.1.230 -Credential $cred -ScriptBlock {
+    Get-Process -Name "MESManager*" | Select Name, Id, StartTime
+}
+```
+
+### 2. Build Locale
+
+```powershell
+# Dalla root del progetto
+cd C:\Dev\MESManager
+
+# Build solution completo
+dotnet build MESManager.sln -c Release
+
+# Publish singolo progetto (framework-dependent)
+dotnet publish MESManager/MESManager.Web/MESManager.Web.csproj -c Release -o publish/Web --self-contained false
+
+# Publish con self-contained (include .NET runtime ~60MB extra)
+dotnet publish MESManager/MESManager.Web/MESManager.Web.csproj -c Release -r win-x64 -o publish/Web --self-contained true
+```
+
+### 3. Stop Servizi (Ordine Importante!)
+
+```powershell
+# Sul server, ordine: PlcSync → Worker → Web
+# Questo evita errori di SignalR e connessioni PLC orfane
+
+# Metodo 1: Script già presente sul server
+\\192.168.1.230\c$\MESManager\stop-all-services.cmd
+
+# Metodo 2: PowerShell remoto
+Invoke-Command -ComputerName 192.168.1.230 -Credential $cred -ScriptBlock {
+    # Stop PlcSync prima (ha connessioni PLC)
+    taskkill /F /IM MESManager.PlcSync.exe 2>$null
+    Start-Sleep -Seconds 5
+    
+    # Stop Worker
+    taskkill /F /IM MESManager.Worker.exe 2>$null
+    Start-Sleep -Seconds 2
+    
+    # Stop Web
+    taskkill /F /IM MESManager.Web.exe 2>$null
+    
+    # Se IIS: iisreset /stop
+}
+```
+
+### 4. Copia File (CON ESCLUSIONI!)
+
+```powershell
+# ⚠️ IMPORTANTE: Escludi i file di configurazione!
+
+$excludeFiles = @(
+    "appsettings.Secrets.json",
+    "appsettings.Database.json", 
+    "appsettings.Development.json",
+    "*.log",
+    "*.pdb"
+)
+
+# Copia Web
+$source = "C:\Dev\MESManager\publish\Web\*"
+$dest = "\\192.168.1.230\c$\MESManager\Web\"
+
+Get-ChildItem $source -Recurse | 
+    Where-Object { $_.Name -notin $excludeFiles } |
+    ForEach-Object {
+        $targetPath = $_.FullName.Replace($source.TrimEnd('*'), $dest)
+        Copy-Item $_.FullName -Destination $targetPath -Force
+    }
+
+# Oppure usa robocopy (più robusto)
+robocopy "C:\Dev\MESManager\publish\Web" "\\192.168.1.230\c$\MESManager\Web" /E /XF appsettings.Secrets.json appsettings.Database.json *.log *.pdb /XD SyncBackups
+```
+
+### 5. Riavvio Servizi (Ordine Inverso!)
+
+```powershell
+# Ordine: Web → Worker → PlcSync
+
+# Metodo 1: Script sul server
+\\192.168.1.230\c$\MESManager\start-all-services.cmd
+
+# Metodo 2: Manuale
+Invoke-Command -ComputerName 192.168.1.230 -Credential $cred -ScriptBlock {
+    Set-Location C:\MESManager
+    $env:ASPNETCORE_ENVIRONMENT = "Production"
+    $env:ASPNETCORE_URLS = "http://0.0.0.0:5156"
+    
+    # Avvia Web
+    Start-Process "C:\MESManager\Web\MESManager.Web.exe" -WorkingDirectory "C:\MESManager\Web"
+    Start-Sleep -Seconds 5
+    
+    # Avvia Worker  
+    Start-Process "C:\MESManager\Worker\MESManager.Worker.exe" -WorkingDirectory "C:\MESManager\Worker"
+    Start-Sleep -Seconds 3
+    
+    # Avvia PlcSync
+    Start-Process "C:\MESManager\PlcSync\MESManager.PlcSync.exe" -WorkingDirectory "C:\MESManager\PlcSync"
+}
+```
+
+### 6. Verifica Post-Deploy
+
+```powershell
+# Verifica processi attivi
+Invoke-Command -ComputerName 192.168.1.230 -Credential $cred -ScriptBlock {
+    Get-Process -Name "MESManager*" | Select Name, Id, StartTime
+}
+
+# Test connessione web
+Invoke-WebRequest -Uri "http://192.168.1.230:5156" -UseBasicParsing -TimeoutSec 10
+
+# Verifica log recenti
+Get-Content "\\192.168.1.230\c$\MESManager\Web\logs\startup.log" -Tail 20
+Get-Content "\\192.168.1.230\c$\MESManager\PlcSync\output.log" -Tail 20
+```
+
+---
+
+## 🚨 Troubleshooting Comune
+
+### Errore: Connessione DB fallita dopo deploy
+
+**Causa**: È stato sovrascritto `appsettings.Database.json` o `appsettings.Secrets.json`
+
+**Soluzione**:
+```powershell
+# Verifica connection string
+Get-Content "\\192.168.1.230\c$\MESManager\Web\appsettings.Database.json"
+
+# Deve contenere localhost, non 192.168.1.230 per MESManagerDb e GanttDb!
+```
+
+### Errore: PLC non risponde / connessioni bloccate
+
+**Causa**: PlcSync terminato bruscamente, connessioni S7 rimaste aperte
+
+**Soluzione**:
+```powershell
+# Attendi 2-3 minuti (timeout automatico S7)
+# Oppure riavvia il servizio PlcSync
+```
+
+### Errore: SignalR client disconnessi
+
+**Causa**: Web riavviato senza graceful shutdown
+
+**Soluzione**: I client si riconnettono automaticamente entro 30 secondi
+
+### Errore: File in uso, impossibile copiare
+
+**Causa**: Servizi ancora in esecuzione
+
+**Soluzione**:
+```powershell
+# Forza stop tutti i processi
+Invoke-Command -ComputerName 192.168.1.230 -Credential $cred -ScriptBlock {
+    Get-Process -Name "MESManager*" | Stop-Process -Force
+    Get-Process -Name "dotnet" | Where-Object { $_.MainWindowTitle -match "MESManager" } | Stop-Process -Force
+}
+```
+
+---
+
+## 📋 Checklist Deploy Rapido
+
+```
+□ 1. Verificare che il codice compili senza errori localmente
+□ 2. Committare le modifiche su Git (opzionale ma consigliato)
+□ 3. Fermare i servizi sul server (ordine: PlcSync → Worker → Web)
+□ 4. Attendere 10 secondi per graceful shutdown
+□ 5. Copiare i file ESCLUDENDO: appsettings.Secrets.json, appsettings.Database.json
+□ 6. Riavviare i servizi (ordine: Web → Worker → PlcSync)
+□ 7. Verificare che l'applicazione risponda su http://192.168.1.230:5156
+□ 8. Controllare i log per errori
+```
+
+---
+
+## 🔧 Comandi Rapidi per Copilot
+
+Quando l'utente chiede di fare deploy, usa questi comandi:
+
+### Deploy Completo (Tutti i Servizi)
+```powershell
+cd C:\Dev\MESManager
+$psexec = "$env:TEMP\PsExec64.exe"
+
+# 1. Build
+dotnet publish MESManager.Web/MESManager.Web.csproj -c Release -o publish/Web --self-contained false
+dotnet publish MESManager.Worker/MESManager.Worker.csproj -c Release -o publish/Worker --self-contained false
+dotnet publish MESManager.PlcSync/MESManager.PlcSync.csproj -c Release -o publish/PlcSync --self-contained false
+
+# 2. Stop servizi
+& $psexec \\192.168.1.230 cmd /c "taskkill /F /IM MESManager.PlcSync.exe"
+& $psexec \\192.168.1.230 cmd /c "taskkill /F /IM MESManager.Worker.exe"
+& $psexec \\192.168.1.230 cmd /c "taskkill /F /IM MESManager.Web.exe"
+Start-Sleep -Seconds 3
+
+# 3. Copia file
+robocopy publish/Web "\\192.168.1.230\c$\MESManager\Web" /MIR /XF appsettings.Secrets.json appsettings.Database.json appsettings.Production.json /XD wwwroot\uploads
+robocopy publish/Worker "\\192.168.1.230\c$\MESManager\Worker" /MIR /XF appsettings.Secrets.json appsettings.Database.json
+robocopy publish/PlcSync "\\192.168.1.230\c$\MESManager\PlcSync" /MIR /XD Configuration /XF appsettings.Database.json appsettings.Secrets.json
+
+# 4. Riavvia servizi
+& $psexec \\192.168.1.230 cmd /c "cd /d C:\MESManager\Web && start start-web.cmd"
+& $psexec \\192.168.1.230 cmd /c "cd /d C:\MESManager\Worker && start start-worker.cmd"
+& $psexec \\192.168.1.230 cmd /c "cd /d C:\MESManager\PlcSync && start start-plcsync.cmd"
+```
+
+### Deploy Solo Web
+```powershell
+cd C:\Dev\MESManager
+dotnet publish MESManager.Web/MESManager.Web.csproj -c Release -o publish/Web --self-contained false
+& "$env:TEMP\PsExec64.exe" \\192.168.1.230 cmd /c "taskkill /F /IM MESManager.Web.exe"
+robocopy publish/Web "\\192.168.1.230\c$\MESManager\Web" /MIR /XF appsettings.Secrets.json appsettings.Database.json appsettings.Production.json /XD wwwroot\uploads
+& "$env:TEMP\PsExec64.exe" \\192.168.1.230 cmd /c "cd /d C:\MESManager\Web && start start-web.cmd"
+```
+
+### Deploy Solo PlcSync
+```powershell
+cd C:\Dev\MESManager
+dotnet publish MESManager.PlcSync/MESManager.PlcSync.csproj -c Release -o publish/PlcSync --self-contained false
+& "$env:TEMP\PsExec64.exe" \\192.168.1.230 cmd /c "taskkill /F /IM MESManager.PlcSync.exe"
+robocopy publish/PlcSync "\\192.168.1.230\c$\MESManager\PlcSync" /MIR /XD Configuration /XF appsettings.Database.json appsettings.Secrets.json
+& "$env:TEMP\PsExec64.exe" \\192.168.1.230 cmd /c "cd /d C:\MESManager\PlcSync && start start-plcsync.cmd"
+```
+
+### Deploy Solo Worker
+```powershell
+cd C:\Dev\MESManager
+dotnet publish MESManager.Worker/MESManager.Worker.csproj -c Release -o publish/Worker --self-contained false
+& "$env:TEMP\PsExec64.exe" \\192.168.1.230 cmd /c "taskkill /F /IM MESManager.Worker.exe"
+robocopy publish/Worker "\\192.168.1.230\c$\MESManager\Worker" /MIR /XF appsettings.Secrets.json appsettings.Database.json
+& "$env:TEMP\PsExec64.exe" \\192.168.1.230 cmd /c "cd /d C:\MESManager\Worker && start start-worker.cmd"
+```
+
+---
+
+## 🖼️ Gestione Foto Articoli
+
+### Architettura Sistema Allegati
+
+Esistono **due sistemi paralleli** per la gestione delle foto articoli:
+
+| Sistema | Service | API Endpoint | Database | Uso |
+|---------|---------|--------------|----------|-----|
+| **Legacy Gantt** | `AllegatiAnimaService` | `/api/AllegatiAnima/codice/{codice}` | Gantt DB (sola lettura) | Foto storiche dal sistema Gantt |
+| **Nuovo Locale** | `AllegatoArticoloService` | `/api/allegati-articoli/articolo/{codice}` | MESManager_Prod (locale) | Foto importate/aggiunte manualmente |
+
+### ⚠️ Problema Risolto (28 Gennaio 2026)
+
+**Sintomo**: Le foto negli articoli non venivano visualizzate sul server di produzione.
+
+**Causa**: `AllegatoArticoloService.cs` usava una connection string errata:
+```csharp
+// ❌ ERRATO - "GanttConnection" non esiste in appsettings
+var ganttConnectionString = configuration.GetConnectionString("GanttConnection") 
+    ?? "Server=192.168.1.230\\SQLEXPRESS01;Database=Gantt;User Id=fab;Password=fabpwd;...";
+```
+
+**Soluzione**: Correggere il nome della connection string in `GanttDb`:
+```csharp
+// ✅ CORRETTO - usa "GanttDb" come definito in appsettings.Database.json
+var ganttConnectionString = configuration.GetConnectionString("GanttDb") 
+    ?? configuration.GetConnectionString("GanttConnection")
+    ?? throw new InvalidOperationException("Connection string 'GanttDb' not found");
+```
+
+**File modificato**: `MESManager.Application/Services/AllegatoArticoloService.cs` (costruttore, righe 34-36)
+
+### Mappatura Path Immagini
+
+Il database Gantt contiene path immagini con il drive `P:\` (mappatura di rete legacy):
+```
+P:\Documenti\AA SCHEDE PRODUZIONE\foto cel\...
+```
+
+Sul server questi file sono accessibili localmente come:
+```
+C:\Dati\Documenti\AA SCHEDE PRODUZIONE\foto cel\...
+```
+
+### Conversione Automatica
+
+Il codice in `AllegatiAnimaService.cs` e `AllegatoArticoloService.cs` converte automaticamente i path:
+```csharp
+// P:\Documenti → C:\Dati\Documenti
+private static string ConvertNetworkPath(string path)
+{
+    if (path.StartsWith(@"P:\Documenti", StringComparison.OrdinalIgnoreCase))
+        return path.Replace(@"P:\Documenti", @"C:\Dati\Documenti");
+    return path;
+}
+```
+
+### Verifica Path sul Server
+```powershell
+# Verificare che la cartella esista
+Test-Path "\\192.168.1.230\c$\Dati\Documenti\AA SCHEDE PRODUZIONE\foto cel"
+
+# Verificare contenuto
+Get-ChildItem "\\192.168.1.230\c$\Dati\Documenti\AA SCHEDE PRODUZIONE\foto cel" | Select-Object -First 5
+```
+
+### Test API Foto
+```powershell
+# Test endpoint nuovo sistema (allegati-articoli)
+Invoke-WebRequest "http://192.168.1.230:5156/api/allegati-articoli/articolo/0606" -UseBasicParsing
+
+# Test endpoint legacy (AllegatiAnima)
+Invoke-WebRequest "http://192.168.1.230:5156/api/AllegatiAnima/codice/0606" -UseBasicParsing
+```
+
+---
+
+## 🔌 Note Tecniche PlcSync
+
+### Metodo di Connessione Corretto
+
+Il PlcSync **DEVE** usare il metodo `ConnectTo()` di Sharp7:
+```csharp
+// ✅ CORRETTO - Funziona
+var result = state.Client.ConnectTo(config.PlcIp, rack, slot);
+
+// ❌ ERRATO - Causa timeout
+state.Client.SetConnectionParams(ip, rack, slot);
+state.Client.Connect();
+```
+
+### Configurazione PLC
+
+I file di configurazione macchine in `PlcSync/Configuration/machines/` contengono:
+- **PlcIp**: Indirizzo IP del PLC (subnet 192.168.17.x)
+- **Rack**: Tipicamente 0
+- **Slot**: Tipicamente 1 per S7-300/400, 0 per S7-1200/1500
+- **DbNumber**: Numero Data Block da leggere (default 55)
+
+### Rete PLC
+
+Il server ha una scheda di rete con doppio IP:
+- `192.168.1.230` - Rete ufficio
+- `192.168.17.230` - Rete PLC
+
+I PLC sono sulla subnet 192.168.17.x:
+| PLC | IP |
+|-----|-----|
+| 2 | 192.168.17.26 |
+| 3 | 192.168.17.24 |
+| 5 | 192.168.17.27 |
+| 6 | 192.168.17.25 |
+| 7 | 192.168.17.23 |
+| 8 | 192.168.17.22 |
+| 9 | 192.168.17.21 |
+| 10 | 192.168.17.20 |
+
+---
+
+## 📌 Note Importanti per Copilot
+
+1. **Mai proporre di copiare `appsettings.Secrets.json` o `appsettings.Database.json`** - contengono credenziali e connection string specifiche del server
+
+2. **Il database sul server si chiama `MESManager_Prod`**, non `MESManager`
+
+3. **Sul server le connection string usano `localhost`** perché SQL Server gira sulla stessa macchina
+
+4. **La porta dell'applicazione web è 5156** sia in sviluppo che in produzione
+
+5. **I servizi non sono registrati come Windows Services** - girano come processi standalone avviati da script `.cmd`
+
+6. **IIS NON è installato** - Per riavviare l'applicazione web, usare:
+   ```powershell
+   # Sul server (via RDP o console):
+   taskkill /F /IM MESManager.Web.exe
+   cd C:\MESManager\Web
+   start MESManager.Web.exe
+   ```
+
+7. **PlcSync ha dipendenze speciali** (`Sharp7.dll`) e deve usare `ConnectTo()` non `SetConnectionParams+Connect`
+
+8. **Le cartelle di localizzazione** (de, es, fr, etc.) possono essere escluse dal deploy per risparmiare spazio
+
+9. **Path immagini Articoli**: Il DB contiene path `P:\Documenti\...` ma sul server sono in `C:\Dati\Documenti\...` - la conversione è automatica in `AllegatiAnimaService.ConvertNetworkPath()` e `AllegatoArticoloService`
+
+10. **Connection String per Allegati**: Usare sempre `GanttDb` (NON `GanttConnection`) - vedi sezione "Gestione Foto Articoli"
+
+11. **Prima di ogni deploy, verificare che non ci siano errori di compilazione**:
+   ```powershell
+   dotnet build MESManager.sln -c Release
+   ```
+
+12. **Credenziali Server**: Administrator / A123456!
+
+---
+
+## 📞 Contatti e Supporto
+
+- **Server Produzione**: 192.168.1.230
+- **Database Server MES/Gantt**: 192.168.1.230\SQLEXPRESS01
+- **Database Server Mago**: 192.168.1.72\SQLEXPRESS01
+- **Utente DB Produzione**: FAB
+- **Utente DB Mago**: Gantt

@@ -31,9 +31,10 @@ public class AllegatoArticoloService : IAllegatoArticoloService
         // Path base per gli allegati usando FileConstants
         _allegatiBasePath = FileConstants.GetAllegatiBasePath(configuration["AllegatiBasePath"]);
         
-        // Connection string per Gantt - usa SQL Authentication
-        _ganttConnectionString = configuration.GetConnectionString("GanttConnection") 
-            ?? "Server=192.168.1.230\\SQLEXPRESS01;Database=Gantt;User Id=fab;Password=fabpwd;TrustServerCertificate=True;";
+        // Connection string per Gantt - prova GanttDb prima di GanttConnection
+        _ganttConnectionString = configuration.GetConnectionString("GanttDb") 
+            ?? configuration.GetConnectionString("GanttConnection")
+            ?? throw new InvalidOperationException("Connection string 'GanttDb' non trovata.");
         
         _logger.LogInformation("AllegatoArticoloService initialized. BasePath={Path}", _allegatiBasePath);
     }
@@ -175,16 +176,34 @@ public class AllegatoArticoloService : IAllegatoArticoloService
             return null;
         }
         
-        if (!File.Exists(allegato.PathFile))
+        // Converti path di rete P:\Documenti -> C:\Dati\Documenti
+        var localPath = ConvertNetworkPath(allegato.PathFile);
+        
+        if (!File.Exists(localPath))
         {
-            _logger.LogWarning("GetFileContentAsync: File not found: {Path}", allegato.PathFile);
+            _logger.LogWarning("GetFileContentAsync: File not found: {Path} (converted: {LocalPath})", allegato.PathFile, localPath);
             return null;
         }
         
-        var content = await File.ReadAllBytesAsync(allegato.PathFile);
+        var content = await File.ReadAllBytesAsync(localPath);
         var contentType = GetContentType(allegato.Estensione);
         
         return (content, contentType, allegato.NomeFile);
+    }
+    
+    private static string ConvertNetworkPath(string path)
+    {
+        // Il path nel DB è tipo: P:\Documenti\AA SCHEDE PRODUZIONE\foto cel\...
+        // Sul server è mappato come: C:\Dati\Documenti\AA SCHEDE PRODUZIONE\foto cel\...
+        if (string.IsNullOrEmpty(path))
+            return path;
+
+        if (path.StartsWith(@"P:\Documenti", StringComparison.OrdinalIgnoreCase))
+        {
+            return path.Replace(@"P:\Documenti", @"C:\Dati\Documenti", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return path;
     }
 
     public async Task<ImportAllegatiResult> ImportFromGanttAsync(string codiceArticolo)

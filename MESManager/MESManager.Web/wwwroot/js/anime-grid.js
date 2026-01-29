@@ -124,10 +124,15 @@ window.animeGrid = (function() {
             return;
         }
 
-        // Carica stato colonne da localStorage (chiave per-utente)
+        // Prima usa lo stato passato da Blazor, poi fallback a localStorage
         const storageKey = getStorageKey();
-        const savedState = localStorage.getItem(storageKey);
-        console.log('Loading column state from localStorage:', storageKey, savedState ? 'found' : 'not found');
+        let stateToRestore = savedColumnState;
+        if (!stateToRestore) {
+            stateToRestore = localStorage.getItem(storageKey);
+            console.log('Loading column state from localStorage:', storageKey, stateToRestore ? 'found' : 'not found');
+        } else {
+            console.log('Using column state from Blazor');
+        }
 
         // Distruggi la griglia esistente se presente
         if (gridApi) {
@@ -162,10 +167,11 @@ window.animeGrid = (function() {
                 console.log('Grid ready, rowData count:', gridApi.getDisplayedRowCount());
                 
                 // Ripristina stato colonne se disponibile
-                if (savedState) {
+                if (stateToRestore) {
                     try {
+                        const state = typeof stateToRestore === 'string' ? JSON.parse(stateToRestore) : stateToRestore;
                         gridApi.applyColumnState({
-                            state: JSON.parse(savedState),
+                            state: state,
                             applyOrder: true
                         });
                         console.log('✓ Column state restored');

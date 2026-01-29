@@ -24,7 +24,7 @@ public static class FileConstants
     /// <summary>
     /// Path di rete predefinito per allegati (produzione)
     /// </summary>
-    public const string DefaultNetworkPath = @"P:\Documenti\AA SCHEDE PRODUZIONE\foto cel";
+    public const string DefaultNetworkPath = @"C:\Dati\Documenti\AA SCHEDE PRODUZIONE\foto cel";
 
     /// <summary>
     /// Sottocartella per upload allegati

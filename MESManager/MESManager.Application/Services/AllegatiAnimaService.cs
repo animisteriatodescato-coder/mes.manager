@@ -14,13 +14,27 @@ namespace MESManager.Application.Services
         private readonly string _ganttConnectionString;
         private readonly ILogger<AllegatiAnimaService> _logger;
         private readonly string _allegatiBasePath;
+        private readonly List<(string Source, string Target)> _pathMappings;
 
-        public AllegatiAnimaService(ILogger<AllegatiAnimaService> logger, IOptions<DatabaseConfiguration> dbConfig)
+        public AllegatiAnimaService(
+            ILogger<AllegatiAnimaService> logger, 
+            IOptions<DatabaseConfiguration> dbConfig)
         {
             _logger = logger;
             _ganttConnectionString = dbConfig.Value.GanttDb;
-            _allegatiBasePath = FileConstants.GetAllegatiBasePath();
-            _logger.LogInformation("AllegatiAnimaService initialized. AllegatiBasePath={Path}", _allegatiBasePath);
+            
+            // Percorso base degli allegati
+            _allegatiBasePath = @"C:\Dati\Documenti\AA SCHEDE PRODUZIONE\foto cel";
+            
+            // Mappature dei percorsi di rete
+            _pathMappings = new List<(string Source, string Target)>
+            {
+                (@"P:\Documenti", @"C:\Dati\Documenti"),
+                (@"P:\", @"C:\Dati\")
+            };
+            
+            _logger.LogInformation("AllegatiAnimaService initialized. AllegatiBasePath={Path}, PathMappings={Mappings}", 
+                _allegatiBasePath, string.Join("; ", _pathMappings.Select(m => $"{m.Source} -> {m.Target}")));
         }
 
         public async Task<AllegatiAnimaResponse> GetAllegatiByIdArchivioAsync(int idArchivio)
@@ -321,12 +335,32 @@ namespace MESManager.Application.Services
             }
         }
 
-        private static string ConvertNetworkPath(string path)
+        private string ConvertNetworkPath(string path)
         {
             // Il path nel DB è tipo: P:\Documenti\AA SCHEDE PRODUZIONE\foto cel\...
-            // Potrebbe essere necessario mapparlo a un percorso UNC o locale
-            // Per ora assumiamo che P: sia mappato correttamente sul server
-            return path;
+            // Sul server è mappato secondo le configurazioni in FileConfiguration.PathMappings
+            if (string.IsNullOrEmpty(path))
+                return path;
+
+            var convertedPath = path;
+            foreach (var (source, target) in _pathMappings)
+            {
+                if (convertedPath.StartsWith(source, StringComparison.OrdinalIgnoreCase))
+                {
+                    convertedPath = convertedPath.Replace(source, target, StringComparison.OrdinalIgnoreCase);
+                    _logger.LogDebug("Path converted: {Original} -> {Converted}", path, convertedPath);
+                    break;
+                }
+            }
+
+            // Verifica se il file esiste, altrimenti prova il percorso originale
+            if (!File.Exists(convertedPath) && File.Exists(path))
+            {
+                _logger.LogDebug("Converted path not found, using original: {Path}", path);
+                return path;
+            }
+
+            return convertedPath;
         }
     }
 }

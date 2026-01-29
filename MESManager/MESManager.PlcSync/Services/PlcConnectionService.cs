@@ -28,15 +28,11 @@ public class PlcConnectionService
             if (state.Client.Connected)
                 return Task.FromResult(true);
 
-            // Imposta timeout più brevi per evitare blocchi lunghi
-            state.Client.SetConnectionParams(
+            var result = state.Client.ConnectTo(
                 config.PlcIp,
-                (ushort)config.PlcSettings.Rack,
-                (ushort)config.PlcSettings.Slot);
-            state.Client.ConnTimeout = 2000; // 2 secondi timeout connessione
-            state.Client.RecvTimeout = 2000; // 2 secondi timeout ricezione
-
-            var result = state.Client.Connect();
+                config.PlcSettings.Rack,
+                config.PlcSettings.Slot
+            );
 
             if (result == 0)
             {

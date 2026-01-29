@@ -20,6 +20,19 @@ namespace MESManager.Web.Controllers
         }
 
         /// <summary>
+        /// Endpoint di test per diagnostica
+        /// </summary>
+        [HttpGet("test")]
+        public IActionResult Test()
+        {
+            return Ok(new { 
+                message = "AllegatiAnimaController v2 - OK", 
+                timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                serviceType = _allegatiService.GetType().FullName
+            });
+        }
+
+        /// <summary>
         /// Recupera tutti gli allegati per un'anima per CodiceArticolo
         /// </summary>
         [HttpGet("codice/{codiceArticolo}")]
@@ -39,8 +52,8 @@ namespace MESManager.Web.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GET /api/AllegatiAnima/codice/{CodiceArticolo} - ERROR", codiceArticolo);
-                return StatusCode(500, "Errore nel recupero degli allegati");
+                _logger.LogError(ex, "GET /api/AllegatiAnima/codice/{CodiceArticolo} - ERROR: {Message}", codiceArticolo, ex.Message);
+                return StatusCode(500, $"Errore nel recupero degli allegati: {ex.Message}");
             }
         }
 

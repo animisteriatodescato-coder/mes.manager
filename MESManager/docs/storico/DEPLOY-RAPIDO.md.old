@@ -1,0 +1,74 @@
+#  Deploy Rapido MESManager
+
+> **Guida essenziale - Automatizzata al 100%**
+> Ultima modifica: 29 Gennaio 2026
+
+---
+
+##  Credenziali
+
+| Risorsa | Valore |
+|---------|--------|
+| **Server** | `192.168.1.230` |
+| **Porta Web** | `5156` |
+| **Admin Server** | `Administrator` / `A123456!` |
+| **DB Produzione** | `FAB` / `password.123` |
+| **Database** | `MESManager_Prod` |
+| **SQL Instance** | `192.168.1.230\SQLEXPRESS01` |
+
+---
+
+##  DEPLOY COMPLETO (Automatico)
+
+**Eseguire da:** `C:\Dev\MESManager`
+
+```powershell
+# STEP 1: Modifica versione in MESManager.Web/Components/Layout/MainLayout.razor (linea ~126)
+# Cambia: v1.11  v1.12 (oppure v1.12  v1.13, ecc.)
+
+# STEP 2: BUILD
+Write-Host " Building..." -ForegroundColor Cyan
+dotnet build MESManager.sln -c Release --nologo > $null 2>&1
+
+# STEP 3: PUBLISH
+Write-Host " Publishing..." -ForegroundColor Cyan
+dotnet publish MESManager.Web/MESManager.Web.csproj -c Release -o publish/Web --nologo > $null 2>&1
+
+# STEP 4: STOP
+Write-Host " Stopping app..." -ForegroundColor Cyan
+taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /IM MESManager.Web.exe /F 2>$null
+Start-Sleep 2
+
+# STEP 5: COPY (escludi config sensibili)
+Write-Host " Copying files..." -ForegroundColor Cyan
+robocopy "C:\Dev\MESManager\publish\Web" "\\192.168.1.230\c$\MESManager" /E /XF appsettings.Secrets.json appsettings.Database.json *.log *.pdb /XD logs SyncBackups > $null 2>&1
+
+# STEP 6: RESTART
+Write-Host " Starting app..." -ForegroundColor Cyan
+schtasks /S 192.168.1.230 /U Administrator /P "A123456!" /Run /TN "StartMESWeb" 2>$null
+Start-Sleep 6
+
+# STEP 7: VERIFY
+tasklist /S 192.168.1.230 /U Administrator /P "A123456!" | findstr MES
+Write-Host " Deploy completato! http://192.168.1.230:5156  Ctrl+Shift+R" -ForegroundColor Green
+```
+
+---
+
+##  Deploy Solo JS (senza recompile)
+
+```powershell
+Copy-Item "C:\Dev\MESManager\MESManager.Web\wwwroot\lib\ag-grid\*.js" "\\192.168.1.230\c$\MESManager\wwwroot\lib\ag-grid\" -Force
+Write-Host " JS aggiornati - Utenti: Ctrl+Shift+R"
+```
+
+---
+
+##  Versioning
+
+Prima di deploy, modifica versione in `MESManager.Web/Components/Layout/MainLayout.razor`:
+```html
+v1.12  <!-- Incrementa: v1.11  v1.12  v1.13 ... -->
+```
+
+Poi aggiorna `docs/CHANGELOG.md` con cosa è cambiato.
