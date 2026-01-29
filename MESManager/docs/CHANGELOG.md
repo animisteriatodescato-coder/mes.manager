@@ -1,8 +1,9 @@
 # 📋 Changelog Versioni MESManager
 
 ## v1.13 (29 Gennaio 2026)
-**Data:** 29 Gen 2026 - Integrazione Colonne Anime + Fix Stampa + Fix Refresh  
-**Status:** ✅ Completato
+**Data:** 29 Gen 2026 16:10 UTC  
+**Status:** ✅ Deploy completato e verificato su 192.168.1.230  
+**Commit:** `83fe425`
 
 ### Modifiche
 - ✅ **Imballo Descrizione**: Ora mostra la descrizione invece del numero nelle griglie
@@ -37,6 +38,29 @@
 - `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` - Usa colonne condivise + fix stampa + fix refresh
 - `MESManager.Web/Components/App.razor` - Caricamento script condiviso
 - `MESManager.Web/Controllers/PlcController.cs` - Rimosso warning variabile non usata
+
+### Comandi Deploy Usati
+```powershell
+# Build
+dotnet build MESManager.sln -c Release --nologo
+
+# Publish
+dotnet publish MESManager.Web/MESManager.Web.csproj -c Release -o publish/Web --nologo
+
+# Stop servizio
+taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /IM MESManager.Web.exe /F
+
+# Copia file (esclude config sensibili)
+robocopy "C:\Dev\MESManager\publish\Web" "\\192.168.1.230\c$\MESManager\Web" /E /XF appsettings.Secrets.json appsettings.Database.json *.log *.pdb /XD logs
+
+# Avvia servizio
+$secpwd = ConvertTo-SecureString "A123456!" -AsPlainText -Force
+$cred = New-Object System.Management.Automation.PSCredential("Administrator", $secpwd)
+Invoke-WmiMethod -ComputerName 192.168.1.230 -Credential $cred -Class Win32_Process -Name Create -ArgumentList "C:\MESManager\Web\MESManager.Web.exe", "C:\MESManager\Web"
+
+# Verifica
+Invoke-WebRequest -Uri "http://192.168.1.230:5156" -UseBasicParsing -TimeoutSec 10
+```
 
 ---
 
