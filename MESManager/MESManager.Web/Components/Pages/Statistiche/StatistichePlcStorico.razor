@@ -1,0 +1,473 @@
+@page "/statistiche/plc-storico"
+@using MESManager.Application.DTOs
+@using MESManager.Web.Services
+@using System.Globalization
+@inject PlcDataService PlcService
+@inject ISnackbar Snackbar
+
+<PageTitle>Analisi PLC Storico</PageTitle>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+        <MudDatePicker Label="Da" @bind-Date="dataInizio" 
+                       Variant="Variant.Outlined" Margin="Margin.Dense" />
+        
+        <MudDatePicker Label="A" @bind-Date="dataFine" 
+                       Variant="Variant.Outlined" Margin="Margin.Dense" />
+
+        <MudSelect T="string" Label="Macchina" @bind-Value="selectedMacchina"
+                   Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width: 200px;">
+            <MudSelectItem T="string" Value="@("")">Tutte</MudSelectItem>
+            @foreach (var m in macchineDisponibili)
+            {
+                <MudSelectItem T="string" Value="@m">@m</MudSelectItem>
+            }
+        </MudSelect>
+        
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                   StartIcon="@Icons.Material.Filled.Search"
+                   OnClick="LoadData" Disabled="@_loading">
+            @if (_loading)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Analizza
+        </MudButton>
+        
+        <MudSpacer />
+        
+        <MudChip T="string" Color="Color.Info" Size="Size.Small">
+            @_data.Count record
+        </MudChip>
+    </MudStack>
+</MudPaper>
+
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+}
+
+@if (_data.Any())
+{
+    @* KPI Cards *@
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudStack AlignItems="AlignItems.Center">
+                    <MudIcon Icon="@Icons.Material.Filled.PrecisionManufacturing" Size="Size.Large" Color="Color.Primary" />
+                    <MudText Typo="Typo.subtitle2" Color="Color.Default">Cicli Totali</MudText>
+                    <MudText Typo="Typo.h4" Color="Color.Primary">@totalCicli.ToString("N0")</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudStack AlignItems="AlignItems.Center">
+                    <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Large" Color="Color.Error" />
+                    <MudText Typo="Typo.subtitle2" Color="Color.Default">Scarti Totali</MudText>
+                    <MudText Typo="Typo.h4" Color="Color.Error">@totalScarti.ToString("N0")</MudText>
+                    <MudText Typo="Typo.caption">(@percentualeScarti.ToString("F2")%)</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudStack AlignItems="AlignItems.Center">
+                    <MudIcon Icon="@Icons.Material.Filled.Speed" Size="Size.Large" Color="Color.Warning" />
+                    <MudText Typo="Typo.subtitle2" Color="Color.Default">Tempo Medio Ciclo</MudText>
+                    <MudText Typo="Typo.h4" Color="Color.Warning">@tempoMedioCiclo.ToString("F1")s</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudStack AlignItems="AlignItems.Center">
+                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Large" Color="Color.Success" />
+                    <MudText Typo="Typo.subtitle2" Color="Color.Default">Efficienza Media</MudText>
+                    <MudText Typo="Typo.h4" Color="Color.Success">@efficienzaMedia.ToString("F1")%</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    @* Grafici *@
+    <MudGrid>
+        @* Produzione per Macchina *@
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">Produzione per Macchina</MudText>
+                <MudChart ChartType="ChartType.Bar" 
+                          ChartSeries="@produzioneMacchinaData"
+                          XAxisLabels="@macchinaLabels" 
+                          Width="100%" Height="300px"
+                          ChartOptions="@chartOptions" />
+            </MudPaper>
+        </MudItem>
+
+        @* Scarti per Macchina *@
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">Scarti per Macchina</MudText>
+                <MudChart ChartType="ChartType.Bar" 
+                          ChartSeries="@scartiMacchinaData"
+                          XAxisLabels="@macchinaLabels" 
+                          Width="100%" Height="300px"
+                          ChartOptions="@scartiChartOptions" />
+            </MudPaper>
+        </MudItem>
+
+        @* Produzione nel Tempo *@
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">Produzione Giornaliera</MudText>
+                <MudChart ChartType="ChartType.Line" 
+                          ChartSeries="@produzioneTempoData"
+                          XAxisLabels="@tempoLabels" 
+                          Width="100%" Height="300px"
+                          ChartOptions="@lineChartOptions" />
+            </MudPaper>
+        </MudItem>
+
+        @* Distribuzione Stati *@
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">Distribuzione Stati Macchina</MudText>
+                <MudChart ChartType="ChartType.Donut"
+                          InputData="@statiData"
+                          InputLabels="@statiLabels"
+                          Width="100%" Height="300px" />
+            </MudPaper>
+        </MudItem>
+
+        @* Top Operatori *@
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">Top 10 Operatori per Produzione</MudText>
+                <MudSimpleTable Dense="true" Striped="true">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Operatore</th>
+                            <th style="text-align: right;">Cicli</th>
+                            <th style="text-align: right;">Scarti</th>
+                            <th style="text-align: right;">% Scarti</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{var rank = 1;}
+                        @foreach (var op in topOperatori)
+                        {
+                            <tr>
+                                <td>@rank</td>
+                                <td>@op.Nome</td>
+                                <td style="text-align: right;">@op.Cicli.ToString("N0")</td>
+                                <td style="text-align: right;">@op.Scarti.ToString("N0")</td>
+                                <td style="text-align: right; color: @(op.PercentualeScarti > 5 ? "#e53935" : "#43a047")">
+                                    @op.PercentualeScarti.ToString("F2")%
+                                </td>
+                            </tr>
+                            rank++;
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudPaper>
+        </MudItem>
+
+        @* Riepilogo Commesse *@
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">Top 10 Commesse per Produzione</MudText>
+                <MudSimpleTable Dense="true" Striped="true">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Barcode</th>
+                            <th style="text-align: right;">Prodotti</th>
+                            <th style="text-align: right;">Obiettivo</th>
+                            <th style="text-align: right;">%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{var rk = 1;}
+                        @foreach (var c in topCommesse)
+                        {
+                            <tr>
+                                <td>@rk</td>
+                                <td>@c.Barcode</td>
+                                <td style="text-align: right;">@c.Prodotti.ToString("N0")</td>
+                                <td style="text-align: right;">@c.Obiettivo.ToString("N0")</td>
+                                <td style="text-align: right; color: @(c.Percentuale >= 100 ? "#43a047" : "#1976d2")">
+                                    @c.Percentuale.ToString("F1")%
+                                </td>
+                            </tr>
+                            rk++;
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+else if (!_loading && _hasSearched)
+{
+    <MudPaper Class="pa-8" Elevation="1">
+        <MudStack AlignItems="AlignItems.Center" Spacing="4">
+            <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Warning" />
+            <MudText Typo="Typo.h6" Color="Color.Warning">Nessun dato trovato</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Non ci sono dati PLC nel periodo selezionato (@dataInizio?.ToString("dd/MM/yyyy") - @dataFine?.ToString("dd/MM/yyyy"))
+            </MudText>
+        </MudStack>
+    </MudPaper>
+}
+else if (!_loading)
+{
+    <MudPaper Class="pa-8" Elevation="0">
+        <MudStack AlignItems="AlignItems.Center" Spacing="4">
+            <MudIcon Icon="@Icons.Material.Filled.Analytics" Size="Size.Large" Color="Color.Default" />
+            <MudText Typo="Typo.h6" Color="Color.Default">Seleziona un intervallo di date e clicca "Analizza"</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                I dati PLC storici verranno caricati e analizzati con grafici e statistiche.
+            </MudText>
+        </MudStack>
+    </MudPaper>
+}
+
+@code {
+    private List<PlcStoricoDto> _data = new();
+    private bool _loading = false;
+    private bool _hasSearched = false;
+    private DateTime? dataInizio = DateTime.Today.AddDays(-7);
+    private DateTime? dataFine = DateTime.Today.AddDays(1);
+    private string selectedMacchina = "";
+    private List<string> macchineDisponibili = new();
+
+    // KPIs
+    private int totalCicli = 0;
+    private int totalScarti = 0;
+    private double percentualeScarti = 0;
+    private double tempoMedioCiclo = 0;
+    private double efficienzaMedia = 0;
+
+    // Chart data
+    private List<ChartSeries> produzioneMacchinaData = new();
+    private List<ChartSeries> scartiMacchinaData = new();
+    private List<ChartSeries> produzioneTempoData = new();
+    private string[] macchinaLabels = Array.Empty<string>();
+    private string[] tempoLabels = Array.Empty<string>();
+    private double[] statiData = Array.Empty<double>();
+    private string[] statiLabels = Array.Empty<string>();
+
+    private ChartOptions chartOptions = new() { YAxisTicks = 100 };
+    private ChartOptions scartiChartOptions = new() { YAxisTicks = 10 };
+    private ChartOptions lineChartOptions = new() { YAxisTicks = 100, LineStrokeWidth = 2 };
+
+    // Tables
+    private List<OperatoreStats> topOperatori = new();
+    private List<CommessaStats> topCommesse = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Carica lista macchine per il filtro
+            var allData = await PlcService.LoadStoricoDataAsync(DateTime.Today.AddDays(-30), DateTime.Today);
+            macchineDisponibili = allData
+                .Where(x => !string.IsNullOrEmpty(x.MacchinaNumero))
+                .Select(x => x.MacchinaNumero)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
+        }
+        catch
+        {
+            // Ignora errori di caricamento iniziale
+        }
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _hasSearched = true;
+        StateHasChanged();
+
+        try
+        {
+            _data = await PlcService.LoadStoricoDataAsync(dataInizio, dataFine);
+
+            if (!string.IsNullOrEmpty(selectedMacchina))
+            {
+                _data = _data.Where(x => x.MacchinaNumero == selectedMacchina).ToList();
+            }
+
+            if (_data.Any())
+            {
+                CalculateKPIs();
+                BuildCharts();
+                BuildTables();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore caricamento dati: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CalculateKPIs()
+    {
+        // Prendi l'ultimo record per ogni macchina/commessa per avere i valori più aggiornati
+        var latestByMachineCommessa = _data
+            .GroupBy(x => new { x.MacchinaId, x.BarcodeLavorazione })
+            .Select(g => g.OrderByDescending(x => x.Timestamp).First())
+            .ToList();
+
+        totalCicli = latestByMachineCommessa.Sum(x => x.CicliFatti);
+        totalScarti = latestByMachineCommessa.Sum(x => x.CicliScarti);
+        percentualeScarti = totalCicli > 0 ? (double)totalScarti / totalCicli * 100 : 0;
+
+        var tempiValidi = _data.Where(x => x.TempoMedioRilevato > 0).ToList();
+        tempoMedioCiclo = tempiValidi.Any() ? tempiValidi.Average(x => x.TempoMedioRilevato) : 0;
+
+        // Efficienza = tempo teorico / tempo rilevato
+        var conTempi = _data.Where(x => x.TempoMedio > 0 && x.TempoMedioRilevato > 0).ToList();
+        if (conTempi.Any())
+        {
+            efficienzaMedia = conTempi.Average(x => (double)x.TempoMedio / x.TempoMedioRilevato * 100);
+            efficienzaMedia = Math.Min(efficienzaMedia, 100); // Cap at 100%
+        }
+    }
+
+    private void BuildCharts()
+    {
+        // Produzione per Macchina
+        var prodPerMacchina = _data
+            .GroupBy(x => x.MacchinaNumero)
+            .Select(g => new { 
+                Macchina = g.Key, 
+                Cicli = g.GroupBy(x => x.BarcodeLavorazione)
+                         .Select(bc => bc.OrderByDescending(x => x.Timestamp).First().CicliFatti)
+                         .Sum()
+            })
+            .OrderBy(x => x.Macchina)
+            .ToList();
+
+        macchinaLabels = prodPerMacchina.Select(x => x.Macchina).ToArray();
+        produzioneMacchinaData = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Cicli", Data = prodPerMacchina.Select(x => (double)x.Cicli).ToArray() }
+        };
+
+        // Scarti per Macchina
+        var scartiPerMacchina = _data
+            .GroupBy(x => x.MacchinaNumero)
+            .Select(g => new {
+                Macchina = g.Key,
+                Scarti = g.GroupBy(x => x.BarcodeLavorazione)
+                          .Select(bc => bc.OrderByDescending(x => x.Timestamp).First().CicliScarti)
+                          .Sum()
+            })
+            .OrderBy(x => x.Macchina)
+            .ToList();
+
+        scartiMacchinaData = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Scarti", Data = scartiPerMacchina.Select(x => (double)x.Scarti).ToArray() }
+        };
+
+        // Produzione nel tempo (per giorno)
+        var prodPerGiorno = _data
+            .GroupBy(x => x.Timestamp.Date)
+            .Select(g => new {
+                Data = g.Key,
+                Cicli = g.GroupBy(x => new { x.MacchinaId, x.BarcodeLavorazione })
+                         .Select(bc => bc.OrderByDescending(x => x.Timestamp).First().CicliFatti -
+                                      bc.OrderBy(x => x.Timestamp).First().CicliFatti)
+                         .Sum()
+            })
+            .OrderBy(x => x.Data)
+            .ToList();
+
+        tempoLabels = prodPerGiorno.Select(x => x.Data.ToString("dd/MM")).ToArray();
+        produzioneTempoData = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Cicli/Giorno", Data = prodPerGiorno.Select(x => (double)Math.Max(0, x.Cicli)).ToArray() }
+        };
+
+        // Stati macchina
+        var statiCount = _data
+            .GroupBy(x => string.IsNullOrEmpty(x.StatoMacchina) ? "Sconosciuto" : x.StatoMacchina)
+            .Select(g => new { Stato = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToList();
+
+        statiLabels = statiCount.Select(x => x.Stato).ToArray();
+        statiData = statiCount.Select(x => (double)x.Count).ToArray();
+    }
+
+    private void BuildTables()
+    {
+        // Top operatori
+        topOperatori = _data
+            .Where(x => !string.IsNullOrEmpty(x.NomeOperatore))
+            .GroupBy(x => x.NomeOperatore)
+            .Select(g => {
+                var latestByCommessa = g
+                    .GroupBy(x => x.BarcodeLavorazione)
+                    .Select(bc => bc.OrderByDescending(x => x.Timestamp).First())
+                    .ToList();
+                var cicli = latestByCommessa.Sum(x => x.CicliFatti);
+                var scarti = latestByCommessa.Sum(x => x.CicliScarti);
+                return new OperatoreStats
+                {
+                    Nome = g.Key ?? "N/A",
+                    Cicli = cicli,
+                    Scarti = scarti,
+                    PercentualeScarti = cicli > 0 ? (double)scarti / cicli * 100 : 0
+                };
+            })
+            .OrderByDescending(x => x.Cicli)
+            .Take(10)
+            .ToList();
+
+        // Top commesse
+        topCommesse = _data
+            .Where(x => x.BarcodeLavorazione > 0)
+            .GroupBy(x => x.BarcodeLavorazione)
+            .Select(g => {
+                var latest = g.OrderByDescending(x => x.Timestamp).First();
+                return new CommessaStats
+                {
+                    Barcode = g.Key,
+                    Prodotti = latest.CicliFatti,
+                    Obiettivo = latest.QuantitaDaProdurre,
+                    Percentuale = latest.QuantitaDaProdurre > 0 
+                        ? (double)latest.CicliFatti / latest.QuantitaDaProdurre * 100 
+                        : 0
+                };
+            })
+            .OrderByDescending(x => x.Prodotti)
+            .Take(10)
+            .ToList();
+    }
+
+    private class OperatoreStats
+    {
+        public string Nome { get; set; } = "";
+        public int Cicli { get; set; }
+        public int Scarti { get; set; }
+        public double PercentualeScarti { get; set; }
+    }
+
+    private class CommessaStats
+    {
+        public int Barcode { get; set; }
+        public int Prodotti { get; set; }
+        public int Obiettivo { get; set; }
+        public double Percentuale { get; set; }
+    }
+}

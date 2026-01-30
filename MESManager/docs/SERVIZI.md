@@ -25,7 +25,12 @@ Documento sintetico che descrive i tre servizi principali e le loro responsabili
 ## MESManager.PlcSync
 - Scopo: comunicazione diretta con PLC Siemens S7 per lettura/scrittura I/O e aggiornamento stato realtime e storico.
 - Responsabilità: mantenimento connessioni S7 (Sharp7), polling variabile per macchine, scrittura dati realtime nel DB, gestione errori/ri-connessione.
-- Dipendenze: accesso di rete ai PLC, file `PlcSync/Configuration/machines/*` (IP e mapping variabili), `Sharp7.dll` o driver simili.
+- Dipendenze: 
+  - Accesso di rete ai PLC
+  - **Database** (Tabella Macchine): per IP delle macchine
+  - **File JSON** (`PlcSync/Configuration/machines/*`): per offset memoria PLC
+  - `Sharp7.dll` o driver simili
+- **Architettura IP**: Gli IP delle macchine vengono letti dal database (campo `Macchine.IndirizzoPLC`), non più solo dai file JSON. I file JSON mantengono solo gli offset specifici del PLC.
 - Rischi di shutdown brusco: connessioni S7 "appese" che consumano slot di connessione del PLC (limite tipico ~32), causando malfunzionamenti fino allo scadere delle connessioni.
 - Raccomandazione deploy: sempre fermare PRIMA degli altri servizi, eseguire graceful shutdown che chiuda socket e logghi lo stato; riavviare per ultimo.
 

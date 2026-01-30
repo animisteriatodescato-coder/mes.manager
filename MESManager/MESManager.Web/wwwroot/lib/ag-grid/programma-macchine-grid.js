@@ -2,8 +2,15 @@ window.programmaMacchineGrid = (function() {
     let gridApi = null;
     let dotNetHelper = null;
     
-    // Lista macchine disponibili (M001-M010)
-    const allMachines = ['M001', 'M002', 'M003', 'M004', 'M005', 'M006', 'M007', 'M008', 'M009', 'M010'];
+    // Lista macchine disponibili - caricata dinamicamente dal database
+    let allMachines = [];
+    
+    // Funzione per impostare le macchine dal backend
+    function setMachines(machines) {
+        // machines è un array di oggetti MacchinaDto con Codice (es: "M001", "M011")
+        allMachines = machines.map(m => m.codice).sort();
+        console.log('Macchine configurate:', allMachines);
+    }
 
     // Colori alternati per le macchine (verde pallido alternato)
     const machineColors = {
@@ -1207,6 +1214,7 @@ window.programmaMacchineGrid = (function() {
     return {
         init: init,
         updateData: updateData,
+        setMachines: setMachines,
         setQuickFilter: setQuickFilter,
         setColumnVisible: setColumnVisible,
         getAllColumns: getAllColumns,

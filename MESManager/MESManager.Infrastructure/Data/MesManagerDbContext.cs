@@ -34,6 +34,7 @@ public class MesManagerDbContext : DbContext
     public DbSet<PreferenzaUtente> PreferenzeUtente => Set<PreferenzaUtente>();
     public DbSet<PlcServiceStatus> PlcServiceStatus => Set<PlcServiceStatus>();
     public DbSet<PlcSyncLog> PlcSyncLogs => Set<PlcSyncLog>();
+    public DbSet<TechnicalIssue> TechnicalIssues => Set<TechnicalIssue>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -180,5 +181,29 @@ public class MesManagerDbContext : DbContext
             .WithMany()
             .HasForeignKey(l => l.MacchinaId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // TechnicalIssue - indici per query veloci
+        modelBuilder.Entity<TechnicalIssue>()
+            .Property(t => t.Title)
+            .HasMaxLength(200);
+
+        modelBuilder.Entity<TechnicalIssue>()
+            .Property(t => t.DocsReferencePath)
+            .HasMaxLength(260);
+
+        modelBuilder.Entity<TechnicalIssue>()
+            .HasIndex(t => t.Status);
+
+        modelBuilder.Entity<TechnicalIssue>()
+            .HasIndex(t => t.Area);
+
+        modelBuilder.Entity<TechnicalIssue>()
+            .HasIndex(t => t.Severity);
+
+        modelBuilder.Entity<TechnicalIssue>()
+            .HasIndex(t => t.Environment);
+
+        modelBuilder.Entity<TechnicalIssue>()
+            .HasIndex(t => t.CreatedAt);
     }
 }

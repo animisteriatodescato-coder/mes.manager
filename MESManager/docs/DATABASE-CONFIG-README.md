@@ -126,3 +126,89 @@ Quando passi in produzione, **copia** il file `appsettings.Database.json` sul se
 **La connection string non viene letta**
 - Riavvia Visual Studio
 - Pulisci e ricompila la solution: `dotnet clean && dotnet build`
+
+---
+
+## 🔧 Configurazione Macchine PLC
+
+### Fonti di Verità (Architettura Ibrida)
+
+| Dato | Fonte | Dove si modifica |
+|------|-------|------------------|
+| **Elenco macchine** | Database (Macchine) | Impostazioni → Gantt Macchine |
+| **IP PLC** | Database (Macchine.IndirizzoPLC) | Impostazioni → Gantt Macchine |
+| **Codice macchina** | Database (Macchine.Codice) | Impostazioni → Gantt Macchine |
+| **Offset PLC** | File JSON | `PlcSync/Configuration/machines/*.json` |
+| **Parametri connessione PLC** | File JSON | `PlcSync/Configuration/machines/*.json` |
+
+### Come funziona
+
+1. **PlcSync Worker** all'avvio:
+   - Carica tutte le macchine dal database con i loro IP
+   - Carica i file JSON per gli offset PLC
+   - **Sovrascrive** l'IP del JSON con quello del database
+   - Usa il risultato per connettersi ai PLC
+
+2. **Programma Macchine** (griglia):
+   - Carica l'elenco macchine dinamicamente dall'API `/api/Macchine`
+   - Mostra tutte le macchine presenti nel database
+
+### Aggiungere una Nuova Macchina (es. M011)
+
+#### Step 1: Aggiungi nel Database
+1. Vai in **Impostazioni → Gantt Macchine**
+2. Click "Aggiungi Macchina"
+3. Compila:
+   - Codice: `M011`
+   - Nome: `Macchina 11`
+   - Indirizzo IP PLC: `192.168.17.XX` (l'IP reale del PLC)
+   - Attiva nel Gantt: ✓
+
+#### Step 2: Crea il file JSON per gli offset
+1. Copia un file esistente, es: `macchina_010.json` → `macchina_011.json`
+2. Modifica i campi:
+```json
+{
+  "MachineId": "11111111-1111-1111-1111-000000000011",
+  "Numero": 11,
+  "Nome": "11",
+  "PlcIp": "192.168.17.XX",  // Verrà sovrascritto dal DB
+  "Enabled": true,
+  // ... offset specifici della macchina
+}
+```
+
+**⚠️ IMPORTANTE**: Il `MachineId` nel JSON deve corrispondere all'Id della macchina nel database!
+
+#### Step 3: Verifica corrispondenza ID
+```sql
+-- Trova l'ID della macchina nel database
+SELECT Id, Codice, Nome, IndirizzoPLC 
+FROM Macchine 
+WHERE Codice = 'M011';
+```
+Usa questo ID nel campo `MachineId` del file JSON.
+
+### Modificare IP di una Macchina Esistente
+
+**Basta modificare in Impostazioni → Gantt Macchine**.
+
+Il PlcSync al prossimo avvio leggerà l'IP aggiornato dal database.
+
+Non è più necessario modificare i file JSON per cambiare IP!
+
+### Troubleshooting
+
+**La macchina non appare nel Programma Macchine**
+- Verifica che la macchina sia presente in Impostazioni Gantt
+- Ricarica la pagina (F5)
+
+**PlcSync non si connette alla macchina**
+- Verifica che esista il file `macchina_XXX.json` con gli offset
+- Verifica che il `MachineId` nel JSON corrisponda all'Id nel database
+- Controlla i log di PlcSync per errori di connessione
+
+**L'IP non viene aggiornato**
+- Riavvia il servizio PlcSync dopo aver modificato l'IP
+- Controlla i log: dovrebbe mostrare "IP aggiornato da database"
+

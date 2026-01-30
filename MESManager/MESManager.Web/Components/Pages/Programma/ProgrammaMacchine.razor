@@ -398,6 +398,7 @@
 @code {
     private List<CommessaDto> _commesse = new();
     private List<CommessaDto> _allCommesse = new();
+    private List<MacchinaDto> _macchine = new();
     private GridUiSettings settings = new();
     private bool showSettings = false;
     private string searchText = string.Empty;
@@ -440,6 +441,10 @@
     protected override async Task OnInitializedAsync()
     {
         _isDataLoaded = false;
+        
+        // Carica macchine dal database
+        _macchine = await Http.GetFromJsonAsync<List<MacchinaDto>>("api/Macchine") ?? new();
+        
         await LoadData();
         _isDataLoaded = true;
         
@@ -604,6 +609,11 @@
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 WriteIndented = false
             };
+            
+            // Passa le macchine al JavaScript PRIMA di inizializzare la griglia
+            var macchineJson = JsonSerializer.Serialize(_macchine, jsonOptions);
+            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.setMachines", _macchine);
+            
             var jsonData = JsonSerializer.Serialize(_commesse, jsonOptions);
 
             await JSRuntime.InvokeVoidAsync("eval", $"programmaMacchineGrid.init('programmaMacchineGrid', JSON.parse({System.Text.Json.JsonSerializer.Serialize(jsonData)}), {System.Text.Json.JsonSerializer.Serialize(settings.ColumnStateJson)})");

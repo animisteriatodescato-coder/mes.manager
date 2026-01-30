@@ -1,0 +1,128 @@
+@using MESManager.Application.Interfaces
+@using MESManager.Domain.Entities
+@using MESManager.Domain.Enums
+@inject ITechnicalIssueService IssueService
+@inject ILogger<GlobalErrorBoundary> Logger
+
+@if (_hasError)
+{
+    <MudAlert Severity="Severity.Error" Class="ma-4" ShowCloseIcon="true" CloseIconClicked="Recover">
+        <MudText Typo="Typo.h6">Si è verificato un errore</MudText>
+        <MudText>@_errorMessage</MudText>
+        <MudText Typo="Typo.caption" Class="mt-2">
+            L'errore è stato registrato automaticamente nell'Issue Log.
+            @if (_issueId.HasValue)
+            {
+                <MudLink Href="@($"/impostazioni/issue-log/{_issueId}")">Visualizza Issue #@_issueId</MudLink>
+            }
+        </MudText>
+        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="Recover" Class="mt-2">
+            Riprova
+        </MudButton>
+    </MudAlert>
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private bool _hasError = false;
+    private string _errorMessage = string.Empty;
+    private int? _issueId;
+
+    protected override void OnParametersSet()
+    {
+        // Reset error state when parameters change (navigation)
+        if (_hasError)
+        {
+            _hasError = false;
+            _errorMessage = string.Empty;
+            _issueId = null;
+        }
+    }
+
+    public async Task HandleError(Exception exception)
+    {
+        _hasError = true;
+        _errorMessage = exception.Message;
+        
+        Logger.LogError(exception, "Errore catturato da GlobalErrorBoundary");
+
+        try
+        {
+            // Crea automaticamente un issue nell'archivio
+            var issue = new TechnicalIssue
+            {
+                Environment = IssueEnvironment.Dev, // TODO: rilevare da config
+                Area = DetermineArea(exception),
+                Severity = DetermineSeverity(exception),
+                Status = IssueStatus.Open,
+                Title = TruncateTitle(exception.Message),
+                Description = $"Errore rilevato automaticamente durante la navigazione.\n\n**Tipo:** {exception.GetType().FullName}\n\n**Messaggio:** {exception.Message}",
+                ReproSteps = "Errore catturato automaticamente - verificare i passaggi con l'utente.",
+                Logs = exception.ToString(),
+                AffectedVersion = "v1.16",
+                CreatedBy = "Sistema (Auto)"
+            };
+
+            var created = await IssueService.CreateAsync(issue);
+            _issueId = created.Id;
+            
+            Logger.LogInformation("Issue #{IssueId} creato automaticamente per errore: {Message}", created.Id, exception.Message);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Impossibile creare issue automatico");
+        }
+
+        StateHasChanged();
+    }
+
+    private void Recover()
+    {
+        _hasError = false;
+        _errorMessage = string.Empty;
+        _issueId = null;
+        StateHasChanged();
+    }
+
+    private static string TruncateTitle(string message)
+    {
+        if (string.IsNullOrEmpty(message)) return "Errore sconosciuto";
+        return message.Length > 190 ? message.Substring(0, 190) + "..." : message;
+    }
+
+    private static IssueArea DetermineArea(Exception ex)
+    {
+        var msg = ex.ToString().ToLower();
+        
+        if (msg.Contains("sql") || msg.Contains("database") || msg.Contains("entityframework") || msg.Contains("dbcontext"))
+            return IssueArea.DB;
+        if (msg.Contains("ag-grid") || msg.Contains("aggrid") || msg.Contains("grid"))
+            return IssueArea.AGGrid;
+        if (msg.Contains("plc") || msg.Contains("s7"))
+            return IssueArea.PLC;
+        if (msg.Contains("sync") || msg.Contains("mago"))
+            return IssueArea.Sync;
+        if (msg.Contains("security") || msg.Contains("auth") || msg.Contains("unauthorized"))
+            return IssueArea.Security;
+        
+        return IssueArea.UX;
+    }
+
+    private static IssueSeverity DetermineSeverity(Exception ex)
+    {
+        if (ex is NullReferenceException || ex is InvalidOperationException)
+            return IssueSeverity.High;
+        if (ex is TimeoutException || ex is OperationCanceledException)
+            return IssueSeverity.Medium;
+        if (ex.ToString().ToLower().Contains("critical"))
+            return IssueSeverity.Critical;
+        
+        return IssueSeverity.Medium;
+    }
+}

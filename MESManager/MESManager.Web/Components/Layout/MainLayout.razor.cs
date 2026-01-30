@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 using MESManager.Web.Services;
 
@@ -23,6 +24,7 @@ public partial class MainLayout : IDisposable
     private bool _drawerOpen = false;
     private string _currentCategory = string.Empty;
     private string _toolbarSearchText = string.Empty;
+    private ErrorBoundary? _errorBoundary;
     
     private readonly MudTheme _theme = new()
     {
@@ -95,6 +97,12 @@ public partial class MainLayout : IDisposable
         return !string.IsNullOrEmpty(pageKey);
     }
     
+    private bool IsHomePage()
+    {
+        var currentPath = NavManager.ToBaseRelativePath(NavManager.Uri).ToLower();
+        return string.IsNullOrEmpty(currentPath) || currentPath == "/";
+    }
+    
     private bool IsPlcRealtimePage()
     {
         try
@@ -121,7 +129,7 @@ public partial class MainLayout : IDisposable
         var currentPath = NavManager.ToBaseRelativePath(NavManager.Uri).ToLower();
         return currentPath switch
         {
-            "" or "/" => "Dashboard",
+            "" or "/" => "Todescato MES",
             
             // Produzione
             "produzione/dashboard" => "Dashboard Produzione",
@@ -155,6 +163,7 @@ public partial class MainLayout : IDisposable
             // Statistiche
             "statistiche/produzione" => "Statistiche Produzione",
             "statistiche/ordini" => "Statistiche Ordini",
+            "statistiche/plc-storico" => "Analisi PLC Storico",
             
             // Impostazioni
             "impostazioni/gantt" => "Gantt Macchine",
@@ -381,5 +390,10 @@ public partial class MainLayout : IDisposable
             Title = title;
             Url = url;
         }
+    }
+    
+    private void RecoverFromError()
+    {
+        _errorBoundary?.Recover();
     }
 }

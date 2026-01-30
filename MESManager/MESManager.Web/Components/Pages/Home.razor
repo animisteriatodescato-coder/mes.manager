@@ -1,31 +1,55 @@
 @page "/"
 @layout MainLayout
 @using MESManager.Web.Components.Shared
+@using MESManager.Web.Services
+@inject AppSettingsService AppSettingsService
 
-<PageTitle>Dashboard - MESManager</PageTitle>
+<PageTitle>MESManager</PageTitle>
 
-<MudPaper Class="pa-6 mb-6" Elevation="3">
-    <MudGrid>
-        <MudItem xs="12" Class="d-flex justify-center align-center">
-            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Large" Class="mr-3" Color="Color.Primary" />
-            <MudText Typo="Typo.h5" Class="mr-4">Seleziona Utente:</MudText>
-            <UserSelector />
-        </MudItem>
-    </MudGrid>
-</MudPaper>
+<div class="home-container" style="@GetBackgroundStyle()">
+    @* Selettore utente piccolo in alto a destra *@
+    <div class="user-selector-floating">
+        <UserSelector />
+    </div>
+</div>
 
-<MudText Typo="Typo.h3" Class="mb-4">Dashboard Produzione</MudText>
-<MudGrid>
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Elevation="2" Class="pa-4">
-            <MudText Typo="Typo.h6">Macchine Attive</MudText>
-            <MudText Typo="Typo.h3" Color="Color.Success">0</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="3">
-        <MudPaper Elevation="2" Class="pa-4">
-            <MudText Typo="Typo.h6">Commesse Aperte</MudText>
-            <MudText Typo="Typo.h3" Color="Color.Info">0</MudText>
-        </MudPaper>
-    </MudItem>
-</MudGrid>
+<style>
+    .home-container {
+        min-height: calc(100vh - 64px);
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        margin: -24px;
+        padding: 24px;
+        position: relative;
+    }
+    
+    .user-selector-floating {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 8px 16px;
+        border-radius: 8px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+</style>
+
+@code {
+    private string _backgroundUrl = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        var settings = AppSettingsService.GetSettings();
+        _backgroundUrl = settings.BackgroundImageUrl;
+    }
+
+    private string GetBackgroundStyle()
+    {
+        if (string.IsNullOrEmpty(_backgroundUrl))
+            return "";
+        
+        return $"background-image: url('{_backgroundUrl}');";
+    }
+}

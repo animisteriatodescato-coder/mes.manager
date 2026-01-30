@@ -1,5 +1,6 @@
 @inherits LayoutComponentBase
 @using MESManager.Web.Services
+@using MESManager.Web.Components.Shared
 @implements IDisposable
 
 <MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
@@ -10,7 +11,17 @@
 <MudLayout>
     <MudAppBar Elevation="1" data-testid="main-appbar">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-        <MudText Typo="Typo.h5" Class="ml-3">@GetPageTitle()</MudText>
+        @if (IsHomePage())
+        {
+            <div class="ml-3 d-flex flex-column" style="line-height: 1.2;">
+                <MudText Typo="Typo.h5" Style="margin-bottom: -2px;">Todescato MES</MudText>
+                <MudText Typo="Typo.caption" Style="opacity: 0.7; font-size: 10px;">powered by Marra</MudText>
+            </div>
+        }
+        else
+        {
+            <MudText Typo="Typo.h5" Class="ml-3">@GetPageTitle()</MudText>
+        }
         <MudSpacer />
         
         @* Contenuto custom da pagine specifiche (es. PlcRealtime) *@
@@ -66,10 +77,18 @@
         <MudNavMenu>
             <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary">Home</MudNavLink>
             
-            <MudNavGroup Title="Programma Irene" Icon="@Icons.Material.Filled.Favorite" IconColor="Color.Error" Expanded="true">
-                <MudNavLink Href="/programma/programma-macchine">Programma</MudNavLink>
-                <MudNavLink Href="/programma/commesse-aperte">Commesse</MudNavLink>
-                <MudNavLink Href="/programma/gantt-macchine">Gantt</MudNavLink>
+            <MudNavGroup Expanded="true">
+                <TitleContent>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 16px; display: inline-flex; align-items: center;">💩</span>
+                        <span style="line-height: normal;">Programma Irene</span>
+                    </div>
+                </TitleContent>
+                <ChildContent>
+                    <MudNavLink Href="/programma/programma-macchine">Programma</MudNavLink>
+                    <MudNavLink Href="/programma/commesse-aperte">Commesse</MudNavLink>
+                    <MudNavLink Href="/programma/gantt-macchine">Gantt</MudNavLink>
+                </ChildContent>
             </MudNavGroup>
             
             <MudNavGroup Title="Produzione" Icon="@Icons.Material.Filled.Factory" IconColor="Color.Warning">
@@ -102,6 +121,7 @@
             <MudNavGroup Title="Statistiche" Icon="@Icons.Material.Filled.BarChart" IconColor="Color.Tertiary">
                 <MudNavLink Href="/statistiche/produzione">Produzione</MudNavLink>
                 <MudNavLink Href="/statistiche/ordini">Ordini</MudNavLink>
+                <MudNavLink Href="/statistiche/plc-storico">PLC Storico</MudNavLink>
             </MudNavGroup>
             
             <MudNavGroup Title="Impostazioni" Icon="@Icons.Material.Filled.Settings" IconColor="Color.Dark">
@@ -110,17 +130,31 @@
                 <MudNavLink Href="/impostazioni/utenti">Utenti</MudNavLink>
                 <MudNavLink Href="/impostazioni/operatori">Operatori</MudNavLink>
                 <MudNavLink Href="/impostazioni/generali">Generali</MudNavLink>
+                <MudNavLink Href="/impostazioni/issue-log" Icon="@Icons.Material.Filled.BugReport">Issue Log</MudNavLink>
             </MudNavGroup>
         </MudNavMenu>
     </MudDrawer>
     
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
-            @Body
+            <ErrorBoundary @ref="_errorBoundary">
+                <ChildContent>
+                    @Body
+                </ChildContent>
+                <ErrorContent Context="ex">
+                    <MudAlert Severity="Severity.Error" Class="ma-4">
+                        <MudText Typo="Typo.h6">Si è verificato un errore</MudText>
+                        <MudText>@ex.Message</MudText>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="RecoverFromError" Class="mt-2">
+                            Riprova
+                        </MudButton>
+                    </MudAlert>
+                </ErrorContent>
+            </ErrorBoundary>
         </MudContainer>
         <!-- Version number in bottom right corner -->
         <div style="position: fixed; bottom: 10px; right: 15px; font-size: 11px; color: #999; font-family: monospace; pointer-events: none;">
-            v1.14
+            v1.17
         </div>
     </MudMainContent>
 </MudLayout>

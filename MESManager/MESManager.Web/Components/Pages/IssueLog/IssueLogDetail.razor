@@ -1,0 +1,353 @@
+@page "/impostazioni/issue-log/new"
+@page "/impostazioni/issue-log/{Id:int}"
+@using MESManager.Application.Interfaces
+@using MESManager.Domain.Entities
+@using MESManager.Domain.Enums
+@inject ITechnicalIssueService IssueService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>@(_isNew ? "Nuovo Issue" : "Dettaglio Issue")</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">
+    <MudIcon Icon="@Icons.Material.Filled.BugReport" Class="mr-2" />
+    @(_isNew ? "Nuovo Issue" : $"Issue #{Id}")
+</MudText>
+
+@if (_issue == null && !_isNew)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    @* Warning se risolto ma non documentato *@
+    @if (_issue?.Status == IssueStatus.Resolved && !_issue.DocsUpdated)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-4" Icon="@Icons.Material.Filled.Warning">
+            <strong>Attenzione:</strong> Questo issue è stato risolto ma la documentazione non è stata aggiornata. 
+            Ricorda di documentare la soluzione in <code>/docs</code> e segnare come "Documentato".
+        </MudAlert>
+    }
+
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudGrid>
+            @* Prima riga: metadati *@
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="IssueEnvironment" Label="Ambiente *" @bind-Value="_issue!.Environment"
+                           Variant="Variant.Outlined" Required="true">
+                    @foreach (var e in Enum.GetValues<IssueEnvironment>())
+                    {
+                        <MudSelectItem Value="@e">@e</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="IssueArea" Label="Area *" @bind-Value="_issue.Area"
+                           Variant="Variant.Outlined" Required="true">
+                    @foreach (var a in Enum.GetValues<IssueArea>())
+                    {
+                        <MudSelectItem Value="@a">@a</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="IssueSeverity" Label="Gravità *" @bind-Value="_issue.Severity"
+                           Variant="Variant.Outlined" Required="true">
+                    @foreach (var s in Enum.GetValues<IssueSeverity>())
+                    {
+                        <MudSelectItem Value="@s">@s</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="IssueStatus" Label="Stato *" @bind-Value="_issue.Status"
+                           Variant="Variant.Outlined" Required="true">
+                    @foreach (var st in Enum.GetValues<IssueStatus>())
+                    {
+                        <MudSelectItem Value="@st">@st</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+
+            @* Titolo e versione *@
+            <MudItem xs="12" sm="8">
+                <MudTextField @bind-Value="_issue.Title" Label="Titolo *" 
+                              Variant="Variant.Outlined" Required="true"
+                              MaxLength="200" Counter="200" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="_issue.AffectedVersion" Label="Versione Coinvolta"
+                              Variant="Variant.Outlined" Placeholder="es: v1.14" />
+            </MudItem>
+
+            @* Descrizione *@
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_issue.Description" Label="Descrizione Problema *"
+                              Variant="Variant.Outlined" Lines="5" Required="true"
+                              Placeholder="Descrivi il problema in modo dettagliato..." />
+            </MudItem>
+
+            @* Passi riproduzione *@
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_issue.ReproSteps" Label="Passi per Riprodurre"
+                              Variant="Variant.Outlined" Lines="4"
+                              Placeholder="1. Vai a...&#10;2. Clicca su...&#10;3. Osserva che..." />
+            </MudItem>
+
+            @* Log *@
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_issue.Logs" Label="Log / Messaggi Errore"
+                              Variant="Variant.Outlined" Lines="5"
+                              Placeholder="Incolla qui eventuali log o stack trace..." 
+                              Style="font-family: monospace;" />
+            </MudItem>
+
+            @* Soluzione *@
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_issue.Solution" Label="Soluzione Implementata"
+                              Variant="Variant.Outlined" Lines="4"
+                              Placeholder="Descrivi la soluzione adottata..." />
+            </MudItem>
+
+            @* Regole apprese *@
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_issue.RulesLearned" Label="Regole / Lezioni Apprese"
+                              Variant="Variant.Outlined" Lines="3"
+                              Placeholder="Cosa abbiamo imparato? Regole da documentare?" />
+            </MudItem>
+
+            @* Documentazione *@
+            <MudItem xs="12" sm="6" md="3">
+                <MudCheckBox @bind-Value="_issue.DocsUpdated" Label="Docs Aggiornati"
+                             Color="Color.Success" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="9">
+                <MudTextField @bind-Value="_issue.DocsReferencePath" Label="Path File Docs"
+                              Variant="Variant.Outlined" 
+                              Placeholder="es: docs/storico/FIX-NOME-ISSUE.md"
+                              Disabled="@(!_issue.DocsUpdated)" />
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    @* Pulsanti azioni *@
+    <MudStack Row="true" Spacing="2" Class="mb-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Save"
+                   OnClick="Salva" Disabled="@_saving">
+            @(_saving ? "Salvataggio..." : "Salva")
+        </MudButton>
+
+        @if (!_isNew)
+        {
+            @if (_issue?.Status != IssueStatus.Resolved && _issue?.Status != IssueStatus.Documented)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Success"
+                           StartIcon="@Icons.Material.Filled.CheckCircle"
+                           OnClick="SegnaRisolto">
+                    Segna Risolto
+                </MudButton>
+            }
+
+            @if (_issue?.Status == IssueStatus.Resolved && !_issue.DocsUpdated)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Info"
+                           StartIcon="@Icons.Material.Filled.Description"
+                           OnClick="SegnaDocumentato">
+                    Segna Documentato
+                </MudButton>
+            }
+
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
+                       StartIcon="@Icons.Material.Filled.ContentCopy"
+                       OnClick="EsportaPerAI">
+                📤 Esporta per AI
+            </MudButton>
+
+            <MudButton Variant="Variant.Outlined" Color="Color.Error"
+                       StartIcon="@Icons.Material.Filled.Delete"
+                       OnClick="EliminaIssue">
+                Elimina
+            </MudButton>
+        }
+
+        <MudButton Variant="Variant.Text" Color="Color.Default"
+                   OnClick="@(() => Navigation.NavigateTo("/impostazioni/issue-log"))">
+            ← Torna alla Lista
+        </MudButton>
+    </MudStack>
+
+    @* Dialog Export AI *@
+    <MudDialog @bind-Visible="_exportDialogVisible" Options="@(new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true })">
+        <TitleContent>
+            <MudText Typo="Typo.h6">📤 Export per AI - Copia questo testo</MudText>
+        </TitleContent>
+        <DialogContent>
+            <MudTextField @bind-Value="_exportMarkdown" Lines="20" 
+                          Variant="Variant.Outlined" ReadOnly="true"
+                          Style="font-family: monospace; font-size: 12px;" />
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CopiaClipboard" Color="Color.Primary" Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.ContentCopy">
+                Copia negli Appunti
+            </MudButton>
+            <MudButton OnClick="@(() => _exportDialogVisible = false)">Chiudi</MudButton>
+        </DialogActions>
+    </MudDialog>
+
+    @* Dialog Conferma Eliminazione *@
+    <MudDialog @bind-Visible="_deleteDialogVisible">
+        <TitleContent>
+            <MudText Typo="Typo.h6">Conferma Eliminazione</MudText>
+        </TitleContent>
+        <DialogContent>
+            <MudText>Sei sicuro di voler eliminare questo issue? L'azione è irreversibile.</MudText>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="@(() => _deleteDialogVisible = false)">Annulla</MudButton>
+            <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="ConfermaElimina">Elimina</MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private TechnicalIssue? _issue;
+    private bool _isNew => !Id.HasValue || Id == 0;
+    private bool _saving = false;
+    
+    // Dialog export
+    private bool _exportDialogVisible = false;
+    private string _exportMarkdown = string.Empty;
+    
+    // Dialog delete
+    private bool _deleteDialogVisible = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_isNew)
+        {
+            _issue = new TechnicalIssue
+            {
+                Environment = IssueEnvironment.Dev,
+                Area = IssueArea.Other,
+                Severity = IssueSeverity.Medium,
+                Status = IssueStatus.Open
+            };
+        }
+        else
+        {
+            _issue = await IssueService.GetByIdAsync(Id!.Value);
+            if (_issue == null)
+            {
+                Snackbar.Add("Issue non trovato", Severity.Error);
+                Navigation.NavigateTo("/impostazioni/issue-log");
+            }
+        }
+    }
+
+    private async Task Salva()
+    {
+        if (string.IsNullOrWhiteSpace(_issue?.Title))
+        {
+            Snackbar.Add("Il titolo è obbligatorio", Severity.Warning);
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_issue?.Description))
+        {
+            Snackbar.Add("La descrizione è obbligatoria", Severity.Warning);
+            return;
+        }
+
+        _saving = true;
+        try
+        {
+            if (_isNew)
+            {
+                var created = await IssueService.CreateAsync(_issue!);
+                Snackbar.Add("Issue creato con successo", Severity.Success);
+                Navigation.NavigateTo($"/impostazioni/issue-log/{created.Id}");
+            }
+            else
+            {
+                await IssueService.UpdateAsync(_issue!);
+                Snackbar.Add("Issue aggiornato", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task SegnaRisolto()
+    {
+        if (_issue == null) return;
+        
+        var updated = await IssueService.MarkAsResolvedAsync(_issue.Id, _issue.Solution);
+        if (updated != null)
+        {
+            _issue = updated;
+            Snackbar.Add("Issue segnato come Risolto", Severity.Success);
+            StateHasChanged();
+        }
+    }
+
+    private async Task SegnaDocumentato()
+    {
+        if (_issue == null) return;
+        
+        var updated = await IssueService.MarkAsDocumentedAsync(_issue.Id, _issue.DocsReferencePath);
+        if (updated != null)
+        {
+            _issue = updated;
+            Snackbar.Add("Issue segnato come Documentato", Severity.Success);
+            StateHasChanged();
+        }
+    }
+
+    private void EsportaPerAI()
+    {
+        if (_issue == null) return;
+        _exportMarkdown = IssueService.GenerateAIExportMarkdown(_issue);
+        _exportDialogVisible = true;
+    }
+
+    private async Task CopiaClipboard()
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", _exportMarkdown);
+        Snackbar.Add("Testo copiato negli appunti!", Severity.Success);
+        _exportDialogVisible = false;
+    }
+
+    private void EliminaIssue()
+    {
+        _deleteDialogVisible = true;
+    }
+
+    private async Task ConfermaElimina()
+    {
+        if (_issue == null) return;
+        
+        var deleted = await IssueService.DeleteAsync(_issue.Id);
+        _deleteDialogVisible = false;
+        
+        if (deleted)
+        {
+            Snackbar.Add("Issue eliminato", Severity.Success);
+            Navigation.NavigateTo("/impostazioni/issue-log");
+        }
+        else
+        {
+            Snackbar.Add("Errore durante l'eliminazione", Severity.Error);
+        }
+    }
+}

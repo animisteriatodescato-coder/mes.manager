@@ -1,19 +1,119 @@
 @page "/impostazioni/generali"
+@using MESManager.Web.Services
+@inject AppSettingsService AppSettingsService
+@inject ISnackbar Snackbar
 
 <PageTitle>Impostazioni Generali</PageTitle>
 
-<MudPaper Class="pa-4">
-    <MudTextField Label="Nome Azienda" @bind-Value="_nomeAzienda" />
-    <MudTextField Label="Indirizzo" @bind-Value="_indirizzo" Class="mt-3" />
-    <MudTextField Label="Email" @bind-Value="_email" Class="mt-3" />
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-4">Impostazioni Generali</MudText>
+
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-4">Dati Azienda</MudText>
+                
+                <MudTextField Label="Nome Azienda" @bind-Value="_settings.NomeAzienda" 
+                             Variant="Variant.Outlined" Class="mb-3" />
+                <MudTextField Label="Indirizzo" @bind-Value="_settings.Indirizzo" 
+                             Variant="Variant.Outlined" Class="mb-3" />
+                <MudTextField Label="Email" @bind-Value="_settings.Email" 
+                             Variant="Variant.Outlined" InputType="InputType.Email" />
+            </MudPaper>
+        </MudItem>
+        
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-4">Immagine Sfondo Home</MudText>
+                
+                @if (!string.IsNullOrEmpty(_settings.BackgroundImageUrl))
+                {
+                    <div class="mb-4" style="border: 2px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                        <img src="@_settings.BackgroundImageUrl" alt="Sfondo attuale" 
+                             style="width: 100%; max-height: 200px; object-fit: cover;" />
+                    </div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                        Immagine attuale: @_settings.BackgroundImageUrl
+                    </MudText>
+                }
+                
+                <MudFileUpload T="IBrowserFile" Accept=".png,.jpg,.jpeg,.gif,.webp" 
+                              FilesChanged="OnBackgroundImageSelected" MaximumFileCount="1">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                                  StartIcon="@Icons.Material.Filled.CloudUpload">
+                            Carica Nuova Immagine
+                        </MudButton>
+                    </ActivatorContent>
+                </MudFileUpload>
+                
+                @if (_isUploading)
+                {
+                    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mt-2" />
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
     
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" 
+               Size="Size.Large" OnClick="SalvaImpostazioni" StartIcon="@Icons.Material.Filled.Save">
         Salva Impostazioni
     </MudButton>
-</MudPaper>
+</MudContainer>
 
 @code {
-    private string _nomeAzienda = string.Empty;
-    private string _indirizzo = string.Empty;
-    private string _email = string.Empty;
+    private AppSettings _settings = new();
+    private bool _isUploading = false;
+
+    protected override void OnInitialized()
+    {
+        _settings = AppSettingsService.GetSettings();
+    }
+
+    private async Task OnBackgroundImageSelected(IBrowserFile file)
+    {
+        if (file == null) return;
+        
+        _isUploading = true;
+        StateHasChanged();
+        
+        try
+        {
+            // Limite 5MB
+            if (file.Size > 5 * 1024 * 1024)
+            {
+                Snackbar.Add("L'immagine non può superare 5MB", Severity.Warning);
+                return;
+            }
+            
+            using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            var url = await AppSettingsService.SaveBackgroundImageAsync(stream, file.Name);
+            _settings.BackgroundImageUrl = url;
+            
+            await AppSettingsService.SaveSettingsAsync(_settings);
+            Snackbar.Add("Immagine di sfondo aggiornata!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nel caricamento: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SalvaImpostazioni()
+    {
+        try
+        {
+            await AppSettingsService.SaveSettingsAsync(_settings);
+            Snackbar.Add("Impostazioni salvate con successo!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nel salvataggio: {ex.Message}", Severity.Error);
+        }
+    }
 }

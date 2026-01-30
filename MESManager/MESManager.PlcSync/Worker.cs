@@ -1,7 +1,9 @@
 using System.Text.Json;
 using MESManager.Domain.Entities;
+using MESManager.Infrastructure.Data;
 using MESManager.PlcSync.Configuration;
 using MESManager.PlcSync.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace MESManager.PlcSync;
 
@@ -9,6 +11,7 @@ public class PlcSyncWorker : BackgroundService
 {
     private readonly ILogger<PlcSyncWorker> _logger;
     private readonly IConfiguration _configuration;
+    private readonly IDbContextFactory<MesManagerDbContext> _contextFactory;
     private readonly PlcConnectionService _connectionService;
     private readonly PlcReaderService _readerService;
     private readonly PlcSyncService _syncService;
@@ -21,6 +24,7 @@ public class PlcSyncWorker : BackgroundService
     public PlcSyncWorker(
         ILogger<PlcSyncWorker> logger,
         IConfiguration configuration,
+        IDbContextFactory<MesManagerDbContext> contextFactory,
         PlcConnectionService connectionService,
         PlcReaderService readerService,
         PlcSyncService syncService,
@@ -28,6 +32,7 @@ public class PlcSyncWorker : BackgroundService
         IHostApplicationLifetime appLifetime)
     {
         _logger = logger;
+        _contextFactory = contextFactory;
         _configuration = configuration;
         _connectionService = connectionService;
         _readerService = readerService;
@@ -193,6 +198,20 @@ public class PlcSyncWorker : BackgroundService
         var configs = new List<PlcMachineConfig>();
         var configPath = Path.Combine(AppContext.BaseDirectory, _settings.MachineConfigPath);
 
+        // Carica gli IP dal database
+        Dictionary<Guid, string?> macchineDbIps = new();
+        try
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            var macchineDb = await context.Macchine.ToListAsync();
+            macchineDbIps = macchineDb.ToDictionary(m => m.Id, m => m.IndirizzoPLC);
+            _logger.LogInformation("Caricate {Count} macchine dal database per sincronizzazione IP", macchineDbIps.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Impossibile caricare macchine dal database, uso IP dai file JSON");
+        }
+
         if (!Directory.Exists(configPath))
         {
             _logger.LogWarning("Cartella configurazioni macchine non trovata: {Path}", configPath);
@@ -208,9 +227,21 @@ public class PlcSyncWorker : BackgroundService
                 
                 if (config != null)
                 {
+                    // Sovrascrivi IP con quello dal database se disponibile
+                    if (macchineDbIps.TryGetValue(config.MacchinaId, out var dbIp) && !string.IsNullOrWhiteSpace(dbIp))
+                    {
+                        var oldIp = config.PlcIp;
+                        config.PlcIp = dbIp;
+                        if (oldIp != dbIp)
+                        {
+                            _logger.LogInformation("Macchina {Numero}: IP aggiornato da database ({OldIp} -> {NewIp})", 
+                                config.Numero, oldIp, dbIp);
+                        }
+                    }
+                    
                     configs.Add(config);
-                    _logger.LogInformation("Caricata configurazione macchina {Numero} ({Nome})", 
-                        config.Numero, config.Nome);
+                    _logger.LogInformation("Caricata configurazione macchina {Numero} ({Nome}) - IP: {Ip}", 
+                        config.Numero, config.Nome, config.PlcIp);
                 }
             }
             catch (Exception ex)

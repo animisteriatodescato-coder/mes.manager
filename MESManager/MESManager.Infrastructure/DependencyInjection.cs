@@ -45,6 +45,7 @@ public static class DependencyInjection
         services.AddScoped<IUtenteAppService, UtenteAppService>();
         services.AddScoped<IPreferenzeUtenteService, PreferenzeUtenteService>();
         services.AddScoped<CurrentUserService>();
+        services.AddScoped<ITechnicalIssueService, TechnicalIssueService>();
         // Aggiungi altri servizi qui quando implementati
 
         return services;

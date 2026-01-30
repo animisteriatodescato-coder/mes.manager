@@ -35,6 +35,8 @@ Guida unica, completa e senza ambiguità per eseguire deploy su server di produz
 
 ### Changelog
 - **[CHANGELOG.md](CHANGELOG.md)** - Storico versioni e modifiche
+- **[PENDING-CHANGES.md](PENDING-CHANGES.md)** - Modifiche in attesa di consolidamento
+- **[WORKFLOW-PUBBLICAZIONE.md](WORKFLOW-PUBBLICAZIONE.md)** - 🆕 Istruzioni per AI su deploy
 
 ---
 

@@ -132,6 +132,7 @@ builder.Services.AddScoped<IPlcSyncCoordinator, PlcSyncCoordinator>();
 builder.Services.AddScoped<IPlcStatusService, PlcStatusService>();
 builder.Services.AddSingleton<IPageToolbarService, PageToolbarService>();
 builder.Services.AddScoped<AppBarContentService>();
+builder.Services.AddSingleton<AppSettingsService>();
 
 // Servizio Singleton per gestione stato real-time PLC (avviato automaticamente)
 builder.Services.AddSingleton<RealtimeStateService>();

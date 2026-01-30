@@ -1,5 +1,110 @@
 # 📋 Changelog Versioni MESManager
 
+> ⚠️ **REGOLA OBBLIGATORIA VERSIONAMENTO**
+> 
+> Ad ogni modifica funzionale o bug fix, **DEVI**:
+> 1. Incrementare la versione in `MainLayout.razor` (riga 157): `v1.XX` → `v1.XX+1`
+> 2. Aggiornare questo CHANGELOG con la nuova versione
+> 3. **MAI** deployare senza aver incrementato la versione
+>
+> La versione è visibile in basso a destra nell'app.
+>
+> 📋 **Vedi anche**: [WORKFLOW-PUBBLICAZIONE.md](WORKFLOW-PUBBLICAZIONE.md) per istruzioni complete
+
+---
+
+## v1.17 (30 Gennaio 2026)
+**Data:** 30 Gen 2026  
+**Status:** ✅ Completato
+
+### Modifiche v1.17
+
+#### 🏠 Rebranding Home Page
+- Titolo AppBar cambiato da "Dashboard" a **"Todescato MES"** con sottotitolo "*powered by Marra*"
+
+#### 💩 Menu "Programma Irene"
+- Mantenuta icona cacca **marrone** originale
+- Corretto allineamento verticale dell'icona nel menu (era sfalsata)
+
+#### 📊 Nuova Pagina: Statistiche PLC Storico
+- Nuova pagina `/statistiche/plc-storico` per analisi dati storici PLC
+- Aggiunto feedback visivo quando non ci sono dati nel periodo selezionato
+- **KPI Cards**: Cicli totali, Scarti totali, Tempo medio ciclo, Efficienza media
+- **Grafici**:
+  - Produzione per Macchina (Bar chart)
+  - Scarti per Macchina (Bar chart)  
+  - Produzione Giornaliera (Line chart)
+  - Distribuzione Stati Macchina (Donut chart)
+- **Tabelle**: Top 10 Operatori, Top 10 Commesse
+- Filtri per intervallo date e singola macchina
+- Link aggiunto nel menu Statistiche
+
+---
+
+## v1.16 (30 Gennaio 2026)
+**Data:** 30 Gen 2026  
+**Status:** ✅ Completato
+
+### Modifiche v1.16
+
+#### 🏠 Home Semplificata
+- Rimossa Dashboard Produzione dalla home
+- Solo selettore utente piccolo in alto a destra per vedere lo sfondo
+
+#### 🐛 Issue Log nel Menu
+- Aggiunto link "Issue Log" nel menu Impostazioni
+
+#### 🛡️ ErrorBoundary Globale
+- Implementato ErrorBoundary nel MainLayout per catturare errori runtime
+- Gli errori vengono mostrati con alert e pulsante "Riprova"
+
+---
+
+## v1.15 (30 Gennaio 2026)
+**Data:** 30 Gen 2026  
+**Status:** 🚧 In sviluppo
+
+### Nuova Funzionalità: Issue Log (Archivio Bug & Errori)
+
+Implementato sistema interno per tracciare bug, errori e problemi tecnici con export "pronto per AI".
+
+#### 🐛 Funzionalità Principali
+- **Pagina Lista Issues** (`/impostazioni/issue-log`): Tabella con filtri per Stato, Area, Gravità, Ambiente
+- **Pagina Dettaglio/Edit** (`/impostazioni/issue-log/{id}`): Form completo con tutti i campi
+- **Export per AI**: Bottone che genera Markdown formattato con contesto, problema, passi, log e vincoli
+- **Warning Documentazione**: Alert se issue risolto ma docs non aggiornati
+- **Menu**: Voce aggiunta sotto "Impostazioni"
+
+#### 📊 Campi Entità TechnicalIssue
+- `Environment`: Dev/Prod
+- `Area`: DB, Deploy, AGGrid, UX, Security, Performance, PLC, Sync, Other
+- `Severity`: Low, Medium, High, Critical
+- `Status`: Open, Investigating, Resolved, Documented
+- `Title`, `Description`, `ReproSteps`, `Logs`, `AffectedVersion`
+- `Solution`, `RulesLearned`
+- `DocsUpdated`, `DocsReferencePath`
+
+#### 📁 File Creati/Modificati
+- `MESManager.Domain/Enums/IssueEnums.cs` - Enumerazioni
+- `MESManager.Domain/Entities/TechnicalIssue.cs` - Entità
+- `MESManager.Application/Interfaces/ITechnicalIssueService.cs` - Interfaccia service
+- `MESManager.Infrastructure/Services/TechnicalIssueService.cs` - Implementazione
+- `MESManager.Infrastructure/Data/MesManagerDbContext.cs` - DbSet + configurazione
+- `MESManager.Infrastructure/DependencyInjection.cs` - Registrazione DI
+- `MESManager.Infrastructure/Migrations/xxx_AddTechnicalIssuesTable.cs` - Migration
+- `MESManager.Web/Components/Pages/IssueLog/IssueLogList.razor` - Pagina lista
+- `MESManager.Web/Components/Pages/IssueLog/IssueLogDetail.razor` - Pagina dettaglio
+- `MESManager.Web/Components/Layout/NavMenu.razor` - Voce menu
+
+#### 🔐 Sicurezza
+- Nessun controllo ruoli (coerente con pattern attuale UtenteApp senza password)
+- Tutti gli utenti possono accedere a Issue Log
+
+#### 📝 Note Deploy
+- Richiede migration EF Core: `dotnet ef database update`
+
+---
+
 ## v1.14 (29 Gennaio 2026)
 **Data:** 29 Gen 2026  
 **Status:** ✅ Deploy completato
