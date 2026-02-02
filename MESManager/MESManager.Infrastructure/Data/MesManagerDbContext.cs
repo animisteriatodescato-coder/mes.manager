@@ -36,6 +36,13 @@ public class MesManagerDbContext : DbContext
     public DbSet<PlcSyncLog> PlcSyncLogs => Set<PlcSyncLog>();
     public DbSet<TechnicalIssue> TechnicalIssues => Set<TechnicalIssue>();
     public DbSet<Festivo> Festivi => Set<Festivo>();
+    
+    // Modulo Preventivi
+    public DbSet<Quote> Quotes => Set<Quote>();
+    public DbSet<QuoteRow> QuoteRows => Set<QuoteRow>();
+    public DbSet<QuoteAttachment> QuoteAttachments => Set<QuoteAttachment>();
+    public DbSet<PriceList> PriceLists => Set<PriceList>();
+    public DbSet<PriceListItem> PriceListItems => Set<PriceListItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -213,5 +220,140 @@ public class MesManagerDbContext : DbContext
         
         modelBuilder.Entity<Festivo>()
             .HasIndex(f => f.Ricorrente);
+
+        // =====================================
+        // MODULO PREVENTIVI
+        // =====================================
+
+        // Quote - Preventivi
+        modelBuilder.Entity<Quote>()
+            .HasIndex(q => q.Number)
+            .IsUnique();
+        
+        modelBuilder.Entity<Quote>()
+            .HasIndex(q => q.Date);
+        
+        modelBuilder.Entity<Quote>()
+            .HasIndex(q => q.Status);
+        
+        modelBuilder.Entity<Quote>()
+            .HasIndex(q => q.ClienteId);
+
+        modelBuilder.Entity<Quote>()
+            .Property(q => q.Subtotal)
+            .HasPrecision(18, 4);
+        
+        modelBuilder.Entity<Quote>()
+            .Property(q => q.DiscountTotal)
+            .HasPrecision(18, 4);
+        
+        modelBuilder.Entity<Quote>()
+            .Property(q => q.TaxableAmount)
+            .HasPrecision(18, 4);
+        
+        modelBuilder.Entity<Quote>()
+            .Property(q => q.VatTotal)
+            .HasPrecision(18, 4);
+        
+        modelBuilder.Entity<Quote>()
+            .Property(q => q.GrandTotal)
+            .HasPrecision(18, 4);
+
+        // Relazione Quote -> Cliente
+        modelBuilder.Entity<Quote>()
+            .HasOne(q => q.Cliente)
+            .WithMany()
+            .HasForeignKey(q => q.ClienteId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Relazione Quote -> PriceList
+        modelBuilder.Entity<Quote>()
+            .HasOne(q => q.PriceList)
+            .WithMany(pl => pl.Quotes)
+            .HasForeignKey(q => q.PriceListId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // QuoteRow - Righe preventivo
+        modelBuilder.Entity<QuoteRow>()
+            .HasOne(r => r.Quote)
+            .WithMany(q => q.Rows)
+            .HasForeignKey(r => r.QuoteId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<QuoteRow>()
+            .HasOne(r => r.PriceListItem)
+            .WithMany(i => i.QuoteRows)
+            .HasForeignKey(r => r.PriceListItemId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<QuoteRow>()
+            .Property(r => r.Quantity)
+            .HasPrecision(18, 4);
+        
+        modelBuilder.Entity<QuoteRow>()
+            .Property(r => r.UnitPrice)
+            .HasPrecision(18, 4);
+        
+        modelBuilder.Entity<QuoteRow>()
+            .Property(r => r.DiscountPercent)
+            .HasPrecision(5, 2);
+        
+        modelBuilder.Entity<QuoteRow>()
+            .Property(r => r.VatPercent)
+            .HasPrecision(5, 2);
+        
+        modelBuilder.Entity<QuoteRow>()
+            .Property(r => r.RowTotal)
+            .HasPrecision(18, 4);
+        
+        modelBuilder.Entity<QuoteRow>()
+            .Property(r => r.VatAmount)
+            .HasPrecision(18, 4);
+
+        modelBuilder.Entity<QuoteRow>()
+            .HasIndex(r => r.QuoteId);
+
+        // QuoteAttachment - Allegati preventivo
+        modelBuilder.Entity<QuoteAttachment>()
+            .HasOne(a => a.Quote)
+            .WithMany(q => q.Attachments)
+            .HasForeignKey(a => a.QuoteId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<QuoteAttachment>()
+            .HasIndex(a => a.QuoteId);
+
+        // PriceList - Listini prezzi
+        modelBuilder.Entity<PriceList>()
+            .HasIndex(pl => new { pl.Name, pl.Version })
+            .IsUnique();
+        
+        modelBuilder.Entity<PriceList>()
+            .HasIndex(pl => pl.IsDefault);
+        
+        modelBuilder.Entity<PriceList>()
+            .HasIndex(pl => pl.ValidFrom);
+
+        // PriceListItem - Voci listino
+        modelBuilder.Entity<PriceListItem>()
+            .HasOne(i => i.PriceList)
+            .WithMany(pl => pl.Items)
+            .HasForeignKey(i => i.PriceListId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PriceListItem>()
+            .HasIndex(i => new { i.PriceListId, i.Code })
+            .IsUnique();
+        
+        modelBuilder.Entity<PriceListItem>()
+            .HasIndex(i => i.Category);
+
+        modelBuilder.Entity<PriceListItem>()
+            .Property(i => i.BasePrice)
+            .HasPrecision(18, 4);
+        
+        modelBuilder.Entity<PriceListItem>()
+            .Property(i => i.VatRate)
+            .HasPrecision(5, 2);
     }
 }

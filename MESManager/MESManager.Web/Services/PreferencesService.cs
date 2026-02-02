@@ -49,6 +49,14 @@ public class PreferencesService
                 
             _userLoadAttempted = true;
             
+            // Verifica se JSRuntime è disponibile (non durante prerendering)
+            if (_jsRuntime is not IJSInProcessRuntime && 
+                _jsRuntime.GetType().Name.Contains("Remote", StringComparison.OrdinalIgnoreCase) == false)
+            {
+                // Durante prerendering, skip JS calls
+                return;
+            }
+            
             var savedUserId = await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", "selectedUserId");
             if (!string.IsNullOrEmpty(savedUserId) && Guid.TryParse(savedUserId, out var userId))
             {
@@ -58,6 +66,10 @@ public class PreferencesService
                     _currentUserService.SetCurrentUser(utente);
                 }
             }
+        }
+        catch (InvalidOperationException)
+        {
+            // JSInterop non disponibile durante prerendering - ignorare
         }
         catch
         {

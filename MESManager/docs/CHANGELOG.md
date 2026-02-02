@@ -13,6 +13,56 @@
 
 ---
 
+## v1.19 (2 Febbraio 2026)
+**Data:** 02 Feb 2026  
+**Status:** ✅ Completato
+
+### Modifiche v1.19
+
+#### 🐛 Fix Critico - Blazor WebSocket Connection
+- **Fix PreferencesService**: Aggiunta protezione per chiamate JSInterop durante pre-rendering
+- Risolto errore "Server returned an error on close: Connection closed with an error"
+- Aggiunto catch specifico per `InvalidOperationException` durante prerendering
+- L'applicazione ora si carica correttamente senza disconnessioni WebSocket
+
+---
+
+## v1.18 (2 Febbraio 2026)
+**Data:** 02 Feb 2026  
+**Status:** 🚧 In sviluppo
+
+### Modifiche v1.18
+
+#### 📅 Sistema Pianificazione Gantt Avanzato
+- **Drag & Drop Commesse**: Spostamento visuale delle commesse tra macchine nel Gantt
+- **Accodamento Rigido**: Le commesse si accodano automaticamente in sequenza senza sovrapposizioni
+- **Ricalcolo Cascata**: Al termine di una commessa, tutte le successive vengono ricalcolate
+- **API SpostaCommessa**: Nuovo endpoint per spostare commesse con validazione
+
+#### 🎄 Gestione Festivi
+- **Nuova pagina** `/impostazioni/festivi` per gestire giorni festivi
+- CRUD completo per festivi ricorrenti e una tantum
+- Inizializzazione automatica festivi italiani standard
+- I festivi vengono considerati nel calcolo durata commesse
+
+#### 🔄 SignalR Real-Time Sync
+- Sincronizzazione real-time del Gantt tra client multipli
+- Icona stato connessione nel Gantt (verde/rosso)
+- Hub dedicato `/hubs/gantt` per broadcast modifiche
+
+#### 🎨 UX Miglioramenti
+- Snackbar feedback su spostamento commesse
+- Pulsante "Ricalcola Tutto" nel Gantt
+- Voce menu Festivi in Impostazioni
+
+#### 🐛 Fix Compilazione
+- Risolti tutti i warning CS8601/CS8602/CS8604 nullable reference
+- Fix null check in IssueLogList, IssueLogDetail, AllegatiAnimaService
+- Fix null coalescing in AllegatoArticoloService, CommessaAppService
+- Rimossa variabile inutilizzata in ProgrammaMacchine
+
+---
+
 ## v1.17 (30 Gennaio 2026)
 **Data:** 30 Gen 2026  
 **Status:** ✅ Completato

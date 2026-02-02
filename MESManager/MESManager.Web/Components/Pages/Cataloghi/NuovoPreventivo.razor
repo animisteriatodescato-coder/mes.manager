@@ -1,0 +1,831 @@
+@page "/cataloghi/preventivi/nuovo"
+@page "/cataloghi/preventivi/{Id:guid}"
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@using MESManager.Domain.Enums
+@using System.ComponentModel.DataAnnotations
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>@(isEdit ? "Modifica Preventivo" : "Nuovo Preventivo")</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-4">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@GoBack" />
+        <MudText Typo="Typo.h5">@(isEdit ? $"Preventivo {quote?.Number}" : "Nuovo Preventivo")</MudText>
+        <MudSpacer />
+        @if (quote != null)
+        {
+            <MudChip T="string" Color="@GetStatusColor(quote.Status)" Size="Size.Medium">
+                @quote.Status.ToString()
+            </MudChip>
+        }
+    </MudStack>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudGrid Spacing="3">
+            <!-- INTESTAZIONE PREVENTIVO -->
+            <MudItem xs="12">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1" Color="Color.Primary"><b>DATI GENERALI</b></MudText>
+                    </MudStack>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="3">
+                            <MudDatePicker @bind-Date="quoteDate" Label="Data" Variant="Variant.Outlined" 
+                                          Margin="Margin.Dense" Required="true" />
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudDatePicker @bind-Date="validUntilDate" Label="Valido Fino Al" Variant="Variant.Outlined" 
+                                          Margin="Margin.Dense" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudAutocomplete T="ClienteDto" Label="Cliente" @bind-Value="selectedCliente"
+                                            SearchFunc="@SearchClienti" ToStringFunc="@(c => c?.RagioneSociale ?? "")"
+                                            Variant="Variant.Outlined" Margin="Margin.Dense"
+                                            Dense="true" ShowProgressIndicator="true" Required="true" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="Guid?" @bind-Value="selectedPriceListId" Label="Listino Prezzi"
+                                      Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                                <MudSelectItem T="Guid?" Value="@((Guid?)null)">-- Seleziona Listino --</MudSelectItem>
+                                @foreach (var pl in priceLists)
+                                {
+                                    <MudSelectItem T="Guid?" Value="@pl.Id">@pl.Name v@pl.Version @(pl.IsDefault ? "(Default)" : "")</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="8">
+                            <MudTextField @bind-Value="quote!.Subject" Label="Oggetto" Variant="Variant.Outlined" 
+                                         Margin="Margin.Dense" />
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+
+            <!-- RIGHE PREVENTIVO -->
+            <MudItem xs="12">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.ListAlt" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1" Color="Color.Primary"><b>RIGHE PREVENTIVO</b></MudText>
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                                  OnClick="@AddRowFromPriceList" Disabled="@(selectedPriceListId == null)">
+                            Da Listino
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.AddBox"
+                                  OnClick="@AddManualRow">
+                            Riga Manuale
+                        </MudButton>
+                    </MudStack>
+
+                    <MudTable Items="@quoteRows" Dense="true" Hover="true" Striped="true" Class="mt-2"
+                             FixedHeader="true" Height="400px">
+                        <HeaderContent>
+                            <MudTh Style="width:50px;">#</MudTh>
+                            <MudTh Style="width:120px;">Codice</MudTh>
+                            <MudTh>Descrizione</MudTh>
+                            <MudTh Style="width:80px;">Qta</MudTh>
+                            <MudTh Style="width:60px;">U.M.</MudTh>
+                            <MudTh Style="width:100px;">Prezzo Unit.</MudTh>
+                            <MudTh Style="width:80px;">Sconto %</MudTh>
+                            <MudTh Style="width:80px;">IVA %</MudTh>
+                            <MudTh Style="width:120px;">Totale</MudTh>
+                            <MudTh Style="width:60px;"></MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="#">@(quoteRows.IndexOf(context) + 1)</MudTd>
+                            <MudTd DataLabel="Codice">
+                                @if (context.RowType == QuoteRowType.FromPriceList)
+                                {
+                                    <MudText>@context.Code</MudText>
+                                }
+                                else
+                                {
+                                    <MudTextField @bind-Value="context.Code" Variant="Variant.Text" Margin="Margin.Dense"
+                                                 Immediate="true" />
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Descrizione">
+                                <MudTextField @bind-Value="context.Description" Variant="Variant.Text" Margin="Margin.Dense"
+                                             Immediate="true" />
+                            </MudTd>
+                            <MudTd DataLabel="Qta">
+                                <MudNumericField T="decimal" Value="context.Quantity" Variant="Variant.Text" Margin="Margin.Dense"
+                                                Min="0" Format="N2" Immediate="true"
+                                                ValueChanged="@((decimal v) => OnRowQuantityChanged(context, v))" />
+                            </MudTd>
+                            <MudTd DataLabel="U.M.">
+                                <MudTextField @bind-Value="context.Unit" Variant="Variant.Text" Margin="Margin.Dense"
+                                             Immediate="true" Style="width:50px;" />
+                            </MudTd>
+                            <MudTd DataLabel="Prezzo Unit.">
+                                <MudNumericField T="decimal" Value="context.UnitPrice" Variant="Variant.Text" Margin="Margin.Dense"
+                                                Min="0" Format="N2" Immediate="true" Adornment="Adornment.Start" AdornmentText="€"
+                                                ValueChanged="@((decimal v) => OnRowPriceChanged(context, v))" />
+                            </MudTd>
+                            <MudTd DataLabel="Sconto %">
+                                <MudNumericField T="decimal" Value="context.DiscountPercent" Variant="Variant.Text" Margin="Margin.Dense"
+                                                Min="0" Max="100" Format="N1" Immediate="true"
+                                                ValueChanged="@((decimal v) => OnRowDiscountChanged(context, v))" />
+                            </MudTd>
+                            <MudTd DataLabel="IVA %">
+                                <MudNumericField T="decimal" Value="context.VatPercent" Variant="Variant.Text" Margin="Margin.Dense"
+                                                Min="0" Max="100" Format="N1" Immediate="true"
+                                                ValueChanged="@((decimal v) => OnRowVatChanged(context, v))" />
+                            </MudTd>
+                            <MudTd DataLabel="Totale">
+                                <MudText><b>€ @context.RowTotal.ToString("N2")</b></MudText>
+                            </MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                              OnClick="@(() => RemoveRow(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                        <FooterContent>
+                            <MudTd colspan="8" Style="text-align:right;">
+                                <MudText><b>Totale Imponibile:</b></MudText>
+                            </MudTd>
+                            <MudTd>
+                                <MudText><b>€ @quote!.TotalNet.ToString("N2")</b></MudText>
+                            </MudTd>
+                            <MudTd></MudTd>
+                        </FooterContent>
+                    </MudTable>
+                </MudPaper>
+            </MudItem>
+
+            <!-- TOTALI E NOTE -->
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Notes" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1" Color="Color.Primary"><b>NOTE E CONDIZIONI</b></MudText>
+                    </MudStack>
+                    <MudTextField @bind-Value="quote!.Notes" Label="Note" Variant="Variant.Outlined"
+                                 Lines="3" Class="mb-2" />
+                    <MudTextField @bind-Value="quote!.PaymentTerms" Label="Condizioni di Pagamento" Variant="Variant.Outlined"
+                                 Lines="2" />
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Euro" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1" Color="Color.Primary"><b>RIEPILOGO</b></MudText>
+                    </MudStack>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="6">
+                            <MudText>Totale Imponibile:</MudText>
+                        </MudItem>
+                        <MudItem xs="6" Style="text-align:right;">
+                            <MudText><b>€ @quote!.TotalNet.ToString("N2")</b></MudText>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText>Totale IVA:</MudText>
+                        </MudItem>
+                        <MudItem xs="6" Style="text-align:right;">
+                            <MudText><b>€ @quote!.TotalVat.ToString("N2")</b></MudText>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudDivider />
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.h6">TOTALE:</MudText>
+                        </MudItem>
+                        <MudItem xs="6" Style="text-align:right;">
+                            <MudText Typo="Typo.h6" Color="Color.Primary"><b>€ @quote!.TotalGross.ToString("N2")</b></MudText>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+
+            <!-- ALLEGATI -->
+            <MudItem xs="12">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.AttachFile" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1" Color="Color.Primary"><b>ALLEGATI</b></MudText>
+                        <MudSpacer />
+                        <MudFileUpload T="IBrowserFile" FilesChanged="@OnFileUpload" Accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png">
+                            <ActivatorContent>
+                                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Upload"
+                                          Disabled="@(!isEdit)">
+                                    Carica File
+                                </MudButton>
+                            </ActivatorContent>
+                        </MudFileUpload>
+                    </MudStack>
+                    
+                    @if (!isEdit)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true">
+                            Salva il preventivo per poter caricare allegati.
+                        </MudAlert>
+                    }
+                    else if (attachments.Any())
+                    {
+                        <MudList T="QuoteAttachmentDto" Dense="true">
+                            @foreach (var att in attachments)
+                            {
+                                <MudListItem T="QuoteAttachmentDto">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudIcon Icon="@GetFileIcon(att.FileName)" Size="Size.Small" />
+                                        <MudText>@att.FileName</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            (@FormatFileSize(att.FileSize))
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small"
+                                                      OnClick="@(() => DownloadAttachment(att))" />
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                                      OnClick="@(() => DeleteAttachment(att))" />
+                                    </MudStack>
+                                </MudListItem>
+                            }
+                        </MudList>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Nessun allegato</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <!-- AZIONI -->
+            <MudItem xs="12">
+                <MudStack Row="true" Spacing="2" Justify="Justify.FlexEnd">
+                    <MudButton Variant="Variant.Outlined" OnClick="@GoBack">Annulla</MudButton>
+                    @if (isEdit && quote?.Status == QuoteStatus.Draft)
+                    {
+                        <MudButton Variant="Variant.Outlined" Color="Color.Warning" 
+                                  StartIcon="@Icons.Material.Filled.ContentCopy"
+                                  OnClick="@DuplicateQuote">Duplica</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Info"
+                                  StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                                  OnClick="@GeneratePdf">Genera PDF</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success"
+                                  StartIcon="@Icons.Material.Filled.Send"
+                                  OnClick="@SendQuote">Invia</MudButton>
+                    }
+                    @if (isEdit && quote?.Status == QuoteStatus.Sent)
+                    {
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success"
+                                  StartIcon="@Icons.Material.Filled.CheckCircle"
+                                  OnClick="@AcceptQuote">Accettato</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error"
+                                  StartIcon="@Icons.Material.Filled.Cancel"
+                                  OnClick="@RejectQuote">Rifiutato</MudButton>
+                    }
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                              StartIcon="@Icons.Material.Filled.Save"
+                              OnClick="@SaveQuote" Disabled="@isSaving">
+                        @(isSaving ? "Salvataggio..." : "Salva")
+                    </MudButton>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+<!-- DIALOG: Selezione da Listino -->
+<MudDialog @bind-Visible="showPriceListDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true }">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.List" Class="mr-2" />
+            Seleziona Articoli dal Listino
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="priceListSearchText" Label="Cerca" Variant="Variant.Outlined"
+                     Margin="Margin.Dense" Immediate="true" Adornment="Adornment.Start"
+                     AdornmentIcon="@Icons.Material.Filled.Search" Class="mb-3" />
+        <MudTable Items="@filteredPriceListItems" Dense="true" Hover="true" MultiSelection="true"
+                 @bind-SelectedItems="selectedPriceListItems" Height="400px" FixedHeader="true">
+            <HeaderContent>
+                <MudTh>Codice</MudTh>
+                <MudTh>Descrizione</MudTh>
+                <MudTh>U.M.</MudTh>
+                <MudTh>Prezzo</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Codice">@context.Code</MudTd>
+                <MudTd DataLabel="Descrizione">@context.Description</MudTd>
+                <MudTd DataLabel="U.M.">@context.Unit</MudTd>
+                <MudTd DataLabel="Prezzo">€ @context.UnitPrice.ToString("N2")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => showPriceListDialog = false)">Annulla</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                  OnClick="@AddSelectedItemsFromPriceList"
+                  Disabled="@(!selectedPriceListItems.Any())">
+            Aggiungi @(selectedPriceListItems.Count > 0 ? $"({selectedPriceListItems.Count})" : "")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public Guid? Id { get; set; }
+
+    private bool isEdit => Id.HasValue;
+    private bool isLoading = true;
+    private bool isSaving = false;
+
+    private QuoteDto? quote;
+    private List<QuoteRowDto> quoteRows = new();
+    private List<QuoteAttachmentDto> attachments = new();
+    private List<PriceListDto> priceLists = new();
+    private List<PriceListItemDto> currentPriceListItems = new();
+    private List<ClienteDto> clienti = new();
+
+    private ClienteDto? selectedCliente;
+    private Guid? selectedPriceListId;
+    private DateTime? quoteDate = DateTime.Today;
+    private DateTime? validUntilDate = DateTime.Today.AddDays(30);
+
+    // Dialog listino
+    private bool showPriceListDialog = false;
+    private string priceListSearchText = "";
+    private HashSet<PriceListItemDto> selectedPriceListItems = new();
+
+    private IEnumerable<PriceListItemDto> filteredPriceListItems =>
+        string.IsNullOrWhiteSpace(priceListSearchText)
+            ? currentPriceListItems
+            : currentPriceListItems.Where(i =>
+                (i.Code?.Contains(priceListSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (i.Description?.Contains(priceListSearchText, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            isLoading = true;
+            
+            // Carica listini disponibili
+            var priceListsResponse = await Http.GetFromJsonAsync<List<PriceListDto>>("api/pricelists");
+            priceLists = priceListsResponse ?? new();
+
+            // Carica clienti per autocomplete
+            var clientiResponse = await Http.GetFromJsonAsync<List<ClienteDto>>("api/clienti");
+            clienti = clientiResponse ?? new();
+
+            if (isEdit)
+            {
+                // Modifica: carica preventivo esistente
+                quote = await Http.GetFromJsonAsync<QuoteDto>($"api/quotes/{Id}");
+                if (quote != null)
+                {
+                    quoteRows = quote.Rows?.ToList() ?? new();
+                    quoteDate = quote.Date;
+                    validUntilDate = quote.ValidUntil;
+                    selectedCliente = clienti.FirstOrDefault(c => c.Id == quote.ClienteId);
+                    selectedPriceListId = quote.PriceListId;
+
+                    // Carica allegati
+                    var attachmentsResponse = await Http.GetFromJsonAsync<List<QuoteAttachmentDto>>($"api/quotes/{Id}/attachments");
+                    attachments = attachmentsResponse ?? new();
+                }
+            }
+            else
+            {
+                // Nuovo preventivo
+                quote = new QuoteDto
+                {
+                    Date = DateTime.Today,
+                    ValidUntil = DateTime.Today.AddDays(30),
+                    Status = QuoteStatus.Draft
+                };
+            }
+
+            // Carica items del listino selezionato (se presente)
+            if (selectedPriceListId.HasValue)
+            {
+                await LoadPriceListItems(selectedPriceListId.Value);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore caricamento: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadPriceListItems(Guid priceListId)
+    {
+        try
+        {
+            var items = await Http.GetFromJsonAsync<List<PriceListItemDto>>($"api/pricelists/{priceListId}/items");
+            currentPriceListItems = items ?? new();
+        }
+        catch
+        {
+            currentPriceListItems = new();
+        }
+    }
+
+    private async Task<IEnumerable<ClienteDto>> SearchClienti(string? value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return clienti.Take(20);
+
+        return clienti.Where(c =>
+            (c.RagioneSociale?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (c.Codice?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false))
+            .Take(20);
+    }
+
+    private void AddManualRow()
+    {
+        var newRow = new QuoteRowDto
+        {
+            RowType = QuoteRowType.Manual,
+            Quantity = 1,
+            UnitPrice = 0,
+            DiscountPercent = 0,
+            VatPercent = 22, // IVA italiana standard
+            Unit = "pz"
+        };
+        CalculateRowTotals(newRow);
+        quoteRows.Add(newRow);
+        RecalculateQuoteTotals();
+    }
+
+    private async Task AddRowFromPriceList()
+    {
+        if (!selectedPriceListId.HasValue) return;
+
+        await LoadPriceListItems(selectedPriceListId.Value);
+        selectedPriceListItems.Clear();
+        priceListSearchText = "";
+        showPriceListDialog = true;
+    }
+
+    private void AddSelectedItemsFromPriceList()
+    {
+        foreach (var item in selectedPriceListItems)
+        {
+            var newRow = new QuoteRowDto
+            {
+                RowType = QuoteRowType.FromPriceList,
+                PriceListItemId = item.Id,
+                Code = item.Code,
+                Description = item.Description,
+                Unit = item.Unit,
+                UnitPrice = item.UnitPrice,
+                Quantity = 1,
+                DiscountPercent = 0,
+                VatPercent = 22
+            };
+            CalculateRowTotals(newRow);
+            quoteRows.Add(newRow);
+        }
+
+        RecalculateQuoteTotals();
+        showPriceListDialog = false;
+    }
+
+    private void RemoveRow(QuoteRowDto row)
+    {
+        quoteRows.Remove(row);
+        RecalculateQuoteTotals();
+    }
+
+    // Metodi per gestire i cambi nei campi delle righe
+    private void OnRowQuantityChanged(QuoteRowDto row, decimal value)
+    {
+        row.Quantity = value;
+        CalculateRowTotals(row);
+        RecalculateQuoteTotals();
+    }
+
+    private void OnRowPriceChanged(QuoteRowDto row, decimal value)
+    {
+        row.UnitPrice = value;
+        CalculateRowTotals(row);
+        RecalculateQuoteTotals();
+    }
+
+    private void OnRowDiscountChanged(QuoteRowDto row, decimal value)
+    {
+        row.DiscountPercent = value;
+        CalculateRowTotals(row);
+        RecalculateQuoteTotals();
+    }
+
+    private void OnRowVatChanged(QuoteRowDto row, decimal value)
+    {
+        row.VatPercent = value;
+        CalculateRowTotals(row);
+        RecalculateQuoteTotals();
+    }
+
+    // Calcoli centralizzati - NESSUNA formula nell'UI, solo chiamate al engine
+    private void CalculateRowTotals(QuoteRowDto row)
+    {
+        // Calcolo importo lordo
+        var grossAmount = row.Quantity * row.UnitPrice;
+        
+        // Calcolo sconto
+        var discountAmount = grossAmount * (row.DiscountPercent / 100m);
+        row.DiscountAmount = Math.Round(discountAmount, 2);
+        
+        // Totale riga (imponibile)
+        row.RowTotal = Math.Round(grossAmount - discountAmount, 2);
+        
+        // Calcolo IVA
+        row.VatAmount = Math.Round(row.RowTotal * (row.VatPercent / 100m), 2);
+    }
+
+    private void RecalculateQuoteTotals()
+    {
+        if (quote == null) return;
+
+        quote.TotalNet = quoteRows.Sum(r => r.RowTotal);
+        quote.TotalVat = quoteRows.Sum(r => r.VatAmount);
+        quote.TotalGross = quote.TotalNet + quote.TotalVat;
+    }
+
+    private async Task SaveQuote()
+    {
+        if (selectedCliente == null)
+        {
+            Snackbar.Add("Seleziona un cliente", Severity.Warning);
+            return;
+        }
+
+        if (!quoteDate.HasValue)
+        {
+            Snackbar.Add("Inserisci la data del preventivo", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            isSaving = true;
+
+            quote!.ClienteId = selectedCliente.Id;
+            quote.Date = quoteDate.Value;
+            quote.ValidUntil = validUntilDate;
+            quote.PriceListId = selectedPriceListId;
+            quote.Rows = quoteRows;
+
+            HttpResponseMessage response;
+            if (isEdit)
+            {
+                response = await Http.PutAsJsonAsync($"api/quotes/{Id}", quote);
+            }
+            else
+            {
+                response = await Http.PostAsJsonAsync("api/quotes", quote);
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+                var savedQuote = await response.Content.ReadFromJsonAsync<QuoteDto>();
+                Snackbar.Add(isEdit ? "Preventivo aggiornato" : "Preventivo creato", Severity.Success);
+                
+                if (!isEdit && savedQuote != null)
+                {
+                    Nav.NavigateTo($"/cataloghi/preventivi/{savedQuote.Id}");
+                }
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"Errore: {error}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore salvataggio: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task DuplicateQuote()
+    {
+        if (!isEdit) return;
+
+        try
+        {
+            var response = await Http.PostAsync($"api/quotes/{Id}/duplicate", null);
+            if (response.IsSuccessStatusCode)
+            {
+                var newQuote = await response.Content.ReadFromJsonAsync<QuoteDto>();
+                Snackbar.Add("Preventivo duplicato", Severity.Success);
+                if (newQuote != null)
+                {
+                    Nav.NavigateTo($"/cataloghi/preventivi/{newQuote.Id}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore duplicazione: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task GeneratePdf()
+    {
+        if (!isEdit) return;
+
+        try
+        {
+            var response = await Http.GetAsync($"api/quotes/{Id}/pdf");
+            if (response.IsSuccessStatusCode)
+            {
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+                var fileName = $"Preventivo_{quote?.Number ?? "nuovo"}.pdf";
+                
+                // Download via JS
+                await JS.InvokeVoidAsync("downloadFile", bytes, fileName, "application/pdf");
+                Snackbar.Add("PDF generato", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore generazione PDF: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SendQuote()
+    {
+        if (!isEdit) return;
+
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Confermi l'invio del preventivo al cliente?");
+        if (!confirmed) return;
+
+        try
+        {
+            var response = await Http.PostAsync($"api/quotes/{Id}/send", null);
+            if (response.IsSuccessStatusCode)
+            {
+                quote!.Status = QuoteStatus.Sent;
+                Snackbar.Add("Preventivo inviato", Severity.Success);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore invio: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AcceptQuote()
+    {
+        if (!isEdit) return;
+
+        try
+        {
+            var response = await Http.PostAsync($"api/quotes/{Id}/accept", null);
+            if (response.IsSuccessStatusCode)
+            {
+                quote!.Status = QuoteStatus.Accepted;
+                Snackbar.Add("Preventivo accettato", Severity.Success);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task RejectQuote()
+    {
+        if (!isEdit) return;
+
+        try
+        {
+            var response = await Http.PostAsync($"api/quotes/{Id}/reject", null);
+            if (response.IsSuccessStatusCode)
+            {
+                quote!.Status = QuoteStatus.Rejected;
+                Snackbar.Add("Preventivo rifiutato", Severity.Warning);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OnFileUpload(IBrowserFile file)
+    {
+        if (!isEdit || quote == null) return;
+
+        try
+        {
+            var content = new MultipartFormDataContent();
+            var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB
+            content.Add(new StreamContent(stream), "file", file.Name);
+
+            var response = await Http.PostAsync($"api/quotes/{Id}/attachments", content);
+            if (response.IsSuccessStatusCode)
+            {
+                var attachment = await response.Content.ReadFromJsonAsync<QuoteAttachmentDto>();
+                if (attachment != null)
+                {
+                    attachments.Add(attachment);
+                    Snackbar.Add("File caricato", Severity.Success);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore upload: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DownloadAttachment(QuoteAttachmentDto attachment)
+    {
+        try
+        {
+            var response = await Http.GetAsync($"api/quotes/{Id}/attachments/{attachment.Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+                await JS.InvokeVoidAsync("downloadFile", bytes, attachment.FileName, attachment.ContentType);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore download: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteAttachment(QuoteAttachmentDto attachment)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", $"Eliminare l'allegato '{attachment.FileName}'?");
+        if (!confirmed) return;
+
+        try
+        {
+            var response = await Http.DeleteAsync($"api/quotes/{Id}/attachments/{attachment.Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                attachments.Remove(attachment);
+                Snackbar.Add("Allegato eliminato", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore eliminazione: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/cataloghi/preventivi");
+    }
+
+    private Color GetStatusColor(QuoteStatus status) => status switch
+    {
+        QuoteStatus.Draft => Color.Default,
+        QuoteStatus.Sent => Color.Info,
+        QuoteStatus.Accepted => Color.Success,
+        QuoteStatus.Rejected => Color.Error,
+        QuoteStatus.Expired => Color.Warning,
+        _ => Color.Default
+    };
+
+    private string GetFileIcon(string fileName)
+    {
+        var ext = Path.GetExtension(fileName).ToLowerInvariant();
+        return ext switch
+        {
+            ".pdf" => Icons.Material.Filled.PictureAsPdf,
+            ".doc" or ".docx" => Icons.Material.Filled.Description,
+            ".xls" or ".xlsx" => Icons.Material.Filled.TableChart,
+            ".jpg" or ".jpeg" or ".png" or ".gif" => Icons.Material.Filled.Image,
+            _ => Icons.Material.Filled.AttachFile
+        };
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024:N1} KB";
+        return $"{bytes / (1024 * 1024):N1} MB";
+    }
+}

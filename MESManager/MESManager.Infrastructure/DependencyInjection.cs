@@ -47,6 +47,14 @@ public static class DependencyInjection
         services.AddScoped<CurrentUserService>();
         services.AddScoped<ITechnicalIssueService, TechnicalIssueService>();
         services.AddScoped<IPianificazioneEngineService, PianificazioneEngineService>();
+        
+        // Preventivi Services
+        services.AddScoped<IQuotePricingEngine, QuotePricingEngine>();
+        services.AddScoped<IPriceListService, PriceListService>();
+        services.AddScoped<IExcelImportService, ExcelImportService>();
+        services.AddScoped<IQuoteService, QuoteService>();
+        services.AddScoped<IQuoteAttachmentService, QuoteAttachmentService>();
+        services.AddScoped<IQuotePdfGenerator, QuotePdfGenerator>();
         // Aggiungi altri servizi qui quando implementati
 
         return services;
