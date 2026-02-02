@@ -1,9 +1,261 @@
 @page "/cataloghi/ricette"
+@using MESManager.Application.DTOs
+@inject HttpClient Http
+@inject ISnackbar Snackbar
 
 <PageTitle>Catalogo Ricette</PageTitle>
 
-<MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mb-4" StartIcon="@Icons.Material.Filled.Add">
-    Nuova Ricetta
-</MudButton>
+<div class="ricette-page">
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudTextField @bind-Value="searchText"
+                         Placeholder="Cerca codice articolo (anche parziale)..."
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         Style="width: 350px;"
+                         Adornment="Adornment.End"
+                         AdornmentIcon="@Icons.Material.Filled.Search"
+                         Immediate="true"
+                         DebounceInterval="300"
+                         OnDebounceIntervalElapsed="@OnSearchDebounced" />
+            <MudButton Variant="Variant.Filled" 
+                      Color="Color.Primary" 
+                      StartIcon="@Icons.Material.Filled.Search"
+                      OnClick="@SearchRicette"
+                      Disabled="@isLoading">
+                Cerca
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" 
+                      StartIcon="@Icons.Material.Filled.Clear"
+                      OnClick="@ClearSearch"
+                      Disabled="@isLoading">
+                Pulisci
+            </MudButton>
+            @if (isLoading)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+            }
+        </MudStack>
+        
+        @if (totaleRicetteDisponibili > 0)
+        {
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                Totale ricette disponibili: <strong>@totaleRicetteDisponibili</strong> 
+                @if (ricetteTrovate.Count > 0)
+                {
+                    <span> | Risultati: <strong>@ricetteTrovate.Count</strong></span>
+                }
+            </MudText>
+        }
+    </MudPaper>
 
-<MudText>Pagina predisposta per gestione ricette produzione</MudText>
+    @* Lista risultati ricerca *@
+    @if (ricetteTrovate.Count > 0 && ricettaSelezionata == null)
+    {
+        <MudPaper Class="pa-4 mb-4" Elevation="1">
+            <MudText Typo="Typo.subtitle1" Class="mb-2">
+                <MudIcon Icon="@Icons.Material.Filled.List" Size="Size.Small" /> 
+                Trovate <strong>@ricetteTrovate.Count</strong> ricette - clicca per vedere i dettagli:
+            </MudText>
+            <MudChipSet T="string" SelectionMode="SelectionMode.SingleSelection" Class="mt-2">
+                @foreach (var ricetta in ricetteTrovate)
+                {
+                    <MudChip T="string" 
+                            Color="Color.Primary" 
+                            Variant="Variant.Outlined"
+                            OnClick="@(() => SelectRicetta(ricetta))">
+                        @ricetta.CodiceArticolo (@ricetta.TotaleParametri param.)
+                    </MudChip>
+                }
+            </MudChipSet>
+        </MudPaper>
+    }
+
+    @* Dettaglio ricetta selezionata *@
+    @if (ricettaSelezionata != null)
+    {
+        <MudPaper Class="pa-4 mb-4" Elevation="2">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" 
+                              OnClick="@BackToList" 
+                              Title="Torna alla lista" />
+                <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Primary" />
+                <MudText Typo="Typo.h6">
+                    Ricetta: <strong>@ricettaSelezionata.CodiceArticolo</strong>
+                </MudText>
+                @if (!string.IsNullOrEmpty(ricettaSelezionata.DescrizioneArticolo))
+                {
+                    <MudText Typo="Typo.subtitle1" Color="Color.Secondary">
+                        — @ricettaSelezionata.DescrizioneArticolo
+                    </MudText>
+                }
+                <MudSpacer />
+                <MudChip T="string" Color="Color.Info" Size="Size.Small">
+                    @ricettaSelezionata.TotaleParametri parametri
+                </MudChip>
+            </MudStack>
+
+            <MudTable Items="@ricettaSelezionata.Parametri" 
+                     Dense="true" 
+                     Hover="true" 
+                     Striped="true"
+                     FixedHeader="true"
+                     Height="calc(100vh - 400px)">
+                <HeaderContent>
+                    <MudTh Style="width: 80px;">Cod.</MudTh>
+                    <MudTh>Descrizione Parametro</MudTh>
+                    <MudTh Style="width: 100px; text-align: center;">Indirizzo</MudTh>
+                    <MudTh Style="width: 80px; text-align: center;">Area</MudTh>
+                    <MudTh Style="width: 80px; text-align: center;">Tipo</MudTh>
+                    <MudTh Style="width: 80px; text-align: center;">UM</MudTh>
+                    <MudTh Style="width: 120px; text-align: right;"><strong>Valore</strong></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Cod.">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default">@context.CodiceParametro</MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Descrizione">@context.DescrizioneParametro</MudTd>
+                    <MudTd DataLabel="Indirizzo" Style="text-align: center;">@context.Indirizzo</MudTd>
+                    <MudTd DataLabel="Area" Style="text-align: center;">@context.Area</MudTd>
+                    <MudTd DataLabel="Tipo" Style="text-align: center;">@context.Tipo</MudTd>
+                    <MudTd DataLabel="UM" Style="text-align: center;">@(context.UM ?? "-")</MudTd>
+                    <MudTd DataLabel="Valore" Style="text-align: right;">
+                        <MudText Typo="Typo.body1" Color="Color.Primary"><strong>@context.Valore</strong></MudText>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    }
+    else if (searchPerformed && ricetteTrovate.Count == 0 && !isLoading)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-4">
+            Nessuna ricetta trovata per "<strong>@lastSearchTerm</strong>".
+            Prova con un codice diverso o parziale.
+        </MudAlert>
+    }
+    else if (!searchPerformed)
+    {
+        <MudPaper Class="pa-6" Elevation="0" Style="background: var(--mud-palette-background-grey); text-align: center;">
+            <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
+            <MudText Typo="Typo.h6" Color="Color.Secondary">
+                Cerca un articolo per visualizzare la ricetta
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                Digita anche solo parte del codice articolo - la ricerca è automatica
+            </MudText>
+        </MudPaper>
+    }
+</div>
+
+@code {
+    private string searchText = string.Empty;
+    private string lastSearchTerm = string.Empty;
+    private List<RicettaArticoloDto> ricetteTrovate = new();
+    private RicettaArticoloDto? ricettaSelezionata;
+    private bool isLoading = false;
+    private bool searchPerformed = false;
+    private int totaleRicetteDisponibili = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTotaleRicette();
+    }
+
+    private async Task LoadTotaleRicette()
+    {
+        try
+        {
+            totaleRicetteDisponibili = await Http.GetFromJsonAsync<int>("/api/RicetteArticoli/count");
+        }
+        catch
+        {
+            totaleRicetteDisponibili = 0;
+        }
+    }
+
+    private async Task OnSearchDebounced(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value) && value.Length >= 1)
+        {
+            await SearchRicette();
+        }
+    }
+
+    private async Task SearchRicette()
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            return;
+        }
+
+        isLoading = true;
+        searchPerformed = true;
+        lastSearchTerm = searchText.Trim();
+        ricettaSelezionata = null;
+        ricetteTrovate.Clear();
+        StateHasChanged();
+
+        try
+        {
+            var response = await Http.GetAsync($"/api/RicetteArticoli/search?q={Uri.EscapeDataString(lastSearchTerm)}&max=100");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<RicetteSearchResponse>();
+                if (result != null)
+                {
+                    ricetteTrovate = result.Ricette;
+                    
+                    // Se c'è solo 1 risultato, selezionalo automaticamente
+                    if (ricetteTrovate.Count == 1)
+                    {
+                        ricettaSelezionata = ricetteTrovate[0];
+                        Snackbar.Add($"Trovata ricetta {ricettaSelezionata.CodiceArticolo} con {ricettaSelezionata.TotaleParametri} parametri", Severity.Success);
+                    }
+                    else if (ricetteTrovate.Count > 1)
+                    {
+                        Snackbar.Add($"Trovate {ricetteTrovate.Count} ricette", Severity.Info);
+                    }
+                }
+            }
+            else
+            {
+                Snackbar.Add("Errore durante la ricerca", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SelectRicetta(RicettaArticoloDto ricetta)
+    {
+        ricettaSelezionata = ricetta;
+    }
+
+    private void BackToList()
+    {
+        ricettaSelezionata = null;
+    }
+
+    private void ClearSearch()
+    {
+        searchText = string.Empty;
+        ricetteTrovate.Clear();
+        ricettaSelezionata = null;
+        searchPerformed = false;
+        lastSearchTerm = string.Empty;
+    }
+}
+
+<style>
+    .ricette-page {
+        padding: 0;
+    }
+</style>

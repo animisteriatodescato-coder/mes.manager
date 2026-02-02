@@ -4,6 +4,7 @@
 @using MESManager.Web.Services
 @using MESManager.Web.Components.Dialogs
 @using Microsoft.JSInterop
+@using Microsoft.AspNetCore.SignalR.Client
 @using System.Text.Json
 @inject HttpClient Http
 @inject NavigationManager Nav
@@ -425,6 +426,10 @@
     private bool _isGridInitialized = false;
     private bool _isDataLoaded = false;
     private bool _isLoadingData = false;
+    
+    // SignalR
+    private HubConnection? _hubConnection;
+    private bool _isSignalRConnected;
 
     private async Task OnSearchDebounced(string value)
     {
@@ -453,6 +458,60 @@
         {
             settings = savedSettings;
         }
+        
+        // Inizializza SignalR per aggiornamenti real-time
+        await InitializeSignalR();
+    }
+    
+    private async Task InitializeSignalR()
+    {
+        try
+        {
+            _hubConnection = new HubConnectionBuilder()
+                .WithUrl(Nav.ToAbsoluteUri("/hubs/pianificazione"))
+                .WithAutomaticReconnect()
+                .Build();
+
+            _hubConnection.On<PianificazioneNotification>("PianificazioneUpdated", async (notification) =>
+            {
+                // Ricarica i dati quando vengono spostare commesse nel Gantt
+                await LoadData(force: true);
+                await InvokeAsync(async () =>
+                {
+                    StateHasChanged();
+                    if (_isGridInitialized)
+                    {
+                        await RefreshGrid();
+                    }
+                });
+            });
+
+            await _hubConnection.StartAsync();
+            _isSignalRConnected = true;
+            
+            // Iscriviti agli aggiornamenti del Gantt
+            await _hubConnection.InvokeAsync("SubscribeToGantt");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Errore connessione SignalR: {ex.Message}");
+            _isSignalRConnected = false;
+        }
+    }
+    
+    private async Task RefreshGrid()
+    {
+        try
+        {
+            // Get current programmed commesse for the grid
+            var programmate = _commesse.Where(c => 
+                !string.IsNullOrEmpty(c.NumeroMacchina) &&
+                c.StatoProgramma != "Archiviata"
+            ).ToList();
+            
+            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.setRowData", programmate);
+        }
+        catch { }
     }
 
     private async Task LoadData(bool force = false)
@@ -808,6 +867,15 @@
 
     public async ValueTask DisposeAsync()
     {
+        if (_hubConnection != null)
+        {
+            try
+            {
+                await _hubConnection.DisposeAsync();
+            }
+            catch { }
+        }
+        
         if (jsModule != null)
         {
             try
@@ -822,6 +890,12 @@
             await SaveSettings();
         }
         catch { }
+    }
+    
+    private class PianificazioneNotification
+    {
+        public string Type { get; set; } = "";
+        public List<CommessaGanttDto>? CommesseAggiornate { get; set; }
     }
 
     private class GridStats

@@ -13,7 +13,7 @@ public class PianificazioneService : IPianificazioneService
         }
 
         // Calcola il tempo totale di produzione in secondi
-        // (TempoCiclo * QuantitaRichiesta) perché NumeroFigure indica quanti pezzi escono per ciclo
+        // (TempoCiclo * QuantitaRichiesta / NumeroFigure) perché NumeroFigure indica quanti pezzi escono per ciclo
         decimal cicliNecessari = quantitaRichiesta / numeroFigure;
         decimal tempoProduzioneTotaleSecondi = tempoCicloSecondi * cicliNecessari;
         
@@ -24,6 +24,11 @@ public class PianificazioneService : IPianificazioneService
     }
 
     public DateTime CalcolaDataFinePrevista(DateTime dataInizio, int durataMinuti, int oreLavorativeGiornaliere, int giorniLavorativiSettimanali)
+    {
+        return CalcolaDataFinePrevistaConFestivi(dataInizio, durataMinuti, oreLavorativeGiornaliere, giorniLavorativiSettimanali, new HashSet<DateOnly>());
+    }
+
+    public DateTime CalcolaDataFinePrevistaConFestivi(DateTime dataInizio, int durataMinuti, int oreLavorativeGiornaliere, int giorniLavorativiSettimanali, HashSet<DateOnly> festivi)
     {
         if (durataMinuti <= 0)
         {
@@ -36,14 +41,19 @@ public class PianificazioneService : IPianificazioneService
 
         while (minutiRimanenti > 0)
         {
-            // Salta i weekend se necessario
+            // Salta i weekend se necessario (5 giorni lavorativi = Lun-Ven)
             if (giorniLavorativiSettimanali == 5)
             {
-                // Lunedì = 1, Domenica = 0
                 while (dataFine.DayOfWeek == DayOfWeek.Saturday || dataFine.DayOfWeek == DayOfWeek.Sunday)
                 {
-                    dataFine = dataFine.AddDays(1);
+                    dataFine = dataFine.AddDays(1).Date; // Reset all'inizio del giorno
                 }
+            }
+            
+            // Salta i festivi
+            while (festivi.Contains(DateOnly.FromDateTime(dataFine)))
+            {
+                dataFine = dataFine.AddDays(1).Date; // Passa al giorno successivo
             }
 
             // Calcola quanti minuti possiamo aggiungere in questo giorno
@@ -59,7 +69,7 @@ public class PianificazioneService : IPianificazioneService
             {
                 // Usa tutto il giorno e passa al successivo
                 minutiRimanenti -= minutiDisponibiliOggi;
-                dataFine = dataFine.AddDays(1);
+                dataFine = dataFine.AddDays(1).Date; // Reset all'inizio del giorno successivo
             }
         }
 

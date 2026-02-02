@@ -35,6 +35,7 @@ public class MesManagerDbContext : DbContext
     public DbSet<PlcServiceStatus> PlcServiceStatus => Set<PlcServiceStatus>();
     public DbSet<PlcSyncLog> PlcSyncLogs => Set<PlcSyncLog>();
     public DbSet<TechnicalIssue> TechnicalIssues => Set<TechnicalIssue>();
+    public DbSet<Festivo> Festivi => Set<Festivo>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -205,5 +206,12 @@ public class MesManagerDbContext : DbContext
 
         modelBuilder.Entity<TechnicalIssue>()
             .HasIndex(t => t.CreatedAt);
+
+        // Festivi - indici per query veloci
+        modelBuilder.Entity<Festivo>()
+            .HasIndex(f => f.Data);
+        
+        modelBuilder.Entity<Festivo>()
+            .HasIndex(f => f.Ricorrente);
     }
 }

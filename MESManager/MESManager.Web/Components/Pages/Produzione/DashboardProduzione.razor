@@ -7,7 +7,7 @@
 
 <PageTitle>Dashboard Produzione</PageTitle>
 
-<div class="dashboard-container" style="background: #f5f5f5 !important;">
+<div class="dashboard-container">
     <div class="d-flex justify-end align-center mb-4">
         <div class="d-flex gap-2">
             <MudChip T="string" Color="Color.Success" Size="Size.Small">@_data.Count Macchine Attive</MudChip>
@@ -137,7 +137,7 @@
 <style>
     .dashboard-container {
         padding: 1.5rem;
-        background: #f5f5f5 !important;
+        background: var(--mud-palette-background) !important;
         min-height: 100vh;
     }
 
@@ -150,7 +150,7 @@
         border-radius: 12px !important;
         overflow: hidden;
         backdrop-filter: blur(10px);
-        background: radial-gradient(circle at center, #ffffff 0%, rgba(33, 150, 243, 0.08) 100%) !important;
+        background: var(--mud-palette-surface) !important;
     }
 
     .machine-card:hover {
@@ -160,31 +160,31 @@
 
     .machine-card.status-emergenza {
         border: 4px solid #f44336;
-        background: radial-gradient(circle at center, #ffffff 0%, rgba(244, 67, 54, 0.12) 100%) !important;
+        background: var(--mud-palette-surface) !important;
         box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3) !important;
     }
 
     .machine-card.status-allarme {
         border: 4px solid #ff9800;
-        background: radial-gradient(circle at center, #ffffff 0%, rgba(255, 152, 0, 0.12) 100%) !important;
+        background: var(--mud-palette-surface) !important;
         box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3) !important;
     }
 
     .machine-card.status-automatico {
         border: 4px solid #4caf50;
-        background: radial-gradient(circle at center, #ffffff 0%, rgba(76, 175, 80, 0.12) 100%) !important;
+        background: var(--mud-palette-surface) !important;
         box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3) !important;
     }
 
     .machine-card.status-manuale {
         border: 4px solid #616161;
-        background: radial-gradient(circle at center, #ffffff 0%, rgba(97, 97, 97, 0.12) 100%) !important;
+        background: var(--mud-palette-surface) !important;
         box-shadow: 0 4px 12px rgba(97, 97, 97, 0.3) !important;
     }
 
     .machine-card.status-non-connessa {
         border: 4px solid #bdbdbd;
-        background: radial-gradient(circle at center, #fafafa 0%, rgba(189, 189, 189, 0.15) 100%) !important;
+        background: var(--mud-palette-surface) !important;
         box-shadow: 0 4px 12px rgba(189, 189, 189, 0.2) !important;
         opacity: 0.85;
     }
@@ -232,9 +232,9 @@
         align-items: center;
         gap: 12px;
         padding: 10px;
-        background: linear-gradient(135deg, rgba(63, 81, 181, 0.05) 0%, rgba(33, 150, 243, 0.05) 100%);
+        background: var(--mud-palette-background-grey);
         border-radius: 12px;
-        border: 1px solid rgba(0, 0, 0, 0.06);
+        border: 1px solid var(--mud-palette-lines-default);
         transition: all 0.2s ease;
     }
 
@@ -248,9 +248,9 @@
         align-items: center;
         justify-content: space-between;
         padding: 10px;
-        background: linear-gradient(135deg, rgba(63, 81, 181, 0.05) 0%, rgba(33, 150, 243, 0.05) 100%);
+        background: var(--mud-palette-background-grey);
         border-radius: 12px;
-        border: 1px solid rgba(0, 0, 0, 0.06);
+        border: 1px solid var(--mud-palette-lines-default);
         transition: all 0.2s ease;
         gap: 8px;
     }
@@ -290,6 +290,7 @@
         font-weight: 800;
         line-height: 1.2;
         font-size: 1rem;
+        color: var(--mud-palette-text-primary);
     }
 
     .metrics-grid {

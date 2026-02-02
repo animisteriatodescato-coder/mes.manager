@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MESManager — Scheda Tecnica & Guida Commerciale</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: #161a2b;
+      --text: #e7e9ee;
+      --muted: #aab0c0;
+      --primary: #6aa0ff;
+      --accent: #7bd389;
+      --danger: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    .wrap { max-width: 980px; margin: 32px auto; padding: 0 20px 60px; }
+    header { margin-bottom: 24px; }
+    h1 { font-size: 32px; margin: 0 0 8px; }
+    .subtitle { color: var(--muted); font-size: 14px; }
+    .card { background: var(--card); border: 1px solid #22263b; border-radius: 14px; padding: 20px; margin: 20px 0; }
+    h2 { font-size: 22px; margin: 18px 0 12px; }
+    h3 { font-size: 18px; margin: 16px 0 10px; color: var(--primary); }
+    p { line-height: 1.6; color: var(--text); }
+    ul { margin: 8px 0 8px 20px; }
+    li { margin: 6px 0; }
+    .kpi-list li::marker { color: var(--accent); }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #22263b; color: var(--muted); font-size: 12px; margin-right: 8px; }
+    .callout { border-left: 3px solid var(--primary); padding-left: 12px; color: var(--muted); }
+    .toc a { color: var(--primary); text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .footer { margin-top: 32px; color: var(--muted); font-size: 12px; }
+    .tag { background: #1d2338; color: var(--primary); font-size: 11px; padding: 3px 8px; border-radius: 999px; margin-right: 6px; }
+    .pill { background: #1e2a20; color: var(--accent); font-size: 12px; padding: 5px 10px; border-radius: 999px; margin-right: 6px; }
+    @media print {
+      .wrap { margin: 0; max-width: 100%; padding: 0; }
+      a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 10px; color: var(--muted); }
+      .card { break-inside: avoid; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>MESManager — Gestionale su Misura</h1>
+      <div class="subtitle">Versione 1.0 · Aggiornato: 02/02/2026 · .NET 8 · Blazor Server · SQL Server · SignalR</div>
+    </header>
+
+    <div class="card toc">
+      <h2>Indice</h2>
+      <ul>
+        <li><a href="#exec">Executive Summary</a></li>
+        <li><a href="#benefici">Benefici Chiave</a></li>
+        <li><a href="#su-misura">Perché Su Misura (non adattato)</a></li>
+        <li><a href="#moduli">Moduli & Funzionalità</a></li>
+        <li><a href="#arch">Architettura</a></li>
+        <li><a href="#sicurezza">Sicurezza & Compliance</a></li>
+        <li><a href="#deploy">Deploy & Operatività</a></li>
+        <li><a href="#integrazioni">Integrazioni</a></li>
+        <li><a href="#metodo">Metodo di Lavoro</a></li>
+        <li><a href="#demo">Script Demo</a></li>
+        <li><a href="#pricing">Modelli di Prezzo</a></li>
+        <li><a href="#implementazione">Piano di Implementazione</a></li>
+        <li><a href="#kpi">Metriche di Successo</a></li>
+      </ul>
+    </div>
+
+    <div id="exec" class="card">
+      <h2>Executive Summary</h2>
+      <p><strong>Cosa</strong>: gestionale/MES <strong>costruito su misura</strong> per la tua azienda — <em>non</em> un prodotto generico adattato. Flussi con <strong>logica diretta</strong>, <strong>0 passaggi inutili</strong> e inserimento dati <strong>alla massima velocità</strong>.</p>
+      <p class="callout">Co‑progettazione con i reparti, misurazione dei click‑path, scorciatoie da tastiera, default intelligenti. Stack moderno (.NET 8, Blazor, SignalR, SQL Server) per evolvere rapidamente senza zavorra.</p>
+      <span class="pill">Realtime</span>
+      <span class="pill">Gantt</span>
+      <span class="pill">ERP Sync</span>
+      <span class="pill">PLC S7</span>
+      <span class="pill">Security</span>
+      <span class="pill">Su Misura</span>
+      <span class="pill">Zero Sprechi</span>
+    </div>
+
+    <div id="benefici" class="card">
+      <h2>Benefici Chiave</h2>
+      <ul class="kpi-list">
+        <li><strong>0 passaggi inutili</strong>: flussi cuciti sui ruoli operativi, meno errori e maggiore produttività.</li>
+        <li><strong>Inserimento dati velocissimo</strong>: scorciatoie, precompilazione, validazioni contestuali.</li>
+        <li><strong>Pianificazione lampo</strong>: focus su carico reale e vincoli effettivi, senza superfluo.</li>
+        <li><strong>Coerenza dati</strong> con ERP Mago: una sola fonte di verità.</li>
+        <li><strong>Scalabilità modulare</strong> (Web/Worker/PlcSync) e aggiornamenti parziali (solo JS/CSS).</li>
+        <li><strong>Sicurezza enterprise</strong>: segreti cifrati, ruoli granulari, best practice di hardening.</li>
+      </ul>
+    </div>
+
+    <div id="su-misura" class="card">
+      <h2>Perché Su Misura (non adattato)</h2>
+      <ul>
+        <li>Processi unici: modelliamo il gestionale esattamente su come <em>lavorate davvero</em>.</li>
+        <li>Velocità operativa: ottimizziamo click‑path e tempi per le operazioni ricorrenti.</li>
+        <li>Riduzione complessità: eliminiamo menu e campi non usati; interfacce pulite.</li>
+        <li>Evolutivo: aggiunte incrementali senza stravolgere l’esperienza dei reparti.</li>
+      </ul>
+    </div>
+
+    <div id="moduli" class="card">
+      <h2>Moduli & Funzionalità</h2>
+      <div class="grid">
+        <div>
+          <h3>Produzione</h3>
+          <ul>
+            <li>Dashboard in tempo reale (SignalR).</li>
+            <li>PLC realtime, storico con filtri.</li>
+            <li>Gestione processo di incollaggio.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Programmazione</h3>
+          <ul>
+            <li>Gantt macchine, carico e sequenze.</li>
+            <li>Commesse aperte e programma macchine.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Cataloghi</h3>
+          <ul>
+            <li>Articoli, clienti, ricette.</li>
+            <li>Foto e allegati (percorsi mappati).</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Manutenzioni</h3>
+          <ul>
+            <li>Alert programmati e catalogo interventi.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Sync</h3>
+          <ul>
+            <li>ERP Mago (anagrafiche, commesse).</li>
+            <li>Macchine & servizi Google selezionati.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Statistiche</h3>
+          <ul>
+            <li>KPI produzione/ordini (espandibile a OEE).</li>
+            <li>Export Excel (EPPlus).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="arch" class="card">
+      <h2>Architettura</h2>
+      <p><span class="badge">Clean Architecture</span> <span class="badge">Domain</span> <span class="badge">Application</span> <span class="badge">Infrastructure</span> <span class="badge">Web</span> <span class="badge">Worker</span> <span class="badge">PlcSync</span></p>
+      <ul>
+        <li><strong>Realtime</strong>: SignalR per aggiornamenti istantanei UI.</li>
+        <li><strong>PLC</strong>: servizio dedicato PlcSync (Sharp7), polling, riconnessione, storico.</li>
+        <li><strong>ERP</strong>: sincronizzazioni batch con Mago (Worker/Sync).</li>
+        <li><strong>DB</strong>: SQL Server, EF Core 8 con retry e DbContext factory.</li>
+        <li><strong>UI</strong>: MudBlazor + Syncfusion; temi, toolbar, griglie.</li>
+        <li><strong>Config</strong>: segreti cifrati (DPAPI), fallback a Secrets.json; file offset PLC JSON.</li>
+      </ul>
+    </div>
+
+    <div id="sicurezza" class="card">
+      <h2>Sicurezza & Compliance</h2>
+      <ul>
+        <li>ASP.NET Identity: policy password, lockout, token.</li>
+        <li>Principle of least privilege su SQL; connessioni cifrate.</li>
+        <li>Gestione segreti: <em>appsettings.Secrets.encrypted</em>, esclusione dal deploy.</li>
+        <li>Best practice operative: ordine stop/start servizi, hardening, segmentazione rete OT.</li>
+        <li>Conformità GDPR-ready: autenticazione, ruoli, log, separazione configurazioni.</li>
+      </ul>
+    </div>
+
+    <div id="deploy" class="card">
+      <h2>Deploy & Operatività</h2>
+      <ul>
+        <li>Eseguibili self-contained; script di publish e avvio rapido.</li>
+        <li>Update parziali di asset (solo <em>wwwroot</em> per JS/CSS).</li>
+        <li>Percorsi corretti: <strong>C:\MESManager\wwwroot\</strong> (ROOT); esclusione Secrets/Database JSON.</li>
+        <li>Ordine: Stop PlcSync → Worker → Web; Start Web → Worker → PlcSync.</li>
+        <li>Guida deploy definitiva e checklist errori comuni.</li>
+      </ul>
+    </div>
+
+    <div id="integrazioni" class="card">
+      <h2>Integrazioni</h2>
+      <ul>
+        <li><strong>ERP Mago</strong>: anagrafiche/commesse; flusso incrementale.</li>
+        <li><strong>PLC S7</strong>: IP da DB, offset da JSON; validazioni e log.</li>
+        <li><strong>API</strong>: controller REST estendibili per sistemi terzi.</li>
+      </ul>
+    </div>
+
+    <div id="metodo" class="card">
+      <h2>Metodo di Lavoro (Analisi Tecnica Preliminare)</h2>
+      <ol>
+        <li><strong>Discovery</strong>: workshop con reparti, shadowing su postazioni reali.</li>
+        <li><strong>Mappatura flussi</strong>: click‑path, input minimi, eccezioni, KPI operativi.</li>
+        <li><strong>Prototipo</strong>: wireframe UX con scorciatoie e default intelligenti.</li>
+        <li><strong>Co‑design</strong>: sprint brevi, feedback sul campo, refine.</li>
+        <li><strong>UAT</strong>: test utenti, misurazione tempi/precisione.</li>
+        <li><strong>Go‑live</strong> & hypercare: assistenza ravvicinata e fine‑tuning.</li>
+      </ol>
+      <p class="callout">Deliverable: mappa processi, backlog prioritizzato (MoSCoW), specifiche UX, piano dati, piano formazione.</p>
+    </div>
+
+    <div id="demo" class="card">
+      <h2>Script Demo (30–40 min)</h2>
+      <ol>
+        <li>Introduzione obiettivi e outcome.</li>
+        <li>Login & ruoli (policy sicurezza).</li>
+        <li>Dashboard Produzione realtime (SignalR).</li>
+        <li>PLC realtime/storico con filtri.</li>
+        <li>Pianificazione Gantt e commesse.</li>
+        <li>Cataloghi: articoli, ricette, foto/allegati.</li>
+        <li>Manutenzioni: alert e interventi.</li>
+        <li>Sync ERP Mago (flusso e coerenza dati).</li>
+        <li>Statistiche & export Excel; Q&A.</li>
+      </ol>
+    </div>
+
+    <div id="pricing" class="card">
+      <h2>Modelli di Prezzo (suggeriti)</h2>
+      <ul>
+        <li>Licenza: canone per modulo/utente/macchina.</li>
+        <li>Setup: fee una tantum (installazione, mappatura PLC, onboarding).</li>
+        <li>Personalizzazioni: tariffa giornaliera.</li>
+        <li>Supporto: piani Bronze/Silver/Gold (SLA).</li>
+      </ul>
+    </div>
+
+    <div id="implementazione" class="card">
+      <h2>Piano di Implementazione</h2>
+      <ul>
+        <li>Discovery & fit (workshop processi, mappa PLC/ERP).</li>
+        <li>PoC 2–4 settimane su 1–2 macchine.</li>
+        <li>MVP 6–10 settimane: moduli core in produzione pilota.</li>
+        <li>Rollout: estensione reparti/linee, KPI avanzati, hardening.</li>
+      </ul>
+    </div>
+
+    <div id="kpi" class="card">
+      <h2>Metriche di Successo</h2>
+      <ul>
+        <li>Puntualità piani, riduzione fermo, saturazione macchine.</li>
+        <li>Lead time ordine→consegna; tasso scarti; OEE (se implementato).</li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      Riferimenti tecnici: docs/Scheda-Tecnica-MESManager.md · docs/DEPLOY-GUIDA-DEFINITIVA.md · docs/SERVIZI.md · docs/SECURITY-CONFIG.md
+    </div>
+
+    <div class="no-print" style="margin-top:16px;">
+      <button onclick="window.print()" style="background:var(--primary); color:#0b1020; border:0; padding:10px 14px; border-radius:10px; cursor:pointer;">Stampa/Salva come PDF</button>
+    </div>
+  </div>
+</body>
+</html>

@@ -11,7 +11,7 @@ namespace MESManager.Application.Services
 {
     public class AllegatiAnimaService : IAllegatiAnimaService
     {
-        private readonly string _ganttConnectionString;
+        private readonly string _connectionString;
         private readonly ILogger<AllegatiAnimaService> _logger;
         private readonly string _allegatiBasePath;
         private readonly List<(string Source, string Target)> _pathMappings;
@@ -21,7 +21,7 @@ namespace MESManager.Application.Services
             IOptions<DatabaseConfiguration> dbConfig)
         {
             _logger = logger;
-            _ganttConnectionString = dbConfig.Value.GanttDb;
+            _connectionString = dbConfig.Value.MESManagerDb;
             
             // Percorso base degli allegati
             _allegatiBasePath = @"C:\Dati\Documenti\AA SCHEDE PRODUZIONE\foto cel";
@@ -63,7 +63,7 @@ namespace MESManager.Application.Services
 
             try
             {
-                using var conn = new SqlConnection(_ganttConnectionString);
+                using var conn = new SqlConnection(_connectionString);
                 await conn.OpenAsync();
 
                 // Cerca per IdArchivio o per CodiceArticolo nel path
@@ -144,7 +144,7 @@ namespace MESManager.Application.Services
                 _logger.LogInformation("File saved to disk: {Path}", pathCompleto);
 
                 // Inserisci record nel DB
-                using var conn = new SqlConnection(_ganttConnectionString);
+                using var conn = new SqlConnection(_connectionString);
                 await conn.OpenAsync();
 
                 // Ottieni prossima priorità
@@ -208,7 +208,7 @@ namespace MESManager.Application.Services
                 }
 
                 // Elimina dal DB
-                using var conn = new SqlConnection(_ganttConnectionString);
+                using var conn = new SqlConnection(_connectionString);
                 await conn.OpenAsync();
 
                 using var cmd = new SqlCommand("DELETE FROM [dbo].[Allegati] WHERE Id = @Id", conn);
@@ -294,7 +294,7 @@ namespace MESManager.Application.Services
             
             try
             {
-                using var conn = new SqlConnection(_ganttConnectionString);
+                using var conn = new SqlConnection(_connectionString);
                 await conn.OpenAsync();
 
                 var query = @"

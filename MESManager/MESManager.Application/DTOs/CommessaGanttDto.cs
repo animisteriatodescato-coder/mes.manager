@@ -5,8 +5,9 @@ public class CommessaGanttDto
     public Guid Id { get; set; }
     public string Codice { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public string? NumeroMacchina { get; set; }
+    public int? NumeroMacchina { get; set; }
     public string? NomeMacchina { get; set; }
+    public int OrdineSequenza { get; set; }
     
     // Date pianificazione
     public DateTime? DataInizioPrevisione { get; set; }

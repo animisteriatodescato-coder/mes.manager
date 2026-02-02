@@ -16,15 +16,18 @@ public class PianificazioneController : ControllerBase
 {
     private readonly MesManagerDbContext _context;
     private readonly IPianificazioneService _pianificazioneService;
+    private readonly IPianificazioneEngineService _engineService;
     private readonly ILogger<PianificazioneController> _logger;
 
     public PianificazioneController(
         MesManagerDbContext context,
         IPianificazioneService pianificazioneService,
+        IPianificazioneEngineService engineService,
         ILogger<PianificazioneController> logger)
     {
         _context = context;
         _pianificazioneService = pianificazioneService;
+        _engineService = engineService;
         _logger = logger;
     }
 
@@ -43,6 +46,8 @@ public class PianificazioneController : ControllerBase
             var commesse = await _context.Commesse
                 .Include(c => c.Articolo)
                 .Where(c => c.NumeroMacchina != null) // Solo commesse assegnate
+                .OrderBy(c => c.NumeroMacchina)
+                .ThenBy(c => c.OrdineSequenza)
                 .ToListAsync();
 
             var commesseGantt = commesse.Select(c => MapToGanttDto(c, impostazioni)).ToList();
@@ -183,6 +188,194 @@ public class PianificazioneController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Sposta una commessa su una macchina con accodamento rigido
+    /// </summary>
+    [HttpPost("sposta")]
+    public async Task<ActionResult<SpostaCommessaResponse>> SpostaCommessa([FromBody] SpostaCommessaRequest request)
+    {
+        try
+        {
+            var result = await _engineService.SpostaCommessaAsync(request);
+            
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+            
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore nello spostamento della commessa {CommessaId}", request.CommessaId);
+            return StatusCode(500, new SpostaCommessaResponse 
+            { 
+                Success = false, 
+                ErrorMessage = "Errore interno del server" 
+            });
+        }
+    }
+
+    /// <summary>
+    /// Ricalcola tutte le commesse di tutte le macchine
+    /// </summary>
+    [HttpPost("ricalcola-tutto")]
+    public async Task<IActionResult> RicalcolaTutto()
+    {
+        try
+        {
+            await _engineService.RicalcolaTutteCommesseAsync();
+            return Ok(new { message = "Ricalcolo completato" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore nel ricalcolo delle commesse");
+            return StatusCode(500, "Errore interno del server");
+        }
+    }
+
+    #region Festivi
+
+    /// <summary>
+    /// Ottiene tutti i festivi
+    /// </summary>
+    [HttpGet("festivi")]
+    public async Task<ActionResult<IEnumerable<FestivoDto>>> GetFestivi()
+    {
+        try
+        {
+            var festivi = await _context.Festivi
+                .OrderBy(f => f.Data)
+                .Select(f => new FestivoDto
+                {
+                    Id = f.Id,
+                    Data = f.Data,
+                    Descrizione = f.Descrizione,
+                    Ricorrente = f.Ricorrente,
+                    Anno = f.Anno
+                })
+                .ToListAsync();
+
+            return Ok(festivi);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore nel recupero dei festivi");
+            return StatusCode(500, "Errore interno del server");
+        }
+    }
+
+    /// <summary>
+    /// Crea un nuovo festivo
+    /// </summary>
+    [HttpPost("festivi")]
+    public async Task<ActionResult<FestivoDto>> CreateFestivo([FromBody] CreateFestivoRequest request)
+    {
+        try
+        {
+            var festivo = new Festivo
+            {
+                Id = Guid.NewGuid(),
+                Data = request.Data,
+                Descrizione = request.Descrizione,
+                Ricorrente = request.Ricorrente,
+                Anno = request.Ricorrente ? null : request.Data.Year,
+                DataCreazione = DateTime.UtcNow
+            };
+
+            _context.Festivi.Add(festivo);
+            await _context.SaveChangesAsync();
+
+            // Ricalcola tutte le commesse considerando il nuovo festivo
+            await _engineService.RicalcolaTutteCommesseAsync();
+
+            return CreatedAtAction(nameof(GetFestivi), new FestivoDto
+            {
+                Id = festivo.Id,
+                Data = festivo.Data,
+                Descrizione = festivo.Descrizione,
+                Ricorrente = festivo.Ricorrente,
+                Anno = festivo.Anno
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore nella creazione del festivo");
+            return StatusCode(500, "Errore interno del server");
+        }
+    }
+
+    /// <summary>
+    /// Elimina un festivo
+    /// </summary>
+    [HttpDelete("festivi/{id}")]
+    public async Task<IActionResult> DeleteFestivo(Guid id)
+    {
+        try
+        {
+            var festivo = await _context.Festivi.FindAsync(id);
+            if (festivo == null)
+            {
+                return NotFound();
+            }
+
+            _context.Festivi.Remove(festivo);
+            await _context.SaveChangesAsync();
+
+            // Ricalcola tutte le commesse
+            await _engineService.RicalcolaTutteCommesseAsync();
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore nell'eliminazione del festivo {Id}", id);
+            return StatusCode(500, "Errore interno del server");
+        }
+    }
+
+    /// <summary>
+    /// Inizializza i festivi italiani standard (ricorrenti)
+    /// </summary>
+    [HttpPost("festivi/inizializza-standard")]
+    public async Task<IActionResult> InizializzaFestiviStandard()
+    {
+        try
+        {
+            // Verifica se esistono già festivi
+            if (await _context.Festivi.AnyAsync())
+            {
+                return BadRequest(new { message = "Festivi già presenti. Eliminarli prima di reinizializzare." });
+            }
+
+            var festiviItaliani = new List<Festivo>
+            {
+                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 1, 1), Descrizione = "Capodanno", Ricorrente = true },
+                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 1, 6), Descrizione = "Epifania", Ricorrente = true },
+                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 4, 25), Descrizione = "Festa della Liberazione", Ricorrente = true },
+                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 5, 1), Descrizione = "Festa del Lavoro", Ricorrente = true },
+                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 6, 2), Descrizione = "Festa della Repubblica", Ricorrente = true },
+                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 8, 15), Descrizione = "Ferragosto", Ricorrente = true },
+                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 11, 1), Descrizione = "Tutti i Santi", Ricorrente = true },
+                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 12, 8), Descrizione = "Immacolata Concezione", Ricorrente = true },
+                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 12, 25), Descrizione = "Natale", Ricorrente = true },
+                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 12, 26), Descrizione = "Santo Stefano", Ricorrente = true },
+            };
+
+            _context.Festivi.AddRange(festiviItaliani);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = $"Inizializzati {festiviItaliani.Count} festivi italiani standard" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore nell'inizializzazione dei festivi standard");
+            return StatusCode(500, "Errore interno del server");
+        }
+    }
+
+    #endregion
+
     private CommessaGanttDto MapToGanttDto(Commessa commessa, ImpostazioniProduzione impostazioni)
     {
         var tempoCiclo = commessa.Articolo?.TempoCiclo ?? 0;
@@ -207,13 +400,21 @@ public class PianificazioneController : ControllerBase
             );
         }
 
+        // Parse NumeroMacchina to int
+        int? numeroMacchinaInt = null;
+        if (!string.IsNullOrEmpty(commessa.NumeroMacchina) && int.TryParse(commessa.NumeroMacchina, out var num))
+        {
+            numeroMacchinaInt = num;
+        }
+
         return new CommessaGanttDto
         {
             Id = commessa.Id,
             Codice = commessa.Codice,
             Description = commessa.Description ?? "",
-            NumeroMacchina = commessa.NumeroMacchina,
+            NumeroMacchina = numeroMacchinaInt,
             NomeMacchina = !string.IsNullOrEmpty(commessa.NumeroMacchina) ? $"Macchina {commessa.NumeroMacchina}" : null,
+            OrdineSequenza = commessa.OrdineSequenza,
             DataInizioPrevisione = commessa.DataInizioPrevisione,
             DataFinePrevisione = dataFinePrevisione,
             DataInizioProduzione = commessa.DataInizioProduzione,

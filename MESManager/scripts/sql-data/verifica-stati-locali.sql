@@ -1,5 +1,5 @@
 -- Script per verificare gli stati delle commesse confrontandoli con Mago
--- Da eseguire sul database locale MESManager (localhost\SQLEXPRESS01)
+-- Da eseguire sul database MESManager_Prod (192.168.1.230\SQLEXPRESS01)
 
 -- Prima mostra il confronto
 SELECT TOP 20

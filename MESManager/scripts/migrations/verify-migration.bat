@@ -1,0 +1,3 @@
+@echo off
+sqlcmd -S "192.168.1.230\SQLEXPRESS01" -U FAB -P "password.123" -d MESManager_Prod -C -Q "SELECT TABLE_NAME, (SELECT COUNT(*) FROM MESManager_Prod.INFORMATION_SCHEMA.TABLES t2 WHERE t2.TABLE_NAME = t1.TABLE_NAME) as Exists FROM (VALUES ('ArticoliRicetta'),('AllegatiGantt'),('tbArticoliGantt')) AS t1(TABLE_NAME)" -o "C:\Dev\MESManager\verify-tables.txt"
+sqlcmd -S "192.168.1.230\SQLEXPRESS01" -U FAB -P "password.123" -d MESManager_Prod -C -Q "SELECT 'ArticoliRicetta' as Tabella, COUNT(*) as Righe FROM ArticoliRicetta UNION ALL SELECT 'AllegatiGantt', COUNT(*) FROM AllegatiGantt UNION ALL SELECT 'tbArticoliGantt', COUNT(*) FROM tbArticoliGantt" -o "C:\Dev\MESManager\row-counts.txt"

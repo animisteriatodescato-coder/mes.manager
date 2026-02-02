@@ -2,25 +2,41 @@
 @layout MainLayout
 @using MESManager.Application.DTOs
 @using MESManager.Application.Interfaces
+@using Microsoft.AspNetCore.SignalR.Client
 @inject IJSRuntime JS
 @inject HttpClient Http
 @inject IMacchinaAppService MacchinaService
 @inject ICalendarioLavoroAppService CalendarioService
 @inject IImpostazioniGanttAppService ImpostazioniGanttService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@implements IAsyncDisposable
 
 <PageTitle>Gantt Macchine</PageTitle>
 
 <MudPaper Class="pa-4 mb-4">
     <MudText Typo="Typo.h5" Class="mb-2">Pianificazione Macchine - Vista Gantt</MudText>
-    <MudText Typo="Typo.body2" Color="Color.Secondary">Visualizzazione temporale delle commesse pianificate per macchina</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary">
+        Visualizzazione temporale delle commesse pianificate per macchina
+        @if (_isConnected)
+        {
+            <MudIcon Icon="@Icons.Material.Filled.Wifi" Color="Color.Success" Size="Size.Small" Class="ml-2" />
+            <span class="ml-1" style="color: var(--mud-palette-success);">Sincronizzazione attiva</span>
+        }
+    </MudText>
 </MudPaper>
 
 <MudPaper Class="pa-4 mb-4">
-    <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary">
-        <MudButton OnClick="@RefreshGantt">Aggiorna</MudButton>
-    </MudButtonGroup>
+    <MudStack Row="true" Spacing="2">
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="@RefreshGantt">
+            <MudIcon Icon="@Icons.Material.Filled.Refresh" Class="mr-1" /> Aggiorna
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="@RicalcolaTutto">
+            <MudIcon Icon="@Icons.Material.Filled.Calculate" Class="mr-1" /> Ricalcola Tutto
+        </MudButton>
+    </MudStack>
     <MudText Typo="Typo.caption" Class="mt-2" Color="Color.Secondary">
-        Carica i dati reali delle commesse programmate da Programma Macchine
+        Trascina le commesse per spostarle tra macchine. L'accodamento è automatico (nessuna sovrapposizione).
     </MudText>
 </MudPaper>
 
@@ -33,6 +49,9 @@
     private CalendarioLavoroDto? calendario;
     private ImpostazioniGanttDto? impostazioniGantt;
     private List<CommessaGanttDto> commesseGantt = new();
+    private HubConnection? _hubConnection;
+    private bool _isConnected;
+    private DotNetObjectReference<GanttMacchine>? _dotNetRef;
 
     protected override async Task OnInitializedAsync()
     {
@@ -42,6 +61,53 @@
         
         // Carica le commesse pianificate
         await LoadCommesseGantt();
+        
+        // Inizializza connessione SignalR
+        await InitializeSignalR();
+    }
+    
+    private async Task InitializeSignalR()
+    {
+        try
+        {
+            _hubConnection = new HubConnectionBuilder()
+                .WithUrl(NavigationManager.ToAbsoluteUri("/hubs/pianificazione"))
+                .WithAutomaticReconnect()
+                .Build();
+
+            _hubConnection.On<GanttUpdateNotification>("PianificazioneUpdated", async (notification) =>
+            {
+                if (notification.Type == "FullRecalculation")
+                {
+                    await LoadCommesseGantt();
+                    await UpdateGanttTasks();
+                    await InvokeAsync(StateHasChanged);
+                }
+            });
+
+            _hubConnection.Reconnected += async (connectionId) =>
+            {
+                _isConnected = true;
+                await InvokeAsync(StateHasChanged);
+            };
+
+            _hubConnection.Closed += async (error) =>
+            {
+                _isConnected = false;
+                await InvokeAsync(StateHasChanged);
+            };
+
+            await _hubConnection.StartAsync();
+            _isConnected = true;
+            
+            // Iscriviti agli aggiornamenti
+            await _hubConnection.InvokeAsync("SubscribeToGantt");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Errore connessione SignalR: {ex.Message}");
+            _isConnected = false;
+        }
     }
     
     private async Task LoadCommesseGantt()
@@ -65,6 +131,8 @@
         if (firstRender)
         {
             await Task.Delay(100);
+            
+            _dotNetRef = DotNetObjectReference.Create(this);
             
             // Passa le macchine, le impostazioni e le commesse al JavaScript
             var macchineAttive = macchine
@@ -91,17 +159,95 @@
                     durataMinuti = c.DurataPrevistaMinuti,
                     stato = c.Stato,
                     coloreStato = c.ColoreStato,
-                    percentualeCompletamento = c.PercentualeCompletamento
+                    percentualeCompletamento = c.PercentualeCompletamento,
+                    ordineSequenza = c.OrdineSequenza
                 }).ToList()
             };
             
             await JS.InvokeVoidAsync("GanttMacchine.initialize", "gantt-chart", settings);
+            await JS.InvokeVoidAsync("GanttMacchine.setDotNetHelper", _dotNetRef);
         }
+    }
+    
+    [JSInvokable]
+    public async Task OnCommessaMoved(SpostaCommessaResponse result)
+    {
+        // Aggiorna lo stato locale
+        await LoadCommesseGantt();
+        Snackbar.Add("Commessa spostata con successo", Severity.Success);
+        await InvokeAsync(StateHasChanged);
+    }
+    
+    [JSInvokable]
+    public async Task OnFullRecalculation()
+    {
+        await LoadCommesseGantt();
+        await UpdateGanttTasks();
+        await InvokeAsync(StateHasChanged);
+    }
+    
+    private async Task UpdateGanttTasks()
+    {
+        var tasks = commesseGantt.Select(c => new
+        {
+            id = c.Id,
+            codice = c.Codice,
+            description = c.Description,
+            numeroMacchina = c.NumeroMacchina,
+            nomeMacchina = c.NomeMacchina,
+            quantita = c.QuantitaRichiesta,
+            dataInizio = c.DataInizioPrevisione,
+            dataFine = c.DataFinePrevisione,
+            durataMinuti = c.DurataPrevistaMinuti,
+            stato = c.Stato,
+            coloreStato = c.ColoreStato,
+            percentualeCompletamento = c.PercentualeCompletamento,
+            ordineSequenza = c.OrdineSequenza
+        }).ToList();
+        
+        await JS.InvokeVoidAsync("GanttMacchine.updateTasks", tasks);
     }
 
     private async Task RefreshGantt()
     {
         await LoadCommesseGantt();
-        await JS.InvokeVoidAsync("GanttMacchine.refresh", commesseGantt);
+        await UpdateGanttTasks();
+        Snackbar.Add("Gantt aggiornato", Severity.Info);
+    }
+    
+    private async Task RicalcolaTutto()
+    {
+        try
+        {
+            var response = await Http.PostAsync("api/pianificazione/ricalcola-tutto", null);
+            if (response.IsSuccessStatusCode)
+            {
+                await RefreshGantt();
+                Snackbar.Add("Tutte le commesse ricalcolate", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nel ricalcolo: {ex.Message}", Severity.Error);
+        }
+    }
+    
+    public async ValueTask DisposeAsync()
+    {
+        await JS.InvokeVoidAsync("GanttMacchine.dispose");
+        
+        if (_hubConnection is not null)
+        {
+            await _hubConnection.DisposeAsync();
+        }
+        
+        _dotNetRef?.Dispose();
+    }
+    
+    // Classe interna per le notifiche SignalR
+    private class GanttUpdateNotification
+    {
+        public string Type { get; set; } = "";
+        public List<CommessaGanttDto>? CommesseAggiornate { get; set; }
     }
 }

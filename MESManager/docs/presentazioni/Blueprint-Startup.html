@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blueprint Startup — Gestionale/MES su Misura</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: #161a2b;
+      --text: #e7e9ee;
+      --muted: #aab0c0;
+      --primary: #6aa0ff;
+      --accent: #ffc36a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    .wrap { max-width: 980px; margin: 32px auto; padding: 0 20px 60px; }
+    header { margin-bottom: 24px; }
+    h1 { font-size: 32px; margin: 0 0 8px; }
+    .subtitle { color: var(--muted); font-size: 14px; }
+    .card { background: var(--card); border: 1px solid #22263b; border-radius: 14px; padding: 20px; margin: 20px 0; }
+    h2 { font-size: 22px; margin: 18px 0 12px; }
+    h3 { font-size: 18px; margin: 16px 0 10px; color: var(--primary); }
+    p { line-height: 1.6; color: var(--text); }
+    ul { margin: 8px 0 8px 20px; }
+    li { margin: 6px 0; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #22263b; color: var(--muted); font-size: 12px; margin-right: 8px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .callout { border-left: 3px solid var(--primary); padding-left: 12px; color: var(--muted); }
+    @media print {
+      .wrap { margin: 0; max-width: 100%; padding: 0; }
+      .card { break-inside: avoid; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Blueprint Startup — Gestionale/MES su Misura</h1>
+      <div class="subtitle">Versione 1.0 · Aggiornato: 02/02/2026 · Operativo • Percorsi • Tooling • Compliance • GTM</div>
+    </header>
+
+    <div class="card">
+      <h2>Visione & Posizionamento</h2>
+      <p>Mission: portare dati real‑time e processi digitali nelle PMI industriali con soluzioni su misura, rapide e sostenibili. Verticali: manifattura discreta, conto terzi, packaging, gomma/plastica, alimentare (estendibile).</p>
+    </div>
+
+    <div class="card">
+      <h2>Offerta</h2>
+      <div class="grid">
+        <div>
+          <h3>Prodotto</h3>
+          <ul>
+            <li>Piattaforma MESManager modulare (Produzione, Gantt, Sync ERP, Manutenzioni, KPI).</li>
+            <li>Estensibilità API e componenti UI.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Servizi</h3>
+          <ul>
+            <li>Analisi processi, integrazione ERP/PLC, personalizzazioni.</li>
+            <li>Formazione e supporto gestito (SLA).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Organizzazione (ruoli chiave)</h2>
+      <ul>
+        <li>CEO/COO · strategia, operations, P&L.</li>
+        <li>CTO · architettura, qualità tecnica, sicurezza.</li>
+        <li>Sales Lead · pipeline, partnership, offerte.</li>
+        <li>Project Manager · delivery, tempi/costi, stakeholder.</li>
+        <li>Solution Architect (.NET/OT) · disegno end‑to‑end, integrazioni.</li>
+        <li>Full‑stack .NET (Blazor) · feature UI/backend.</li>
+        <li>Integration Engineer (ERP) · connettori Mago/REST/DB.</li>
+        <li>PLC/OT Engineer · segnali, reti industriali, test di campo.</li>
+        <li>QA/Testing (E2E) · piani di test, Playwright, automazione.</li>
+        <li>DevOps/SecOps · CI/CD, ambiente, hardening, backup/monitoring.</li>
+        <li>UX/UI · design usabilità, design system.</li>
+        <li>Customer Success/Support · onboarding, SLA, helpdesk.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Processi & Metodologie</h2>
+      <ul>
+        <li>Prevendita: discovery, mappa processi, stima T‑shirt, SoW.</li>
+        <li>Delivery: Agile (Scrum/Kanban), sprint 2 settimane, demo, retro.</li>
+        <li>Quality: code review, SAST/DAST, test unit/E2E, checklist release.</li>
+        <li>Change Management: versioning, CHANGELOG, approvazioni.</li>
+        <li>Security: gestione segreti, least privilege, segmentazione rete OT, incident response.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Tooling Consigliato</h2>
+      <ul>
+        <li>Repo/CI: GitHub/Azure DevOps, build .NET, release multi‑env.</li>
+        <li>Tracking: Azure Boards/Jira; roadmap e backlog condivisi.</li>
+        <li>QA: Playwright, test report e coverage.</li>
+        <li>Observability: AppInsights/Seq/ELK; dashboard errori e performance.</li>
+        <li>ITSM/Helpdesk: Freshdesk/Zendesk; SLA e knowledge base.</li>
+        <li>CRM: HubSpot/Pipedrive; funnel e automazioni.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Compliance & Contratti</h2>
+      <ul>
+        <li>GDPR: DPA, registro trattamenti, DPIA, privacy by design.</li>
+        <li>Sicurezza: linea ISO/IEC 27001 (accessi, backup, logging, vulnerability mgmt.).</li>
+        <li>Contratti: MSA, SoW, SLA, manutenzione evolutiva/correttiva, licenza software, escrow opzionale.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Go‑To‑Market</h2>
+      <ul>
+        <li>Lead gen: casi studio, webinar, referral, partnership SI e rivenditori ERP.</li>
+        <li>Prezzi: canone per modulo/utente/macchina + setup + personalizzazioni.</li>
+        <li>PoC: pacchetto fisso 2–4 settimane su 1–2 linee/macchine.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Delivery Accelerators</h2>
+      <ul>
+        <li>Template progetto (.NET + Blazor + Clean Architecture) e libreria componenti.</li>
+        <li>Scaffolding CRUD/API; convenzioni DB e naming.</li>
+        <li>Guide operative (deploy, sicurezza, OT), checklist e script automatizzati.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Hiring Plan (12 mesi)</h2>
+      <ul>
+        <li>T1: CTO, 2 dev full‑stack, PM; servizi base e primi clienti.</li>
+        <li>T2: OT engineer, QA, DevOps; hardening e playbook.</li>
+        <li>T3: Sales dedicato, UX/UI; scalare ad altri verticali.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Piano 90 Giorni</h2>
+      <ul>
+        <li>0–30: pacchetto demo, sito, 3 lead attivi, PoC standard.</li>
+        <li>31–60: primo cliente in produzione (MVP), KPI e referenza.</li>
+        <li>61–90: 2–3 PoC in parallelo, processi stabili, roadmap 12 mesi.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Rischi & Mitigazioni</h2>
+      <ul>
+        <li>Dipendenza da singolo vertical → diversificare moduli/casi d’uso.</li>
+        <li>Sicurezza OT → audit periodici, segmentazione rete, pentest.</li>
+        <li>Scalabilità team → standardizzazione, acceleratori, coaching tecnico.</li>
+      </ul>
+    </div>
+
+    <div class="card no-print">
+      <button onclick="window.print()" style="background:var(--primary); color:#0b1020; border:0; padding:10px 14px; border-radius:10px; cursor:pointer;">Stampa/Salva come PDF</button>
+    </div>
+  </div>
+</body>
+</html>

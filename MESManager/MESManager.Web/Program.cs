@@ -70,7 +70,7 @@ builder.Services.Configure<DatabaseConfiguration>(options =>
     options.MESManagerDb = builder.Configuration.GetConnectionString("MESManagerDb") ?? "";
     options.MagoDb = builder.Configuration.GetConnectionString("MagoDb") 
                      ?? builder.Configuration["Mago:ConnectionString"] ?? "";
-    options.GanttDb = builder.Configuration.GetConnectionString("GanttDb") ?? "";
+    // GanttDb non più usato - dati migrati in MESManagerDb
 });
 
 // Configura FileConfiguration per i percorsi allegati (con valori di default)
@@ -121,9 +121,11 @@ builder.Services.AddScoped<PreferencesService>();
 builder.Services.AddScoped<AnimeImportService>();
 builder.Services.AddScoped<AnimeExcelImportService>();
 builder.Services.AddScoped<AllegatiAnimaService>();
+builder.Services.AddScoped<RicettaGanttService>();
 builder.Services.AddScoped<IAllegatoArticoloRepository, AllegatoArticoloRepository>();
 builder.Services.AddScoped<IAllegatoArticoloService, AllegatoArticoloService>();
 builder.Services.AddScoped<IPianificazioneService, PianificazioneService>();
+builder.Services.AddScoped<PianificazioneNotificationService>();
 builder.Services.AddHttpClient<PlcDataService>(client =>
 {
     client.BaseAddress = new Uri("http://localhost:5156/");
@@ -200,6 +202,9 @@ app.MapRazorComponents<App>()
 
 // SignalR Hub per dati PLC real-time
 app.MapHub<RealtimeHub>("/hubs/realtime");
+
+// SignalR Hub per pianificazione Gantt
+app.MapHub<PianificazioneHub>("/hubs/pianificazione");
 
 // API Controllers
 app.MapControllers();
