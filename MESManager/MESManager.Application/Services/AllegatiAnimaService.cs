@@ -167,7 +167,8 @@ namespace MESManager.Application.Services
                 cmd.Parameters.AddWithValue("@Descrizione", descrizione ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@Priorita", maxPriorita + 1);
 
-                var newId = (int)await cmd.ExecuteScalarAsync();
+                var result = await cmd.ExecuteScalarAsync();
+                var newId = result != null ? (int)result : 0;
 
                 _logger.LogInformation("UploadAllegatoAsync END - NewId={NewId}, Path={Path}", newId, pathCompleto);
 

@@ -186,9 +186,9 @@ public class AllegatoArticoloService : IAllegatoArticoloService
         }
         
         var content = await File.ReadAllBytesAsync(localPath);
-        var contentType = GetContentType(allegato.Estensione);
+        var contentType = GetContentType(allegato.Estensione ?? "");
         
-        return (content, contentType, allegato.NomeFile);
+        return (content, contentType, allegato.NomeFile ?? "file");
     }
     
     private static string ConvertNetworkPath(string path)
@@ -389,15 +389,15 @@ public class AllegatoArticoloService : IAllegatoArticoloService
         return new AllegatoArticoloDto
         {
             Id = entity.Id,
-            Archivio = entity.Archivio,
+            Archivio = entity.Archivio ?? "",
             IdArchivio = entity.IdArchivio,
-            CodiceArticolo = entity.CodiceArticolo,
-            PathFile = entity.PathFile,
-            NomeFile = entity.NomeFile,
+            CodiceArticolo = entity.CodiceArticolo ?? "",
+            PathFile = entity.PathFile ?? "",
+            NomeFile = entity.NomeFile ?? "",
             Descrizione = entity.Descrizione,
             Priorita = entity.Priorita,
-            TipoFile = entity.TipoFile,
-            Estensione = entity.Estensione,
+            TipoFile = entity.TipoFile ?? "",
+            Estensione = entity.Estensione ?? "",
             DimensioneBytes = entity.DimensioneBytes,
             DataCreazione = entity.DataCreazione,
             ImportatoDaGantt = entity.ImportatoDaGantt,

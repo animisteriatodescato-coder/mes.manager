@@ -76,7 +76,7 @@
 
 @* Tabella Issues *@
 <MudTable Items="@_issues" Hover="true" Dense="true" Striped="true" Elevation="2"
-          OnRowClick="@((TableRowClickEventArgs<TechnicalIssue> args) => GoToDetail(args.Item))"
+          OnRowClick="@((TableRowClickEventArgs<TechnicalIssue> args) => { if (args.Item != null) GoToDetail(args.Item); })"
           T="TechnicalIssue" Style="cursor: pointer;">
     <HeaderContent>
         <MudTh Style="width: 120px;">Data</MudTh>

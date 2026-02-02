@@ -15,14 +15,17 @@
     @(_isNew ? "Nuovo Issue" : $"Issue #{Id}")
 </MudText>
 
-@if (_issue == null && !_isNew)
+@if (_issue == null)
 {
-    <MudProgressCircular Indeterminate="true" />
+    @if (!_isNew)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
 }
 else
 {
     @* Warning se risolto ma non documentato *@
-    @if (_issue?.Status == IssueStatus.Resolved && !_issue.DocsUpdated)
+    @if (_issue.Status == IssueStatus.Resolved && !_issue.DocsUpdated)
     {
         <MudAlert Severity="Severity.Warning" Class="mb-4" Icon="@Icons.Material.Filled.Warning">
             <strong>Attenzione:</strong> Questo issue è stato risolto ma la documentazione non è stata aggiornata. 
@@ -34,7 +37,7 @@ else
         <MudGrid>
             @* Prima riga: metadati *@
             <MudItem xs="12" sm="6" md="3">
-                <MudSelect T="IssueEnvironment" Label="Ambiente *" @bind-Value="_issue!.Environment"
+                <MudSelect T="IssueEnvironment" Label="Ambiente *" @bind-Value="_issue.Environment"
                            Variant="Variant.Outlined" Required="true">
                     @foreach (var e in Enum.GetValues<IssueEnvironment>())
                     {
@@ -246,18 +249,21 @@ else
             {
                 Snackbar.Add("Issue non trovato", Severity.Error);
                 Navigation.NavigateTo("/impostazioni/issue-log");
+                return;
             }
         }
     }
 
     private async Task Salva()
     {
-        if (string.IsNullOrWhiteSpace(_issue?.Title))
+        if (_issue == null) return;
+        
+        if (string.IsNullOrWhiteSpace(_issue.Title))
         {
             Snackbar.Add("Il titolo è obbligatorio", Severity.Warning);
             return;
         }
-        if (string.IsNullOrWhiteSpace(_issue?.Description))
+        if (string.IsNullOrWhiteSpace(_issue.Description))
         {
             Snackbar.Add("La descrizione è obbligatoria", Severity.Warning);
             return;
@@ -268,13 +274,13 @@ else
         {
             if (_isNew)
             {
-                var created = await IssueService.CreateAsync(_issue!);
+                var created = await IssueService.CreateAsync(_issue);
                 Snackbar.Add("Issue creato con successo", Severity.Success);
                 Navigation.NavigateTo($"/impostazioni/issue-log/{created.Id}");
             }
             else
             {
-                await IssueService.UpdateAsync(_issue!);
+                await IssueService.UpdateAsync(_issue);
                 Snackbar.Add("Issue aggiornato", Severity.Success);
             }
         }

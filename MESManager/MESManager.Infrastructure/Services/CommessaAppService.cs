@@ -305,8 +305,8 @@ public class CommessaAppService : ICommessaAppService
             StatoPrecedente = s.StatoPrecedente.ToString(),
             StatoNuovo = s.StatoNuovo.ToString(),
             DataModifica = s.DataModifica,
-            UtenteModifica = s.UtenteModifica,
-            Note = s.Note
+            UtenteModifica = s.UtenteModifica ?? "",
+            Note = s.Note ?? ""
         }).ToList();
     }
 

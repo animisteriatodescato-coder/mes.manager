@@ -429,7 +429,6 @@
     
     // SignalR
     private HubConnection? _hubConnection;
-    private bool _isSignalRConnected;
 
     private async Task OnSearchDebounced(string value)
     {
@@ -487,7 +486,6 @@
             });
 
             await _hubConnection.StartAsync();
-            _isSignalRConnected = true;
             
             // Iscriviti agli aggiornamenti del Gantt
             await _hubConnection.InvokeAsync("SubscribeToGantt");
@@ -495,7 +493,6 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Errore connessione SignalR: {ex.Message}");
-            _isSignalRConnected = false;
         }
     }
     

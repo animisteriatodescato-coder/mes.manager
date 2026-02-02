@@ -1,0 +1,258 @@
+@page "/impostazioni/festivi"
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<PageTitle>Gestione Festivi</PageTitle>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudIcon Icon="@Icons.Material.Filled.Event" Size="Size.Large" Color="Color.Primary" />
+        <MudText Typo="Typo.h5">Gestione Festivi</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" 
+                   StartIcon="@Icons.Material.Filled.AutoAwesome"
+                   OnClick="@InizializzaStandard">
+            Inizializza Festivi Italiani @DateTime.Now.Year
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="@(() => _showAddDialog = true)">
+            Aggiungi Festivo
+        </MudButton>
+    </MudStack>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+        I giorni festivi vengono esclusi dal calcolo delle date di produzione nel Gantt.
+    </MudText>
+</MudPaper>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudPaper Class="pa-4">
+        <MudTable Items="@_festivi" Hover="true" Dense="true" Striped="true" Elevation="0">
+            <HeaderContent>
+                <MudTh>Data</MudTh>
+                <MudTh>Descrizione</MudTh>
+                <MudTh>Tipo</MudTh>
+                <MudTh Style="width: 100px;">Azioni</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Data">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Color="Color.Primary" />
+                        @context.Data.ToString("dd/MM/yyyy")
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            (@context.Data.ToString("dddd", System.Globalization.CultureInfo.GetCultureInfo("it-IT")))
+                        </MudText>
+                    </MudStack>
+                </MudTd>
+                <MudTd DataLabel="Descrizione">@context.Descrizione</MudTd>
+                <MudTd DataLabel="Tipo">
+                    @if (context.Ricorrente)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Repeat">
+                            Ricorrente
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                            @context.Anno
+                        </MudChip>
+                    }
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                   Color="Color.Error" Size="Size.Small"
+                                   OnClick="@(() => ConfermaElimina(context))" />
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Nessun festivo configurato. Clicca "Inizializza Festivi Italiani" per aggiungere i festivi standard.
+                </MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudPaper>
+}
+
+@* Dialog Aggiungi Festivo *@
+<MudDialog @bind-Visible="_showAddDialog" Options="@(new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-2" />
+            Aggiungi Festivo
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudDatePicker @bind-Date="_newFestivoData" Label="Data *" 
+                           Variant="Variant.Outlined" Required="true"
+                           DateFormat="dd/MM/yyyy" />
+            <MudTextField @bind-Value="_newFestivoDescrizione" Label="Descrizione *"
+                          Variant="Variant.Outlined" Required="true"
+                          MaxLength="100" />
+            <MudCheckBox @bind-Value="_newFestivoRicorrente" Label="Ricorrente (ogni anno)" 
+                         Color="Color.Primary" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                @if (_newFestivoRicorrente)
+                {
+                    <text>Il festivo verrà applicato automaticamente ogni anno.</text>
+                }
+                else
+                {
+                    <text>Il festivo sarà valido solo per l'anno selezionato.</text>
+                }
+            </MudText>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _showAddDialog = false)">Annulla</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@AggiungiFestivo">
+            Aggiungi
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* Dialog Conferma Eliminazione *@
+<MudDialog @bind-Visible="_showDeleteDialog" Options="@(new DialogOptions { MaxWidth = MaxWidth.ExtraSmall })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Conferma Eliminazione</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>
+            Eliminare il festivo <strong>@_festivoToDelete?.Descrizione</strong> 
+            del @_festivoToDelete?.Data.ToString("dd/MM/yyyy")?
+        </MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _showDeleteDialog = false)">Annulla</MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="@EliminaFestivo">
+            Elimina
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<FestivoDto> _festivi = new();
+    private bool _loading = true;
+    
+    // Dialog aggiungi
+    private bool _showAddDialog = false;
+    private DateTime? _newFestivoData = DateTime.Today;
+    private string _newFestivoDescrizione = "";
+    private bool _newFestivoRicorrente = false;
+    
+    // Dialog elimina
+    private bool _showDeleteDialog = false;
+    private FestivoDto? _festivoToDelete;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CaricaFestivi();
+    }
+
+    private async Task CaricaFestivi()
+    {
+        _loading = true;
+        try
+        {
+            _festivi = await Http.GetFromJsonAsync<List<FestivoDto>>("api/pianificazione/festivi") ?? new();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore caricamento festivi: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task InizializzaStandard()
+    {
+        try
+        {
+            var response = await Http.PostAsync($"api/pianificazione/festivi/inizializza-standard?anno={DateTime.Now.Year}", null);
+            if (response.IsSuccessStatusCode)
+            {
+                var aggiunti = await response.Content.ReadFromJsonAsync<List<FestivoDto>>();
+                Snackbar.Add($"Aggiunti {aggiunti?.Count ?? 0} festivi standard", Severity.Success);
+                await CaricaFestivi();
+            }
+            else
+            {
+                Snackbar.Add("Errore nell'inizializzazione festivi", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AggiungiFestivo()
+    {
+        if (_newFestivoData == null || string.IsNullOrWhiteSpace(_newFestivoDescrizione))
+        {
+            Snackbar.Add("Compilare tutti i campi obbligatori", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var request = new CreateFestivoRequest
+            {
+                Data = DateOnly.FromDateTime(_newFestivoData.Value),
+                Descrizione = _newFestivoDescrizione,
+                Ricorrente = _newFestivoRicorrente
+            };
+
+            var response = await Http.PostAsJsonAsync("api/pianificazione/festivi", request);
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Festivo aggiunto", Severity.Success);
+                _showAddDialog = false;
+                _newFestivoDescrizione = "";
+                _newFestivoData = DateTime.Today;
+                _newFestivoRicorrente = false;
+                await CaricaFestivi();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void ConfermaElimina(FestivoDto festivo)
+    {
+        _festivoToDelete = festivo;
+        _showDeleteDialog = true;
+    }
+
+    private async Task EliminaFestivo()
+    {
+        if (_festivoToDelete == null) return;
+
+        try
+        {
+            var response = await Http.DeleteAsync($"api/pianificazione/festivi/{_festivoToDelete.Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Festivo eliminato", Severity.Success);
+                _showDeleteDialog = false;
+                await CaricaFestivi();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+    }
+}
