@@ -23,7 +23,8 @@ public class DbMaintenanceController : ControllerBase
     {
         try
         {
-            var sql = @"
+            // Prima creiamo la tabella (se non esiste) e gli indici
+            var createTableSql = @"
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Festivi')
 BEGIN
     CREATE TABLE [dbo].[Festivi](
@@ -34,22 +35,30 @@ BEGIN
         [Anno] [int] NULL,
         [DataCreazione] [datetime2](7) NOT NULL DEFAULT GETUTCDATE()
     );
+    
+    CREATE INDEX IX_Festivi_Data ON [dbo].[Festivi]([Data]);
+    CREATE INDEX IX_Festivi_Ricorrente ON [dbo].[Festivi]([Ricorrente]);
 END";
             
-            await _context.Database.ExecuteSqlRawAsync(sql);
+            await _context.Database.ExecuteSqlRawAsync(createTableSql);
             
-            // Verifica
-            var checkSql = "SELECT CASE WHEN EXISTS(SELECT * FROM sys.tables WHERE name = 'Festivi') THEN 1 ELSE 0 END AS TableExists";
-            var exists = await _context.Database.SqlQueryRaw<int>(checkSql).FirstOrDefaultAsync();
+            // Verifica usando ExecuteSqlRawAsync con output parameter o contando le tabelle
+            var checkSql = "SELECT COUNT(*) FROM sys.tables WHERE name = 'Festivi'";
+            using var connection = _context.Database.GetDbConnection();
+            await connection.OpenAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = checkSql;
+            var result = await command.ExecuteScalarAsync();
+            var exists = Convert.ToInt32(result) > 0;
             
-            if (exists == 1)
+            if (exists)
             {
-                _logger.LogInformation("Tabella Festivi creata/verificata con successo");
+                _logger.LogInformation("✅ Tabella Festivi creata/verificata con successo");
                 return Ok(new { success = true, message = "Tabella Festivi presente" });
             }
             else
             {
-                _logger.LogError("Tabella Festivi non è stata creata");
+                _logger.LogError("❌ Tabella Festivi non è stata creata");
                 return BadRequest(new { success = false, message = "Errore creazione tabella Festivi" });
             }
         }
