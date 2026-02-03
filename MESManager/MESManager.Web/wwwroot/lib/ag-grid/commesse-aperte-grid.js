@@ -572,7 +572,7 @@ window.commesseAperteGrid = (function() {
                         // Usa API pianificazione per calcolare date automaticamente
                         // Estrae solo i numeri: "01" -> 1, "M001" -> 1, "02" -> 2
                         const machineNumber = numeroMacchina ? parseInt(numeroMacchina.replace(/\D/g, '')) : null;
-                        console.log('machineNumber estratto:', machineNumber);
+                        console.log('[v1.23] machineNumber estratto:', machineNumber, 'from:', numeroMacchina);
                         
                         const response = await fetch('/api/pianificazione/sposta', {
                             method: 'POST',

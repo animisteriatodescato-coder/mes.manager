@@ -1,0 +1,28 @@
+{
+  "MachineId": "11111111-1111-1111-1111-000000000005",
+  "Numero": 3,
+  "Nome": "03",
+  "PlcIp": "192.168.17.24",
+  "Enabled": true,
+  "Offsets": {
+    "InizioSetup": 8,
+    "FineSetup": 10,
+    "NuovaProduzione": 12,
+    "FineProduzione": 14,
+    "QuantitaRaggiunta": 16,
+    "CicliFatti": 18,
+    "CicliScarti": 20,
+    "NumeroOperatore": 22,
+    "TempoMedioRil": 24,
+    "StatoEmergenza": 34,
+    "StatoManuale": 36,
+    "StatoAutomatico": 38,
+    "StatoCiclo": 40,
+    "StatoPezziRagg": 42,
+    "StatoAllarme": 44,
+    "BarcodeLavorazione": 46,
+    "QuantitaDaProd": 162,
+    "TempoMedio": 164,
+    "Figure": 170
+  }
+}

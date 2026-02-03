@@ -4,6 +4,7 @@
 @inject IMacchinaAppService MacchinaService
 @inject ICalendarioLavoroAppService CalendarioService
 @inject IImpostazioniGanttAppService ImpostazioniGanttService
+@inject IFestiviAppService FestiviService
 @inject ISnackbar Snackbar
 
 <PageTitle>Impostazioni Gantt Macchine</PageTitle>
@@ -166,6 +167,54 @@
                     </MudButton>
                 </MudPaper>
             </MudTabPanel>
+
+            <!-- Tab Festivi -->
+            <MudTabPanel Text="Festivi" Icon="@Icons.Material.Filled.EventBusy">
+                <MudPaper Class="pa-4 mt-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">Gestione Festivi e Chiusure Aziendali</MudText>
+                    
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Success" 
+                              StartIcon="@Icons.Material.Filled.Add"
+                              Class="mb-4" 
+                              OnClick="AggiungiFestivo">
+                        Aggiungi Festivo
+                    </MudButton>
+                    
+                    <MudTable Items="@festivi" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Data</MudTh>
+                            <MudTh>Descrizione</MudTh>
+                            <MudTh>Ricorrente</MudTh>
+                            <MudTh>Azioni</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Data">@context.Data.ToString("dd/MM/yyyy")</MudTd>
+                            <MudTd DataLabel="Descrizione">@context.Descrizione</MudTd>
+                            <MudTd DataLabel="Ricorrente">
+                                @if (context.Ricorrente)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Icon="@Icons.Material.Filled.Repeat">Ricorrente</MudChip>
+                                }
+                                else
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Default">@context.Anno</MudChip>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Azioni">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                              Color="Color.Primary" 
+                                              Size="Size.Small" 
+                                              OnClick="@(() => ModificaFestivo(context))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                              Color="Color.Error" 
+                                              Size="Size.Small" 
+                                              OnClick="@(() => EliminaFestivo(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+            </MudTabPanel>
         </MudTabs>
     }
 </MudContainer>
@@ -215,11 +264,45 @@
     </DialogActions>
 </MudDialog>
 
+<MudDialog @bind-Visible="dialogFestivoVisible" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true }">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            @(isNuovoFestivo ? "Nuovo Festivo" : "Modifica Festivo")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudDatePicker @bind-Date="dataFestivo" 
+                      Label="Data" 
+                      DateFormat="dd/MM/yyyy"
+                      Variant="Variant.Outlined" 
+                      Required="true"
+                      Class="mb-4" />
+        
+        <MudTextField @bind-Value="festivoCorrente.Descrizione" 
+                     Label="Descrizione" 
+                     Variant="Variant.Outlined" 
+                     Required="true"
+                     Placeholder="es. Natale, Ferragosto, Chiusura aziendale"
+                     Class="mb-4" />
+        
+        <MudSwitch @bind-Value="festivoCorrente.Ricorrente" 
+                  Label="Ricorrente ogni anno" 
+                  Color="Color.Primary"
+                  HelperText="Se attivo, il festivo si ripeterà automaticamente ogni anno"
+                  Class="mb-4" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => dialogFestivoVisible = false)">Annulla</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SalvaFestivoDialogAsync">Salva</MudButton>
+    </DialogActions>
+</MudDialog>
+
 @code {
     private bool isLoading = true;
     private List<MacchinaDto> macchine = new();
     private CalendarioLavoroDto calendario = new();
     private ImpostazioniGanttDto impostazioniGantt = new();
+    private List<FestivoDto> festivi = new();
     
     private TimeSpan? oraInizio;
     private TimeSpan? oraFine;
@@ -227,6 +310,12 @@
     private bool dialogMacchinaVisible = false;
     private MacchinaDto macchinaCorrente = new();
     private bool isNuovaMacchina = false;
+
+    private bool dialogFestivoVisible = false;
+    private CreateFestivoRequest festivoCorrente = new();
+    private bool isNuovoFestivo = false;
+    private DateTime? dataFestivo;
+    private Guid festivoIdCorrente;
 
     protected override async Task OnInitializedAsync()
     {
@@ -253,6 +342,8 @@
             {
                 impostazioniGantt = impostazioniDb;
             }
+
+            festivi = await FestiviService.GetListaAsync();
         }
         finally
         {
@@ -377,6 +468,85 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Errore nel salvataggio delle impostazioni: {ex.Message}", Severity.Error);
+        }
+    }
+
+    // Gestione Festivi
+    private void AggiungiFestivo()
+    {
+        festivoCorrente = new CreateFestivoRequest
+        {
+            Data = DateOnly.FromDateTime(DateTime.Today),
+            Ricorrente = false
+        };
+        dataFestivo = DateTime.Today;
+        isNuovoFestivo = true;
+        dialogFestivoVisible = true;
+    }
+
+    private void ModificaFestivo(FestivoDto festivo)
+    {
+        festivoCorrente = new CreateFestivoRequest
+        {
+            Data = festivo.Data,
+            Descrizione = festivo.Descrizione,
+            Ricorrente = festivo.Ricorrente
+        };
+        dataFestivo = festivo.Data.ToDateTime(TimeOnly.MinValue);
+        festivoIdCorrente = festivo.Id;
+        isNuovoFestivo = false;
+        dialogFestivoVisible = true;
+    }
+
+    private async Task SalvaFestivoDialogAsync()
+    {
+        try
+        {
+            if (dataFestivo.HasValue)
+            {
+                festivoCorrente.Data = DateOnly.FromDateTime(dataFestivo.Value);
+            }
+
+            if (isNuovoFestivo)
+            {
+                var nuovoFestivo = await FestiviService.CreaAsync(festivoCorrente);
+                festivi.Add(nuovoFestivo);
+                festivi = festivi.OrderBy(f => f.Data).ToList();
+                Snackbar.Add("Festivo aggiunto con successo!", Severity.Success);
+            }
+            else
+            {
+                await FestiviService.AggiornaAsync(festivoIdCorrente, festivoCorrente);
+                var festivo = festivi.FirstOrDefault(f => f.Id == festivoIdCorrente);
+                if (festivo != null)
+                {
+                    festivo.Data = festivoCorrente.Data;
+                    festivo.Descrizione = festivoCorrente.Descrizione;
+                    festivo.Ricorrente = festivoCorrente.Ricorrente;
+                    festivo.Anno = festivoCorrente.Ricorrente ? null : festivoCorrente.Data.Year;
+                }
+                festivi = festivi.OrderBy(f => f.Data).ToList();
+                Snackbar.Add("Festivo modificato con successo!", Severity.Success);
+            }
+            dialogFestivoVisible = false;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nel salvataggio del festivo: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task EliminaFestivo(FestivoDto festivo)
+    {
+        try
+        {
+            await FestiviService.EliminaAsync(festivo.Id);
+            festivi.Remove(festivo);
+            Snackbar.Add("Festivo eliminato con successo!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nell'eliminazione del festivo: {ex.Message}", Severity.Error);
         }
     }
 }

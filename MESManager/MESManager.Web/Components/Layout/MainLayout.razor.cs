@@ -37,12 +37,16 @@ public partial class MainLayout : IDisposable
         PaletteDark = new PaletteDark
         {
             Primary = "#90caf9",
-            Secondary = "#b0b0b0",  // Da #757575 a #b0b0b0 - più chiaro
+            Secondary = "#e0e0e0",  // Grigio quasi bianco
             AppbarBackground = "#1e1e1e",
-            TextSecondary = "rgba(255,255,255,0.7)",  // Testo secondario più chiaro
-            TextDisabled = "rgba(255,255,255,0.5)",   // Testo disabilitato più visibile
-            ActionDisabled = "rgba(255,255,255,0.4)", // Azioni disabilitate più visibili
-            Divider = "rgba(255,255,255,0.15)"        // Divisori più visibili
+            TextPrimary = "rgba(255,255,255,0.95)",   // Testo principale quasi bianco
+            TextSecondary = "rgba(255,255,255,0.85)", // Testo secondario grigio chiarissimo
+            TextDisabled = "rgba(255,255,255,0.6)",   // Testo disabilitato più visibile
+            ActionDisabled = "rgba(255,255,255,0.5)", // Azioni disabilitate più visibili
+            Divider = "rgba(255,255,255,0.2)",        // Divisori più visibili
+            Surface = "#2d2d2d",                       // Superficie leggermente più chiara
+            Background = "#1a1a1a",                    // Background scuro
+            DrawerBackground = "#1e1e1e"              // Drawer stesso colore appbar
         }
     };
     

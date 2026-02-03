@@ -13,6 +13,71 @@
 
 ---
 
+## v1.23 (3 Febbraio 2026)
+**Data:** 03 Feb 2026  
+**Status:** ✅ Completato
+
+### Modifiche v1.23
+
+#### 🐛 Fix Critico - Tabella Festivi Database
+- **Problema**: Errore "Il nome di oggetto 'Festivi' non è valido" su Gantt Macchine
+- **Causa**: Migration esistente ma tabella non creata nel database
+- **Fix**: Creazione forzata tabella Festivi con tutti i campi necessari
+- **SQL**: CREATE TABLE con Id (GUID PK), Data (date), Descrizione (nvarchar200), Ricorrente (bit), Anno (int null), DataCreazione (datetime2)
+
+#### 🎨 Fix Cache CSS - Dark Mode
+- **Problema**: Modifiche colori dark mode non visibili nel browser
+- **Causa**: Browser cache CSS vecchio
+- **Fix**: Aggiunto query string versioning `?v=1.23` a CSS bootstrap
+- **Tecnica**: Cache-busting per forzare reload assets
+
+#### ⚙️ Miglioramento Log Debug
+- **Aggiunto**: Tag versione `[v1.23]` nei log console JavaScript
+- **Scopo**: Verificare quale versione JavaScript è caricata nel browser
+- **File**: `commesse-aperte-grid.js`
+
+---
+
+## v1.22 (3 Febbraio 2026)
+**Data:** 03 Feb 2026  
+**Status:** ✅ Completato
+
+### Modifiche v1.22
+
+#### 🎉 Gestione Festivi - UI Completa
+- **Aggiunta**: Nuovo tab "Festivi" in **Impostazioni → Gantt Macchine**
+- **Funzionalità**:
+  - CRUD completo per festivi (crea, modifica, elimina)
+  - Support festivi ricorrenti (es. Natale 25/12, Ferragosto 15/08)
+  - Flag automatico Anno quando Ricorrente = false
+  - Ordinamento automatico per data
+- **UI**: MudTable + MudDialog con DatePicker e switch Ricorrente
+- **File**: `ImpostazioniGantt.razor` (aggiunto 4° tab dopo "Tempo Attrezzaggio")
+
+#### 🧑‍💼 Servizio Festivi - Backend
+- **Aggiunta**: `FestiviAppService` e `IFestiviAppService`
+- **Metodi**: GetListaAsync, GetAsync, CreaAsync, AggiornaAsync, EliminaAsync
+- **Integrazione**: Registrato in `DependencyInjection.cs`
+- **File**: `MESManager.Application/Services/FestiviAppService.cs`
+
+#### 🎨 Dark Mode Ultra-Leggibile - Grigio Quasi Bianco
+- **Problema**: Utente riportava testi ancora troppo scuri in dark mode
+- **Soluzione**: Colori grigio quasi bianco per massima leggibilità
+- **Modifiche colori**:
+  - TextPrimary: `rgba(255,255,255,0.95)` - quasi bianco
+  - TextSecondary: `rgba(255,255,255,0.85)` - grigio chiarissimo
+  - TextDisabled: `rgba(255,255,255,0.6)` - più visibile
+  - Secondary: `#e0e0e0` - grigio quasi bianco (prima #b0b0b0)
+  - Surface: `#2d2d2d` - superficie leggermente più chiara
+- **File**: `MainLayout.razor.cs` - PaletteDark
+
+#### 🐛 Debug JavaScript - Cache Reload
+- **Aggiunta**: Log console con tag `[v1.22]` per debugging
+- **Scopo**: Forzare browser a ricaricare JavaScript modificato
+- **File**: `commesse-aperte-grid.js`
+
+---
+
 ## v1.21 (3 Febbraio 2026)
 **Data:** 03 Feb 2026  
 **Status:** ✅ Completato

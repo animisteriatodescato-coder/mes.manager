@@ -162,6 +162,9 @@ public class PlcSyncWorker : BackgroundService
                         _logger.LogInformation("Polling interval aggiornato a {Polling}s", pollingInterval);
                         await _statusWriter.LogInfoAsync($"Polling interval cambiato a {pollingInterval}s");
                     }
+                    
+                    // Hot-reload IP macchine dal database
+                    await ReloadMachineIpsAsync(machines, stoppingToken);
                 }
 
                 await Task.Delay(TimeSpan.FromSeconds(pollingInterval), stoppingToken);
@@ -251,6 +254,43 @@ public class PlcSyncWorker : BackgroundService
         }
 
         return configs;
+    }
+
+    /// <summary>
+    /// Ricarica gli IP delle macchine dal database e aggiorna le configurazioni in memoria.
+    /// Se l'IP cambia, forza la riconnessione al PLC.
+    /// </summary>
+    private async Task ReloadMachineIpsAsync(List<PlcMachineConfig> machines, CancellationToken ct)
+    {
+        try
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync(ct);
+            var macchineDb = await context.Macchine.ToListAsync(ct);
+            var dbIps = macchineDb.ToDictionary(m => m.Id, m => m.IndirizzoPLC);
+
+            foreach (var machine in machines)
+            {
+                if (dbIps.TryGetValue(machine.MacchinaId, out var newIp) && !string.IsNullOrWhiteSpace(newIp))
+                {
+                    if (machine.PlcIp != newIp)
+                    {
+                        _logger.LogInformation("🔄 IP macchina {Numero} cambiato: {OldIp} → {NewIp}. Riconnessione...",
+                            machine.Numero, machine.PlcIp, newIp);
+                        
+                        machine.PlcIp = newIp;
+                        
+                        // Forza riconnessione con il nuovo IP
+                        await _connectionService.ReconnectAsync(machine, 0, ct);
+                        
+                        await _statusWriter.LogInfoAsync($"IP macchina {machine.Numero} cambiato in {newIp}");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Errore durante hot-reload IP macchine");
+        }
     }
 
     public override void Dispose()
