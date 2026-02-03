@@ -206,7 +206,12 @@ window.GanttMacchine = {
 
         const self = this;
         return tasks
-            .filter(task => task.dataInizio && task.dataFine && task.numeroMacchina)
+            .filter(task => {
+                const hasDataInizio = task.dataInizioPrevisione || task.dataInizio;
+                const hasDataFine = task.dataFinePrevisione || task.dataFine;
+                const hasMacchina = task.numeroMacchina != null;
+                return hasDataInizio && hasDataFine && hasMacchina;
+            })
             .map(task => {
                 const groupId = self.machineMap.get(task.numeroMacchina) || 'M01';
                 const progress = task.percentualeCompletamento || 0;
@@ -216,24 +221,31 @@ window.GanttMacchine = {
                 // Aggiungi triangolino avviso se dati incompleti
                 const warningIcon = task.datiIncompleti ? ' ⚠️' : '';
                 
+                // Usa dataInizioPrevisione/dataFinePrevisione come primary, fallback su dataInizio/dataFine
+                const dataInizio = task.dataInizioPrevisione || task.dataInizio;
+                const dataFine = task.dataFinePrevisione || task.dataFine;
+                
                 return {
                     id: task.id,
                     group: groupId,
                     content: `${task.codice} (${Math.round(progress)}%)${warningIcon}`,
-                    start: new Date(task.dataInizio),
-                    end: new Date(task.dataFine),
+                    start: new Date(dataInizio),
+                    end: new Date(dataFine),
                     className: 'commessa-item',
                     style: progressStyle,
-                    title: self.createTooltip(task)
+                    title: self.createTooltip(task),
+                    datiIncompleti: task.datiIncompleti  // Conserva il flag per uso futuro
                 };
             });
     },
 
     createTooltip: function(task) {
         const warningText = task.datiIncompleti ? '\n⚠️ ATTENZIONE: Dati incompleti (usato 8h standard)' : '';
+        const quantita = task.quantita || task.quantitaRichiesta || 0;
+        const durata = task.durataMinuti || task.durataPrevistaMinuti || 0;
         return `${task.description || task.codice}
-Quantità: ${task.quantita || 0} ${task.uom || ''}
-Durata: ${task.durataMinuti || 0} min
+Quantità: ${quantita} ${task.uom || task.uoM || ''}
+Durata: ${durata} min
 Stato: ${task.stato}
 Ordine: ${task.ordineSequenza || '-'}${warningText}`;
     },
@@ -250,8 +262,12 @@ Ordine: ${task.ordineSequenza || '-'}${warningText}`;
                 const baseColor = this.getStatusColor(c.stato);
                 const progressStyle = `background: linear-gradient(to right, ${baseColor} ${progress}%, rgba(${this.hexToRgb(baseColor)}, 0.3) ${progress}%); color: white;`;
 
-                // Aggiungi triangolino avviso se dati incompleti
+                // Aggiungi triangolino avviso se dati incompleti - MANTIENI IL FLAG
                 const warningIcon = c.datiIncompleti ? ' ⚠️' : '';
+                
+                // Usa dataInizioPrevisione e dataFinePrevisione dal DTO
+                const dataInizio = c.dataInizioPrevisione || c.dataInizio;
+                const dataFine = c.dataFinePrevisione || c.dataFine;
                 
                 const existingItem = this.timeline.itemsData.get(c.id);
                 if (existingItem) {
@@ -259,21 +275,23 @@ Ordine: ${task.ordineSequenza || '-'}${warningText}`;
                         id: c.id,
                         group: groupId,
                         content: `${c.codice} (${Math.round(progress)}%)${warningIcon}`,
-                        start: new Date(c.dataInizioPrevisione),
-                        end: new Date(c.dataFinePrevisione),
+                        start: new Date(dataInizio),
+                        end: new Date(dataFine),
                         style: progressStyle,
-                        title: this.createTooltip(c)
+                        title: this.createTooltip(c),
+                        datiIncompleti: c.datiIncompleti  // Conserva il flag per il tooltip
                     });
                 } else {
                     this.timeline.itemsData.add({
                         id: c.id,
                         group: groupId,
                         content: `${c.codice} (${Math.round(progress)}%)${warningIcon}`,
-                        start: new Date(c.dataInizioPrevisione),
-                        end: new Date(c.dataFinePrevisione),
+                        start: new Date(dataInizio),
+                        end: new Date(dataFine),
                         className: 'commessa-item',
                         style: progressStyle,
-                        title: this.createTooltip(c)
+                        title: this.createTooltip(c),
+                        datiIncompleti: c.datiIncompleti  // Conserva il flag per il tooltip
                     });
                 }
             });
