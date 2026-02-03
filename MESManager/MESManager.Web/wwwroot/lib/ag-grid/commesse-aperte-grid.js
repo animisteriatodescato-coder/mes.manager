@@ -566,27 +566,38 @@ window.commesseAperteGrid = (function() {
                     const commessaId = event.data.id;
                     const numeroMacchina = event.newValue || null;
                     
-                    console.log(`Salvataggio macchina: ${commessaId} -> ${numeroMacchina}`);
+                    console.log(`Assegnazione macchina: ${commessaId} -> ${numeroMacchina}`);
                     
                     try {
-                        const response = await fetch(`/api/Commesse/${commessaId}/numero-macchina`, {
-                            method: 'PATCH',
+                        // Usa API pianificazione per calcolare date automaticamente
+                        // Estrae solo i numeri: "01" -> 1, "M001" -> 1, "02" -> 2
+                        const machineNumber = numeroMacchina ? parseInt(numeroMacchina.replace(/\D/g, '')) : null;
+                        console.log('machineNumber estratto:', machineNumber);
+                        
+                        const response = await fetch('/api/pianificazione/sposta', {
+                            method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ numeroMacchina: numeroMacchina })
+                            body: JSON.stringify({
+                                commessaId: commessaId,
+                                targetMacchina: machineNumber,
+                                insertBeforeCommessaId: null,
+                                targetDataInizio: null
+                            })
                         });
                         
                         if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}`);
+                            const errorText = await response.text();
+                            throw new Error(errorText || `HTTP ${response.status}`);
                         }
                         
-                        console.log('✓ Salvato con successo');
+                        console.log('✓ Commessa pianificata con calcolo automatico date');
                         
-                        // Ricarica i dati per aggiornare stato automatico
+                        // Ricarica i dati per mostrare le date calcolate
                         await refreshGridData();
                         
                     } catch (err) {
-                        console.error('Errore salvataggio:', err);
-                        alert(`Errore: ${err.message}`);
+                        console.error('Errore pianificazione:', err);
+                        alert(`Errore nella pianificazione: ${err.message}`);
                         // Ripristina valore precedente
                         event.node.setDataValue('numeroMacchina', event.oldValue);
                     }

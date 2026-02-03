@@ -10,11 +10,13 @@ namespace MESManager.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "IndirizzoPLC",
-                table: "Macchine",
-                type: "nvarchar(max)",
-                nullable: true);
+            // Idempotent: la colonna potrebbe già esistere
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Macchine') AND name = 'IndirizzoPLC')
+                BEGIN
+                    ALTER TABLE [Macchine] ADD [IndirizzoPLC] nvarchar(max) NULL;
+                END
+            ");
         }
 
         /// <inheritdoc />

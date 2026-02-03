@@ -13,6 +13,69 @@
 
 ---
 
+## v1.21 (3 Febbraio 2026)
+**Data:** 03 Feb 2026  
+**Status:** ✅ Completato
+
+### Modifiche v1.21
+
+#### 🗄️ Database - Tabella Festivi
+- **Aggiunta**: Migration per tabella `Festivi` (giorni festivi e chiusure aziendali)
+- **Fix**: Errore "Il nome di oggetto 'Festivi' non è valido" durante pianificazione
+- **Entità**: `Festivo` con Id, Data, Descrizione, Ricorrente, Attivo
+
+#### 🐛 Fix Critico - Assegnazione Macchina in Commesse Aperte
+- **Problema**: Errore "The JSON value could not be converted to System.Int32" quando si assegna macchina
+- **Causa**: Regex `replace(/M0*/gi, '')` non gestiva correttamente valori come "01", "02"
+- **Fix**: Usato `replace(/\\D/g, '')` per estrarre solo numeri
+- **File**: `commesse-aperte-grid.js` - onCellValueChanged handler
+
+#### 🎨 UI - Dark Mode Testi Più Chiari
+- **Miglioramento**: Testi grigi più visibili in modalità scura
+- **Modifiche colori dark mode**:
+  - Secondary: `#757575` → `#b0b0b0`
+  - TextSecondary: `rgba(255,255,255,0.7)` (prima default scuro)
+  - TextDisabled: `rgba(255,255,255,0.5)` (più visibile)
+  - ActionDisabled: `rgba(255,255,255,0.4)`
+  - Divider: `rgba(255,255,255,0.15)`
+- **File**: `MainLayout.razor.cs` - PaletteDark
+
+#### ⚙️ Pianificazione - Default 8 Ore
+- **Aggiunta**: Se mancano TempoCiclo o NumeroFigure, usa 8 ore (480 min) come default
+- **File**: `PianificazioneService.cs` - CalcolaDurataPrevistaMinuti
+- **Logica**: Setup + 480 minuti di lavorazione standard
+
+#### ⚠️ Gantt - Indicatore Dati Incompleti
+- **Aggiunta**: Triangolino ⚠️ nel Gantt per commesse con dati mancanti
+- **DTO**: Nuovo campo `DatiIncompleti` in `CommessaGanttDto`
+- **Tooltip**: "ATTENZIONE: Dati incompleti (usato 8h standard)"
+- **File**: `gantt-macchine.js`, `PianificazioneEngineService.cs`
+
+---
+
+## v1.20 (3 Febbraio 2026)
+**Data:** 03 Feb 2026  
+**Status:** ✅ Completato
+
+### Modifiche v1.20
+
+#### 🐛 Fix Critico - SignalR Version Mismatch
+- **Problema**: L'applicazione non rispondeva ai click dopo l'aggiunta del Gantt
+- **Causa**: Pacchetto `Microsoft.AspNetCore.SignalR.Client` versione 10.0.2 incompatibile con .NET 8
+- **Errore**: `MissingMethodException: Method not found: IInvocationBinder.GetTarget(ReadOnlySpan<Byte>)`
+- **Fix**: Cambiata versione SignalR.Client da `10.0.2` a `8.*` nel csproj
+
+#### 🔧 Fix Configurazione Blazor
+- Rimossa chiamata duplicata `AddServerSideBlazor()` in Program.cs
+- Consolidato su `AddInteractiveServerComponents()` con `DetailedErrors = true`
+
+#### 🧭 Fix Navigazione Menu
+- Corretti link nel NavMenu che puntavano a route sbagliate
+- Gantt Macchine ora punta correttamente a `/programma/gantt-macchine`
+- Aggiunta voce menu "Commesse Aperte"
+
+---
+
 ## v1.19 (2 Febbraio 2026)
 **Data:** 02 Feb 2026  
 **Status:** ✅ Completato

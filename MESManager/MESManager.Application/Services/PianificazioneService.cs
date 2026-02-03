@@ -8,8 +8,9 @@ public class PianificazioneService : IPianificazioneService
     {
         if (tempoCicloSecondi <= 0 || numeroFigure <= 0)
         {
-            // Se non ci sono dati produttivi, restituisci solo il tempo di setup
-            return tempoSetupMinuti;
+            // Se mancano dati produttivi, usa 8 ore (480 minuti) come default
+            // Include setup + 8 ore di lavorazione standard
+            return tempoSetupMinuti + 480; // 8 ore = 480 minuti
         }
 
         // Calcola il tempo totale di produzione in secondi

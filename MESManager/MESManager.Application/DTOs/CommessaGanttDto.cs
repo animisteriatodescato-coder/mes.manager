@@ -32,4 +32,7 @@ public class CommessaGanttDto
     
     // Percentuale completamento
     public decimal PercentualeCompletamento { get; set; }
+    
+    // Indicatore dati incompleti (per triangolino avviso nel Gantt)
+    public bool DatiIncompleti { get; set; }
 }

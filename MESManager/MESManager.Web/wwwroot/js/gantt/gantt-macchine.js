@@ -213,10 +213,13 @@ window.GanttMacchine = {
                 const baseColor = self.getStatusColor(task.stato);
                 const progressStyle = `background: linear-gradient(to right, ${baseColor} ${progress}%, rgba(${self.hexToRgb(baseColor)}, 0.3) ${progress}%); color: white;`;
                 
+                // Aggiungi triangolino avviso se dati incompleti
+                const warningIcon = task.datiIncompleti ? ' ⚠️' : '';
+                
                 return {
                     id: task.id,
                     group: groupId,
-                    content: `${task.codice} (${Math.round(progress)}%)`,
+                    content: `${task.codice} (${Math.round(progress)}%)${warningIcon}`,
                     start: new Date(task.dataInizio),
                     end: new Date(task.dataFine),
                     className: 'commessa-item',
@@ -227,11 +230,12 @@ window.GanttMacchine = {
     },
 
     createTooltip: function(task) {
+        const warningText = task.datiIncompleti ? '\n⚠️ ATTENZIONE: Dati incompleti (usato 8h standard)' : '';
         return `${task.description || task.codice}
 Quantità: ${task.quantita || 0} ${task.uom || ''}
 Durata: ${task.durataMinuti || 0} min
 Stato: ${task.stato}
-Ordine: ${task.ordineSequenza || '-'}`;
+Ordine: ${task.ordineSequenza || '-'}${warningText}`;
     },
 
     updateItemsFromServer: function(commesse) {
@@ -246,12 +250,15 @@ Ordine: ${task.ordineSequenza || '-'}`;
                 const baseColor = this.getStatusColor(c.stato);
                 const progressStyle = `background: linear-gradient(to right, ${baseColor} ${progress}%, rgba(${this.hexToRgb(baseColor)}, 0.3) ${progress}%); color: white;`;
 
+                // Aggiungi triangolino avviso se dati incompleti
+                const warningIcon = c.datiIncompleti ? ' ⚠️' : '';
+                
                 const existingItem = this.timeline.itemsData.get(c.id);
                 if (existingItem) {
                     this.timeline.itemsData.update({
                         id: c.id,
                         group: groupId,
-                        content: `${c.codice} (${Math.round(progress)}%)`,
+                        content: `${c.codice} (${Math.round(progress)}%)${warningIcon}`,
                         start: new Date(c.dataInizioPrevisione),
                         end: new Date(c.dataFinePrevisione),
                         style: progressStyle,
@@ -261,7 +268,7 @@ Ordine: ${task.ordineSequenza || '-'}`;
                     this.timeline.itemsData.add({
                         id: c.id,
                         group: groupId,
-                        content: `${c.codice} (${Math.round(progress)}%)`,
+                        content: `${c.codice} (${Math.round(progress)}%)${warningIcon}`,
                         start: new Date(c.dataInizioPrevisione),
                         end: new Date(c.dataFinePrevisione),
                         className: 'commessa-item',

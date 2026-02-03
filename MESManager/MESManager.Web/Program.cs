@@ -95,14 +95,14 @@ var connectionString = builder.Configuration.GetConnectionString("MESManagerDb")
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
-
-// Abilita errori dettagliati per Blazor Server (solo in Development)
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.AddServerSideBlazor()
-        .AddCircuitOptions(options => options.DetailedErrors = true);
-}
+    .AddInteractiveServerComponents(options =>
+    {
+        // Abilita errori dettagliati per Blazor Server (solo in Development)
+        if (builder.Environment.IsDevelopment())
+        {
+            options.DetailedErrors = true;
+        }
+    });
 
 // MudBlazor
 builder.Services.AddMudServices();

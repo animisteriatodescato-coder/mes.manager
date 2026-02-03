@@ -37,8 +37,12 @@ public partial class MainLayout : IDisposable
         PaletteDark = new PaletteDark
         {
             Primary = "#90caf9",
-            Secondary = "#757575",
-            AppbarBackground = "#1e1e1e"
+            Secondary = "#b0b0b0",  // Da #757575 a #b0b0b0 - più chiaro
+            AppbarBackground = "#1e1e1e",
+            TextSecondary = "rgba(255,255,255,0.7)",  // Testo secondario più chiaro
+            TextDisabled = "rgba(255,255,255,0.5)",   // Testo disabilitato più visibile
+            ActionDisabled = "rgba(255,255,255,0.4)", // Azioni disabilitate più visibili
+            Divider = "rgba(255,255,255,0.15)"        // Divisori più visibili
         }
     };
     

@@ -14,14 +14,11 @@
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-4">
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
         <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@GoBack" />
-        <MudText Typo="Typo.h5">@(isEdit ? $"Preventivo {quote?.Number}" : "Nuovo Preventivo")</MudText>
+        <MudText Typo="Typo.h5">@(isEdit ? $"Preventivo {quote.Number}" : "Nuovo Preventivo")</MudText>
         <MudSpacer />
-        @if (quote != null)
-        {
-            <MudChip T="string" Color="@GetStatusColor(quote.Status)" Size="Size.Medium">
-                @quote.Status.ToString()
-            </MudChip>
-        }
+        <MudChip T="string" Color="@GetStatusColor(quote.Status)" Size="Size.Medium">
+            @quote.Status.ToString()
+        </MudChip>
     </MudStack>
 
     @if (isLoading)
@@ -266,7 +263,7 @@
             <MudItem xs="12">
                 <MudStack Row="true" Spacing="2" Justify="Justify.FlexEnd">
                     <MudButton Variant="Variant.Outlined" OnClick="@GoBack">Annulla</MudButton>
-                    @if (isEdit && quote?.Status == QuoteStatus.Draft)
+                    @if (isEdit && quote.Status == QuoteStatus.Draft)
                     {
                         <MudButton Variant="Variant.Outlined" Color="Color.Warning" 
                                   StartIcon="@Icons.Material.Filled.ContentCopy"
@@ -278,7 +275,7 @@
                                   StartIcon="@Icons.Material.Filled.Send"
                                   OnClick="@SendQuote">Invia</MudButton>
                     }
-                    @if (isEdit && quote?.Status == QuoteStatus.Sent)
+                    @if (isEdit && quote.Status == QuoteStatus.Sent)
                     {
                         <MudButton Variant="Variant.Outlined" Color="Color.Success"
                                   StartIcon="@Icons.Material.Filled.CheckCircle"
@@ -344,7 +341,7 @@
     private bool isLoading = true;
     private bool isSaving = false;
 
-    private QuoteDto? quote;
+    private QuoteDto quote = new() { Date = DateTime.Today, ValidUntil = DateTime.Today.AddDays(30), Status = QuoteStatus.Draft };
     private List<QuoteRowDto> quoteRows = new();
     private List<QuoteAttachmentDto> attachments = new();
     private List<PriceListDto> priceLists = new();
@@ -385,9 +382,10 @@
             if (isEdit)
             {
                 // Modifica: carica preventivo esistente
-                quote = await Http.GetFromJsonAsync<QuoteDto>($"api/quotes/{Id}");
-                if (quote != null)
+                var loadedQuote = await Http.GetFromJsonAsync<QuoteDto>($"api/quotes/{Id}");
+                if (loadedQuote != null)
                 {
+                    quote = loadedQuote;
                     quoteRows = quote.Rows?.ToList() ?? new();
                     quoteDate = quote.Date;
                     validUntilDate = quote.ValidUntil;
@@ -399,16 +397,7 @@
                     attachments = attachmentsResponse ?? new();
                 }
             }
-            else
-            {
-                // Nuovo preventivo
-                quote = new QuoteDto
-                {
-                    Date = DateTime.Today,
-                    ValidUntil = DateTime.Today.AddDays(30),
-                    Status = QuoteStatus.Draft
-                };
-            }
+            // Il quote è già inizializzato con valori di default per nuovo preventivo
 
             // Carica items del listino selezionato (se presente)
             if (selectedPriceListId.HasValue)
@@ -654,7 +643,7 @@
             if (response.IsSuccessStatusCode)
             {
                 var bytes = await response.Content.ReadAsByteArrayAsync();
-                var fileName = $"Preventivo_{quote?.Number ?? "nuovo"}.pdf";
+                var fileName = $"Preventivo_{quote.Number ?? "nuovo"}.pdf";
                 
                 // Download via JS
                 await JS.InvokeVoidAsync("downloadFile", bytes, fileName, "application/pdf");

@@ -542,6 +542,9 @@ public class PianificazioneEngineService : IPianificazioneEngineService
         var tempoCiclo = commessa.Articolo?.TempoCiclo ?? 0;
         var numeroFigure = commessa.Articolo?.NumeroFigure ?? 0;
         
+        // Indica se i dati sono incompleti (mancano tempo ciclo o numero figure)
+        var datiIncompleti = tempoCiclo <= 0 || numeroFigure <= 0;
+        
         var durataMinuti = _pianificazioneService.CalcolaDurataPrevistaMinuti(
             tempoCiclo,
             numeroFigure,
@@ -570,7 +573,8 @@ public class PianificazioneEngineService : IPianificazioneEngineService
             DurataPrevistaMinuti = durataMinuti,
             Stato = commessa.Stato.ToString(),
             ColoreStato = _pianificazioneService.GetColoreStato(commessa.Stato.ToString()),
-            PercentualeCompletamento = CalcolaPercentualeCompletamento(commessa)
+            PercentualeCompletamento = CalcolaPercentualeCompletamento(commessa),
+            DatiIncompleti = datiIncompleti
         };
     }
 

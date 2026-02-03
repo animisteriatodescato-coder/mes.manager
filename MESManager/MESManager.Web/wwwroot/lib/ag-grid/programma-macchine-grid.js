@@ -97,6 +97,11 @@ window.programmaMacchineGrid = (function() {
             pinned: 'left',
             sort: 'asc',
             sortIndex: 0,
+            editable: params => !params.data.isPlaceholder,
+            cellEditor: 'agSelectCellEditor',
+            cellEditorParams: {
+                values: () => allMachines
+            },
             cellStyle: { fontWeight: 'bold', textAlign: 'center' },
             valueFormatter: params => {
                 if (!params.value) return '';
@@ -106,6 +111,15 @@ window.programmaMacchineGrid = (function() {
                     return match[1].padStart(2, '0');
                 }
                 return params.value;
+            },
+            onCellValueChanged: async (params) => {
+                console.log('onCellValueChanged triggered:', params.oldValue, '->', params.newValue);
+                if (params.oldValue === params.newValue) {
+                    console.log('Valore non cambiato, skip');
+                    return;
+                }
+                console.log('Chiamata assignCommessaToMachine per commessa:', params.data.id);
+                await assignCommessaToMachine(params.data.id, params.newValue);
             }
         },
         { field: 'codice', headerName: 'Codice', sortable: true, filter: true, width: 180, pinned: 'left' },
@@ -319,6 +333,67 @@ window.programmaMacchineGrid = (function() {
         } catch (err) {
             console.error('Errore durante lo spostamento:', err);
             alert(`Errore: ${err.message}`);
+        }
+    }
+
+    // Assegna una commessa a una macchina (calcolo automatico date)
+    async function assignCommessaToMachine(commessaId, targetMacchina) {
+        try {
+            console.log('=== assignCommessaToMachine START ===');
+            console.log('commessaId:', commessaId);
+            console.log('targetMacchina:', targetMacchina);
+            
+            if (!targetMacchina) {
+                console.log('Nessuna macchina selezionata - skip');
+                return;
+            }
+
+            // Estrai il numero della macchina (M001 -> 1)
+            const machineNumber = getMachineNumber(targetMacchina);
+            console.log('machineNumber estratto:', machineNumber);
+            
+            // Chiama l'API di pianificazione che calcola automaticamente le date
+            const requestBody = {
+                commessaId: commessaId,
+                targetMacchina: machineNumber,
+                // Accoda in fondo - le date saranno calcolate automaticamente
+                insertBeforeCommessaId: null,
+                targetDataInizio: null
+            };
+            console.log('Request body:', JSON.stringify(requestBody));
+            
+            const response = await fetch('/api/pianificazione/sposta', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+            
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Response error:', errorText);
+                throw new Error(errorText || `HTTP ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('Response result:', result);
+            
+            if (result.success) {
+                console.log('✓ Commessa assegnata con successo. Date calcolate automaticamente.');
+                
+                // Ricarica i dati per mostrare le nuove date
+                await refreshGridData();
+            } else {
+                throw new Error(result.errorMessage || 'Errore sconosciuto');
+            }
+            
+        } catch (err) {
+            console.error('Errore durante l\'assegnazione:', err);
+            alert(`Errore nell'assegnazione: ${err.message}`);
+            
+            // Ricarica comunque per annullare la modifica locale
+            await refreshGridData();
         }
     }
 
