@@ -19,11 +19,24 @@
 
 ### Modifiche v1.23
 
-#### 🐛 Fix Critico - Tabella Festivi Database
-- **Problema**: Errore "Il nome di oggetto 'Festivi' non è valido" su Gantt Macchine
-- **Causa**: Migration esistente ma tabella non creata nel database
-- **Fix**: Creazione forzata tabella Festivi con tutti i campi necessari
+#### 🐛 Fix Critico - Tabella Festivi Database (RISOLTO COMPLETAMENTE)
+- **Problema 1**: Errore "Il nome di oggetto 'Festivi' non è valido" su Gantt Macchine
+- **Problema 2**: Endpoint `/api/dbmaintenance/ensure-festivi-table` falliva con errore "Il nome di colonna 'Value' non è valido"
+- **Causa Root**: 
+  - Migration esistente ma tabella non creata in tutti gli ambienti
+  - `SqlQueryRaw<int>()` di EF Core cerca colonna chiamata `Value` per tipi primitivi
+  - L'alias SQL `TableExists` non viene riconosciuto automaticamente
+- **Fix Applicati**:
+  1. ✅ Tabella Festivi verificata/creata nel database prod (192.168.1.230)
+  2. ✅ Corretto endpoint `DbMaintenanceController.EnsureFestiviTable()` 
+  3. ✅ Usato `ExecuteScalarAsync()` invece di `SqlQueryRaw<int>`
+  4. ✅ Aggiunto creazione indici `IX_Festivi_Data` e `IX_Festivi_Ricorrente`
+  5. ✅ Creato script SQL `scripts/check-and-create-festivi.sql` per troubleshooting
 - **SQL**: CREATE TABLE con Id (GUID PK), Data (date), Descrizione (nvarchar200), Ricorrente (bit), Anno (int null), DataCreazione (datetime2)
+- **File Modificati**:
+  - `MESManager.Web/Controllers/DbMaintenanceController.cs`
+  - `scripts/check-and-create-festivi.sql` (nuovo)
+- **Test**: ✅ Tabella presente, 0 record, indici OK
 
 #### 🎨 Fix Cache CSS - Dark Mode
 - **Problema**: Modifiche colori dark mode non visibili nel browser
