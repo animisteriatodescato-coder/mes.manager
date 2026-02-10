@@ -56,6 +56,41 @@ Quando l'utente dice **"pubblica"**, **"deploy"** o **"vai in produzione"**:
 > **Nota**: Questa sezione raccoglie modifiche durante sviluppo.  
 > Prima di ogni deploy, spostarle in "Storico Versioni" sotto.
 
+### v1.30.10 - Fix Conteggi Clienti + Footer a Filo (IN DEV)
+
+#### 🐛 Bug Fix: Conteggi Righe Sempre a Zero
+- **Problema**: Footer stats (Totale righe, Righe filtrate, Righe selezionate) restavano a 0
+- **Causa Root**: `getStats()` in `clienti-grid.js` era finita dentro una stringa CSS (`panel.style.cssText`), quindi mai registrata come funzione
+- **Soluzione**:
+  - Spostato `getStats()` fuori dalla stringa CSS (dopo `resetState()`)
+  - Aggiunto trigger `clientiGridStatsChanged` in `onGridReady` per aggiornamento iniziale
+- **Lezione**: Mai combinare JS inline con CSS multiline string
+
+#### 🎨 UI Fix: Footer "a filo"
+- Rimossa ombra/bordo dal footer Catalogo Clienti (`Elevation="0"`, `box-shadow: none`)
+- Footer ora flush con la griglia come in Catalogo Anime
+
+#### File Modificati
+- `MESManager.Web/wwwroot/js/clienti-grid.js`
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoClienti.razor`
+- `MESManager.Web/Constants/AppVersion.cs` (1.30.9 → 1.30.10)
+
+### v1.30.9 - UI Polish: Titoli, Pulsanti, Gantt (✅ COMPLETATO)
+
+#### 🎨 Miglioramenti UI
+1. **Rimossi titoli duplicati**: ProgrammaMacchine, CommesseAperte, CatalogoCommesse avevano titolo sia in appbar che nella pagina
+2. **Pulsanti ridotti 20%**: CSS globale per `.settings-panel` e `.toolbar-sticky` buttons (font 0.75rem, padding 3px 10px)
+3. **Label "Archiviate"**: Da "Mostra Archiviate" a "Archiviate" in CommesseAperte
+4. **Gantt calendario leggibile**: Testo da `#424242` → `#1a1a1a` (light), da `#e0e0e0` → `#ffffff` (dark), font-weight 600
+
+#### File Modificati
+- `MESManager.Web/Components/Pages/Programma/ProgrammaMacchine.razor`
+- `MESManager.Web/Components/Pages/Programma/CommesseAperte.razor`
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoCommesse.razor`
+- `MESManager.Web/wwwroot/css/gantt-macchine.css`
+- `MESManager.Web/wwwroot/css/layout-config.css`
+- `MESManager.Web/Constants/AppVersion.cs` (1.30.8 → 1.30.9)
+
 ### v1.30.8 - Diagnostica Programma Vuoto con 5 Fix (IN DEV)
 
 #### 🔍 Problema

@@ -107,6 +107,7 @@ window.clientiGrid = (function() {
                         console.warn('Failed to restore column state:', e);
                     }
                 }
+                window.dispatchEvent(new CustomEvent('clientiGridStatsChanged'));
             },
             onSelectionChanged: () => {
                 window.dispatchEvent(new CustomEvent('clientiGridStatsChanged'));
@@ -168,6 +169,16 @@ window.clientiGrid = (function() {
         }
     }
 
+    function getStats() {
+        if (!gridApi) return { Total: 0, Filtered: 0, Selected: 0 };
+
+        return {
+            Total: gridApi.getModel().getRowCount(),
+            Filtered: gridApi.getDisplayedRowCount(),
+            Selected: gridApi.getSelectedRows().length
+        };
+    }
+
     function toggleColumnPanel() {
         console.log('toggleColumnPanel called');
         if (!gridApi) return;
@@ -198,16 +209,6 @@ window.clientiGrid = (function() {
         // Crea pannello
         const panel = document.createElement('div');
         panel.style.cssText = `
-    
-    function getStats() {
-        if (!gridApi) return { Total: 0, Filtered: 0, Selected: 0 };
-        
-        return {
-            Total: gridApi.getModel().getRowCount(),
-            Filtered: gridApi.getDisplayedRowCount(),
-            Selected: gridApi.getSelectedRows().length
-        };
-    }
             background: white;
             border-radius: 8px;
             padding: 20px;

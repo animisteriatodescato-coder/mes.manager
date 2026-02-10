@@ -77,7 +77,7 @@
          style="width: 100%; flex: 1; min-height: 0;">
     </div>
 
-    <MudPaper Class="footer-info pa-1" Elevation="1" Style="flex-shrink: 0;">
+    <MudPaper Class="footer-info pa-1" Elevation="0" Style="flex-shrink: 0;">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
             <MudText Typo="Typo.caption" Color="Color.Secondary">Totale righe: <strong>@totalRows</strong></MudText>
             <MudDivider Vertical="true" FlexItem="true" />
@@ -99,6 +99,12 @@
 <style>
     .clienti-page {
         position: relative;
+    }
+
+    .clienti-page .footer-info {
+        box-shadow: none;
+        border-top: none;
+        margin-top: 0;
     }
 
     .toolbar-sticky {
