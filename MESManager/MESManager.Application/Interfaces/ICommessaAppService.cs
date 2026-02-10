@@ -10,8 +10,8 @@ public interface ICommessaAppService
     Task<CommessaDto> AggiornaAsync(Guid id, CommessaDto dto);
     Task AggiornaStatoAsync(Guid id, string stato);
     Task AggiornaStatoProgrammaAsync(Guid id, string statoProgramma, string? note = null, string? utente = null);
-    Task AggiornaNumeroMacchinaAsync(Guid id, string? numeroMacchina);
-    Task RiordinaCommessaAsync(Guid commessaId, string nuovoNumeroMacchina, int nuovaPosizioneIndex);
+    Task AggiornaNumeroMacchinaAsync(Guid id, int? numeroMacchina);
+    Task RiordinaCommessaAsync(Guid commessaId, int? nuovoNumeroMacchina, int nuovaPosizioneIndex);
     Task EliminaAsync(Guid id);
     Task<List<StoricoProgrammazioneDto>> GetStoricoProgrammazioneAsync(Guid commessaId);
 }

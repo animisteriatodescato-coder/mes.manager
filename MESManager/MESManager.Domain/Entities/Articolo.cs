@@ -13,6 +13,7 @@ public class Articolo
     // Dati produttivi (per calcolo tempi pianificazione)
     public int TempoCiclo { get; set; } // Tempo ciclo in secondi
     public int NumeroFigure { get; set; } // Numero di figure/pezzi per ciclo
+    public string? ClasseLavorazione { get; set; } // Classe di lavorazione (per riduzione setup)
 
     // Navigazioni
     public Ricetta? Ricetta { get; set; }

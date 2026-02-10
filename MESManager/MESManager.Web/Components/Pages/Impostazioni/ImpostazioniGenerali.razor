@@ -5,7 +5,7 @@
 
 <PageTitle>Impostazioni Generali</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-impostazioni-generali">
     <MudText Typo="Typo.h4" Class="mb-4">Impostazioni Generali</MudText>
 
     <MudGrid>
@@ -41,7 +41,8 @@
                               FilesChanged="OnBackgroundImageSelected" MaximumFileCount="1">
                     <ActivatorContent>
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" 
-                                  StartIcon="@Icons.Material.Filled.CloudUpload">
+                                  StartIcon="@Icons.Material.Filled.CloudUpload"
+                                  data-testid="btn-generali-upload-bg">
                             Carica Nuova Immagine
                         </MudButton>
                     </ActivatorContent>
@@ -56,7 +57,8 @@
     </MudGrid>
     
     <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" 
-               Size="Size.Large" OnClick="SalvaImpostazioni" StartIcon="@Icons.Material.Filled.Save">
+               Size="Size.Large" OnClick="SalvaImpostazioni" StartIcon="@Icons.Material.Filled.Save"
+               data-testid="btn-generali-salva">
         Salva Impostazioni
     </MudButton>
 </MudContainer>

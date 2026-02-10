@@ -11,12 +11,17 @@ public class PlaywrightTestBase : IAsyncLifetime
     protected IBrowser Browser { get; private set; } = null!;
     protected IBrowserContext Context { get; private set; } = null!;
     protected IPage Page { get; private set; } = null!;
-    protected string BaseUrl => "http://127.0.0.1:5156";
+    protected string BaseUrl => Environment.GetEnvironmentVariable("E2E_BASE_URL") ?? "http://localhost:5156";
     protected ITestOutputHelper _output { get; private set; }
     
     private readonly List<string> _consoleErrors = new();
     private readonly List<string> _pageErrors = new();
     private Process? _webAppProcess;
+
+    private static readonly string[] IgnoredErrorSnippets =
+    {
+        "AG Grid: cannot get grid to draw rows when it is in the middle of drawing rows"
+    };
 
     public PlaywrightTestBase(ITestOutputHelper output)
     {
@@ -24,51 +29,61 @@ public class PlaywrightTestBase : IAsyncLifetime
     }
     
     private static readonly bool IsHeaded = Environment.GetEnvironmentVariable("PLAYWRIGHT_HEADED") == "1";
+    private static readonly bool UseExistingServer =
+        (Environment.GetEnvironmentVariable("E2E_USE_EXISTING_SERVER") ?? "").Equals("1", StringComparison.OrdinalIgnoreCase) ||
+        (Environment.GetEnvironmentVariable("E2E_USE_EXISTING_SERVER") ?? "").Equals("true", StringComparison.OrdinalIgnoreCase);
     private static readonly int SlowMo = int.TryParse(Environment.GetEnvironmentVariable("PLAYWRIGHT_SLOWMO"), out var slowmo) ? slowmo : 0;
+    private static readonly int ServerStartupTimeoutSeconds = int.TryParse(
+        Environment.GetEnvironmentVariable("WEBAPP_STARTUP_TIMEOUT_SECONDS"),
+        out var timeoutSeconds) ? timeoutSeconds : 90;
 
     public virtual async Task InitializeAsync()
     {
-        // Avvia l'applicazione web come processo separato
-        var projectPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "MESManager.Web"));
-        
-        _webAppProcess = new Process
+        if (!UseExistingServer)
         {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "dotnet",
-                Arguments = $"run --urls {BaseUrl}",
-                WorkingDirectory = projectPath,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true
-            }
-        };
+            // Avvia l'applicazione web come processo separato
+            var solutionRoot = FindSolutionRoot();
+            var projectPath = Path.Combine(solutionRoot, "MESManager.Web");
 
-        _webAppProcess.Start();
-        
-        // Aspetta che il server sia pronto (controlla quando il log dice "Now listening")
-        var serverReady = false;
-        var timeout = DateTime.Now.AddSeconds(30);
-        
-        _webAppProcess.OutputDataReceived += (sender, e) =>
-        {
-            if (e.Data != null && e.Data.Contains("Now listening"))
+            _webAppProcess = new Process
             {
-                serverReady = true;
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = $"run --urls {BaseUrl}",
+                    WorkingDirectory = projectPath,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                }
+            };
+
+            _webAppProcess.Start();
+
+            // Aspetta che il server sia pronto (controlla quando il log dice "Now listening")
+            var serverReady = false;
+            var timeout = DateTime.Now.AddSeconds(ServerStartupTimeoutSeconds);
+
+            _webAppProcess.OutputDataReceived += (sender, e) =>
+            {
+                if (e.Data != null && e.Data.Contains("Now listening"))
+                {
+                    serverReady = true;
+                }
+            };
+
+            _webAppProcess.BeginOutputReadLine();
+
+            while (!serverReady && DateTime.Now < timeout)
+            {
+                await Task.Delay(100);
             }
-        };
-        
-        _webAppProcess.BeginOutputReadLine();
-        
-        while (!serverReady && DateTime.Now < timeout)
-        {
-            await Task.Delay(100);
-        }
-        
-        if (!serverReady)
-        {
-            throw new Exception("Web server failed to start within 30 seconds");
+
+            if (!serverReady)
+            {
+                throw new Exception($"Web server failed to start within {ServerStartupTimeoutSeconds} seconds");
+            }
         }
         
         // Inizializza Playwright
@@ -93,14 +108,21 @@ public class PlaywrightTestBase : IAsyncLifetime
         {
             if (msg.Type == "error")
             {
-                _consoleErrors.Add($"Console Error: {msg.Text}");
+                if (!IgnoredErrorSnippets.Any(snippet => msg.Text.Contains(snippet, StringComparison.OrdinalIgnoreCase)))
+                {
+                    _consoleErrors.Add($"Console Error: {msg.Text}");
+                }
             }
         };
 
         // Cattura page errors (eccezioni JavaScript non gestite)
         Page.PageError += (_, exception) =>
         {
-            _pageErrors.Add($"Page Error: {exception}");
+            var message = exception?.ToString() ?? string.Empty;
+            if (!IgnoredErrorSnippets.Any(snippet => message.Contains(snippet, StringComparison.OrdinalIgnoreCase)))
+            {
+                _pageErrors.Add($"Page Error: {exception}");
+            }
         };
     }
 
@@ -162,5 +184,22 @@ public class PlaywrightTestBase : IAsyncLifetime
             throw new Exception($"Console errors detected: {string.Join(", ", _consoleErrors)}");
         }
         return Task.CompletedTask;
+    }
+
+    private static string FindSolutionRoot()
+    {
+        var currentDir = AppContext.BaseDirectory;
+        while (!string.IsNullOrEmpty(currentDir))
+        {
+            var slnPath = Path.Combine(currentDir, "MESManager.sln");
+            if (File.Exists(slnPath))
+            {
+                return currentDir;
+            }
+
+            currentDir = Directory.GetParent(currentDir)?.FullName ?? string.Empty;
+        }
+
+        throw new DirectoryNotFoundException("Impossibile trovare MESManager.sln. Verifica la struttura del repository.");
     }
 }

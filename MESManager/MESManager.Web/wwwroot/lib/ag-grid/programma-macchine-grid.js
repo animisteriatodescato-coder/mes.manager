@@ -1,5 +1,16 @@
 window.programmaMacchineGrid = (function() {
     let gridApi = null;
+        function safeApiCall(action) {
+            if (!gridApi) return;
+            setTimeout(() => {
+                try {
+                    action();
+                } catch (err) {
+                    console.warn('safeApiCall failed:', err);
+                }
+            }, 0);
+        }
+
     let dotNetHelper = null;
     
     // Lista macchine disponibili - caricata dinamicamente dal database
@@ -19,35 +30,6 @@ window.programmaMacchineGrid = (function() {
     };
 
     const columnDefs = [
-        {
-            field: 'ordine',
-            headerName: '↕',
-            width: 70,
-            pinned: 'left',
-            sortable: false,
-            filter: false,
-            suppressMenu: true,
-            cellRenderer: params => {
-                // Righe placeholder (vuote) non hanno pulsanti
-                if (params.data.isPlaceholder) {
-                    return '<span style="color:#bbb;font-style:italic;font-size:11px;">(vuoto)</span>';
-                }
-                return `<div style="display:flex;gap:2px;justify-content:center;align-items:center;height:100%;">
-                    <button class="move-up-btn" style="border:none;background:#e3f2fd;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:3px;" title="Sposta su">▲</button>
-                    <button class="move-down-btn" style="border:none;background:#e3f2fd;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:3px;" title="Sposta giù">▼</button>
-                </div>`;
-            },
-            onCellClicked: async (params) => {
-                if (params.data.isPlaceholder) return;
-                
-                const target = params.event.target;
-                if (target.classList.contains('move-up-btn')) {
-                    await moveRow(params.data.id, params.data.numeroMacchina, 'up');
-                } else if (target.classList.contains('move-down-btn')) {
-                    await moveRow(params.data.id, params.data.numeroMacchina, 'down');
-                }
-            }
-        },
         {
             field: 'storico',
             headerName: '',
@@ -271,71 +253,6 @@ window.programmaMacchineGrid = (function() {
         return match ? parseInt(match[1], 10) : 0;
     }
 
-    // ==================== MOVE UP/DOWN FUNCTIONS ====================
-    
-    // Sposta una riga su o giù all'interno della stessa macchina
-    async function moveRow(commessaId, numeroMacchina, direction) {
-        try {
-            // Trova tutte le commesse della stessa macchina (esclusi placeholder)
-            const machineRows = [];
-            gridApi.forEachNodeAfterFilterAndSort(node => {
-                if (node.data && node.data.numeroMacchina === numeroMacchina && !node.data.isPlaceholder) {
-                    machineRows.push(node.data);
-                }
-            });
-            
-            // Trova la posizione corrente
-            const currentIndex = machineRows.findIndex(r => r.id === commessaId);
-            if (currentIndex === -1) {
-                console.log('Commessa non trovata nella macchina');
-                return;
-            }
-            
-            // Calcola nuova posizione
-            let newIndex;
-            if (direction === 'up') {
-                if (currentIndex === 0) {
-                    console.log('Già in prima posizione');
-                    return;
-                }
-                newIndex = currentIndex - 1;
-            } else {
-                if (currentIndex === machineRows.length - 1) {
-                    console.log('Già in ultima posizione');
-                    return;
-                }
-                newIndex = currentIndex + 1;
-            }
-            
-            console.log(`Spostamento ${direction}: ${currentIndex} -> ${newIndex}`);
-            
-            // Chiama l'API per salvare
-            const response = await fetch('/api/Commesse/riordina', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    commessaId: commessaId,
-                    nuovoNumeroMacchina: numeroMacchina,
-                    nuovaPosizioneIndex: newIndex
-                })
-            });
-            
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || `HTTP ${response.status}`);
-            }
-            
-            console.log('✓ Spostamento salvato con successo');
-            
-            // Ricarica i dati
-            await refreshGridData();
-            
-        } catch (err) {
-            console.error('Errore durante lo spostamento:', err);
-            alert(`Errore: ${err.message}`);
-        }
-    }
-
     // Assegna una commessa a una macchina (calcolo automatico date)
     async function assignCommessaToMachine(commessaId, targetMacchina) {
         try {
@@ -362,7 +279,7 @@ window.programmaMacchineGrid = (function() {
             };
             console.log('Request body:', JSON.stringify(requestBody));
             
-            const response = await fetch('/api/pianificazione/sposta', {
+            const response = await fetch('/api/pianificazione/sposta-commessa', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody)
@@ -487,9 +404,6 @@ window.programmaMacchineGrid = (function() {
                     -moz-user-select: none;
                     -ms-user-select: none;
                 }
-                .move-up-btn:hover, .move-down-btn:hover {
-                    background: #bbdefb !important;
-                }
                 .placeholder-row {
                     color: #bbb !important;
                     font-style: italic;
@@ -584,10 +498,14 @@ window.programmaMacchineGrid = (function() {
                 console.log('onGridReady: gridApi set');
                 if (savedColumnState) {
                     try {
-                        gridApi.applyColumnState({
-                            state: JSON.parse(savedColumnState),
-                            applyOrder: true
-                        });
+                        setTimeout(() => {
+                            safeApiCall(() => {
+                                gridApi.applyColumnState({
+                                    state: JSON.parse(savedColumnState),
+                                    applyOrder: true
+                                });
+                            });
+                        }, 0);
                     } catch (e) {
                         console.warn('Failed to restore column state:', e);
                     }
@@ -689,13 +607,16 @@ window.programmaMacchineGrid = (function() {
 
     function updateData(data) {
         console.log('updateData called with', data?.length, 'rows, gridApi exists:', !!gridApi);
-        if (gridApi) {
-            const preparedData = prepareDataWithPlaceholders(data);
-            console.log('updateData: prepared to', preparedData.length, 'with placeholders');
-            gridApi.setGridOption('rowData', preparedData);
-        } else {
+        if (!gridApi) {
             console.error('updateData: gridApi is null, cannot update data');
+            return;
         }
+
+        const preparedData = prepareDataWithPlaceholders(data);
+        console.log('updateData: prepared to', preparedData.length, 'with placeholders');
+        safeApiCall(() => {
+            gridApi.setGridOption('rowData', preparedData);
+        });
     }
 
     function setDotNetHelper(helper) {
@@ -703,9 +624,9 @@ window.programmaMacchineGrid = (function() {
     }
 
     function setQuickFilter(searchText) {
-        if (gridApi) {
+        safeApiCall(() => {
             gridApi.setGridOption('quickFilterText', searchText);
-        }
+        });
     }
 
     function setColumnVisible(field, visible) {
@@ -846,8 +767,10 @@ window.programmaMacchineGrid = (function() {
         if (!gridApi || !stateJson) return;
         try {
             const state = JSON.parse(stateJson);
-            gridApi.applyColumnState({ state: state, applyOrder: true });
-            console.log('setState: applied successfully');
+            safeApiCall(() => {
+                gridApi.applyColumnState({ state: state, applyOrder: true });
+                console.log('setState: applied successfully');
+            });
         } catch (e) {
             console.error('setState: error parsing state', e);
         }

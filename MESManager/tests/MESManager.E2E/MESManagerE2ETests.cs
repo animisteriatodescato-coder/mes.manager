@@ -48,18 +48,15 @@ public class MESManagerE2ETests : PlaywrightTestBase
     public async Task Pianificazione_LoadsGanttPage()
     {
         // Navigate to Pianificazione page
-        await Page.GotoAsync(BaseUrl + "/pianificazione", new() { WaitUntil = WaitUntilState.NetworkIdle });
-
-        // Aspetta caricamento completo
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.GotoAsync(BaseUrl + "/pianificazione", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
 
         // Verifica presenza titolo pagina
-        var title = Page.Locator("h4:has-text('Pianificazione Produzione')");
-        await Expect(title).ToBeVisibleAsync();
+        var title = Page.Locator("text=Pianificazione Produzione");
+        await Expect(title).ToBeVisibleAsync(new() { Timeout = 15000 });
 
         // Verifica presenza pannello impostazioni
-        var setupPanel = Page.Locator("label:has-text('Tempo Setup (minuti)')");
-        await Expect(setupPanel).ToBeVisibleAsync();
+        var tempoSetup = Page.GetByLabel("Tempo Setup (minuti)");
+        await Expect(tempoSetup).ToBeVisibleAsync(new() { Timeout = 15000 });
 
         // Verifica nessun errore console
         await AssertNoConsoleErrors();
@@ -71,20 +68,19 @@ public class MESManagerE2ETests : PlaywrightTestBase
     public async Task Pianificazione_HasConfigurationFields()
     {
         // Navigate to Pianificazione page
-        await Page.GotoAsync(BaseUrl + "/pianificazione", new() { WaitUntil = WaitUntilState.NetworkIdle });
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.GotoAsync(BaseUrl + "/pianificazione", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
 
         // Verifica presenza campo Tempo Setup
-        var tempoSetup = Page.Locator("input").Filter(new() { HasNot = Page.Locator("[type=hidden]") }).First;
-        await Expect(tempoSetup).ToBeVisibleAsync();
+        var tempoSetup = Page.GetByLabel("Tempo Setup (minuti)");
+        await Expect(tempoSetup).ToBeVisibleAsync(new() { Timeout = 15000 });
 
         // Verifica presenza pulsante Salva Impostazioni
-        var salvaBtnText = Page.Locator("button:has-text('Salva Impostazioni')");
-        await Expect(salvaBtnText).ToBeVisibleAsync();
+        var salvaBtn = Page.GetByRole(AriaRole.Button, new() { Name = "Salva Impostazioni" });
+        await Expect(salvaBtn).ToBeVisibleAsync(new() { Timeout = 15000 });
 
         // Verifica presenza pulsante Aggiorna Dati
-        var aggiornaBtnText = Page.Locator("button:has-text('Aggiorna Dati')");
-        await Expect(aggiornaBtnText).ToBeVisibleAsync();
+        var aggiornaBtn = Page.GetByRole(AriaRole.Button, new() { Name = "Aggiorna Dati" });
+        await Expect(aggiornaBtn).ToBeVisibleAsync(new() { Timeout = 15000 });
 
         // Verifica nessun errore console
         await AssertNoConsoleErrors();
@@ -96,8 +92,15 @@ public class MESManagerE2ETests : PlaywrightTestBase
     public async Task Pianificazione_HasGanttOrInfoMessage()
     {
         // Navigate to Pianificazione page
-        await Page.GotoAsync(BaseUrl + "/pianificazione", new() { WaitUntil = WaitUntilState.NetworkIdle });
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.GotoAsync(BaseUrl + "/pianificazione", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+
+        var title = Page.Locator("text=Pianificazione Produzione");
+        await Expect(title).ToBeVisibleAsync(new() { Timeout = 15000 });
+
+        await Page.WaitForFunctionAsync(
+            "() => !!document.querySelector('.e-gantt') || document.body.textContent.includes('Nessuna commessa pianificata')",
+            new PageWaitForFunctionOptions { Timeout = 15000 }
+        );
 
         // Verifica che ci sia o il componente Gantt o il messaggio informativo
         // (dipende se ci sono dati o meno)
@@ -118,8 +121,10 @@ public class MESManagerE2ETests : PlaywrightTestBase
     public async Task Pianificazione_HasStatusLegend()
     {
         // Navigate to Pianificazione page
-        await Page.GotoAsync(BaseUrl + "/pianificazione", new() { WaitUntil = WaitUntilState.NetworkIdle });
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.GotoAsync(BaseUrl + "/pianificazione", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+
+        var title = Page.Locator("text=Pianificazione Produzione");
+        await Expect(title).ToBeVisibleAsync(new() { Timeout = 15000 });
 
         // Verifica presenza sezione legenda (se ci sono dati)
         var legendTitle = Page.Locator("h6:has-text('Legenda Stati')");
@@ -144,35 +149,18 @@ public class MESManagerE2ETests : PlaywrightTestBase
     [Trait("Page", "Pianificazione")]
     public async Task Pianificazione_ApiImpostazioniWorks()
     {
-        // Navigate to Pianificazione page
-        await Page.GotoAsync(BaseUrl + "/pianificazione", new() { WaitUntil = WaitUntilState.NetworkIdle });
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-        // Intercetta la chiamata API
+        // Intercetta la chiamata API prima della navigazione
         var apiResponsePromise = Page.WaitForResponseAsync(
-            response => response.Url.Contains("/api/Pianificazione/impostazioni") && response.Status == 200,
-            new() { Timeout = 10000 }
+            response => response.Url.Contains("/api/Pianificazione/impostazioni"),
+            new() { Timeout = 15000 }
         );
 
-        // Clicca su Aggiorna Dati per triggerare la chiamata
-        var aggiornaBtn = Page.Locator("button:has-text('Aggiorna Dati')");
-        if (await aggiornaBtn.CountAsync() > 0)
-        {
-            await aggiornaBtn.ClickAsync();
-        }
+        // Navigate to Pianificazione page
+        await Page.GotoAsync(BaseUrl + "/pianificazione", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
 
-        // Verifica che la risposta API sia arrivata (o già presente)
-        try
-        {
-            var response = await apiResponsePromise;
-            Assert.Equal(200, response.Status);
-        }
-        catch (TimeoutException)
-        {
-            // Se timeout, verifica almeno che la pagina sia caricata correttamente
-            var title = Page.Locator("h4:has-text('Pianificazione Produzione')");
-            await Expect(title).ToBeVisibleAsync();
-        }
+        // Verifica che la risposta API sia arrivata
+        var response = await apiResponsePromise;
+        Assert.Equal(200, response.Status);
 
         // Verifica nessun errore console
         await AssertNoConsoleErrors();

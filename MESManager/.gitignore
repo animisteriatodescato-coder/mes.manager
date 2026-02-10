@@ -48,6 +48,9 @@ packages/
 TestResults/
 *.trx
 
+# Visual regression
+tests/MESManager.E2E/UPDATE_BASELINES.flag
+
 # Windows
 Thumbs.db
 ehthumbs.db

@@ -5,10 +5,11 @@
 
 <PageTitle>Catalogo Ricette</PageTitle>
 
-<div class="ricette-page">
+<div class="ricette-page" data-testid="page-catalogo-ricette">
     <MudPaper Class="pa-4 mb-4" Elevation="1">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
             <MudTextField @bind-Value="searchText"
+                         data-testid="input-ricette-search"
                          Placeholder="Cerca codice articolo (anche parziale)..."
                          Variant="Variant.Outlined"
                          Margin="Margin.Dense"
@@ -22,13 +23,15 @@
                       Color="Color.Primary" 
                       StartIcon="@Icons.Material.Filled.Search"
                       OnClick="@SearchRicette"
-                      Disabled="@isLoading">
+                      Disabled="@isLoading"
+                      data-testid="btn-ricette-cerca">
                 Cerca
             </MudButton>
             <MudButton Variant="Variant.Outlined" 
                       StartIcon="@Icons.Material.Filled.Clear"
                       OnClick="@ClearSearch"
-                      Disabled="@isLoading">
+                      Disabled="@isLoading"
+                      data-testid="btn-ricette-pulisci">
                 Pulisci
             </MudButton>
             @if (isLoading)
@@ -78,7 +81,8 @@
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
                 <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" 
                               OnClick="@BackToList" 
-                              Title="Torna alla lista" />
+                              Title="Torna alla lista"
+                              data-testid="btn-ricette-back" />
                 <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Primary" />
                 <MudText Typo="Typo.h6">
                     Ricetta: <strong>@ricettaSelezionata.CodiceArticolo</strong>

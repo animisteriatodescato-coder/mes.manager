@@ -11,9 +11,9 @@
 
 <PageTitle>@(isEdit ? "Modifica Preventivo" : "Nuovo Preventivo")</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-4">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-4" data-testid="page-preventivo-dettaglio">
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@GoBack" />
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@GoBack" data-testid="btn-preventivo-back" />
         <MudText Typo="Typo.h5">@(isEdit ? $"Preventivo {quote.Number}" : "Nuovo Preventivo")</MudText>
         <MudSpacer />
         <MudChip T="string" Color="@GetStatusColor(quote.Status)" Size="Size.Medium">
@@ -76,11 +76,11 @@
                         <MudText Typo="Typo.subtitle1" Color="Color.Primary"><b>RIGHE PREVENTIVO</b></MudText>
                         <MudSpacer />
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                                  OnClick="@AddRowFromPriceList" Disabled="@(selectedPriceListId == null)">
+                                  OnClick="@AddRowFromPriceList" Disabled="@(selectedPriceListId == null)" data-testid="btn-preventivo-add-listino">
                             Da Listino
                         </MudButton>
                         <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.AddBox"
-                                  OnClick="@AddManualRow">
+                                  OnClick="@AddManualRow" data-testid="btn-preventivo-add-manuale">
                             Riga Manuale
                         </MudButton>
                     </MudStack>
@@ -262,31 +262,31 @@
             <!-- AZIONI -->
             <MudItem xs="12">
                 <MudStack Row="true" Spacing="2" Justify="Justify.FlexEnd">
-                    <MudButton Variant="Variant.Outlined" OnClick="@GoBack">Annulla</MudButton>
+                    <MudButton Variant="Variant.Outlined" OnClick="@GoBack" data-testid="btn-preventivo-annulla">Annulla</MudButton>
                     @if (isEdit && quote.Status == QuoteStatus.Draft)
                     {
                         <MudButton Variant="Variant.Outlined" Color="Color.Warning" 
                                   StartIcon="@Icons.Material.Filled.ContentCopy"
-                                  OnClick="@DuplicateQuote">Duplica</MudButton>
+                                  OnClick="@DuplicateQuote" data-testid="btn-preventivo-duplica">Duplica</MudButton>
                         <MudButton Variant="Variant.Outlined" Color="Color.Info"
                                   StartIcon="@Icons.Material.Filled.PictureAsPdf"
-                                  OnClick="@GeneratePdf">Genera PDF</MudButton>
+                                  OnClick="@GeneratePdf" data-testid="btn-preventivo-pdf">Genera PDF</MudButton>
                         <MudButton Variant="Variant.Outlined" Color="Color.Success"
                                   StartIcon="@Icons.Material.Filled.Send"
-                                  OnClick="@SendQuote">Invia</MudButton>
+                                  OnClick="@SendQuote" data-testid="btn-preventivo-invia">Invia</MudButton>
                     }
                     @if (isEdit && quote.Status == QuoteStatus.Sent)
                     {
                         <MudButton Variant="Variant.Outlined" Color="Color.Success"
                                   StartIcon="@Icons.Material.Filled.CheckCircle"
-                                  OnClick="@AcceptQuote">Accettato</MudButton>
+                                  OnClick="@AcceptQuote" data-testid="btn-preventivo-accetta">Accettato</MudButton>
                         <MudButton Variant="Variant.Outlined" Color="Color.Error"
                                   StartIcon="@Icons.Material.Filled.Cancel"
-                                  OnClick="@RejectQuote">Rifiutato</MudButton>
+                                  OnClick="@RejectQuote" data-testid="btn-preventivo-rifiuta">Rifiutato</MudButton>
                     }
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" 
                               StartIcon="@Icons.Material.Filled.Save"
-                              OnClick="@SaveQuote" Disabled="@isSaving">
+                              OnClick="@SaveQuote" Disabled="@isSaving" data-testid="btn-preventivo-salva">
                         @(isSaving ? "Salvataggio..." : "Salva")
                     </MudButton>
                 </MudStack>

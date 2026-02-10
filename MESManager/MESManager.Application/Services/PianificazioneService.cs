@@ -1,4 +1,6 @@
+using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
+using MESManager.Domain.Entities;
 
 namespace MESManager.Application.Services;
 
@@ -26,39 +28,62 @@ public class PianificazioneService : IPianificazioneService
 
     public DateTime CalcolaDataFinePrevista(DateTime dataInizio, int durataMinuti, int oreLavorativeGiornaliere, int giorniLavorativiSettimanali)
     {
-        return CalcolaDataFinePrevistaConFestivi(dataInizio, durataMinuti, oreLavorativeGiornaliere, giorniLavorativiSettimanali, new HashSet<DateOnly>());
+        // Crea calendario fittizio per compatibilità
+        var calendarioDefault = new CalendarioLavoroDto
+        {
+            Lunedi = true, Martedi = true, Mercoledi = true, Giovedi = true, Venerdi = true,
+            Sabato = giorniLavorativiSettimanali > 5,
+            Domenica = giorniLavorativiSettimanali > 6,
+            OraInizio = new TimeOnly(8, 0),
+            OraFine = new TimeOnly(8 + oreLavorativeGiornaliere, 0)
+        };
+        return CalcolaDataFinePrevistaConFestivi(dataInizio, durataMinuti, calendarioDefault, new HashSet<DateOnly>());
     }
 
-    public DateTime CalcolaDataFinePrevistaConFestivi(DateTime dataInizio, int durataMinuti, int oreLavorativeGiornaliere, int giorniLavorativiSettimanali, HashSet<DateOnly> festivi)
+    /// <summary>
+    /// METODO PRINCIPALE - Calcola data fine prevista considerando calendario lavoro completo
+    /// </summary>
+    public DateTime CalcolaDataFinePrevistaConFestivi(DateTime dataInizio, int durataMinuti, CalendarioLavoroDto calendario, HashSet<DateOnly> festivi)
     {
         if (durataMinuti <= 0)
         {
             return dataInizio;
         }
 
-        var dataFine = dataInizio;
+        // Normalizza data inizio all'orario lavorativo
+        var dataFine = NormalizzaInizioGiorno(dataInizio, calendario.OraInizio);
         var minutiRimanenti = durataMinuti;
-        var minutiPerGiorno = oreLavorativeGiornaliere * 60;
+        var minutiPerGiorno = (int)(calendario.OraFine - calendario.OraInizio).TotalMinutes;
 
         while (minutiRimanenti > 0)
         {
-            // Salta i weekend se necessario (5 giorni lavorativi = Lun-Ven)
-            if (giorniLavorativiSettimanali == 5)
+            // Salta giorni NON lavorativi (controlla calendario specifico) e festivi
+            while (!IsGiornoLavorativo(dataFine, calendario) || festivi.Contains(DateOnly.FromDateTime(dataFine)))
             {
-                while (dataFine.DayOfWeek == DayOfWeek.Saturday || dataFine.DayOfWeek == DayOfWeek.Sunday)
-                {
-                    dataFine = dataFine.AddDays(1).Date; // Reset all'inizio del giorno
-                }
-            }
-            
-            // Salta i festivi
-            while (festivi.Contains(DateOnly.FromDateTime(dataFine)))
-            {
-                dataFine = dataFine.AddDays(1).Date; // Passa al giorno successivo
+                dataFine = dataFine.AddDays(1).Date + calendario.OraInizio.ToTimeSpan();
             }
 
-            // Calcola quanti minuti possiamo aggiungere in questo giorno
-            var minutiDisponibiliOggi = minutiPerGiorno;
+            // Calcola minuti disponibili oggi (rispetta OraInizio/OraFine)
+            var oraCorrente = TimeOnly.FromDateTime(dataFine);
+            int minutiDisponibiliOggi;
+            
+            if (oraCorrente < calendario.OraInizio)
+            {
+                // Siamo prima dell'inizio lavoro: disponibile tutto il giorno
+                minutiDisponibiliOggi = minutiPerGiorno;
+                dataFine = dataFine.Date + calendario.OraInizio.ToTimeSpan();
+            }
+            else if (oraCorrente >= calendario.OraFine)
+            {
+                // Siamo dopo la fine lavoro: passa al giorno successivo
+                dataFine = dataFine.Date.AddDays(1) + calendario.OraInizio.ToTimeSpan();
+                continue;
+            }
+            else
+            {
+                // Siamo nell'orario lavorativo: calcola minuti rimanenti oggi
+                minutiDisponibiliOggi = (int)(calendario.OraFine - oraCorrente).TotalMinutes;
+            }
             
             if (minutiRimanenti <= minutiDisponibiliOggi)
             {
@@ -68,13 +93,63 @@ public class PianificazioneService : IPianificazioneService
             }
             else
             {
-                // Usa tutto il giorno e passa al successivo
+                // Usa tutto il tempo disponibile oggi e passa al successivo
                 minutiRimanenti -= minutiDisponibiliOggi;
-                dataFine = dataFine.AddDays(1).Date; // Reset all'inizio del giorno successivo
+                dataFine = dataFine.Date.AddDays(1) + calendario.OraInizio.ToTimeSpan();
             }
         }
 
         return dataFine;
+    }
+
+    /// <summary>
+    /// [DEPRECATO] Overload legacy per backward compatibility
+    /// </summary>
+    [Obsolete("Usare overload con CalendarioLavoroDto per rispettare le impostazioni calendario utente")]
+    public DateTime CalcolaDataFinePrevistaConFestivi(DateTime dataInizio, int durataMinuti, int oreLavorativeGiornaliere, int giorniLavorativiSettimanali, HashSet<DateOnly> festivi)
+    {
+        // Delega al metodo principale creando calendario fittizio
+        var calendarioDefault = new CalendarioLavoroDto
+        {
+            Lunedi = true, Martedi = true, Mercoledi = true, Giovedi = true, Venerdi = true,
+            Sabato = giorniLavorativiSettimanali > 5,
+            Domenica = giorniLavorativiSettimanali > 6,
+            OraInizio = new TimeOnly(8, 0),
+            OraFine = new TimeOnly(8 + oreLavorativeGiornaliere, 0)
+        };
+        
+        return CalcolaDataFinePrevistaConFestivi(dataInizio, durataMinuti, calendarioDefault, festivi);
+    }
+
+    /// <summary>
+    /// Helper: Verifica se un giorno è lavorativo secondo il calendario
+    /// </summary>
+    private bool IsGiornoLavorativo(DateTime data, CalendarioLavoroDto calendario)
+    {
+        return data.DayOfWeek switch
+        {
+            DayOfWeek.Monday => calendario.Lunedi,
+            DayOfWeek.Tuesday => calendario.Martedi,
+            DayOfWeek.Wednesday => calendario.Mercoledi,
+            DayOfWeek.Thursday => calendario.Giovedi,
+            DayOfWeek.Friday => calendario.Venerdi,
+            DayOfWeek.Saturday => calendario.Sabato,
+            DayOfWeek.Sunday => calendario.Domenica,
+            _ => false
+        };
+    }
+
+    /// <summary>
+    /// Helper: Normalizza una data all'orario di inizio lavoro se necessario
+    /// </summary>
+    private DateTime NormalizzaInizioGiorno(DateTime data, TimeOnly oraInizio)
+    {
+        var ora = TimeOnly.FromDateTime(data);
+        if (ora < oraInizio)
+        {
+            return data.Date + oraInizio.ToTimeSpan();
+        }
+        return data;
     }
 
     public string GetColoreStato(string stato)
@@ -88,5 +163,127 @@ public class PianificazioneService : IPianificazioneService
             "sospesa" => "#9E9E9E", // Grigio
             _ => "#757575" // Grigio scuro default
         };
+    }
+    
+    /// <summary>
+    /// Mappa batch di commesse a DTOs per Gantt con animeLookup pre-caricato (fix N+1 queries)
+    /// Il chiamante deve fornire animeLookup già caricato dal DbContext
+    /// </summary>
+    public async Task<List<CommessaGanttDto>> MapToGanttDtoBatchAsync(
+        List<Commessa> commesse, 
+        ImpostazioniProduzione impostazioni,
+        Dictionary<string, Anime>? animeLookup = null)
+    {
+        // animeLookup deve essere fornito dal chiamante che ha accesso al DbContext
+        animeLookup ??= new Dictionary<string, Anime>();
+        
+        return await Task.FromResult(commesse.Select(c =>
+        {
+            Anime? anime = null;
+            if (c.Articolo != null && animeLookup.TryGetValue(c.Articolo.Codice, out var a))
+            {
+                anime = a;
+            }
+            
+            var tempoCiclo = c.Articolo?.TempoCiclo ?? 0;
+            var numeroFigure = c.Articolo?.NumeroFigure ?? 0;
+            var datiIncompleti = tempoCiclo <= 0 || numeroFigure <= 0;
+            
+            // Setup effettivo (override o default)
+            int setupEffettivo = c.SetupStimatoMinuti ?? impostazioni.TempoSetupMinuti;
+            
+            var durataMinuti = CalcolaDurataPrevistaMinuti(
+                tempoCiclo,
+                numeroFigure,
+                c.QuantitaRichiesta,
+                setupEffettivo
+            );
+            
+            // NumeroMacchina è già int? - niente conversione necessaria
+            int? numeroMacchinaInt = c.NumeroMacchina;
+            
+            // Calcola DataFinePrevisione se mancante ma presente DataInizioPrevisione
+            DateTime? dataFinePrevisione = c.DataFinePrevisione;
+            if (c.DataInizioPrevisione.HasValue && !dataFinePrevisione.HasValue && durataMinuti > 0)
+            {
+                dataFinePrevisione = CalcolaDataFinePrevista(
+                    c.DataInizioPrevisione.Value,
+                    durataMinuti,
+                    impostazioni.OreLavorativeGiornaliere,
+                    impostazioni.GiorniLavorativiSettimanali
+                );
+            }
+            
+            // Verifica vincolo data fine superato
+            bool vincoloDataFineSuperato = false;
+            if (c.VincoloDataFine.HasValue && dataFinePrevisione.HasValue)
+            {
+                vincoloDataFineSuperato = dataFinePrevisione > c.VincoloDataFine;
+            }
+            
+            return new CommessaGanttDto
+            {
+                Id = c.Id,
+                Codice = anime?.CodiceCassa ?? c.Articolo?.Codice ?? c.Codice,
+                CodiceCassa = anime?.CodiceCassa,
+                Description = c.Description ?? "",
+                NumeroMacchina = numeroMacchinaInt,
+                NomeMacchina = numeroMacchinaInt.HasValue ? $"Macchina {numeroMacchinaInt}" : null,
+                OrdineSequenza = c.OrdineSequenza,
+                DataInizioPrevisione = c.DataInizioPrevisione,
+                DataFinePrevisione = dataFinePrevisione,
+                DataInizioProduzione = c.DataInizioProduzione,
+                DataFineProduzione = c.DataFineProduzione,
+                QuantitaRichiesta = c.QuantitaRichiesta,
+                UoM = c.UoM,
+                DataConsegna = c.DataConsegna,
+                TempoCicloSecondi = tempoCiclo,
+                NumeroFigure = numeroFigure,
+                TempoSetupMinuti = setupEffettivo,
+                DurataPrevistaMinuti = durataMinuti,
+                Stato = c.Stato.ToString(),
+                ColoreStato = GetColoreStato(c.Stato.ToString()),
+                StatoProgramma = c.StatoProgramma.ToString(),
+                PercentualeCompletamento = CalcolaPercentualeCompletamento(c),
+                DatiIncompleti = datiIncompleti,
+                Priorita = c.Priorita,
+                Bloccata = c.Bloccata,
+                VincoloDataInizio = c.VincoloDataInizio,
+                VincoloDataFine = c.VincoloDataFine,
+                VincoloDataFineSuperato = vincoloDataFineSuperato,
+                ClasseLavorazione = c.ClasseLavorazione
+            };
+        }).ToList());
+    }
+    
+    /// <summary>
+    /// Calcola la percentuale di completamento in base allo stato e alle date
+    /// </summary>
+    public decimal CalcolaPercentualeCompletamento(Commessa commessa)
+    {
+        if (commessa.DataFineProduzione.HasValue)
+        {
+            return 100m; // Completata
+        }
+        
+        if (commessa.DataInizioProduzione.HasValue && !commessa.DataFineProduzione.HasValue)
+        {
+            // In produzione: calcola in base al tempo trascorso
+            if (commessa.DataInizioPrevisione.HasValue && commessa.DataFinePrevisione.HasValue)
+            {
+                var now = DateTime.Now;
+                var totalDuration = (commessa.DataFinePrevisione.Value - commessa.DataInizioPrevisione.Value).TotalMinutes;
+                var elapsed = (now - commessa.DataInizioPrevisione.Value).TotalMinutes;
+                
+                if (totalDuration > 0)
+                {
+                    var percentage = (decimal)(elapsed / totalDuration * 100);
+                    return Math.Min(99m, Math.Max(0m, percentage)); // Cap tra 0-99%
+                }
+            }
+            return 50m; // Default in produzione senza date
+        }
+        
+        return 0m; // Non ancora iniziata
     }
 }

@@ -6,6 +6,7 @@ using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
 using MESManager.Domain.Entities;
 using MESManager.Domain.Enums;
+using MESManager.Web.Hubs;
 
 namespace MESManager.Web.Controllers;
 
@@ -17,17 +18,20 @@ public class PianificazioneController : ControllerBase
     private readonly MesManagerDbContext _context;
     private readonly IPianificazioneService _pianificazioneService;
     private readonly IPianificazioneEngineService _engineService;
+    private readonly PianificazioneNotificationService _notificationService;
     private readonly ILogger<PianificazioneController> _logger;
 
     public PianificazioneController(
         MesManagerDbContext context,
         IPianificazioneService pianificazioneService,
         IPianificazioneEngineService engineService,
+        PianificazioneNotificationService notificationService,
         ILogger<PianificazioneController> logger)
     {
         _context = context;
         _pianificazioneService = pianificazioneService;
         _engineService = engineService;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -39,24 +43,65 @@ public class PianificazioneController : ControllerBase
     {
         try
         {
+            await AutoCompletaCommesseAsync();
+
             // Ottieni le impostazioni di produzione (o usa valori di default)
             var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
                 ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
 
             var commesse = await _context.Commesse
                 .Include(c => c.Articolo)
-                .Where(c => c.NumeroMacchina != null) // Solo commesse assegnate
+                .Where(c => c.NumeroMacchina != null && c.StatoProgramma != StatoProgramma.Archiviata) // Solo commesse assegnate
                 .OrderBy(c => c.NumeroMacchina)
                 .ThenBy(c => c.OrdineSequenza)
                 .ToListAsync();
 
-            var commesseGantt = commesse.Select(c => MapToGanttDto(c, impostazioni)).ToList();
+            // Batch loading Anime (fix N+1 queries)
+            var articoloCodes = commesse
+                .Where(c => c.Articolo != null)
+                .Select(c => c.Articolo!.Codice)
+                .Distinct()
+                .ToList();
+            
+            var animeData = await _context.Anime
+                .Where(a => articoloCodes.Contains(a.CodiceArticolo))
+                .ToListAsync();
+            
+            var animeLookup = animeData
+                .GroupBy(a => a.CodiceArticolo)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            // Usa metodo centralizzato con batch loading
+            var commesseGantt = await _pianificazioneService.MapToGanttDtoBatchAsync(commesse, impostazioni, animeLookup);
 
             return Ok(commesseGantt);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Errore nel recupero delle commesse per il Gantt");
+            return StatusCode(500, "Errore interno del server");
+        }
+    }
+
+    /// <summary>
+    /// Auto-completa commesse che hanno superato la data fine prevista
+    /// </summary>
+    [HttpPost("auto-completa")]
+    public async Task<IActionResult> AutoCompleta()
+    {
+        try
+        {
+            var updated = await AutoCompletaCommesseAsync();
+            if (updated > 0 && _notificationService != null)
+            {
+                await _notificationService.NotifyFullRecalculationAsync(0);
+            }
+
+            return Ok(new { updated });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore auto-completamento commesse");
             return StatusCode(500, "Errore interno del server");
         }
     }
@@ -81,6 +126,9 @@ public class PianificazioneController : ControllerBase
             var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
                 ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
 
+            // Carica calendario lavoro
+            var calendario = await GetCalendarioLavoroDtoAsync();
+
             // Aggiorna le date
             commessa.DataInizioPrevisione = request.DataInizioPrevisione;
             commessa.NumeroMacchina = request.NumeroMacchina;
@@ -95,11 +143,11 @@ public class PianificazioneController : ControllerBase
                     impostazioni.TempoSetupMinuti
                 );
 
-                commessa.DataFinePrevisione = _pianificazioneService.CalcolaDataFinePrevista(
+                commessa.DataFinePrevisione = _pianificazioneService.CalcolaDataFinePrevistaConFestivi(
                     request.DataInizioPrevisione.Value,
                     durataMinuti,
-                    impostazioni.OreLavorativeGiornaliere,
-                    impostazioni.GiorniLavorativiSettimanali
+                    calendario,
+                    new HashSet<DateOnly>()
                 );
             }
 
@@ -191,12 +239,98 @@ public class PianificazioneController : ControllerBase
     /// <summary>
     /// Sposta una commessa su una macchina con accodamento rigido
     /// </summary>
-    [HttpPost("sposta")]
+    [HttpPost("sposta-commessa")]
     public async Task<ActionResult<SpostaCommessaResponse>> SpostaCommessa([FromBody] SpostaCommessaRequest request)
+    {
+        // VALIDAZIONE INPUT ROBUSTA
+        if (request == null)
+        {
+            return BadRequest(new SpostaCommessaResponse
+            {
+                Success = false,
+                ErrorMessage = "Request nullo",
+                UpdateVersion = DateTime.UtcNow.Ticks
+            });
+        }
+
+        if (request.CommessaId == Guid.Empty)
+        {
+            return BadRequest(new SpostaCommessaResponse
+            {
+                Success = false,
+                ErrorMessage = "ID commessa non valido",
+                UpdateVersion = DateTime.UtcNow.Ticks
+            });
+        }
+
+        if (request.TargetMacchina < 1 || request.TargetMacchina > 99)
+        {
+            return BadRequest(new SpostaCommessaResponse
+            {
+                Success = false,
+                ErrorMessage = $"Numero macchina non valido: {request.TargetMacchina}",
+                UpdateVersion = DateTime.UtcNow.Ticks
+            });
+        }
+
+        try
+        {
+            _logger.LogInformation("Spostamento commessa {CommessaId} su macchina {Macchina}", 
+                request.CommessaId, request.TargetMacchina);
+
+            var result = await _engineService.SpostaCommessaAsync(request);
+            
+            if (!result.Success)
+            {
+                _logger.LogWarning("Spostamento fallito: {Error}", result.ErrorMessage);
+                return BadRequest(result);
+            }
+            
+            // Notifica SignalR delle modifiche
+            if (_notificationService != null)
+            {
+                var allCommesse = result.CommesseAggiornate.ToList();
+                if (result.CommesseMacchinaOrigine != null)
+                {
+                    allCommesse.AddRange(result.CommesseMacchinaOrigine);
+                }
+                await _notificationService.NotifyCommesseUpdatedAsync(allCommesse, null);
+            }
+            
+            _logger.LogInformation("Commessa spostata con successo, updateVersion: {Version}", result.UpdateVersion);
+            return Ok(result);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            _logger.LogWarning(ex, "Concurrency conflict spostando commessa {CommessaId}", request.CommessaId);
+            return Conflict(new SpostaCommessaResponse
+            {
+                Success = false,
+                ErrorMessage = "I dati sono stati modificati da un altro utente. Aggiorna la pagina e riprova.",
+                UpdateVersion = DateTime.UtcNow.Ticks
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore nello spostamento della commessa {CommessaId}", request.CommessaId);
+            return StatusCode(500, new SpostaCommessaResponse 
+            { 
+                Success = false, 
+                ErrorMessage = "Errore interno del server",
+                UpdateVersion = DateTime.UtcNow.Ticks
+            });
+        }
+    }
+
+    /// <summary>
+    /// Suggerisce la macchina migliore per una commessa (bilanciamento carico)
+    /// </summary>
+    [HttpPost("suggerisci-macchina")]
+    public async Task<ActionResult<SuggerisciMacchinaResponse>> SuggerisciMacchina([FromBody] SuggerisciMacchinaRequest request)
     {
         try
         {
-            var result = await _engineService.SpostaCommessaAsync(request);
+            var result = await _engineService.SuggerisciMacchinaMiglioreAsync(request);
             
             if (!result.Success)
             {
@@ -207,11 +341,51 @@ public class PianificazioneController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Errore nello spostamento della commessa {CommessaId}", request.CommessaId);
-            return StatusCode(500, new SpostaCommessaResponse 
-            { 
-                Success = false, 
-                ErrorMessage = "Errore interno del server" 
+            _logger.LogError(ex, "Errore nel suggerimento macchina per commessa {CommessaId}", request.CommessaId);
+            return StatusCode(500, new SuggerisciMacchinaResponse
+            {
+                Success = false,
+                ErrorMessage = "Errore interno del server"
+            });
+        }
+    }
+
+    /// <summary>
+    /// 🚀 CARICA SUL GANTT - Auto-scheduler intelligente v1.31
+    /// Assegna automaticamente una commessa alla macchina con minore carico
+    /// </summary>
+    [HttpPost("carica-su-gantt/{commessaId}")]
+    public async Task<ActionResult<CaricaSuGanttResponse>> CaricaSuGantt(Guid commessaId)
+    {
+        try
+        {
+            _logger.LogInformation("🚀 [CARICA GANTT] Request per commessa {CommessaId}", commessaId);
+            
+            var result = await _engineService.CaricaSuGanttAsync(commessaId);
+            
+            if (!result.Success)
+            {
+                _logger.LogWarning("⚠️ Caricamento fallito: {Error}", result.ErrorMessage);
+                return BadRequest(result);
+            }
+            
+            _logger.LogInformation("✅ Commessa caricata su macchina {Macchina}", result.MacchinaAssegnata);
+            
+            // Notifica SignalR per refresh Gantt
+            if (_notificationService != null)
+            {
+                await _notificationService.NotifyFullRecalculationAsync(result.UpdateVersion);
+            }
+            
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Errore caricamento su Gantt per commessa {CommessaId}", commessaId);
+            return StatusCode(500, new CaricaSuGanttResponse
+            {
+                Success = false,
+                ErrorMessage = $"Errore interno: {ex.Message}"
             });
         }
     }
@@ -225,6 +399,13 @@ public class PianificazioneController : ControllerBase
         try
         {
             await _engineService.RicalcolaTutteCommesseAsync();
+            
+            // Notifica SignalR full reload
+            if (_notificationService != null)
+            {
+                await _notificationService.NotifyFullRecalculationAsync();
+            }
+            
             return Ok(new { message = "Ricalcolo completato" });
         }
         catch (Exception ex)
@@ -375,87 +556,408 @@ public class PianificazioneController : ControllerBase
     }
 
     #endregion
-
-    private CommessaGanttDto MapToGanttDto(Commessa commessa, ImpostazioniProduzione impostazioni)
+    
+    /// <summary>
+    /// Aggiorna la priorità di una commessa
+    /// </summary>
+    [HttpPut("{id}/priorita")]
+    public async Task<IActionResult> AggiornaPriorita(Guid id, [FromBody] AggiornaPrioritaRequest request)
     {
-        var tempoCiclo = commessa.Articolo?.TempoCiclo ?? 0;
-        var numeroFigure = commessa.Articolo?.NumeroFigure ?? 0;
+        try
+        {
+            var commessa = await _context.Commesse.FindAsync(id);
+            if (commessa == null)
+                return NotFound();
+            
+            commessa.Priorita = request.Priorita;
+            await _context.SaveChangesAsync();
+            
+            // Ricalcola solo la macchina interessata considerando priorità
+            if (commessa.NumeroMacchina.HasValue)
+            {
+                await _engineService.RicalcolaMacchinaConBlocchiAsync(commessa.NumeroMacchina);
+            }
+            
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore nell'aggiornamento priorità commessa {Id}", id);
+            return StatusCode(500, "Errore interno del server");
+        }
+    }
+    
+    /// <summary>
+    /// Blocca o sblocca una commessa
+    /// </summary>
+    [HttpPut("{id}/blocca")]
+    public async Task<IActionResult> AggiornaBlocco(Guid id, [FromBody] AggiornaBloccoRequest request)
+    {
+        try
+        {
+            var commessa = await _context.Commesse.FindAsync(id);
+            if (commessa == null)
+                return NotFound();
+            
+            commessa.Bloccata = request.Bloccata;
+            await _context.SaveChangesAsync();
+            
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore nell'aggiornamento blocco commessa {Id}", id);
+            return StatusCode(500, "Errore interno del server");
+        }
+    }
+    
+    /// <summary>
+    /// Aggiorna i vincoli temporali di una commessa
+    /// </summary>
+    [HttpPut("{id}/vincoli")]
+    public async Task<IActionResult> AggiornaVincoli(Guid id, [FromBody] AggiornaVincoliRequest request)
+    {
+        try
+        {
+            var commessa = await _context.Commesse.FindAsync(id);
+            if (commessa == null)
+                return NotFound();
+            
+            commessa.VincoloDataInizio = request.VincoloDataInizio;
+            commessa.VincoloDataFine = request.VincoloDataFine;
+            await _context.SaveChangesAsync();
+            
+            // Ricalcola la macchina considerando i vincoli
+            if (commessa.NumeroMacchina.HasValue)
+            {
+                await _engineService.RicalcolaMacchinaConBlocchiAsync(commessa.NumeroMacchina);
+            }
+            
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore nell'aggiornamento vincoli commessa {Id}", id);
+            return StatusCode(500, "Errore interno del server");
+        }
+    }
+    
+    /// <summary>
+    /// Ottiene suggerimenti macchina per una commessa (endpoint GET per comodità)
+    /// </summary>
+    [HttpGet("suggerisci-macchina/{commessaId}")]
+    public async Task<ActionResult<List<SuggerimentoMacchinaDto>>> GetSuggerimentiMacchina(Guid commessaId)
+    {
+        try
+        {
+            var request = new SuggerisciMacchinaRequest { CommessaId = commessaId };
+            var result = await _engineService.SuggerisciMacchinaMiglioreAsync(request);
+            
+            if (!result.Success || result.Valutazioni == null)
+            {
+                return BadRequest(result.ErrorMessage ?? "Errore nel calcolo suggerimenti");
+            }
+            
+            // Converti Valutazioni in SuggerimentoMacchinaDto per il frontend
+            var suggerimenti = result.Valutazioni.Select(v => new SuggerimentoMacchinaDto
+            {
+                NumeroMacchina = int.TryParse(v.NumeroMacchina, out var num) ? num : 0,
+                NomeMacchina = v.NomeMacchina,
+                CaricoPercentuale = v.CaricoPrevisto / 480, // Converti minuti in % (8h = 480min)
+                DataFinePrevista = v.DataFinePrevista ?? DateTime.Now,
+                PosizioneInCoda = v.NumeroCommesseInCoda
+            }).ToList();
+            
+            return Ok(suggerimenti);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore nel suggerimento macchina per commessa {CommessaId}", commessaId);
+            return StatusCode(500, "Errore interno del server");
+        }
+    }
+    
+    /// <summary>
+    /// DEBUG: Verifica lo stato delle commesse
+    /// </summary>
+    [HttpGet("debug-commesse")]
+    public async Task<IActionResult> DebugCommesse()
+    {
+        var total = await _context.Commesse.CountAsync();
+        var conMacchina = await _context.Commesse.Where(c => c.NumeroMacchina != null).CountAsync();
+        var conDate = await _context.Commesse.Where(c => c.DataInizioPrevisione.HasValue).CountAsync();
+        var entrambi = await _context.Commesse.Where(c => c.NumeroMacchina != null && c.DataInizioPrevisione.HasValue).CountAsync();
+        var programmate = await _context.Commesse.Where(c => c.StatoProgramma == StatoProgramma.Programmata).CountAsync();
+        var aperte = await _context.Commesse.Where(c => c.Stato == StatoCommessa.Aperta).CountAsync();
+        var aperteConMacchina = await _context.Commesse.Where(c => c.Stato == StatoCommessa.Aperta && c.NumeroMacchina != null).CountAsync();
         
-        var durataMinuti = _pianificazioneService.CalcolaDurataPrevistaMinuti(
-            tempoCiclo,
-            numeroFigure,
-            commessa.QuantitaRichiesta,
-            impostazioni.TempoSetupMinuti
-        );
-
-        // Calcola DataFinePrevisione se mancante ma presente DataInizioPrevisione
-        DateTime? dataFinePrevisione = commessa.DataFinePrevisione;
-        if (commessa.DataInizioPrevisione.HasValue && !dataFinePrevisione.HasValue && durataMinuti > 0)
+        return Ok(new {
+            totaleCommesse = total,
+            conMacchina,
+            conDate,
+            conMacchinaEDate = entrambi,
+            statoProgrammataProgrammata = programmate,
+            statoAperta = aperte,
+            aperteConMacchina
+        });
+    }
+    
+    /// <summary>
+    /// Esporta la programmazione Gantt sulla pagina Programma (applica date e ordine)
+    /// DEBUG: Logging aggressivo per verificare ogni step
+    /// </summary>
+    [HttpPost("esporta-su-programma")]
+    public async Task<IActionResult> EsportaSuProgramma()
+    {
+        var startTime = DateTime.UtcNow;
+        _logger.LogInformation("🚀 [EXPORT START] Inizio esportazione su programma");
+        
+        try
         {
-            dataFinePrevisione = _pianificazioneService.CalcolaDataFinePrevista(
-                commessa.DataInizioPrevisione.Value,
-                durataMinuti,
-                impostazioni.OreLavorativeGiornaliere,
-                impostazioni.GiorniLavorativiSettimanali
-            );
+            await AutoCompletaCommesseAsync();
+
+            // STEP 1: Carica tutte commesse (debug)
+            var tutteCommesse = await _context.Commesse.ToListAsync();
+            _logger.LogInformation("📊 STEP 1: Caricate {Total} commesse totali dal DB", tutteCommesse.Count);
+            
+            // STEP 2: Filtra per NumeroMacchina
+            var conMacchina = tutteCommesse
+                .Where(c => c.NumeroMacchina != null
+                            && c.StatoProgramma != StatoProgramma.Completata
+                            && c.StatoProgramma != StatoProgramma.Archiviata)
+                .ToList();
+            _logger.LogInformation("🔧 STEP 2: Filtro NumeroMacchina != null: {Count} commesse", conMacchina.Count);
+            
+            // STEP 3: Filtra per DataInizioPrevisione
+            var conDataInizio = conMacchina.Where(c => c.DataInizioPrevisione.HasValue).ToList();
+            _logger.LogInformation("📅 STEP 3: Filtro DataInizioPrevisione.HasValue: {Count} commesse", conDataInizio.Count);
+            
+            // STEP 3b: Log dettagli commesse senza data
+            var senzaDataInizio = conMacchina.Where(c => !c.DataInizioPrevisione.HasValue).ToList();
+            if (senzaDataInizio.Count > 0)
+            {
+                _logger.LogWarning("⚠️ STEP 3b: {Count} commesse CON macchina ma SENZA DataInizioPrevisione", senzaDataInizio.Count);
+                foreach (var c in senzaDataInizio.Take(5))
+                {
+                    _logger.LogWarning("   - {Codice} | Macchina={Macchina} | DataInizio={DataInizio}", 
+                        c.Codice, c.NumeroMacchina, c.DataInizioPrevisione);
+                }
+            }
+            
+            // STEP 4: Verifica se ci sono commesse da esportare
+            if (conDataInizio.Count == 0 && conMacchina.Count > 0)
+            {
+                _logger.LogWarning("⚠️ Nessuna commessa con DataInizioPrevisione. Avvio ricalcolo automatico.");
+                await _engineService.RicalcolaTutteCommesseAsync();
+
+                // Ricarica dopo ricalcolo
+                conDataInizio = await _context.Commesse
+                    .Where(c => c.NumeroMacchina != null
+                                && c.DataInizioPrevisione.HasValue
+                                && c.StatoProgramma != StatoProgramma.Completata
+                                && c.StatoProgramma != StatoProgramma.Archiviata)
+                    .ToListAsync();
+            }
+
+            if (conDataInizio.Count == 0)
+            {
+                _logger.LogWarning("❌ EXPORT FALLITO: Nessuna commessa da esportare (Count=0)");
+                _logger.LogWarning("   Commesse totali: {Total}", tutteCommesse.Count);
+                _logger.LogWarning("   Con Macchina: {ConMacchina}", conMacchina.Count);
+                _logger.LogWarning("   Con DataInizio: {ConDataInizio}", conDataInizio.Count);
+                
+                return Ok(new 
+                { 
+                    success = false, 
+                    message = "Nessuna commessa da esportare",
+                    debugInfo = new
+                    {
+                        totali = tutteCommesse.Count,
+                        conMacchina = conMacchina.Count,
+                        conDataInizio = conDataInizio.Count
+                    }
+                });
+            }
+            
+            _logger.LogInformation("✅ Trovate {Count} commesse idonee all'export", conDataInizio.Count);
+            
+            // STEP 5: Carica dal DB correttamente (non in memoria)
+            var commesseDaProgrammare = await _context.Commesse
+                .Where(c => c.NumeroMacchina != null
+                            && c.DataInizioPrevisione.HasValue
+                            && c.StatoProgramma != StatoProgramma.Completata
+                            && c.StatoProgramma != StatoProgramma.Archiviata)
+                .ToListAsync();
+            
+            _logger.LogInformation("🔄 STEP 5: Query DB eseguita: {Count} commesse", commesseDaProgrammare.Count);
+            
+            // STEP 6: Segna tutte come esportate (indipendentemente dallo stato precedente)
+            // FIX: La semantica è "esporta tutto ciò che è planificato", non "cambia stato solo se NonProgrammata"
+            var aggiornate = 0;
+            foreach (var commessa in commesseDaProgrammare)
+            {
+                var statoPrima = commessa.StatoProgramma;
+                
+                // NOTA: StatoProgramma è automaticamente impostato a Programmata quando viene assegnata una macchina.
+                // L'export segna semplicemente che è stato esportato al programma esterno.
+                // Qui verifichiamo che abbia una macchina e una data di inizio (già fatto nel Where)
+                
+                commessa.StatoProgramma = StatoProgramma.Programmata;
+                commessa.DataCambioStatoProgramma = DateTime.Now;
+                commessa.UltimaModifica = DateTime.UtcNow;
+                aggiornate++;
+                
+                _logger.LogInformation("📝 Esportazione: {Codice} | Macchina={Macchina} | Inizio={DataInizio}", 
+                    commessa.Codice, commessa.NumeroMacchina, commessa.DataInizioPrevisione?.ToString("yyyy-MM-dd HH:mm"));
+            }
+            
+            _logger.LogInformation("💾 STEP 6: Marcatura {Updated}/{Total} commesse come esportate", aggiornate, commesseDaProgrammare.Count);
+            
+            // STEP 7: SaveChanges
+            int rowsAffected = await _context.SaveChangesAsync();
+            _logger.LogInformation("✅ SaveChanges completato: {RowsAffected} righe modificate nel DB", rowsAffected);
+            
+            // STEP 8: Verifica post-save
+            var verificaPostSave = await _context.Commesse
+                .Where(c => c.DataCambioStatoProgramma != null && c.DataCambioStatoProgramma > startTime.AddSeconds(-1))
+                .ToListAsync();
+            _logger.LogInformation("🔍 STEP 8: Verifica post-save: {Count} commesse con DataCambioStatoProgramma recente", 
+                verificaPostSave.Count);
+            
+            // STEP 9: Notifica SignalR
+            _logger.LogInformation("📢 STEP 9: Invio notifica SignalR...");
+            await _notificationService.NotifyFullRecalculationAsync(0);
+            _logger.LogInformation("✅ Notifica inviata");
+            
+            var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+            _logger.LogInformation("✨ [EXPORT SUCCESS] Completato in {DurationMs}ms. Esportate {Aggiornate} commesse", 
+                duration, aggiornate);
+            
+            return Ok(new 
+            { 
+                success = true, 
+                message = $"{aggiornate} commesse esportate ({commesseDaProgrammare.Count} totali)",
+                debugInfo = new
+                {
+                    aggiornate = aggiornate,
+                    totali = commesseDaProgrammare.Count,
+                    rowsAffected = rowsAffected,
+                    durationMs = duration
+                }
+            });
         }
-
-        // Parse NumeroMacchina to int
-        int? numeroMacchinaInt = null;
-        if (!string.IsNullOrEmpty(commessa.NumeroMacchina) && int.TryParse(commessa.NumeroMacchina, out var num))
+        catch (Exception ex)
         {
-            numeroMacchinaInt = num;
+            var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+            _logger.LogError(ex, "❌ [EXPORT ERROR] Errore dopo {DurationMs}ms: {Message}", duration, ex.Message);
+            _logger.LogError("Stack: {StackTrace}", ex.StackTrace);
+            
+            return StatusCode(500, new 
+            { 
+                success = false,
+                message = "Errore interno del server",
+                error = ex.Message,
+                durationMs = duration
+            });
         }
+    }
 
-        return new CommessaGanttDto
+    /// <summary>
+    /// Helper: Carica CalendarioLavoro dal database e lo mappa a DTO
+    /// </summary>
+    private async Task<CalendarioLavoroDto> GetCalendarioLavoroDtoAsync()
+    {
+        var calendario = await _context.CalendarioLavoro.FirstOrDefaultAsync();
+        
+        if (calendario == null)
         {
-            Id = commessa.Id,
-            Codice = commessa.Codice,
-            Description = commessa.Description ?? "",
-            NumeroMacchina = numeroMacchinaInt,
-            NomeMacchina = !string.IsNullOrEmpty(commessa.NumeroMacchina) ? $"Macchina {commessa.NumeroMacchina}" : null,
-            OrdineSequenza = commessa.OrdineSequenza,
-            DataInizioPrevisione = commessa.DataInizioPrevisione,
-            DataFinePrevisione = dataFinePrevisione,
-            DataInizioProduzione = commessa.DataInizioProduzione,
-            DataFineProduzione = commessa.DataFineProduzione,
-            QuantitaRichiesta = commessa.QuantitaRichiesta,
-            UoM = commessa.UoM,
-            DataConsegna = commessa.DataConsegna,
-            TempoCicloSecondi = tempoCiclo,
-            NumeroFigure = numeroFigure,
-            TempoSetupMinuti = impostazioni.TempoSetupMinuti,
-            DurataPrevistaMinuti = durataMinuti,
-            Stato = commessa.Stato.ToString(),
-            ColoreStato = _pianificazioneService.GetColoreStato(commessa.Stato.ToString()),
-            PercentualeCompletamento = CalcolaPercentualeCompletamento(commessa)
+            // Default: Lunedì-Venerdì 08:00-17:00
+            return new CalendarioLavoroDto
+            {
+                Lunedi = true,
+                Martedi = true,
+                Mercoledi = true,
+                Giovedi = true,
+                Venerdi = true,
+                Sabato = false,
+                Domenica = false,
+                OraInizio = new TimeOnly(8, 0),
+                OraFine = new TimeOnly(17, 0)
+            };
+        }
+        
+        return new CalendarioLavoroDto
+        {
+            Id = calendario.Id,
+            Lunedi = calendario.Lunedi,
+            Martedi = calendario.Martedi,
+            Mercoledi = calendario.Mercoledi,
+            Giovedi = calendario.Giovedi,
+            Venerdi = calendario.Venerdi,
+            Sabato = calendario.Sabato,
+            Domenica = calendario.Domenica,
+            OraInizio = calendario.OraInizio,
+            OraFine = calendario.OraFine
         };
     }
 
-    private decimal CalcolaPercentualeCompletamento(Commessa commessa)
+    private async Task<int> AutoCompletaCommesseAsync()
     {
-        if (commessa.Stato == StatoCommessa.Completata)
-            return 100;
-
-        if (commessa.DataInizioProduzione == null || commessa.DataFinePrevisione == null)
-            return 0;
-
         var now = DateTime.Now;
-        if (now < commessa.DataInizioProduzione)
+        var commesseDaCompletare = await _context.Commesse
+            .Where(c => c.NumeroMacchina != null
+                        && c.DataFinePrevisione.HasValue
+                        && c.DataFinePrevisione.Value < now
+                        && c.StatoProgramma != StatoProgramma.Completata
+                        && c.StatoProgramma != StatoProgramma.Archiviata)
+            .ToListAsync();
+
+        if (commesseDaCompletare.Count == 0)
+        {
             return 0;
+        }
 
-        if (now >= commessa.DataFinePrevisione)
-            return 100;
+        foreach (var commessa in commesseDaCompletare)
+        {
+            commessa.StatoProgramma = StatoProgramma.Completata;
+            commessa.DataCambioStatoProgramma = DateTime.Now;
+            commessa.DataInizioProduzione ??= commessa.DataInizioPrevisione;
+            commessa.DataFineProduzione ??= commessa.DataFinePrevisione;
+            commessa.UltimaModifica = DateTime.UtcNow;
+        }
 
-        var totalDuration = (commessa.DataFinePrevisione.Value - commessa.DataInizioProduzione.Value).TotalMinutes;
-        var elapsed = (now - commessa.DataInizioProduzione.Value).TotalMinutes;
-
-        return (decimal)(elapsed / totalDuration * 100);
+        await _context.SaveChangesAsync();
+        return commesseDaCompletare.Count;
     }
 }
 
 public class AggiornaPianificazioneRequest
 {
     public DateTime? DataInizioPrevisione { get; set; }
-    public string? NumeroMacchina { get; set; }
+    public int? NumeroMacchina { get; set; }
+}
+
+public class AggiornaPrioritaRequest
+{
+    public int Priorita { get; set; }
+}
+
+public class AggiornaBloccoRequest
+{
+    public bool Bloccata { get; set; }
+}
+
+public class AggiornaVincoliRequest
+{
+    public DateTime? VincoloDataInizio { get; set; }
+    public DateTime? VincoloDataFine { get; set; }
+}
+
+public class SuggerimentoMacchinaDto
+{
+    public int NumeroMacchina { get; set; }
+    public string NomeMacchina { get; set; } = "";
+    public int CaricoPercentuale { get; set; }
+    public DateTime DataFinePrevista { get; set; }
+    public int PosizioneInCoda { get; set; }
 }

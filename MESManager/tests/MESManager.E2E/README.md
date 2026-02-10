@@ -1,51 +1,81 @@
 # MESManager.E2E - Test End-to-End con Playwright
 
-✅ **Test Status**: Test organizzati per categoria (Core, Modified, Page-specific)
+✅ **Test Status**: Suite completa con test funzionali + visual regression
 
-Questo progetto contiene test E2E automatici per MESManager usando Microsoft Playwright per .NET.
+Suite E2E automatica per MESManager con:
+- **Playwright** per browser automation
+- **Page Object Model** per manutenibilità
+- **Visual Regression** con screenshot baseline
+- **GitHub Actions** CI/CD integration
 
-## Test Implementati
-
-### Test Core (sempre eseguiti)
-1. ✅ **Home non è bianca** - Verifica che la home page carichi elementi visibili (appbar, layout MudBlazor)
-
-### Test su Pagine Modificate (Modified)
-1. ✅ **Pianificazione - caricamento pagina Gantt** - Verifica il caricamento della pagina di pianificazione
-2. ✅ **Pianificazione - campi configurazione** - Verifica presenza campi setup e pulsanti
-3. ✅ **Pianificazione - componente Gantt** - Verifica presenza componente o messaggio informativo
-4. ✅ **Pianificazione - legenda stati** - Verifica legenda con chip colorati
-5. ✅ **Pianificazione - API impostazioni** - Verifica funzionamento API di configurazione
-
-**Tutti i test includono verifica automatica di errori console JavaScript.**
-
-## Prerequisiti
-
-- .NET 8 SDK
-- Browser Chromium (installato automaticamente da Playwright)
-- **Porta 5156 disponibile** - i test avviano automaticamente l'app web su questa porta
-
-## Setup Iniziale
-
-### 1. Installazione Browser
-
-Dopo il primo build, eseguire:
+## 🚀 Quick Start
 
 ```powershell
-cd MESManager.E2E\bin\Debug\net8.0
-pwsh playwright.ps1 install chromium
+# Install browsers (first time only)
+cd tests\MESManager.E2E
+pwsh bin\Debug\net8.0\playwright.ps1 install chromium
+
+# Run all tests
+dotnet test
+
+# Run specific category
+dotnet test --filter "Category=Functional"
+dotnet test --filter "Category=Visual"
+
+# Debug mode (visible browser)
+$env:PLAYWRIGHT_HEADED="1"
+dotnet test
 ```
 
-**Nota**: Questo step viene fatto automaticamente durante il primo build. Se i browser non sono installati, il comando sopra li installerà.
-
-## Esecuzione Test
-
-### Solo pagine modificate (CONSIGLIATO per sviluppo)
+## 🖼 Visual Regression
 
 ```powershell
-dotnet test --filter "Category=Modified"
+# Create/Update baselines
+$env:UPDATE_BASELINES="true"
+dotnet test --filter "Category=Visual"
+
+# Run visual regression tests
+dotnet test --filter "Category=Visual"
 ```
 
-### Con browser visibile (utile per debugging)
+Diff images generated in `playwright-results/visual-diffs/` on failure.
+
+### Flag locale (senza env var)
+
+Se preferisci non usare variabili ambiente, crea il file:
+
+```
+UPDATE_BASELINES.flag
+```
+
+Nella cartella `tests/MESManager.E2E/`. Rimuovilo quando hai finito.
+
+## 📚 Full Documentation
+
+**Consulta [docs2/10-QA-UI-TESTING.md](../../docs2/10-QA-UI-TESTING.md) per:**
+- Page Object Model pattern
+- Aggiungere nuovi test
+- Visual regression workflow
+- CI/CD pipeline GitHub Actions
+- Troubleshooting
+
+## 🏗 Project Structure
+
+```
+tests/MESManager.E2E/
+├── Pages/              # Page Object Model classes
+│   ├── BasePage.cs
+│   ├── HomePage.cs
+│   ├── CommesseApertePage.cs
+│   ├── GanttMacchinePage.cs
+│   └── ProgrammaMacchinePage.cs
+├── Tests/              # Test files
+│   ├── HomeTests.cs
+│   ├── CommesseAperteTests.cs
+│   ├── GanttTests.cs
+│   └── ProgrammaTests.cs
+├── VisualBaselines/    # Screenshot baselines
+└── playwright-results/ # Test output (screenshots, diffs)
 
 ```powershell
 $env:PLAYWRIGHT_HEADED="1"
@@ -66,9 +96,15 @@ dotnet test
 
 **Per maggiori opzioni di filtro, consulta [TEST_FILTERS.md](TEST_FILTERS.md).**
 
-**IMPORTANTE**: I test avviano automaticamente l'applicazione web su `http://127.0.0.1:5156`. Assicurati che:
-- La porta 5156 sia disponibile (non in uso da altri processi)
-- L'app web non sia già in esecuzione manualmente sulla stessa porta
+**IMPORTANTE**: Se l'app è già avviata manualmente, usa:
+```
+$env:E2E_USE_EXISTING_SERVER="1"
+$env:E2E_BASE_URL="http://localhost:5156"
+```
+Per seed automatico dati:
+```
+$env:E2E_SEED="1"
+```
 ```
 
 ### Esecuzione con Slow Motion (debug)
@@ -117,7 +153,7 @@ Esempio GitHub Actions:
 
 ```yaml
 - name: Install Playwright Browsers
-  run: pwsh MESManager.E2E/bin/Debug/net8.0/playwright.ps1 install chromium
+  run: pwsh tests/MESManager.E2E/bin/Debug/net8.0/playwright.ps1 install chromium
   
 - name: Run E2E Tests
   run: dotnet test --logger "trx;LogFileName=test-results.trx"
@@ -148,7 +184,7 @@ Esempio GitHub Actions:
 
 ### Browser non trovato
 ```powershell
-pwsh MESManager.E2E/bin/Debug/net8.0/playwright.ps1 install chromium --force
+pwsh tests/MESManager.E2E/bin/Debug/net8.0/playwright.ps1 install chromium --force
 ```
 
 ### Errori di compilazione Blazor

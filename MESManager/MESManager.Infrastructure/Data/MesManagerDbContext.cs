@@ -1,10 +1,25 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MESManager.Domain.Entities;
+using MESManager.Domain.Enums;
+using System.Globalization;
 
 namespace MESManager.Infrastructure.Data;
 
 public class MesManagerDbContext : DbContext
 {
+    private static readonly HashSet<string> StringDbTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "nvarchar",
+        "varchar",
+        "nchar",
+        "char",
+        "text",
+        "ntext"
+    };
+
+    private static readonly Dictionary<string, bool> ColumnStringCache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly object SchemaLock = new();
     public MesManagerDbContext(DbContextOptions<MesManagerDbContext> options) : base(options)
     {
     }
@@ -48,6 +63,26 @@ public class MesManagerDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        var statoCommessaConverter = new ValueConverter<StatoCommessa, string>(
+            value => value.ToString(),
+            value => ParseStatoCommessa(value));
+
+        var statoProgrammaConverter = new ValueConverter<StatoProgramma, string>(
+            value => value.ToString(),
+            value => ParseStatoProgramma(value));
+
+        var intToStringConverter = new ValueConverter<int, string>(
+            value => value.ToString(CultureInfo.InvariantCulture),
+            value => ParseInt(value, 0));
+
+        var nullableIntToStringConverter = new ValueConverter<int?, string>(
+            value => value.HasValue ? value.Value.ToString(CultureInfo.InvariantCulture) : string.Empty,
+            value => ParseNullableInt(value));
+
+        var decimalToStringConverter = new ValueConverter<decimal, string>(
+            value => value.ToString(CultureInfo.InvariantCulture),
+            value => ParseDecimal(value, 0m));
+
         // Relazione 1:1 Articolo-Ricetta
         modelBuilder.Entity<Ricetta>()
             .HasOne(r => r.Articolo)
@@ -75,6 +110,84 @@ public class MesManagerDbContext : DbContext
             .WithMany(cl => cl.Commesse)
             .HasForeignKey(c => c.ClienteId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Gestione conversioni enum in base al tipo colonna nel DB
+        if (IsColumnString("Commesse", "Stato"))
+        {
+            modelBuilder.Entity<Commessa>()
+                .Property(c => c.Stato)
+                .HasConversion(statoCommessaConverter)
+                .HasMaxLength(50);
+        }
+
+        if (IsColumnString("Commesse", "StatoProgramma"))
+        {
+            modelBuilder.Entity<Commessa>()
+                .Property(c => c.StatoProgramma)
+                .HasConversion(statoProgrammaConverter)
+                .HasMaxLength(50);
+        }
+
+        modelBuilder.Entity<Commessa>()
+            .Property(c => c.NumeroMacchina)
+            .HasConversion(nullableIntToStringConverter)
+            .HasMaxLength(50);
+
+        if (IsColumnString("Commesse", "OrdineSequenza"))
+        {
+            modelBuilder.Entity<Commessa>()
+                .Property(c => c.OrdineSequenza)
+                .HasConversion(intToStringConverter)
+                .HasMaxLength(50);
+        }
+
+        if (IsColumnString("Commesse", "Priorita"))
+        {
+            modelBuilder.Entity<Commessa>()
+                .Property(c => c.Priorita)
+                .HasConversion(intToStringConverter)
+                .HasMaxLength(50);
+        }
+
+        if (IsColumnString("Commesse", "SetupStimatoMinuti"))
+        {
+            modelBuilder.Entity<Commessa>()
+                .Property(c => c.SetupStimatoMinuti)
+                .HasConversion(nullableIntToStringConverter)
+                .HasMaxLength(50);
+        }
+
+        if (IsColumnString("Commesse", "QuantitaRichiesta"))
+        {
+            modelBuilder.Entity<Commessa>()
+                .Property(c => c.QuantitaRichiesta)
+                .HasConversion(decimalToStringConverter)
+                .HasMaxLength(50);
+        }
+
+        if (IsColumnString("Articoli", "TempoCiclo"))
+        {
+            modelBuilder.Entity<Articolo>()
+                .Property(a => a.TempoCiclo)
+                .HasConversion(intToStringConverter)
+                .HasMaxLength(50);
+        }
+
+        if (IsColumnString("Articoli", "NumeroFigure"))
+        {
+            modelBuilder.Entity<Articolo>()
+                .Property(a => a.NumeroFigure)
+                .HasConversion(intToStringConverter)
+                .HasMaxLength(50);
+        }
+
+        if (IsColumnString("Articoli", "Prezzo"))
+        {
+            modelBuilder.Entity<Articolo>()
+                .Property(a => a.Prezzo)
+                .HasConversion(decimalToStringConverter)
+                .HasMaxLength(50);
+        }
 
         // Relazione 1:N Macchina-EventoPLC
         modelBuilder.Entity<EventoPLC>()
@@ -105,6 +218,11 @@ public class MesManagerDbContext : DbContext
         modelBuilder.Entity<Commessa>()
             .Property(c => c.QuantitaRichiesta)
             .HasPrecision(18, 4);
+
+        // Optimistic Concurrency Control su Commessa
+        modelBuilder.Entity<Commessa>()
+            .Property(c => c.RowVersion)
+            .IsRowVersion();
 
         // Indici per performance
         modelBuilder.Entity<Articolo>()
@@ -355,5 +473,119 @@ public class MesManagerDbContext : DbContext
         modelBuilder.Entity<PriceListItem>()
             .Property(i => i.VatRate)
             .HasPrecision(5, 2);
+    }
+
+    private static StatoCommessa ParseStatoCommessa(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return StatoCommessa.Aperta;
+        }
+
+        if (int.TryParse(value, out var numeric) && Enum.IsDefined(typeof(StatoCommessa), numeric))
+        {
+            return (StatoCommessa)numeric;
+        }
+
+        return Enum.TryParse<StatoCommessa>(value, true, out var parsed)
+            ? parsed
+            : StatoCommessa.Aperta;
+    }
+
+    private static StatoProgramma ParseStatoProgramma(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return StatoProgramma.NonProgrammata;
+        }
+
+        if (int.TryParse(value, out var numeric) && Enum.IsDefined(typeof(StatoProgramma), numeric))
+        {
+            return (StatoProgramma)numeric;
+        }
+
+        return Enum.TryParse<StatoProgramma>(value, true, out var parsed)
+            ? parsed
+            : StatoProgramma.NonProgrammata;
+    }
+
+    private static int ParseInt(string? value, int fallback)
+    {
+        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
+        {
+            return parsed;
+        }
+
+        return fallback;
+    }
+
+    private static int? ParseNullableInt(string? value)
+    {
+        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
+        {
+            return parsed;
+        }
+
+        return null;
+    }
+
+    private static decimal ParseDecimal(string? value, decimal fallback)
+    {
+        if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var parsed))
+        {
+            return parsed;
+        }
+
+        return fallback;
+    }
+
+    private bool IsColumnString(string tableName, string columnName)
+    {
+        lock (SchemaLock)
+        {
+            var cacheKey = $"{tableName}.{columnName}";
+            if (ColumnStringCache.TryGetValue(cacheKey, out var cachedValue))
+            {
+                return cachedValue;
+            }
+
+            try
+            {
+                using var connection = Database.GetDbConnection();
+                var shouldClose = connection.State != System.Data.ConnectionState.Open;
+                if (shouldClose)
+                {
+                    connection.Open();
+                }
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @table AND COLUMN_NAME = @column";
+
+                var tableParameter = command.CreateParameter();
+                tableParameter.ParameterName = "@table";
+                tableParameter.Value = tableName;
+                command.Parameters.Add(tableParameter);
+
+                var parameter = command.CreateParameter();
+                parameter.ParameterName = "@column";
+                parameter.Value = columnName;
+                command.Parameters.Add(parameter);
+
+                var dataType = command.ExecuteScalar() as string;
+                var isString = dataType != null && StringDbTypes.Contains(dataType);
+                ColumnStringCache[cacheKey] = isString;
+
+                if (shouldClose)
+                {
+                    connection.Close();
+                }
+            }
+            catch
+            {
+                ColumnStringCache[cacheKey] = false;
+            }
+
+            return ColumnStringCache[cacheKey];
+        }
     }
 }

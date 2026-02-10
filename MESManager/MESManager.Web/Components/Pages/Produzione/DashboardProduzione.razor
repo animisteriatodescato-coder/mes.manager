@@ -7,12 +7,12 @@
 
 <PageTitle>Dashboard Produzione</PageTitle>
 
-<div class="dashboard-container">
+<div class="dashboard-container" data-testid="page-dashboard-produzione">
     <div class="d-flex justify-end align-center mb-4">
         <div class="d-flex gap-2">
             <MudChip T="string" Color="Color.Success" Size="Size.Small">@_data.Count Macchine Attive</MudChip>
             <MudChip T="string" Color="Color.Info" Size="Size.Small">Aggiornato: @DateTime.Now.ToString("HH:mm:ss")</MudChip>
-            <MudSwitch T="bool" @bind-Value="@autoRefresh" Color="Color.Primary" Label="Auto-refresh" />
+            <MudSwitch T="bool" @bind-Value="@autoRefresh" Color="Color.Primary" Label="Auto-refresh" data-testid="toggle-dashboard-autorefresh" />
         </div>
     </div>
 
@@ -115,7 +115,7 @@
                     </MudCardContent>
                     <MudCardActions Class="pt-0">
                         <MudButton Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" 
-                                   OnClick="@(() => Nav.NavigateTo("/produzione/plc-realtime"))">
+                                   OnClick="@(() => Nav.NavigateTo("/produzione/plc-realtime"))" data-testid="btn-dashboard-dettagli">
                             Dettagli
                         </MudButton>
                     </MudCardActions>

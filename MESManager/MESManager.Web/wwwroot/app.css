@@ -106,3 +106,59 @@ h1:focus {
         print-color-adjust: exact !important;
     }
 }
+
+/* ========================================
+   Dark Mode Typography Overrides
+   Enforce very light gray text across UI
+   ======================================== */
+.mud-theme-dark,
+.mud-theme-dark .mud-typography,
+.mud-theme-dark .mud-text,
+.mud-theme-dark .mud-button,
+.mud-theme-dark .mud-button-label,
+.mud-theme-dark .mud-nav-link,
+.mud-theme-dark .mud-nav-group-title,
+.mud-theme-dark .mud-menu-item,
+.mud-theme-dark .mud-table,
+.mud-theme-dark .mud-table-cell,
+.mud-theme-dark .mud-table-head,
+.mud-theme-dark .mud-table-toolbar,
+.mud-theme-dark .mud-input,
+.mud-theme-dark .mud-input-slot,
+.mud-theme-dark .mud-input-label,
+.mud-theme-dark .mud-select,
+.mud-theme-dark .mud-list-item,
+.mud-theme-dark .mud-list-item-text,
+.mud-theme-dark .mud-tabs-toolbar,
+.mud-theme-dark .mud-tab,
+.mud-theme-dark .mud-tab-panel,
+.mud-theme-dark .mud-link,
+.mud-theme-dark .mud-chip,
+.mud-theme-dark .mud-appbar,
+.mud-theme-dark .mud-drawer,
+.mud-theme-dark .mud-toolbar,
+.mud-theme-dark .mud-pagination,
+.mud-theme-dark .mud-form,
+.mud-theme-dark .mud-helper-text {
+    color: #e6e6e6 !important;
+}
+
+.mud-theme-dark .mud-nav-link.active,
+.mud-theme-dark .mud-nav-link:hover,
+.mud-theme-dark .mud-menu-item:hover,
+.mud-theme-dark .mud-tab.mud-tab-active {
+    color: #f0f0f0 !important;
+}
+
+.mud-theme-dark input::placeholder,
+.mud-theme-dark textarea::placeholder,
+.mud-theme-dark .mud-input-slot::placeholder {
+    color: #cfcfcf !important;
+}
+
+.mud-theme-dark .ag-theme-alpine .ag-header-cell-text,
+.mud-theme-dark .ag-theme-alpine .ag-cell,
+.mud-theme-dark .ag-theme-alpine .ag-floating-top .ag-cell,
+.mud-theme-dark .ag-theme-alpine .ag-floating-bottom .ag-cell {
+    color: #e6e6e6 !important;
+}

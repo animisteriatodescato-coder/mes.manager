@@ -183,6 +183,20 @@ builder.Services.AddSignalR();
 
 var app = builder.Build();
 
+var enableE2ESeed = (Environment.GetEnvironmentVariable("E2E_SEED") ?? "")
+    .Equals("1", StringComparison.OrdinalIgnoreCase)
+    || (Environment.GetEnvironmentVariable("E2E_SEED") ?? "")
+        .Equals("true", StringComparison.OrdinalIgnoreCase);
+
+if (enableE2ESeed)
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<MesManagerDbContext>();
+    var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+    var logger = loggerFactory.CreateLogger("E2ESeed");
+    await E2ETestDataSeeder.SeedAsync(db, logger);
+}
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

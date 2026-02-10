@@ -9,18 +9,20 @@
 
 <PageTitle>Catalogo Preventivi</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-4">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-4" data-testid="page-catalogo-preventivi">
     <!-- TOOLBAR -->
     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4" Wrap="Wrap.Wrap">
         <MudText Typo="Typo.h5">Preventivi</MudText>
         <MudSpacer />
         
         <MudTextField @bind-Value="searchText" Placeholder="Cerca..." Variant="Variant.Outlined"
+                 data-testid="input-preventivi-search"
                      Margin="Margin.Dense" Style="width:250px;" Immediate="true"
                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
                      DebounceInterval="300" OnDebounceIntervalElapsed="@OnSearchChanged" />
         
         <MudSelect T="QuoteStatus?" @bind-Value="filterStatus" Label="Stato" Variant="Variant.Outlined"
+              data-testid="select-preventivi-stato"
                   Margin="Margin.Dense" Dense="true" Style="width:150px;" Clearable="true">
             <MudSelectItem T="QuoteStatus?" Value="@((QuoteStatus?)null)">Tutti</MudSelectItem>
             <MudSelectItem T="QuoteStatus?" Value="@QuoteStatus.Draft">Bozza</MudSelectItem>
@@ -31,21 +33,22 @@
         </MudSelect>
         
         <MudDateRangePicker @bind-DateRange="dateRange" Label="Periodo" Variant="Variant.Outlined"
+                   data-testid="daterange-preventivi"
                            Margin="Margin.Dense" Style="width:280px;" Clearable="true" />
         
         <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.FilterAlt"
-                  OnClick="@ApplyFilters">Filtra</MudButton>
+              OnClick="@ApplyFilters" data-testid="btn-preventivi-filtra">Filtra</MudButton>
         <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Clear"
-                  OnClick="@ClearFilters">Reset</MudButton>
+              OnClick="@ClearFilters" data-testid="btn-preventivi-reset">Reset</MudButton>
         
         <MudDivider Vertical="true" FlexItem="true" />
         
         <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.FileUpload"
-                  OnClick="@(() => showImportDialog = true)">Importa Listino</MudButton>
+              OnClick="@(() => showImportDialog = true)" data-testid="btn-preventivi-importa">Importa Listino</MudButton>
         
         <MudButton Variant="Variant.Filled" Color="Color.Primary" 
-                  StartIcon="@Icons.Material.Filled.Add"
-                  OnClick="@CreateNewQuote">Nuovo Preventivo</MudButton>
+              StartIcon="@Icons.Material.Filled.Add"
+              OnClick="@CreateNewQuote" data-testid="btn-preventivi-nuovo">Nuovo Preventivo</MudButton>
     </MudStack>
 
     <!-- STATISTICHE -->
@@ -126,6 +129,7 @@
         }
         
         <MudTable Items="@filteredQuotes" Dense="true" Hover="true" Striped="true"
+             data-testid="table-preventivi"
                  Loading="@isLoading" LoadingProgressColor="Color.Primary"
                  FixedHeader="true" Height="calc(100vh - 450px)">
             <HeaderContent>
@@ -175,14 +179,14 @@
                 <MudTd>
                     <MudStack Row="true" Spacing="1">
                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                      OnClick="@(() => EditQuote(context))" Title="Modifica" />
+                                      OnClick="@(() => EditQuote(context))" Title="Modifica" data-testid="btn-preventivi-edit" />
                         <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small"
-                                      OnClick="@(() => DuplicateQuote(context))" Title="Duplica" />
+                                      OnClick="@(() => DuplicateQuote(context))" Title="Duplica" data-testid="btn-preventivi-duplica" />
                         <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Size="Size.Small"
-                                      OnClick="@(() => DownloadPdf(context))" Title="PDF" />
+                                      OnClick="@(() => DownloadPdf(context))" Title="PDF" data-testid="btn-preventivi-pdf" />
                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
                                       OnClick="@(() => DeleteQuote(context))" Title="Elimina"
-                                      Disabled="@(context.Status != QuoteStatus.Draft)" />
+                                      Disabled="@(context.Status != QuoteStatus.Draft)" data-testid="btn-preventivi-elimina" />
                     </MudStack>
                 </MudTd>
             </RowTemplate>
@@ -197,7 +201,7 @@
 </MudContainer>
 
 <!-- DIALOG: Import Listino -->
-<MudDialog @bind-Visible="showImportDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true }">
+<MudDialog @bind-Visible="showImportDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true }" data-testid="dlg-preventivi-importa">
     <TitleContent>
         <MudText Typo="Typo.h6">
             <MudIcon Icon="@Icons.Material.Filled.FileUpload" Class="mr-2" />
@@ -214,7 +218,7 @@
             
             <MudFileUpload T="IBrowserFile" FilesChanged="@OnImportFileSelected" Accept=".xlsx,.xls">
                 <ActivatorContent>
-                    <MudButton Variant="Variant.Outlined" FullWidth="true" StartIcon="@Icons.Material.Filled.CloudUpload">
+                    <MudButton Variant="Variant.Outlined" FullWidth="true" StartIcon="@Icons.Material.Filled.CloudUpload" data-testid="btn-preventivi-importa-file">
                         @(importFile != null ? importFile.Name : "Seleziona file Excel")
                     </MudButton>
                 </ActivatorContent>
@@ -243,9 +247,9 @@
         </MudStack>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="@CloseImportDialog">Annulla</MudButton>
+        <MudButton OnClick="@CloseImportDialog" data-testid="btn-preventivi-importa-annulla">Annulla</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" 
-                  OnClick="@ImportPriceList" Disabled="@(importFile == null || isImporting)">
+                  OnClick="@ImportPriceList" Disabled="@(importFile == null || isImporting)" data-testid="btn-preventivi-importa-conferma">
             @(isImporting ? "Importazione..." : "Importa")
         </MudButton>
     </DialogActions>

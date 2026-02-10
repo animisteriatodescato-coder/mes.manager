@@ -219,6 +219,9 @@ namespace MESManager.Infrastructure.Migrations
                     b.Property<bool>("Attivo")
                         .HasColumnType("bit");
 
+                    b.Property<string>("ClasseLavorazione")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Codice")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -341,6 +344,12 @@ namespace MESManager.Infrastructure.Migrations
                     b.Property<Guid?>("ArticoloId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("Bloccata")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ClasseLavorazione")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid?>("ClienteId")
                         .HasColumnType("uniqueidentifier");
 
@@ -390,6 +399,9 @@ namespace MESManager.Infrastructure.Migrations
                     b.Property<string>("OurReference")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("Priorita")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("QuantitaRichiesta")
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");
@@ -397,8 +409,17 @@ namespace MESManager.Infrastructure.Migrations
                     b.Property<string>("RiferimentoOrdineCliente")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.Property<string>("SaleOrdId")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("SetupStimatoMinuti")
+                        .HasColumnType("int");
 
                     b.Property<int>("Stato")
                         .HasColumnType("int");
@@ -414,6 +435,12 @@ namespace MESManager.Infrastructure.Migrations
 
                     b.Property<string>("UoM")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("VincoloDataFine")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("VincoloDataInizio")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 

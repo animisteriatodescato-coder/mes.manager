@@ -6,8 +6,8 @@
 
 <PageTitle>Gestione Operatori</PageTitle>
 
-<MudPaper Class="pa-4">
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenCreateDialog" Class="mb-4">
+<MudPaper Class="pa-4" data-testid="page-gestione-operatori">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenCreateDialog" Class="mb-4" data-testid="btn-operatori-nuovo">
         <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-2" /> Nuovo Operatore
     </MudButton>
 
@@ -17,7 +17,7 @@
     }
     else
     {
-        <MudTable Items="@operatori" Hover="true" Striped="true" Dense="true">
+        <MudTable Items="@operatori" Hover="true" Striped="true" Dense="true" data-testid="table-operatori">
             <HeaderContent>
                 <MudTh>Numero</MudTh>
                 <MudTh>Nome</MudTh>
@@ -54,7 +54,7 @@
     }
 </MudPaper>
 
-<MudDialog @bind-Visible="dialogVisible" Options="dialogOptions">
+<MudDialog @bind-Visible="dialogVisible" Options="dialogOptions" data-testid="dlg-operatori-edit">
     <TitleContent>
         <MudText Typo="Typo.h6">@dialogTitle</MudText>
     </TitleContent>
@@ -67,8 +67,8 @@
         <MudDatePicker @bind-Date="editingOperatore.DataLicenziamento" Label="Data Licenziamento" />
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="CloseDialog">Annulla</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveOperatore">Salva</MudButton>
+        <MudButton OnClick="CloseDialog" data-testid="btn-operatori-annulla">Annulla</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveOperatore" data-testid="btn-operatori-salva">Salva</MudButton>
     </DialogActions>
 </MudDialog>
 

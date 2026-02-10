@@ -1,4 +1,27 @@
 // Gantt Macchine - Vis-Timeline chart for machine scheduling with drag & drop and SignalR sync
+// VERSIONE GANTT-FIRST: posizione esatta, no reload, avanzamento real-time - v20 NO MODULES
+
+// Costanti inline (precedentemente in GanttConstants.js)
+const PROGRESS_UPDATE_INTERVAL_MS = 60000;
+const SIGNALR_RETRY_DELAYS_MS = [0, 2000, 10000, 30000];
+const DEFAULT_WORKING_MINUTES = 480;
+const STATUS_COLORS = {
+    'NonProgrammata': '#9E9E9E',
+    'Programmata': '#4CAF50',
+    'InProduzione': '#FF9800',
+    'Completata': '#9E9E9E',
+    'Archiviata': '#9E9E9E',
+    'Aperta': '#4CAF50',
+    'Chiusa': '#9E9E9E',
+    'Default': '#607D8B'
+};
+const GANTT_ITEM_MARGIN = 10;
+const GANTT_AXIS_MARGIN = 5;
+const MAX_PROGRESS_PERCENTAGE = 100;
+const MIN_PROGRESS_PERCENTAGE = 0;
+const MACHINE_NUMBER_MIN = 1;
+const MACHINE_NUMBER_MAX = 99;
+
 window.GanttMacchine = {
     timeline: null,
     settings: null,
@@ -7,6 +30,7 @@ window.GanttMacchine = {
     reverseMachineMap: new Map(),
     isProcessingUpdate: false,
     dotNetHelper: null,
+    lastUpdateVersion: 0, // Traccia ultima versione aggiornamento ricevuta
     
     initialize: function(elementId, settings) {
         console.log('Initializing Vis-Timeline chart for element:', elementId);
@@ -57,7 +81,7 @@ window.GanttMacchine = {
         
         console.log('Machine number mapping:', Array.from(this.machineMap.entries()));
 
-        // Define items (commesse) from real data
+        // Define items (commesse) from real data - SENZA FILTRI DISTRUTTIVI
         let items = this.createItemsFromTasks(this.settings.tasks);
 
         // Configuration options
@@ -70,13 +94,17 @@ window.GanttMacchine = {
                 overrideItems: false
             },
             stack: false,  // Don't stack items - keep them on the same line (accodamento rigido)
+            stackSubgroups: false, // Previene sovrapposizione verticale
             orientation: 'top',
             groupOrder: 'order',
             margin: {
-                item: 10,
+                item: {horizontal: 2, vertical: 10}, // Margine minimo per evitare sovrapposizione
                 axis: 5
             },
             snap: null, // Disable snapping to allow precise positioning
+            verticalScroll: true, // Abilita scroll verticale se necessario
+            zoomable: true,
+            moveable: true,
             start: items.length > 0 ? new Date(Math.min(...items.map(i => new Date(i.start)))) : new Date(),
             end: items.length > 0 ? new Date(Math.max(...items.map(i => new Date(i.end)))) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
         };
@@ -93,27 +121,26 @@ window.GanttMacchine = {
                 return;
             }
             
-            const allItems = self.timeline.itemsData.get();
-            const itemsInGroup = allItems.filter(i => i.group === item.group && i.id !== item.id);
-            
-            // Find overlapping items and queue after them
-            for (let other of itemsInGroup) {
-                const otherStart = new Date(other.start).getTime();
-                const otherEnd = new Date(other.end).getTime();
-                const itemStart = new Date(item.start).getTime();
-                const itemEnd = new Date(item.end).getTime();
-                
-                // Check if overlapping
-                if (itemStart < otherEnd && itemEnd > otherStart) {
-                    // Queue after the other item
-                    const duration = itemEnd - itemStart;
-                    item.start = new Date(otherEnd);
-                    item.end = new Date(otherEnd + duration);
-                    break;
-                }
+            // LOCK: Verifica se item è bloccato
+            if (item.bloccata) {
+                console.warn('Tentativo di spostare commessa bloccata:', item.id);
+                callback(null); // Blocca movimento
+                return;
             }
             
             callback(item);
+        });
+        
+        // Handle item selection
+        this.timeline.on('select', function(properties) {
+            console.log('Gantt select event:', properties);
+            if (properties.items && properties.items.length > 0 && self.dotNetHelper) {
+                const selectedId = properties.items[0];
+                console.log('Calling OnCommessaSelected with ID:', selectedId);
+                self.dotNetHelper.invokeMethodAsync('OnCommessaSelected', selectedId);
+            } else {
+                console.log('No items selected or dotNetHelper not set. Items:', properties.items, 'Helper:', self.dotNetHelper);
+            }
         });
 
         // Handle item moved (after drop) - persist to server
@@ -129,20 +156,29 @@ window.GanttMacchine = {
                     return;
                 }
 
-                // Extract machine number from group code
-                const targetMacchina = self.reverseMachineMap.get(item.group);
-                
-                if (!targetMacchina) {
-                    console.error('Could not determine target machine for group:', item.group);
+                // LOCK: Double-check bloccata
+                if (item.bloccata) {
+                    alert('Impossibile spostare una commessa bloccata. Sbloccarla prima.');
                     callback(null);
                     return;
                 }
 
-                console.log(`Moving item ${item.id} to machine ${targetMacchina} at ${item.start}`);
+                // Extract machine number from group code
+                const targetMacchina = self.reverseMachineMap.get(item.group);
+                
+                // VALIDAZIONE ROBUSTA numero macchina
+                if (!targetMacchina || isNaN(parseInt(targetMacchina)) || parseInt(targetMacchina) < MACHINE_NUMBER_MIN || parseInt(targetMacchina) > MACHINE_NUMBER_MAX) {
+                    console.error('❌ Numero macchina non valido:', { group: item.group, targetMacchina, validRange: `${MACHINE_NUMBER_MIN}-${MACHINE_NUMBER_MAX}` });
+                    alert(`Errore: numero macchina non valido. Range consentito: ${MACHINE_NUMBER_MIN}-${MACHINE_NUMBER_MAX}`);
+                    callback(null);
+                    return;
+                }
+
+                console.log(`✓ Moving item ${item.id} to machine ${targetMacchina} at ${item.start}`);
 
                 try {
-                    // Call server API to persist the move
-                    const response = await fetch('/api/pianificazione/sposta', {
+                    // Call server API to persist the move - URL CORRETTO
+                    const response = await fetch('/api/pianificazione/sposta-commessa', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -156,22 +192,29 @@ window.GanttMacchine = {
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json();
-                        console.error('Server error:', errorData);
-                        alert('Errore spostamento: ' + (errorData.errorMessage || 'Errore sconosciuto'));
-                        callback(null); // Cancel the move
+                        let errorMessage = `Errore HTTP ${response.status}`;
+                        try {
+                            const errorData = await response.json();
+                            errorMessage = errorData.errorMessage || errorMessage;
+                        } catch (e) {
+                            const errorText = await response.text();
+                            console.error('❌ Response text:', errorText);
+                        }
+                        console.error('❌ Server error:', errorMessage);
+                        alert('Errore spostamento: ' + errorMessage);
+                        callback(null);
                         return;
                     }
 
                     const result = await response.json();
-                    console.log('Move result:', result);
+                    console.log('✓ Move result:', result);
 
                     if (result.success) {
                         // Update all items with server-calculated positions
-                        self.updateItemsFromServer(result.commesseAggiornate);
+                        self.updateItemsFromServer(result.commesseAggiornate, result.updateVersion);
                         
                         if (result.commesseMacchinaOrigine) {
-                            self.updateItemsFromServer(result.commesseMacchinaOrigine);
+                            self.updateItemsFromServer(result.commesseMacchinaOrigine, result.updateVersion);
                         }
 
                         // Notify Blazor component if available
@@ -194,8 +237,52 @@ window.GanttMacchine = {
 
         // Initialize SignalR connection
         this.initSignalR();
+        
+        // v16: Update ciclico % avanzamento ogni 60 secondi
+        this.startProgressUpdateTimer();
 
         console.log('Vis-Timeline chart initialized successfully');
+    },
+    
+    /**
+     * Avvia timer ciclico per aggiornamento % avanzamento commesse in produzione
+     * Update ogni PROGRESS_UPDATE_INTERVAL_MS (60 secondi)
+     */
+    startProgressUpdateTimer: function() {
+        const self = this;
+        
+        // Update ogni PROGRESS_UPDATE_INTERVAL_MS
+        setInterval(function() {
+            if (!self.timeline || !self.timeline.itemsData) return;
+            
+            const now = new Date();
+            const items = self.timeline.itemsData.get();
+            
+            items.forEach(function(item) {
+                // Solo per item con currentProgress definito (in produzione)
+                if (item.currentProgress !== undefined && item.start && item.end) {
+                    const start = new Date(item.start);
+                    const end = new Date(item.end);
+                    
+                    if (now >= start && now <= end) {
+                        const totalDuration = end - start;
+                        const elapsed = now - start;
+                        const newProgress = Math.min(MAX_PROGRESS_PERCENTAGE, Math.max(MIN_PROGRESS_PERCENTAGE, (elapsed / totalDuration) * 100));
+                        
+                        // Update content con nuova %
+                        const contentMatch = item.content.match(/^(.*?)\s*\((\d+)%\)(.*)$/);
+                        if (contentMatch) {
+                            const updatedContent = `${contentMatch[1]} (${Math.round(newProgress)}%)${contentMatch[3]}`;
+                            self.timeline.itemsData.update({
+                                id: item.id,
+                                content: updatedContent,
+                                currentProgress: newProgress
+                            });
+                        }
+                    }
+                }
+            });
+        }, PROGRESS_UPDATE_INTERVAL_MS); // Costante configurabile
     },
 
     createItemsFromTasks: function(tasks) {
@@ -205,94 +292,213 @@ window.GanttMacchine = {
         }
 
         const self = this;
+        
+        // ❌ RIMOSSO FILTRO DISTRUTTIVO: mostra TUTTE le commesse assegnate a macchina
+        // Il backend deve garantire che abbiano date
         return tasks
-            .filter(task => {
-                const hasDataInizio = task.dataInizioPrevisione || task.dataInizio;
-                const hasDataFine = task.dataFinePrevisione || task.dataFine;
-                const hasMacchina = task.numeroMacchina != null;
-                return hasDataInizio && hasDataFine && hasMacchina;
-            })
+            .filter(task => task.numeroMacchina != null) // Solo filtro: deve avere macchina
             .map(task => {
                 const groupId = self.machineMap.get(task.numeroMacchina) || 'M01';
-                const progress = task.percentualeCompletamento || 0;
-                const baseColor = self.getStatusColor(task.stato);
-                const progressStyle = `background: linear-gradient(to right, ${baseColor} ${progress}%, rgba(${self.hexToRgb(baseColor)}, 0.3) ${progress}%); color: white;`;
                 
-                // Aggiungi triangolino avviso se dati incompleti
-                const warningIcon = task.datiIncompleti ? ' ⚠️' : '';
+                // CALCOLO AVANZAMENTO: basato su finestra pianificata
+                let progress = task.percentualeCompletamento || 0;
+                if (task.dataInizioPrevisione && task.dataFinePrevisione) {
+                    const now = new Date();
+                    const start = new Date(task.dataInizioPrevisione);
+                    const end = new Date(task.dataFinePrevisione);
+                    if (now >= start && now <= end) {
+                        const totalDuration = end - start;
+                        const elapsed = now - start;
+                        progress = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+                    } else if (now > end) {
+                        progress = 100;
+                    } else {
+                        progress = 0;
+                    }
+                }
                 
-                // Usa dataInizioPrevisione/dataFinePrevisione come primary, fallback su dataInizio/dataFine
-                const dataInizio = task.dataInizioPrevisione || task.dataInizio;
-                const dataFine = task.dataFinePrevisione || task.dataFine;
+                const statoProgramma = task.statoProgramma || '';
+                const baseColor = self.getStatusColor(statoProgramma || task.stato);
+                const isCompletata = statoProgramma === 'Completata';
                 
+                // v17: Background con gradazione per avanzamento - scurisce per la parte completata
+                const backgroundColor = task.bloccata ? '#d32f2f' : baseColor;
+                const darkerColor = self.darkenColor(backgroundColor, 30); // Scurisce del 30%
+                
+                // Gradiente: parte completata più scura, parte rimanente normale
+                const progressStyle = `background: linear-gradient(to right, ${darkerColor} 0%, ${darkerColor} ${progress}%, ${backgroundColor} ${progress}%, ${backgroundColor} 100%); color: white; font-weight: 500;`;
+                
+                // Icone stato speciale - PRIMA del codice
+                let icons = '';
+                if (task.datiIncompleti) icons += '⚠️ '; // Triangolino PRIMA
+                if (task.bloccata) icons += '🔒 '; // Lucchetto
+                if (task.vincoloDataFineSuperato) icons += '⚠️ '; // Vincolo superato
+                
+                // Priorità nel content se diversa da default
+                let priorityIndicator = '';
+                if (task.priorita && task.priorita < 100) {
+                    priorityIndicator = ` [P${task.priorita}]`; // Alta priorità
+                }
+                
+                // PERCENTUALE PRIMA del codice cassa
+                const displayCode = task.codice || task.id;
+                const percentagePrefix = `${Math.round(progress)}% `;
+                
+                // Fallback date (se non ci sono usiamo now, ma dovrebbero sempre esserci)
+                const dataInizio = task.dataInizioPrevisione || task.dataInizio || new Date().toISOString();
+                const dataFine = task.dataFinePrevisione || task.dataFine || new Date(Date.now() + 8*60*60*1000).toISOString();
+                
+                const classNames = [
+                    'commessa-item',
+                    task.bloccata ? 'commessa-bloccata' : null,
+                    isCompletata ? 'commessa-completata' : null
+                ].filter(Boolean).join(' ');
+
                 return {
                     id: task.id,
                     group: groupId,
-                    content: `${task.codice} (${Math.round(progress)}%)${warningIcon}`,
+                    content: `${icons}${percentagePrefix}${displayCode}${priorityIndicator}`,
                     start: new Date(dataInizio),
                     end: new Date(dataFine),
-                    className: 'commessa-item',
+                    className: classNames,
                     style: progressStyle,
                     title: self.createTooltip(task),
-                    datiIncompleti: task.datiIncompleti  // Conserva il flag per uso futuro
+                    // Dati custom per drag handling
+                    bloccata: task.bloccata || false,
+                    priorita: task.priorita || 100,
+                    vincoloDataInizio: task.vincoloDataInizio,
+                    vincoloDataFine: task.vincoloDataFine,
+                    datiIncompleti: task.datiIncompleti || false,
+                    // Store progress per update
+                    currentProgress: progress
                 };
             });
     },
 
     createTooltip: function(task) {
-        const warningText = task.datiIncompleti ? '\n⚠️ ATTENZIONE: Dati incompleti (usato 8h standard)' : '';
-        const quantita = task.quantita || task.quantitaRichiesta || 0;
-        const durata = task.durataMinuti || task.durataPrevistaMinuti || 0;
-        return `${task.description || task.codice}
-Quantità: ${quantita} ${task.uom || task.uoM || ''}
-Durata: ${durata} min
+        let tooltip = `${task.description || task.codice}
+Quantità: ${task.quantita || task.quantitaRichiesta || 0} ${task.uom || task.uoM || ''}
+Durata: ${task.durataMinuti || task.durataPrevistaMinuti || 0} min
 Stato: ${task.stato}
-Ordine: ${task.ordineSequenza || '-'}${warningText}`;
+Ordine: ${task.ordineSequenza || '-'}`;
+
+        // Priorità
+        if (task.priorita && task.priorita !== 100) {
+            tooltip += `\nPriorità: ${task.priorita} ${task.priorita < 100 ? '(ALTA)' : ''}`;
+        }
+
+        // Vincoli
+        if (task.vincoloDataInizio) {
+            tooltip += `\n⏰ Inizio dopo: ${new Date(task.vincoloDataInizio).toLocaleString('it-IT')}`;
+        }
+        if (task.vincoloDataFine) {
+            const vincoloStr = new Date(task.vincoloDataFine).toLocaleString('it-IT');
+            if (task.vincoloDataFineSuperato) {
+                tooltip += `\n⚠️ VINCOLO SUPERATO! Deve finire entro: ${vincoloStr}`;
+            } else {
+                tooltip += `\n⏰ Finire entro: ${vincoloStr}`;
+            }
+        }
+
+        // Blocco
+        if (task.bloccata) {
+            tooltip += '\n🔒 BLOCCATA (non trascinabile)';
+        }
+
+        // Classe lavorazione
+        if (task.classeLavorazione) {
+            tooltip += `\nClasse: ${task.classeLavorazione}`;
+        }
+
+        // Warning dati incompleti
+        if (task.datiIncompleti) {
+            tooltip += '\n⚠️ Dati incompleti (usato 8h standard)';
+        }
+
+        return tooltip;
     },
 
-    updateItemsFromServer: function(commesse) {
+    updateItemsFromServer: function(commesse, updateVersion) {
         if (!commesse || !this.timeline) return;
+
+        // Verifica updateVersion per evitare aggiornamenti stali
+        if (updateVersion && updateVersion <= this.lastUpdateVersion) {
+            console.log(`Skipping stale update: v${updateVersion} <= v${this.lastUpdateVersion}`);
+            return;
+        }
 
         this.isProcessingUpdate = true;
         
         try {
+            if (updateVersion) {
+                this.lastUpdateVersion = updateVersion;
+                console.log(`Applying update v${updateVersion}`);
+            }
+
             commesse.forEach(c => {
                 const groupId = this.machineMap.get(c.numeroMacchina) || 'M01';
-                const progress = c.percentualeCompletamento || 0;
-                const baseColor = this.getStatusColor(c.stato);
+                let progress = c.percentualeCompletamento || 0;
+                if (c.dataInizioPrevisione && c.dataFinePrevisione) {
+                    const now = new Date();
+                    const start = new Date(c.dataInizioPrevisione);
+                    const end = new Date(c.dataFinePrevisione);
+                    if (now >= start && now <= end) {
+                        const totalDuration = end - start;
+                        const elapsed = now - start;
+                        progress = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+                    } else if (now > end) {
+                        progress = 100;
+                    } else {
+                        progress = 0;
+                    }
+                }
+                const statoProgramma = c.statoProgramma || '';
+                const baseColor = this.getStatusColor(statoProgramma || c.stato);
                 const progressStyle = `background: linear-gradient(to right, ${baseColor} ${progress}%, rgba(${this.hexToRgb(baseColor)}, 0.3) ${progress}%); color: white;`;
+                const isCompletata = statoProgramma === 'Completata';
 
-                // Aggiungi triangolino avviso se dati incompleti - MANTIENI IL FLAG
-                const warningIcon = c.datiIncompleti ? ' ⚠️' : '';
+                // Icone
+                let icons = '';
+                if (c.bloccata) icons += ' 🔒';
+                if (c.vincoloDataFineSuperato) icons += ' ⚠️';
+                if (c.datiIncompleti) icons += ' ⚠️';
+
+                let priorityIndicator = '';
+                if (c.priorita && c.priorita < 100) {
+                    priorityIndicator = ` [P${c.priorita}]`;
+                }
                 
-                // Usa dataInizioPrevisione e dataFinePrevisione dal DTO
-                const dataInizio = c.dataInizioPrevisione || c.dataInizio;
-                const dataFine = c.dataFinePrevisione || c.dataFine;
+                const dataInizio = c.dataInizioPrevisione || c.dataInizio || new Date().toISOString();
+                const dataFine = c.dataFinePrevisione || c.dataFine || new Date(Date.now() + 8*60*60*1000).toISOString();
                 
                 const existingItem = this.timeline.itemsData.get(c.id);
+                const classNames = [
+                    'commessa-item',
+                    c.bloccata ? 'commessa-bloccata' : null,
+                    isCompletata ? 'commessa-completata' : null
+                ].filter(Boolean).join(' ');
+
+                const itemData = {
+                    id: c.id,
+                    group: groupId,
+                    content: `${c.codice} (${Math.round(progress)}%)${priorityIndicator}${icons}`,
+                    start: new Date(dataInizio),
+                    end: new Date(dataFine),
+                    className: classNames,
+                    style: progressStyle,
+                    title: this.createTooltip(c),
+                    bloccata: c.bloccata || false,
+                    priorita: c.priorita || 100,
+                    vincoloDataInizio: c.vincoloDataInizio,
+                    vincoloDataFine: c.vincoloDataFine,
+                    datiIncompleti: c.datiIncompleti || false,
+                    currentProgress: progress
+                };
+
                 if (existingItem) {
-                    this.timeline.itemsData.update({
-                        id: c.id,
-                        group: groupId,
-                        content: `${c.codice} (${Math.round(progress)}%)${warningIcon}`,
-                        start: new Date(dataInizio),
-                        end: new Date(dataFine),
-                        style: progressStyle,
-                        title: this.createTooltip(c),
-                        datiIncompleti: c.datiIncompleti  // Conserva il flag per il tooltip
-                    });
+                    this.timeline.itemsData.update(itemData);
                 } else {
-                    this.timeline.itemsData.add({
-                        id: c.id,
-                        group: groupId,
-                        content: `${c.codice} (${Math.round(progress)}%)${warningIcon}`,
-                        start: new Date(dataInizio),
-                        end: new Date(dataFine),
-                        className: 'commessa-item',
-                        style: progressStyle,
-                        title: this.createTooltip(c),
-                        datiIncompleti: c.datiIncompleti  // Conserva il flag per il tooltip
-                    });
+                    this.timeline.itemsData.add(itemData);
                 }
             });
         } finally {
@@ -300,6 +506,10 @@ Ordine: ${task.ordineSequenza || '-'}${warningText}`;
         }
     },
 
+    /**
+     * Inizializza la connessione SignalR con retry automatico configurabile
+     * @returns {Promise<void>}
+     */
     initSignalR: async function() {
         try {
             if (typeof signalR === 'undefined') {
@@ -309,7 +519,7 @@ Ordine: ${task.ordineSequenza || '-'}${warningText}`;
 
             this.hubConnection = new signalR.HubConnectionBuilder()
                 .withUrl('/hubs/pianificazione')
-                .withAutomaticReconnect()
+                .withAutomaticReconnect(SIGNALR_RETRY_DELAYS_MS) // Retry configurabile: 0ms, 2s, 10s, 30s
                 .build();
 
             const self = this;
@@ -317,12 +527,21 @@ Ordine: ${task.ordineSequenza || '-'}${warningText}`;
             this.hubConnection.on('PianificazioneUpdated', function(notification) {
                 console.log('Received PianificazioneUpdated:', notification);
                 
+                // Verifica updateVersion per evitare update stali o loop
+                if (notification.updateVersion && notification.updateVersion <= self.lastUpdateVersion) {
+                    console.log(`Ignoring stale notification: v${notification.updateVersion} <= v${self.lastUpdateVersion}`);
+                    return;
+                }
+                
                 if (notification.type === 'CommesseUpdated' && notification.commesseAggiornate) {
-                    self.updateItemsFromServer(notification.commesseAggiornate);
+                    self.updateItemsFromServer(notification.commesseAggiornate, notification.updateVersion);
                 } else if (notification.type === 'FullRecalculation') {
-                    // Reload all data
+                    // v16 GANTT-FIRST: NO location.reload() - aggiorna via Blazor
+                    console.log('✓ Full recalculation - updating via Blazor (no page reload)');
                     if (self.dotNetHelper) {
                         self.dotNetHelper.invokeMethodAsync('OnFullRecalculation');
+                    } else {
+                        console.warn('⚠️ DotNetHelper not available - manual refresh required');
                     }
                 }
             });
@@ -338,20 +557,21 @@ Ordine: ${task.ordineSequenza || '-'}${warningText}`;
         }
     },
 
+    /**
+     * Registra helper .NET per comunicazione bidirezionale Blazor ↔ JavaScript
+     * @param {DotNetObjectReference} helper - Reference .NET object
+     */
     setDotNetHelper: function(helper) {
         this.dotNetHelper = helper;
     },
     
+    /**
+     * Ottiene il colore associato allo stato commessa
+     * @param {string} stato - Stato commessa
+     * @returns {string} Codice colore hex
+     */
     getStatusColor: function(stato) {
-        const statusColors = {
-            'InProgrammazione': '#2196F3',
-            'Programmata': '#4CAF50',
-            'InCorso': '#FF9800',
-            'Completata': '#9E9E9E',
-            'Sospesa': '#F44336',
-            'Default': '#607D8B'
-        };
-        return statusColors[stato] || statusColors['Default'];
+        return STATUS_COLORS[stato] || STATUS_COLORS['Default'];
     },
     
     hexToRgb: function(hex) {
@@ -361,11 +581,59 @@ Ordine: ${task.ordineSequenza || '-'}${warningText}`;
             '96, 125, 139';
     },
     
+    /**
+     * Scurisce un colore hex di una percentuale specificata
+     * @param {string} hex - Colore in formato hex (#RRGGBB)
+     * @param {number} percent - Percentuale di scurimento (0-100)
+     * @returns {string} Colore scurito in formato hex
+     */
+    darkenColor: function(hex, percent) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        if (!result) return hex;
+        
+        const r = Math.max(0, parseInt(result[1], 16) * (100 - percent) / 100);
+        const g = Math.max(0, parseInt(result[2], 16) * (100 - percent) / 100);
+        const b = Math.max(0, parseInt(result[3], 16) * (100 - percent) / 100);
+        
+        const toHex = (n) => {
+            const hex = Math.round(n).toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        };
+        
+        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    },
+    
     updateTasks: function(tasks) {
         if (this.timeline) {
             const items = this.createItemsFromTasks(tasks);
             this.timeline.setItems(items);
         }
+    },
+
+    calculateProgress: function(dataInizioPrevisione, dataFinePrevisione, isCompletata) {
+        if (isCompletata) {
+            return 100;
+        }
+
+        if (!dataInizioPrevisione || !dataFinePrevisione) {
+            return 0;
+        }
+
+        const now = new Date();
+        const start = new Date(dataInizioPrevisione);
+        const end = new Date(dataFinePrevisione);
+
+        if (now <= start) {
+            return 0;
+        }
+
+        if (now >= end) {
+            return 100;
+        }
+
+        const totalDuration = end - start;
+        const elapsed = now - start;
+        return Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
     },
     
     refresh: function() {

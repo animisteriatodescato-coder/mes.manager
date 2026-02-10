@@ -2,7 +2,7 @@
 
 <PageTitle>Calendario Produzione</PageTitle>
 
-<MudPaper Class="pa-4">
+<MudPaper Class="pa-4" data-testid="page-calendario-produzione">
     <MudText Typo="Typo.h6" Class="mb-4">Giorni Lavorativi</MudText>
     <MudCheckBox Label="Lunedì" @bind-Value="_lunedi" />
     <MudCheckBox Label="Martedì" @bind-Value="_martedi" />
@@ -12,7 +12,7 @@
     <MudCheckBox Label="Sabato" @bind-Value="_sabato" />
     <MudCheckBox Label="Domenica" @bind-Value="_domenica" />
     
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" data-testid="btn-calendario-salva">
         Salva Impostazioni
     </MudButton>
 </MudPaper>

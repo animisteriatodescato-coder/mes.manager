@@ -43,6 +43,16 @@ public class SpostaCommessaResponse
     /// Se la macchina di origine era diversa, contiene le commesse ricalcolate della macchina origine
     /// </summary>
     public List<CommessaGanttDto>? CommesseMacchinaOrigine { get; set; }
+    
+    /// <summary>
+    /// Versione aggiornamento (timestamp ticks) per evitare loop e stale updates
+    /// </summary>
+    public long UpdateVersion { get; set; }
+    
+    /// <summary>
+    /// Lista macchine coinvolte (per SignalR mirato)
+    /// </summary>
+    public List<string> MacchineCoinvolte { get; set; } = new();
 }
 
 /// <summary>
@@ -65,4 +75,45 @@ public class CreateFestivoRequest
     public DateOnly Data { get; set; }
     public string Descrizione { get; set; } = string.Empty;
     public bool Ricorrente { get; set; }
+}
+
+/// <summary>
+/// Response per caricamento automatico sul Gantt
+/// </summary>
+public class CaricaSuGanttResponse
+{
+    public bool Success { get; set; }
+    public string? ErrorMessage { get; set; }
+    
+    /// <summary>
+    /// Numero macchina assegnata dall'algoritmo
+    /// </summary>
+    public int? MacchinaAssegnata { get; set; }
+    
+    /// <summary>
+    /// Data inizio calcolata
+    /// </summary>
+    public DateTime? DataInizioCalcolata { get; set; }
+    
+    /// <summary>
+    /// Data fine calcolata
+    /// </summary>
+    public DateTime? DataFineCalcolata { get; set; }
+    
+    /// <summary>
+    /// Ore necessarie stimate
+    /// </summary>
+    public decimal OreNecessarie { get; set; }
+    
+    /// <summary>
+    /// Motivazione scelta della macchina
+    /// </summary>
+    public string Motivazione { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Commesse aggiornate sulla macchina
+    /// </summary>
+    public List<CommessaGanttDto> CommesseAggiornate { get; set; } = new();
+    
+    public long UpdateVersion { get; set; }
 }

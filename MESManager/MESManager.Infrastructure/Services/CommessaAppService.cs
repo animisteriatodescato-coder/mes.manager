@@ -1,4 +1,7 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Data.Common;
+using System.Globalization;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
 using MESManager.Domain.Entities;
@@ -32,14 +35,132 @@ public class CommessaAppService : ICommessaAppService
     
     public async Task<List<CommessaDto>> GetListaAsync()
     {
-        var commesse = await _context.Commesse
-            .Include(c => c.Articolo)
-            .Include(c => c.Cliente)
-            .ToListAsync();
+        var commesse = new List<CommessaProjection>();
+
+        var connectionString = _context.Database.GetConnectionString();
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException("Connection string MESManagerDb non configurata.");
+        }
+
+        using (var connection = new SqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+SELECT
+    c.Id,
+    c.Codice,
+    c.SaleOrdId,
+    c.InternalOrdNo,
+    c.ExternalOrdNo,
+    c.Line,
+    c.ArticoloId,
+    c.ClienteId,
+    c.CompanyName,
+    c.Description,
+    c.QuantitaRichiesta,
+    c.UoM,
+    c.DataConsegna,
+    CAST(c.Stato AS nvarchar(50)) AS StatoRaw,
+    CAST(c.StatoProgramma AS nvarchar(50)) AS StatoProgrammaRaw,
+    c.DataCambioStatoProgramma,
+    c.RiferimentoOrdineCliente,
+    c.OurReference,
+    CAST(c.NumeroMacchina AS nvarchar(50)) AS NumeroMacchinaRaw,
+    CAST(c.OrdineSequenza AS nvarchar(50)) AS OrdineSequenzaRaw,
+    c.DataInizioPrevisione,
+    c.DataFinePrevisione,
+    c.DataInizioProduzione,
+    c.DataFineProduzione,
+    c.UltimaModifica,
+    c.TimestampSync,
+    a.Codice AS ArticoloCodice,
+    a.Descrizione AS ArticoloDescrizione,
+    a.Prezzo AS ArticoloPrezzo,
+    cl.RagioneSociale AS ClienteRagioneSociale
+FROM Commesse c
+LEFT JOIN Articoli a ON a.Id = c.ArticoloId
+LEFT JOIN Clienti cl ON cl.Id = c.ClienteId";
+
+            using var reader = await command.ExecuteReaderAsync();
+            var ordinalId = reader.GetOrdinal("Id");
+            var ordinalCodice = reader.GetOrdinal("Codice");
+            var ordinalSaleOrdId = reader.GetOrdinal("SaleOrdId");
+            var ordinalInternalOrdNo = reader.GetOrdinal("InternalOrdNo");
+            var ordinalExternalOrdNo = reader.GetOrdinal("ExternalOrdNo");
+            var ordinalLine = reader.GetOrdinal("Line");
+            var ordinalArticoloId = reader.GetOrdinal("ArticoloId");
+            var ordinalClienteId = reader.GetOrdinal("ClienteId");
+            var ordinalCompanyName = reader.GetOrdinal("CompanyName");
+            var ordinalDescription = reader.GetOrdinal("Description");
+            var ordinalQuantitaRichiesta = reader.GetOrdinal("QuantitaRichiesta");
+            var ordinalUoM = reader.GetOrdinal("UoM");
+            var ordinalDataConsegna = reader.GetOrdinal("DataConsegna");
+            var ordinalStatoRaw = reader.GetOrdinal("StatoRaw");
+            var ordinalStatoProgrammaRaw = reader.GetOrdinal("StatoProgrammaRaw");
+            var ordinalDataCambioStatoProgramma = reader.GetOrdinal("DataCambioStatoProgramma");
+            var ordinalRiferimentoOrdineCliente = reader.GetOrdinal("RiferimentoOrdineCliente");
+            var ordinalOurReference = reader.GetOrdinal("OurReference");
+            var ordinalNumeroMacchinaRaw = reader.GetOrdinal("NumeroMacchinaRaw");
+            var ordinalOrdineSequenzaRaw = reader.GetOrdinal("OrdineSequenzaRaw");
+            var ordinalDataInizioPrevisione = reader.GetOrdinal("DataInizioPrevisione");
+            var ordinalDataFinePrevisione = reader.GetOrdinal("DataFinePrevisione");
+            var ordinalDataInizioProduzione = reader.GetOrdinal("DataInizioProduzione");
+            var ordinalDataFineProduzione = reader.GetOrdinal("DataFineProduzione");
+            var ordinalUltimaModifica = reader.GetOrdinal("UltimaModifica");
+            var ordinalTimestampSync = reader.GetOrdinal("TimestampSync");
+            var ordinalArticoloCodice = reader.GetOrdinal("ArticoloCodice");
+            var ordinalArticoloDescrizione = reader.GetOrdinal("ArticoloDescrizione");
+            var ordinalArticoloPrezzo = reader.GetOrdinal("ArticoloPrezzo");
+            var ordinalClienteRagioneSociale = reader.GetOrdinal("ClienteRagioneSociale");
+
+            while (await reader.ReadAsync())
+            {
+                var statoRaw = GetNullableString(reader, ordinalStatoRaw);
+                var statoProgrammaRaw = GetNullableString(reader, ordinalStatoProgrammaRaw);
+                var ordineSequenzaRaw = GetNullableString(reader, ordinalOrdineSequenzaRaw);
+
+                commesse.Add(new CommessaProjection
+                {
+                    Id = reader.GetGuid(ordinalId),
+                    Codice = reader.GetString(ordinalCodice),
+                    SaleOrdId = GetNullableString(reader, ordinalSaleOrdId),
+                    InternalOrdNo = GetNullableString(reader, ordinalInternalOrdNo),
+                    ExternalOrdNo = GetNullableString(reader, ordinalExternalOrdNo),
+                    Line = GetNullableString(reader, ordinalLine),
+                    ArticoloId = GetNullableGuid(reader, ordinalArticoloId),
+                    ClienteId = GetNullableGuid(reader, ordinalClienteId),
+                    CompanyName = GetNullableString(reader, ordinalCompanyName),
+                    Description = GetNullableString(reader, ordinalDescription),
+                    QuantitaRichiesta = GetDecimal(reader, ordinalQuantitaRichiesta),
+                    UoM = GetNullableString(reader, ordinalUoM),
+                    DataConsegna = GetNullableDateTime(reader, ordinalDataConsegna),
+                    Stato = ParseStatoCommessa(statoRaw),
+                    StatoProgramma = ParseStatoProgramma(statoProgrammaRaw),
+                    DataCambioStatoProgramma = GetNullableDateTime(reader, ordinalDataCambioStatoProgramma),
+                    RiferimentoOrdineCliente = GetNullableString(reader, ordinalRiferimentoOrdineCliente),
+                    OurReference = GetNullableString(reader, ordinalOurReference),
+                    NumeroMacchinaRaw = GetNullableString(reader, ordinalNumeroMacchinaRaw),
+                    OrdineSequenza = ParseInt(ordineSequenzaRaw, 0),
+                    DataInizioPrevisione = GetNullableDateTime(reader, ordinalDataInizioPrevisione),
+                    DataFinePrevisione = GetNullableDateTime(reader, ordinalDataFinePrevisione),
+                    DataInizioProduzione = GetNullableDateTime(reader, ordinalDataInizioProduzione),
+                    DataFineProduzione = GetNullableDateTime(reader, ordinalDataFineProduzione),
+                    UltimaModifica = reader.GetDateTime(ordinalUltimaModifica),
+                    TimestampSync = reader.GetDateTime(ordinalTimestampSync),
+                    ArticoloCodice = GetNullableString(reader, ordinalArticoloCodice),
+                    ArticoloDescrizione = GetNullableString(reader, ordinalArticoloDescrizione),
+                    ArticoloPrezzo = GetNullableDecimal(reader, ordinalArticoloPrezzo),
+                    ClienteRagioneSociale = GetNullableString(reader, ordinalClienteRagioneSociale)
+                });
+            }
+        }
             
         var articoloCodes = commesse
-            .Where(c => c.Articolo != null)
-            .Select(c => c.Articolo!.Codice)
+            .Where(c => !string.IsNullOrEmpty(c.ArticoloCodice))
+            .Select(c => c.ArticoloCodice!)
             .Distinct()
             .ToList();
             
@@ -54,10 +175,12 @@ public class CommessaAppService : ICommessaAppService
         return commesse.Select(c =>
         {
             Anime? anime = null;
-            if (c.Articolo != null && animeLookup.TryGetValue(c.Articolo.Codice, out var a))
+            if (!string.IsNullOrEmpty(c.ArticoloCodice) && animeLookup.TryGetValue(c.ArticoloCodice, out var a))
             {
                 anime = a;
             }
+
+            var numeroMacchina = ParseNullableInt(c.NumeroMacchinaRaw);
             
             return new CommessaDto
             {
@@ -73,11 +196,11 @@ public class CommessaAppService : ICommessaAppService
                 // Relazioni
                 ArticoloId = c.ArticoloId,
                 ClienteId = c.ClienteId,
-                ClienteRagioneSociale = c.CompanyName ?? (c.Cliente != null ? c.Cliente.RagioneSociale : null),
+                ClienteRagioneSociale = c.ClienteRagioneSociale,
                 CompanyName = c.CompanyName,
-                ArticoloCodice = c.Articolo != null ? c.Articolo.Codice : null,
-                ArticoloDescrizione = c.Articolo != null ? c.Articolo.Descrizione : null,
-                ArticoloPrezzo = c.Articolo != null ? c.Articolo.Prezzo : null,
+                ArticoloCodice = c.ArticoloCodice,
+                ArticoloDescrizione = c.ArticoloDescrizione,
+                ArticoloPrezzo = c.ArticoloPrezzo,
                 
                 // Dati commessa
                 Description = c.Description,
@@ -95,8 +218,14 @@ public class CommessaAppService : ICommessaAppService
                 OurReference = c.OurReference,
                 
                 // Programmazione Macchine
-                NumeroMacchina = c.NumeroMacchina,
+                NumeroMacchina = numeroMacchina,
                 OrdineSequenza = c.OrdineSequenza,
+                
+                // Pianificazione produzione
+                DataInizioPrevisione = c.DataInizioPrevisione,
+                DataFinePrevisione = c.DataFinePrevisione,
+                DataInizioProduzione = c.DataInizioProduzione,
+                DataFineProduzione = c.DataFineProduzione,
                 
                 // Audit
                 UltimaModifica = c.UltimaModifica,
@@ -215,36 +344,26 @@ public class CommessaAppService : ICommessaAppService
         await _context.SaveChangesAsync();
     }
 
-    public async Task AggiornaNumeroMacchinaAsync(Guid id, string? numeroMacchina)
+    // ❌ DISABILITATO v1.31: Assegnazione macchina SOLO da Gantt (master source)
+    // Se serve assegnare macchina → usa Gantt Macchine
+    // Programma = vista read-only auto-sync del Gantt
+    [Obsolete("Usa Gantt per assegnare macchine. Programma è read-only.")]
+    public async Task AggiornaNumeroMacchinaAsync(Guid id, int? numeroMacchina)
     {
-        var commessa = await _context.Commesse.FindAsync(id);
-        if (commessa == null) throw new Exception("Commessa non trovata");
+        throw new InvalidOperationException(
+            "Assegnazione macchina disabilitata da questa interfaccia. " +
+            "Usa Gantt Macchine come master source. " +
+            "Programma si sincronizza automaticamente."
+        );
         
-        var vecchioNumeroMacchina = commessa.NumeroMacchina;
-        commessa.NumeroMacchina = numeroMacchina;
-        
-        // Se assegno una macchina e lo stato è NonProgrammata, passa automaticamente a Programmata
-        if (!string.IsNullOrEmpty(numeroMacchina) && commessa.StatoProgramma == StatoProgramma.NonProgrammata)
-        {
-            var statoPrecedente = commessa.StatoProgramma;
-            commessa.StatoProgramma = StatoProgramma.Programmata;
-            commessa.DataCambioStatoProgramma = DateTime.Now;
-            
-            // Crea record storico per il cambio automatico
-            var storico = new StoricoProgrammazione
-            {
-                Id = Guid.NewGuid(),
-                CommessaId = id,
-                StatoPrecedente = statoPrecedente,
-                StatoNuovo = StatoProgramma.Programmata,
-                DataModifica = DateTime.Now,
-                Note = $"Cambio automatico per assegnazione macchina {numeroMacchina}"
-            };
-            _context.StoricoProgrammazione.Add(storico);
-        }
-        
-        commessa.UltimaModifica = DateTime.Now;
-        await _context.SaveChangesAsync();
+        // CODICE ORIGINALE COMMENTATO:
+        // var commessa = await _context.Commesse.FindAsync(id);
+        // if (commessa == null) throw new Exception("Commessa non trovata");
+        // var vecchioNumeroMacchina = commessa.NumeroMacchina;
+        // commessa.NumeroMacchina = numeroMacchina;
+        // ❌ RIMOSSO: Auto-marcatura StatoProgramma = Programmata (crea confusione)
+        // commessa.UltimaModifica = DateTime.Now;
+        // await _context.SaveChangesAsync();
     }
 
     public async Task AggiornaStatoProgrammaAsync(Guid id, string statoProgramma, string? note = null, string? utente = null)
@@ -258,7 +377,7 @@ public class CommessaAppService : ICommessaAppService
         // Se passo a NonProgrammata o Archiviata, rimuovo la macchina assegnata
         if (nuovoStato == StatoProgramma.NonProgrammata || nuovoStato == StatoProgramma.Archiviata)
         {
-            if (!string.IsNullOrEmpty(commessa.NumeroMacchina))
+            if (commessa.NumeroMacchina.HasValue)
             {
                 note = (note ?? "") + $" [Rimossa macchina {commessa.NumeroMacchina}]";
                 commessa.NumeroMacchina = null;
@@ -310,7 +429,7 @@ public class CommessaAppService : ICommessaAppService
         }).ToList();
     }
 
-    public async Task RiordinaCommessaAsync(Guid commessaId, string nuovoNumeroMacchina, int nuovaPosizioneIndex)
+    public async Task RiordinaCommessaAsync(Guid commessaId, int? nuovoNumeroMacchina, int nuovaPosizioneIndex)
     {
         var commessa = await _context.Commesse.FindAsync(commessaId);
         if (commessa == null) throw new Exception("Commessa non trovata");
@@ -322,24 +441,8 @@ public class CommessaAppService : ICommessaAppService
         commessa.NumeroMacchina = nuovoNumeroMacchina;
         commessa.UltimaModifica = DateTime.Now;
 
-        // Se assegno una macchina e lo stato è NonProgrammata, passa automaticamente a Programmata
-        if (!string.IsNullOrEmpty(nuovoNumeroMacchina) && commessa.StatoProgramma == StatoProgramma.NonProgrammata)
-        {
-            var statoPrecedente = commessa.StatoProgramma;
-            commessa.StatoProgramma = StatoProgramma.Programmata;
-            commessa.DataCambioStatoProgramma = DateTime.Now;
-
-            var storico = new StoricoProgrammazione
-            {
-                Id = Guid.NewGuid(),
-                CommessaId = commessaId,
-                StatoPrecedente = statoPrecedente,
-                StatoNuovo = StatoProgramma.Programmata,
-                DataModifica = DateTime.Now,
-                Note = $"Cambio automatico per riordinamento su macchina {nuovoNumeroMacchina}"
-            };
-            _context.StoricoProgrammazione.Add(storico);
-        }
+        // ❌ RIMOSSO v1.31: Auto-marcatura StatoProgramma creava confusione
+        // Ora: assegnazione macchina non implica "programmata" automaticamente
 
         // 2. Ricalcola OrdineSequenza per la macchina di DESTINAZIONE
         var commesseDestinazione = await _context.Commesse
@@ -371,7 +474,7 @@ public class CommessaAppService : ICommessaAppService
         }
 
         // 3. Se cambio macchina, ricalcola anche OrdineSequenza per macchina di ORIGINE
-        if (cambioMacchina && !string.IsNullOrEmpty(vecchioNumeroMacchina))
+        if (cambioMacchina && vecchioNumeroMacchina.HasValue)
         {
             var commesseOrigine = await _context.Commesse
                 .Where(c => c.NumeroMacchina == vecchioNumeroMacchina && c.Id != commessaId)
@@ -395,5 +498,112 @@ public class CommessaAppService : ICommessaAppService
         
         _context.Commesse.Remove(commessa);
         await _context.SaveChangesAsync();
+    }
+
+    private static string? GetNullableString(DbDataReader reader, int ordinal)
+    {
+        return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+    }
+
+    private static Guid? GetNullableGuid(DbDataReader reader, int ordinal)
+    {
+        return reader.IsDBNull(ordinal) ? null : reader.GetGuid(ordinal);
+    }
+
+    private static DateTime? GetNullableDateTime(DbDataReader reader, int ordinal)
+    {
+        return reader.IsDBNull(ordinal) ? null : reader.GetDateTime(ordinal);
+    }
+
+    private static decimal GetDecimal(DbDataReader reader, int ordinal)
+    {
+        return reader.IsDBNull(ordinal) ? 0m : reader.GetDecimal(ordinal);
+    }
+
+    private static decimal? GetNullableDecimal(DbDataReader reader, int ordinal)
+    {
+        return reader.IsDBNull(ordinal) ? null : reader.GetDecimal(ordinal);
+    }
+
+    private static int ParseInt(string? value, int fallback)
+    {
+        return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
+            ? parsed
+            : fallback;
+    }
+
+    private static int? ParseNullableInt(string? value)
+    {
+        return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
+            ? parsed
+            : null;
+    }
+
+    private static StatoCommessa ParseStatoCommessa(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return StatoCommessa.Aperta;
+        }
+
+        if (int.TryParse(value, out var numeric) && Enum.IsDefined(typeof(StatoCommessa), numeric))
+        {
+            return (StatoCommessa)numeric;
+        }
+
+        return Enum.TryParse<StatoCommessa>(value, true, out var parsed)
+            ? parsed
+            : StatoCommessa.Aperta;
+    }
+
+    private static StatoProgramma ParseStatoProgramma(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return StatoProgramma.NonProgrammata;
+        }
+
+        if (int.TryParse(value, out var numeric) && Enum.IsDefined(typeof(StatoProgramma), numeric))
+        {
+            return (StatoProgramma)numeric;
+        }
+
+        return Enum.TryParse<StatoProgramma>(value, true, out var parsed)
+            ? parsed
+            : StatoProgramma.NonProgrammata;
+    }
+
+    private sealed class CommessaProjection
+    {
+        public Guid Id { get; set; }
+        public string Codice { get; set; } = string.Empty;
+        public string? SaleOrdId { get; set; }
+        public string? InternalOrdNo { get; set; }
+        public string? ExternalOrdNo { get; set; }
+        public string? Line { get; set; }
+        public Guid? ArticoloId { get; set; }
+        public Guid? ClienteId { get; set; }
+        public string? ClienteRagioneSociale { get; set; }
+        public string? CompanyName { get; set; }
+        public string? ArticoloCodice { get; set; }
+        public string? ArticoloDescrizione { get; set; }
+        public decimal? ArticoloPrezzo { get; set; }
+        public string? Description { get; set; }
+        public decimal QuantitaRichiesta { get; set; }
+        public string? UoM { get; set; }
+        public DateTime? DataConsegna { get; set; }
+        public StatoCommessa Stato { get; set; }
+        public StatoProgramma StatoProgramma { get; set; }
+        public DateTime? DataCambioStatoProgramma { get; set; }
+        public string? RiferimentoOrdineCliente { get; set; }
+        public string? OurReference { get; set; }
+        public string? NumeroMacchinaRaw { get; set; }
+        public int OrdineSequenza { get; set; }
+        public DateTime? DataInizioPrevisione { get; set; }
+        public DateTime? DataFinePrevisione { get; set; }
+        public DateTime? DataInizioProduzione { get; set; }
+        public DateTime? DataFineProduzione { get; set; }
+        public DateTime UltimaModifica { get; set; }
+        public DateTime TimestampSync { get; set; }
     }
 }

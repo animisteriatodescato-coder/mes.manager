@@ -38,8 +38,14 @@ public class CommessaDto
     public string? OurReference { get; set; }
     
     // Programmazione Macchine
-    public string? NumeroMacchina { get; set; }
+    public int? NumeroMacchina { get; set; }
     public int OrdineSequenza { get; set; } // Ordine di esecuzione sulla macchina
+    
+    // Pianificazione produzione (per diagramma Gantt)
+    public DateTime? DataInizioPrevisione { get; set; } // Data/ora inizio prevista
+    public DateTime? DataFinePrevisione { get; set; } // Data/ora fine prevista (calcolata)
+    public DateTime? DataInizioProduzione { get; set; } // Data/ora inizio effettivo
+    public DateTime? DataFineProduzione { get; set; } // Data/ora fine effettivo
     
     // Audit
     public DateTime UltimaModifica { get; set; }

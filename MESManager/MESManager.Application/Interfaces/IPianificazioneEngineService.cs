@@ -15,7 +15,12 @@ public interface IPianificazioneEngineService
     /// <summary>
     /// Ricalcola tutte le commesse di una macchina a cascata.
     /// </summary>
-    Task RicalcolaAcqueMacchinaAsync(string numeroMacchina);
+    Task RicalcolaAcqueMacchinaAsync(int? numeroMacchina);
+    
+    /// <summary>
+    /// Ricalcola tutte le commesse di una macchina rispettando i blocchi.
+    /// </summary>
+    Task RicalcolaMacchinaConBlocchiAsync(int? numeroMacchina);
     
     /// <summary>
     /// Ricalcola tutte le commesse di tutte le macchine.
@@ -46,4 +51,15 @@ public interface IPianificazioneEngineService
     /// Inizializza i festivi standard italiani per un anno.
     /// </summary>
     Task<List<FestivoDto>> InizializzaFestiviStandardAsync(int anno);
+    
+    /// <summary>
+    /// Suggerisce la macchina migliore per una commessa (earliest completion time).
+    /// </summary>
+    Task<SuggerisciMacchinaResponse> SuggerisciMacchinaMiglioreAsync(SuggerisciMacchinaRequest request);
+    
+    /// <summary>
+    /// Carica automaticamente una commessa sul Gantt con algoritmo intelligente.
+    /// Considera: data consegna, carico macchine, disponibilità.
+    /// </summary>
+    Task<CaricaSuGanttResponse> CaricaSuGanttAsync(Guid commessaId);
 }

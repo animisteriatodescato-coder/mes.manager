@@ -1,5 +1,16 @@
 window.commesseAperteGrid = (function() {
     let gridApi = null;
+        function safeApiCall(action) {
+            if (!gridApi) return;
+            setTimeout(() => {
+                try {
+                    action();
+                } catch (err) {
+                    console.warn('safeApiCall failed:', err);
+                }
+            }, 0);
+        }
+
     let dotNetHelper = null;
     let currentUserId = null;
 
@@ -56,42 +67,6 @@ window.commesseAperteGrid = (function() {
             },
             onCellClicked: params => {
                 showStoricoProgrammazione(params.data.id, params.data.numeroCommessa);
-            }
-        },
-        { 
-            field: 'numeroMacchina', 
-            headerName: 'MA', 
-            sortable: true, 
-            filter: true, 
-            width: 90, 
-            pinned: 'left',
-            editable: true,
-            singleClickEdit: true,  // Un solo click per editare
-            cellEditor: 'agSelectCellEditor',
-            cellEditorParams: params => {
-                const raw = params.data?.macchineSuDisponibili || '';
-                const macchine = raw.split(';').map(s => s.trim()).filter(s => s.length > 0);
-                // Opzioni: vuoto + tutte le macchine disponibili
-                return { values: ['', ...macchine] };
-            },
-            valueFormatter: params => {
-                // Mostra M001 -> 01, M002 -> 02, etc.
-                if (!params.value) return '-';
-                const match = params.value.match(/M0*(\d+)/);
-                return match ? match[1].padStart(2, '0') : params.value;
-            },
-            cellStyle: params => ({
-                fontWeight: params.value ? 'bold' : 'normal',
-                backgroundColor: params.value ? '#e3f2fd' : 'transparent',
-                textAlign: 'center',
-                cursor: 'pointer'
-            }),
-            suppressKeyboardEvent: () => false,
-            onCellClicked: (params) => {
-                // Blocca propagazione per evitare apertura dialog anima
-                if (params.event) {
-                    params.event.stopPropagation();
-                }
             }
         },
         { field: 'codice', headerName: 'Codice', sortable: true, filter: true, width: 180, pinned: 'left' },
@@ -266,57 +241,6 @@ window.commesseAperteGrid = (function() {
         return columnDefs;
     }
 
-    // Funzione per gestire i cambi di selezione macchina con EVENT DELEGATION
-    // Usa un singolo handler sul container che intercetta tutti i change events
-    let delegationAttached = false;
-    
-    function attachMachineSelectHandlers() {
-        if (delegationAttached) return;
-        
-        const gridContainer = document.getElementById('commesseAperteGrid');
-        if (!gridContainer) {
-            console.log('Container griglia non trovato');
-            return;
-        }
-        
-        delegationAttached = true;
-        console.log('Event delegation attaccato al container griglia');
-        
-        gridContainer.addEventListener('change', async (e) => {
-            // Verifica che sia un select di macchina
-            if (!e.target.matches('select[data-commessa-id]')) return;
-            
-            const commessaId = e.target.getAttribute('data-commessa-id');
-            const numeroMacchina = e.target.value;
-            const selectEl = e.target;
-            
-            console.log(`>>> CHANGE: commessa ${commessaId} -> "${numeroMacchina}"`);
-            
-            try {
-                const response = await fetch(`/api/Commesse/${commessaId}/numero-macchina`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ numeroMacchina: numeroMacchina || null })
-                });
-                
-                console.log(`>>> Response: ${response.status}`);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                
-                console.log(`>>> OK - Salvato!`);
-                
-                // Ricarica i dati
-                await refreshGridData();
-                
-            } catch (err) {
-                console.error(`>>> ERRORE:`, err);
-                alert(`Errore: ${err.message}`);
-            }
-        });
-    }
-
     // Funzione per ricaricare i dati della griglia
     async function refreshGridData() {
         try {
@@ -329,15 +253,10 @@ window.commesseAperteGrid = (function() {
             const filteredData = showArchived 
                 ? allData.filter(c => c.stato === 'Aperta')
                 : allData.filter(c => c.stato === 'Aperta' && c.statoProgramma !== 'Archiviata');
-            if (gridApi) {
+            safeApiCall(() => {
                 gridApi.setGridOption('rowData', filteredData);
                 console.log(`Grid refreshed with ${filteredData.length} rows (showArchived: ${showArchived})`);
-                // Attendi che la griglia sia renderizzata prima di attaccare gli handler
-                setTimeout(() => {
-                    attachMachineSelectHandlers();
-                    console.log('Handlers re-attached after refresh');
-                }, 200);
-            }
+            });
         } catch (err) {
             console.error('Error refreshing grid data:', err);
         }
@@ -439,6 +358,8 @@ window.commesseAperteGrid = (function() {
             gridDiv.innerHTML = '';
         }
 
+        const initialRowCount = Array.isArray(data) ? data.length : 0;
+
         console.log('Initializing commesse aperte grid with data:', data);
         console.log('Data length:', data ? data.length : 'null');
         if (data && data.length > 0) {
@@ -494,20 +415,27 @@ window.commesseAperteGrid = (function() {
                 if (stateToRestore) {
                     try {
                         const state = typeof stateToRestore === 'string' ? JSON.parse(stateToRestore) : stateToRestore;
-                        gridApi.applyColumnState({
-                            state: state,
-                            applyOrder: true
-                        });
-                        console.log('✓ Column state restored');
+                        setTimeout(() => {
+                            safeApiCall(() => {
+                                gridApi.applyColumnState({
+                                    state: state,
+                                    applyOrder: true
+                                });
+                                console.log('✓ Column state restored');
+                            });
+                        }, 0);
                     } catch (e) {
                         console.warn('Failed to restore column state:', e);
                     }
                 }
+
+                if (initialRowCount > 0 && gridApi.getDisplayedRowCount() === 0) {
+                    console.warn('Grid has data but shows 0 rows. Clearing filters/quick filter.');
+                    gridApi.setFilterModel(null);
+                    gridApi.setGridOption('quickFilterText', '');
+                    gridApi.onFilterChanged();
+                }
                 
-                // Attach change handlers to machine selects
-                setTimeout(() => {
-                    attachMachineSelectHandlers();
-                }, 100);
             },
             onColumnMoved: (params) => {
                 if (params.finished) saveColumnState();
@@ -534,17 +462,6 @@ window.commesseAperteGrid = (function() {
             },
             onModelUpdated: () => {
                 window.dispatchEvent(new CustomEvent('commesseAperteGridStatsChanged'));
-                // Re-attach select handlers after grid updates
-                setTimeout(() => {
-                    attachMachineSelectHandlers();
-                }, 100);
-            },
-            onRowDataUpdated: () => {
-                // Re-attach select handlers after row data changes
-                console.log('onRowDataUpdated triggered');
-                setTimeout(() => {
-                    attachMachineSelectHandlers();
-                }, 150);
             },
             onRowDoubleClicked: (event) => {
                 // Skip navigation if double-clicking on machine select or special columns
@@ -574,7 +491,7 @@ window.commesseAperteGrid = (function() {
                         const machineNumber = numeroMacchina ? parseInt(numeroMacchina.replace(/\D/g, '')) : null;
                         console.log('[v1.23] machineNumber estratto:', machineNumber, 'from:', numeroMacchina);
                         
-                        const response = await fetch('/api/pianificazione/sposta', {
+                        const response = await fetch('/api/pianificazione/sposta-commessa', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -622,9 +539,9 @@ window.commesseAperteGrid = (function() {
     }
 
     function setQuickFilter(searchText) {
-        if (gridApi) {
+        safeApiCall(() => {
             gridApi.setGridOption('quickFilterText', searchText);
-        }
+        });
     }
 
     function setColumnVisible(field, visible) {
@@ -653,8 +570,10 @@ window.commesseAperteGrid = (function() {
         if (!gridApi || !stateJson) return;
         try {
             const state = JSON.parse(stateJson);
-            gridApi.applyColumnState({ state: state, applyOrder: true });
-            console.log('setState: applied successfully');
+            safeApiCall(() => {
+                gridApi.applyColumnState({ state: state, applyOrder: true });
+                console.log('setState: applied successfully');
+            });
         } catch (e) {
             console.error('setState: error parsing state', e);
         }
@@ -711,6 +630,11 @@ window.commesseAperteGrid = (function() {
         };
     }
 
+    function getSelectedRows() {
+        if (!gridApi) return [];
+        return gridApi.getSelectedRows() || [];
+    }
+
     function toggleColumnPanel() {
         if (gridApi) {
             gridApi.openToolPanel('columns');
@@ -727,9 +651,9 @@ window.commesseAperteGrid = (function() {
     function updateRowData(jsonData) {
         console.log('Updating grid row data...');
         const data = JSON.parse(jsonData);
-        if (gridApi) {
+        safeApiCall(() => {
             gridApi.setRowData(data);
-        }
+        });
     }
 
     return {
@@ -747,6 +671,7 @@ window.commesseAperteGrid = (function() {
         setUiVars: setUiVars,
         exportCsv: exportCsv,
         getStats: getStats,
+        getSelectedRows: getSelectedRows,
         toggleColumnPanel: toggleColumnPanel
     };
 })();

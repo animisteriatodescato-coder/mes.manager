@@ -6,19 +6,21 @@
 
 <PageTitle>Gestione Festivi</PageTitle>
 
-<MudPaper Class="pa-4 mb-4">
+<MudPaper Class="pa-4 mb-4" data-testid="page-gestione-festivi">
     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
         <MudIcon Icon="@Icons.Material.Filled.Event" Size="Size.Large" Color="Color.Primary" />
         <MudText Typo="Typo.h5">Gestione Festivi</MudText>
         <MudSpacer />
         <MudButton Variant="Variant.Outlined" Color="Color.Secondary" 
                    StartIcon="@Icons.Material.Filled.AutoAwesome"
-                   OnClick="@InizializzaStandard">
+                   OnClick="@InizializzaStandard"
+                   data-testid="btn-festivi-inizializza">
             Inizializza Festivi Italiani @DateTime.Now.Year
         </MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" 
                    StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="@(() => _showAddDialog = true)">
+                   OnClick="@(() => _showAddDialog = true)"
+                   data-testid="btn-festivi-aggiungi">
             Aggiungi Festivo
         </MudButton>
     </MudStack>
@@ -34,7 +36,7 @@
 else
 {
     <MudPaper Class="pa-4">
-        <MudTable Items="@_festivi" Hover="true" Dense="true" Striped="true" Elevation="0">
+        <MudTable Items="@_festivi" Hover="true" Dense="true" Striped="true" Elevation="0" data-testid="table-festivi">
             <HeaderContent>
                 <MudTh>Data</MudTh>
                 <MudTh>Descrizione</MudTh>
@@ -82,7 +84,7 @@ else
 }
 
 @* Dialog Aggiungi Festivo *@
-<MudDialog @bind-Visible="_showAddDialog" Options="@(new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true })">
+<MudDialog @bind-Visible="_showAddDialog" Options="@(new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true })" data-testid="dlg-festivi-aggiungi">
     <TitleContent>
         <MudText Typo="Typo.h6">
             <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-2" />
@@ -112,15 +114,15 @@ else
         </MudStack>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="@(() => _showAddDialog = false)">Annulla</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@AggiungiFestivo">
+        <MudButton OnClick="@(() => _showAddDialog = false)" data-testid="btn-festivi-aggiungi-annulla">Annulla</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@AggiungiFestivo" data-testid="btn-festivi-aggiungi-conferma">
             Aggiungi
         </MudButton>
     </DialogActions>
 </MudDialog>
 
 @* Dialog Conferma Eliminazione *@
-<MudDialog @bind-Visible="_showDeleteDialog" Options="@(new DialogOptions { MaxWidth = MaxWidth.ExtraSmall })">
+<MudDialog @bind-Visible="_showDeleteDialog" Options="@(new DialogOptions { MaxWidth = MaxWidth.ExtraSmall })" data-testid="dlg-festivi-elimina">
     <TitleContent>
         <MudText Typo="Typo.h6">Conferma Eliminazione</MudText>
     </TitleContent>
@@ -131,8 +133,8 @@ else
         </MudText>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="@(() => _showDeleteDialog = false)">Annulla</MudButton>
-        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="@EliminaFestivo">
+        <MudButton OnClick="@(() => _showDeleteDialog = false)" data-testid="btn-festivi-elimina-annulla">Annulla</MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="@EliminaFestivo" data-testid="btn-festivi-elimina-conferma">
             Elimina
         </MudButton>
     </DialogActions>

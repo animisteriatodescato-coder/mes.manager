@@ -80,7 +80,7 @@ public class UpdateStatoRequest
 
 public class UpdateNumeroMacchinaRequest
 {
-    public string? NumeroMacchina { get; set; }
+    public int? NumeroMacchina { get; set; }
 }
 
 public class UpdateStatoProgrammaRequest
@@ -93,6 +93,6 @@ public class UpdateStatoProgrammaRequest
 public class RiordinaCommessaRequest
 {
     public Guid CommessaId { get; set; }
-    public string NuovoNumeroMacchina { get; set; } = string.Empty;
+    public int? NuovoNumeroMacchina { get; set; }
     public int NuovaPosizioneIndex { get; set; }
 }

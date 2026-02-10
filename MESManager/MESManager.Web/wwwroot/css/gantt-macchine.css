@@ -1,26 +1,120 @@
-/* Custom styles for Vis-Timeline Gantt Macchine */
+/* Custom styles for Vis-Timeline Gantt Macchine - VERSIONE ROBUSTA v2.0 */
 
-/* Timeline container */
+/* ==========================================
+   TIMELINE CONTAINER
+   ========================================== */
 #gantt-chart {
     border: 1px solid #e0e0e0;
     border-radius: 4px;
+    transition: box-shadow 0.3s ease;
 }
 
-/* Timeline items (commesse) */
+#gantt-chart:focus-within {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================
+   TIMELINE ITEMS (COMMESSE)
+   ========================================== */
 .vis-item {
     border-radius: 4px;
     border: none;
     font-weight: 500;
     font-size: 14px;
     overflow: visible;
+    transition: all 0.2s ease;
 }
 
 .vis-item.vis-selected {
     border: 2px solid #333;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    transform: translateY(-1px);
 }
 
-/* Commessa content with progress bar */
+/* ==========================================
+   COMMESSA BLOCCATA
+   ========================================== */
+.commessa-bloccata,
+.vis-item.commessa-bloccata {
+    background-color: #d32f2f !important; /* Rosso pieno */
+    border: 2px solid #b71c1c !important; /* Rosso scuro */
+    border-left-width: 4px !important;
+    opacity: 1 !important;
+    cursor: not-allowed !important;
+    color: white !important;
+    font-weight: bold !important;
+    animation: pulse-border 2s infinite;
+}
+
+.commessa-bloccata:hover,
+.vis-item.commessa-bloccata:hover {
+    box-shadow: 0 6px 16px rgba(211, 47, 47, 0.6) !important;
+    background-color: #c62828 !important;
+}
+
+.commessa-bloccata:focus,
+.vis-item.commessa-bloccata:focus {
+    outline: 2px solid #f44336;
+    outline-offset: 2px;
+}
+
+@keyframes pulse-border {
+    0%, 100% {
+        border-color: #b71c1c;
+    }
+    50% {
+        border-color: #d32f2f;
+    }
+}
+
+/* ==========================================
+   COMMESSA NORMALE
+   ========================================== */
+.vis-item.commessa-item {
+    cursor: move;
+    border-left: 3px solid rgba(0, 0, 0, 0.2);
+}
+
+.vis-item.commessa-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+.vis-item.commessa-item:active {
+    cursor: grabbing;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.vis-item.commessa-item:focus {
+    outline: 2px solid #2196F3;
+    outline-offset: 2px;
+}
+
+/* ==========================================
+   COMMESSA COMPLETATA (VISIBILE MA ATTENUATA)
+   ========================================== */
+.vis-item.commessa-completata {
+    opacity: 0.45;
+    filter: grayscale(70%);
+}
+
+/* ==========================================
+   DRAG FEEDBACK
+   ========================================== */
+.vis-item.vis-drag-left,
+.vis-item.vis-drag-right {
+    opacity: 0.7;
+    cursor: col-resize;
+}
+
+.vis-item.vis-drag-center {
+    opacity: 0.8;
+    cursor: move;
+}
+
+/* ==========================================
+   PROGRESS BAR
+   ========================================== */
 .commessa-content {
     position: relative;
     width: 100%;
@@ -37,7 +131,8 @@
     left: 0;
     top: 0;
     height: 100%;
-    transition: width 0.3s ease;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: width;
 }
 
 .commessa-text {
@@ -46,14 +141,27 @@
     color: white;
     font-weight: 500;
     padding: 0 8px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    user-select: none;
 }
 
-/* Timeline groups (machines) */
+/* ==========================================
+   ICONS IN COMMESSA
+   ========================================== */
+.vis-item .icon {
+    font-size: 16px;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+/* ==========================================
+   GROUPS (MACCHINE)
+   ========================================== */
 .vis-label {
     font-weight: 500;
     color: #424242;
     padding: 8px;
+    transition: background-color 0.2s ease;
 }
 
 .vis-labelset .vis-label {
@@ -61,10 +169,59 @@
     border-bottom: 1px solid #e0e0e0;
 }
 
-/* Timeline axis */
+.vis-labelset .vis-label:hover {
+    background-color: #eeeeee;
+}
+
+/* ==========================================
+   TIME AXIS
+   ========================================== */
 .vis-time-axis .vis-text {
     color: #424242;
     font-weight: 500;
+}
+
+/* ==========================================
+   DARK MODE - GANTT E GLOBALE
+   ========================================== */
+/* Giorni della settimana e assi temporali sempre visibili in grigio chiarissimo */
+.mud-theme-dark .vis-time-axis .vis-text,
+.mud-theme-dark .vis-time-axis .vis-text.vis-major,
+.mud-theme-dark .vis-time-axis .vis-text.vis-minor {
+    color: #e0e0e0 !important;
+    opacity: 1 !important;
+}
+
+.mud-theme-dark .vis-labelset .vis-label {
+    color: #e0e0e0 !important;
+}
+
+/* Dark mode globale MudBlazor: pulsanti, tabelle, menu */
+.mud-theme-dark .mud-button-text,
+.mud-theme-dark .mud-button-root,
+.mud-theme-dark .mud-table,
+.mud-theme-dark .mud-table-cell,
+.mud-theme-dark .mud-menu-item,
+.mud-theme-dark .mud-list-item,
+.mud-theme-dark .mud-typography,
+.mud-theme-dark .mud-input-root,
+.mud-theme-dark .mud-input-slot,
+.mud-theme-dark .mud-select,
+.mud-theme-dark .mud-select-input,
+.mud-theme-dark label,
+.mud-theme-dark .mud-input-label,
+.mud-theme-dark .mud-toolbar,
+.mud-theme-dark .mud-chip-text,
+.mud-theme-dark .ag-cell,
+.mud-theme-dark .ag-header-cell-text,
+.mud-theme-dark .ag-header-cell-label,
+.mud-theme-dark .ag-row,
+.mud-theme-dark .mud-nav-link,
+.mud-theme-dark .mud-drawer-content,
+.mud-theme-dark span,
+.mud-theme-dark p,
+.mud-theme-dark div {
+    color: #e0e0e0 !important;
 }
 
 .vis-time-axis .vis-grid.vis-minor {
@@ -73,6 +230,114 @@
 
 .vis-time-axis .vis-grid.vis-major {
     border-color: #bdbdbd;
+}
+
+.vis-time-axis .vis-grid.vis-today {
+    background-color: rgba(33, 150, 243, 0.05);
+}
+
+/* ==========================================
+   CURRENT TIME INDICATOR
+   ========================================== */
+.vis-current-time {
+    background-color: #f44336;
+    width: 2px;
+    z-index: 1;
+}
+
+/* ==========================================
+   TOOLTIP
+   ========================================== */
+.vis-tooltip {
+    background-color: rgba(0, 0, 0, 0.85);
+    color: white;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 13px;
+    max-width: 300px;
+    white-space: pre-line;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================
+   ACCESSIBILITY
+   ========================================== */
+.vis-item:focus-visible {
+    outline: 3px solid #2196F3;
+    outline-offset: 2px;
+}
+
+/* Reduce motion per utenti con preferenze */
+@media (prefers-reduced-motion: reduce) {
+    .vis-item,
+    .commessa-progress,
+    .vis-tooltip {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* ==========================================
+   HIGH PRIORITY INDICATOR
+   ========================================== */
+.vis-item[data-priority="high"] {
+    border-left-width: 5px !important;
+    border-left-color: #ff9800 !important;
+}
+
+/* ==========================================
+   VINCOLI SUPERATI WARNING
+   ========================================== */
+.vis-item[data-vincolo-superato="true"] {
+    border-top: 3px solid #f44336 !important;
+}
+
+/* ==========================================
+   LOADING STATE
+   ========================================== */
+#gantt-chart.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+#gantt-chart.loading::after {
+    content: 'Caricamento...';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 12px 24px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    font-weight: 500;
+    z-index: 1000;
+}
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+@media (max-width: 768px) {
+    .vis-item {
+        font-size: 12px;
+    }
+    
+    .vis-label {
+        font-size: 13px;
+        padding: 6px;
+    }
 }
 
 /* Current time marker */

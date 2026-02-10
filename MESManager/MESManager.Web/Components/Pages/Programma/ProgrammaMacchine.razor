@@ -16,7 +16,7 @@
 
 <PageTitle>Programma Macchine</PageTitle>
 
-<div class="programma-macchine-page">
+<div class="programma-macchine-page" data-testid="page-programma-macchine">
     <div class="settings-panel">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
             <MudText Typo="Typo.h6" data-testid="programma-macchine-title">Programma Macchine</MudText>
@@ -31,7 +31,7 @@
                          DebounceInterval="280"
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshData">Aggiorna</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshData" data-testid="btn-refresh">Aggiorna</MudButton>
             <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Print" OnClick="@PrintCommesse">Stampa</MudButton>
@@ -78,7 +78,7 @@
     </div>
 
     <div id="programmaMacchineGrid" class="ag-theme-alpine" 
-         data-testid="programma-macchine-grid"
+         data-testid="grid-programma"
          style="width: 100%; height: calc(100vh - 150px);">
     </div>
 
@@ -285,7 +285,8 @@
                 <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-2">(alternati per cambio macchina)</MudText>
             </MudStack>
             <MudChip T="string" Size="Size.Small" Color="@(isLoading ? Color.Warning : Color.Success)" 
-                     Icon="@(isLoading ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.CheckCircle)">
+                     Icon="@(isLoading ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.CheckCircle)"
+                     data-testid="status-info">
                 @gridStatus
             </MudChip>
         </MudStack>
@@ -502,8 +503,9 @@
         {
             // Get current programmed commesse for the grid
             var programmate = _commesse.Where(c => 
-                !string.IsNullOrEmpty(c.NumeroMacchina) &&
-                c.StatoProgramma != "Archiviata"
+                c.NumeroMacchina.HasValue &&
+                c.StatoProgramma != "Archiviata" &&
+                c.StatoProgramma != "Completata"
             ).ToList();
             
             await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.setRowData", programmate);
@@ -525,17 +527,31 @@
             isLoading = true;
             gridStatus = "Caricamento...";
             StateHasChanged();
+
+            try
+            {
+                await Http.PostAsync("api/pianificazione/auto-completa", null);
+            }
+            catch
+            {
+                // Auto-complete best-effort
+            }
             
             _allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
             
-            // Filter only open commesse (la griglia JS farà ulteriori filtri per macchina e stato)
-            _commesse = _allCommesse.Where(c => c.Stato == "Aperta").ToList();
-            
-            // Conteggio delle commesse programmate (con macchina assegnata e non archiviate)
-            var programmate = _commesse.Where(c => 
-                !string.IsNullOrEmpty(c.NumeroMacchina) &&
-                c.StatoProgramma != "Archiviata"
+            // 🔄 AUTO-SYNC v1.31: Mostra SOLO commesse con macchina E data inizio
+            // Programma = Vista Read-Only del Gantt (master source)
+            // Si aggiorna automaticamente quando Gantt cambia (via SignalR)
+            _commesse = _allCommesse.Where(c => 
+                c.Stato == "Aperta" &&
+                c.NumeroMacchina.HasValue &&
+                c.DataInizioPrevisione.HasValue &&
+                c.StatoProgramma != "Archiviata" &&
+                c.StatoProgramma != "Completata"
             ).ToList();
+            
+            // Conteggio totale
+            var programmate = _commesse;
             
             totalRows = programmate.Count;
             filteredRows = programmate.Count;

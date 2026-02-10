@@ -202,7 +202,7 @@ MESManager/
 │   ├── SyncMagoBackgroundService.cs
 │   └── Program.cs
 │
-├── 📦 MESManager.E2E/                 # Test End-to-End
+├── 📦 tests/MESManager.E2E/           # Test End-to-End
 │
 ├── 📦 TestMagoConnection/             # Utility test connessione Mago
 │

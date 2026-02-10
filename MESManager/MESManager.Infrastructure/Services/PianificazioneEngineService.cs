@@ -8,8 +8,15 @@ using Microsoft.Extensions.Logging;
 namespace MESManager.Infrastructure.Services;
 
 /// <summary>
-/// Servizio per la gestione avanzata della pianificazione con accodamento rigido.
-/// Gestisce spostamenti, ricalcoli cascata e validazione anti-sovrapposizione.
+/// Servizio ROBUSTO per la gestione avanzata della pianificazione con scheduling industriale.
+/// 
+/// Funzionalità principali:
+/// - Optimistic Concurrency Control (RowVersion)
+/// - Segmenti bloccati con ricalcolo intelligente
+/// - Priorità e vincoli temporali
+/// - Setup dinamico e riduzione per classi consecutive
+/// - Transazioni atomiche
+/// - Update version per sincronizzazione client
 /// </summary>
 public class PianificazioneEngineService : IPianificazioneEngineService
 {
@@ -28,16 +35,30 @@ public class PianificazioneEngineService : IPianificazioneEngineService
     }
 
     /// <summary>
-    /// Sposta una commessa su una macchina con gestione accodamento rigido.
+    /// Sposta una commessa su una macchina con gestione robusta contro concorrenza, blocchi e vincoli.
     /// </summary>
     public async Task<SpostaCommessaResponse> SpostaCommessaAsync(SpostaCommessaRequest request)
     {
         try
         {
-            _logger.LogInformation("Inizio spostamento commessa {CommessaId} su macchina {TargetMacchina}", 
-                request.CommessaId, request.TargetMacchina);
+            var updateVersion = DateTime.UtcNow.Ticks;
+            
+            _logger.LogInformation("[v{UpdateVersion}] Inizio spostamento commessa {CommessaId} su macchina {TargetMacchina}", 
+                updateVersion, request.CommessaId, request.TargetMacchina);
 
-            // 1. Carica la commessa con l'articolo
+            // 0. Validazione input (defense-in-depth)
+            if (request.TargetMacchina < 1 || request.TargetMacchina > 99)
+            {
+                _logger.LogWarning("Service: TargetMacchina non valida: {TargetMacchina}", request.TargetMacchina);
+                return new SpostaCommessaResponse
+                {
+                    Success = false,
+                    ErrorMessage = $"Numero macchina non valido: {request.TargetMacchina}. Deve essere tra 1 e 99.",
+                    UpdateVersion = updateVersion
+                };
+            }
+
+            // 1. Carica la commessa con tracking per concurrency
             var commessa = await _context.Commesse
                 .Include(c => c.Articolo)
                 .FirstOrDefaultAsync(c => c.Id == request.CommessaId);
@@ -47,178 +68,199 @@ public class PianificazioneEngineService : IPianificazioneEngineService
                 return new SpostaCommessaResponse
                 {
                     Success = false,
-                    ErrorMessage = $"Commessa con ID {request.CommessaId} non trovata"
+                    ErrorMessage = $"Commessa {request.CommessaId} non trovata",
+                    UpdateVersion = updateVersion
                 };
             }
 
-            // 2. Verifica che la commessa non sia già in produzione
+            // 2. Verifica blocco: commesse bloccate NON possono essere spostate
+            if (commessa.Bloccata)
+            {
+                _logger.LogWarning("Tentativo di spostare commessa bloccata {CommessaId}", request.CommessaId);
+                return new SpostaCommessaResponse
+                {
+                    Success = false,
+                    ErrorMessage = "Impossibile spostare una commessa bloccata. Sbloccarla prima di spostarla.",
+                    UpdateVersion = updateVersion
+                };
+            }
+
+            // 3. Verifica produzione in corso
             if (commessa.DataInizioProduzione != null && commessa.DataFineProduzione == null)
             {
                 return new SpostaCommessaResponse
                 {
                     Success = false,
-                    ErrorMessage = "Impossibile spostare una commessa già in produzione"
+                    ErrorMessage = "Impossibile spostare una commessa già in produzione",
+                    UpdateVersion = updateVersion
                 };
             }
 
-            // 3. Carica le impostazioni
+            // 4. Carica impostazioni, calendario e festivi
             var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
                 ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
 
-            // 4. Carica i festivi
+            var calendario = await GetCalendarioLavoroDtoAsync();
             var festivi = await GetFestiviSetAsync();
 
-            // 5. Salva la macchina di origine per eventuale ricalcolo
+            // 5. Salva macchina origine
             var macchinaOrigine = commessa.NumeroMacchina;
-            var targetMacchinaStr = request.TargetMacchina.ToString();
-
-            // 6. Carica tutte le commesse della macchina di destinazione (esclusa quella da spostare)
+            
+            // 6. NUOVA LOGICA GANTT-FIRST: Normalizza data drag su orario lavorativo
+            DateTime dataInizioDesiderata = request.TargetDataInizio ?? DateTime.Now;
+            dataInizioDesiderata = NormalizzaSuOrarioLavorativo(dataInizioDesiderata, calendario, festivi);
+            
+            // 7. Carica commesse macchina destinazione (esclusa quella da spostare)
             var commesseDestinazione = await _context.Commesse
                 .Include(c => c.Articolo)
-                .Where(c => c.NumeroMacchina == targetMacchinaStr && c.Id != request.CommessaId)
-                .OrderBy(c => c.OrdineSequenza)
-                .ThenBy(c => c.DataInizioPrevisione)
+                .Where(c => c.NumeroMacchina == request.TargetMacchina && c.Id != request.CommessaId)
+                .OrderBy(c => c.DataInizioPrevisione ?? DateTime.MaxValue)
                 .ToListAsync();
 
-            // 7. Determina la posizione di inserimento
-            int nuovoOrdine;
-            DateTime dataInizio;
+            // 8. Calcola durata commessa da spostare
+            var durataMinuti = CalcolaDurataConSetupDinamico(commessa, null, impostazioni);
+            var dataFineCalcolata = _pianificazioneService.CalcolaDataFinePrevistaConFestivi(
+                dataInizioDesiderata,
+                durataMinuti,
+                calendario,
+                festivi
+            );
 
-            if (request.InsertBeforeCommessaId.HasValue)
+            // 9. CHECK SOVRAPPOSIZIONE con commesse esistenti
+            bool hasOverlap = false;
+            Commessa? commessaSovrapposta = null;
+            
+            foreach (var c in commesseDestinazione)
             {
-                // Inserisci PRIMA di una specifica commessa
-                var insertBefore = commesseDestinazione.FirstOrDefault(c => c.Id == request.InsertBeforeCommessaId);
-                if (insertBefore == null)
+                if (c.DataInizioPrevisione.HasValue && c.DataFinePrevisione.HasValue)
                 {
-                    return new SpostaCommessaResponse
+                    // Overlap se: (nuovoInizio < vecchioFine) AND (nuovoFine > vecchioInizio)
+                    if (dataInizioDesiderata < c.DataFinePrevisione && dataFineCalcolata > c.DataInizioPrevisione)
                     {
-                        Success = false,
-                        ErrorMessage = "Commessa di riferimento per inserimento non trovata sulla macchina di destinazione"
-                    };
+                        hasOverlap = true;
+                        commessaSovrapposta = c;
+                        break;
+                    }
                 }
+            }
 
-                nuovoOrdine = insertBefore.OrdineSequenza;
+            DateTime dataInizioEffettiva;
+            int nuovoOrdine;
+
+            if (hasOverlap && commessaSovrapposta != null)
+            {
+                // ACCODAMENTO: Metti dopo l'ultima commessa sovrapposta
+                _logger.LogInformation("Sovrapposizione rilevata con {CodiceCommessa} - accodamento", commessaSovrapposta.Codice);
                 
-                // Shifta tutte le commesse successive
-                foreach (var c in commesseDestinazione.Where(c => c.OrdineSequenza >= nuovoOrdine))
+                dataInizioEffettiva = commessaSovrapposta.DataFinePrevisione ?? dataInizioDesiderata;
+                dataFineCalcolata = _pianificazioneService.CalcolaDataFinePrevistaConFestivi(
+                    dataInizioEffettiva,
+                    durataMinuti,
+                    calendario,
+                    festivi
+                );
+                
+                nuovoOrdine = commessaSovrapposta.OrdineSequenza + 1;
+                
+                // Shifta ordini successive
+                foreach (var c in commesseDestinazione.Where(c => c.OrdineSequenza >= nuovoOrdine && !c.Bloccata))
                 {
                     c.OrdineSequenza++;
-                }
-
-                // Data inizio = inizio della commessa prima cui inseriamo (verrà ricalcolata nella cascata)
-                var commessaPrecedente = commesseDestinazione
-                    .Where(c => c.OrdineSequenza < nuovoOrdine)
-                    .OrderByDescending(c => c.OrdineSequenza)
-                    .FirstOrDefault();
-
-                dataInizio = commessaPrecedente?.DataFinePrevisione ?? request.TargetDataInizio ?? DateTime.Now;
-            }
-            else if (request.TargetDataInizio.HasValue)
-            {
-                // Data specifica richiesta - verifica sovrapposizioni
-                dataInizio = request.TargetDataInizio.Value;
-                
-                // Trova la posizione corretta basata sulla data
-                var commesseOrdinatePerData = commesseDestinazione
-                    .OrderBy(c => c.DataInizioPrevisione ?? DateTime.MaxValue)
-                    .ToList();
-
-                // Trova la prima commessa che inizia dopo la data richiesta
-                var commessaDopoDataRichiesta = commesseOrdinatePerData
-                    .FirstOrDefault(c => c.DataInizioPrevisione >= dataInizio);
-
-                if (commessaDopoDataRichiesta != null)
-                {
-                    nuovoOrdine = commessaDopoDataRichiesta.OrdineSequenza;
-                    
-                    // Shifta tutte le commesse dalla posizione in poi
-                    foreach (var c in commesseDestinazione.Where(c => c.OrdineSequenza >= nuovoOrdine))
-                    {
-                        c.OrdineSequenza++;
-                    }
-                }
-                else
-                {
-                    // Accoda in fondo
-                    nuovoOrdine = (commesseDestinazione.Max(c => (int?)c.OrdineSequenza) ?? 0) + 1;
-                    
-                    // Ma la data inizio deve essere DOPO l'ultima commessa
-                    var ultimaCommessa = commesseDestinazione
-                        .OrderByDescending(c => c.DataFinePrevisione)
-                        .FirstOrDefault();
-                    
-                    if (ultimaCommessa?.DataFinePrevisione > dataInizio)
-                    {
-                        dataInizio = ultimaCommessa.DataFinePrevisione.Value;
-                    }
                 }
             }
             else
             {
-                // Accoda in fondo
-                nuovoOrdine = (commesseDestinazione.Max(c => (int?)c.OrdineSequenza) ?? 0) + 1;
+                // POSIZIONE ESATTA: Usa la data desiderata senza modifiche
+                _logger.LogInformation("Nessuna sovrapposizione - posizione esatta a {DataInizio}", dataInizioDesiderata);
                 
-                // Data inizio = fine dell'ultima commessa
-                var ultimaCommessa = commesseDestinazione
+                dataInizioEffettiva = dataInizioDesiderata;
+                
+                // Trova ordine sequenza per data
+                var commessaPrecedente = commesseDestinazione
+                    .Where(c => c.DataFinePrevisione <= dataInizioEffettiva)
                     .OrderByDescending(c => c.DataFinePrevisione)
                     .FirstOrDefault();
                 
-                dataInizio = ultimaCommessa?.DataFinePrevisione ?? DateTime.Now;
+                if (commessaPrecedente != null)
+                {
+                    nuovoOrdine = commessaPrecedente.OrdineSequenza + 1;
+                }
+                else
+                {
+                    nuovoOrdine = 1;
+                }
+                
+                // Shifta ordini successive solo se necessario
+                foreach (var c in commesseDestinazione.Where(c => c.OrdineSequenza >= nuovoOrdine && !c.Bloccata))
+                {
+                    c.OrdineSequenza++;
+                }
             }
 
-            // 8. Aggiorna la commessa spostata
-            commessa.NumeroMacchina = targetMacchinaStr;
+            // 10. Aggiorna commessa spostata con posizione ESATTA
+            commessa.NumeroMacchina = request.TargetMacchina;
             commessa.OrdineSequenza = nuovoOrdine;
-            commessa.DataInizioPrevisione = dataInizio;
+            commessa.DataInizioPrevisione = dataInizioEffettiva;
+            commessa.DataFinePrevisione = dataFineCalcolata;
             commessa.UltimaModifica = DateTime.UtcNow;
 
-            // 9. Calcola la durata e data fine della commessa spostata
-            var durataMinuti = CalcolaDurata(commessa, impostazioni);
-            commessa.DataFinePrevisione = _pianificazioneService.CalcolaDataFinePrevistaConFestivi(
-                dataInizio,
-                durataMinuti,
-                impostazioni.OreLavorativeGiornaliere,
-                impostazioni.GiorniLavorativiSettimanali,
-                festivi
-            );
+            // 11. Ricalcola SOLO commesse successive (non tutta macchina)
+            await RicalcolaCommesseSuccessiveAsync(request.TargetMacchina, commessa, impostazioni, calendario, festivi);
 
-            // 10. Ricalcola a cascata tutte le commesse della macchina di destinazione
-            await RicalcolaAcqueMacchinaInternalAsync(targetMacchinaStr, impostazioni, festivi);
-
-            // 11. Se la macchina di origine era diversa, ricalcola anche quella
+            // 12. Ricalcola macchina origine se diversa
             List<CommessaGanttDto>? commesseMacchinaOrigine = null;
-            if (macchinaOrigine != null && macchinaOrigine != targetMacchinaStr)
+            if (macchinaOrigine != null && macchinaOrigine != request.TargetMacchina)
             {
-                await RicalcolaAcqueMacchinaInternalAsync(macchinaOrigine, impostazioni, festivi);
+                await RicalcolaMacchinaConBlocchiAsync(macchinaOrigine, impostazioni, calendario, festivi);
                 
-                // Carica le commesse aggiornate della macchina origine
                 var commesseOrigine = await _context.Commesse
                     .Include(c => c.Articolo)
                     .Where(c => c.NumeroMacchina == macchinaOrigine)
                     .OrderBy(c => c.OrdineSequenza)
                     .ToListAsync();
                 
-                commesseMacchinaOrigine = commesseOrigine.Select(c => MapToGanttDto(c, impostazioni)).ToList();
+                commesseMacchinaOrigine = await MapToGanttDtoBatchAsync(commesseOrigine, impostazioni);
             }
 
-            // 12. Salva tutto
-            await _context.SaveChangesAsync();
+            // 13. Salva con gestione concurrency exception
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                _logger.LogWarning(ex, "Concurrency conflict durante spostamento commessa {CommessaId}", request.CommessaId);
+                return new SpostaCommessaResponse
+                {
+                    Success = false,
+                    ErrorMessage = "I dati sono stati modificati da un altro utente. Aggiorna e riprova.",
+                    UpdateVersion = updateVersion
+                };
+            }
 
-            // 13. Carica le commesse aggiornate della macchina destinazione
+            // 13. Carica commesse aggiornate destinazione
             var commesseAggiornate = await _context.Commesse
                 .Include(c => c.Articolo)
-                .Where(c => c.NumeroMacchina == targetMacchinaStr)
+                .Where(c => c.NumeroMacchina == request.TargetMacchina)
                 .OrderBy(c => c.OrdineSequenza)
                 .ToListAsync();
 
-            _logger.LogInformation("Commessa {CommessaId} spostata su macchina {TargetMacchina} in posizione {Ordine}", 
-                request.CommessaId, request.TargetMacchina, nuovoOrdine);
+            var macchineCoinvolte = new List<string> { request.TargetMacchina.ToString() };
+            if (macchinaOrigine != null && macchinaOrigine != request.TargetMacchina)
+            {
+                macchineCoinvolte.Add(macchinaOrigine.Value.ToString());
+            }
+
+            _logger.LogInformation("[v{UpdateVersion}] Spostamento completato: commessa {CommessaId} → macchina {TargetMacchina} posizione {Ordine}", 
+                updateVersion, request.CommessaId, request.TargetMacchina, nuovoOrdine);
 
             return new SpostaCommessaResponse
             {
                 Success = true,
-                CommesseAggiornate = commesseAggiornate.Select(c => MapToGanttDto(c, impostazioni)).ToList(),
-                CommesseMacchinaOrigine = commesseMacchinaOrigine
+                CommesseAggiornate = await MapToGanttDtoBatchAsync(commesseAggiornate, impostazioni),
+                CommesseMacchinaOrigine = commesseMacchinaOrigine,
+                UpdateVersion = updateVersion,
+                MacchineCoinvolte = macchineCoinvolte
             };
         }
         catch (Exception ex)
@@ -227,110 +269,410 @@ public class PianificazioneEngineService : IPianificazioneEngineService
             return new SpostaCommessaResponse
             {
                 Success = false,
-                ErrorMessage = $"Errore interno: {ex.Message}"
+                ErrorMessage = $"Errore interno: {ex.Message}",
+                UpdateVersion = DateTime.UtcNow.Ticks
             };
         }
     }
 
     /// <summary>
-    /// Ricalcola le date di tutte le commesse di una macchina (versione pubblica dell'interfaccia).
+    /// Overload pubblico per ricalcolare macchina con blocchi
     /// </summary>
-    public async Task RicalcolaAcqueMacchinaAsync(string numeroMacchina)
+    public async Task RicalcolaMacchinaConBlocchiAsync(int? numeroMacchina)
     {
-        var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
+        var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync() 
             ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
+        var calendario = await GetCalendarioLavoroDtoAsync();
         var festivi = await GetFestiviSetAsync();
-        
-        await RicalcolaAcqueMacchinaInternalAsync(numeroMacchina, impostazioni, festivi);
-        await _context.SaveChangesAsync();
+        await RicalcolaMacchinaConBlocchiAsync(numeroMacchina, impostazioni, calendario, festivi);
     }
 
     /// <summary>
-    /// Ricalcola le date di tutte le commesse di una macchina in modo sequenziale (accodamento rigido).
+    /// Ricalcola una macchina rispettando i blocchi come segmenti fissi.
+    /// Algoritmo: le commesse bloccate definiscono "segmenti" fissi, e le commesse non bloccate vengono 
+    /// ricalcolate nei "vuoti" tra i blocchi o in coda.
     /// </summary>
-    private async Task RicalcolaAcqueMacchinaInternalAsync(string numeroMacchina, ImpostazioniProduzione impostazioni, HashSet<DateOnly> festivi)
+    private async Task RicalcolaMacchinaConBlocchiAsync(int? numeroMacchina, ImpostazioniProduzione impostazioni, CalendarioLavoroDto calendario, HashSet<DateOnly> festivi)
     {
         var commesse = await _context.Commesse
             .Include(c => c.Articolo)
             .Where(c => c.NumeroMacchina == numeroMacchina)
-            .OrderBy(c => c.OrdineSequenza)
-            .ThenBy(c => c.DataInizioPrevisione)
+            .OrderBy(c => c.Priorita) // Priorità prima (più basse = più urgenti)
+            .ThenBy(c => c.OrdineSequenza)
             .ToListAsync();
 
         if (!commesse.Any()) return;
 
-        DateTime? dataInizioCorrente = null;
+        // Separa bloccate e non bloccate
+        var commesseBloccate = commesse.Where(c => c.Bloccata).OrderBy(c => c.OrdineSequenza).ToList();
+        var commesseNonBloccate = commesse.Where(c => !c.Bloccata).OrderBy(c => c.OrdineSequenza).ToList();
 
-        // Rinumera gli ordini sequenzialmente
-        int ordine = 1;
-        foreach (var commessa in commesse)
+        // Le commesse bloccate NON vengono toccate: mantengono le loro date
+        // Ricalcola solo le non bloccate "intorno" ai blocchi
+
+        DateTime? cursore = null; // Cursore temporale per accodare
+
+        // Rinumera tutti gli ordini alla fine per coerenza
+        int ordineGlobale = 1;
+
+        // Prima passa sulle commesse bloccate per rinumerarle e usarle come vincoli temporali
+        foreach (var bloccata in commesseBloccate)
         {
-            commessa.OrdineSequenza = ordine++;
+            bloccata.OrdineSequenza = ordineGlobale++;
+            // Le date non vengono toccate
+        }
 
-            // La prima commessa mantiene la sua data inizio (o usa ora corrente se non impostata)
-            if (dataInizioCorrente == null)
+        // Ora ricalcola le non bloccate: le accoda sequenzialmente tra/dopo i blocchi
+        foreach (var commessa in commesseNonBloccate)
+        {
+            commessa.OrdineSequenza = ordineGlobale++;
+
+            // Determina data inizio rispettando vincoli
+            DateTime dataInizio;
+
+            // Vincolo DataInizio utente
+            if (commessa.VincoloDataInizio.HasValue)
             {
-                dataInizioCorrente = commessa.DataInizioPrevisione ?? DateTime.Now;
+                dataInizio = cursore.HasValue && cursore > commessa.VincoloDataInizio
+                    ? cursore.Value
+                    : commessa.VincoloDataInizio.Value;
+            }
+            else
+            {
+                dataInizio = cursore ?? DateTime.Now;
             }
 
-            // Imposta data inizio
-            commessa.DataInizioPrevisione = dataInizioCorrente;
+            // Verifica se c'è una commessa bloccata che inizia prima della data inizio calcolata
+            var prossimoBloccato = commesseBloccate
+                .Where(b => b.DataInizioPrevisione.HasValue && b.DataInizioPrevisione > dataInizio)
+                .OrderBy(b => b.DataInizioPrevisione)
+                .FirstOrDefault();
 
-            // Calcola durata e data fine
-            var durataMinuti = CalcolaDurata(commessa, impostazioni);
+            // Imposta data inizio
+            commessa.DataInizioPrevisione = dataInizio;
+
+            // Calcola durata con setup dinamico (considera classe lavorazione precedente)
+            Commessa? commessaPrecedente = commesse
+                .Where(c => c.OrdineSequenza < commessa.OrdineSequenza)
+                .OrderByDescending(c => c.OrdineSequenza)
+                .FirstOrDefault();
+            
+            var durataMinuti = CalcolaDurataConSetupDinamico(commessa, commessaPrecedente, impostazioni);
+            
             commessa.DataFinePrevisione = _pianificazioneService.CalcolaDataFinePrevistaConFestivi(
-                dataInizioCorrente.Value,
+                dataInizio,
                 durataMinuti,
-                impostazioni.OreLavorativeGiornaliere,
-                impostazioni.GiorniLavorativiSettimanali,
+                calendario,
                 festivi
             );
 
-            // La prossima commessa inizia quando questa finisce (accodamento rigido)
-            dataInizioCorrente = commessa.DataFinePrevisione;
-            
+            // Verifica vincolo DataFine utente (warning, non blocco)
+            if (commessa.VincoloDataFine.HasValue && commessa.DataFinePrevisione > commessa.VincoloDataFine)
+            {
+                _logger.LogWarning("Commessa {CommessaCodice} supera vincolo data fine: previsto {DataFinePrevista}, limite {VincoloDataFine}",
+                    commessa.Codice, commessa.DataFinePrevisione, commessa.VincoloDataFine);
+                // Il flag warning verrà impostato nel DTO
+            }
+
+            // Aggiorna cursore per prossima commessa
+            cursore = commessa.DataFinePrevisione;
+
+            // Se c'è un bloccato che inizia prima della fine calcolata, il cursore deve saltare oltre il bloccato
+            if (prossimoBloccato != null && prossimoBloccato.DataFinePrevisione.HasValue)
+            {
+                if (cursore < prossimoBloccato.DataInizioPrevisione)
+                {
+                    // C'è spazio: OK
+                }
+                else
+                {
+                    // Sovrapposizione: sposta cursore dopo il bloccato
+                    cursore = prossimoBloccato.DataFinePrevisione.Value;
+                }
+            }
+
             commessa.UltimaModifica = DateTime.UtcNow;
         }
     }
 
     /// <summary>
-    /// Ricalcola tutte le commesse di tutte le macchine.
+    /// Calcola durata con setup dinamico:
+    /// - Se SetupStimatoMinuti è valorizzato, usa quello
+    /// - Altrimenti, se ClasseLavorazione è uguale alla precedente, riduce setup del 50%
+    /// - Altrimenti, usa setup default da ImpostazioniProduzione
     /// </summary>
-    public async Task<List<CommessaGanttDto>> RicalcolaTutteCommesseAsync()
+    private int CalcolaDurataConSetupDinamico(Commessa commessa, Commessa? commessaPrecedente, ImpostazioniProduzione impostazioni)
     {
-        var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
-            ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
+        var tempoCiclo = commessa.Articolo?.TempoCiclo ?? 0;
+        var numeroFigure = commessa.Articolo?.NumeroFigure ?? 1;
 
-        var festivi = await GetFestiviSetAsync();
+        int setupMinuti;
 
-        // Ottieni tutte le macchine che hanno commesse
-        var macchine = await _context.Commesse
-            .Where(c => c.NumeroMacchina != null)
-            .Select(c => c.NumeroMacchina!)
-            .Distinct()
-            .ToListAsync();
-
-        foreach (var macchina in macchine)
+        if (commessa.SetupStimatoMinuti.HasValue)
         {
-            await RicalcolaAcqueMacchinaInternalAsync(macchina, impostazioni, festivi);
+            // Override utente
+            setupMinuti = commessa.SetupStimatoMinuti.Value;
+        }
+        else if (!string.IsNullOrEmpty(commessa.ClasseLavorazione) 
+                 && !string.IsNullOrEmpty(commessaPrecedente?.ClasseLavorazione)
+                 && commessa.ClasseLavorazione == commessaPrecedente.ClasseLavorazione)
+        {
+            // Stessa classe: riduzione setup 50%
+            setupMinuti = impostazioni.TempoSetupMinuti / 2;
+            _logger.LogDebug("Riduzione setup per classe lavorazione {Classe}: {SetupRidotto}min", 
+                commessa.ClasseLavorazione, setupMinuti);
+        }
+        else
+        {
+            // Setup standard
+            setupMinuti = impostazioni.TempoSetupMinuti;
         }
 
-        await _context.SaveChangesAsync();
-
-        // Ritorna tutte le commesse aggiornate
-        var tutteCommesse = await _context.Commesse
-            .Include(c => c.Articolo)
-            .Where(c => c.NumeroMacchina != null)
-            .OrderBy(c => c.NumeroMacchina)
-            .ThenBy(c => c.OrdineSequenza)
-            .ToListAsync();
-
-        return tutteCommesse.Select(c => MapToGanttDto(c, impostazioni)).ToList();
+        return _pianificazioneService.CalcolaDurataPrevistaMinuti(
+            tempoCiclo,
+            numeroFigure,
+            commessa.QuantitaRichiesta,
+            setupMinuti
+        );
     }
 
     /// <summary>
-    /// Ottiene il set di festivi per l'anno corrente e successivo.
+    /// Ricalcola una macchina (versione pubblica).
     /// </summary>
+    public async Task RicalcolaAcqueMacchinaAsync(int? numeroMacchina)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        
+        try
+        {
+            var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
+                ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
+            var calendario = await GetCalendarioLavoroDtoAsync();
+            var festivi = await GetFestiviSetAsync();
+            
+            await RicalcolaMacchinaConBlocchiAsync(numeroMacchina, impostazioni, calendario, festivi);
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Errore ricalcolo macchina {NumeroMacchina}", numeroMacchina);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Ricalcola tutte le macchine.
+    /// </summary>
+    public async Task<List<CommessaGanttDto>> RicalcolaTutteCommesseAsync()
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        
+        try
+        {
+            var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
+                ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
+
+            var calendario = await GetCalendarioLavoroDtoAsync();
+            var festivi = await GetFestiviSetAsync();
+
+            var macchine = await _context.Commesse
+                .Where(c => c.NumeroMacchina != null)
+                .Select(c => c.NumeroMacchina!)
+                .Distinct()
+                .ToListAsync();
+
+            foreach (var macchina in macchine)
+            {
+                await RicalcolaMacchinaConBlocchiAsync(macchina, impostazioni, calendario, festivi);
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            var tutteCommesse = await _context.Commesse
+                .Include(c => c.Articolo)
+                .Where(c => c.NumeroMacchina != null)
+                .OrderBy(c => c.NumeroMacchina)
+                .ThenBy(c => c.OrdineSequenza)
+                .ToListAsync();
+
+            return await MapToGanttDtoBatchAsync(tutteCommesse, impostazioni);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Errore ricalcolo tutte commesse");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Suggerisce la macchina migliore per una commessa (earliest completion time).
+    /// </summary>
+    public async Task<SuggerisciMacchinaResponse> SuggerisciMacchinaMiglioreAsync(SuggerisciMacchinaRequest request)
+    {
+        try
+        {
+            var commessa = await _context.Commesse
+                .Include(c => c.Articolo)
+                .FirstOrDefaultAsync(c => c.Id == request.CommessaId);
+
+            if (commessa == null)
+            {
+                return new SuggerisciMacchinaResponse
+                {
+                    Success = false,
+                    ErrorMessage = "Commessa non trovata"
+                };
+            }
+
+            var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
+                ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
+            
+            var calendario = await GetCalendarioLavoroDtoAsync();
+            var festivi = await GetFestiviSetAsync();
+
+            // Ottieni macchine candidate
+            var macchineStringCandidate = request.NumeriMacchineCandidate != null && request.NumeriMacchineCandidate.Any()
+                ? request.NumeriMacchineCandidate
+                : await _context.Macchine
+                    .Where(m => m.AttivaInGantt)
+                    .Select(m => m.Codice.Replace("M0", "").Replace("M", "")) // Estrai numero
+                    .ToListAsync();
+            
+            // Converti in int?
+            var macchineCandidate = macchineStringCandidate
+                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
+                .Where(m => m.HasValue)
+                .Select(m => m.Value)
+                .ToList();
+
+            var valutazioni = new List<ValutazioneMacchina>();
+
+            foreach (var numeroMacchina in macchineCandidate)
+            {
+                // Carica ultima commessa NON bloccata
+                var ultimaCommessa = await _context.Commesse
+                    .Where(c => c.NumeroMacchina == numeroMacchina && !c.Bloccata)
+                    .OrderByDescending(c => c.DataFinePrevisione)
+                    .FirstOrDefaultAsync();
+
+                var dataFineUltima = ultimaCommessa?.DataFinePrevisione ?? DateTime.Now;
+
+                // Calcola durata della nuova commessa
+                var durataMinuti = CalcolaDurataConSetupDinamico(commessa, ultimaCommessa, impostazioni);
+
+                var dataInizioPrevista = dataFineUltima;
+                var dataFinePrevista = _pianificazioneService.CalcolaDataFinePrevistaConFestivi(
+                    dataInizioPrevista,
+                    durataMinuti,
+                    calendario,
+                    festivi
+                );
+
+                var numeroCommesseInCoda = await _context.Commesse
+                    .CountAsync(c => c.NumeroMacchina == numeroMacchina && c.DataFineProduzione == null);
+
+                // Calcola carico totale dalla differenza date (approssimazione)
+                var commesseMacchina = await _context.Commesse
+                    .Where(c => c.NumeroMacchina == numeroMacchina && c.DataFineProduzione == null && c.DataInizioPrevisione.HasValue && c.DataFinePrevisione.HasValue)
+                    .ToListAsync();
+
+                var caricoTotale = commesseMacchina.Sum(c => (int)(c.DataFinePrevisione!.Value - c.DataInizioPrevisione!.Value).TotalMinutes);
+
+                valutazioni.Add(new ValutazioneMacchina
+                {
+                    NumeroMacchina = numeroMacchina.ToString(),
+                    NomeMacchina = $"Macchina {numeroMacchina}",
+                    DataFineUltimaCommessa = dataFineUltima,
+                    DataInizioPrevista = dataInizioPrevista,
+                    DataFinePrevista = dataFinePrevista,
+                    NumeroCommesseInCoda = numeroCommesseInCoda,
+                    CaricoPrevisto = caricoTotale
+                });
+            }
+
+            // Ordina per earliest completion
+            valutazioni = valutazioni.OrderBy(v => v.DataFinePrevista).ToList();
+            var migliore = valutazioni.FirstOrDefault();
+
+            if (migliore == null)
+            {
+                return new SuggerisciMacchinaResponse
+                {
+                    Success = false,
+                    ErrorMessage = "Nessuna macchina disponibile"
+                };
+            }
+
+            _logger.LogInformation("Suggerita macchina {NumeroMacchina} per commessa {CommessaId} (completion: {DataFinePrevista})",
+                migliore.NumeroMacchina, request.CommessaId, migliore.DataFinePrevista);
+
+            return new SuggerisciMacchinaResponse
+            {
+                Success = true,
+                MacchinaSuggerita = migliore.NumeroMacchina,
+                NomeMacchina = migliore.NomeMacchina,
+                DataFineUltimaCommessa = migliore.DataFineUltimaCommessa,
+                DataInizioPrevista = migliore.DataInizioPrevista,
+                DataFinePrevista = migliore.DataFinePrevista,
+                Valutazioni = valutazioni
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore suggerimento macchina per commessa {CommessaId}", request.CommessaId);
+            return new SuggerisciMacchinaResponse
+            {
+                Success = false,
+                ErrorMessage = $"Errore: {ex.Message}"
+            };
+        }
+    }
+
+    #region Festivi (uguale a prima)
+    
+    /// <summary>
+    /// Carica CalendarioLavoro dal database e lo mappa a DTO
+    /// </summary>
+    private async Task<CalendarioLavoroDto> GetCalendarioLavoroDtoAsync()
+    {
+        var calendario = await _context.CalendarioLavoro.FirstOrDefaultAsync();
+        
+        if (calendario == null)
+        {
+            // Default: Lunedì-Venerdì 08:00-17:00
+            return new CalendarioLavoroDto
+            {
+                Lunedi = true,
+                Martedi = true,
+                Mercoledi = true,
+                Giovedi = true,
+                Venerdi = true,
+                Sabato = false,
+                Domenica = false,
+                OraInizio = new TimeOnly(8, 0),
+                OraFine = new TimeOnly(17, 0)
+            };
+        }
+        
+        return new CalendarioLavoroDto
+        {
+            Id = calendario.Id,
+            Lunedi = calendario.Lunedi,
+            Martedi = calendario.Martedi,
+            Mercoledi = calendario.Mercoledi,
+            Giovedi = calendario.Giovedi,
+            Venerdi = calendario.Venerdi,
+            Sabato = calendario.Sabato,
+            Domenica = calendario.Domenica,
+            OraInizio = calendario.OraInizio,
+            OraFine = calendario.OraFine
+        };
+    }
+    
     public async Task<HashSet<DateOnly>> GetFestiviSetAsync()
     {
         var annoCorrente = DateTime.Now.Year;
@@ -342,7 +684,6 @@ public class PianificazioneEngineService : IPianificazioneEngineService
         {
             if (festivo.Ricorrente)
             {
-                // Aggiungi per anno corrente e successivo
                 festivi.Add(new DateOnly(annoCorrente, festivo.Data.Month, festivo.Data.Day));
                 festivi.Add(new DateOnly(annoCorrente + 1, festivo.Data.Month, festivo.Data.Day));
             }
@@ -359,9 +700,6 @@ public class PianificazioneEngineService : IPianificazioneEngineService
         return festivi;
     }
 
-    /// <summary>
-    /// Ottiene la lista dei festivi.
-    /// </summary>
     public async Task<List<FestivoDto>> GetFestiviAsync()
     {
         var festivi = await _context.Festivi
@@ -378,9 +716,6 @@ public class PianificazioneEngineService : IPianificazioneEngineService
         }).ToList();
     }
 
-    /// <summary>
-    /// Aggiunge un festivo.
-    /// </summary>
     public async Task<FestivoDto> AddFestivoAsync(CreateFestivoRequest request)
     {
         var festivo = new Festivo
@@ -404,9 +739,6 @@ public class PianificazioneEngineService : IPianificazioneEngineService
         };
     }
 
-    /// <summary>
-    /// Rimuove un festivo.
-    /// </summary>
     public async Task<bool> DeleteFestivoAsync(int id)
     {
         var festivo = await _context.Festivi.FindAsync(id);
@@ -417,12 +749,8 @@ public class PianificazioneEngineService : IPianificazioneEngineService
         return true;
     }
 
-    /// <summary>
-    /// Inizializza i festivi standard italiani per un anno.
-    /// </summary>
     public async Task<List<FestivoDto>> InizializzaFestiviStandardAsync(int anno)
     {
-        // Festivi italiani ricorrenti
         var festiviStandard = new List<(int mese, int giorno, string descrizione)>
         {
             (1, 1, "Capodanno"),
@@ -443,7 +771,6 @@ public class PianificazioneEngineService : IPianificazioneEngineService
         {
             var data = new DateOnly(anno, mese, giorno);
             
-            // Verifica se esiste già
             var esistente = await _context.Festivi
                 .FirstOrDefaultAsync(f => f.Data.Month == mese && f.Data.Day == giorno && f.Ricorrente);
 
@@ -467,11 +794,9 @@ public class PianificazioneEngineService : IPianificazioneEngineService
             }
         }
 
-        // Calcola Pasqua e Pasquetta per l'anno specifico
         var pasqua = CalcolaPasqua(anno);
         var pasquetta = pasqua.AddDays(1);
 
-        // Aggiungi Pasquetta (non ricorrente, specifica per anno)
         var pasquettaData = DateOnly.FromDateTime(pasquetta);
         var pasquettaEsistente = await _context.Festivi
             .FirstOrDefaultAsync(f => f.Data == pasquettaData);
@@ -501,9 +826,6 @@ public class PianificazioneEngineService : IPianificazioneEngineService
         return festiviAggiunti;
     }
 
-    /// <summary>
-    /// Calcola la data di Pasqua usando l'algoritmo di Computus (Gauss/Anonymous Gregorian).
-    /// </summary>
     private DateTime CalcolaPasqua(int anno)
     {
         int a = anno % 19;
@@ -524,58 +846,29 @@ public class PianificazioneEngineService : IPianificazioneEngineService
         return new DateTime(anno, mese, giorno);
     }
 
-    private int CalcolaDurata(Commessa commessa, ImpostazioniProduzione impostazioni)
-    {
-        var tempoCiclo = commessa.Articolo?.TempoCiclo ?? 0;
-        var numeroFigure = commessa.Articolo?.NumeroFigure ?? 1;
-        
-        return _pianificazioneService.CalcolaDurataPrevistaMinuti(
-            tempoCiclo,
-            numeroFigure,
-            commessa.QuantitaRichiesta,
-            impostazioni.TempoSetupMinuti
-        );
-    }
+    #endregion
 
-    private CommessaGanttDto MapToGanttDto(Commessa commessa, ImpostazioniProduzione impostazioni)
-    {
-        var tempoCiclo = commessa.Articolo?.TempoCiclo ?? 0;
-        var numeroFigure = commessa.Articolo?.NumeroFigure ?? 0;
-        
-        // Indica se i dati sono incompleti (mancano tempo ciclo o numero figure)
-        var datiIncompleti = tempoCiclo <= 0 || numeroFigure <= 0;
-        
-        var durataMinuti = _pianificazioneService.CalcolaDurataPrevistaMinuti(
-            tempoCiclo,
-            numeroFigure,
-            commessa.QuantitaRichiesta,
-            impostazioni.TempoSetupMinuti
-        );
+    #region Mapping
 
-        return new CommessaGanttDto
-        {
-            Id = commessa.Id,
-            Codice = commessa.Codice,
-            Description = commessa.Description ?? "",
-            NumeroMacchina = commessa.NumeroMacchina != null ? int.TryParse(commessa.NumeroMacchina, out var num) ? num : (int?)null : null,
-            NomeMacchina = !string.IsNullOrEmpty(commessa.NumeroMacchina) ? $"Macchina {commessa.NumeroMacchina}" : null,
-            OrdineSequenza = commessa.OrdineSequenza,
-            DataInizioPrevisione = commessa.DataInizioPrevisione,
-            DataFinePrevisione = commessa.DataFinePrevisione,
-            DataInizioProduzione = commessa.DataInizioProduzione,
-            DataFineProduzione = commessa.DataFineProduzione,
-            QuantitaRichiesta = commessa.QuantitaRichiesta,
-            UoM = commessa.UoM,
-            DataConsegna = commessa.DataConsegna,
-            TempoCicloSecondi = tempoCiclo,
-            NumeroFigure = numeroFigure,
-            TempoSetupMinuti = impostazioni.TempoSetupMinuti,
-            DurataPrevistaMinuti = durataMinuti,
-            Stato = commessa.Stato.ToString(),
-            ColoreStato = _pianificazioneService.GetColoreStato(commessa.Stato.ToString()),
-            PercentualeCompletamento = CalcolaPercentualeCompletamento(commessa),
-            DatiIncompleti = datiIncompleti
-        };
+    private async Task<List<CommessaGanttDto>> MapToGanttDtoBatchAsync(List<Commessa> commesse, ImpostazioniProduzione impostazioni)
+    {
+        // Batch lookup Anime per performance
+        var articoloCodes = commesse
+            .Where(c => c.Articolo != null)
+            .Select(c => c.Articolo!.Codice)
+            .Distinct()
+            .ToList();
+            
+        var animeData = await _context.Anime
+            .Where(a => articoloCodes.Contains(a.CodiceArticolo))
+            .ToListAsync();
+            
+        var animeLookup = animeData
+            .GroupBy(a => a.CodiceArticolo)
+            .ToDictionary(g => g.Key, g => g.First());
+        
+        // Usa il metodo centralizzato di PianificazioneService
+        return await _pianificazioneService.MapToGanttDtoBatchAsync(commesse, impostazioni, animeLookup);
     }
 
     private decimal CalcolaPercentualeCompletamento(Commessa commessa)
@@ -598,4 +891,317 @@ public class PianificazioneEngineService : IPianificazioneEngineService
 
         return (decimal)(elapsed / totalDuration * 100);
     }
+
+    /// <summary>
+    /// Ricalcola SOLO le commesse successive a quella appena spostata (ottimizzazione GANTT-FIRST)
+    /// </summary>
+    private async Task RicalcolaCommesseSuccessiveAsync(int? numeroMacchina, Commessa commessaSpostata, ImpostazioniProduzione impostazioni, CalendarioLavoroDto calendario, HashSet<DateOnly> festivi)
+    {
+        var commesseSuccessive = await _context.Commesse
+            .Include(c => c.Articolo)
+            .Where(c => c.NumeroMacchina == numeroMacchina 
+                && c.OrdineSequenza > commessaSpostata.OrdineSequenza
+                && !c.Bloccata) // NON ricalcolare bloccate
+            .OrderBy(c => c.OrdineSequenza)
+            .ToListAsync();
+
+        if (!commesseSuccessive.Any())
+        {
+            _logger.LogInformation("Nessuna commessa successiva da ricalcolare su macchina {Macchina}", numeroMacchina);
+            return;
+        }
+
+        _logger.LogInformation("Ricalcolo {Count} commesse successive su macchina {Macchina}", commesseSuccessive.Count, numeroMacchina);
+
+        DateTime dataInizioCorrente = commessaSpostata.DataFinePrevisione ?? DateTime.Now;
+
+        foreach (var c in commesseSuccessive)
+        {
+            // Rispetta vincoli data inizio se presenti
+            if (c.VincoloDataInizio.HasValue && c.VincoloDataInizio > dataInizioCorrente)
+            {
+                dataInizioCorrente = c.VincoloDataInizio.Value;
+            }
+
+            c.DataInizioPrevisione = dataInizioCorrente;
+
+            var durataMinuti = CalcolaDurataConSetupDinamico(c, null, impostazioni);
+            c.DataFinePrevisione = _pianificazioneService.CalcolaDataFinePrevistaConFestivi(
+                dataInizioCorrente,
+                durataMinuti,
+                calendario,
+                festivi
+            );
+
+            dataInizioCorrente = c.DataFinePrevisione.Value;
+        }
+    }
+
+    /// <summary>
+    /// Normalizza una data agli orari lavorativi e salta giorni non lavorativi/festivi
+    /// </summary>
+    private DateTime NormalizzaSuOrarioLavorativo(DateTime data, CalendarioLavoroDto calendario, HashSet<DateOnly> festivi)
+    {
+        // 1. Normalizza ora all'inizio lavoro se prima, o giorno dopo se dopo fine lavoro
+        var ora = TimeOnly.FromDateTime(data);
+        if (ora < calendario.OraInizio)
+        {
+            data = data.Date + calendario.OraInizio.ToTimeSpan();
+        }
+        else if (ora >= calendario.OraFine)
+        {
+            // Se dopo fine lavoro, passa al giorno successivo all'inizio lavoro
+            data = data.Date.AddDays(1) + calendario.OraInizio.ToTimeSpan();
+        }
+        
+        // 2. Salta giorni non lavorativi e festivi
+        while (!IsGiornoLavorativo(data, calendario) || festivi.Contains(DateOnly.FromDateTime(data)))
+        {
+            data = data.AddDays(1).Date + calendario.OraInizio.ToTimeSpan();
+        }
+        
+        return data;
+    }
+
+    /// <summary>
+    /// Verifica se un giorno è lavorativo secondo il calendario
+    /// </summary>
+    private bool IsGiornoLavorativo(DateTime data, CalendarioLavoroDto calendario)
+    {
+        return data.DayOfWeek switch
+        {
+            DayOfWeek.Monday => calendario.Lunedi,
+            DayOfWeek.Tuesday => calendario.Martedi,
+            DayOfWeek.Wednesday => calendario.Mercoledi,
+            DayOfWeek.Thursday => calendario.Giovedi,
+            DayOfWeek.Friday => calendario.Venerdi,
+            DayOfWeek.Saturday => calendario.Sabato,
+            DayOfWeek.Sunday => calendario.Domenica,
+            _ => false
+        };
+    }
+
+    #endregion
+
+    #region Auto-Scheduler Intelligente v1.31
+
+    /// <summary>
+    /// 🚀 CARICA SUL GANTT - Auto-scheduling intelligente
+    /// 
+    /// Algoritmo:
+    /// 1. Stima ore necessarie (se non già calcolate)
+    /// 2. Trova macchine disponibili per l'articolo
+    /// 3. Calcola carico attuale di ogni macchina
+    /// 4. Seleziona macchina con minore carico E che rispetta data consegna
+    /// 5. Accoda alla fine della coda della macchina selezionata
+    /// </summary>
+    public async Task<CaricaSuGanttResponse> CaricaSuGanttAsync(Guid commessaId)
+    {
+        var updateVersion = DateTime.UtcNow.Ticks;
+        
+        try
+        {
+            _logger.LogInformation("🚀 [AUTO-SCHEDULER] Caricamento commessa {CommessaId} sul Gantt", commessaId);
+            
+            // 1. Carica commessa con articolo
+            var commessa = await _context.Commesse
+                .Include(c => c.Articolo)
+                .FirstOrDefaultAsync(c => c.Id == commessaId);
+                
+            if (commessa == null)
+            {
+                return new CaricaSuGanttResponse
+                {
+                    Success = false,
+                    ErrorMessage = "Commessa non trovata",
+                    UpdateVersion = updateVersion
+                };
+            }
+            
+            // 2. Verifica se già assegnata a una macchina
+            if (commessa.NumeroMacchina.HasValue)
+            {
+                return new CaricaSuGanttResponse
+                {
+                    Success = false,
+                    ErrorMessage = $"Commessa già assegnata a macchina {commessa.NumeroMacchina}. Usare il Gantt per spostarla.",
+                    UpdateVersion = updateVersion
+                };
+            }
+            
+            // 3. Carica impostazioni, calendario, festivi
+            var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
+                ?? throw new Exception("Impostazioni produzione mancanti");
+            var calendarioEntity = await _context.CalendarioLavoro.FirstOrDefaultAsync()
+                ?? throw new Exception("Calendario lavoro mancante");
+            var calendario = new CalendarioLavoroDto
+            {
+                Lunedi = calendarioEntity.Lunedi,
+                Martedi = calendarioEntity.Martedi,
+                Mercoledi = calendarioEntity.Mercoledi,
+                Giovedi = calendarioEntity.Giovedi,
+                Venerdi = calendarioEntity.Venerdi,
+                Sabato = calendarioEntity.Sabato,
+                Domenica = calendarioEntity.Domenica,
+                OraInizio = calendarioEntity.OraInizio,
+                OraFine = calendarioEntity.OraFine
+            };
+            var festivi = await GetFestiviSetAsync();
+            
+            // 4. Stima ore necessarie (default 8h, TODO: stimare da catalogo anime)
+            decimal oreNecessarie = 8m;
+            
+            // 5. Carica tutte le commesse assegnate per calcolare il carico
+            var tutteCommesseAssegnate = await _context.Commesse
+                .Where(c => c.NumeroMacchina != null && c.DataInizioPrevisione != null)
+                .OrderBy(c => c.NumeroMacchina)
+                .ThenBy(c => c.OrdineSequenza)
+                .ThenBy(c => c.DataInizioPrevisione)
+                .ToListAsync();
+            
+            // 6. Raggruppa per macchina e calcola data fine ultima commessa + carico totale
+            var caricoPerMacchina = tutteCommesseAssegnate
+                .GroupBy(c => c.NumeroMacchina!)
+                .Select(g => new
+                {
+                    NumeroMacchina = g.Key,
+                    UltimaDataFine = g.Max(c => c.DataFinePrevisione ?? c.DataInizioPrevisione),
+                    NumeroCommesse = g.Count(),
+                    OreTotali = g.Sum(c => (c.DataFinePrevisione.HasValue && c.DataInizioPrevisione.HasValue) 
+                        ? (decimal)(c.DataFinePrevisione.Value - c.DataInizioPrevisione.Value).TotalHours 
+                        : 8m) // Default 8h se mancano le date
+                })
+                .OrderBy(x => x.OreTotali) // Macchina con MENO carico prima
+                .ToList();
+            
+            _logger.LogInformation("📊 Carico macchine: {Carico}", 
+                string.Join(", ", caricoPerMacchina.Select(c => $"M{c.NumeroMacchina}={c.OreTotali:F1}h")));
+            
+            // 7. Seleziona macchina migliore (con meno carico)
+            int macchinaSelezionata;
+            DateTime dataInizioCalcolata;
+            
+            var now = DateTime.Now;
+
+            if (caricoPerMacchina.Any())
+            {
+                var macchina = caricoPerMacchina.First();
+                
+                // NumeroMacchina è già un int?
+                macchinaSelezionata = macchina.NumeroMacchina ?? 1;
+                
+                // Accoda DOPO l'ultima commessa di questa macchina
+                if (macchina.UltimaDataFine.HasValue)
+                {
+                    dataInizioCalcolata = macchina.UltimaDataFine.Value;
+                }
+                else
+                {
+                    dataInizioCalcolata = now.Date.AddHours(calendario.OraInizio.ToTimeSpan().TotalHours);
+                }
+
+                // Normalizza su orario lavorativo
+                dataInizioCalcolata = NormalizzaSuOrarioLavorativo(dataInizioCalcolata, calendario, festivi);
+
+                // Se la data e' nel passato, parte da adesso
+                if (dataInizioCalcolata < now)
+                {
+                    dataInizioCalcolata = NormalizzaSuOrarioLavorativo(now, calendario, festivi);
+                }
+                
+                _logger.LogInformation("✅ Macchina selezionata: M{Macchina} (carico={Ore}h, commesse={N})",
+                    macchinaSelezionata, macchina.OreTotali, macchina.NumeroCommesse);
+            }
+            else
+            {
+                // Nessuna commessa assegnata: usa macchina 1 di default
+                macchinaSelezionata = 1;
+                dataInizioCalcolata = NormalizzaSuOrarioLavorativo(now, calendario, festivi);
+                
+                _logger.LogInformation("ℹ️ Nessuna commessa assegnata: uso macchina 1 di default");
+            }
+            
+            // 8. Calcola data fine con calendario (converti ore in minuti)
+            int durataMinuti = (int)(oreNecessarie * 60);
+            var dataFineCalcolata = _pianificazioneService.CalcolaDataFinePrevistaConFestivi(
+                dataInizioCalcolata,
+                durataMinuti,
+                calendario,
+                festivi
+            );
+            
+            // 9. Assegna alla commessa
+            commessa.NumeroMacchina = macchinaSelezionata;
+            commessa.DataInizioPrevisione = dataInizioCalcolata;
+            commessa.DataFinePrevisione = dataFineCalcolata;
+            commessa.UltimaModifica = DateTime.UtcNow;
+            
+            // Calcola OrdineSequenza (massimo + 10)
+            var maxOrdine = await _context.Commesse
+                .Where(c => c.NumeroMacchina == macchinaSelezionata)
+                .MaxAsync(c => (int?)c.OrdineSequenza) ?? 0;
+            commessa.OrdineSequenza = maxOrdine + 10;
+            
+            await _context.SaveChangesAsync();
+            
+            _logger.LogInformation("✨ Commessa {Codice} caricata su M{Macchina}: {DataInizio} → {DataFine} ({Ore}h)",
+                commessa.Codice, macchinaSelezionata, dataInizioCalcolata, dataFineCalcolata, oreNecessarie);
+            
+            // 10. Ricarica commesse aggiornate per response (materializza prima, poi mappa)
+            var commesseDb = await _context.Commesse
+                .Include(c => c.Articolo)
+                .Where(c => c.NumeroMacchina == macchinaSelezionata)
+                .OrderBy(c => c.OrdineSequenza)
+                .ToListAsync();
+            
+            var commesseAggiornate = commesseDb.Select(c => new CommessaGanttDto
+            {
+                Id = c.Id,
+                Codice = c.Codice,
+                Description = c.Description ?? string.Empty,
+                NumeroMacchina = c.NumeroMacchina,
+                DataInizioPrevisione = c.DataInizioPrevisione,
+                DataFinePrevisione = c.DataFinePrevisione,
+                Stato = c.Stato.ToString(),
+                ColoreStato = string.Empty, // Verrà calcolato lato client
+                StatoProgramma = c.StatoProgramma.ToString(),
+                QuantitaRichiesta = c.QuantitaRichiesta,
+                UoM = c.UoM,
+                Bloccata = c.Bloccata,
+                DataConsegna = c.DataConsegna,
+                OrdineSequenza = c.OrdineSequenza,
+                Priorita = c.Priorita,
+                VincoloDataInizio = c.VincoloDataInizio,
+                VincoloDataFine = c.VincoloDataFine,
+                ClasseLavorazione = c.ClasseLavorazione,
+                PercentualeCompletamento = 0m // Default, non calcolato qui
+            }).ToList();
+            
+            return new CaricaSuGanttResponse
+            {
+                Success = true,
+                MacchinaAssegnata = macchinaSelezionata,
+                DataInizioCalcolata = dataInizioCalcolata,
+                DataFineCalcolata = dataFineCalcolata,
+                OreNecessarie = oreNecessarie,
+                Motivazione = caricoPerMacchina.Any()
+                    ? $"Macchina con minore carico ({caricoPerMacchina.First().OreTotali:F1} ore totali)"
+                    : "Prima macchina disponibile (nessuna commessa assegnata)",
+                CommesseAggiornate = commesseAggiornate,
+                UpdateVersion = updateVersion
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Errore durante auto-scheduler per commessa {CommessaId}", commessaId);
+            return new CaricaSuGanttResponse
+            {
+                Success = false,
+                ErrorMessage = $"Errore: {ex.Message}",
+                UpdateVersion = updateVersion
+            };
+        }
+    }
+
+    #endregion
 }

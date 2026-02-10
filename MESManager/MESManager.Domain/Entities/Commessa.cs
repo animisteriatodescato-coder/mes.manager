@@ -30,7 +30,7 @@ public class Commessa
     public string? OurReference { get; set; } // Nostro riferimento
     
     // Programmazione Macchine
-    public string? NumeroMacchina { get; set; } // Codice macchina assegnata dal catalogo anime
+    public int? NumeroMacchina { get; set; } // Numero macchina assegnata (1-10). NULL = non programmata. INT type per type safety.
     public int OrdineSequenza { get; set; } // Ordine di esecuzione sulla macchina per drag&drop
     
     // Pianificazione produzione (per diagramma Gantt)
@@ -39,9 +39,22 @@ public class Commessa
     public DateTime? DataInizioProduzione { get; set; } // Data/ora inizio effettivo
     public DateTime? DataFineProduzione { get; set; } // Data/ora fine effettivo
     
+    // Scheduling Avanzato - Vincoli e Priorità
+    public int Priorita { get; set; } = 100; // Più basso = più urgente. Default 100
+    public bool Bloccata { get; set; } = false; // Se true, non viene spostata da ricalcoli automatici
+    public DateTime? VincoloDataInizio { get; set; } // Non può iniziare prima di questa data
+    public DateTime? VincoloDataFine { get; set; } // Deve finire entro questa data (warning se impossibile)
+    
+    // Setup Dinamico
+    public int? SetupStimatoMinuti { get; set; } // Override setup. Se null, usa ImpostazioniProduzione.TempoSetupMinuti
+    public string? ClasseLavorazione { get; set; } // Classe per riduzione setup su commesse consecutive simili
+    
     // Stato programma interno (NON sovrascrive lo stato Mago)
     public StatoProgramma StatoProgramma { get; set; } = StatoProgramma.NonProgrammata;
     public DateTime? DataCambioStatoProgramma { get; set; }
+    
+    // Optimistic Concurrency Control
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     
     // Audit
     public DateTime UltimaModifica { get; set; }

@@ -67,6 +67,7 @@ public class PianificazioneHub : Hub
 
 /// <summary>
 /// Servizio per inviare notifiche SignalR relative alla pianificazione.
+/// Versione ottimizzata con updateVersion e payload mirato.
 /// </summary>
 public class PianificazioneNotificationService
 {
@@ -82,27 +83,34 @@ public class PianificazioneNotificationService
     }
 
     /// <summary>
-    /// Notifica tutti i client che le commesse sono state aggiornate.
+    /// Notifica tutti i client che le commesse sono state aggiornate (con updateVersion).
     /// </summary>
-    public async Task NotifyCommesseUpdatedAsync(List<CommessaGanttDto> commesseAggiornate, int? macchinaOrigine = null)
+    public async Task NotifyCommesseUpdatedAsync(List<CommessaGanttDto> commesseAggiornate, int? macchinaOrigine = null, long? updateVersion = null)
     {
         var notification = new PianificazioneUpdateNotification
         {
             Type = "CommesseUpdated",
             CommesseAggiornate = commesseAggiornate,
             MacchinaOrigine = macchinaOrigine,
-            Timestamp = DateTime.Now
+            UpdateVersion = updateVersion ?? DateTime.UtcNow.Ticks,
+            Timestamp = DateTime.Now,
+            MacchineCoinvolte = commesseAggiornate
+                .Where(c => c.NumeroMacchina.HasValue)
+                .Select(c => c.NumeroMacchina!.Value.ToString())
+                .Distinct()
+                .ToList()
         };
 
         await _hubContext.Clients.Group("gantt_updates").SendAsync("PianificazioneUpdated", notification);
         
-        _logger.LogDebug("Notificati {Count} aggiornamenti commesse", commesseAggiornate.Count);
+        _logger.LogDebug("[v{UpdateVersion}] Notificati {Count} aggiornamenti commesse, macchine: {Macchine}", 
+            notification.UpdateVersion, commesseAggiornate.Count, string.Join(",", notification.MacchineCoinvolte));
     }
 
     /// <summary>
     /// Notifica tutti i client che una commessa è stata spostata.
     /// </summary>
-    public async Task NotifyCommessaMovedAsync(Guid commessaId, int targetMacchina, int? macchinaOrigine)
+    public async Task NotifyCommessaMovedAsync(Guid commessaId, int targetMacchina, int? macchinaOrigine, long? updateVersion = null)
     {
         var notification = new PianificazioneUpdateNotification
         {
@@ -110,8 +118,15 @@ public class PianificazioneNotificationService
             CommessaId = commessaId,
             TargetMacchina = targetMacchina,
             MacchinaOrigine = macchinaOrigine,
-            Timestamp = DateTime.Now
+            UpdateVersion = updateVersion ?? DateTime.UtcNow.Ticks,
+            Timestamp = DateTime.Now,
+            MacchineCoinvolte = new List<string> { targetMacchina.ToString() }
         };
+
+        if (macchinaOrigine.HasValue && macchinaOrigine != targetMacchina)
+        {
+            notification.MacchineCoinvolte.Add(macchinaOrigine.Value.ToString());
+        }
 
         await _hubContext.Clients.Group("gantt_updates").SendAsync("PianificazioneUpdated", notification);
         
@@ -123,23 +138,25 @@ public class PianificazioneNotificationService
             await _hubContext.Clients.Group($"macchina_{macchinaOrigine}").SendAsync("MacchinaUpdated", notification);
         }
 
-        _logger.LogDebug("Notificato spostamento commessa {CommessaId} a macchina {TargetMacchina}", commessaId, targetMacchina);
+        _logger.LogDebug("[v{UpdateVersion}] Notificato spostamento commessa {CommessaId} a macchina {TargetMacchina}", 
+            notification.UpdateVersion, commessaId, targetMacchina);
     }
 
     /// <summary>
     /// Notifica tutti i client di un ricalcolo completo.
     /// </summary>
-    public async Task NotifyFullRecalculationAsync()
+    public async Task NotifyFullRecalculationAsync(long? updateVersion = null)
     {
         var notification = new PianificazioneUpdateNotification
         {
             Type = "FullRecalculation",
+            UpdateVersion = updateVersion ?? DateTime.UtcNow.Ticks,
             Timestamp = DateTime.Now
         };
 
         await _hubContext.Clients.Group("gantt_updates").SendAsync("PianificazioneUpdated", notification);
         
-        _logger.LogDebug("Notificato ricalcolo completo");
+        _logger.LogDebug("[v{UpdateVersion}] Notificato ricalcolo completo", notification.UpdateVersion);
     }
 }
 
@@ -154,4 +171,14 @@ public class PianificazioneUpdateNotification
     public int? MacchinaOrigine { get; set; }
     public List<CommessaGanttDto>? CommesseAggiornate { get; set; }
     public DateTime Timestamp { get; set; }
+    
+    /// <summary>
+    /// Versione aggiornamento (timestamp ticks) per evitare loop e update stali
+    /// </summary>
+    public long UpdateVersion { get; set; }
+    
+    /// <summary>
+    /// Lista numeri macchine coinvolte (per filtraggio mirato client-side)
+    /// </summary>
+    public List<string> MacchineCoinvolte { get; set; } = new();
 }

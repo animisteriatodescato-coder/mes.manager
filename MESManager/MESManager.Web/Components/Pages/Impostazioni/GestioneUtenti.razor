@@ -6,12 +6,13 @@
 
 <PageTitle>Gestione Utenti</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Gestione Utenti App</MudText>
+<MudText Typo="Typo.h4" Class="mb-4" data-testid="page-gestione-utenti">Gestione Utenti App</MudText>
 
 <MudPaper Class="pa-4 mb-4">
     <MudGrid>
         <MudItem xs="12" sm="6" md="4">
             <MudTextField @bind-Value="_nuovoNome" 
+                          data-testid="input-utente-nuovo"
                           Label="Nome Nuovo Utente" 
                           Variant="Variant.Outlined"
                           Adornment="Adornment.End"
@@ -22,14 +23,15 @@
                        Color="Color.Primary" 
                        StartIcon="@Icons.Material.Filled.PersonAdd"
                        OnClick="AggiungiUtente"
-                       Disabled="@(string.IsNullOrWhiteSpace(_nuovoNome))">
+                       Disabled="@(string.IsNullOrWhiteSpace(_nuovoNome))"
+                       data-testid="btn-utente-aggiungi">
                 Aggiungi
             </MudButton>
         </MudItem>
     </MudGrid>
 </MudPaper>
 
-<MudTable Items="@_utenti" Hover="true" Dense="true" Striped="true" Elevation="2" Style="overflow-x: hidden;">
+<MudTable Items="@_utenti" Hover="true" Dense="true" Striped="true" Elevation="2" Style="overflow-x: hidden;" data-testid="table-utenti">
     <HeaderContent>
         <MudTh Style="width: 80px;">Ordine</MudTh>
         <MudTh Style="width: 120px;">Nome</MudTh>
@@ -103,7 +105,7 @@
 </MudTable>
 
 @* Dialog per selezione colore *@
-<MudDialog @bind-Visible="_colorDialogVisible" Options="@(new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true })">
+<MudDialog @bind-Visible="_colorDialogVisible" Options="@(new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true })" data-testid="dlg-utente-colore">
     <TitleContent>
         <MudText Typo="Typo.h6">Seleziona Colore per @_utenteColoreCorrente?.Nome</MudText>
     </TitleContent>
@@ -120,8 +122,8 @@
                         Style="width: 100%;" />
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="ChiudiColorPicker">Annulla</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="ConfermaColore">Conferma</MudButton>
+        <MudButton OnClick="ChiudiColorPicker" data-testid="btn-utente-colore-annulla">Annulla</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="ConfermaColore" data-testid="btn-utente-colore-conferma">Conferma</MudButton>
     </DialogActions>
 </MudDialog>
 

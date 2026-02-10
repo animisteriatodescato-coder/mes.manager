@@ -4,7 +4,7 @@
 
 <PageTitle>Impostazioni Tabelle</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-impostazioni-tabelle">
     <MudText Typo="Typo.h4" Class="mb-4">Gestione Tabelle</MudText>
 
     @if (isLoading)
@@ -23,11 +23,12 @@
                               Color="Color.Success" 
                               StartIcon="@Icons.Material.Filled.Add"
                               Class="mb-4" 
-                              OnClick="AggiungiColla">
+                              OnClick="AggiungiColla"
+                              data-testid="btn-tabelle-colla-add">
                         Aggiungi Colla
                     </MudButton>
 
-                    <MudTable Items="@colla" Hover="true" Striped="true">
+                    <MudTable Items="@colla" Hover="true" Striped="true" data-testid="table-tabelle-colla">
                         <HeaderContent>
                             <MudTh>Codice Colla</MudTh>
                             <MudTh>Descrizione Colla</MudTh>
@@ -52,7 +53,8 @@
                     <MudButton Variant="Variant.Filled" 
                               Color="Color.Primary" 
                               Class="mt-4" 
-                              OnClick="SalvaCollaAsync">
+                              OnClick="SalvaCollaAsync"
+                              data-testid="btn-tabelle-colla-salva">
                         Salva Modifiche Colla
                     </MudButton>
                 </MudPaper>
@@ -67,11 +69,12 @@
                               Color="Color.Success" 
                               StartIcon="@Icons.Material.Filled.Add"
                               Class="mb-4" 
-                              OnClick="AggiungiVernice">
+                              OnClick="AggiungiVernice"
+                              data-testid="btn-tabelle-vernice-add">
                         Aggiungi Vernice
                     </MudButton>
 
-                    <MudTable Items="@vernice" Hover="true" Striped="true">
+                    <MudTable Items="@vernice" Hover="true" Striped="true" data-testid="table-tabelle-vernice">
                         <HeaderContent>
                             <MudTh>Codice Vernice</MudTh>
                             <MudTh>Descrizione Vernice</MudTh>
@@ -96,7 +99,8 @@
                     <MudButton Variant="Variant.Filled" 
                               Color="Color.Primary" 
                               Class="mt-4" 
-                              OnClick="SalvaVerniceAsync">
+                              OnClick="SalvaVerniceAsync"
+                              data-testid="btn-tabelle-vernice-salva">
                         Salva Modifiche Vernice
                     </MudButton>
                 </MudPaper>
@@ -111,11 +115,12 @@
                               Color="Color.Success" 
                               StartIcon="@Icons.Material.Filled.Add"
                               Class="mb-4" 
-                              OnClick="AggiungiSabbia">
+                              OnClick="AggiungiSabbia"
+                              data-testid="btn-tabelle-sabbia-add">
                         Aggiungi Sabbia
                     </MudButton>
 
-                    <MudTable Items="@sabbia" Hover="true" Striped="true">
+                    <MudTable Items="@sabbia" Hover="true" Striped="true" data-testid="table-tabelle-sabbia">
                         <HeaderContent>
                             <MudTh>Codice Sabbia</MudTh>
                             <MudTh>Descrizione Sabbia</MudTh>
@@ -140,7 +145,8 @@
                     <MudButton Variant="Variant.Filled" 
                               Color="Color.Primary" 
                               Class="mt-4" 
-                              OnClick="SalvaSabbiaAsync">
+                              OnClick="SalvaSabbiaAsync"
+                              data-testid="btn-tabelle-sabbia-salva">
                         Salva Modifiche Sabbia
                     </MudButton>
                 </MudPaper>
@@ -155,11 +161,12 @@
                               Color="Color.Success" 
                               StartIcon="@Icons.Material.Filled.Add"
                               Class="mb-4" 
-                              OnClick="AggiungiImballo">
+                              OnClick="AggiungiImballo"
+                              data-testid="btn-tabelle-imballo-add">
                         Aggiungi Imballo
                     </MudButton>
 
-                    <MudTable Items="@imballo" Hover="true" Striped="true">
+                    <MudTable Items="@imballo" Hover="true" Striped="true" data-testid="table-tabelle-imballo">
                         <HeaderContent>
                             <MudTh>Codice Imballo</MudTh>
                             <MudTh>Descrizione Imballo</MudTh>
@@ -184,7 +191,8 @@
                     <MudButton Variant="Variant.Filled" 
                               Color="Color.Primary" 
                               Class="mt-4" 
-                              OnClick="SalvaImballoAsync">
+                              OnClick="SalvaImballoAsync"
+                              data-testid="btn-tabelle-imballo-salva">
                         Salva Modifiche Imballo
                     </MudButton>
                 </MudPaper>

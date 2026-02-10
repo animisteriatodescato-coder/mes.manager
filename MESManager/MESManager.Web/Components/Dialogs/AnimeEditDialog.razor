@@ -7,7 +7,7 @@
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 
-<MudDialog Style="max-width: 1200px;">
+<MudDialog Style="max-width: 1200px;" data-testid="dlg-anime-edit">
     <TitleContent>
         <MudStack Row="true" AlignItems="AlignItems.Center">
             <MudIcon Icon="@Icons.Material.Filled.Edit" />
@@ -178,8 +178,8 @@
                 <MudIcon Icon="@Icons.Material.Filled.PrecisionManufacturing" Size="Size.Small" Color="Color.Primary" />
                 <MudText Typo="Typo.caption" Color="Color.Primary"><b>MACCHINE</b></MudText>
                 <MudSpacer />
-                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="SelezionaTutteLeMacchine">Tutte</MudButton>
-                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="DeselezionaTutteLeMacchine">Nessuna</MudButton>
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="SelezionaTutteLeMacchine" data-testid="btn-anime-macchine-tutte">Tutte</MudButton>
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="DeselezionaTutteLeMacchine" data-testid="btn-anime-macchine-nessuna">Nessuna</MudButton>
             </MudStack>
             <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="0">
                 @foreach (var macchina in macchineDisponibili)
@@ -323,8 +323,8 @@
                 @(Anime.ModificatoLocalmente ? "Mod." : "Mago")
             </MudChip>
         </MudStack>
-        <MudButton OnClick="Cancel">Annulla</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" OnClick="Save">Salva</MudButton>
+        <MudButton OnClick="Cancel" data-testid="btn-anime-cancel">Annulla</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" OnClick="Save" data-testid="btn-anime-save">Salva</MudButton>
     </DialogActions>
 </MudDialog>
 

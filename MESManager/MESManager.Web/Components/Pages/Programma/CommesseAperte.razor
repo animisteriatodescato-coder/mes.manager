@@ -18,7 +18,7 @@
 
 <PageTitle>Commesse Aperte</PageTitle>
 
-<div class="commesse-aperte-page">
+<div class="commesse-aperte-page" data-testid="page-commesse-aperte">
     <div class="settings-panel">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
             <MudText Typo="Typo.h6" data-testid="commesse-aperte-title">Commesse Aperte</MudText>
@@ -38,7 +38,10 @@
                        Label="Mostra Archiviate" 
                        T="bool"
                        ValueChanged="@OnShowArchivedChanged" />
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshGridData">Aggiorna</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshGridData" data-testid="btn-refresh">Aggiorna</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Timeline" OnClick="@CaricaSuGantt" data-testid="btn-carica-su-gantt">
+                🚀 Carica su Gantt
+            </MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
             <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
@@ -87,8 +90,8 @@
         }
     </div>
 
-    <div id="commesseAperteGrid" class="ag-theme-alpine" 
-         data-testid="commesse-aperte-grid"
+        <div id="commesseAperteGrid" class="ag-theme-alpine" 
+            data-testid="grid-commesse"
          style="width: 100%; height: calc(100vh - 150px);">
     </div>
 
@@ -270,7 +273,8 @@
             <MudText Typo="Typo.caption" Color="Color.Secondary">Ultimo aggiornamento: <strong>@lastUpdate.ToString("HH:mm:ss")</strong></MudText>
             <MudSpacer />
             <MudChip T="string" Size="Size.Small" Color="@(isLoading ? Color.Warning : Color.Success)" 
-                     Icon="@(isLoading ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.CheckCircle)">
+                     Icon="@(isLoading ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.CheckCircle)"
+                     data-testid="status-message">
                 @gridStatus
             </MudChip>
         </MudStack>
@@ -578,6 +582,85 @@
         catch
         {
             // Error filtering grid
+        }
+    }
+
+    /// <summary>
+    /// 🚀 CARICA SU GANTT - Auto-scheduler intelligente v1.31
+    /// Prende la commessa selezionata e la carica sul Gantt con algoritmo smart
+    /// </summary>
+    private async Task CaricaSuGantt()
+    {
+        try
+        {
+            // Ottieni righe selezionate da AG-Grid
+            var selectedRows = await JSRuntime.InvokeAsync<CommessaDto[]>("commesseAperteGrid.getSelectedRows");
+            
+            if (selectedRows == null || selectedRows.Length == 0)
+            {
+                Snackbar.Add("⚠️ Seleziona una commessa dalla griglia", Severity.Warning);
+                return;
+            }
+            
+            if (selectedRows.Length > 1)
+            {
+                Snackbar.Add("⚠️ Seleziona una sola commessa alla volta", Severity.Warning);
+                return;
+            }
+            
+            var commessa = selectedRows[0];
+            
+            // Verifica se già ha una macchina assegnata
+            if (commessa.NumeroMacchina.HasValue)
+            {
+                var confirm = await DialogService.ShowMessageBox(
+                    "Commessa già assegnata",
+                    $"La commessa {commessa.Codice} è già assegnata a macchina {commessa.NumeroMacchina}. Vuoi ri-caricarla sul Gantt?",
+                    yesText: "Sì, ricarica",
+                    cancelText: "Annulla"
+                );
+                
+                if (confirm != true)
+                {
+                    return;
+                }
+            }
+            
+            Snackbar.Add("🚀 Caricamento in corso...", Severity.Info);
+            
+            // Chiamata API
+            var response = await Http.PostAsync($"api/pianificazione/carica-su-gantt/{commessa.Id}", null);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<CaricaSuGanttResponse>();
+                
+                if (result != null && result.Success)
+                {
+                    Snackbar.Add(
+                        $"✅ {commessa.Codice} caricata su macchina {result.MacchinaAssegnata} - {result.Motivazione}",
+                        Severity.Success,
+                        config => { config.VisibleStateDuration = 5000; }
+                    );
+                    
+                    // Refresh griglia per rimuovere la commessa appena caricata
+                    await Task.Delay(500);
+                    await RefreshGridData();
+                }
+                else
+                {
+                    Snackbar.Add($"❌ Errore: {result?.ErrorMessage ?? "Risposta non valida"}", Severity.Error);
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"❌ Errore HTTP {response.StatusCode}: {errorContent}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"❌ Errore: {ex.Message}", Severity.Error);
         }
     }
 

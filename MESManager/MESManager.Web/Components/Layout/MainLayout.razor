@@ -74,7 +74,7 @@
         <MudDrawerHeader>
             <MudText Typo="Typo.h6">Menu</MudText>
         </MudDrawerHeader>
-        <MudNavMenu>
+        <MudNavMenu data-testid="nav-menu">
             <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary">Home</MudNavLink>
             
             <MudNavGroup Expanded="true">
@@ -155,8 +155,8 @@
             </ErrorBoundary>
         </MudContainer>
         <!-- Version number in bottom right corner -->
-        <div style="position: fixed; bottom: 10px; right: 15px; font-size: 11px; color: #999; font-family: monospace; pointer-events: none;">
-            v1.23
+        <div style="position: fixed; bottom: 10px; right: 15px; font-size: 11px; color: @(_isDarkMode ? "#e6e6e6" : "#999"); font-family: monospace; pointer-events: none;">
+            v1.31.1
         </div>
     </MudMainContent>
 </MudLayout>

@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MESManager.Worker", "MESMan
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MESManager.PlcSync", "MESManager.PlcSync\MESManager.PlcSync.csproj", "{EFEA5296-AA00-48BC-90FA-C0AFBDCA1558}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MESManager.E2E", "MESManager.E2E\MESManager.E2E.csproj", "{58E0650A-CC9E-44BB-810F-939B10DFCA91}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MESManager.E2E", "tests\MESManager.E2E\MESManager.E2E.csproj", "{58E0650A-CC9E-44BB-810F-939B10DFCA91}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -9,7 +9,7 @@
 
 <PageTitle>Impostazioni Gantt Macchine</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-impostazioni-gantt">
     <MudText Typo="Typo.h4" Class="mb-4">Impostazioni Gantt Macchine</MudText>
 
     @if (isLoading)
@@ -28,11 +28,12 @@
                               Color="Color.Success" 
                               StartIcon="@Icons.Material.Filled.Add"
                               Class="mb-4" 
-                              OnClick="AggiungiMacchina">
+                              OnClick="AggiungiMacchina"
+                              data-testid="btn-gantt-add-macchina">
                         Aggiungi Macchina
                     </MudButton>
                     
-                    <MudTable Items="@macchine" Hover="true" Striped="true">
+                    <MudTable Items="@macchine" Hover="true" Striped="true" data-testid="table-gantt-macchine">
                         <HeaderContent>
                             <MudTh>Codice</MudTh>
                             <MudTh>Nome</MudTh>
@@ -76,7 +77,8 @@
                     <MudButton Variant="Variant.Filled" 
                               Color="Color.Primary" 
                               Class="mt-4" 
-                              OnClick="SalvaMacchineAsync">
+                              OnClick="SalvaMacchineAsync"
+                              data-testid="btn-gantt-salva-macchine">
                         Salva Modifiche Macchine
                     </MudButton>
                 </MudPaper>
@@ -133,7 +135,8 @@
                     <MudButton Variant="Variant.Filled" 
                               Color="Color.Primary" 
                               Class="mt-4" 
-                              OnClick="SalvaCalendarioAsync">
+                              OnClick="SalvaCalendarioAsync"
+                              data-testid="btn-gantt-salva-calendario">
                         Salva Calendario
                     </MudButton>
                 </MudPaper>
@@ -162,7 +165,8 @@
                     <MudButton Variant="Variant.Filled" 
                               Color="Color.Primary" 
                               Class="mt-4" 
-                              OnClick="SalvaImpostazioniGanttAsync">
+                              OnClick="SalvaImpostazioniGanttAsync"
+                              data-testid="btn-gantt-salva-attrezzaggio">
                         Salva Impostazioni Attrezzaggio
                     </MudButton>
                 </MudPaper>
@@ -177,11 +181,12 @@
                               Color="Color.Success" 
                               StartIcon="@Icons.Material.Filled.Add"
                               Class="mb-4" 
-                              OnClick="AggiungiFestivo">
+                              OnClick="AggiungiFestivo"
+                              data-testid="btn-gantt-add-festivo">
                         Aggiungi Festivo
                     </MudButton>
                     
-                    <MudTable Items="@festivi" Hover="true" Striped="true">
+                    <MudTable Items="@festivi" Hover="true" Striped="true" data-testid="table-gantt-festivi">
                         <HeaderContent>
                             <MudTh>Data</MudTh>
                             <MudTh>Descrizione</MudTh>

@@ -18,10 +18,11 @@
 
 <PageTitle>Catalogo Anime</PageTitle>
 
-<div class="anime-page">
+<div class="anime-page" data-testid="page-catalogo-anime">
     <div class="settings-panel">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
             <MudTextField @bind-Value="searchText"
+                         data-testid="input-anime-search"
                          Placeholder="Cerca in tutte le colonne..."
                          Variant="Variant.Outlined"
                          Margin="Margin.Dense"
@@ -29,11 +30,11 @@
                          Immediate="true"
                          DebounceInterval="280"
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshGridData">Aggiorna</MudButton>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshGridData" data-testid="btn-anime-refresh">Aggiorna</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel" data-testid="btn-anime-columns">Colonne</MudButton>
             <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)">Impostazioni</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv" data-testid="btn-anime-export">Export CSV</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)" data-testid="btn-anime-settings">Impostazioni</MudButton>
         </MudStack>
         
         @if (showSettings)
@@ -78,7 +79,8 @@
         }
     </div>
 
-    <div id="animeGrid" class="ag-theme-alpine" 
+        <div id="animeGrid" class="ag-theme-alpine" 
+            data-testid="grid-catalogo-anime"
          style="width: 100%; height: calc(100vh - 150px);">
     </div>
 
@@ -93,7 +95,8 @@
             <MudText Typo="Typo.caption" Color="Color.Secondary">Ultimo aggiornamento: <strong>@lastUpdate.ToString("HH:mm:ss")</strong></MudText>
             <MudSpacer />
             <MudChip T="string" Size="Size.Small" Color="@(isLoading ? Color.Warning : Color.Success)" 
-                     Icon="@(isLoading ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.CheckCircle)">
+                     Icon="@(isLoading ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.CheckCircle)"
+                     data-testid="status-catalogo-anime">
                 @gridStatus
             </MudChip>
         </MudStack>
