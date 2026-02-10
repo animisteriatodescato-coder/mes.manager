@@ -56,7 +56,37 @@ Quando l'utente dice **"pubblica"**, **"deploy"** o **"vai in produzione"**:
 > **Nota**: Questa sezione raccoglie modifiche durante sviluppo.  
 > Prima di ogni deploy, spostarle in "Storico Versioni" sotto.
 
-### v1.30.6 - Programma Macchine Filter Fix (IN DEV)
+### v1.30.7 - Fix Programma Macchine Loop + Versione Centralizzata (IN DEV)
+
+#### ✅ Obiettivo
+- Risolvere bug: Programma Macchine chiamava auto-completa ad ogni load creando loop confuso.
+- Centralizzare versione applicazione per evitare inconsistenze.
+
+#### 🐛 Problema Scoperto
+**Root Cause**: `ProgrammaMacchine.razor` chiamava `/api/pianificazione/auto-completa` al load, che marcava commesse oltre la linea rossa come `Completata`. Il filtro però non escludeva `Completata`, causando:
+- Count che cambiava ad ogni refresh (25 → 11)
+- Tabella sempre vuota o parzialmente vuota
+- Confusione su quali commesse mostrare
+
+**Versione UI**: Hardcoded in 2 posti (MainLayout.razor + .csproj) causava inconsistenze.
+
+#### ✅ Soluzione Implementata
+1. **Rimossa chiamata auto-completa** da ProgrammaMacchine (già chiamata dal Gantt)
+2. **Filtro corretto**: esclude sia `Completata` che `Archiviata`
+3. **Versione centralizzata**: creato `AppVersion.cs` con costante unica
+
+**File modificati:**
+- MESManager.Web/Components/Pages/Programma/ProgrammaMacchine.razor
+- MESManager.Web/Constants/AppVersion.cs (nuovo)
+- MESManager.Web/Components/Layout/MainLayout.razor
+- MESManager.Web/MESManager.Web.csproj
+
+#### 📚 Lezione Appresa
+- **MAI duplicare logiche di business** tra pagine (auto-completa deve stare solo nel Gantt)
+- **Versione sempre centralizzata** in un'unica costante
+- **Filtri devono essere espliciti** con TUTTE le esclusioni necessarie
+
+### v1.30.6 - Programma Macchine Filter Fix (✅ COMPLETATO)
 
 #### ✅ Obiettivo
 - Risolvere bug: Programma Macchine vuoto dopo export.

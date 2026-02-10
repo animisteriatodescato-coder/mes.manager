@@ -527,24 +527,16 @@
             isLoading = true;
             gridStatus = "Caricamento...";
             StateHasChanged();
-
-            try
-            {
-                await Http.PostAsync("api/pianificazione/auto-completa", null);
-            }
-            catch
-            {
-                // Auto-complete best-effort
-            }
             
             _allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
             
-            // 🔄 AUTO-SYNC v1.31: Mostra TUTTE le commesse pianificate (con macchina e data)
+            // 🔄 FILTRO v1.30.7: Mostra solo commesse pianificate NON completate/archiviate
             // Programma = Vista Read-Only del Gantt (master source)
             // Si aggiorna automaticamente quando Gantt cambia (via SignalR)
             _commesse = _allCommesse.Where(c => 
                 c.NumeroMacchina.HasValue &&
                 c.DataInizioPrevisione.HasValue &&
+                c.StatoProgramma != "Completata" &&
                 c.StatoProgramma != "Archiviata" &&
                 c.Stato == "Aperta"
             ).ToList();
