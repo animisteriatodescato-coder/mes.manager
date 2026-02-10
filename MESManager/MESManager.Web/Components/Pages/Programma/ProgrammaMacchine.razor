@@ -539,15 +539,14 @@
             
             _allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
             
-            // 🔄 AUTO-SYNC v1.31: Mostra SOLO commesse con macchina E data inizio
-            // Programma = Vista Read-Only del Gantt (master source)
+            // 🔄 AUTO-SYNC v1.31: Mostra commesse ESPORTATE dal Gantt
+            // Programma = Vista Read-Only delle commesse esportate (Programmata)
             // Si aggiorna automaticamente quando Gantt cambia (via SignalR)
             _commesse = _allCommesse.Where(c => 
-                c.Stato == "Aperta" &&
                 c.NumeroMacchina.HasValue &&
                 c.DataInizioPrevisione.HasValue &&
-                c.StatoProgramma != "Archiviata" &&
-                c.StatoProgramma != "Completata"
+                c.StatoProgramma == "Programmata" &&
+                c.Stato == "Aperta"
             ).ToList();
             
             // Conteggio totale

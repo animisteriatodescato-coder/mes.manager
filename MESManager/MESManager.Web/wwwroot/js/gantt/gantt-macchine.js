@@ -318,8 +318,15 @@ window.GanttMacchine = {
                 }
                 
                 const statoProgramma = task.statoProgramma || '';
-                const baseColor = self.getStatusColor(statoProgramma || task.stato);
+                // DEBUG: Log stato per diagnosi colori
+                if (!statoProgramma) {
+                    console.warn(`Task ${task.codice} senza statoProgramma, usando stato: ${task.stato}`);
+                }
+                const statoPerColore = statoProgramma || task.stato;
+                const baseColor = self.getStatusColor(statoPerColore);
                 const isCompletata = statoProgramma === 'Completata';
+                // DEBUG colore
+                console.log(`Task ${task.codice}: statoProgramma='${statoProgramma}', stato='${task.stato}', statoPerColore='${statoPerColore}', baseColor='${baseColor}'`);
                 
                 // v17: Background con gradazione per avanzamento - scurisce per la parte completata
                 const backgroundColor = task.bloccata ? '#d32f2f' : baseColor;

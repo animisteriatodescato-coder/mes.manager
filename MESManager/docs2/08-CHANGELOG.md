@@ -56,7 +56,23 @@ Quando l'utente dice **"pubblica"**, **"deploy"** o **"vai in produzione"**:
 > **Nota**: Questa sezione raccoglie modifiche durante sviluppo.  
 > Prima di ogni deploy, spostarle in "Storico Versioni" sotto.
 
-### v1.30.4 - Dark Mode Text Contrast Global (IN DEV)
+### v1.30.5 - Export Gantt to Programma Fix (IN DEV)
+
+#### ✅ Obiettivo
+- Risolvere bug export: commesse esportate dal Gantt non apparivano in Programma Macchine.
+- Diagnosticare colori grigi errati su commesse attive nel Gantt.
+
+#### ✅ Modifiche
+- ProgrammaMacchine: filtro corretto per mostrare commesse con `StatoProgramma == "Programmata"`.
+- Gantt JS: aggiunto debug logging per statoProgramma e colori.
+- Export funzionante: le commesse Programmata ora visibili in Programma per stampa.
+
+**File modificati:**
+- MESManager.Web/Components/Pages/Programma/ProgrammaMacchine.razor
+- MESManager.Web/wwwroot/js/gantt/gantt-macchine.js
+- MESManager.Web/MESManager.Web.csproj
+
+### v1.30.4 - Dark Mode Text Contrast Global (✅ COMPLETATO)
 
 #### ✅ Obiettivo
 - Migliorare leggibilità dark mode: tutti i testi in grigio chiarissimo (#e0e0e0).
