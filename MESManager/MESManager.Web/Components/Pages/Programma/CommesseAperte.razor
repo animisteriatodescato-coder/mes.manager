@@ -18,10 +18,9 @@
 
 <PageTitle>Commesse Aperte</PageTitle>
 
-<div class="commesse-aperte-page" data-testid="page-commesse-aperte">
+<div class="commesse-aperte-page" data-testid="page-commesse-aperte" style="display: flex; flex-direction: column; height: calc(100vh - 100px); overflow: hidden;">
     <div class="settings-panel">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
-            <MudText Typo="Typo.h6" data-testid="commesse-aperte-title">Commesse Aperte</MudText>
             <MudSpacer />
 
             
@@ -35,7 +34,7 @@
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
             <MudSwitch Value="@showArchived" 
                        Color="Color.Warning" 
-                       Label="Mostra Archiviate" 
+                       Label="Archiviate" 
                        T="bool"
                        ValueChanged="@OnShowArchivedChanged" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshGridData" data-testid="btn-refresh">Aggiorna</MudButton>
@@ -92,7 +91,7 @@
 
         <div id="commesseAperteGrid" class="ag-theme-alpine" 
             data-testid="grid-commesse"
-         style="width: 100%; height: calc(100vh - 150px);">
+         style="width: 100%; flex: 1; min-height: 0;">
     </div>
 
     <MudDialog @bind-Visible="showColumnDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Medium }">
@@ -262,7 +261,7 @@
         </DialogActions>
     </MudDialog>
 
-    <MudPaper Class="footer-info pa-1 mt-2" Elevation="1">
+    <MudPaper Class="footer-info pa-1" Elevation="1" Style="flex-shrink: 0;">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
             <MudText Typo="Typo.caption" Color="Color.Success">Totale Aperte: <strong>@totalRows</strong></MudText>
             <MudDivider Vertical="true" FlexItem="true" />

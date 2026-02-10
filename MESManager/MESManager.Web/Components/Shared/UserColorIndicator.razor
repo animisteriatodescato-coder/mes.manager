@@ -23,16 +23,17 @@
     .user-color-indicator {
         position: fixed;
         top: var(--mud-appbar-height, 64px);
-        left: 0;
+        left: var(--mud-drawer-width-left, 240px);
         right: 0;
-        height: 5px;
-        z-index: 1299; /* Sotto l'appbar ma sopra il contenuto */
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        transition: background-color 0.3s ease;
+        height: 4px;
+        z-index: 1100; /* Sotto l'appbar e drawer, sopra il contenuto */
+        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        transition: background-color 0.3s ease, left 0.3s ease;
     }
 
-    /* Quando il drawer è aperto, lascia spazio */
-    .mud-drawer-open-responsive-md-left ~ .user-color-indicator {
-        left: var(--mud-drawer-width-left, 240px);
+    /* Quando il drawer è chiuso, la linea parte da 0 */
+    .mud-drawer-closed ~ .mud-main-content .user-color-indicator,
+    .user-color-indicator.drawer-closed {
+        left: 0;
     }
 </style>

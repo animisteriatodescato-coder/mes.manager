@@ -72,8 +72,11 @@
     }
     
     <MudDrawer @bind-Open="_drawerOpen" Elevation="2">
-        <MudDrawerHeader>
+        <MudDrawerHeader Style="display: flex; justify-content: space-between; align-items: center;">
             <MudText Typo="Typo.h6">Menu</MudText>
+            <MudText Typo="Typo.caption" Style="@($"font-family: monospace; color: {(_isDarkMode ? "rgba(230,230,230,0.5)" : "rgba(0,0,0,0.3)")}; font-size: 10px;")">
+                @AppVersion.Display
+            </MudText>
         </MudDrawerHeader>
         <MudNavMenu data-testid="nav-menu">
             <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary">Home</MudNavLink>
@@ -155,9 +158,5 @@
                 </ErrorContent>
             </ErrorBoundary>
         </MudContainer>
-        <!-- Version number in bottom right corner -->
-        <div style="position: fixed; bottom: 10px; right: 15px; font-size: 11px; color: @(_isDarkMode ? "#e6e6e6" : "#999"); font-family: monospace; pointer-events: none;">
-            @AppVersion.Display
-        </div>
     </MudMainContent>
 </MudLayout>

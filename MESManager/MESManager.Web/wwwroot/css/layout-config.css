@@ -48,3 +48,22 @@
 .commesse-grid-container {
     height: calc(100vh - var(--grid-offset)) !important;
 }
+
+/* ========== RIDUZIONE PULSANTI 20% ========== */
+/* Pulsanti più compatti: ridotti del ~20% rispetto a default MudBlazor */
+.settings-panel .mud-button-root,
+.toolbar-sticky .mud-button-root {
+    font-size: 0.75rem !important;
+    padding: 3px 10px !important;
+    min-height: 30px !important;
+}
+
+.settings-panel .mud-icon-button-root,
+.toolbar-sticky .mud-icon-button-root {
+    padding: 4px !important;
+}
+
+.settings-panel .mud-button-root .mud-icon-root,
+.toolbar-sticky .mud-button-root .mud-icon-root {
+    font-size: 1.1rem !important;
+}

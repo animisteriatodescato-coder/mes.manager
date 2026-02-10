@@ -12,7 +12,7 @@
 
 <PageTitle>Catalogo Clienti</PageTitle>
 
-<div class="clienti-page" data-testid="page-catalogo-clienti">
+<div class="clienti-page" data-testid="page-catalogo-clienti" style="display: flex; flex-direction: column; height: calc(100vh - 100px); overflow: hidden;">
     <div class="settings-panel">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
             <MudTextField @bind-Value="searchText"
@@ -74,10 +74,10 @@
 
         <div id="clientiGrid" class="ag-theme-alpine" 
             data-testid="grid-catalogo-clienti"
-         style="width: 100%; height: calc(100vh - 150px);">
+         style="width: 100%; flex: 1; min-height: 0;">
     </div>
 
-    <MudPaper Class="footer-info pa-1 mt-2" Elevation="1">
+    <MudPaper Class="footer-info pa-1" Elevation="1" Style="flex-shrink: 0;">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
             <MudText Typo="Typo.caption" Color="Color.Secondary">Totale righe: <strong>@totalRows</strong></MudText>
             <MudDivider Vertical="true" FlexItem="true" />
@@ -141,6 +141,7 @@
     private GridUiSettings settings = new();
     private bool showSettings = false;
     private string searchText = string.Empty;
+    private IJSObjectReference? jsModule = null;
 
     private int totalRows = 0;
     private int filteredRows = 0;
@@ -180,6 +181,10 @@
         {
             await Task.Delay(100);
             await InitializeGrid();
+            
+            // Subscribe to stats changes
+            jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/stats-listener-clienti.js");
+            await jsModule.InvokeVoidAsync("subscribeToStatsChanges", DotNetObjectReference.Create(this));
         }
     }
 
@@ -306,11 +311,34 @@
         // Deregistra questa pagina
         PageToolbarService.SetActivePage("clienti", null);
         
+        if (jsModule != null)
+        {
+            await jsModule.DisposeAsync();
+        }
+        
         try
         {
             await SaveSettings();
         }
         catch { }
+    }
+    
+    [JSInvokable]
+    public async Task UpdateStats()
+    {
+        try
+        {
+            var stats = await JSRuntime.InvokeAsync<GridStats>("clientiGrid.getStats");
+            totalRows = stats.Total;
+            filteredRows = stats.Filtered;
+            selectedRows = stats.Selected;
+            lastUpdate = DateTime.Now;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CLIENTI] Error updating stats: {ex.Message}");
+        }
     }
     
     // Metodi pubblici per essere chiamati dalla AppBar
@@ -339,5 +367,12 @@
         public bool Attivo { get; set; }
         public DateTime UltimaModifica { get; set; }
         public DateTime TimestampSync { get; set; }
+    }
+    
+    private class GridStats
+    {
+        public int Total { get; set; }
+        public int Filtered { get; set; }
+        public int Selected { get; set; }
     }
 }

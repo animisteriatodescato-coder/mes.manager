@@ -177,8 +177,9 @@
    TIME AXIS
    ========================================== */
 .vis-time-axis .vis-text {
-    color: #424242;
-    font-weight: 500;
+    color: #1a1a1a;
+    font-weight: 600;
+    font-size: 13px;
 }
 
 /* ==========================================
@@ -188,8 +189,9 @@
 .mud-theme-dark .vis-time-axis .vis-text,
 .mud-theme-dark .vis-time-axis .vis-text.vis-major,
 .mud-theme-dark .vis-time-axis .vis-text.vis-minor {
-    color: #e0e0e0 !important;
+    color: #ffffff !important;
     opacity: 1 !important;
+    font-weight: 600;
 }
 
 .mud-theme-dark .vis-labelset .vis-label {
