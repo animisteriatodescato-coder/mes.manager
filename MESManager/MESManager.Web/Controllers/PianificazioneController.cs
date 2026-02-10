@@ -703,6 +703,57 @@ public class PianificazioneController : ControllerBase
     }
     
     /// <summary>
+    /// 🔍 DEBUG v1.30.8: Test FILTRO ESATTO usato da ProgrammaMacchine.razor
+    /// Replica identico il WHERE client-side per verificare cosa passa
+    /// </summary>
+    [HttpGet("test-filtro-programma")]
+    public async Task<IActionResult> TestFiltroProgramma()
+    {
+        var tutte = await _context.Commesse
+            .Include(c => c.Articolo)
+            .ToListAsync();
+            
+        var conMacchina = tutte.Where(c => c.NumeroMacchina.HasValue).ToList();
+        var conDate = tutte.Where(c => c.DataInizioPrevisione.HasValue).ToList();
+        var nonCompletata = tutte.Where(c => c.StatoProgramma != StatoProgramma.Completata).ToList();
+        var nonArchiviata = tutte.Where(c => c.StatoProgramma != StatoProgramma.Archiviata).ToList();
+        var aperte = tutte.Where(c => c.Stato == StatoCommessa.Aperta).ToList();
+        
+        // FILTRO FINALE ESATTO (come in ProgrammaMacchine.razor)
+        var filtrate = tutte.Where(c =>
+            c.NumeroMacchina.HasValue &&
+            c.DataInizioPrevisione.HasValue &&
+            c.StatoProgramma != StatoProgramma.Completata &&
+            c.StatoProgramma != StatoProgramma.Archiviata &&
+            c.Stato == StatoCommessa.Aperta
+        ).ToList();
+        
+        // Sample delle prime 5 che passano il filtro
+        var sample = filtrate.Take(5).Select(c => new {
+            c.Codice,
+            c.NumeroMacchina,
+            dataInizio = c.DataInizioPrevisione?.ToString("yyyy-MM-dd"),
+            dataFine = c.DataFinePrevisione?.ToString("yyyy-MM-dd"),
+            statoProgramma = c.StatoProgramma.ToString(),
+            stato = c.Stato.ToString(),
+            articolo = c.Articolo?.Codice
+        });
+        
+        return Ok(new {
+            totale = tutte.Count,
+            stepByStep = new {
+                conMacchina = conMacchina.Count,
+                conDate = conDate.Count,
+                nonCompletata = nonCompletata.Count,
+                nonArchiviata = nonArchiviata.Count,
+                aperte = aperte.Count
+            },
+            filtrateFinali = filtrate.Count,
+            sample
+        });
+    }
+    
+    /// <summary>
     /// Esporta la programmazione Gantt sulla pagina Programma (applica date e ordine)
     /// DEBUG: Logging aggressivo per verificare ogni step
     /// </summary>

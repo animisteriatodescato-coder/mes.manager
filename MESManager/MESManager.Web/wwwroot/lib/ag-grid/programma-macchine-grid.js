@@ -387,11 +387,14 @@ window.programmaMacchineGrid = (function() {
     }
 
     function init(gridId, data, savedColumnState) {
+        console.log('[JS-PROGRAMMA] 🔍 init() START - gridId:', gridId, 'data.length:', data?.length);
+        
         const gridDiv = document.getElementById(gridId);
         if (!gridDiv) {
-            console.error('Grid element not found:', gridId);
+            console.error('[JS-PROGRAMMA] ❌ Grid element not found:', gridId);
             return;
         }
+        console.log('[JS-PROGRAMMA] ✅ Grid element found');
 
         // Aggiungi CSS per impedire la selezione del testo al doppio click
         if (!document.getElementById('pm-grid-noselect-style')) {
@@ -414,7 +417,10 @@ window.programmaMacchineGrid = (function() {
 
         // Prepara i dati con placeholder per macchine vuote
         const preparedData = prepareDataWithPlaceholders(data);
-        console.log('init: received', data.length, 'rows, prepared to', preparedData.length, 'with placeholders');
+        console.log('[JS-PROGRAMMA] 📊 init: received', data?.length, 'rows, prepared to', preparedData.length, 'with placeholders');
+        if (data?.length > 0) {
+            console.log('[JS-PROGRAMMA] Sample data[0]:', data[0]);
+        }
 
         const gridOptions = {
             columnDefs: getColumnDefs(),
@@ -570,15 +576,36 @@ window.programmaMacchineGrid = (function() {
             row.statoProgramma !== 'Archiviata'
         );
         
+        // 🔍 DEBUG: Log per verificare formato dati
+        if (commesse.length > 0) {
+            console.log('[JS-PROGRAMMA] prepareData: commesse[0].numeroMacchina =', commesse[0].numeroMacchina, 'tipo:', typeof commesse[0].numeroMacchina);
+            console.log('[JS-PROGRAMMA] prepareData: allMachines =', allMachines);
+        }
+        
+        // Helper: converte numeroMacchina (int o string) in codice macchina "M001"
+        function toMachineCode(num) {
+            if (typeof num === 'string' && num.startsWith('M')) return num; // già in formato M00X
+            const n = parseInt(num);
+            if (isNaN(n)) return null;
+            return 'M' + String(n).padStart(3, '0'); // 5 → "M005", 11 → "M011"
+        }
+        
         // Raggruppa per macchina
         const byMachine = {};
         allMachines.forEach(m => byMachine[m] = []);
         
+        let matched = 0, unmatched = 0;
         commesse.forEach(c => {
-            if (byMachine[c.numeroMacchina]) {
-                byMachine[c.numeroMacchina].push(c);
+            const machineCode = toMachineCode(c.numeroMacchina);
+            if (machineCode && byMachine[machineCode]) {
+                byMachine[machineCode].push(c);
+                matched++;
+            } else {
+                console.warn('[JS-PROGRAMMA] ⚠️ Commessa senza match macchina:', c.codice, 'numeroMacchina:', c.numeroMacchina, '→ machineCode:', machineCode);
+                unmatched++;
             }
         });
+        console.log('[JS-PROGRAMMA] prepareData: matched =', matched, 'unmatched =', unmatched);
         
         // Ordina per ordineSequenza dentro ogni macchina
         allMachines.forEach(m => {
@@ -598,10 +625,15 @@ window.programmaMacchineGrid = (function() {
                 });
             } else {
                 // Macchina con commesse: aggiungile tutte
-                byMachine[machine].forEach(c => result.push(c));
+                // ⚠️ IMPORTANTE: Converti numeroMacchina nel formato M00X per coerenza con la griglia
+                byMachine[machine].forEach(c => {
+                    c.numeroMacchina = machine; // normalizza al formato M00X
+                    result.push(c);
+                });
             }
         });
         
+        console.log('[JS-PROGRAMMA] prepareData: result =', result.length, 'righe (commesse + placeholder)');
         return result;
     }
 

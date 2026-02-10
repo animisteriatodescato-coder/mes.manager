@@ -56,7 +56,54 @@ Quando l'utente dice **"pubblica"**, **"deploy"** o **"vai in produzione"**:
 > **Nota**: Questa sezione raccoglie modifiche durante sviluppo.  
 > Prima di ogni deploy, spostarle in "Storico Versioni" sotto.
 
-### v1.30.7 - Fix Programma Macchine Loop + Versione Centralizzata (IN DEV)
+### v1.30.8 - Diagnostica Programma Vuoto con 5 Fix (IN DEV)
+
+#### 🔍 Problema
+- Programma Macchine mostra griglia VUOTA nonostante "25 commesse programmate"
+- Debug API conferma: 26 commesse `aperteConMacchina` esistono nel DB
+- Necessaria diagnostica aggressiva per identificare breakpoint
+
+#### ✅ 5 Possibili Problemi Identificati e Risolti
+
+1. **GRIDSTATUS NASCOSTO**
+   - Problema: gridStatus diceva "Pronto" invece di mostrare count reale
+   - Fix: Ora mostra `"{count} commesse programmate"` (linea 569)
+
+2. **LOGGING ASSENTE**
+   - Problema: Nessun debug per capire dove si perdono i dati
+   - Fix: Logging aggressivo in `LoadData()` e `InitializeGrid()`
+   - Console log: BEFORE/AFTER filtro, valori StatoProgramma, sample commesse
+
+3. **STATOPROGRAMMA TIPO MISMATCH**
+   - Problema: Possibile confronto errato enum vs stringa
+   - Fix: Confermato che DTO usa `string`, filtro corretto
+
+4. **GRID INIT SENZA ERROR HANDLING**
+   - Problema: Errori silenti nella grid JS non loggati
+   - Fix: catch con `Console.WriteLine` dell'errore in `InitializeGrid()`
+
+5. **FILTRO TROPPO RESTRITTIVO**
+   - Problema: AND di 5 condizioni potrebbe eliminare tutto
+   - Fix: Creato endpoint `/api/pianificazione/test-filtro-programma` per test server-side
+
+#### 📝 File Modificati
+- MESManager.Web/Components/Pages/Programma/ProgrammaMacchine.razor
+  - LoadData(): logging BEFORE/AFTER filtro con sample
+  - InitializeGrid(): logging completo step-by-step
+  - gridStatus: visualizza count reale
+- MESManager.Web/Controllers/PianificazioneController.cs
+  - Nuovo endpoint: `GET /api/pianificazione/test-filtro-programma`
+  - Replica filtro esatto lato server per diagnostica
+- MESManager.Web/Constants/AppVersion.cs
+  - Versione: 1.30.7 → 1.30.8
+
+#### 🧪 Test Previsti
+1. Call API `/api/pianificazione/test-filtro-programma` → verifica count lato server
+2. Hard refresh browser → verifica console log
+3. Verifica grid popolata con count visibile
+4. Screenshot proof prima di dichiarare risolto
+
+### v1.30.7 - Fix Programma Macchine Loop + Versione Centralizzata (✅ COMPLETATO)
 
 #### ✅ Obiettivo
 - Risolvere bug: Programma Macchine chiamava auto-completa ad ogni load creando loop confuso.

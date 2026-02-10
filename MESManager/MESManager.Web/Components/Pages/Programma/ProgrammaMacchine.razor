@@ -530,9 +530,16 @@
             
             _allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
             
+            // � DEBUG: Log BEFORE filtro
+            Console.WriteLine($"[PROGRAMMA] BEFORE filtro: {_allCommesse.Count} commesse totali");
+            Console.WriteLine($"[PROGRAMMA] Con macchina: {_allCommesse.Count(c => c.NumeroMacchina.HasValue)}");
+            Console.WriteLine($"[PROGRAMMA] Con data inizio: {_allCommesse.Count(c => c.DataInizioPrevisione.HasValue)}");
+            Console.WriteLine($"[PROGRAMMA] StatoProgramma values: {string.Join(", ", _allCommesse.Select(c => c.StatoProgramma).Distinct())}");
+            Console.WriteLine($"[PROGRAMMA] Stato values: {string.Join(", ", _allCommesse.Select(c => c.Stato).Distinct())}");
+            
             // 🔄 FILTRO v1.30.7: Mostra solo commesse pianificate NON completate/archiviate
+            // IMPORTANTE: StatoProgramma è STRINGA nel DTO, non enum!
             // Programma = Vista Read-Only del Gantt (master source)
-            // Si aggiorna automaticamente quando Gantt cambia (via SignalR)
             _commesse = _allCommesse.Where(c => 
                 c.NumeroMacchina.HasValue &&
                 c.DataInizioPrevisione.HasValue &&
@@ -541,6 +548,18 @@
                 c.Stato == "Aperta"
             ).ToList();
             
+            // 🔍 DEBUG: Log AFTER filtro
+            Console.WriteLine($"[PROGRAMMA] AFTER filtro: {_commesse.Count} commesse visualizzabili");
+            if (_commesse.Count == 0 && _allCommesse.Count > 0)
+            {
+                Console.WriteLine("[PROGRAMMA] ⚠️ FILTRO HA ELIMINATO TUTTO! Verifica condizioni:");
+                var sample = _allCommesse.Take(5);
+                foreach (var c in sample)
+                {
+                    Console.WriteLine($"  - {c.Codice}: NumMacchina={c.NumeroMacchina}, DataInizio={c.DataInizioPrevisione}, StatoProg={c.StatoProgramma}, Stato={c.Stato}");
+                }
+            }
+            
             // Conteggio totale
             var programmate = _commesse;
             
@@ -548,7 +567,11 @@
             filteredRows = programmate.Count;
             lastUpdate = DateTime.Now;
             isLoading = false;
-            gridStatus = "Pronto";
+            
+            // ⚠️ IMPORTANTE: Mostra count reale, non "Pronto"
+            gridStatus = $"{programmate.Count} commesse programmate";
+            
+            Console.WriteLine($"[PROGRAMMA] gridStatus = '{gridStatus}', totalRows = {totalRows}");
         }
         finally
         {
@@ -660,11 +683,17 @@
     {
         try
         {
+            Console.WriteLine($"[PROGRAMMA] InitializeGrid() START - _commesse.Count = {_commesse.Count}");
+            
             var exists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.programmaMacchineGrid !== 'undefined'");
             if (!exists)
             {
-                // programmaMacchineGrid is not defined
+                Console.WriteLine("[PROGRAMMA] ❌ programmaMacchineGrid NON definito in window");
                 return;
+            }
+            else
+            {
+                Console.WriteLine("[PROGRAMMA] ✅ programmaMacchineGrid definito");
             }
 
             var jsonOptions = new JsonSerializerOptions 
@@ -676,19 +705,23 @@
             // Passa le macchine al JavaScript PRIMA di inizializzare la griglia
             var macchineJson = JsonSerializer.Serialize(_macchine, jsonOptions);
             await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.setMachines", _macchine);
+            Console.WriteLine($"[PROGRAMMA] Macchine serializzate: {_macchine.Count} elementi");
             
             var jsonData = JsonSerializer.Serialize(_commesse, jsonOptions);
+            Console.WriteLine($"[PROGRAMMA] Dati serializzati: {jsonData.Length} caratteri, {_commesse.Count} commesse");
 
             await JSRuntime.InvokeVoidAsync("eval", $"programmaMacchineGrid.init('programmaMacchineGrid', JSON.parse({System.Text.Json.JsonSerializer.Serialize(jsonData)}), {System.Text.Json.JsonSerializer.Serialize(settings.ColumnStateJson)})");
+            Console.WriteLine($"[PROGRAMMA] ✅ Grid.init() completato");
             
             // Passa il DotNetReference per il doppio clic
             await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.setDotNetHelper", DotNetObjectReference.Create(this));
             
             await ApplyUiSettings();
+            Console.WriteLine($"[PROGRAMMA] InitializeGrid() END");
         }
-        catch
+        catch (Exception ex)
         {
-            // Error initializing grid
+            Console.WriteLine($"[PROGRAMMA] ❌ ERRORE in InitializeGrid: {ex.Message}");
         }
     }
 
