@@ -56,7 +56,22 @@ Quando l'utente dice **"pubblica"**, **"deploy"** o **"vai in produzione"**:
 > **Nota**: Questa sezione raccoglie modifiche durante sviluppo.  
 > Prima di ogni deploy, spostarle in "Storico Versioni" sotto.
 
-### v1.30.5 - Export Gantt to Programma Fix (IN DEV)
+### v1.30.6 - Programma Macchine Filter Fix (IN DEV)
+
+#### ✅ Obiettivo
+- Risolvere bug: Programma Macchine vuoto dopo export.
+- Filtro troppo restrittivo (richiedeva StatoProgramma="Programmata").
+
+#### ✅ Modifiche
+- ProgrammaMacchine: filtro corretto per mostrare TUTTE le commesse pianificate (con macchina e data), escludendo solo archiviate.
+- Versione UI aggiornata a v1.30.6.
+
+**File modificati:**
+- MESManager.Web/Components/Pages/Programma/ProgrammaMacchine.razor
+- MESManager.Web/Components/Layout/MainLayout.razor
+- MESManager.Web/MESManager.Web.csproj
+
+### v1.30.5 - Export Gantt to Programma Fix (✅ COMPLETATO)
 
 #### ✅ Obiettivo
 - Risolvere bug export: commesse esportate dal Gantt non apparivano in Programma Macchine.
