@@ -377,5 +377,141 @@ Quando aggiorni BIBBIA-VI MESMANAGER.md, Aggiungi:
 
 ---
 
+## 🧪 TESTING E DEBUG INFRASTRUCTURE
+
+### Test Automation Scripts
+
+**Path**: `C:\Dev\MESManager\test-api.ps1`
+
+Script PowerShell per test automatici delle API senza interferire con l'applicazione in esecuzione.
+
+#### Comandi Disponibili
+
+```powershell
+# Avvio applicazione in processo isolato
+.\start-web.ps1
+
+# Test suite completa (dopo 10 secondi dall'avvio)
+.\test-api.ps1
+```
+
+#### Test Eseguiti
+
+1. **Debug Commesse** - Conteggi database via `/api/pianificazione/debug-commesse`
+   - `totaleCommesse`: Tutte le commesse
+   - `conMacchina`: Con NumeroMacchina assegnato
+   - `conDate`: Con DataInizioPrevisione
+   - `conMacchinaEDate`: Esportabili (macchina E date)
+   - `statoProgrammataProgrammata`: Con StatoProgramma = Programmata
+   - `statoAperta`: Con Stato = Aperta
+   - `aperteConMacchina`: Aperte con macchina assegnata
+
+2. **Lista Commesse** - Tutte le commesse via `/api/Commesse`
+   - Mostra prime 3 commesse con dettagli
+   - Verifica disponibilità dati
+
+3. **Filtro Programma Macchine** - Verifica lato client
+   - Filtro: `Stato == "Aperta" AND NumeroMacchina != null AND StatoProgramma != "Archiviata"`
+   - **NOTA**: Non esiste endpoint `/api/pianificazione/programma-macchine`
+   - La pagina ProgrammaMacchine.razor filtra lato client da `/api/Commesse`
+
+4. **Export** - Test `/api/pianificazione/esporta-su-programma`
+   - Esporta commesse con macchina E date
+   - Aggiorna `StatoProgramma: NonProgrammata → Programmata`
+   - Mostra conteggio prima/dopo
+
+5. **Diagnostica Post-Export**
+   - Verifica se StatoProgramma è cambiato
+   - Conta commesse aggiunte a Programma Macchine
+   - Identifica cause di fallimento
+
+#### Debug Endpoint
+
+**Endpoint**: `GET /api/pianificazione/debug-commesse`
+
+Restituisce conteggi critici per diagnostica:
+
+```json
+{
+  "totaleCommesse": 161,
+  "conMacchina": 20,
+  "conDate": 43,
+  "conMacchinaEDate": 20,
+  "statoProgrammataProgrammata": 25,
+  "statoAperta": 80,
+  "aperteConMacchina": 12
+}
+```
+
+**Uso**: Identificare rapidamente problemi di stato/assegnazione
+
+#### Problemi Comuni Identificabili
+
+| Sintomo | Diagnosi | Soluzione |
+|---------|----------|-----------|
+| `conMacchinaEDate == 0` | Nessuna commessa assegnata | Usare Gantt per assegnare macchine e date |
+| Export 0 commesse ma `conMacchinaEDate > 0` | Tutte già Programmate | Normale se già esportate |
+| `aperteConMacchina > 0` ma Programma Macchine vuoto | Tutte Archiviate o StatoProgramma sbagliato | Verificare StatoProgramma in database |
+| `statoProgrammataProgrammata > 0` ma tabella vuota | NumeroMacchina null o Stato != Aperta | Verificare entrambi i campi |
+
+#### Workflow Testing
+
+```powershell
+# 1. Avvia app
+.\start-web.ps1
+
+# 2. Aspetta 10 secondi
+
+# 3. Esegui test
+.\test-api.ps1
+
+# 4. Analizza output
+# - Verde ✓: Test passato
+# - Rosso ✗: Test fallito
+# - Giallo ⚠: Warning/diagnostica
+```
+
+#### Script Isolation Fix
+
+**Problema**: Script PowerShell arrestavano l'applicazione quando eseguiti nello stesso terminale
+
+**Soluzione**: `start-web.ps1` usa `UseShellExecute = $true` per creare processo completamente separato
+
+```powershell
+$psi.UseShellExecute = $true   # Processo separato
+$psi.CreateNoWindow = $false    # Mostra finestra separata
+```
+
+### Logging e Tracciamento
+
+**Endpoint Export Modificato** (5 Feb 2026):
+
+Aggiunto logging dettagliato per troubleshooting:
+
+```csharp
+_logger.LogInformation("PRIMA dell'update: {Count} commesse trovate", commesseDaProgrammare.Count);
+
+foreach (var commessa in commesseDaProgrammare)
+{
+    _logger.LogInformation("Commessa {Codice}: Stato={Stato}, StatoProgramma={StatoProgramma}", 
+        commessa.Codice, commessa.Stato, commessa.StatoProgramma);
+    
+    if (commessa.StatoProgramma == StatoProgramma.NonProgrammata)
+    {
+        commessa.StatoProgramma = StatoProgramma.Programmata;
+        commessa.DataCambioStatoProgramma = DateTime.Now;
+        commessa.UltimaModifica = DateTime.Now;
+        aggiornate++;
+    }
+}
+
+_logger.LogInformation("DOPO SaveChanges: Aggiornate {Aggiornate}/{Totali} commesse a stato Programmata", 
+    aggiornate, commesseDaProgrammare.Count);
+```
+
+**Consultare**: Terminale dotnet per vedere questi log durante export
+
+---
+
 **Documento Obbligatorio**: Leggi prima di ogni nuova fase di sviluppo.  
 **Aggiorna**: Quando scopri una lezione nuova importante.

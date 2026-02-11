@@ -93,6 +93,40 @@ dotnet publish MESManager.PlcSync/MESManager.PlcSync.csproj -c Release -o publis
 
 ---
 
+### STEP 2.5: Backup Preferenze Utente (⭐ CRITICO)
+
+**⚠️ OBBLIGATORIO** se il deploy modifica:
+- Nomi campi nelle grid (es: `ClienteRagioneSociale` → `CompanyName`)
+- Struttura colonne (nuove colonne, rimosse, riordinate)
+- DTO che cambiano property usate nelle grid
+
+```powershell
+cd C:\Dev\MESManager\scripts
+
+# Backup automatico delle preferenze utente
+.\backup-preferenze-utente.ps1
+
+# Output: backup-preferenze\preferenze_YYYYMMDD_HHmmss.json
+```
+
+**Risultato atteso**:
+```
+✅ Backup completato!
+Record salvati: 45
+File: C:\Dev\MESManager\scripts\backup-preferenze\preferenze_20260211_085500.json
+
+Preferenze per utente:
+  - admin: 12 preferenze
+  - operatore1: 8 preferenze
+  ...
+```
+
+**Quando NON serve**:
+- Deploy solo fix logica backend (senza cambi UI)
+- Deploy solo nuove pagine (senza modificare grid esistenti)
+
+---
+
 ### STEP 3: Ferma Servizi su Server
 
 **Ordine CRITICO**: PlcSync → Worker → Web
@@ -116,20 +150,33 @@ Start-Sleep 3
 ### STEP 4: Copia File
 
 ```powershell
-# Copia tutto ESCLUDENDO file critici
+# Copia Web ESCLUDENDO file critici e sottocartelle Worker/PlcSync
 robocopy "C:\Dev\MESManager\publish\Web" "\\192.168.1.230\c$\MESManager" `
+    /E /XF appsettings.Secrets.json appsettings.Database.json *.log *.pdb `
+    /XD logs SyncBackups Worker PlcSync
+
+# Copia Worker (solo se modificato in questa versione)
+robocopy "C:\Dev\MESManager\publish\Worker" "\\192.168.1.230\c$\MESManager\Worker" `
     /E /XF appsettings.Secrets.json appsettings.Database.json *.log *.pdb `
     /XD logs SyncBackups
 
+# Copia PlcSync (solo se modificato in questa versione)
+robocopy "C:\Dev\MESManager\publish\PlcSync" "\\192.168.1.230\c$\MESManager\PlcSync" `
+    /E /XF appsettings.Secrets.json appsettings.Database.json *.log *.pdb `
+    /XD logs
+
 # Verifica exit code
 # 0-7 = OK, >7 = errore
-echo "Exit Code: $LASTEXITCODE"
+echo "Exit Code: $LASTEXITCODE (0-7 = OK)"
 ```
 
 **File esclusi**:
 - `appsettings.Secrets.json` → Password produzione
 - `appsettings.Database.json` → Connection string produzione
 - `*.log`, `*.pdb` → Debug e log inutili
+
+**Cartelle escluse da Web**:
+- `Worker\`, `PlcSync\` → Copiate separatamente per non sovrascrivere
 
 ---
 
@@ -162,6 +209,52 @@ tasklist /S 192.168.1.230 /U Administrator /P "A123456!" | findstr MESManager
 2. **Versione**: Controlla numero versione in basso a destra
 3. **Test login** con utente
 4. **Log**: Verifica `C:\MESManager\logs\` per errori
+
+---
+
+### STEP 7: Restore Preferenze Utente (se necessario)
+
+**Usa SOLO se**:
+- Gli utenti segnalano che le colonne delle grid sono resettate
+- Vuoi ripristinare configurazioni pre-deploy
+
+#### Caso A: Deploy NON ha cambiato colonne (ripristino COMPLETO)
+
+```powershell
+cd C:\Dev\MESManager\scripts
+
+# Restore completo (include stati grid)
+.\restore-preferenze-utente.ps1
+```
+
+#### Caso B: Deploy HA CAMBIATO colonne (ripristino PARZIALE)
+
+Se hai modificato nomi campi o struttura colonne (es: `ClienteRagioneSociale` → `CompanyName`):
+
+```powershell
+cd C:\Dev\MESManager\scripts
+
+# Restore parziale - SALTA stati grid incompatibili
+.\restore-preferenze-utente.ps1 -SkipGridStates
+```
+
+**Risultato con -SkipGridStates**:
+- ✅ Ripristina: preferenze UI (font size, density, zebra stripes, ecc.)
+- ❌ **NON** ripristina: ordine colonne, larghezze, visibilità (incompatibili)
+- ⚠️ Gli utenti dovranno:
+  1. Riordinare le colonne come preferivano
+  2. Cliccare "Fix" per salvare il nuovo layout
+
+**Verifica**:
+```powershell
+# Output atteso:
+Ripristinate: 22
+Saltate (grid states): 12
+```
+
+**Alternative**:
+- NON fare restore → utenti riconfigurano tutto da zero
+- Fare restore completo → rischio errori JS se JSON incompatibile
 
 ---
 
@@ -288,9 +381,11 @@ taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /F /IM MESManager.*
 
 cd C:\Dev\MESManager
 
-# Build
+# Build & Publish
 dotnet build MESManager.sln -c Release --nologo
 dotnet publish MESManager.Web/MESManager.Web.csproj -c Release -o publish/Web --nologo
+dotnet publish MESManager.Worker/MESManager.Worker.csproj -c Release -o publish/Worker --nologo
+dotnet publish MESManager.PlcSync/MESManager.PlcSync.csproj -c Release -o publish/PlcSync --nologo
 
 # Stop servizi (ordine: PlcSync → Worker → Web)
 taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /IM MESManager.PlcSync.exe /F
@@ -298,8 +393,10 @@ taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /IM MESManager.Worker.e
 taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /IM MESManager.Web.exe /F
 Start-Sleep 3
 
-# Copia
-robocopy "C:\Dev\MESManager\publish\Web" "\\192.168.1.230\c$\MESManager" /E /XF appsettings.Secrets.json appsettings.Database.json *.log *.pdb /XD logs SyncBackups
+# Copia file (escludi sottocartelle Worker/PlcSync da Web per non sovrascrivere)
+robocopy "C:\Dev\MESManager\publish\Web" "\\192.168.1.230\c$\MESManager" /E /XF appsettings.Secrets.json appsettings.Database.json *.log *.pdb /XD logs SyncBackups Worker PlcSync /R:2 /W:5
+robocopy "C:\Dev\MESManager\publish\Worker" "\\192.168.1.230\c$\MESManager\Worker" /E /XF appsettings.Secrets.json appsettings.Database.json *.log *.pdb /XD logs SyncBackups /R:2 /W:5
+robocopy "C:\Dev\MESManager\publish\PlcSync" "\\192.168.1.230\c$\MESManager\PlcSync" /E /XF appsettings.Secrets.json appsettings.Database.json *.log *.pdb /XD logs /R:2 /W:5
 
 # Start servizi (ordine: Web → Worker → PlcSync)
 schtasks /S 192.168.1.230 /U Administrator /P "A123456!" /Run /TN "StartMESWeb"

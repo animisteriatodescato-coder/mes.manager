@@ -99,7 +99,7 @@
 }
 
 /* ==========================================
-   DRAG FEEDBACK
+   DRAG FEEDBACK - MIGLIORATO
    ========================================== */
 .vis-item.vis-drag-left,
 .vis-item.vis-drag-right {
@@ -108,8 +108,26 @@
 }
 
 .vis-item.vis-drag-center {
-    opacity: 0.8;
+    opacity: 0.85 !important;
     cursor: move;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+    transform: scale(1.02) translateY(-3px) !important;
+    z-index: 9999 !important;
+    border: 2px dashed #2196F3 !important;
+}
+
+/* Feedback visivo durante spostamento */
+.vis-item.vis-selected.vis-drag-center {
+    animation: pulse-drag 1s infinite;
+}
+
+@keyframes pulse-drag {
+    0%, 100% {
+        box-shadow: 0 8px 24px rgba(33, 150, 243, 0.4);
+    }
+    50% {
+        box-shadow: 0 12px 32px rgba(33, 150, 243, 0.6);
+    }
 }
 
 /* ==========================================
@@ -248,18 +266,26 @@
 }
 
 /* ==========================================
-   TOOLTIP
+   TOOLTIP - FIX COMPLETO SFONDO
    ========================================== */
 .vis-tooltip {
-    background-color: rgba(0, 0, 0, 0.85);
-    color: white;
-    border-radius: 4px;
-    padding: 8px 12px;
-    font-size: 13px;
-    max-width: 300px;
-    white-space: pre-line;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.92) !important;
+    color: white !important;
+    border-radius: 6px !important;
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+    max-width: 350px !important;
+    white-space: pre-line !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     animation: fadeIn 0.2s ease;
+    z-index: 999999 !important;
+    pointer-events: none !important;
+    /* Fix sfondo completo testo */
+    display: inline-block !important;
+    width: auto !important;
+    min-width: 200px !important;
 }
 
 @keyframes fadeIn {

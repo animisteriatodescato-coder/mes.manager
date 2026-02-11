@@ -93,5 +93,5 @@ public class CommessaDto
     // Flag per verificare se i dati etichetta sono completi
     public bool DatiEtichettaCompleti => 
         !string.IsNullOrEmpty(CodiceAnime) && 
-        !string.IsNullOrEmpty(ClienteRagioneSociale);
+        !string.IsNullOrEmpty(CompanyName);
 }

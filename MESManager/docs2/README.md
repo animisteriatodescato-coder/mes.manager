@@ -25,19 +25,21 @@
 3. **[03-CONFIGURAZIONE.md](03-CONFIGURAZIONE.md)** - Database, sicurezza, secrets, PLC
 
 ### Tecnici (architettura e implementazione)
-4. **[04-SCHEDULING-ENGINE-PATTERNS.md](04-SCHEDULING-ENGINE-PATTERNS.md)** - ⭐ NEW Algoritmi scheduling consolidati (Job Shop, FJSS, RCPSP) + pattern Odoo/OR-Tools + testing
-5. **[05-ARCHITETTURA.md](05-ARCHITETTURA.md)** - Clean Architecture, servizi, integrazioni
-6. **[06-REPLICA-SISTEMA.md](06-REPLICA-SISTEMA.md)** - Setup completo nuovo ambiente
-7. **[07-GANTT-ANALISI.md](07-GANTT-ANALISI.md)** - Analisi dettagliata Gantt v2.0
-8. **[08-PLC-SYNC.md](08-PLC-SYNC.md)** - Sincronizzazione PLC e troubleshooting
+4. **[04-ARCHITETTURA.md](04-ARCHITETTURA.md)** - Clean Architecture, servizi, integrazioni
+5. **[04-SCHEDULING-ENGINE-PATTERNS.md](04-SCHEDULING-ENGINE-PATTERNS.md)** - ⭐ Algoritmi scheduling (Job Shop, FJSS, RCPSP) + pattern Odoo/OR-Tools
+6. **[05-REPLICA-SISTEMA.md](05-REPLICA-SISTEMA.md)** - Setup completo nuovo ambiente
+7. **[06-GANTT-ANALISI.md](06-GANTT-ANALISI.md)** - Analisi dettagliata Gantt v2.0
+8. **[07-PLC-SYNC.md](07-PLC-SYNC.md)** - Sincronizzazione PLC e troubleshooting
 9. **[GANTT-REFACTORING-v2.0.md](GANTT-REFACTORING-v2.0.md)** - Rifattorizzazione scheduling robusto
 
-10. **[09-CHANGELOG.md](09-CHANGELOG.md)** - Storico versioni e modifiche
-11. **[10-BUSINESS.md](10-CHANGELOG.md)** - Storico versioni e modifiche
-10. **[09-BUSINESS.md](09-BUSINESS.md)** - Commerciale, demo, scheda tecnica
+### Changelog e Business
+10. **[08-CHANGELOG.md](08-CHANGELOG.md)** - Storico versioni e workflow AI deploy
+11. **[09-BUSINESS.md](09-BUSINESS.md)** - Commerciale, demo, scheda tecnica
+12. **[09-TESTING-FRAMEWORK.md](09-TESTING-FRAMEWORK.md)** - Framework unit/integration testing
+13. **[10-QA-UI-TESTING.md](10-QA-UI-TESTING.md)** - Testing UI e automazione QA
 
 ### Storico e Fix
-10. **[storico/](storico/)** - Fix risolti, report diagnostici, analisi tecniche
+14. **[storico/](storico/)** - Fix risolti, report diagnostici, analisi tecniche
     - [FIX-GANTT-ACCODAMENTO-20260120.md](storico/FIX-GANTT-ACCODAMENTO-20260120.md)
     - [FIX-TABELLA-FESTIVI-SQLQUERYRAW-20260203.md](storico/FIX-TABELLA-FESTIVI-SQLQUERYRAW-20260203.md)
     - [DIAGNOSTIC_REPORT.md](storico/DIAGNOSTIC_REPORT.md)
@@ -88,6 +90,49 @@
 | presentazioni/ (HTML) | *(non migrati)* | File HTML non essenziali per sviluppo |
 
 **Risultato**: Da 18 file principali → **13 file essenziali** (9 guide + 3 AI + 1 storico) + 6 fix nello storico + NEW pattern guide
+
+---
+
+## 🌱 Crescita Documentale - Dove Aggiungere Cosa
+
+**Problema da evitare**: Documentazione che cresce disordinata, duplicazioni, file giganti.
+
+**Soluzione**: Regole chiare su DOVE mettere nuovi contenuti.
+
+### Mappa Decisionale Rapida
+
+```
+Nuovo contenuto da documentare?
+│
+├─ È una REGOLA GENERALE progetto?
+│  └─ → BIBBIA-AI-MESMANAGER.md (se <20 righe)
+│     └─ Altrimenti → File tematico 01-10
+│
+├─ È un PROBLEMA emerso in DEPLOY PRODUZIONE?
+│  └─ → storico/DEPLOY-LESSONS-LEARNED.md
+│
+├─ È un FIX specifico con codice dettagliato?
+│  └─ → storico/FIX-[AREA]-[PROBLEMA]-[DATA].md
+│
+├─ È una PROCEDURA operativa?
+│  └─ → 01-DEPLOY.md, 02-SVILUPPO.md, etc.
+│
+└─ È un ALGORITMO o PATTERN nuovo?
+   └─ → 04-SCHEDULING-ENGINE-PATTERNS.md
+```
+
+### Limiti Dimensioni File
+
+| File | Max Righe | Se Superato |
+|------|-----------|-------------|
+| **BIBBIA-AI-MESMANAGER.md** | 350 | Split dettagli → docs2/ |
+| **File 01-10** | 800 | Crea sottopagine o split |
+| **storico/FIX-*.md** | 500 | OK (documenti puntuali) |
+| **storico/DEPLOY-LESSONS** | 1000 | Split annuale |
+
+### Riferimento Completo
+
+Vedi **[BIBBIA-AI-MESMANAGER.md](BIBBIA-AI-MESMANAGER.md#-regole-di-crescita-documentale)** per regole dettagliate.
 
 ---
 

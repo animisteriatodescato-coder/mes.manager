@@ -97,7 +97,7 @@ window.commesseAperteGrid = (function() {
             valueFormatter: params => params.value != null ? '€ ' + params.value.toFixed(2) : ''
         },
         { 
-            field: 'clienteRagioneSociale', 
+            field: 'companyName', 
             headerName: 'Cliente', 
             sortable: true, 
             filter: true, 
@@ -377,7 +377,7 @@ window.commesseAperteGrid = (function() {
             },
             getRowStyle: params => {
                 if (params.data && params.data.numeroMacchina != null && params.data.numeroMacchina !== '') {
-                    return { backgroundColor: '#e3f2fd' };
+                    return { backgroundColor: '#e8f5e9' }; // Verde chiaro per commesse assegnate a macchina
                 }
                 return null;
             },
@@ -439,20 +439,23 @@ window.commesseAperteGrid = (function() {
             },
             onColumnMoved: (params) => {
                 if (params.finished) saveColumnState();
-                window.dispatchEvent(new CustomEvent('commesseAperteGridStateChanged'));
+                notifyBlazorStateChanged();
             },
             onColumnResized: (params) => {
                 if (params.finished) saveColumnState();
-                window.dispatchEvent(new CustomEvent('commesseAperteGridStateChanged'));
+                notifyBlazorStateChanged();
             },
             onColumnVisible: () => {
                 saveColumnState();
-                window.dispatchEvent(new CustomEvent('commesseAperteGridStateChanged'));
+                notifyBlazorStateChanged();
             },
-            onColumnPinned: () => saveColumnState(),
+            onColumnPinned: () => {
+                saveColumnState();
+                notifyBlazorStateChanged();
+            },
             onSortChanged: () => {
                 saveColumnState();
-                window.dispatchEvent(new CustomEvent('commesseAperteGridStateChanged'));
+                notifyBlazorStateChanged();
             },
             onSelectionChanged: () => {
                 window.dispatchEvent(new CustomEvent('commesseAperteGridStatsChanged'));
@@ -532,6 +535,18 @@ window.commesseAperteGrid = (function() {
             localStorage.setItem(storageKey, JSON.stringify(columnState));
             console.log('Column state saved to localStorage:', storageKey);
         }
+    }
+
+    // Debounced notification to Blazor for DB persistence (avoids flooding)
+    let _blazorStateTimer = null;
+    function notifyBlazorStateChanged() {
+        window.dispatchEvent(new CustomEvent('commesseAperteGridStateChanged'));
+        if (_blazorStateTimer) clearTimeout(_blazorStateTimer);
+        _blazorStateTimer = setTimeout(() => {
+            if (dotNetHelper) {
+                dotNetHelper.invokeMethodAsync('SaveGridStateFromJs').catch(() => {});
+            }
+        }, 1000); // Debounce 1 second
     }
 
     function setDotNetHelper(helper) {

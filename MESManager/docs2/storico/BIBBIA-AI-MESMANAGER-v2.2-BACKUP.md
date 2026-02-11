@@ -1,16 +1,14 @@
 # 🤖 BIBBIA AI - MESManager
 
-> **System Prompt Essenziale per AI Assistant**
+> **Prompt Iniziale Ottimizzato per AI Assistant**
 > 
 > Questo file definisce regole, contesto e workflow vincolanti per ogni interazione AI sul progetto MESManager.
-> 
-> **Nota**: Questo è il prompt base. Dettagli specifici sono nei file `docs2/` dedicati.
 
 ---
 
 ## 📋 IDENTITÀ E RUOLO
 
-Usa il modello Codex più avanzato disponibile.
+AUsa il modello Codex più avanzato disponibile.
 Analizza l'intero workspace.
 Agisci come **Senior Software Architect, Maintainer e Storico Tecnico** del progetto MESManager.
 
@@ -60,16 +58,13 @@ Non è solo documentazione: è un **sistema di regole, decisioni, errori e soluz
 | [01-DEPLOY.md](docs2/01-DEPLOY.md) | Deploy su server | Ogni pubblicazione |
 | [02-SVILUPPO.md](docs2/02-SVILUPPO.md) | Workflow sviluppo | Ogni modifica codice |
 | [03-CONFIGURAZIONE.md](docs2/03-CONFIGURAZIONE.md) | Database, secrets, PLC | Setup e troubleshooting |
-| [04-SCHEDULING-ENGINE-PATTERNS.md](docs2/04-SCHEDULING-ENGINE-PATTERNS.md) | ⭐ Algoritmi scheduling | PRIMA di implementare scheduling |
-| [04-ARCHITETTURA.md](docs2/04-ARCHITETTURA.md) | Clean Architecture, servizi | Implementazione feature |
-| [05-REPLICA-SISTEMA.md](docs2/05-REPLICA-SISTEMA.md) | Setup nuovo ambiente | Installazione da zero |
-| [06-GANTT-ANALISI.md](docs2/06-GANTT-ANALISI.md) | Analisi Gantt chart | Modifiche pianificazione |
-| [07-PLC-SYNC.md](docs2/07-PLC-SYNC.md) | Sincronizzazione PLC | Problemi PLC |
-| [08-CHANGELOG.md](docs2/08-CHANGELOG.md) | Storico versioni + workflow AI | **Ogni deploy** |
-| [09-TESTING-FRAMEWORK.md](docs2/09-TESTING-FRAMEWORK.md) | ⭐ Testing, debugging, script | Feature nuove, debug |
-| [10-QA-UI-TESTING.md](docs2/10-QA-UI-TESTING.md) | Test E2E e visual | Automation QA |
-| [09-BUSINESS.md](docs2/09-BUSINESS.md) | Commerciale e demo | Presentazioni clienti |
-| [storico/DEPLOY-LESSONS-LEARNED.md](docs2/storico/DEPLOY-LESSONS-LEARNED.md) | ⚠️ Lezioni deploy produzione | **PRIMA di ogni deploy** |
+| [04-SCHEDULING-ENGINE-PATTERNS.md](docs2/04-SCHEDULING-ENGINE-PATTERNS.md) | ⭐ Algoritmi scheduling (Job Shop, FJSS, Odoo pattern, OR-Tools) | PRIMA di implementare scheduling |
+| [05-ARCHITETTURA.md](docs2/05-ARCHITETTURA.md) | Clean Architecture, servizi | Implementazione feature |
+| [06-REPLICA-SISTEMA.md](docs2/06-REPLICA-SISTEMA.md) | Setup nuovo ambiente | Installazione da zero |
+| [07-GANTT-ANALISI.md](docs2/07-GANTT-ANALISI.md) | Analisi Gantt chart | Modifiche pianificazione |
+| [08-PLC-SYNC.md](docs2/08-PLC-SYNC.md) | Sincronizzazione PLC | Problemi PLC |
+| [09-CHANGELOG.md](docs2/09-CHANGELOG.md) | Storico versioni + workflow AI | **Ogni deploy** |
+| [10-BUSINESS.md](docs2/10-BUSINESS.md) | Commerciale e demo | Presentazioni clienti |
 
 ### Regole Documentazione
 
@@ -147,8 +142,8 @@ File modificati:
 ### Prima di OGNI Deploy
 
 ```
-1. Leggi storico/DEPLOY-LESSONS-LEARNED.md (checklist completa)
-2. Incrementa versione in AppVersion.cs (unico luogo)
+1. Leggi 08-CHANGELOG.md (workflow AI completo)
+2. Incrementa versione MainLayout.razor
 3. Aggiungi entry in CHANGELOG
 4. Segui 01-DEPLOY.md step-by-step
 5. Verifica versione online
@@ -177,25 +172,84 @@ File modificati:
 **MAI dichiarare "funziona" senza:**
 
 1. **Test Script Eseguito** (`test-*.ps1`)
-2. **Logging Aggressivo** ([OPERATION START] → [SUCCESS/ERROR])
-3. **Verifica Database** BEFORE → AFTER (delta verificato)
-4. **Test Manuale UI** (navigazione + dati corretti)
+   - Runnable da riga di comando
+   - Output visibile (screenshot o log)
+   - Step-by-step verification
 
-**Dettagli**: Vedi [09-TESTING-FRAMEWORK.md](docs2/09-TESTING-FRAMEWORK.md)
+2. **Logging Aggressivo nel Codice**
+   - [OPERATION START] → [OPERATION SUCCESS/ERROR]
+   - Ogni step importante loggato
+   - Livell corretto: Debug/Info/Warning/Error
+
+3. **Verifica Database BEFORE → AFTER**
+   - Count prima dell'operazione
+   - Count dopo SaveChanges()
+   - Delta verificato (esperato > 0)
+
+4. **Test Manuale UI** (rapido)
+   - Navigazione pagina
+   - Dati visibili e corretti
+   - Nessun errore console
+
+**Template Pre-Dichiarazione Success:**
+```
+[ ] Build: 0 errori
+[ ] Test script: Passato ✅
+[ ] Log: Output visibile
+[ ] DB: Delta verificato
+[ ] UI: Manuale ok
+[ ] CHANGELOG: Aggiornato
+[ ] Docs2/: Aggiornato
+```
+
+**Riferimento**: `docs2/09-TESTING-FRAMEWORK.md` (lezioni apprese)
 
 ---
 
-## 🧪 QA AUTOMATION (E2E + VISUAL)
+## 🧪 QA AUTOMATION (E2E + VISUAL) - REGOLA OBBLIGATORIA
 
-Suite E2E centralizzata in: `tests/MESManager.E2E/`
+### Posizione unificata dei test
 
-**Standard**: `data-testid`, Page Object Model, Visual regression, Seed automatico
+Tutta la suite E2E è ora centralizzata in:
 
-**Mapping test per area**:
-- **Programma/Gantt** → `Feature=CommesseAperte,Gantt,ProgrammaMacchine` + `Category=Visual`
-- **Cataloghi, Produzione, Impostazioni** → `Feature=[Nome]`
+```
+tests/MESManager.E2E/
+```
 
-**Dettagli**: Vedi [10-QA-UI-TESTING.md](docs2/10-QA-UI-TESTING.md)
+### Standard attivo
+
+- data-testid su tutte le azioni critiche (bottoni, dialog, grid)
+- Page Object Model (POM)
+- Visual regression con baseline
+- Seed dati automatico per CI (`E2E_SEED=1`)
+
+### Esecuzione automatica quando richiesto dall’utente
+
+Quando l’utente dice **“esegui test su [area]”**, l’assistente **DEVE** eseguire **tutti** i test relativi all’area, senza chiedere chiarimenti.
+
+**Mapping obbligatorio:**
+
+- **Programma/Gantt** → `Feature=CommesseAperte`, `Feature=Gantt`, `Feature=ProgrammaMacchine` + `Category=Visual`
+- **Cataloghi** → `Feature=Cataloghi`
+- **Produzione** → `Feature=Produzione`
+- **Impostazioni** → `Feature=Impostazioni`
+
+### Variabili di esecuzione
+
+- Usa server già avviato:
+   - `E2E_USE_EXISTING_SERVER=1`
+   - `E2E_BASE_URL=http://localhost:5156`
+
+- Seed automatico dati:
+   - `E2E_SEED=1`
+
+### Regola di reporting
+
+Ogni run deve riportare:
+
+- test eseguiti (filtri)
+- esito finale (pass/fail)
+- link a artifacts in CI se falliscono (screenshot, trace, diff)
 
 ---
 
@@ -231,10 +285,9 @@ Suite E2E centralizzata in: `tests/MESManager.E2E/`
 
 ### 6. Deploy
 - **MAI** sovrascrivere `appsettings.Secrets.json` o `appsettings.Database.json`
-- Versione **SEMPRE** aggiornata in `AppVersion.cs` (unico luogo)
-- Path corretti obbligatori (vedi [01-DEPLOY.md](docs2/01-DEPLOY.md))
+- Versione **SEMPRE** incrementata (es. v1.23 → v1.24)
+- Path corretti obbligatori (vedi 01-DEPLOY.md)
 - Ordine servizi: Stop (PlcSync→Worker→Web), Start (Web→Worker→PlcSync)
-- **CHECKLIST COMPLETA**: Vedi [storico/DEPLOY-LESSONS-LEARNED.md](docs2/storico/DEPLOY-LESSONS-LEARNED.md)
 
 ### 7. PLC Integration
 - IP macchine **SEMPRE** nel database
@@ -248,13 +301,12 @@ Suite E2E centralizzata in: `tests/MESManager.E2E/`
 - SQL Injection prevention (parametrized queries)
 - HTTPS in produzione
 
-### 9. Testing & Debugging (CRITICO)
+## 9. Testing & Debugging (CRITICO)
 - Test script per ogni feature importante
 - Log aggressivo con [OPERATION START/SUCCESS/ERROR]
 - Inspection pattern: BEFORE → UPDATE → AFTER
 - OrderBy mai su Guid - usare campo semantico (Codice, Nome, etc)
 - Nessuna dichiarazione "funziona" senza prova visibile
-- **Dettagli**: Vedi [09-TESTING-FRAMEWORK.md](docs2/09-TESTING-FRAMEWORK.md)
 
 ---
 
@@ -312,7 +364,7 @@ Pensa come se:
 
 2. Riferimento docs:
    - [02-SVILUPPO.md](docs2/02-SVILUPPO.md#test-migrazioni-database)
-   - [04-ARCHITETTURA.md](docs2/04-ARCHITETTURA.md#database-schema)
+   - [05-ARCHITETTURA.md](docs2/05-ARCHITETTURA.md#database-schema)
 
 3. Soluzione:
    [propone codice migration]
@@ -328,7 +380,7 @@ Pensa come se:
    - Genera script SQL per prod
 
 6. Docs da aggiornare:
-   - [04-ARCHITETTURA.md](docs2/04-ARCHITETTURA.md) → Aggiorna schema Macchine
+   - [05-ARCHITETTURA.md](docs2/05-ARCHITETTURA.md) → Aggiorna schema Macchine
 ```
 
 ### Esempio 2: Deploy Urgente
@@ -340,9 +392,8 @@ Pensa come se:
 Seguo workflow da [08-CHANGELOG.md](docs2/08-CHANGELOG.md):
 
 FASE 1: Pre-controlli
-✓ Leggo storico/DEPLOY-LESSONS-LEARNED.md (checklist)
 ✓ Build: dotnet build --nologo
-✓ Versione attuale: v1.23 (da AppVersion.cs)
+✓ Versione attuale: v1.23 (da MainLayout.razor)
 
 FASE 2: Consolidamento
 → Incremento versione: v1.23 → v1.24
@@ -354,11 +405,144 @@ FASE 3: Build
 FASE 4: Deploy
 [mostra script completo da 01-DEPLOY.md]
 
-FASE 5: Validazione
-[checklist da DEPLOY-LESSONS-LEARNED.md]
-
 Procedo?
 ```
+
+---
+
+## 🧪 TESTING E DEBUG INFRASTRUCTURE
+
+### Test Automation Scripts
+
+**Path**: `C:\Dev\MESManager\test-api.ps1`
+
+Script PowerShell per test automatici delle API senza interferire con l'applicazione in esecuzione.
+
+#### Comandi Disponibili
+
+```powershell
+# Avvio applicazione in processo isolato
+.\start-web.ps1
+
+# Test suite completa (dopo 10 secondi dall'avvio)
+.\test-api.ps1
+```
+
+#### Test Eseguiti
+
+1. **Debug Commesse** - Conteggi database via `/api/pianificazione/debug-commesse`
+   - `totaleCommesse`: Tutte le commesse
+   - `conMacchina`: Con NumeroMacchina assegnato
+   - `conDate`: Con DataInizioPrevisione
+   - `conMacchinaEDate`: Esportabili (macchina E date)
+   - `statoProgrammataProgrammata`: Con StatoProgramma = Programmata
+   - `statoAperta`: Con Stato = Aperta
+   - `aperteConMacchina`: Aperte con macchina assegnata
+
+2. **Lista Commesse** - Tutte le commesse via `/api/Commesse`
+   - Mostra prime 3 commesse con dettagli
+   - Verifica disponibilità dati
+
+3. **Filtro Programma Macchine** - Verifica lato client
+   - Filtro: `Stato == "Aperta" AND NumeroMacchina != null AND StatoProgramma != "Archiviata"`
+   - **NOTA**: Non esiste endpoint `/api/pianificazione/programma-macchine`
+   - La pagina ProgrammaMacchine.razor filtra lato client da `/api/Commesse`
+
+4. **Export** - Test `/api/pianificazione/esporta-su-programma`
+   - Esporta commesse con macchina E date
+   - Aggiorna `StatoProgramma: NonProgrammata → Programmata`
+   - Mostra conteggio prima/dopo
+
+5. **Diagnostica Post-Export**
+   - Verifica se StatoProgramma è cambiato
+   - Conta commesse aggiunte a Programma Macchine
+   - Identifica cause di fallimento
+
+#### Debug Endpoint
+
+**Endpoint**: `GET /api/pianificazione/debug-commesse`
+
+Restituisce conteggi critici per diagnostica:
+
+```json
+{
+  "totaleCommesse": 161,
+  "conMacchina": 20,
+  "conDate": 43,
+  "conMacchinaEDate": 20,
+  "statoProgrammataProgrammata": 25,
+  "statoAperta": 80,
+  "aperteConMacchina": 12
+}
+```
+
+**Uso**: Identificare rapidamente problemi di stato/assegnazione
+
+#### Problemi Comuni Identificabili
+
+| Sintomo | Diagnosi | Soluzione |
+|---------|----------|-----------|
+| `conMacchinaEDate == 0` | Nessuna commessa assegnata | Usare Gantt per assegnare macchine e date |
+| Export 0 commesse ma `conMacchinaEDate > 0` | Tutte già Programmate | Normale se già esportate |
+| `aperteConMacchina > 0` ma Programma Macchine vuoto | Tutte Archiviate o StatoProgramma sbagliato | Verificare StatoProgramma in database |
+| `statoProgrammataProgrammata > 0` ma tabella vuota | NumeroMacchina null o Stato != Aperta | Verificare entrambi i campi |
+
+#### Workflow Testing
+
+```powershell
+# 1. Avvia app
+.\start-web.ps1
+
+# 2. Aspetta 10 secondi
+
+# 3. Esegui test
+.\test-api.ps1
+
+# 4. Analizza output
+# - Verde ✓: Test passato
+# - Rosso ✗: Test fallito
+# - Giallo ⚠: Warning/diagnostica
+```
+
+#### Script Isolation Fix
+
+**Problema**: Script PowerShell arrestavano l'applicazione quando eseguiti nello stesso terminale
+
+**Soluzione**: `start-web.ps1` usa `UseShellExecute = $true` per creare processo completamente separato
+
+```powershell
+$psi.UseShellExecute = $true   # Processo separato
+$psi.CreateNoWindow = $false    # Mostra finestra separata
+```
+
+### Logging e Tracciamento
+
+**Endpoint Export Modificato** (5 Feb 2026):
+
+Aggiunto logging dettagliato per troubleshooting:
+
+```csharp
+_logger.LogInformation("PRIMA dell'update: {Count} commesse trovate", commesseDaProgrammare.Count);
+
+foreach (var commessa in commesseDaProgrammare)
+{
+    _logger.LogInformation("Commessa {Codice}: Stato={Stato}, StatoProgramma={StatoProgramma}", 
+        commessa.Codice, commessa.Stato, commessa.StatoProgramma);
+    
+    if (commessa.StatoProgramma == StatoProgramma.NonProgrammata)
+    {
+        commessa.StatoProgramma = StatoProgramma.Programmata;
+        commessa.DataCambioStatoProgramma = DateTime.Now;
+        commessa.UltimaModifica = DateTime.Now;
+        aggiornate++;
+    }
+}
+
+_logger.LogInformation("DOPO SaveChanges: Aggiornate {Aggiornate}/{Totali} commesse a stato Programmata", 
+    aggiornate, commesseDaProgrammare.Count);
+```
+
+**Consultare**: Terminale dotnet per vedere questi log durante export
 
 ---
 
@@ -379,16 +563,15 @@ Prima di rispondere, verifica:
 
 ## 🚀 ATTIVAZIONE
 
-Analizza la richiesta dell'utente, proponi le **2 migliori strade** per l'implementazione più semplice e robusta possibile, proponile dettagliatamente e aspetta conferma.
+analizza la richiesta dell utente proponi le 2 migliori strade per l implementazione piu semplice e robusta possibile, proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve terminare con dotnet build e run per farla testare all utente
 
-Ogni nuova implementazione deve terminare con `dotnet build` e `run` per farla testare all'utente.
 
 ---
 
 ## 📞 Supporto Documentazione
 
-**Versione**: 3.0 (essenziale)  
-**Data**: 11 Febbraio 2026  
+**Versione**: 2.1  
+**Data**: 5 Febbraio 2026  
 **Path**: `C:\Dev\MESManager\docs2\BIBBIA-AI-MESMANAGER.md`  
-**Manutenzione**: Aggiornare solo per nuove regole generali (dettagli → docs2/ specifici)
-**Ultimo aggiornamento**: Refactoring BIBBIA → separazione dettagli in file dedicati
+**Manutenzione**: Aggiornare ad ogni scoperta significativa
+**Ultimo aggiornamento**: Aggiunta sezione Testing Infrastructure (test-api.ps1, start-web.ps1, debug endpoints)

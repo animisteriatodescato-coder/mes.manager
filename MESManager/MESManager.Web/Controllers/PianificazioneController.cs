@@ -952,9 +952,18 @@ public class PianificazioneController : ControllerBase
         };
     }
 
+    /// <summary>
+    /// Aggiorna automaticamente gli stati delle commesse in base alle date di pianificazione.
+    /// - NonProgrammata → Programmata: quando assegnata a macchina
+    /// - Programmata → InProduzione: quando data inizio è nel passato
+    /// - InProduzione → Completata: quando data fine è nel passato
+    /// </summary>
     private async Task<int> AutoCompletaCommesseAsync()
     {
         var now = DateTime.Now;
+        int updateCount = 0;
+
+        // 1. Commesse da completare: DataFinePrevisione nel passato
         var commesseDaCompletare = await _context.Commesse
             .Where(c => c.NumeroMacchina != null
                         && c.DataFinePrevisione.HasValue
@@ -963,11 +972,6 @@ public class PianificazioneController : ControllerBase
                         && c.StatoProgramma != StatoProgramma.Archiviata)
             .ToListAsync();
 
-        if (commesseDaCompletare.Count == 0)
-        {
-            return 0;
-        }
-
         foreach (var commessa in commesseDaCompletare)
         {
             commessa.StatoProgramma = StatoProgramma.Completata;
@@ -975,10 +979,58 @@ public class PianificazioneController : ControllerBase
             commessa.DataInizioProduzione ??= commessa.DataInizioPrevisione;
             commessa.DataFineProduzione ??= commessa.DataFinePrevisione;
             commessa.UltimaModifica = DateTime.UtcNow;
+            updateCount++;
+            
+            _logger.LogInformation("Auto-completata commessa {Codice} (data fine prevista: {DataFine})", 
+                commessa.Codice, commessa.DataFinePrevisione);
         }
 
-        await _context.SaveChangesAsync();
-        return commesseDaCompletare.Count;
+        // 2. Commesse da mettere in produzione: DataInizioPrevisione nel passato, DataFinePrevisione nel futuro
+        var commesseDaAvviare = await _context.Commesse
+            .Where(c => c.NumeroMacchina != null
+                        && c.DataInizioPrevisione.HasValue
+                        && c.DataInizioPrevisione.Value <= now
+                        && c.DataFinePrevisione.HasValue
+                        && c.DataFinePrevisione.Value >= now
+                        && c.StatoProgramma == StatoProgramma.Programmata)
+            .ToListAsync();
+
+        foreach (var commessa in commesseDaAvviare)
+        {
+            commessa.StatoProgramma = StatoProgramma.InProduzione;
+            commessa.DataCambioStatoProgramma = DateTime.Now;
+            commessa.DataInizioProduzione ??= commessa.DataInizioPrevisione;
+            commessa.UltimaModifica = DateTime.UtcNow;
+            updateCount++;
+            
+            _logger.LogInformation("Auto-avviata produzione commessa {Codice} (data inizio prevista: {DataInizio})", 
+                commessa.Codice, commessa.DataInizioPrevisione);
+        }
+
+        // 3. Commesse da programmare: hanno NumeroMacchina ma sono ancora NonProgrammata
+        var commesseDaProgrammare = await _context.Commesse
+            .Where(c => c.NumeroMacchina != null
+                        && c.StatoProgramma == StatoProgramma.NonProgrammata)
+            .ToListAsync();
+
+        foreach (var commessa in commesseDaProgrammare)
+        {
+            commessa.StatoProgramma = StatoProgramma.Programmata;
+            commessa.DataCambioStatoProgramma = DateTime.Now;
+            commessa.UltimaModifica = DateTime.UtcNow;
+            updateCount++;
+            
+            _logger.LogInformation("Auto-programmata commessa {Codice} su macchina {NumeroMacchina}", 
+                commessa.Codice, commessa.NumeroMacchina);
+        }
+
+        if (updateCount > 0)
+        {
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Auto-aggiornati stati di {Count} commesse", updateCount);
+        }
+
+        return updateCount;
     }
 }
 

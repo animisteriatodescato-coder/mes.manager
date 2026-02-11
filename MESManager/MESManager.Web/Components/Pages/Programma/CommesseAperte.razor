@@ -154,7 +154,7 @@
                             <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">Riepilogo Dati</MudText>
                             <MudSimpleTable Dense="true" Hover="true">
                                 <tbody>
-                                    <tr><td><strong>Cliente</strong></td><td>@(selectedCommessaForLabel.ClienteRagioneSociale ?? "N/D")</td></tr>
+                                    <tr><td><strong>Cliente</strong></td><td>@(selectedCommessaForLabel.CompanyName ?? "N/D")</td></tr>
                                     <tr><td><strong>Codice Anima</strong></td><td>@(selectedCommessaForLabel.CodiceAnime ?? "N/D")</td></tr>
                                     <tr><td><strong>Numero Ordine</strong></td><td>@(selectedCommessaForLabel.InternalOrdNo ?? "N/D")</td></tr>
                                     <tr><td><strong>Sabbia</strong></td><td>@(selectedCommessaForLabel.SabbiaDescrizione ?? "N/D")</td></tr>
@@ -174,7 +174,7 @@
                                     </div>
                                     <div class="label-row client-row">
                                         <span class="label-field-name">CLIENTE</span>
-                                        <span class="label-field-value client-name">@(selectedCommessaForLabel.ClienteRagioneSociale ?? "")</span>
+                                        <span class="label-field-value client-name">@(selectedCommessaForLabel.CompanyName ?? "")</span>
                                     </div>
                                     <div class="label-row code-row">
                                         <span class="label-field-name">CODICE ANIMA</span>
@@ -1107,7 +1107,7 @@
             </div>
             <div class='label-row client-row'>
                 <span class='label-field-name'>CLIENTE</span>
-                <span class='label-field-value client-name'>{System.Web.HttpUtility.HtmlEncode(c.ClienteRagioneSociale ?? "")}</span>
+                <span class='label-field-value client-name'>{System.Web.HttpUtility.HtmlEncode(c.CompanyName ?? "")}</span>
             </div>
             <div class='label-row code-row'>
                 <span class='label-field-name'>CODICE ANIMA</span>
@@ -1151,7 +1151,7 @@
             </div>
             <div class='label-row client-row'>
                 <span class='label-field-name'>CLIENTE</span>
-                <span class='label-field-value client-name'>{System.Web.HttpUtility.HtmlEncode(c.ClienteRagioneSociale ?? "")}</span>
+                <span class='label-field-value client-name'>{System.Web.HttpUtility.HtmlEncode(c.CompanyName ?? "")}</span>
             </div>
             <div class='label-row code-row'>
                 <span class='label-field-name'>CODICE ANIMA</span>
