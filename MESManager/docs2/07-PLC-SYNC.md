@@ -482,6 +482,112 @@ private Dictionary<Guid, S7Client> _plcPool = new();
 
 ---
 
+## 📡 Sistema Trasmissione Ricette PLC (v1.34.0)
+
+> **Aggiunto**: 11 Febbraio 2026  
+> **Scopo**: Caricamento automatico/manuale ricette da DB a PLC DB52
+
+### Architettura
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                     TRIGGER EVENTI                        │
+├──────────────────────────────────────────────────────────┤
+│  PlcSyncService (4s poll)                                 │
+│  └─→ Rileva cambio Barcode in DB55                       │
+│  └─→ Emette evento: CommessaCambiataEventArgs            │
+└──────────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌──────────────────────────────────────────────────────────┐
+│                  EVENT HANDLER                            │
+├──────────────────────────────────────────────────────────┤
+│  RecipeAutoLoaderWorker (BackgroundService)               │
+│  └─→ Ascolta evento CommessaCambiata                      │
+│  └─→ Chiama RecipeAutoLoaderService                       │
+└──────────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌──────────────────────────────────────────────────────────┐
+│                 BUSINESS LOGIC                            │
+├──────────────────────────────────────────────────────────┤
+│  RecipeAutoLoaderService                                  │
+│  └─→ GetProssimaCommessaDalGanttAsync()                  │
+│  └─→ Recupera ricetta articolo dal catalogo              │
+│  └─→ Chiama PlcRecipeWriterService                       │
+└──────────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌──────────────────────────────────────────────────────────┐
+│                 PLC WRITER (Sharp7)                       │
+├──────────────────────────────────────────────────────────┤
+│  PlcRecipeWriterService                                   │
+│  ├─→ WriteRecipeToDb52Async() - Scrive ricetta           │
+│  ├─→ ReadDb55Async() - Legge stato macchina              │
+│  ├─→ ReadDb52Async() - Legge ricetta corrente            │
+│  └─→ CopyDb55ToDb52Async() - Copia lettura → scrittura   │
+└──────────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌──────────────────────────────────────────────────────────┐
+│           PLC Siemens - Data Blocks                       │
+├──────────────────────────────────────────────────────────┤
+│  DB55 (READ ONLY - Status)    │  DB52 (WRITE - Recipe)    │
+│  ├─ CicliFatti                │  ├─ CodiceArticolo       │
+│  ├─ Stato                     │  ├─ Parametri[]          │
+│  ├─ Barcode                   │  ├─ Timestamp            │
+│  └─ ...                       │  └─ Status               │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Data Layout DB52 (Ricetta)
+
+| Offset | Tipo | Campo | Note |
+|--------|------|-------|------|
+| 0 | STRING[20] | CodiceArticolo | Codice identificativo |
+| 20 | INT | NumeroParametri | Conteggio parametri |
+| 22+ | BYTE[4] | Parametri[N] | Valori singoli parametri |
+| 500 | LINT | Timestamp | Unix timestamp scrittura |
+| 508 | INT | Status | 0=vuoto, 1=caricato, 2=errore |
+
+### API Endpoints
+
+| Metodo | Endpoint | Descrizione |
+|--------|----------|-------------|
+| POST | `/api/plc/load-next-recipe-manual/{macchinaId}` | Carica prossima ricetta da Gantt |
+| POST | `/api/plc/load-recipe-by-article` | Carica ricetta per codice articolo |
+| GET | `/api/plc/db55/{macchinaId}` | Legge DB55 (stato macchina) |
+| GET | `/api/plc/db52/{macchinaId}` | Legge DB52 (ricetta corrente) |
+| POST | `/api/plc/copy-db55-to-db52/{macchinaId}` | Copia DB55 → DB52 |
+
+### Comportamento PLC Offline
+
+```
+PLC Online:  Scrittura immediata DB52 ✅
+PLC Offline: BLOCCA scrittura (no queue) ⛔
+             Pause monitoring eventi
+PLC Reconnect: Auto-retry ultima ricetta fallita 🔄
+```
+
+### UI Dashboard Integration
+
+- **Doppio-click** su card macchina → Popup viewer DB55/DB52
+- **Pulsante "Prossima"** → Carica manualmente prossima ricetta
+- **Pulsante "DB"** → Apre popup alternativo
+
+### File Coinvolti
+
+| File | Layer | Responsabilità |
+|------|-------|----------------|
+| `PlcRecipeWriterService.cs` | Infrastructure | Sharp7 communication |
+| `RecipeAutoLoaderService.cs` | Infrastructure | Business logic caricamento |
+| `RecipeAutoLoaderWorker.cs` | Worker | Event listener |
+| `PlcController.cs` | Web | REST API endpoints |
+| `PlcDbViewerPopup.razor` | Web/UI | Visualizzatore DB |
+| `DashboardProduzione.razor` | Web/UI | Double-click + buttons |
+
+---
+
 ## 🆘 Supporto
 
 Per configurazione generale: [03-CONFIGURAZIONE.md](03-CONFIGURAZIONE.md)  

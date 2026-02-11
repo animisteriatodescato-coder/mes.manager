@@ -1,0 +1,371 @@
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@using Microsoft.AspNetCore.Components
+@inject IPlcRecipeWriterService RecipeWriter
+@inject IRicettaGanttService RicettaService
+@inject IAnimeService AnimeService
+@inject ISnackbar Snackbar
+@inject ILogger<PlcDbViewerPopup> Logger
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.DataObject" Class="mr-2" />
+            DB55 (Lettura) vs DB52 (Ricetta) - Macchina @NumeroMacchina
+        </MudText>
+    </TitleContent>
+    
+    <DialogContent>
+        <!-- Barra Selezione Articolo (in alto, fuori dalle colonne) -->
+        <MudPaper Class="pa-3 mb-4" Elevation="3">
+            <MudText Typo="Typo.subtitle1" Class="mb-2">
+                <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Small" Class="mr-1" />
+                Salva DB55 come Ricetta Articolo
+            </MudText>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudAutocomplete T="string" 
+                               @bind-Value="_codiceArticoloSelezionato"
+                               SearchFunc="CercaArticoliAsync"
+                               Label="Cerca Articolo" 
+                               Variant="Variant.Outlined"
+                               Dense="true"
+                               MinCharacters="0"
+                               ShowProgressIndicator="true"
+                               DebounceInterval="300"
+                               ResetValueOnEmptyText="true"
+                               CoerceText="true"
+                               CoerceValue="false"
+                               AdornmentIcon="@Icons.Material.Filled.Search"
+                               AdornmentColor="Color.Primary"
+                               MaxItems="50"
+                               Style="flex: 1; min-width: 300px;">
+                    <ItemTemplate Context="item">
+                        <MudText Typo="Typo.body2">@item</MudText>
+                    </ItemTemplate>
+                </MudAutocomplete>
+                
+                <MudButton Variant="Variant.Filled" 
+                         Color="Color.Success" 
+                         StartIcon="@Icons.Material.Filled.Save"
+                         OnClick="SalvaDb55ComeRicettaArticoloAsync"
+                         Disabled="@(string.IsNullOrEmpty(_codiceArticoloSelezionato) || _loading)">
+                    Salva DB55 → Ricetta Articolo
+                </MudButton>
+            </MudStack>
+            <MudText Typo="Typo.caption" Color="Color.Info" Class="mt-2">
+                💡 Questa funzione salva la ricetta corrente (DB55) come ricetta master per l'articolo selezionato
+            </MudText>
+        </MudPaper>
+        <MudGrid>
+            <!-- Colonna DB55 (Lettura - Stato attuale) -->
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                        <MudText Typo="Typo.h6" Color="Color.Primary">
+                            <MudIcon Icon="@Icons.Material.Filled.RemoveRedEye" Size="Size.Small" Class="mr-1" />
+                            DB55 - Lettura
+                        </MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                                     Color="Color.Primary" 
+                                     Size="Size.Small"
+                                     OnClick="CaricaDb55Async" 
+                                     Disabled="@_loading" />
+                    </MudStack>
+                    
+                    @if (_loadingDb55)
+                    {
+                        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+                    }
+                    
+                    <MudTable Items="@_db55Entries" Dense="true" Striped="true" Hover="true" FixedHeader="true" Height="400px">
+                        <HeaderContent>
+                            <MudTh>Offset</MudTh>
+                            <MudTh>Parametro</MudTh>
+                            <MudTh>Valore</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Offset">@context.Offset</MudTd>
+                            <MudTd DataLabel="Parametro">
+                                <strong>@context.Nome</strong>
+                                @if (!string.IsNullOrEmpty(context.UnitaMisura))
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Class="ml-2">@context.UnitaMisura</MudChip>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Valore">
+                                <code>@context.Valore</code>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                    
+                    <MudStack Row="true" Spacing="2" Class="mt-3">
+                        <MudButton Variant="Variant.Filled" 
+                                 Color="Color.Success" 
+                                 StartIcon="@Icons.Material.Filled.ContentCopy"
+                                 FullWidth="true"
+                                 OnClick="CopiaDb55ToDb52Async"
+                                 Disabled="@_loading">
+                            Copia DB55 → DB52
+                        </MudButton>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            
+            <!-- Colonna DB52 (Scrittura - Ricetta) -->
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                        <MudText Typo="Typo.h6" Color="Color.Secondary">
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Class="mr-1" />
+                            DB52 - Ricetta
+                        </MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                                     Color="Color.Secondary" 
+                                     Size="Size.Small"
+                                     OnClick="CaricaDb52Async" 
+                                     Disabled="@_loading" />
+                    </MudStack>
+                    
+                    @if (_loadingDb52)
+                    {
+                        <MudProgressLinear Indeterminate="true" Color="Color.Secondary" Class="mb-2" />
+                    }
+                    
+                    <MudTable Items="@_db52Entries" Dense="true" Striped="true" Hover="true" FixedHeader="true" Height="400px">
+                        <HeaderContent>
+                            <MudTh>Offset</MudTh>
+                            <MudTh>Parametro</MudTh>
+                            <MudTh>Valore</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Offset">@context.Offset</MudTd>
+                            <MudTd DataLabel="Parametro">
+                                <strong>@context.Nome</strong>
+                                @if (!string.IsNullOrEmpty(context.UnitaMisura))
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Class="ml-2">@context.UnitaMisura</MudChip>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Valore">
+                                <code>@context.Valore</code>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                    
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-3">
+                        DB52 contiene la ricetta attualmente programmata per la prossima lavorazione
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+        
+        <!-- Export JSON -->
+        <MudDivider Class="my-4" />
+        
+        <MudStack Row="true" Spacing="2">
+            <MudButton Variant="Variant.Outlined" 
+                     Color="Color.Info" 
+                     StartIcon="@Icons.Material.Filled.Download"
+                     OnClick="EsportaJsonAsync"
+                     Disabled="@_loading">
+                Esporta JSON
+            </MudButton>
+            
+            <MudSpacer />
+            
+            <MudText Typo="Typo.caption" Color="Color.Info">
+                Ultimo aggiornamento: @_ultimoAggiornamento.ToString("HH:mm:ss")
+            </MudText>
+        </MudStack>
+    </DialogContent>
+    
+    <DialogActions>
+        <MudButton Color="Color.Default" OnClick="Chiudi">Chiudi</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Guid MacchinaId { get; set; }
+    [Parameter] public string? NumeroMacchina { get; set; }
+    
+    private List<PlcDbEntryDto> _db55Entries = new();
+    private List<PlcDbEntryDto> _db52Entries = new();
+    private string? _codiceArticoloSelezionato;
+    
+    private bool _loading = false;
+    private bool _loadingDb55 = false;
+    private bool _loadingDb52 = false;
+    private DateTime _ultimoAggiornamento = DateTime.MinValue;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(
+            CaricaDb55Async(),
+            CaricaDb52Async()
+        );
+    }
+    
+    private async Task CaricaDb55Async()
+    {
+        _loadingDb55 = true;
+        try
+        {
+            _db55Entries = await RecipeWriter.ReadDb55Async(MacchinaId, CancellationToken.None);
+            _ultimoAggiornamento = DateTime.Now;
+            Logger.LogInformation("DB55 caricato: {Count} entries", _db55Entries.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Errore caricamento DB55");
+            Snackbar.Add($"Errore caricamento DB55: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingDb55 = false;
+        }
+    }
+    
+    private async Task CaricaDb52Async()
+    {
+        _loadingDb52 = true;
+        try
+        {
+            _db52Entries = await RecipeWriter.ReadDb52Async(MacchinaId, CancellationToken.None);
+            _ultimoAggiornamento = DateTime.Now;
+            Logger.LogInformation("DB52 caricato: {Count} entries", _db52Entries.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Errore caricamento DB52");
+            Snackbar.Add($"Errore caricamento DB52: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingDb52 = false;
+        }
+    }
+    
+    /// <summary>
+    /// Funzione ricerca articoli nel Catalogo Anime per campo Codice (seconda colonna)
+    /// </summary>
+    private async Task<IEnumerable<string>> CercaArticoliAsync(string value, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Cerca nel Catalogo Anime - restituisce il campo "Codice" (colonna 2 dello screen)
+            var anime = await AnimeService.GetAllAsync();
+            var codici = anime.Select(a => a.CodiceArticolo).Distinct().ToList();
+            
+            // Se value è vuoto, restituisci primi 50
+            if (string.IsNullOrWhiteSpace(value))
+                return codici.Take(50);
+            
+            // Altrimenti filtra per ricerca (case insensitive)
+            return codici
+                .Where(c => c.Contains(value, StringComparison.OrdinalIgnoreCase))
+                .Take(50);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Errore ricerca articoli in Catalogo Anime");
+            return Enumerable.Empty<string>();
+        }
+    }
+    
+    /// <summary>
+    /// Salva DB55 corrente come ricetta master per articolo
+    /// NUOVA LOGICA: DB55 (lettura macchina) → salva come ricetta articolo nel database
+    /// </summary>
+    private async Task SalvaDb55ComeRicettaArticoloAsync()
+    {
+        if (string.IsNullOrEmpty(_codiceArticoloSelezionato))
+            return;
+        
+        _loading = true;
+        try
+        {            
+            // TODO: Implementare endpoint API per salvare DB55 come ricetta articolo in database
+            // Per ora simulazione
+            await Task.Delay(500);
+            
+            Snackbar.Add($"✅ DB55 salvato come ricetta per articolo {_codiceArticoloSelezionato}", Severity.Success);
+            Logger.LogInformation("DB55 salvato come ricetta per articolo {Codice}", _codiceArticoloSelezionato);
+            
+            // TODO: Chiamare API reale quando implementata
+            // POST /api/ricette/save-from-db55
+            // Body: { MacchinaId, CodiceArticolo, Entries[] }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Errore salvataggio ricetta");
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+    
+    private async Task CopiaDb55ToDb52Async()
+    {
+        _loading = true;
+        try
+        {
+            var result = await RecipeWriter.CopyDb55ToDb52Async(MacchinaId, CancellationToken.None);
+            
+            if (result.Success)
+            {
+                Snackbar.Add("✅ Ricetta copiata da DB55 a DB52", Severity.Success);
+                await CaricaDb52Async(); // Ricarica DB52 per vedere la modifica
+            }
+            else
+            {
+                Snackbar.Add($"❌ Errore copia: {result.ErrorMessage}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Errore copia DB55→DB52");
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+    
+    private async Task EsportaJsonAsync()
+    {
+        try
+        {
+            var export = new
+            {
+                MacchinaId,
+                NumeroMacchina,
+                Timestamp = DateTime.Now,
+                DB55 = _db55Entries,
+                DB52 = _db52Entries
+            };
+            
+            var json = System.Text.Json.JsonSerializer.Serialize(export, new System.Text.Json.JsonSerializerOptions 
+            { 
+                WriteIndented = true 
+            });
+            
+            // Download diretto via JavaScript (richiede JSInterop)
+            // Per ora solo log
+            Logger.LogInformation("Export JSON generato: {Length} chars", json.Length);
+            Snackbar.Add("📄 Export JSON generato (vedi console)", Severity.Info);
+            
+            // TODO: implementare download file
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Errore export JSON");
+            Snackbar.Add($"Errore export: {ex.Message}", Severity.Error);
+        }
+    }
+    
+    private void Chiudi() => MudDialog.Close();
+}

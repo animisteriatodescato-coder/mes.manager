@@ -1,4 +1,5 @@
 using MESManager.Worker;
+using MESManager.Worker.Workers;
 using MESManager.Infrastructure;
 using MESManager.Sync;
 using MESManager.Sync.Configuration;
@@ -30,6 +31,7 @@ builder.Services.AddMagoSync(magoOptions, backupPath);
 // Worker Services
 builder.Services.AddHostedService<SimulatorePLCWorker>();
 builder.Services.AddHostedService<SyncMagoWorker>();
+builder.Services.AddHostedService<RecipeAutoLoaderWorker>();  // v1.33.0 - Auto-load ricette su cambio commessa
 
 // Support Windows Service
 builder.Services.AddWindowsService(options =>

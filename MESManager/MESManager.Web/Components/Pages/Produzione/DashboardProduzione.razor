@@ -4,6 +4,7 @@
 @inject HttpClient Http
 @inject NavigationManager Nav
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <PageTitle>Dashboard Produzione</PageTitle>
 
@@ -12,7 +13,9 @@
         @foreach (var machine in _data.OrderBy(m => m.MacchinaNumero))
         {
             <MudItem xs="12" sm="6" md="4" lg="3">
-                <MudCard Elevation="3" Class="@($"machine-card {GetMachineCardClass(machine.StatoMacchina)}")">
+                <MudCard Elevation="3" Class="@($"machine-card {GetMachineCardClass(machine.StatoMacchina)}")"
+                         @ondblclick="@(() => ApriDbViewerAsync(machine.MacchinaId, machine.MacchinaNumero))"
+                         Style="cursor: pointer;">
                     <MudCardHeader Class="pb-2">
                         <CardHeaderContent>
                             <div class="d-flex justify-space-between align-center">
@@ -105,6 +108,21 @@
                                    OnClick="@(() => Nav.NavigateTo("/produzione/plc-realtime"))" data-testid="btn-dashboard-dettagli">
                             Dettagli
                         </MudButton>
+                        <MudSpacer />
+                        <MudButtonGroup Size="Size.Small" OverrideStyles="false">
+                            <MudButton Color="Color.Success" Variant="Variant.Outlined"
+                                       StartIcon="@Icons.Material.Filled.PlayArrow"
+                                       OnClick="@(() => CaricaProssimaRicettaAsync(machine.MacchinaId))"
+                                       Title="Carica automaticamente prossima ricetta da Gantt">
+                                Prossima
+                            </MudButton>
+                            <MudButton Color="Color.Info" Variant="Variant.Outlined"
+                                       StartIcon="@Icons.Material.Filled.DataObject"
+                                       OnClick="@(() => ApriDbViewerAsync(machine.MacchinaId, machine.MacchinaNumero))"
+                                       Title="Apri viewer DB55/DB52 (doppio-click sulla card)">
+                                DB
+                            </MudButton>
+                        </MudButtonGroup>
                     </MudCardActions>
                 </MudCard>
             </MudItem>
@@ -147,11 +165,30 @@
     .machine-card {
         height: 100%;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 4px solid var(--mud-palette-primary);
         border-radius: 12px !important;
         overflow: hidden;
         backdrop-filter: blur(10px);
-        background: var(--mud-palette-surface) !important;
+        /* Sfondo grigio sfumato dall'esterno (grigio) verso l'interno (bianco) */
+        background: radial-gradient(ellipse at center, #ffffff 40%, #e8ecef 90%, #dde2e6 100%) !important;
+        position: relative;
+        box-shadow: inset 0 0 30px rgba(0,0,0,0.05);
+    }
+    
+    /* Gradient sfumato dall'esterno verso l'interno */
+    .machine-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 12px;
+        padding: 4px;
+        background: linear-gradient(135deg, var(--mud-palette-primary), var(--mud-palette-primary-lighten));
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
     }
 
     .machine-card:hover {
@@ -159,35 +196,24 @@
         box-shadow: 0 12px 24px rgba(0,0,0,0.2) !important;
     }
 
-    .machine-card.status-emergenza {
-        border: 4px solid #f44336;
-        background: var(--mud-palette-surface) !important;
-        box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3) !important;
+    .machine-card.status-emergenza::before {
+        background: radial-gradient(circle at top left, #f44336, rgba(244, 67, 54, 0.3) 70%, transparent);
     }
 
-    .machine-card.status-allarme {
-        border: 4px solid #ff9800;
-        background: var(--mud-palette-surface) !important;
-        box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3) !important;
+    .machine-card.status-allarme::before {
+        background: radial-gradient(circle at top left, #ff9800, rgba(255, 152, 0, 0.3) 70%, transparent);
     }
 
-    .machine-card.status-automatico {
-        border: 4px solid #4caf50;
-        background: var(--mud-palette-surface) !important;
-        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3) !important;
+    .machine-card.status-automatico::before {
+        background: radial-gradient(circle at top left, #4caf50, rgba(76, 175, 80, 0.3) 70%, transparent);
     }
 
-    .machine-card.status-manuale {
-        border: 4px solid #616161;
-        background: var(--mud-palette-surface) !important;
-        box-shadow: 0 4px 12px rgba(97, 97, 97, 0.3) !important;
+    .machine-card.status-manuale::before {
+        background: radial-gradient(circle at top left, #616161, rgba(97, 97, 97, 0.3) 70%, transparent);
     }
-
-    .machine-card.status-non-connessa {
-        border: 4px solid #bdbdbd;
-        background: var(--mud-palette-surface) !important;
-        box-shadow: 0 4px 12px rgba(189, 189, 189, 0.2) !important;
-        opacity: 0.85;
+    
+    .machine-card.status-non-connessa::before {
+        background: radial-gradient(circle at top left, #bdbdbd, rgba(189, 189, 189, 0.2) 70%, transparent);
     }
 
     .machine-card.status-non-connessa .machine-number {
@@ -469,6 +495,52 @@
         if (ratio <= 1.15) return "#ffc107";
         if (ratio <= 1.3) return "#ff9800";
         return "#f44336";
+    }
+    
+    /// <summary>
+    /// Apre popup viewer DB55/DB52 per macchina (double-click)
+    /// </summary>
+    private async Task ApriDbViewerAsync(Guid macchinaId, string numeroMacchina)
+    {
+        var parameters = new DialogParameters<PlcDbViewerPopup>
+        {
+            { x => x.MacchinaId, macchinaId },
+            { x => x.NumeroMacchina, numeroMacchina }
+        };
+        
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.ExtraExtraLarge, 
+            FullWidth = true,
+            CloseOnEscapeKey = true 
+        };
+        
+        await DialogService.ShowAsync<PlcDbViewerPopup>($"DB Viewer - Macchina {numeroMacchina}", parameters, options);
+    }
+    
+    /// <summary>
+    /// Carica manualmente la prossima ricetta da Gantt su DB52
+    /// </summary>
+    private async Task CaricaProssimaRicettaAsync(Guid macchinaId)
+    {
+        try
+        {
+            var response = await Http.PostAsync($"/api/plc/load-next-recipe-manual/{macchinaId}", null);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("✅ Prossima ricetta caricata in DB52", Severity.Success);
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"❌ Errore: {error}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"❌ Errore HTTP: {ex.Message}", Severity.Error);
+        }
     }
 
     public void Dispose()

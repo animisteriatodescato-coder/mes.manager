@@ -13,6 +13,82 @@
 
 ---
 
+## v1.33.0 (11 Febbraio 2026)
+**Data:** 11 Feb 2026  
+**Status:** ✅ Completato
+
+### 🚀 Nuova Feature - Trasmissione Ricette a PLC (DB52)
+
+#### Architettura Event-Driven Auto-Load
+- **Trigger**: PlcSync rileva cambio barcode su DB55 (polling esistente ogni 4s)
+- **Event**: `CommessaCambiataEventArgs` con MacchinaId, NuovoBarcode, VecchioBarcode
+- **Handler**: RecipeAutoLoaderService carica automaticamente prossima ricetta da Gantt
+- **Target**: DB52 (database write PLC Siemens S7)
+
+#### Componenti Implementati
+
+**DTOs (Application Layer)**:
+- `PlcDbEntryDto`: Visualizzazione entry DB (Offset, Nome, Valore, Tipo, UnitaMisura)
+- `RecipeWriteResult`: Result DTO write operations (Success, Message, ParametersWritten, Timestamp, ErrorMessage)
+- `CommessaCambiataEventArgs`: Event args per cambio commessa
+- `LoadRecipeRequest`: Request DTO per caricamento manuale (MacchinaId, CodiceArticolo, ForceReload)
+
+**Interfaces (Application Layer)**:
+- `IPlcRecipeWriterService`: Write operations DB52, Read DB55/DB52, Copy DB55→DB52, CheckPlcConnection
+- `IRecipeAutoLoaderService`: Event handler auto-load, manual override, status update, recovery
+- `IPlcSyncService`: Definisce evento CommessaCambiata
+- `IRicettaGanttService`: Contratto ricette articoli (GetRicettaByCodiceArticoloAsync, GetArticoliConRicettaAsync)
+
+**Services (Infrastructure Layer)**:
+- `PlcRecipeWriterService`: Sharp7 S7Client, write DB52 (codice articolo STRING[20] @0, num parametri INT @20, parametri 4B @22, timestamp LONG @500, status INT @508), read/parse buffer to PlcDbEntryDto, copy DB55→DB52
+- `RecipeAutoLoaderService`: Event handler OnCommessaCambiataAsync, GetProssimaCommessaDalGanttAsync (ordineSequenza minimo), UpdatePlcStatus con auto-recovery (block su offline, retry su online), LoadNextRecipeManualAsync
+- `PlcSyncService` (modificato): Aggiunto evento CommessaCambiata, tracking _ultimoBarcodeLetto, DetectBarcodeChange trigger
+
+**Workers**:
+- `RecipeAutoLoaderWorker`: BackgroundService listener evento CommessaCambiata, sottoscrizione PlcSyncService.CommessaCambiata
+
+**UI Components (Web Layer)**:
+- `PlcDbViewerPopup.razor`: MudDialog two-column DB55|DB52, MudTable entries, pulsanti "Carica da DB55", dropdown articoli, "Carica Ricetta", Refresh, Export JSON
+- `DashboardProduzione.razor` (modificato): @ondblclick ApriDbViewerAsync, pulsanti "Prossima" (auto-load next), "DB" (popup viewer), DialogService injection
+
+**API Endpoints (Controllers)**:
+- POST `/api/plc/load-next-recipe-manual/{macchinaId}`: Carica manualmente prossima ricetta da Gantt
+- POST `/api/plc/load-recipe-by-article` (body: LoadRecipeRequest): Carica ricetta specifica per codice articolo
+- GET `/api/plc/db55/{macchinaId}`: Legge contenuto DB55 (List<PlcDbEntryDto>)
+- GET `/api/plc/db52/{macchinaId}`: Legge contenuto DB52 (List<PlcDbEntryDto>)
+- POST `/api/plc/copy-db55-to-db52/{macchinaId}`: Copia DB55→DB52 (usa ricetta corrente)
+
+#### Dependency Injection
+- Infrastructure/DependencyInjection.cs: AddScoped IRicettaGanttService, IPlcRecipeWriterService, IRecipeAutoLoaderService
+- Worker/Program.cs: AddHostedService<RecipeAutoLoaderWorker>
+- PlcSync/Program.cs: AddSingleton IPlcSyncService (espone interfaccia PlcSyncService per eventi)
+
+#### Pattern Auto-Recovery
+- **PLC Online**: Write immediato DB52
+- **PLC Offline**: BLOCCO writes (no queue), pause monitoring
+- **PLC Reconnect**: Auto-recovery trigger, loads missing recipe
+- **Heartbeat**: UpdatePlcStatus(macchinaId, isOnline) da PlcConnectionService
+
+#### Librerie
+- Sharp7 1.1.84: Aggiunto a MESManager.Infrastructure.csproj
+
+#### Database Schema
+- DB52 Layout: STRING[20] codice articolo @offset 0, INT numero parametri @20, parametri (Indirizzo INT + Valore INT = 4B each) @22+, LONG timestamp @500, INT status @508
+- DB55: Read-only status database (existing PlcSync polling)
+
+#### File Modificati
+- **Nuovi**: 11 files (7 DTOs/Interfaces, 2 Services, 1 Worker, 1 Razor component)
+- **Modificati**: 6 files (PlcSyncService.cs, DashboardProduzione.razor, PlcController.cs, 3 DI registration files)
+- **Versioning**: AppVersion.cs "1.32.0" → "1.33.0"
+
+#### Testing
+- ✅ Build riuscito (0 errori, 4 warnings NuGet vulnerability non bloccanti)
+- ✅ Clean architecture pattern (DTOs → Interfaces → Implementations)
+- ✅ Sharp7 integration verificata
+- ⏳ Test run applicazione (prossimo step)
+
+---
+
 ## v1.23 (3 Febbraio 2026)
 **Data:** 03 Feb 2026  
 **Status:** ✅ Completato

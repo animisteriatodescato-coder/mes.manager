@@ -1,4 +1,7 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
+using MESManager.Application.DTOs;
+using MESManager.Application.Interfaces;
 using MESManager.Domain.Entities;
 using MESManager.Infrastructure.Data;
 using MESManager.PlcSync.Configuration;
@@ -8,11 +11,19 @@ using Microsoft.Extensions.Options;
 
 namespace MESManager.PlcSync.Services;
 
-public class PlcSyncService
+public class PlcSyncService : IPlcSyncService
 {
     private readonly ILogger<PlcSyncService> _logger;
     private readonly IDbContextFactory<MesManagerDbContext> _contextFactory;
     private readonly PlcSyncSettings _settings;
+    
+    // Tracking ultimo barcode per rilevare cambiamenti
+    private readonly ConcurrentDictionary<Guid, string> _ultimoBarcodeLetto = new();
+    
+    /// <summary>
+    /// Evento scatenato quando cambia il barcode su DB55 (indica cambio commessa)
+    /// </summary>
+    public event EventHandler<CommessaCambiataEventArgs>? CommessaCambiata;
 
     public PlcSyncService(
         ILogger<PlcSyncService> logger,
@@ -66,6 +77,9 @@ public class PlcSyncService
                 operatoreId = realtime.OperatoreId;
 
                 await context.SaveChangesAsync(cancellationToken);
+                
+                // Rilevamento cambio barcode (trigger evento CommessaCambiata)
+                DetectBarcodeChange(macchinaId, snapshot.BarcodeLavorazione.ToString());
             }
             else
             {
@@ -203,6 +217,49 @@ public class PlcSyncService
             context.EventiPLC.AddRange(events);
             await context.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("Salvati {Count} eventi per macchina {MacchinaId}", events.Count, macchinaId);
+        }
+    }
+    
+    /// <summary>
+    /// Rileva cambio barcode e triggera evento CommessaCambiata
+    /// </summary>
+    private void DetectBarcodeChange(Guid macchinaId, string? nuovoBarcode)
+    {
+        if (string.IsNullOrWhiteSpace(nuovoBarcode))
+            return;
+        
+        // Recupera ultimo barcode registrato
+        if (_ultimoBarcodeLetto.TryGetValue(macchinaId, out var vecchioBarcode))
+        {
+            // Barcode cambiato?
+            if (vecchioBarcode != nuovoBarcode)
+            {
+                _logger.LogInformation("🔔 [BARCODE-CHANGE] Macchina {Id}: {Vecchio} → {Nuovo}", 
+                    macchinaId, vecchioBarcode, nuovoBarcode);
+                
+                // Trigger evento
+                var eventArgs = new CommessaCambiataEventArgs
+                {
+                    MacchinaId = macchinaId,
+                    NuovoBarcode = nuovoBarcode,
+                    VecchioBarcode = vecchioBarcode,
+                    Timestamp = DateTime.UtcNow,
+                    NumeroMacchina = null // TODO: potremmo recuperarlo se serve
+                };
+                
+                CommessaCambiata?.Invoke(this, eventArgs);
+                
+                // Aggiorna cache
+                _ultimoBarcodeLetto[macchinaId] = nuovoBarcode;
+            }
+        }
+        else
+        {
+            // Prima volta che leggiamo barcode per questa macchina
+            _logger.LogInformation("📌 [BARCODE-INIT] Macchina {Id}: primo barcode rilevato = {Barcode}", 
+                macchinaId, nuovoBarcode);
+            
+            _ultimoBarcodeLetto[macchinaId] = nuovoBarcode;
         }
     }
 }

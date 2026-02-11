@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MESManager.Application.Configuration;
 using MESManager.Application.DTOs;
+using MESManager.Application.Interfaces;
 
 namespace MESManager.Application.Services;
 
@@ -10,7 +11,7 @@ namespace MESManager.Application.Services;
 /// Servizio per leggere le ricette articoli dal database MESManager
 /// Legge dalla tabella [dbo].[ArticoliRicetta]
 /// </summary>
-public class RicettaGanttService
+public class RicettaGanttService : IRicettaGanttService
 {
     private readonly string _connectionString;
     private readonly ILogger<RicettaGanttService> _logger;
@@ -239,5 +240,47 @@ public class RicettaGanttService
             // Se fallisce, ritorna null silenziosamente
             return null;
         }
+    }
+    
+    /// <summary>
+    /// Ottiene lista articoli che hanno parametri ricetta configurati
+    /// </summary>
+    public async Task<List<ArticoloConRicettaDto>> GetArticoliConRicettaAsync()
+    {
+        var articoli = new List<ArticoloConRicettaDto>();
+        
+        try
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            
+            const string query = @"
+                SELECT 
+                    [CodiceArticolo],
+                    COUNT(*) as NumeroParametri
+                FROM [dbo].[ArticoliRicetta]
+                GROUP BY [CodiceArticolo]
+                ORDER BY [CodiceArticolo]";
+            
+            await using var cmd = new SqlCommand(query, conn);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            
+            while (await reader.ReadAsync())
+            {
+                articoli.Add(new ArticoloConRicettaDto
+                {
+                    CodiceArticolo = reader.GetString(0),
+                    NumeroParametri = reader.GetInt32(1)
+                });
+            }
+            
+            _logger.LogInformation("GetArticoliConRicettaAsync: trovati {Count} articoli", articoli.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore durante lettura articoli con ricetta");
+        }
+        
+        return articoli;
     }
 }

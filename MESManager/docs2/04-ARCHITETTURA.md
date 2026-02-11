@@ -259,7 +259,7 @@ Configuration/
 
 ### PLC Siemens S7 (Sharp7)
 
-**Flow**:
+**Flow Lettura (esistente)**:
 ```
 PlcSync Worker (polling 1s)
     ↓
@@ -272,10 +272,35 @@ Scrive in PLCRealtime (DB SQL)
 Archivia in PLCStorico (ogni cambio stato)
 ```
 
+**Flow Scrittura Ricette (v1.34.0)**:
+```
+Evento: Cambio Barcode in DB55
+    ↓
+RecipeAutoLoaderWorker (listener)
+    ↓
+RecipeAutoLoaderService (business logic)
+    ↓
+PlcRecipeWriterService (Sharp7 write)
+    ↓
+Scrive ricetta in DB52 → PLC Macchina
+```
+
+**Servizi PLC**:
+| Servizio | Layer | Responsabilità |
+|----------|-------|----------------|
+| `PlcSyncService` | PlcSync | Polling lettura DB55 |
+| `PlcRecipeWriterService` | Infrastructure | Scrittura DB52, Lettura DB55/DB52 |
+| `RecipeAutoLoaderService` | Infrastructure | Logic auto-caricamento ricette |
+| `RecipeAutoLoaderWorker` | Worker | Event listener BackgroundService |
+
 **Configurazione**:
 - IP macchina: Database (tabella Macchine)
 - Offset memoria: File JSON (Configuration/machines/)
 - Polling interval: appsettings.json (PlcSync)
+
+**Data Blocks**:
+- **DB55** (Read): Stato macchina real-time (cicli, barcode, stato)
+- **DB52** (Write): Ricetta da eseguire (codice articolo, parametri)
 
 ---
 

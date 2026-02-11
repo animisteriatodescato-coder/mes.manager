@@ -15,11 +15,22 @@ public class PlcController : ControllerBase
 {
     private readonly IPlcAppService _service;
     private readonly IPlcSyncCoordinator _syncCoordinator;
+    private readonly IPlcRecipeWriterService _recipeWriter;
+    private readonly IRecipeAutoLoaderService _autoLoader;
+    private readonly IRicettaGanttService _ricettaService;
 
-    public PlcController(IPlcAppService service, IPlcSyncCoordinator syncCoordinator)
+    public PlcController(
+        IPlcAppService service, 
+        IPlcSyncCoordinator syncCoordinator,
+        IPlcRecipeWriterService recipeWriter,
+        IRecipeAutoLoaderService autoLoader,
+        IRicettaGanttService ricettaService)
     {
         _service = service;
         _syncCoordinator = syncCoordinator;
+        _recipeWriter = recipeWriter;
+        _autoLoader = autoLoader;
+        _ricettaService = ricettaService;
     }
 
     [HttpGet("realtime")]
@@ -267,6 +278,124 @@ public class PlcController : ControllerBase
         }
 
         return Ok(result);
+    }
+    
+    // ===== RECIPE TRANSMISSION ENDPOINTS (v1.33.0) =====
+    
+    /// <summary>
+    /// Carica manualmente la prossima ricetta dal Gantt su DB52
+    /// </summary>
+    [HttpPost("load-next-recipe-manual/{macchinaId}")]
+    public async Task<ActionResult<RecipeWriteResult>> LoadNextRecipeManual(Guid macchinaId)
+    {
+        try
+        {
+            var result = await _autoLoader.LoadNextRecipeManualAsync(macchinaId, HttpContext.RequestAborted);
+            
+            if (result.Success)
+                return Ok(result);
+            
+            return BadRequest(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new RecipeWriteResult 
+            { 
+                Success = false, 
+                ErrorMessage = ex.Message 
+            });
+        }
+    }
+    
+    /// <summary>
+    /// Carica ricetta specifica per codice articolo su DB52
+    /// </summary>
+    [HttpPost("load-recipe-by-article")]
+    public async Task<ActionResult<RecipeWriteResult>> LoadRecipeByArticle([FromBody] LoadRecipeRequest request)
+    {
+        try
+        {
+            var ricetta = await _ricettaService.GetRicettaByCodiceArticoloAsync(request.CodiceArticolo);
+            
+            if (ricetta == null)
+            {
+                return NotFound(new RecipeWriteResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Ricetta non trovata per articolo {request.CodiceArticolo}"
+                });
+            }
+            
+            var result = await _recipeWriter.WriteRecipeToDb52Async(
+                request.MacchinaId, 
+                ricetta, 
+                HttpContext.RequestAborted);
+            
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new RecipeWriteResult 
+            { 
+                Success = false, 
+                ErrorMessage = ex.Message 
+            });
+        }
+    }
+    
+    /// <summary>
+    /// Legge contenuto DB55 (stato/lettura PLC)
+    /// </summary>
+    [HttpGet("db55/{macchinaId}")]
+    public async Task<ActionResult<List<PlcDbEntryDto>>> ReadDb55(Guid macchinaId)
+    {
+        try
+        {
+            var entries = await _recipeWriter.ReadDb55Async(macchinaId, HttpContext.RequestAborted);
+            return Ok(entries);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+    
+    /// <summary>
+    /// Legge contenuto DB52 (ricetta/scrittura PLC)
+    /// </summary>
+    [HttpGet("db52/{macchinaId}")]
+    public async Task<ActionResult<List<PlcDbEntryDto>>> ReadDb52(Guid macchinaId)
+    {
+        try
+        {
+            var entries = await _recipeWriter.ReadDb52Async(macchinaId, HttpContext.RequestAborted);
+            return Ok(entries);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+    
+    /// <summary>
+    /// Copia contenuto DB55 → DB52 (usa ricetta corrente)
+    /// </summary>
+    [HttpPost("copy-db55-to-db52/{macchinaId}")]
+    public async Task<ActionResult<RecipeWriteResult>> CopyDb55ToDb52(Guid macchinaId)
+    {
+        try
+        {
+            var result = await _recipeWriter.CopyDb55ToDb52Async(macchinaId, HttpContext.RequestAborted);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new RecipeWriteResult 
+            { 
+                Success = false, 
+                ErrorMessage = ex.Message 
+            });
+        }
     }
 }
 

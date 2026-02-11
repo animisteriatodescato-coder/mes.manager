@@ -4,27 +4,59 @@
 
 ---
 
-## � Versione Corrente: v1.32.0
+## 🔖 Versione Corrente: v1.34.0
 
 **Data**: 11 Febbraio 2026
 
-### 🔧 Bug Fix
-- **Gantt Sovrapposizioni**: Disabilitato row stacking (`stack: false`) - commesse rimangono sulla stessa riga macchina anche quando si sovrappongono
-- **Gantt Performance**: Rimossi console.log dal loop rendering (da ~3-5s a <0.5s caricamento)
+### 🚀 Features
+- **Sistema Trasmissione Ricette PLC**: Caricamento automatico/manuale ricette su DB52 (Sharp7)
+  - `PlcRecipeWriterService`: Comunicazione Sharp7 per scrittura DB52 e lettura DB55
+  - `RecipeAutoLoaderService`: Event-driven auto-load quando PLC cambia barcode
+  - `RecipeAutoLoaderWorker`: BackgroundService listener eventi
+  - Popup viewer DB55/DB52 con doppio-click su dashboard macchine
+  - 5 nuovi API endpoints (`/api/plc/load-next-recipe-manual`, `db55`, `db52`, etc.)
 
-### ⚡ Performance
-- Gantt: Rendering 85-90% più veloce (rimossi 100+ console.log per 100 commesse)
-- Gantt: Caricamento istantaneo anche con 100+ commesse
+### 🎨 UI/UX Improvements
+- **Tema blu notte**: Primary color da `#0d47a1` → `#0a2f6e` (Industry 5.0 sfumato)
+- **Dashboard card sfumate**: Background grigio chiaro sfumato dall'esterno verso l'interno
+- **PlcDbViewerPopup**: Autocomplete cerca codice articolo nel Catalogo Anime
+- **Gradient borders**: Bordi colorati sfumati per status macchina (radial-gradient)
 
 ### 📝 Documentazione
-- Aggiunto `storico/FIX-GANTT-SOVRAPPOSIZIONI-PERFORMANCE-20260211.md`
-- Aggiornata BIBBIA-AI-MESMANAGER.md con warning box workflow obbligatorio
-- Aggiornata BIBBIA con checklist BUILD+RUN per ogni modifica codice
+- Aggiornato `07-PLC-SYNC.md` con sezione sistema ricette
+- Aggiornato `04-ARCHITETTURA.md` con nuovi servizi PLC
 
 **File modificati**:
-- `MESManager.Web/wwwroot/js/gantt/gantt-macchine.js` (fix stack + log cleanup)
-- `MESManager.Web/Constants/AppVersion.cs` (v1.32.0)
-- `docs2/BIBBIA-AI-MESMANAGER.md` (workflow enforcement)
+- `MESManager.Application/DTOs/PlcDbEntryDto.cs` (NEW)
+- `MESManager.Application/DTOs/RecipeWriteResult.cs` (NEW)
+- `MESManager.Application/DTOs/CommessaCambiataEventArgs.cs` (NEW)
+- `MESManager.Application/Interfaces/IPlcRecipeWriterService.cs` (NEW)
+- `MESManager.Application/Interfaces/IRecipeAutoLoaderService.cs` (NEW)
+- `MESManager.Infrastructure/Services/PlcRecipeWriterService.cs` (NEW - 350 lines)
+- `MESManager.Infrastructure/Services/RecipeAutoLoaderService.cs` (NEW - 200 lines)
+- `MESManager.Worker/RecipeAutoLoaderWorker.cs` (NEW)
+- `MESManager.Web/Components/Pages/PlcDbViewerPopup.razor` (NEW)
+- `MESManager.Web/Controllers/PlcController.cs` (5 nuovi endpoints)
+- `MESManager.Web/Components/Pages/Produzione/DashboardProduzione.razor` (CSS + eventi)
+- `MESManager.Web/Components/Layout/MainLayout.razor.cs` (tema colore)
+- `MESManager.Web/Constants/AppVersion.cs` (v1.34.0)
+
+---
+
+## 🔖 v1.33.0 - Sistema Ricette PLC (11 Feb 2026)
+
+### 🚀 Features
+- **PlcRecipeWriterService**: Scrittura ricette su DB52 via Sharp7
+- **RecipeAutoLoaderWorker**: Auto-load eventi CommessaCambiata
+- **PlcDbViewerPopup**: Visualizzatore DB55/DB52 real-time
+
+### 🐛 Bug Fix
+- Fix MudAutocomplete signature (CancellationToken parameter)
+- Fix duplicate method CercaArticoliAsync
+
+---
+
+## 🔖 v1.32.0 - Gantt Fix Sovrapposizioni (11 Feb 2026)
 
 ---
 

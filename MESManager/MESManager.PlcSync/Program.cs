@@ -1,3 +1,4 @@
+using MESManager.Application.Interfaces;
 using MESManager.Infrastructure.Data;
 using MESManager.PlcSync;
 using MESManager.PlcSync.Services;
@@ -27,6 +28,7 @@ builder.Services.AddDbContextFactory<MesManagerDbContext>(options =>
 builder.Services.AddSingleton<PlcConnectionService>();
 builder.Services.AddSingleton<PlcReaderService>();
 builder.Services.AddSingleton<PlcSyncService>();
+builder.Services.AddSingleton<IPlcSyncService>(sp => sp.GetRequiredService<PlcSyncService>()); // Interfaccia per eventi
 builder.Services.AddSingleton<PlcStatusWriterService>();
 
 // Worker

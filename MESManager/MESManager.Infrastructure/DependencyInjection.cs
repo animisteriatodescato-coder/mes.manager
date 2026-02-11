@@ -56,6 +56,11 @@ public static class DependencyInjection
         services.AddScoped<IQuoteService, QuoteService>();
         services.AddScoped<IQuoteAttachmentService, QuoteAttachmentService>();
         services.AddScoped<IQuotePdfGenerator, QuotePdfGenerator>();
+        
+        // PLC Recipe Services (v1.33.0 - Trasmissione ricette a PLC)
+        services.AddScoped<IRicettaGanttService, RicettaGanttService>();
+        services.AddScoped<IPlcRecipeWriterService, PlcRecipeWriterService>();
+        services.AddScoped<IRecipeAutoLoaderService, RecipeAutoLoaderService>();
         // Aggiungi altri servizi qui quando implementati
 
         return services;

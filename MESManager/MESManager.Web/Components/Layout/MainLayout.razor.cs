@@ -30,9 +30,11 @@ public partial class MainLayout : IDisposable
     {
         PaletteLight = new PaletteLight
         {
-            Primary = "#1976d2",
+            Primary = "#0a2f6e",        // Blu notte sfumato - ancora più scuro e professionale
             Secondary = "#424242",
-            AppbarBackground = "#1976d2"
+            AppbarBackground = "#0a2f6e",  // AppBar con stesso blu notte
+            Surface = "#f8f9fa",           // Superficie grigio chiaro
+            Background = "#ffffff"         // Background bianco
         },
         PaletteDark = new PaletteDark
         {
