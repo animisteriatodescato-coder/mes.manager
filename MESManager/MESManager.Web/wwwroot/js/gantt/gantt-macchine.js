@@ -343,6 +343,7 @@ window.GanttMacchine = {
                 // Icone stato speciale - PRIMA del codice
                 let icons = '';
                 if (task.datiIncompleti) icons += '⚠️ '; // Triangolino PRIMA
+                if (!task.hasRicetta) icons += '📋 '; // Ricetta mancante
                 if (task.bloccata) icons += '🔒 '; // Lucchetto
                 if (task.vincoloDataFineSuperato) icons += '⚠️ '; // Vincolo superato
                 
@@ -381,6 +382,7 @@ window.GanttMacchine = {
                     vincoloDataInizio: task.vincoloDataInizio,
                     vincoloDataFine: task.vincoloDataFine,
                     datiIncompleti: task.datiIncompleti || false,
+                    hasRicetta: task.hasRicetta || false,
                     // Store progress per update
                     currentProgress: progress
                 };
@@ -425,6 +427,11 @@ Ordine: ${task.ordineSequenza || '-'}`;
         // Warning dati incompleti
         if (task.datiIncompleti) {
             tooltip += '\n⚠️ Dati incompleti (usato 8h standard)';
+        }
+
+        // Warning ricetta mancante
+        if (!task.hasRicetta) {
+            tooltip += '\n📋 Ricetta non configurata - Configurare prima di produrre';
         }
 
         return tooltip;

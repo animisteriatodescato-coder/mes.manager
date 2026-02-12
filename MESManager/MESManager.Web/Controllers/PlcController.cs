@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MESManager.Application.Interfaces;
 using MESManager.Application.DTOs;
+using MESManager.Domain.Entities;
+using MESManager.Infrastructure.Data;
 using MESManager.Infrastructure.Services;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -18,19 +21,22 @@ public class PlcController : ControllerBase
     private readonly IPlcRecipeWriterService _recipeWriter;
     private readonly IRecipeAutoLoaderService _autoLoader;
     private readonly IRicettaGanttService _ricettaService;
+    private readonly MesManagerDbContext _context;
 
     public PlcController(
         IPlcAppService service, 
         IPlcSyncCoordinator syncCoordinator,
         IPlcRecipeWriterService recipeWriter,
         IRecipeAutoLoaderService autoLoader,
-        IRicettaGanttService ricettaService)
+        IRicettaGanttService ricettaService,
+        MesManagerDbContext context)
     {
         _service = service;
         _syncCoordinator = syncCoordinator;
         _recipeWriter = recipeWriter;
         _autoLoader = autoLoader;
         _ricettaService = ricettaService;
+        _context = context;
     }
 
     [HttpGet("realtime")]
@@ -395,6 +401,97 @@ public class PlcController : ControllerBase
                 Success = false, 
                 ErrorMessage = ex.Message 
             });
+        }
+    }
+    
+    /// <summary>
+    /// Salva DB55 corrente come ricetta master per un articolo nel database
+    /// </summary>
+    [HttpPost("save-db55-as-recipe")]
+    public async Task<ActionResult<SaveDb55AsRecipeResult>> SaveDb55AsRecipe([FromBody] SaveDb55AsRecipeRequest request)
+    {
+        var result = new SaveDb55AsRecipeResult();
+        
+        try
+        {
+            // 1. Trova articolo dal codice articolo (catalogo Anime)
+            var articolo = await _context.Articoli
+                .FirstOrDefaultAsync(a => a.Codice == request.CodiceArticolo, HttpContext.RequestAborted);
+            
+            if (articolo == null)
+            {
+                result.Success = false;
+                result.ErrorMessage = $"Articolo con codice '{request.CodiceArticolo}' non trovato";
+                return NotFound(result);
+            }
+            
+            // 2. Leggi DB55 se entries non fornite
+            var entries = request.Entries?.ToList();
+            if (entries == null || entries.Count == 0)
+            {
+                entries = await _recipeWriter.ReadDb55Async(request.MacchinaId, HttpContext.RequestAborted);
+            }
+            
+            // 3. Filtra solo i parametri scrivibili (IsReadOnly = false, offset >= 102)
+            var parametriScrivibili = entries.Where(e => !e.IsReadOnly && e.Offset >= 102).ToList();
+            
+            if (parametriScrivibili.Count == 0)
+            {
+                result.Success = false;
+                result.ErrorMessage = "Nessun parametro scrivibile trovato in DB55";
+                return BadRequest(result);
+            }
+            
+            // 4. Trova o crea Ricetta per questo articolo
+            var ricetta = await _context.Ricette
+                .Include(r => r.Parametri)
+                .FirstOrDefaultAsync(r => r.ArticoloId == articolo.Id, HttpContext.RequestAborted);
+            
+            if (ricetta == null)
+            {
+                // Crea nuova ricetta
+                ricetta = new Ricetta
+                {
+                    Id = Guid.NewGuid(),
+                    ArticoloId = articolo.Id
+                };
+                _context.Ricette.Add(ricetta);
+            }
+            else
+            {
+                // Cancella vecchi parametri
+                _context.ParametriRicetta.RemoveRange(ricetta.Parametri);
+            }
+            
+            // 5. Crea nuovi ParametroRicetta dai parametri scrivibili di DB55
+            foreach (var entry in parametriScrivibili)
+            {
+                var parametro = new ParametroRicetta
+                {
+                    Id = Guid.NewGuid(),
+                    RicettaId = ricetta.Id,
+                    NomeParametro = entry.Nome,
+                    Valore = entry.Valore,
+                    UnitaMisura = entry.UnitaMisura ?? string.Empty
+                };
+                
+                _context.ParametriRicetta.Add(parametro);
+            }
+            
+            // 6. Salva tutto
+            await _context.SaveChangesAsync(HttpContext.RequestAborted);
+            
+            result.Success = true;
+            result.RicettaId = ricetta.Id;
+            result.NumeroParametriSalvati = parametriScrivibili.Count;
+            
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            result.Success = false;
+            result.ErrorMessage = $"Errore durante il salvataggio: {ex.Message}";
+            return StatusCode(500, result);
         }
     }
 }

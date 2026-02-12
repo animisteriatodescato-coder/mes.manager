@@ -94,4 +94,7 @@ public class CommessaDto
     public bool DatiEtichettaCompleti => 
         !string.IsNullOrEmpty(CodiceAnime) && 
         !string.IsNullOrEmpty(CompanyName);
+    
+    // Flag per verificare se l'articolo ha una ricetta configurata
+    public bool HasRicetta { get; set; }
 }

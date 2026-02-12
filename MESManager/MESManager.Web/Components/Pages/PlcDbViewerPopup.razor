@@ -6,6 +6,7 @@
 @inject IAnimeService AnimeService
 @inject ISnackbar Snackbar
 @inject ILogger<PlcDbViewerPopup> Logger
+@inject HttpClient HttpClient
 
 <MudDialog>
     <TitleContent>
@@ -285,16 +286,34 @@
         _loading = true;
         try
         {            
-            // TODO: Implementare endpoint API per salvare DB55 come ricetta articolo in database
-            // Per ora simulazione
-            await Task.Delay(500);
+            var request = new SaveDb55AsRecipeRequest
+            {
+                MacchinaId = MacchinaId,
+                CodiceArticolo = _codiceArticoloSelezionato,
+                Entries = _db55Entries // Passa i dati già caricati
+            };
             
-            Snackbar.Add($"✅ DB55 salvato come ricetta per articolo {_codiceArticoloSelezionato}", Severity.Success);
-            Logger.LogInformation("DB55 salvato come ricetta per articolo {Codice}", _codiceArticoloSelezionato);
+            var response = await HttpClient.PostAsJsonAsync("/api/plc/save-db55-as-recipe", request);
             
-            // TODO: Chiamare API reale quando implementata
-            // POST /api/ricette/save-from-db55
-            // Body: { MacchinaId, CodiceArticolo, Entries[] }
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<SaveDb55AsRecipeResult>();
+                if (result != null && result.Success)
+                {
+                    Snackbar.Add($"✅ DB55 salvato come ricetta per articolo {_codiceArticoloSelezionato} ({result.NumeroParametriSalvati} parametri)", Severity.Success);
+                    Logger.LogInformation("DB55 salvato come ricetta per articolo {Codice} - {NumParametri} parametri", _codiceArticoloSelezionato, result.NumeroParametriSalvati);
+                }
+                else
+                {
+                    Snackbar.Add($"❌ Errore: {result?.ErrorMessage ?? "Risposta non valida"}", Severity.Error);
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"❌ Errore HTTP {response.StatusCode}: {errorContent}", Severity.Error);
+                Logger.LogError("Errore salvataggio ricetta - HTTP {StatusCode}: {Error}", response.StatusCode, errorContent);
+            }
         }
         catch (Exception ex)
         {

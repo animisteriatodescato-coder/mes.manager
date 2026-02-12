@@ -172,6 +172,20 @@ LEFT JOIN Clienti cl ON cl.Id = c.ClienteId";
             .GroupBy(a => a.CodiceArticolo)
             .ToDictionary(g => g.Key, g => g.First());
         
+        // Carica le ricette per gli articoli
+        var articoloIds = commesse
+            .Where(c => c.ArticoloId.HasValue)
+            .Select(c => c.ArticoloId!.Value)
+            .Distinct()
+            .ToList();
+        
+        var ricette = await _context.Ricette
+            .Where(r => articoloIds.Contains(r.ArticoloId))
+            .Select(r => r.ArticoloId)
+            .ToListAsync();
+        
+        var ricettaLookup = ricette.ToHashSet();
+        
         return commesse.Select(c =>
         {
             Anime? anime = null;
@@ -265,7 +279,10 @@ LEFT JOIN Clienti cl ON cl.Id = c.ClienteId";
                 Figure = anime?.Figure,
                 Maschere = anime?.Maschere,
                 Assemblata = anime?.Assemblata,
-                ArmataL = anime?.ArmataL
+                ArmataL = anime?.ArmataL,
+                
+                // Flag ricetta configurata
+                HasRicetta = c.ArticoloId.HasValue && ricettaLookup.Contains(c.ArticoloId.Value)
             };
         }).ToList();
     }

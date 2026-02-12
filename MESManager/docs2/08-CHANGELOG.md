@@ -4,7 +4,42 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.35.0
+## 🔖 Versione Corrente: v1.36.0
+
+**Data**: 13 Febbraio 2026
+
+### 🚀 Features  
+- **Salvataggio ricette DB55 → Database**: 
+  - Nuovo endpoint `POST /api/plc/save-db55-as-recipe` per salvare parametri PLC come ricetta master articolo
+  - `SaveDb55AsRecipeRequest` e `SaveDb55AsRecipeResult` DTOs
+  - PlcDbViewerPopup: autocomplete articoli + bottone "Salva DB55 → Ricetta Articolo"
+  - Salva in `Ricette` e `ParametriRicetta` (filtra solo parametri scrivibili offset 102+)
+
+- **Indicatore ricetta configurata UI**:
+  - `CommessaDto.HasRicetta`: flag booleano per articoli con ricetta configurata
+  - **Programma Macchine**: Nuova colonna ✅/⚠️ per HasRicetta (prima di MA)
+  - **Gantt Macchine**: Badge 📋 su commesse senza ricetta + tooltip warning
+  - `CommessaAppService`: Caricamento ricette da database per tutte le commesse
+
+### 🏗️ Architettura
+- **PlcController**: Aggiunto DbContext injection per accedere a Ricette/ParametriRicetta
+- **Entity mapping**: Articolo → Ricetta (1-to-1) → ParametroRicetta (1-to-many)
+- **CommessaAppService.GetListaAsync()**: Query aggiuntiva per caricare ricette (performance)
+
+**File modificati**:
+- `MESManager.Application/DTOs/CommessaDto.cs` (+HasRicetta property)
+- `MESManager.Application/DTOs/SaveDb55AsRecipeRequest.cs` (new)
+- `MESManager.Application/DTOs/SaveDb55AsRecipeResult.cs` (new)
+- `MESManager.Web/Controllers/PlcController.cs` (new endpoint save-db55-as-recipe)
+- `MESManager.Infrastructure/Services/CommessaAppService.cs` (caricamento ricette)
+- `MESManager.Web/Components/Pages/PlcDbViewerPopup.razor` (chiamata API)
+- `wwwroot/lib/ag-grid/programma-macchine-grid.js` (colonna HasRicetta)
+- `wwwroot/js/gantt/gantt-macchine.js` (badge 📋 per ricetta mancante)
+- `MESManager.Web/Constants/AppVersion.cs` (v1.36.0)
+
+---
+
+## 🔖 v1.35.0 - Fix Auto-Frame DB52 + Mappatura completa (12 Feb 2026)
 
 **Data**: 12 Febbraio 2026
 
