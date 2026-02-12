@@ -174,46 +174,59 @@
         box-shadow: inset 0 0 30px rgba(0,0,0,0.05);
     }
     
-    /* Gradient sfumato dall'esterno verso l'interno */
-    .machine-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        border-radius: 12px;
-        padding: 4px;
-        background: linear-gradient(135deg, var(--mud-palette-primary), var(--mud-palette-primary-lighten));
-        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        -webkit-mask-composite: xor;
-        mask-composite: exclude;
-        pointer-events: none;
+    /* Sfumatura colore stato con box-shadow (più affidabile del mask) */
+    .machine-card {
+        border: 3px solid #9e9e9e;
+        box-shadow: 
+            inset 0 0 40px rgba(158, 158, 158, 0.3),
+            0 4px 12px rgba(0,0,0,0.1);
     }
 
     .machine-card:hover {
         transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 12px 24px rgba(0,0,0,0.2) !important;
+        box-shadow: 
+            inset 0 0 50px rgba(158, 158, 158, 0.4),
+            0 12px 24px rgba(0,0,0,0.2) !important;
     }
 
-    .machine-card.status-emergenza::before {
-        background: radial-gradient(circle at top left, #f44336, rgba(244, 67, 54, 0.3) 70%, transparent);
-    }
-
-    .machine-card.status-allarme::before {
-        background: radial-gradient(circle at top left, #ff9800, rgba(255, 152, 0, 0.3) 70%, transparent);
-    }
-
-    .machine-card.status-automatico::before {
-        background: radial-gradient(circle at top left, #4caf50, rgba(76, 175, 80, 0.3) 70%, transparent);
-    }
-
-    .machine-card.status-manuale::before {
-        background: radial-gradient(circle at top left, #616161, rgba(97, 97, 97, 0.3) 70%, transparent);
+    /* EMERGENZA - Rosso */
+    .machine-card.status-emergenza {
+        border-color: #f44336;
+        box-shadow: 
+            inset 0 0 60px rgba(244, 67, 54, 0.25),
+            0 4px 12px rgba(244, 67, 54, 0.3);
     }
     
-    .machine-card.status-non-connessa::before {
-        background: radial-gradient(circle at top left, #bdbdbd, rgba(189, 189, 189, 0.2) 70%, transparent);
+    /* ALLARME - Arancione */
+    .machine-card.status-allarme {
+        border-color: #ff9800;
+        box-shadow: 
+            inset 0 0 60px rgba(255, 152, 0, 0.25),
+            0 4px 12px rgba(255, 152, 0, 0.3);
+    }
+    
+    /* AUTOMATICO - Verde */
+    .machine-card.status-automatico {
+        border-color: #4caf50;
+        box-shadow: 
+            inset 0 0 60px rgba(76, 175, 80, 0.2),
+            0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+    
+    /* MANUALE - Grigio scuro */
+    .machine-card.status-manuale {
+        border-color: #616161;
+        box-shadow: 
+            inset 0 0 60px rgba(97, 97, 97, 0.2),
+            0 4px 12px rgba(97, 97, 97, 0.2);
+    }
+    
+    /* OFFLINE/NON CONNESSA - Grigio chiaro */
+    .machine-card.status-non-connessa {
+        border-color: #bdbdbd;
+        box-shadow: 
+            inset 0 0 40px rgba(189, 189, 189, 0.2),
+            0 4px 12px rgba(0,0,0,0.1);
     }
 
     .machine-card.status-non-connessa .machine-number {
@@ -392,15 +405,18 @@
 
     private string GetMachineCardClass(string? stato)
     {
-        if (string.IsNullOrEmpty(stato)) return "";
+        if (string.IsNullOrEmpty(stato)) return "status-non-connessa";
         
-        if (stato.Contains("NON CONNESSA")) return "status-non-connessa";
-        if (stato.Contains("EMERGENZA")) return "status-emergenza";
-        if (stato.Contains("ALLARME")) return "status-allarme";
-        if (stato.Contains("MANUALE")) return "status-manuale";
-        if (stato.Contains("AUTOMATICO") || stato.Contains("CICLO")) return "status-automatico";
+        // Ordine importante: più specifico prima
+        if (stato.Contains("EMERGENZA", StringComparison.OrdinalIgnoreCase)) return "status-emergenza";
+        if (stato.Contains("ALLARME", StringComparison.OrdinalIgnoreCase)) return "status-allarme";
+        if (stato.Contains("AUTOMATICO", StringComparison.OrdinalIgnoreCase) || stato.Contains("CICLO", StringComparison.OrdinalIgnoreCase)) return "status-automatico";
+        if (stato.Contains("MANUALE", StringComparison.OrdinalIgnoreCase)) return "status-manuale";
+        if (stato.Contains("NON CONNESSA", StringComparison.OrdinalIgnoreCase)) return "status-non-connessa";
+        if (stato.Contains("OFFLINE", StringComparison.OrdinalIgnoreCase)) return "status-non-connessa";
         
-        return "";
+        // Default: non connessa (grigio)
+        return "status-non-connessa";
     }
 
     private Color GetStatoColor(string? stato)

@@ -30,4 +30,11 @@ public class PlcDbEntryDto
     /// Unità di misura (se applicabile)
     /// </summary>
     public string? UnitaMisura { get; set; }
+    
+    /// <summary>
+    /// Se true, questo campo è SOLO LETTURA (stato/produzione)
+    /// Se false, è SCRIVIBILE (parametro ricetta)
+    /// Offset 0-100 = ReadOnly, Offset 102+ = Scrivibile
+    /// </summary>
+    public bool IsReadOnly { get; set; } = true;
 }

@@ -4,7 +4,32 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.34.0
+## 🔖 Versione Corrente: v1.35.0
+
+**Data**: 12 Febbraio 2026
+
+### 🐛 Bug Fixes
+- **Fix errore Auto-Frame DB52**: Ridotta dimensione scrittura DB52 da 96 byte a 70 byte (offset 102-172)
+  - Problema: DB52 più piccolo di DB55 su alcune macchine causava "Auto-Frame" error
+  - Soluzione: Scrivo solo parametri ricetta base (fino a Figure offset 170) invece di tutti i parametri
+- **Mappatura completa DB55/DB52**: Visualizzati tutti i 67 campi PLC (24 lettura + 43 ricetta)
+  - DB_SIZE: 512 → 200 byte (allineato con PlcSync)
+  - Parsing corretto con offset PlcOffsetsConfig.cs
+
+### 🚀 Features  
+- **Distinzione lettura/scrittura parametri DB**: 
+  - `PlcDbEntryDto.IsReadOnly`: flag per distinguere campi readonly (offset 0-100) da scrivibili (102+)
+  - Offset 0-100: SOLO LETTURA (stati, produzione, operatore)
+  - Offset 102+: SCRIVIBILI (parametri ricetta: tempi, pressioni, quote, abilitazioni)
+
+**File modificati**:
+- `MESManager.Application/DTOs/PlcDbEntryDto.cs` (+IsReadOnly property)
+- `MESManager.Infrastructure/Services/PlcRecipeWriterService.cs` (fix dimensioni DB52, mapping completo 67 campi)
+- `MESManager.Web/Constants/AppVersion.cs` (v1.35.0)
+
+---
+
+## 🔖 v1.34.0 - Tema e UX Ricette (11 Feb 2026)
 
 **Data**: 11 Febbraio 2026
 
