@@ -48,5 +48,10 @@ namespace MESManager.Application.DTOs
         // Statistiche foto dall'archivio
         public int NumeroFoto { get; set; }
         public int NumeroDocumenti { get; set; }
+        
+        // Informazioni ricetta (computed dal backend)
+        public bool HasRicetta { get; set; }
+        public int NumeroParametri { get; set; }
+        public DateTime? RicettaUltimaModifica { get; set; }
     }
 }

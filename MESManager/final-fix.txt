@@ -1,0 +1,11 @@
+ INSERT RIUSCITO! 8 macchine in PLCRealtime
+
+Macchine ora visibili in dashboard:
+M002 - Stato: FERMO - Agg: 0 sec fa
+M003 - Stato: FERMO - Agg: 0 sec fa
+M005 - Stato: FERMO - Agg: 0 sec fa
+M006 - Stato: FERMO - Agg: 0 sec fa
+M007 - Stato: FERMO - Agg: 0 sec fa
+M008 - Stato: FERMO - Agg: 0 sec fa
+M009 - Stato: FERMO - Agg: 0 sec fa
+M010 - Stato: FERMO - Agg: 0 sec fa

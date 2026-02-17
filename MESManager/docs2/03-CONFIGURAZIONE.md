@@ -146,6 +146,122 @@ Per produzione, usa `appsettings.Secrets.encrypted` con DPAPI:
 
 ---
 
+## 📦 Archivio Dati Allegati
+
+### Strategia Implementata
+
+**Principio**: Ambiente DEV connesso **direttamente** al database PROD per accesso ai dati reali.
+
+**Approccio**:
+- DEV legge direttamente da `MESManager_Prod` su server `192.168.1.230`
+- Nessun database locale allegati
+- Nessuno script di sincronizzazione
+- Configurazione semplice: un solo connection string per ambiente
+
+**Benefici**:
+- ✅ Dati reali per test (901 articoli, 785 allegati)
+- ✅ Nessuna duplicazione o desincronizzazione
+- ✅ Zero complessità di sync
+- ✅ Configurazione minimale
+
+---
+
+### Configurazione DEV
+
+**File**: `appsettings.Database.Development.json` (root)
+
+```json
+{
+  "ConnectionStrings": {
+    "MESManagerDb": "Server=192.168.1.230\\SQLEXPRESS01;Database=MESManager_Prod;User Id=FAB;Password=password.123;TrustServerCertificate=True;"
+  },
+  "Files": {
+    "AllegatiBasePath": "\\\\192.168.1.230\\Dati\\Documenti\\AA SCHEDE PRODUZIONE\\foto cel",
+    "PathMappings": [
+      "P:\\Documenti->\\\\192.168.1.230\\Dati\\Documenti",
+      "P:\\->\\\\192.168.1.230\\Dati\\",
+      "C:\\Dati\\->\\\\192.168.1.230\\Dati\\"
+    ]
+  }
+}
+```
+
+**⚠️ IMPORTANTE**:
+- La tabella allegati è `AllegatiArticoli` (non `Allegati`)
+- Database: `MESManager_Prod` (non `Gantt`)
+- Path file via UNC `\\192.168.1.230\Dati` (richiede rete attiva)
+- Credenziali: `User Id=FAB; Password=password.123`
+
+---
+
+### Configurazione PROD
+
+**File**: `appsettings.Database.Production.json` (sul server)
+
+```json
+{
+  "ConnectionStrings": {
+    "MESManagerDb": "Server=localhost\\SQLEXPRESS01;Database=MESManager_Prod;Integrated Security=True;TrustServerCertificate=True;"
+  },
+  "Files": {
+    "AllegatiBasePath": "C:\\Dati\\Documenti\\AA SCHEDE PRODUZIONE\\foto cel",
+    "PathMappings": [
+      "P:\\Documenti->C:\\Dati\\Documenti",
+      "P:\\->C:\\Dati\\"
+    ]
+  }
+}
+```
+
+**Differenze**:
+- Server locale (`localhost`) con autenticazione Windows
+- Path fisici locali (`C:\Dati`)
+
+---
+
+### Struttura Database
+
+**Tabella**: `[dbo].[AllegatiArticoli]` in `MESManager_Prod`
+
+**Colonne principali**:
+- `Id` - Primary key
+- `Archivio` - Tipo archivio ('ARTICO' per articoli)
+- `IdArchivio` - FK a `anime.Id`
+- `CodiceArticolo` - Codice articolo per lookup rapido
+- `PathFile` - Path completo del file
+- `Descrizione` - Descrizione allegato
+- `TipoFile` - 'Foto' o 'Documento'
+- `Priorita` - Ordinamento
+
+**Dati**:
+- 901 articoli (tabella `anime`)
+- 785 allegati (tabella `AllegatiArticoli`)
+- 327 articoli hanno allegati
+
+---
+
+### Test Configurazione
+
+```powershell
+# Verifica connessione DEV → PROD
+$conn = New-Object System.Data.SqlClient.SqlConnection("Server=192.168.1.230\SQLEXPRESS01;Database=MESManager_Prod;User Id=FAB;Password=password.123;TrustServerCertificate=True;")
+$conn.Open()
+$cmd = $conn.CreateCommand()
+$cmd.CommandText = "SELECT COUNT(*) FROM [dbo].[AllegatiArticoli] WHERE Archivio = 'ARTICO'"
+$count = $cmd.ExecuteScalar()
+Write-Host "✅ Allegati disponibili: $count" -ForegroundColor Green
+$conn.Close()
+
+# Verifica path UNC
+Test-Path "\\192.168.1.230\Dati\Documenti"
+
+# Test API locale
+Invoke-WebRequest -Uri "http://localhost:5156/api/anime" | ConvertFrom-Json | Select-Object -ExpandProperty Count
+Invoke-WebRequest -Uri "http://localhost:5156/api/AllegatiAnima/codice/300014" | ConvertFrom-Json
+```
+
+---
+
 ## 🏭 Configurazione Macchine PLC
 
 ### Architettura Ibrida (Database + JSON)

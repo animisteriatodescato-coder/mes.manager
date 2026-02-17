@@ -1,0 +1,4 @@
+Macchine che matchano il filtro: 8
+INSERT fallito: Exception calling "ExecuteNonQuery" with "0" argument(s): "Non è possibile inserire il valore NULL nella colonna 'NumeroOperatore' della tabella 'MESManager_Dev.dbo.PLCRealtime'. La colonna non ammette valori Null. INSERT avrà esito negativo.
+L'istruzione è stata interrotta."
+PLCRealtime finale: 0 righe

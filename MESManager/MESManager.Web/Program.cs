@@ -44,6 +44,7 @@ var solutionRoot = builder.Environment.IsProduction()
 var encryptedSecretsPath = Path.Combine(solutionRoot, "appsettings.Secrets.encrypted");
 var secretsPath = Path.Combine(solutionRoot, "appsettings.Secrets.json");
 var dbConfigPath = Path.Combine(solutionRoot, "appsettings.Database.json");
+var dbConfigEnvPath = Path.Combine(solutionRoot, $"appsettings.Database.{builder.Environment.EnvironmentName}.json");
 
 if (File.Exists(encryptedSecretsPath))
 {
@@ -64,12 +65,19 @@ else if (File.Exists(dbConfigPath))
     builder.Configuration.AddJsonFile(dbConfigPath, optional: false, reloadOnChange: true);
 }
 
+// Override locale per ambiente (solo se presente)
+if (!builder.Environment.IsProduction() && File.Exists(dbConfigEnvPath))
+{
+    builder.Configuration.AddJsonFile(dbConfigEnvPath, optional: false, reloadOnChange: true);
+}
+
 // Configura DatabaseConfiguration per la DI
 builder.Services.Configure<DatabaseConfiguration>(options =>
 {
     options.MESManagerDb = builder.Configuration.GetConnectionString("MESManagerDb") ?? "";
     options.MagoDb = builder.Configuration.GetConnectionString("MagoDb") 
                      ?? builder.Configuration["Mago:ConnectionString"] ?? "";
+    options.AllegatiDb = builder.Configuration.GetConnectionString("AllegatiDb"); // Null se non configurato (fallback a MESManagerDb)
     // GanttDb non più usato - dati migrati in MESManagerDb
 });
 

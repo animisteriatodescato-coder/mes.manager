@@ -12,5 +12,15 @@ namespace MESManager.Application.Interfaces
         Task AddAsync(Anime entity);
         Task UpdateAsync(Anime entity);
         Task<bool> DeleteAsync(int id);
+        
+        // Nuovo metodo per informazioni ricetta aggregate
+        Task<Dictionary<string, RicettaInfo>> GetRicetteInfoByCodiceArticoloAsync(List<string> codiciArticolo);
+    }
+    
+    // DTO per info ricetta
+    public class RicettaInfo
+    {
+        public int NumeroParametri { get; set; }
+        public DateTime? UltimaModifica { get; set; }
     }
 }

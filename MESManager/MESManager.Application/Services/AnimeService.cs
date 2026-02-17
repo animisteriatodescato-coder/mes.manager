@@ -25,24 +25,42 @@ namespace MESManager.Application.Services
         public async Task<List<AnimeDto>> GetAllAsync()
         {
             var entities = await _repo.GetAllAsync();
+            
+            // Recupera info ricette per gli articoli presenti
+            var codiciArticolo = entities
+                .Where(x => !string.IsNullOrWhiteSpace(x.CodiceArticolo))
+                .Select(x => x.CodiceArticolo)
+                .Distinct()
+                .ToList();
+            
+            var ricetteInfo = await _repo.GetRicetteInfoByCodiceArticoloAsync(codiciArticolo);
+            
             await EnsureMacchineCacheAsync();
-            return entities.Select(x => MapToDto(x)).ToList();
+            return entities.Select(x => MapToDto(x, ricetteInfo)).ToList();
         }
 
         public async Task<AnimeDto?> GetByIdAsync(int id)
         {
             var entity = await _repo.GetByIdAsync(id);
             if (entity == null) return null;
+            
+            // Recupera info ricetta se presente
+            var ricetteInfo = await _repo.GetRicetteInfoByCodiceArticoloAsync(new List<string> { entity.CodiceArticolo });
+            
             await EnsureMacchineCacheAsync();
-            return MapToDto(entity);
+            return MapToDto(entity, ricetteInfo);
         }
 
         public async Task<AnimeDto?> GetByCodiceArticoloAsync(string codiceArticolo)
         {
             var entity = await _repo.GetByCodiceArticoloAsync(codiceArticolo);
             if (entity == null) return null;
+            
+            // Recupera info ricetta se presente
+            var ricetteInfo = await _repo.GetRicetteInfoByCodiceArticoloAsync(new List<string> { entity.CodiceArticolo });
+            
             await EnsureMacchineCacheAsync();
-            return MapToDto(entity);
+            return MapToDto(entity, ricetteInfo);
         }
         
         private async Task EnsureMacchineCacheAsync()
@@ -50,7 +68,14 @@ namespace MESManager.Application.Services
             if (_macchineCache == null)
             {
                 var macchine = await _macchinaService.GetListaAsync();
-                _macchineCache = macchine.ToDictionary(m => m.Codice, m => m.Nome);
+                _macchineCache = macchine
+                    .Where(m => !string.IsNullOrWhiteSpace(m.Codice))
+                    .GroupBy(m => m.Codice.Trim(), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Select(x => x.Nome)
+                            .FirstOrDefault(nome => !string.IsNullOrWhiteSpace(nome)) ?? g.Key,
+                        StringComparer.OrdinalIgnoreCase);
             }
         }
 
@@ -117,8 +142,12 @@ namespace MESManager.Application.Services
             return await _repo.DeleteAsync(id);
         }
 
-        private AnimeDto MapToDto(Anime entity)
+        private AnimeDto MapToDto(Anime entity, Dictionary<string, RicettaInfo>? ricetteInfo = null)
         {
+            // Recupera info ricetta se disponibile
+            RicettaInfo? ricetta = null;
+            ricetteInfo?.TryGetValue(entity.CodiceArticolo, out ricetta);
+            
             // Mapping manuale - ATTENZIONE: aggiungere ogni nuovo campo a entity
             return new AnimeDto
             {
@@ -161,7 +190,12 @@ namespace MESManager.Application.Services
                 DataImportazione = entity.DataImportazione,
                 ModificatoLocalmente = entity.ModificatoLocalmente,
                 DataUltimaModificaLocale = entity.DataUltimaModificaLocale,
-                UtenteUltimaModificaLocale = entity.UtenteUltimaModificaLocale
+                UtenteUltimaModificaLocale = entity.UtenteUltimaModificaLocale,
+                
+                // Info ricetta (computed)
+                HasRicetta = ricetta != null,
+                NumeroParametri = ricetta?.NumeroParametri ?? 0,
+                RicettaUltimaModifica = ricetta?.UltimaModifica
             };
         }
         

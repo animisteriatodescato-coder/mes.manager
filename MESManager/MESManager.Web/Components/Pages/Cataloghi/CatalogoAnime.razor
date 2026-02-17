@@ -422,6 +422,32 @@
         }
     }
     
+    [JSInvokable]
+    public async Task ViewRicetta(string codiceArticolo)
+    {
+        try
+        {
+            var parameters = new DialogParameters<RicettaViewDialog>
+            {
+                { x => x.CodiceArticolo, codiceArticolo }
+            };
+            
+            var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Large,
+                FullWidth = true,
+                CloseButton = true,
+                CloseOnEscapeKey = true
+            };
+            
+            await DialogService.ShowAsync<RicettaViewDialog>("Visualizza Ricetta", parameters, options);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore apertura ricetta: {ex.Message}", Severity.Error);
+        }
+    }
+    
     // Metodi pubblici per essere chiamati dalla AppBar
     public async Task OnSearchDebounced_Public(string value)
     {

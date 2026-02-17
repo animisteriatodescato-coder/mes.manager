@@ -1,6 +1,8 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using MESManager.Application.Configuration;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
 using MESManager.Domain.Constants;
@@ -18,25 +20,32 @@ public class AllegatoArticoloService : IAllegatoArticoloService
     private readonly ILogger<AllegatoArticoloService> _logger;
     private readonly string _allegatiBasePath;
     private readonly string _ganttConnectionString;
+    private readonly List<(string Source, string Target)> _pathMappings;
 
     public AllegatoArticoloService(
         IAllegatoArticoloRepository repository,
         IConfiguration configuration,
+        IOptions<FileConfiguration> fileConfiguration,
         ILogger<AllegatoArticoloService> logger)
     {
         _repository = repository;
         _configuration = configuration;
         _logger = logger;
+
+        var fileConfig = fileConfiguration.Value;
         
-        // Path base per gli allegati usando FileConstants
-        _allegatiBasePath = FileConstants.GetAllegatiBasePath(configuration["AllegatiBasePath"]);
+        // Path base e mapping percorsi centralizzati in Files
+        _allegatiBasePath = FileConstants.GetAllegatiBasePath(fileConfig.AllegatiBasePath);
+        _pathMappings = ParsePathMappings(fileConfig.PathMappings);
         
         // Connection string per Gantt - prova GanttDb prima di GanttConnection
         _ganttConnectionString = configuration.GetConnectionString("GanttDb") 
             ?? configuration.GetConnectionString("GanttConnection")
             ?? throw new InvalidOperationException("Connection string 'GanttDb' non trovata.");
         
-        _logger.LogInformation("AllegatoArticoloService initialized. BasePath={Path}", _allegatiBasePath);
+        _logger.LogInformation("AllegatoArticoloService initialized. BasePath={Path}, PathMappings={Mappings}",
+            _allegatiBasePath,
+            string.Join("; ", _pathMappings.Select(m => $"{m.Source} -> {m.Target}")));
     }
 
     public async Task<AllegatiArticoloResponse> GetAllegatiByArticoloAsync(string codiceArticolo, int? idArchivio = null)
@@ -191,19 +200,52 @@ public class AllegatoArticoloService : IAllegatoArticoloService
         return (content, contentType, allegato.NomeFile ?? "file");
     }
     
-    private static string ConvertNetworkPath(string path)
+    private string ConvertNetworkPath(string path)
     {
-        // Il path nel DB è tipo: P:\Documenti\AA SCHEDE PRODUZIONE\foto cel\...
-        // Sul server è mappato come: C:\Dati\Documenti\AA SCHEDE PRODUZIONE\foto cel\...
         if (string.IsNullOrEmpty(path))
             return path;
 
-        if (path.StartsWith(@"P:\Documenti", StringComparison.OrdinalIgnoreCase))
+        var convertedPath = path;
+        foreach (var (source, target) in _pathMappings)
         {
-            return path.Replace(@"P:\Documenti", @"C:\Dati\Documenti", StringComparison.OrdinalIgnoreCase);
+            if (convertedPath.StartsWith(source, StringComparison.OrdinalIgnoreCase))
+            {
+                convertedPath = convertedPath.Replace(source, target, StringComparison.OrdinalIgnoreCase);
+                break;
+            }
         }
 
-        return path;
+        if (!File.Exists(convertedPath) && File.Exists(path))
+            return path;
+
+        return convertedPath;
+    }
+
+    private static List<(string Source, string Target)> ParsePathMappings(List<string>? mappings)
+    {
+        var result = new List<(string Source, string Target)>();
+
+        if (mappings != null)
+        {
+            foreach (var mapping in mappings)
+            {
+                if (string.IsNullOrWhiteSpace(mapping) || !mapping.Contains("->"))
+                    continue;
+
+                var parts = mapping.Split("->", 2, StringSplitOptions.TrimEntries);
+                if (parts.Length == 2 && !string.IsNullOrWhiteSpace(parts[0]) && !string.IsNullOrWhiteSpace(parts[1]))
+                {
+                    result.Add((parts[0], parts[1]));
+                }
+            }
+        }
+
+        if (result.Count == 0)
+        {
+            result.Add((@"P:\Documenti", @"C:\Dati\Documenti"));
+        }
+
+        return result;
     }
 
     public async Task<ImportAllegatiResult> ImportFromGanttAsync(string codiceArticolo)

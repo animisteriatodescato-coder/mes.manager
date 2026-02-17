@@ -4,7 +4,245 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.36.0
+## 🔖 Versione Corrente: v1.38.8
+
+## 🔖 v1.38.8 - Connessione Diretta Database PROD in DEV (17 Feb 2026)
+
+**Data**: 17 Febbraio 2026
+
+### ✨ Feature
+- **Ambiente DEV connesso direttamente a database PROD**:
+  - `appsettings.Database.Development.json` punta a `MESManager_Prod` su `192.168.1.230`
+  - Accesso a 901 articoli e 785 allegati reali per test in locale
+  - Nessuna replica locale, nessuno script di sync (approccio più semplice)
+  
+- **Correzione query allegati**:
+  - Tabella corretta: `AllegatiArticoli` (non `Allegati`)
+  - Query modificata per usare `CodiceArticolo` invece di pattern matching
+  - Colonne corrette: `PathFile`, `Descrizione` (non `Allegato`, `DescrizioneAllegato`)
+
+### 🏗️ Architettura
+- **Approccio Direct-Connection**:
+  - DEV legge direttamente da PROD senza duplicazione dati
+  - Eliminata complessità di `AllegatiDb` (non più necessario)
+  - Strategia più semplice: un solo database configurabile per ambiente
+
+### 🔧 Modifiche Tecniche
+- **File Modificati**:
+  - `appsettings.Database.Development.json`: Connection string diretto a PROD
+    - `Server=192.168.1.230\SQLEXPRESS01;Database=MESManager_Prod;User Id=FAB;Password=password.123`
+    - Path UNC: `\\192.168.1.230\Dati\Documenti\AA SCHEDE PRODUZIONE\foto cel`
+  - `MESManager.Application/Services/AllegatiAnimaService.cs`:
+    - Query tabella `AllegatiArticoli` invece di `Allegati`
+    - WHERE clause: `CodiceArticolo = @CodiceArticolo` (exact match)
+    - SELECT: `PathFile as Allegato, Descrizione as DescrizioneAllegato`
+
+### 🗑️ Rimosso
+- ❌ Configurazione `AllegatiDb` (non più usata)
+- ❌ Script `sync-allegati-dev.ps1` (non più necessario)
+- ❌ Tabella locale `Allegati` in `MESManager_Dev` (non più usata)
+- ❌ Logica fallback `AllegatiDb ?? MESManagerDb` (semplificato)
+
+### 📚 Documentazione
+- `docs2/03-CONFIGURAZIONE.md`: Aggiornata sezione "Archivio Dati Allegati" con nuovo approccio
+- `docs2/BIBBIA-AI-MESMANAGER.md`: v2.5 - Rimossa strategia local-first, documentato direct-connection
+
+### ✅ Testing
+- API `/api/anime` → 901 articoli da PROD ✅
+- API `/api/AllegatiAnima/738` → 3 foto + 3 documenti ✅
+- API `/api/AllegatiAnima/codice/300014` → 3 foto + 3 documenti ✅
+- Database: `MESManager_Prod` (192.168.1.230) accessibile da DEV
+
+---
+
+## 🔖 v1.38.7 - Sistema Archivio Allegati Local-First (17 Feb 2026)
+
+**Data**: 17 Febbraio 2026
+
+### ✨ Feature
+- **Archivio Allegati funzionante in DEV**:
+  - Tabella `[dbo].[Allegati]` creata in `MESManager_Dev` (struttura identica a PROD)
+  - Script PowerShell `scripts/sync-allegati-dev.ps1` per sync dati PROD→DEV
+  - Fallback automatico: `AllegatiDb ?? MESManagerDb` in `AllegatiAnimaService`
+  
+- **Configurazione flessibile**:
+  - Proprietà `DatabaseConfiguration.AllegatiDb` (nullable) per environment-specific targeting
+  - Path file configurabile via `appsettings.Database.*.json`
+  - Supporto UNC path e path locali con mappatura `P:\Documenti`
+
+### 🏗️ Architettura
+- **Approccio Local-First**:
+  - DEV usa database locale con sync manuale (nessuna dipendenza remota)
+  - Risolve problemi permessi SQL su database legacy (`Gantt`)
+  - Strategia riutilizzabile per altri ambienti di test
+
+### 🔧 Modifiche Tecniche
+- **File Modificati**:
+  - `MESManager.Application/Configuration/DatabaseConfiguration.cs`: Aggiunta proprietà `AllegatiDb`
+  - `MESManager.Web/Program.cs`: Lettura configurazione `AllegatiDb` da appsettings
+  - `MESManager.Application/Services/AllegatiAnimaService.cs`: Implementato fallback logic
+  - `appsettings.Database.Development.json`: Path locali per dev environment
+  
+- **File Creati**:
+  - `scripts/sync-allegati-dev.ps1`: Script completo per sync PROD→DEV (270 linee)
+  - SQL: Tabella `Allegati` con indice su `(Archivio, IdArchivio)`
+
+### 📚 Documentazione
+- `docs2/BIBBIA-AI-MESMANAGER.md`: v2.4 - Aggiunta sezione "Archivio Dati Allegati"
+- `docs2/03-CONFIGURAZIONE.md`: Ampliata sezione archivio con esempi DEV/PROD
+
+### ✅ Testing
+- API `/api/AllegatiAnima/{idArchivio}` testata con successo
+- Ritorna JSON con `foto[]`, `documenti[]`, `totaleFoto`, `totaleDocumenti`
+- Log confermano: `ConnectionDb=MESManagerDb (local)` (fallback attivo)
+
+## 🔖 v1.38.6 - Centralizzazione gestione tema CSS (13 Feb 2026)
+
+**Data**: 13 Febbraio 2026
+
+### ✨ Feature
+- **Centralizzazione completa gestione tema chiaro/scuro**:
+  - Creato `wwwroot/css/theme-config.css` → Fonte di verità per tutti i colori (42 variabili CSS con prefisso `--mes-*`)
+  - Creato `wwwroot/css/theme-overrides.css` → Applicazione stili tematizzati consolidati
+  - Refactoring ~7 componenti: rimossi colori hardcoded, sostituiti con variabili CSS
+  
+- **Dark Mode Menu/AppBar migliorato**:
+  - Light mode: Gradiente blu (esistente)
+  - Dark mode: Gradiente nero/grigio sfumato (uniformità visiva)
+  - AppBar e Drawer usano stesso colore per coerenza
+
+- **Dark Mode Tabelle AG-Grid**:
+  - Risolto: tabelle grigie scure in dark mode (prima restavano bianche)
+  - AG-Grid ora usa `--mes-grid-*` variabili per background/header/border
+
+### 🏗️ Architettura
+- **Approccio Soluzione 1** (CSS Variables Custom):
+  - Un solo file da modificare per cambiare tema (`theme-config.css`)
+  - Zero breaking changes architetturali
+  - Facile estendibilità (nuove variabili semantiche)
+
+### 📘 Documentazione
+- Creato `docs2/storico/FIX-CENTRALIZZAZIONE-TEMA-CSS-2026-02-13.md` con:
+  - Analisi problema pre-intervento
+  - Architettura completa soluzione
+  - Regole vincolanti DO/DON'T
+  - Esempi modifica tema
+
+**File modificati**:
+- `MESManager.Web/Constants/AppVersion.cs` → v1.38.3
+- `MESManager.Web/Components/App.razor` → Import CSS tematizzati
+- `MESManager.Web/Components/Layout/MainLayout.razor` → Colore versione dinamico
+- `MESManager.Web/Components/Pages/Programma/CommesseAperte.razor` → Variabili CSS
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoClienti.razor` → Variabili CSS
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoArticoli.razor` → Variabili CSS
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoCommesse.razor` → Variabili CSS
+
+**File creati**:
+- `MESManager.Web/wwwroot/css/theme-config.css`
+- `MESManager.Web/wwwroot/css/theme-overrides.css`
+- `docs2/storico/FIX-CENTRALIZZAZIONE-TEMA-CSS-2026-02-13.md`
+
+**Regola architetturale**: Da ora in poi, **ZERO colori hardcoded** - Usare solo `var(--mes-*)`
+
+---
+
+## 🔖 v1.38.5 - Fix Catalogo Anime 500 + centralizzazione path archivi (13 Feb 2026)
+
+**Data**: 13 Febbraio 2026
+
+### 🐛 Bug Fixes
+- **Catalogo Anime in locale restituiva 500**:
+  - Risolto crash in `AnimeService.EnsureMacchineCacheAsync` causato da codici macchina duplicati (es. `M006`)
+  - La cache macchine ora gestisce duplicati in modo robusto e non blocca più `GET /api/Anime`
+
+### 🏗️ Architettura
+- **Centralizzazione riferimenti archivi/server per allegati**:
+  - Rimossi path hardcoded dai servizi allegati
+  - `AllegatoArticoloService` e `AllegatiAnimaService` ora usano solo `Files:AllegatiBasePath` e `Files:PathMappings`
+  - Conversione percorsi rete (`source->target`) resa configurabile da un unico punto
+
+**File modificati**:
+- `MESManager.Application/Services/AnimeService.cs`
+- `MESManager.Application/Services/AllegatoArticoloService.cs`
+- `MESManager.Application/Services/AllegatiAnimaService.cs`
+- `MESManager.Web/Constants/AppVersion.cs`
+
+## 🔖 v1.38.4 - Mapping rigido DB55/DB56 + centralizzazione offset runtime (13 Feb 2026)
+
+**Data**: 13 Febbraio 2026
+
+### 🐛 Bug Fixes
+- **Dashboard leggeva ancora valori da DB55 in area `>=100`**:
+  - Rimossa la logica di fallback `DB56 -> DB55` in `PlcReaderService`
+  - Per i campi `offset >=100` la lettura è ora **solo DB56**
+  - Se DB56 non è disponibile, i campi runtime (`TempoMedio`, `Figure`, `QuantitaDaProdurre`) vengono valorizzati a `0` (mai più contaminazione da DB55)
+
+### 🏗️ Architettura
+- **Offset runtime centralizzati in un solo punto**:
+  - Nuove costanti campi in `PlcConstants.Offsets.Fields`
+  - `PlcReaderService` usa solo `PlcConstants` per DB e offset (niente valori dispersi)
+  - `PlcOffsetsConfig` e `PlcSyncSettings` default allineati a `PlcConstants`
+
+**File modificati**:
+- `MESManager.Domain/Constants/PlcConstants.cs`
+- `MESManager.PlcSync/Services/PlcReaderService.cs`
+- `MESManager.PlcSync/Configuration/PlcOffsetsConfig.cs`
+- `MESManager.PlcSync/Configuration/PlcSyncSettings.cs`
+- `MESManager.Web/Constants/AppVersion.cs`
+
+## 🔖 v1.38.2 - Soluzione 1 PLC: DB55 split + DB56 esecuzione (12 Feb 2026)
+
+**Data**: 12 Febbraio 2026
+
+### 🐛 Bug Fixes
+- **Allineamento mapping PLC al comportamento reale macchina**:
+  - `DB55` usato con split ufficiale: `0-99` lettura stati, `100+` scrittura parametri ricetta
+  - `DB56` usato per lettura tempi/valori reali di esecuzione
+  - `PlcSync` ora legge stati da `DB55` e tempi esecuzione da `DB56` con fallback sicuro su `DB55`
+
+### 🏗️ Architettura
+- `PlcRecipeWriterService`: scrittura ricette solo su `DB55` area scrivibile
+- `PlcReaderService`: dual-read `DB55 + DB56` per evitare dashboard offline
+- `PlcConstants`: introdotto alias `EXECUTION_DATABASE = 56` e `OFFSET_RECIPE_PARAMETERS_START = 100`
+
+### 📌 Note Compatibilità
+- Nomi metodi API/Service mantenuti per compatibilità codice esistente; semantica aggiornata internamente.
+
+**File modificati**:
+- `MESManager.Domain/Constants/PlcConstants.cs`
+- `MESManager.Infrastructure/Services/PlcRecipeWriterService.cs`
+- `MESManager.PlcSync/Services/PlcReaderService.cs`
+- `MESManager.Web/Components/Pages/PlcDbViewerPopup.razor`
+- `MESManager.Web/Controllers/PlcController.cs`
+- `MESManager.Infrastructure/Services/RecipeAutoLoaderService.cs`
+
+---
+
+## 🔖 v1.38.1 - Centralizzazione PLC constants + stabilizzazione dashboard (12 Feb 2026)
+
+**Data**: 12 Febbraio 2026
+
+### 🐛 Bug Fixes
+- **Dashboard offline dopo refactor DB52/DB56**:
+  - Confermata separazione corretta: `DB55` per produzione/lettura e `DB56` per ricetta/esecuzione
+  - Ripristinato flusso PlcSync con connessioni attive e aggiornamento `PLCRealtime`
+
+### 🏗️ Architettura
+- **Centralizzazione costanti PLC in unica fonte di verità**:
+  - Nuovo file: `MESManager.Domain/Constants/PlcConstants.cs`
+  - Centralizzati: `DB55`, `DB56`, `DbLength`, offset range lettura/scrittura, rack/slot PLC
+  - `PlcRecipeWriterService` ora usa solo `PlcConstants` (rimozione magic numbers)
+  - `PlcMachineConfig` (PlcSync) usa `PlcConstants` come default per DB e buffer
+
+### ✅ Regola Operativa
+- Qualsiasi modifica futura a DB number/offset PLC deve passare **solo** da `PlcConstants.cs`.
+
+**File modificati**:
+- `MESManager.Domain/Constants/PlcConstants.cs` (new)
+- `MESManager.Infrastructure/Services/PlcRecipeWriterService.cs`
+- `MESManager.PlcSync/Configuration/PlcMachineConfig.cs`
+
+---
 
 **Data**: 13 Febbraio 2026
 

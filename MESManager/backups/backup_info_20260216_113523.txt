@@ -1,0 +1,5 @@
+﻿BACKUP DATABASE MESManager_Dev
+Data: 2026-02-16 11:35:23
+File: C:\Dev\MESManager\backups\MESManager_Dev_PreFixCataloghi_20260216_113523.bak
+Dimensione: 8.49 MB
+Motivo: Pre-fix cataloghi (duplicati Macchine, operatori mancanti)

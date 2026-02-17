@@ -1,7 +1,7 @@
 namespace MESManager.Application.DTOs;
 
 /// <summary>
-/// Risultato operazione scrittura ricetta su DB52
+/// Risultato operazione scrittura ricetta su DB55 (offset 100+)
 /// </summary>
 public class RecipeWriteResult
 {
@@ -21,7 +21,7 @@ public class RecipeWriteResult
     public DateTime WriteTimestamp { get; set; }
     
     /// <summary>
-    /// Numero parametri scritti su DB52
+    /// Numero parametri scritti su DB55 (offset 100+)
     /// </summary>
     public int ParametersWritten { get; set; }
     

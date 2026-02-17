@@ -181,10 +181,17 @@ LEFT JOIN Clienti cl ON cl.Id = c.ClienteId";
         
         var ricette = await _context.Ricette
             .Where(r => articoloIds.Contains(r.ArticoloId))
-            .Select(r => r.ArticoloId)
+            .Include(r => r.Parametri)
+            .Include(r => r.Articolo)
+            .Select(r => new 
+            { 
+                r.ArticoloId, 
+                NumeroParametri = r.Parametri.Count,
+                UltimaModifica = r.Articolo.UltimaModifica
+            })
             .ToListAsync();
         
-        var ricettaLookup = ricette.ToHashSet();
+        var ricettaLookup = ricette.ToDictionary(r => r.ArticoloId);
         
         return commesse.Select(c =>
         {
@@ -282,7 +289,9 @@ LEFT JOIN Clienti cl ON cl.Id = c.ClienteId";
                 ArmataL = anime?.ArmataL,
                 
                 // Flag ricetta configurata
-                HasRicetta = c.ArticoloId.HasValue && ricettaLookup.Contains(c.ArticoloId.Value)
+                HasRicetta = c.ArticoloId.HasValue && ricettaLookup.ContainsKey(c.ArticoloId.Value),
+                NumeroParametri = c.ArticoloId.HasValue && ricettaLookup.TryGetValue(c.ArticoloId.Value, out var ric) ? ric.NumeroParametri : 0,
+                RicettaUltimaModifica = c.ArticoloId.HasValue && ricettaLookup.TryGetValue(c.ArticoloId.Value, out var ric2) ? ric2.UltimaModifica : null
             };
         }).ToList();
     }
@@ -438,7 +447,7 @@ LEFT JOIN Clienti cl ON cl.Id = c.ClienteId";
             Id = s.Id,
             CommessaId = s.CommessaId,
             NumeroCommessa = codiceCommessa,
-            StatoPrecedente = s.StatoPrecedente.ToString(),
+            StatoPrecedente = s.StatoPrecedente?.ToString() ?? "",
             StatoNuovo = s.StatoNuovo.ToString(),
             DataModifica = s.DataModifica,
             UtenteModifica = s.UtenteModifica ?? "",

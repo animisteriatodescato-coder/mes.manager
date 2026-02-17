@@ -9,7 +9,7 @@ using System.Collections.Concurrent;
 namespace MESManager.Infrastructure.Services;
 
 /// <summary>
-/// Servizio event-driven per auto-caricamento ricette su DB52
+/// Servizio event-driven per auto-caricamento ricette su DB55 (offset 100+)
 /// TRIGGER: cambio commessa rilevato da PlcSync su DB55
 /// </summary>
 public class RecipeAutoLoaderService : IRecipeAutoLoaderService
@@ -97,12 +97,12 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
             _logger.LogInformation("📖 [AUTO-LOAD] Ricetta caricata: {Articolo} ({Parametri} parametri)", 
                 ricetta.CodiceArticolo, ricetta.TotaleParametri);
             
-            // 3. SCRIVE DB52 automaticamente
-            var result = await _recipeWriter.WriteRecipeToDb52Async(macchinaId, ricetta, ct);
+            // 3. SCRIVE DB55(offset 100+) automaticamente
+            var result = await _recipeWriter.WriteRecipeToDb56Async(macchinaId, ricetta, ct);
             
             if (result.Success)
             {
-                _logger.LogInformation("✅ [AUTO-LOAD] Ricetta {Articolo} caricata in DB52 - Prossima lavorazione pronta", 
+                _logger.LogInformation("✅ [AUTO-LOAD] Ricetta {Articolo} caricata in DB55(offset 100+) - Prossima lavorazione pronta", 
                     codiceArticolo);
                 
                 // 4. Aggiorna stato commessa (opzionale - per tracking)
@@ -110,7 +110,7 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
             }
             else
             {
-                _logger.LogError("❌ [AUTO-LOAD] Errore scrittura DB52: {Error}", result.ErrorMessage);
+                _logger.LogError("❌ [AUTO-LOAD] Errore scrittura DB55(offset 100+): {Error}", result.ErrorMessage);
             }
         }
         catch (Exception ex)
@@ -162,7 +162,7 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
                 };
             }
             
-            var result = await _recipeWriter.WriteRecipeToDb52Async(macchinaId, ricetta, ct);
+            var result = await _recipeWriter.WriteRecipeToDb56Async(macchinaId, ricetta, ct);
             
             if (result.Success)
             {
@@ -227,7 +227,7 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
             
             var codiceArticolo = prossima.Articolo?.Codice;
             
-            // TODO: verificare se ricetta è già in DB52 (leggendo DB52 e confrontando codice articolo)
+            // TODO: verificare se ricetta è già in DB55(offset 100+) confrontando i parametri ricetta
             // Per ora assumiamo loaded = true se prossima esiste
             return (codiceArticolo, true);
         }

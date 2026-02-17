@@ -546,7 +546,7 @@ public class PianificazioneEngineService : IPianificazioneEngineService
             var macchineCandidate = macchineStringCandidate
                 .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
                 .Where(m => m.HasValue)
-                .Select(m => m.Value)
+                .Select(m => m!.Value)
                 .ToList();
 
             var valutazioni = new List<ValutazioneMacchina>();

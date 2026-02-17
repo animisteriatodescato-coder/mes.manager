@@ -119,7 +119,7 @@
                             <MudButton Color="Color.Info" Variant="Variant.Outlined"
                                        StartIcon="@Icons.Material.Filled.DataObject"
                                        OnClick="@(() => ApriDbViewerAsync(machine.MacchinaId, machine.MacchinaNumero))"
-                                       Title="Apri viewer DB55/DB52 (doppio-click sulla card)">
+                                       Title="Apri viewer DB55/DB56 (doppio-click sulla card)">
                                 DB
                             </MudButton>
                         </MudButtonGroup>
@@ -514,7 +514,7 @@
     }
     
     /// <summary>
-    /// Apre popup viewer DB55/DB52 per macchina (double-click)
+    /// Apre popup viewer DB55/DB56 per macchina (double-click)
     /// </summary>
     private async Task ApriDbViewerAsync(Guid macchinaId, string numeroMacchina)
     {
@@ -535,7 +535,7 @@
     }
     
     /// <summary>
-    /// Carica manualmente la prossima ricetta da Gantt su DB52
+    /// Carica manualmente la prossima ricetta da Gantt su DB55 (offset 100+)
     /// </summary>
     private async Task CaricaProssimaRicettaAsync(Guid macchinaId)
     {
@@ -545,7 +545,7 @@
             
             if (response.IsSuccessStatusCode)
             {
-                Snackbar.Add("✅ Prossima ricetta caricata in DB52", Severity.Success);
+                Snackbar.Add("✅ Prossima ricetta caricata in DB55 (offset 100+)", Severity.Success);
             }
             else
             {

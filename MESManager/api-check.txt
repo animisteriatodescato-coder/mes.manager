@@ -1,0 +1,11 @@
+Macchine: 8
+Anime: 207
+Sample Macchine:
+M002 - Macchina 02
+M003 - Macchina 03
+M005 - Macchina 05
+M006 - Macchina 06
+M007 - Macchina 07
+M008 - Macchina 08
+M009 - Macchina 09
+M010 - Macchina 10

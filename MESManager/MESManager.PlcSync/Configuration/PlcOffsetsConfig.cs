@@ -1,3 +1,5 @@
+using MESManager.Domain.Constants;
+
 namespace MESManager.PlcSync.Configuration;
 
 public class PlcOffsetsConfig
@@ -7,26 +9,26 @@ public class PlcOffsetsConfig
     public int ComunicazioneAbilitata { get; set; } = 2;
     public int ProntoRicevereNuoviDati { get; set; } = 4;
     public int DatiRicevuti { get; set; } = 6;
-    public int InizioSetup { get; set; } = 8;
-    public int FineSetup { get; set; } = 10;
-    public int NuovaProduzione { get; set; } = 12;
-    public int FineProduzione { get; set; } = 14;
-    public int QuantitaRaggiunta { get; set; } = 16;
-    public int CicliFatti { get; set; } = 18;
-    public int CicliScarti { get; set; } = 20;
-    public int NumeroOperatore { get; set; } = 22;
-    public int TempoMedioRil { get; set; } = 24;
+    public int InizioSetup { get; set; } = PlcConstants.Offsets.Fields.InizioSetup;
+    public int FineSetup { get; set; } = PlcConstants.Offsets.Fields.FineSetup;
+    public int NuovaProduzione { get; set; } = PlcConstants.Offsets.Fields.NuovaProduzione;
+    public int FineProduzione { get; set; } = PlcConstants.Offsets.Fields.FineProduzione;
+    public int QuantitaRaggiunta { get; set; } = PlcConstants.Offsets.Fields.QuantitaRaggiunta;
+    public int CicliFatti { get; set; } = PlcConstants.Offsets.Fields.CicliFatti;
+    public int CicliScarti { get; set; } = PlcConstants.Offsets.Fields.CicliScarti;
+    public int NumeroOperatore { get; set; } = PlcConstants.Offsets.Fields.NumeroOperatore;
+    public int TempoMedioRil { get; set; } = PlcConstants.Offsets.Fields.TempoMedioRilevato;
     public int ProduzioneInRitardo { get; set; } = 26;
     public int ProduzioneInAnticipo { get; set; } = 28;
     public int ProduzioneInLineaConTempi { get; set; } = 30;
     public int RegistroWatchDog { get; set; } = 32;
-    public int StatoEmergenza { get; set; } = 34;
-    public int StatoManuale { get; set; } = 36;
-    public int StatoAutomatico { get; set; } = 38;
-    public int StatoCiclo { get; set; } = 40;
-    public int StatoPezziRagg { get; set; } = 42;
-    public int StatoAllarme { get; set; } = 44;
-    public int BarcodeLavorazione { get; set; } = 46;
+    public int StatoEmergenza { get; set; } = PlcConstants.Offsets.Fields.StatoEmergenza;
+    public int StatoManuale { get; set; } = PlcConstants.Offsets.Fields.StatoManuale;
+    public int StatoAutomatico { get; set; } = PlcConstants.Offsets.Fields.StatoAutomatico;
+    public int StatoCiclo { get; set; } = PlcConstants.Offsets.Fields.StatoCiclo;
+    public int StatoPezziRagg { get; set; } = PlcConstants.Offsets.Fields.StatoPezziRaggiunti;
+    public int StatoAllarme { get; set; } = PlcConstants.Offsets.Fields.StatoAllarme;
+    public int BarcodeLavorazione { get; set; } = PlcConstants.Offsets.Fields.BarcodeLavorazione;
     
     // === CAMPI RICETTE (uso futuro) ===
     public int StatoProduzione { get; set; } = 98;
@@ -61,11 +63,11 @@ public class PlcOffsetsConfig
     public int RitardoAperturaMaschio { get; set; } = 156;
     public int RitardoRestartCiclo { get; set; } = 158;
     public int CodicePDF { get; set; } = 160;
-    public int QuantitaDaProd { get; set; } = 162;
-    public int TempoMedio { get; set; } = 164;
+    public int QuantitaDaProd { get; set; } = PlcConstants.Offsets.Fields.QuantitaDaProdurre;
+    public int TempoMedio { get; set; } = PlcConstants.Offsets.Fields.TempoMedio;
     public int TempoRallentamentoChiusuraPannello { get; set; } = 166;
     public int AbilitazioneSparoLaterale { get; set; } = 168;
-    public int Figure { get; set; } = 170;
+    public int Figure { get; set; } = PlcConstants.Offsets.Fields.Figure;
     public int RitardoCaricoSabbia { get; set; } = 172;
     public int NastroAlto { get; set; } = 174;
     public int NastroBasso { get; set; } = 176;

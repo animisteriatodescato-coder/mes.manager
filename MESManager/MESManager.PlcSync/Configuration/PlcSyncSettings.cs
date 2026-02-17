@@ -1,3 +1,5 @@
+using MESManager.Domain.Constants;
+
 namespace MESManager.PlcSync.Configuration;
 
 public class PlcSyncSettings
@@ -13,11 +15,11 @@ public class PlcSyncSettings
 
 public class PlcDefaultSettings
 {
-    public int Rack { get; set; } = 0;
-    public int Slot { get; set; } = 1;
-    public int DbNumber { get; set; } = 55;
+    public int Rack { get; set; } = PlcConstants.PLC_RACK;
+    public int Slot { get; set; } = PlcConstants.PLC_SLOT;
+    public int DbNumber { get; set; } = PlcConstants.PRODUCTION_DATABASE;
     public int DbStart { get; set; } = 0;
-    public int DbLength { get; set; } = 200;
-    public int TimeoutMs { get; set; } = 5000;
+    public int DbLength { get; set; } = PlcConstants.DATABASE_BUFFER_SIZE;
+    public int TimeoutMs { get; set; } = PlcConstants.PLC_CONNECTION_TIMEOUT_SECONDS * 1000;
     public int ReconnectDelayMs { get; set; } = 3000;
 }

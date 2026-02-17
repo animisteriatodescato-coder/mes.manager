@@ -2,7 +2,7 @@ namespace MESManager.Application.DTOs;
 
 /// <summary>
 /// DTO per rappresentare un singolo entry (offset + valore) di un DB PLC
-/// Usato per visualizzazione DB55 e DB52 nel popup DB Viewer
+/// Usato per visualizzazione DB55 e DB56 nel popup DB Viewer
 /// </summary>
 public class PlcDbEntryDto
 {

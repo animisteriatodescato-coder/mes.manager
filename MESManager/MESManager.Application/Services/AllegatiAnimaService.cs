@@ -18,22 +18,22 @@ namespace MESManager.Application.Services
 
         public AllegatiAnimaService(
             ILogger<AllegatiAnimaService> logger, 
-            IOptions<DatabaseConfiguration> dbConfig)
+            IOptions<DatabaseConfiguration> dbConfig,
+            IOptions<FileConfiguration> fileConfig)
         {
             _logger = logger;
-            _connectionString = dbConfig.Value.MESManagerDb;
             
-            // Percorso base degli allegati
-            _allegatiBasePath = @"C:\Dati\Documenti\AA SCHEDE PRODUZIONE\foto cel";
+            // Usa AllegatiDb se configurato, altrimenti fallback a MESManagerDb
+            // In DEV: AllegatiDb punta a prod (read-only) per dati reali
+            // In PROD: AllegatiDb non configurato, usa MESManagerDb locale
+            _connectionString = dbConfig.Value.AllegatiDb ?? dbConfig.Value.MESManagerDb;
             
-            // Mappature dei percorsi di rete
-            _pathMappings = new List<(string Source, string Target)>
-            {
-                (@"P:\Documenti", @"C:\Dati\Documenti"),
-                (@"P:\", @"C:\Dati\")
-            };
+            // Configurazione file centralizzata (Files)
+            _allegatiBasePath = FileConstants.GetAllegatiBasePath(fileConfig.Value.AllegatiBasePath);
+            _pathMappings = ParsePathMappings(fileConfig.Value.PathMappings);
             
-            _logger.LogInformation("AllegatiAnimaService initialized. AllegatiBasePath={Path}, PathMappings={Mappings}", 
+            _logger.LogInformation("AllegatiAnimaService initialized. ConnectionDb={ConnectionDb}, AllegatiBasePath={Path}, PathMappings={Mappings}", 
+                dbConfig.Value.AllegatiDb != null ? "AllegatiDb (remote)" : "MESManagerDb (local)",
                 _allegatiBasePath, string.Join("; ", _pathMappings.Select(m => $"{m.Source} -> {m.Target}")));
         }
 
@@ -66,17 +66,17 @@ namespace MESManager.Application.Services
                 using var conn = new SqlConnection(_connectionString);
                 await conn.OpenAsync();
 
-                // Cerca per IdArchivio o per CodiceArticolo nel path
+                // Cerca per IdArchivio o per CodiceArticolo
                 var query = @"
-                    SELECT Id, Archivio, IdArchivio, Allegato, DescrizioneAllegato, Priorita
-                    FROM [dbo].[Allegati]
+                    SELECT Id, Archivio, IdArchivio, PathFile as Allegato, Descrizione as DescrizioneAllegato, Priorita
+                    FROM [dbo].[AllegatiArticoli]
                     WHERE Archivio = 'ARTICO' 
-                      AND (IdArchivio = @IdArchivio OR Allegato LIKE @CodicePattern)
+                      AND (IdArchivio = @IdArchivio OR CodiceArticolo = @CodiceArticolo)
                     ORDER BY Priorita";
 
                 using var cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@IdArchivio", idArchivio ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@CodicePattern", $"%{codiceArticolo ?? "NOMATCH"}%");
+                cmd.Parameters.AddWithValue("@CodiceArticolo", codiceArticolo ?? (object)DBNull.Value);
 
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
@@ -362,6 +362,34 @@ namespace MESManager.Application.Services
             }
 
             return convertedPath;
+        }
+
+        private static List<(string Source, string Target)> ParsePathMappings(List<string>? mappings)
+        {
+            var result = new List<(string Source, string Target)>();
+
+            if (mappings != null)
+            {
+                foreach (var mapping in mappings)
+                {
+                    if (string.IsNullOrWhiteSpace(mapping) || !mapping.Contains("->"))
+                        continue;
+
+                    var parts = mapping.Split("->", 2, StringSplitOptions.TrimEntries);
+                    if (parts.Length == 2 && !string.IsNullOrWhiteSpace(parts[0]) && !string.IsNullOrWhiteSpace(parts[1]))
+                    {
+                        result.Add((parts[0], parts[1]));
+                    }
+                }
+            }
+
+            if (result.Count == 0)
+            {
+                result.Add((@"P:\Documenti", @"C:\Dati\Documenti"));
+                result.Add((@"P:\", @"C:\Dati\"));
+            }
+
+            return result;
         }
     }
 }

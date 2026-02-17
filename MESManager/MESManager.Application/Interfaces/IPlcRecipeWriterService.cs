@@ -3,25 +3,29 @@ using MESManager.Application.DTOs;
 namespace MESManager.Application.Interfaces;
 
 /// <summary>
-/// Servizio per scrittura ricette su DB52 PLC tramite Sharp7
+/// Servizio PLC con mapping operativo:
+/// - DB55 offset 0-99: lettura stati
+/// - DB55 offset 100+: scrittura ricette
+/// - DB56: lettura tempi di esecuzione
 /// </summary>
 public interface IPlcRecipeWriterService
 {
     /// <summary>
-    /// Scrive parametri ricetta su DB52 del PLC specificato
+    /// Scrive parametri ricetta in DB55 offset 100+ del PLC specificato
+    /// (nome metodo mantenuto per compatibilità)
     /// </summary>
-    Task<RecipeWriteResult> WriteRecipeToDb52Async(Guid macchinaId, RicettaArticoloDto ricetta, CancellationToken ct = default);
+    Task<RecipeWriteResult> WriteRecipeToDb56Async(Guid macchinaId, RicettaArticoloDto ricetta, CancellationToken ct = default);
     
     /// <summary>
-    /// Copia parametri da DB55 (corrente) a DB52 (prossima)
-    /// Usato da "Carica Ricetta da DB55" nel popup
+    /// Sincronizza area ricetta DB56 -> DB55 (offset 100+)
+    /// (nome metodo mantenuto per compatibilità)
     /// </summary>
-    Task<RecipeWriteResult> CopyDb55ToDb52Async(Guid macchinaId, CancellationToken ct = default);
+    Task<RecipeWriteResult> CopyDb55ToDb56Async(Guid macchinaId, CancellationToken ct = default);
     
     /// <summary>
-    /// Legge contenuto completo DB52 per visualizzazione
+    /// Legge contenuto completo DB56 (tempi/valori di esecuzione) per visualizzazione
     /// </summary>
-    Task<List<PlcDbEntryDto>> ReadDb52Async(Guid macchinaId, CancellationToken ct = default);
+    Task<List<PlcDbEntryDto>> ReadDb56Async(Guid macchinaId, CancellationToken ct = default);
     
     /// <summary>
     /// Legge contenuto completo DB55 per visualizzazione
@@ -32,4 +36,9 @@ public interface IPlcRecipeWriterService
     /// Verifica connessione PLC e restituisce status
     /// </summary>
     Task<bool> CheckPlcConnectionAsync(Guid macchinaId, CancellationToken ct = default);
+    
+    /// <summary>
+    /// Scansiona i DB disponibili su un PLC (da DB1 a maxDb)
+    /// </summary>
+    Task<List<PlcDbScanResultDto>> ScanAvailableDbsAsync(Guid macchinaId, int maxDb = 100, CancellationToken ct = default);
 }

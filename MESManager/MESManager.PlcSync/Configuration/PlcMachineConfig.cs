@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using MESManager.Domain.Constants;
 
 namespace MESManager.PlcSync.Configuration;
 
@@ -17,9 +18,9 @@ public class PlcMachineConfig
 
 public class PlcSettings
 {
-    public int Rack { get; set; } = 0;
-    public int Slot { get; set; } = 1;
-    public int DbNumber { get; set; } = 55;
+    public int Rack { get; set; } = PlcConstants.PLC_RACK;
+    public int Slot { get; set; } = PlcConstants.PLC_SLOT;
+    public int DbNumber { get; set; } = PlcConstants.PRODUCTION_DATABASE;
     public int DbStart { get; set; } = 0;
-    public int DbLength { get; set; } = 200;
+    public int DbLength { get; set; } = PlcConstants.DATABASE_BUFFER_SIZE;
 }

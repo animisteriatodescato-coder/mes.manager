@@ -41,7 +41,7 @@
                     ▼
 ┌─────────────────────────────────────────────────────────────┐
 │           PLC Siemens S7-300/400/1200/1500                   │
-│  IP: 192.168.17.xx    Rack: 0    Slot: 1    DB: 55           │
+│  IP: 192.168.17.xx    Rack: 0    Slot: 1    DB: 55 + DB: 56   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -485,7 +485,7 @@ private Dictionary<Guid, S7Client> _plcPool = new();
 ## 📡 Sistema Trasmissione Ricette PLC (v1.34.0)
 
 > **Aggiunto**: 11 Febbraio 2026  
-> **Scopo**: Caricamento automatico/manuale ricette da DB a PLC DB52
+> **Scopo**: Caricamento automatico/manuale ricette su DB55 (offset 100+) e lettura esecuzione da DB56
 
 ### Architettura
 
@@ -522,17 +522,17 @@ private Dictionary<Guid, S7Client> _plcPool = new();
 │                 PLC WRITER (Sharp7)                       │
 ├──────────────────────────────────────────────────────────┤
 │  PlcRecipeWriterService                                   │
-│  ├─→ WriteRecipeToDb52Async() - Scrive ricetta           │
+│  ├─→ WriteRecipeToDb56Async() - Scrive ricetta su DB55   │
 │  ├─→ ReadDb55Async() - Legge stato macchina              │
-│  ├─→ ReadDb52Async() - Legge ricetta corrente            │
-│  └─→ CopyDb55ToDb52Async() - Copia lettura → scrittura   │
+│  ├─→ ReadDb56Async() - Legge esecuzione corrente         │
+│  └─→ CopyDb55ToDb56Async() - Sync DB56 → DB55(100+)      │
 └──────────────────────────────────────────────────────────┘
                         │
                         ▼
 ┌──────────────────────────────────────────────────────────┐
 │           PLC Siemens - Data Blocks                       │
 ├──────────────────────────────────────────────────────────┤
-│  DB55 (READ ONLY - Status)    │  DB52 (WRITE - Recipe)    │
+│  DB55 (0-99 READ, 100+ WRITE) │  DB56 (READ - Esecuzione) │
 │  ├─ CicliFatti                │  ├─ CodiceArticolo       │
 │  ├─ Stato                     │  ├─ Parametri[]          │
 │  ├─ Barcode                   │  ├─ Timestamp            │
@@ -540,15 +540,13 @@ private Dictionary<Guid, S7Client> _plcPool = new();
 └──────────────────────────────────────────────────────────┘
 ```
 
-### Data Layout DB52 (Ricetta)
+### Data Layout Reale
 
 | Offset | Tipo | Campo | Note |
 |--------|------|-------|------|
-| 0 | STRING[20] | CodiceArticolo | Codice identificativo |
-| 20 | INT | NumeroParametri | Conteggio parametri |
-| 22+ | BYTE[4] | Parametri[N] | Valori singoli parametri |
-| 500 | LINT | Timestamp | Unix timestamp scrittura |
-| 508 | INT | Status | 0=vuoto, 1=caricato, 2=errore |
+| 0-99 | INT/FLAG | Stato produzione (DB55) | SOLO lettura |
+| 100+ | INT | Parametri ricetta (DB55) | Scrivibili da MES |
+| 100+ | INT | Tempi/valori esecuzione (DB56) | Lettura runtime |
 
 ### API Endpoints
 
@@ -557,13 +555,13 @@ private Dictionary<Guid, S7Client> _plcPool = new();
 | POST | `/api/plc/load-next-recipe-manual/{macchinaId}` | Carica prossima ricetta da Gantt |
 | POST | `/api/plc/load-recipe-by-article` | Carica ricetta per codice articolo |
 | GET | `/api/plc/db55/{macchinaId}` | Legge DB55 (stato macchina) |
-| GET | `/api/plc/db52/{macchinaId}` | Legge DB52 (ricetta corrente) |
-| POST | `/api/plc/copy-db55-to-db52/{macchinaId}` | Copia DB55 → DB52 |
+| GET | `/api/plc/db56/{macchinaId}` | Legge DB56 (esecuzione corrente) |
+| POST | `/api/plc/copy-db56-to-db55/{macchinaId}` | Sincronizza DB56 → DB55 (offset 100+) |
 
 ### Comportamento PLC Offline
 
 ```
-PLC Online:  Scrittura immediata DB52 ✅
+PLC Online:  Scrittura immediata DB55(offset 100+) ✅
 PLC Offline: BLOCCA scrittura (no queue) ⛔
              Pause monitoring eventi
 PLC Reconnect: Auto-retry ultima ricetta fallita 🔄
@@ -571,7 +569,7 @@ PLC Reconnect: Auto-retry ultima ricetta fallita 🔄
 
 ### UI Dashboard Integration
 
-- **Doppio-click** su card macchina → Popup viewer DB55/DB52
+- **Doppio-click** su card macchina → Popup viewer DB55/DB56
 - **Pulsante "Prossima"** → Carica manualmente prossima ricetta
 - **Pulsante "DB"** → Apre popup alternativo
 

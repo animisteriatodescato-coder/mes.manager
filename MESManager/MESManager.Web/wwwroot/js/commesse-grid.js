@@ -13,6 +13,39 @@ window.commesseGrid = (function() {
             filter: true, 
             width: 150 
         },
+        // RICETTA - Badge con numero parametri
+        {
+            field: 'HasRicetta',
+            headerName: 'Ricetta',
+            sortable: true,
+            filter: true,
+            width: 100,
+            cellRenderer: params => {
+                if (!params.data) return '';
+                
+                const hasRicetta = params.data.HasRicetta;
+                const numParametri = params.data.NumeroParametri || 0;
+                const dataModifica = params.data.RicettaUltimaModifica;
+                
+                if (hasRicetta && numParametri > 0) {
+                    const tooltip = dataModifica 
+                        ? `${numParametri} parametri - Agg: ${new Date(dataModifica).toLocaleDateString('it-IT')}`
+                        : `${numParametri} parametri`;
+                    
+                    return `<div style="display: flex; align-items: center; height: 100%; cursor: pointer;" 
+                                 onclick="window.commesseGrid.openRicetta('${params.data.ArticoloCodice}')" 
+                                 title="${tooltip}">
+                        <span style="background-color: #4caf50; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                            ✓ ${numParametri}
+                        </span>
+                    </div>`;
+                } else {
+                    return `<div style="display: flex; align-items: center; height: 100%;" title="Nessuna ricetta">
+                        <span style="color: #999; font-size: 11px;">—</span>
+                    </div>`;
+                }
+            }
+        },
         { 
             field: 'Description', 
             headerName: 'Descrizione', 
@@ -203,6 +236,22 @@ window.commesseGrid = (function() {
         };
     }
 
+    function openRicetta(codiceArticolo) {
+        if (!codiceArticolo) {
+            console.warn('[commesseGrid] openRicetta chiamato senza codiceArticolo');
+            return;
+        }
+        
+        console.log('[commesseGrid] Apertura ricetta per:', codiceArticolo);
+        
+        // Invoca il metodo Blazor lato server
+        if (window.commesseGridDotNetRef) {
+            window.commesseGridDotNetRef.invokeMethodAsync('ViewRicetta', codiceArticolo);
+        } else {
+            console.error('[commesseGrid] DotNetRef non registrato');
+        }
+    }
+
     return {
         init: init,
         setQuickFilter: setQuickFilter,
@@ -212,6 +261,7 @@ window.commesseGrid = (function() {
         resetState: resetState,
         setUiVars: setUiVars,
         exportCsv: exportCsv,
-        getStats: getStats
+        getStats: getStats,
+        openRicetta: openRicetta
     };
 })();

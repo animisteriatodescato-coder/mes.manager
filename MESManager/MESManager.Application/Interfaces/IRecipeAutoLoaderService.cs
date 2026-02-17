@@ -3,7 +3,7 @@ using MESManager.Application.DTOs;
 namespace MESManager.Application.Interfaces;
 
 /// <summary>
-/// Servizio event-driven per auto-caricamento ricette su DB52
+/// Servizio event-driven per auto-caricamento ricette su DB55 (offset 100+)
 /// Trigger: cambio commessa rilevato su DB55
 /// </summary>
 public interface IRecipeAutoLoaderService

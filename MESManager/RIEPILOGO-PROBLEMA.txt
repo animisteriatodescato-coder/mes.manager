@@ -1,0 +1,144 @@
+=============================================================================
+RIEPILOGO PROBLEMI CATALOGHI - 16 Febbraio 2026
+=============================================================================
+
+PROBLEMI SEGNALATI
+-----------------
+1. ❌ Anime: 207 invece di ~800 (dati persi)
+2. ❌ Macchine scollegate dalle dashboard (6 visibili, dovrebbero essere tutte)
+3. ✅ Operatori: RISOLTO (0 → 10 operatori seed)
+4. ✅ Macchine duplicate: RISOLTO (16 → 8 macchine uniche)
+
+DIAGNOSI ESEGUITA
+-----------------
+
+1. MACCHINE (8 totali):
+   - M002, M003, M005-M010 (nota: manca M004, probabilmente mai esistita)
+   - TUTTE hanno IndirizzoPLC configurato (subnet 192.168.17.x)
+   - TUTTE hanno AttivaInGantt = true
+   
+2. ANIME:
+   - Locale (DEV): 207 record
+   - Atteso da produzione: ~800 record
+   - ⚠️ Serve re-import da server di produzione
+   
+3. DASHBOARD PROBLEM (IPOTESI):
+   - Le dashboard filtrano con: WHERE !string.IsNullOrWhiteSpace(Macchina.IndirizzoPLC)
+   - Le dashboard leggono da PLCRealtime (non da Macchine)
+   - ⚠️ IPOTESI: Tabella PLCRealtime vuota o incompleta
+   - ⚠️ IPOTESI: DataUltimoAggiornamento troppo vecchio (timeout 2 minuti)
+   
+4. CAUSA PROBABILE:
+   - Ambiente DEV non ha PlcSync service attivo
+   - PLCRealtime non viene popolato automaticamente
+   - In PROD funziona perché PlcSync service è attivo e aggiorna PLCRealtime
+
+SOLUZIONI PROPOSTE
+------------------
+
+SOLUZIONE A - Re-import completo da produzione (CONSIGLIATO):
+   1. Backup database locale
+   2. Re-import Anime da 192.168.1.230\SQLEXPRESS01
+   3. Re-import PLCRealtime da produzione (se esistono record)
+   4. Verifica e test
+   
+SOLUZIONE B - Seed dati test locale (se server non accessibile):
+   1. Inserire 600-800 Anime di test nel database DEV
+   2. Inserire record PLCRealtime di test per le 8 macchine
+   3. Simulare dati realistici per sviluppo
+
+AZIONI IMMEDIATE RICHIESTE
+---------------------------
+
+PER PROCEDERE, HO BISOGNO DI CONFERMA:
+
+1. ✅ Server produzione accessibile da DEV?
+   - Server: 192.168.1.230\SQLEXPRESS01
+   - Database: MESManager_Prod
+   - [  ] SÌ - posso connettermi
+   - [  ] NO - uso dati di test
+
+2. ✅ Re-import Anime: quale fonte?
+   - [  ] Da server produzione (MESManager_Prod.Anime)
+   - [  ] Da backup locale (se esiste)
+   - [  ] Genera 800 Anime di test casuali
+
+3. ✅ PLCRealtime: come popolare?
+   - [  ] Re-import da produzione
+   - [  ] Crea 8 record di test (dati fittizi per DEV)
+   - [  ] Avvia PlcSync service in DEV (se PLC accessibili)
+
+4. ✅ Problema macchine dashboard:
+   - User dice: "vedo 6 macchine attive"
+   - Database ha: 8 macchine con IP configurato
+   - [  ] Verificare numero esatto macchine attese
+   - [  ] Potrebbe essere dashboard che filtra qualcos'altro?
+
+FILE CREATI IN QUESTA SESSIONE
+-------------------------------
+
+1. scripts/backup-database-pre-fix.ps1 - Backup automation
+2. scripts/fix-cataloghi-complete.sql - SQL duplicate fix
+3. scripts/run-fix-cataloghi.ps1 - PowerShell executor
+4. scripts/diagnose-db.ps1 - Database diagnostics
+5. scripts/check-macchine-ip.ps1 - IP address checker  
+6. scripts/fix-macchine-ip-dashboard.sql - IP restore script
+7. scripts/run-fix-macchine-ip.ps1 - IP fix executor
+8. scripts/import-from-production.ps1 - Import automation (DRAFT)
+9. scripts/diagnose-dashboard-problema.ps1 - Dashboard diagnostics
+10. scripts/fix-ip-output.txt - Log output (8 macchine con IP confermati)
+11. MESManager.Web/Controllers/DiagnosticsController.cs - Diagnostic endpoints
+12. docs2/storico/FIX-CATALOGHI-DUPLICATI-20260216.md - Complete documentation
+13.RIEPILOGO-PROBLEMA.txt - Questo file
+
+PROX IMI PASSI (in attesa di conferme utente)
+----------------------------------------------
+
+Appena ricevute le risposte alle 4 domande sopra:
+
+1. Eseguire backup completo database DEV
+2. Re-import Anime (metodo scelto)
+3. Popolare PLCRealtime (metodo scelto)
+4. Rebuild + server start + test
+5. Aggiornare BIBBIA con:
+   - "NON cancellare mai macchine con IndirizzoPLC configurato"
+   - "PLCRealtime DEVE avere record per ogni macchina con IP"
+   - "In DEV, se PlcSync non attivo, usare seed PLCRealtime di test"
+6. Commit e documentazione finale
+
+LEZIONI APPRESE (da aggiungere alla BIBBIA)
+--------------------------------------------
+
+❌ ERRORE RIPETUTO:
+   - "per l'ennesima volta sono scollegate dalle dashboard"
+   - Indica che ho già causato questo problema in passato
+   
+📚 REGOLA DA DOCUMENTARE:
+   - Dashboard Produzione/PLC Realtime mostrano SOLO macchine da PLCRealtime
+   - PLCRealtime viene popolato da PlcSync service (in PROD)
+   - In DEV, se PlcSync non attivo, serve SEED PLCRealtime manuale
+   - Non modificare/eliminare Macchine senza verificare impatto su PLCRealtime
+   
+📚 FILTRI DASHBOARD (da CHANGELOG docs2/storico):
+   1. PLCRealtime.Macchina.IndirizzoPLC NOT NULL
+   2. DataUltimoAggiornamento < 2 minuti (altrimenti "NON CONNESSA")
+   3. Record DEVE esistere in PLCRealtime (JOIN)
+
+NOTE TECNICHE
+-------------
+
+PlcAppService.GetRealtimeDataAsync():
+```csharp
+var query = await _context.PLCRealtime
+    .Include(p => p.Macchina)
+    .Include(p => p.Operatore)
+    .Where(p => !string.IsNullOrWhiteSpace(p.Macchina.IndirizzoPLC))  // <-- FILTRO
+    .OrderBy(p => p.Macchina.Codice)
+    .ToListAsync();
+```
+
+Quindi per ogni macchina M002-M010, DEVE esistere:
+- Record in Macchine con IndirizzoPLC configurato ✅ (VERIFICATO)
+- Record in PLCRealtime con MacchinaId corrispondente  ❌ (DA VERIFICARE)
+
+=============================================================================

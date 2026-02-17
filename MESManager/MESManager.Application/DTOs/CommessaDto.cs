@@ -97,4 +97,6 @@ public class CommessaDto
     
     // Flag per verificare se l'articolo ha una ricetta configurata
     public bool HasRicetta { get; set; }
+    public int NumeroParametri { get; set; }
+    public DateTime? RicettaUltimaModifica { get; set; }
 }

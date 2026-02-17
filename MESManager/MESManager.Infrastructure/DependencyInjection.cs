@@ -30,6 +30,7 @@ public static class DependencyInjection
 
         // Repositories
         services.AddScoped<IAnimeRepository, AnimeRepository>();
+        services.AddScoped<IRicettaRepository, RicettaRepository>();
 
         // App Services
         services.AddScoped<IArticoloAppService, ArticoloAppService>(); // ILogger<T> is injected by default in .NET DI

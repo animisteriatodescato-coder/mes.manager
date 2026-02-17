@@ -1,0 +1,5 @@
+FK su PLCRealtime:
+FK_PLCRealtime_Macchine_MacchinaId su MacchinaId
+FK_PLCRealtime_Operatori_OperatoreId su OperatoreId
+PLCRealtime count: 0
+Macchine con IP: 8

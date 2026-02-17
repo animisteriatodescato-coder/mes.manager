@@ -1,7 +1,4 @@
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using MESManager.Application.Configuration;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
 
@@ -9,19 +6,19 @@ namespace MESManager.Application.Services;
 
 /// <summary>
 /// Servizio per leggere le ricette articoli dal database MESManager
-/// Legge dalla tabella [dbo].[ArticoliRicetta]
+/// Usa IRicettaRepository per accedere alle entità Ricetta e ParametroRicetta
 /// </summary>
 public class RicettaGanttService : IRicettaGanttService
 {
-    private readonly string _connectionString;
+    private readonly IRicettaRepository _ricettaRepo;
     private readonly ILogger<RicettaGanttService> _logger;
 
     public RicettaGanttService(
-        ILogger<RicettaGanttService> logger,
-        IOptions<DatabaseConfiguration> dbConfig)
+        IRicettaRepository ricettaRepo,
+        ILogger<RicettaGanttService> logger)
     {
+        _ricettaRepo = ricettaRepo;
         _logger = logger;
-        _connectionString = dbConfig.Value.MESManagerDb;
     }
 
     /// <summary>
@@ -36,59 +33,31 @@ public class RicettaGanttService : IRicettaGanttService
 
         try
         {
-            var parametri = new List<ParametroRicettaArticoloDto>();
+            var articolo = await _ricettaRepo.GetArticoloConRicettaByCodeAsync(codiceArticolo);
 
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-
-            var query = @"
-                SELECT 
-                    [IdRigaRicetta],
-                    [CodiceArticolo],
-                    [CodiceParametro],
-                    [DescrizioneParametro],
-                    [Indirizzo],
-                    [Area],
-                    [Tipo],
-                    [UM],
-                    [Valore]
-                FROM [dbo].[ArticoliRicetta]
-                WHERE [CodiceArticolo] = @CodiceArticolo
-                ORDER BY [CodiceParametro]";
-
-            await using var cmd = new SqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@CodiceArticolo", codiceArticolo);
-
-            await using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            if (articolo?.Ricetta == null)
             {
-                parametri.Add(new ParametroRicettaArticoloDto
-                {
-                    IdRigaRicetta = reader.IsDBNull(0) ? 0 : Convert.ToInt32(reader.GetValue(0)),
-                    CodiceArticolo = reader.IsDBNull(1) ? string.Empty : reader.GetValue(1)?.ToString() ?? string.Empty,
-                    CodiceParametro = reader.IsDBNull(2) ? 0 : Convert.ToInt32(reader.GetValue(2)),
-                    DescrizioneParametro = reader.IsDBNull(3) ? string.Empty : reader.GetValue(3)?.ToString() ?? string.Empty,
-                    Indirizzo = reader.IsDBNull(4) ? 0 : Convert.ToInt32(reader.GetValue(4)),
-                    Area = reader.IsDBNull(5) ? string.Empty : reader.GetValue(5)?.ToString() ?? string.Empty,
-                    Tipo = reader.IsDBNull(6) ? string.Empty : reader.GetValue(6)?.ToString() ?? string.Empty,
-                    UM = reader.IsDBNull(7) ? null : reader.GetValue(7)?.ToString(),
-                    Valore = reader.IsDBNull(8) ? 0 : Convert.ToInt32(reader.GetValue(8))
-                });
-            }
-
-            if (parametri.Count == 0)
-            {
-                _logger.LogWarning("Nessun parametro trovato per articolo {CodiceArticolo}", codiceArticolo);
+                _logger.LogWarning("Nessuna ricetta trovata per articolo {CodiceArticolo}", codiceArticolo);
                 return null;
             }
 
-            // Cerca descrizione articolo dalla tabella tbArticoli
-            var descrizioneArticolo = await GetDescrizioneArticoloAsync(conn, codiceArticolo);
+            var parametri = articolo.Ricetta.Parametri.Select(p => new ParametroRicettaArticoloDto
+            {
+                IdRigaRicetta = 0,
+                CodiceArticolo = codiceArticolo,
+                CodiceParametro = 0,
+                DescrizioneParametro = p.NomeParametro,
+                Indirizzo = 0,
+                Area = string.Empty,
+                Tipo = string.Empty,
+                UM = p.UnitaMisura,
+                Valore = int.TryParse(p.Valore, out var val) ? val : 0
+            }).ToList();
 
             return new RicettaArticoloDto
             {
                 CodiceArticolo = codiceArticolo,
-                DescrizioneArticolo = descrizioneArticolo,
+                DescrizioneArticolo = articolo.Descrizione,
                 Parametri = parametri
             };
         }
@@ -110,40 +79,27 @@ public class RicettaGanttService : IRicettaGanttService
 
         try
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            var articoli = await _ricettaRepo.GetArticoliConRicettaAsync(searchTerm, maxResults);
 
-            // Prima ottieni la lista dei codici articolo distinti che hanno ricette
-            var queryDistinct = @"
-                SELECT DISTINCT TOP (@MaxResults) [CodiceArticolo]
-                FROM [dbo].[ArticoliRicetta]
-                WHERE @SearchTerm IS NULL OR @SearchTerm = '' OR [CodiceArticolo] LIKE @SearchPattern
-                ORDER BY [CodiceArticolo]";
-
-            var codiciArticolo = new List<string>();
-
-            await using (var cmdDistinct = new SqlCommand(queryDistinct, conn))
+            foreach (var articolo in articoli)
             {
-                cmdDistinct.Parameters.AddWithValue("@MaxResults", maxResults);
-                cmdDistinct.Parameters.AddWithValue("@SearchTerm", (object?)searchTerm ?? DBNull.Value);
-                cmdDistinct.Parameters.AddWithValue("@SearchPattern", $"%{searchTerm ?? ""}%");
-
-                await using var reader = await cmdDistinct.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
+                if (articolo.Ricetta != null)
                 {
-                    if (!reader.IsDBNull(0))
-                        codiciArticolo.Add(reader.GetString(0));
-                }
-            }
+                    var ricettaDto = new RicettaArticoloDto
+                    {
+                        CodiceArticolo = articolo.Codice,
+                        DescrizioneArticolo = articolo.Descrizione,
+                        Parametri = articolo.Ricetta.Parametri.Select(p => new ParametroRicettaArticoloDto
+                        {
+                            CodiceArticolo = articolo.Codice,
+                            DescrizioneParametro = p.NomeParametro,
+                            UM = p.UnitaMisura,
+                            Valore = int.TryParse(p.Valore, out var val) ? val : 0
+                        }).ToList()
+                    };
 
-            // Per ogni codice articolo, carica i parametri
-            foreach (var codice in codiciArticolo)
-            {
-                var ricetta = await GetRicettaByCodiceArticoloAsync(codice);
-                if (ricetta != null)
-                {
-                    response.Ricette.Add(ricetta);
-                    response.TotaleParametri += ricetta.TotaleParametri;
+                    response.Ricette.Add(ricettaDto);
+                    response.TotaleParametri += ricettaDto.TotaleParametri;
                 }
             }
 
@@ -166,36 +122,19 @@ public class RicettaGanttService : IRicettaGanttService
     /// </summary>
     public async Task<List<string>> GetCodiciArticoloConRicetteAsync()
     {
-        var result = new List<string>();
-
         try
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            var articoli = await _ricettaRepo.GetArticoliConRicettaAsync(null, int.MaxValue);
+            var codici = articoli.Select(a => a.Codice).ToList();
 
-            var query = @"
-                SELECT DISTINCT [CodiceArticolo]
-                FROM [dbo].[ArticoliRicetta]
-                ORDER BY [CodiceArticolo]";
-
-            await using var cmd = new SqlCommand(query, conn);
-            await using var reader = await cmd.ExecuteReaderAsync();
-
-            while (await reader.ReadAsync())
-            {
-                if (!reader.IsDBNull(0))
-                    result.Add(reader.GetString(0));
-            }
-
-            _logger.LogInformation("GetCodiciArticoloConRicetteAsync: trovati {Count} articoli con ricette", result.Count);
+            _logger.LogInformation("GetCodiciArticoloConRicetteAsync: trovati {Count} articoli con ricette", codici.Count);
+            return codici;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Errore durante lettura codici articolo");
             throw;
         }
-
-        return result;
     }
 
     /// <summary>
@@ -205,40 +144,12 @@ public class RicettaGanttService : IRicettaGanttService
     {
         try
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-
-            var query = "SELECT COUNT(DISTINCT [CodiceArticolo]) FROM [dbo].[ArticoliRicetta]";
-            await using var cmd = new SqlCommand(query, conn);
-            var result = await cmd.ExecuteScalarAsync();
-            return Convert.ToInt32(result);
+            return await _ricettaRepo.CountArticoliConRicettaAsync();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Errore durante conteggio ricette");
             return 0;
-        }
-    }
-
-    private async Task<string?> GetDescrizioneArticoloAsync(SqlConnection conn, string codiceArticolo)
-    {
-        try
-        {
-            var query = @"
-                SELECT [DescrizioneArticolo]
-                FROM [dbo].[tbArticoliGantt]
-                WHERE [CodiceArticolo] = @CodiceArticolo";
-
-            await using var cmd = new SqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@CodiceArticolo", codiceArticolo);
-
-            var result = await cmd.ExecuteScalarAsync();
-            return result?.ToString();
-        }
-        catch
-        {
-            // Se fallisce, ritorna null silenziosamente
-            return null;
         }
     }
     
@@ -247,40 +158,23 @@ public class RicettaGanttService : IRicettaGanttService
     /// </summary>
     public async Task<List<ArticoloConRicettaDto>> GetArticoliConRicettaAsync()
     {
-        var articoli = new List<ArticoloConRicettaDto>();
-        
         try
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            var articoli = await _ricettaRepo.GetArticoliConRicettaAsync(null, int.MaxValue);
             
-            const string query = @"
-                SELECT 
-                    [CodiceArticolo],
-                    COUNT(*) as NumeroParametri
-                FROM [dbo].[ArticoliRicetta]
-                GROUP BY [CodiceArticolo]
-                ORDER BY [CodiceArticolo]";
-            
-            await using var cmd = new SqlCommand(query, conn);
-            await using var reader = await cmd.ExecuteReaderAsync();
-            
-            while (await reader.ReadAsync())
+            var result = articoli.Select(a => new ArticoloConRicettaDto
             {
-                articoli.Add(new ArticoloConRicettaDto
-                {
-                    CodiceArticolo = reader.GetString(0),
-                    NumeroParametri = reader.GetInt32(1)
-                });
-            }
+                CodiceArticolo = a.Codice,
+                NumeroParametri = a.Ricetta?.Parametri.Count ?? 0
+            }).ToList();
             
-            _logger.LogInformation("GetArticoliConRicettaAsync: trovati {Count} articoli", articoli.Count);
+            _logger.LogInformation("GetArticoliConRicettaAsync: trovati {Count} articoli", result.Count);
+            return result;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Errore durante lettura articoli con ricetta");
+            return new List<ArticoloConRicettaDto>();
         }
-        
-        return articoli;
     }
 }

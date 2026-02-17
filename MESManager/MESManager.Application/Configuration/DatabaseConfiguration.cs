@@ -22,6 +22,13 @@ namespace MESManager.Application.Configuration
         /// Connection string per il database Gantt (legacy)
         /// </summary>
         public string GanttDb { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Connection string per il database Allegati (può puntare a database diverso in dev/prod)
+        /// In DEV: può puntare a produzione per dati reali (read-only)
+        /// In PROD: usa MESManagerDb (locale)
+        /// </summary>
+        public string? AllegatiDb { get; set; }
     }
 
     /// <summary>

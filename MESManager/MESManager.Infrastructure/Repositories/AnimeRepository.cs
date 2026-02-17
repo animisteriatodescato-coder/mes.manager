@@ -67,5 +67,33 @@ namespace MESManager.Infrastructure.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<Dictionary<string, RicettaInfo>> GetRicetteInfoByCodiceArticoloAsync(List<string> codiciArticolo)
+        {
+            if (!codiciArticolo.Any())
+                return new Dictionary<string, RicettaInfo>();
+            
+            var result = await _context.Articoli
+                .Where(a => codiciArticolo.Contains(a.Codice))
+                .Select(a => new
+                {
+                    a.Codice,
+                    HasRicetta = a.Ricetta != null,
+                    NumeroParametri = a.Ricetta != null ? a.Ricetta.Parametri.Count : 0,
+                    UltimaModifica = a.Ricetta != null ? a.UltimaModifica : (DateTime?)null
+                })
+                .AsNoTracking()
+                .ToListAsync();
+            
+            return result
+                .Where(x => x.HasRicetta)
+                .ToDictionary(
+                    x => x.Codice,
+                    x => new RicettaInfo
+                    {
+                        NumeroParametri = x.NumeroParametri,
+                        UltimaModifica = x.UltimaModifica
+                    });
+        }
     }
 }

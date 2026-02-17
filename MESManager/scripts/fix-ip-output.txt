@@ -1,0 +1,25 @@
+Connected to: MESManager_Dev
+
+PRE-FIX:
+M002 - Macchina 02 | IP: 192.168.17.26
+M003 - Macchina 03 | IP: 192.168.17.24
+M005 - Macchina 05 | IP: 192.168.17.27
+M006 - Macchina 06 | IP: 192.168.17.25
+M007 - Macchina 07 | IP: 192.168.17.23
+M008 - Macchina 08 | IP: 192.168.17.21
+M009 - Macchina 09 | IP: 192.168.17.29
+M010 - Macchina 10 | IP: 192.168.17.22
+
+Macchine aggiornate: 0
+
+POST-FIX:
+M002 - Macchina 02 | IP: 192.168.17.26
+M003 - Macchina 03 | IP: 192.168.17.24
+M005 - Macchina 05 | IP: 192.168.17.27
+M006 - Macchina 06 | IP: 192.168.17.25
+M007 - Macchina 07 | IP: 192.168.17.23
+M008 - Macchina 08 | IP: 192.168.17.21
+M009 - Macchina 09 | IP: 192.168.17.29
+M010 - Macchina 10 | IP: 192.168.17.22
+
+Macchine con IP (visibili dashboard): 8

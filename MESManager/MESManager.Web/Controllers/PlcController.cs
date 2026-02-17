@@ -289,7 +289,7 @@ public class PlcController : ControllerBase
     // ===== RECIPE TRANSMISSION ENDPOINTS (v1.33.0) =====
     
     /// <summary>
-    /// Carica manualmente la prossima ricetta dal Gantt su DB52
+    /// Carica manualmente la prossima ricetta dal Gantt su DB55 (offset 100+)
     /// </summary>
     [HttpPost("load-next-recipe-manual/{macchinaId}")]
     public async Task<ActionResult<RecipeWriteResult>> LoadNextRecipeManual(Guid macchinaId)
@@ -314,7 +314,7 @@ public class PlcController : ControllerBase
     }
     
     /// <summary>
-    /// Carica ricetta specifica per codice articolo su DB52
+    /// Carica ricetta specifica per codice articolo su DB55 (offset 100+)
     /// </summary>
     [HttpPost("load-recipe-by-article")]
     public async Task<ActionResult<RecipeWriteResult>> LoadRecipeByArticle([FromBody] LoadRecipeRequest request)
@@ -332,7 +332,7 @@ public class PlcController : ControllerBase
                 });
             }
             
-            var result = await _recipeWriter.WriteRecipeToDb52Async(
+            var result = await _recipeWriter.WriteRecipeToDb56Async(
                 request.MacchinaId, 
                 ricetta, 
                 HttpContext.RequestAborted);
@@ -367,14 +367,14 @@ public class PlcController : ControllerBase
     }
     
     /// <summary>
-    /// Legge contenuto DB52 (ricetta/scrittura PLC)
+    /// Legge contenuto DB56 (tempi/valori di esecuzione PLC)
     /// </summary>
-    [HttpGet("db52/{macchinaId}")]
-    public async Task<ActionResult<List<PlcDbEntryDto>>> ReadDb52(Guid macchinaId)
+    [HttpGet("db56/{macchinaId}")]
+    public async Task<ActionResult<List<PlcDbEntryDto>>> ReadDb56(Guid macchinaId)
     {
         try
         {
-            var entries = await _recipeWriter.ReadDb52Async(macchinaId, HttpContext.RequestAborted);
+            var entries = await _recipeWriter.ReadDb56Async(macchinaId, HttpContext.RequestAborted);
             return Ok(entries);
         }
         catch (Exception ex)
@@ -384,23 +384,41 @@ public class PlcController : ControllerBase
     }
     
     /// <summary>
-    /// Copia contenuto DB55 → DB52 (usa ricetta corrente)
+    /// Sincronizza contenuto DB56 (esecuzione) → DB55 (area scrivibile offset 100+)
     /// </summary>
-    [HttpPost("copy-db55-to-db52/{macchinaId}")]
-    public async Task<ActionResult<RecipeWriteResult>> CopyDb55ToDb52(Guid macchinaId)
+    [HttpPost("copy-db56-to-db55/{macchinaId}")]
+    [HttpPost("copy-db55-to-db56/{macchinaId}")]
+    public async Task<ActionResult<RecipeWriteResult>> CopyDb55ToDb56(Guid macchinaId)
     {
         try
         {
-            var result = await _recipeWriter.CopyDb55ToDb52Async(macchinaId, HttpContext.RequestAborted);
+            var result = await _recipeWriter.CopyDb55ToDb56Async(macchinaId, HttpContext.RequestAborted);
             return result.Success ? Ok(result) : BadRequest(result);
         }
         catch (Exception ex)
         {
             return StatusCode(500, new RecipeWriteResult 
-            { 
+            {
                 Success = false, 
                 ErrorMessage = ex.Message 
             });
+        }
+    }
+    
+    /// <summary>
+    /// Scansiona tutti i DB disponibili su un PLC (DB1..DB100)
+    /// </summary>
+    [HttpGet("scan-db/{macchinaId}")]
+    public async Task<ActionResult<List<PlcDbScanResultDto>>> ScanAvailableDbs(Guid macchinaId, [FromQuery] int maxDb = 100)
+    {
+        try
+        {
+            var results = await _recipeWriter.ScanAvailableDbsAsync(macchinaId, maxDb, HttpContext.RequestAborted);
+            return Ok(results);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
         }
     }
     

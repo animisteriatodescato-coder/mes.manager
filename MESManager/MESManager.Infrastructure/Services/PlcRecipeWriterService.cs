@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
+using MESManager.Domain.Constants;
 using MESManager.Infrastructure.Data;
 using Sharp7;
 using System.Text;
@@ -9,28 +11,36 @@ using System.Text;
 namespace MESManager.Infrastructure.Services;
 
 /// <summary>
-/// Servizio per scrittura ricette su DB52 PLC tramite Sharp7
+/// Servizio PLC con mapping reale:
+/// - DB55 offset 0-99: sola lettura stati
+/// - DB55 offset 100+: scrittura ricette
+/// - DB56: lettura tempi/valori di esecuzione
 /// Responsabilità: connessione PLC, validazione, scrittura parametri, lettura DB per viewer
 /// </summary>
 public class PlcRecipeWriterService : IPlcRecipeWriterService
 {
     private readonly ILogger<PlcRecipeWriterService> _logger;
     private readonly MesManagerDbContext _context;
+    private readonly IHostEnvironment _environment;
     
-    // Configurazione DB offsets (allineato con PlcSync)
-    private const int DB52_NUMBER = 52;
-    private const int DB55_NUMBER = 55;
-    private const int DB_SIZE = 200; // byte - allineato con PlcSync DbLength
+    // Configurazione DB offsets - CENTRALIZZATI in PlcConstants.cs
+    // Modificare SOLO in PlcConstants.cs!
+    private const int DB56_NUMBER = PlcConstants.EXECUTION_DATABASE;
+    private const int DB55_NUMBER = PlcConstants.PRODUCTION_DATABASE;
+    private const int DB_SIZE = PlcConstants.DATABASE_BUFFER_SIZE;
+    private const int RECIPE_START_OFFSET = PlcConstants.OFFSET_RECIPE_PARAMETERS_START;
     
     public PlcRecipeWriterService(
         ILogger<PlcRecipeWriterService> logger,
-        MesManagerDbContext context)
+        MesManagerDbContext context,
+        IHostEnvironment environment)
     {
         _logger = logger;
         _context = context;
+        _environment = environment;
     }
     
-    public async Task<RecipeWriteResult> WriteRecipeToDb52Async(
+    public async Task<RecipeWriteResult> WriteRecipeToDb56Async(
         Guid macchinaId, 
         RicettaArticoloDto ricetta, 
         CancellationToken ct = default)
@@ -44,7 +54,8 @@ public class PlcRecipeWriterService : IPlcRecipeWriterService
         
         try
         {
-            _logger.LogInformation("📡 [RECIPE-WRITE] Avvio scrittura DB52: Articolo {Codice} → Macchina {Id}", 
+            _logger.LogInformation("📡 [RECIPE-WRITE] Avvio scrittura ricetta su DB55(offset {Offset}+): Articolo {Codice} → Macchina {Id}",
+                RECIPE_START_OFFSET,
                 ricetta.CodiceArticolo, macchinaId);
             
             // 1. Carica configurazione macchina
@@ -74,44 +85,48 @@ public class PlcRecipeWriterService : IPlcRecipeWriterService
             
             _logger.LogInformation("✅ [RECIPE-WRITE] Connesso a PLC {Ip}", macchina.IndirizzoPLC);
             
-            // 3. Prepara buffer DB52
+            // 3. Legge DB55 corrente per aggiornare SOLO area scrivibile (offset 100+)
             byte[] buffer = new byte[DB_SIZE];
+            int readCurrent = plc.DBRead(DB55_NUMBER, 0, DB_SIZE, buffer);
+            if (readCurrent != 0)
+            {
+                result.ErrorMessage = $"Lettura DB55 fallita prima della scrittura ricetta: {plc.ErrorText(readCurrent)}";
+                _logger.LogError("❌ [RECIPE-WRITE] {Error}", result.ErrorMessage);
+                plc.Disconnect();
+                return result;
+            }
             
-            // 4. Scrive codice articolo (offset 0, STRING[20])
-            WriteStringAt(buffer, 0, ricetta.CodiceArticolo, 20);
-            
-            // 5. Scrive numero parametri (offset 20, INT)
-            S7.SetIntAt(buffer, 20, (short)ricetta.TotaleParametri);
-            
-            // 6. Scrive parametri (dinamico based on ArticoliRicetta)
+            // 4. Scrive parametri ricetta SOLO su area scrivibile DB55 (offset >=100)
             int parametriScritti = 0;
-            int offsetParametri = 22; // Inizio parametri
             
             foreach (var param in ricetta.Parametri.OrderBy(p => p.CodiceParametro))
             {
-                // Ogni parametro: Indirizzo (INT) + Valore (INT) = 4 byte
-                S7.SetIntAt(buffer, offsetParametri, (short)param.Indirizzo);
-                S7.SetIntAt(buffer, offsetParametri + 2, (short)param.Valore);
-                
-                offsetParametri += 4;
+                if (param.Indirizzo < RECIPE_START_OFFSET || param.Indirizzo + 1 >= DB_SIZE)
+                {
+                    continue;
+                }
+
+                S7.SetIntAt(buffer, param.Indirizzo, (short)param.Valore);
                 parametriScritti++;
-                
-                if (offsetParametri >= DB_SIZE - 10) break; // Safety check
+            }
+
+            if (parametriScritti == 0)
+            {
+                result.ErrorMessage = "Nessun parametro valido da scrivere in area DB55 offset 100+";
+                plc.Disconnect();
+                return result;
             }
             
-            // 7. Timestamp scrittura (offset 500, LONG - unix timestamp)
-            long unixTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            S7.SetLIntAt(buffer, 500, unixTimestamp);
-            
-            // 8. Status (offset 508, INT - 0=OK)
-            S7.SetIntAt(buffer, 508, 0);
-            
-            // 9. Scrittura DB52
-            int writeResult = plc.DBWrite(DB52_NUMBER, 0, DB_SIZE, buffer);
+            // 5. Scrive SOLO la sezione ricetta (100+) su DB55, preservando i campi read-only 0-99
+            var writableLength = DB_SIZE - RECIPE_START_OFFSET;
+            byte[] writableBuffer = new byte[writableLength];
+            Array.Copy(buffer, RECIPE_START_OFFSET, writableBuffer, 0, writableLength);
+
+            int writeResult = plc.DBWrite(DB55_NUMBER, RECIPE_START_OFFSET, writableLength, writableBuffer);
             
             if (writeResult != 0)
             {
-                result.ErrorMessage = $"Scrittura DB52 fallita: {plc.ErrorText(writeResult)}";
+                result.ErrorMessage = $"Scrittura ricetta su DB55 fallita: {plc.ErrorText(writeResult)}";
                 _logger.LogError("❌ [RECIPE-WRITE] {Error}", result.ErrorMessage);
                 plc.Disconnect();
                 return result;
@@ -121,23 +136,24 @@ public class PlcRecipeWriterService : IPlcRecipeWriterService
             plc.Disconnect();
             
             result.Success = true;
-            result.Message = $"Ricetta {ricetta.CodiceArticolo} scritta su DB52";
+            result.Message = $"Ricetta {ricetta.CodiceArticolo} scritta su DB55 (offset {RECIPE_START_OFFSET}+).";
             result.ParametersWritten = parametriScritti;
             
-            _logger.LogInformation("✅ [RECIPE-WRITE] Completato: {Parametri} parametri scritti in DB52", 
-                parametriScritti);
+            _logger.LogInformation("✅ [RECIPE-WRITE] Completato: {Parametri} parametri scritti in DB55(offset {Offset}+)", 
+                parametriScritti,
+                RECIPE_START_OFFSET);
             
             return result;
         }
         catch (Exception ex)
         {
             result.ErrorMessage = ex.Message;
-            _logger.LogError(ex, "❌ [RECIPE-WRITE] Eccezione durante scrittura DB52");
+            _logger.LogError(ex, "❌ [RECIPE-WRITE] Eccezione durante scrittura ricetta su DB55");
             return result;
         }
     }
     
-    public async Task<RecipeWriteResult> CopyDb55ToDb52Async(Guid macchinaId, CancellationToken ct = default)
+    public async Task<RecipeWriteResult> CopyDb55ToDb56Async(Guid macchinaId, CancellationToken ct = default)
     {
         var result = new RecipeWriteResult
         {
@@ -147,7 +163,7 @@ public class PlcRecipeWriterService : IPlcRecipeWriterService
         
         try
         {
-            _logger.LogInformation("📋 [COPY-DB] Copia parametri ricetta DB55 → DB52 per macchina {Id}", macchinaId);
+            _logger.LogInformation("📋 [COPY-DB] Sincronizzazione DB56(esecuzione) → DB55(offset {Offset}+) per macchina {Id}", RECIPE_START_OFFSET, macchinaId);
             
             var macchina = await _context.Macchine.FindAsync(new object[] { macchinaId }, ct);
             if (macchina == null || string.IsNullOrEmpty(macchina.IndirizzoPLC))
@@ -165,32 +181,38 @@ public class PlcRecipeWriterService : IPlcRecipeWriterService
                 return result;
             }
             
-            // IMPORTANTE: Copia SOLO parametri ricetta (offset 102-170) da DB55
-            // Offset 0-100 sono SOLO LETTURA (stati/produzione)
-            // RIDUCIAMO LA DIMENSIONE PER EVITARE "AUTO-FRAME" ERROR
-            // DB52 potrebbe essere più piccolo di DB55 su alcune macchine
-            const int RECIPE_START_OFFSET = 102;
-            const int RECIPE_END_OFFSET = 172; // Fino a Figure (170) + 2 byte - sicuro per tutte le macchine
-            const int RECIPE_SIZE = RECIPE_END_OFFSET - RECIPE_START_OFFSET;
+            var recipeSize = DB_SIZE - RECIPE_START_OFFSET;
             
-            // Leggi solo parametri ricetta da DB55
-            byte[] bufferRecipe = new byte[RECIPE_SIZE];
-            int readResult = plc.DBRead(DB55_NUMBER, RECIPE_START_OFFSET, RECIPE_SIZE, bufferRecipe);
+            // STEP 1: Verifica accessibilità DB56 (fonte tempi di esecuzione)
+            byte[] testBuffer = new byte[2];
+            int testRead = plc.DBRead(DB56_NUMBER, 0, 2, testBuffer);
+            
+            if (testRead != 0)
+            {
+                result.ErrorMessage = "Il blocco DB56 non esiste su questo PLC. Verificare che il programma PLC includa il DB56 (esecuzione).";
+                _logger.LogWarning("⚠️ [COPY-DB] DB56 non presente sul PLC ({Ip}): {Error}", macchina.IndirizzoPLC, plc.ErrorText(testRead));
+                plc.Disconnect();
+                return result;
+            }
+            
+            // STEP 2: Leggi tempi/valori reali da DB56
+            byte[] bufferRecipe = new byte[recipeSize];
+            int readResult = plc.DBRead(DB56_NUMBER, RECIPE_START_OFFSET, recipeSize, bufferRecipe);
             
             if (readResult != 0)
             {
-                result.ErrorMessage = $"Lettura parametri ricetta da DB55 fallita: {plc.ErrorText(readResult)}";
+                result.ErrorMessage = $"Lettura DB56 fallita: {plc.ErrorText(readResult)}";
                 _logger.LogWarning("⚠️ [COPY-DB] {Error}", result.ErrorMessage);
                 plc.Disconnect();
                 return result;
             }
             
-            // Scrivi parametri ricetta su DB52 (stesso offset 102-198)
-            int writeResult = plc.DBWrite(DB52_NUMBER, RECIPE_START_OFFSET, RECIPE_SIZE, bufferRecipe);
+            // STEP 3: Scrivi valori esecuzione in area ricetta DB55 (offset 100+)
+            int writeResult = plc.DBWrite(DB55_NUMBER, RECIPE_START_OFFSET, recipeSize, bufferRecipe);
             
             if (writeResult != 0)
             {
-                result.ErrorMessage = $"Scrittura parametri ricetta su DB52 fallita: {plc.ErrorText(writeResult)}";
+                result.ErrorMessage = $"Scrittura parametri su DB55 fallita (offset {RECIPE_START_OFFSET}+): {plc.ErrorText(writeResult)}";
                 _logger.LogWarning("⚠️ [COPY-DB] {Error}", result.ErrorMessage);
                 plc.Disconnect();
                 return result;
@@ -199,9 +221,9 @@ public class PlcRecipeWriterService : IPlcRecipeWriterService
             plc.Disconnect();
             
             result.Success = true;
-            result.Message = $"Parametri ricetta copiati (offset {RECIPE_START_OFFSET}-{RECIPE_END_OFFSET})";
+            result.Message = $"Parametri sincronizzati DB56→DB55 (offset {RECIPE_START_OFFSET}+).";
             
-            _logger.LogInformation("✅ [COPY-DB] Copiati {Size} byte di parametri ricetta", RECIPE_SIZE);
+            _logger.LogInformation("✅ [COPY-DB] Copiati {Size} byte di parametri ricetta", recipeSize);
             
             return result;
         }
@@ -213,9 +235,9 @@ public class PlcRecipeWriterService : IPlcRecipeWriterService
         }
     }
     
-    public async Task<List<PlcDbEntryDto>> ReadDb52Async(Guid macchinaId, CancellationToken ct = default)
+    public async Task<List<PlcDbEntryDto>> ReadDb56Async(Guid macchinaId, CancellationToken ct = default)
     {
-        return await ReadDbAsync(macchinaId, DB52_NUMBER, ct);
+        return await ReadDbAsync(macchinaId, DB56_NUMBER, ct);
     }
     
     public async Task<List<PlcDbEntryDto>> ReadDb55Async(Guid macchinaId, CancellationToken ct = default)
@@ -232,6 +254,14 @@ public class PlcRecipeWriterService : IPlcRecipeWriterService
             var macchina = await _context.Macchine.FindAsync(new object[] { macchinaId }, ct);
             if (macchina == null || string.IsNullOrEmpty(macchina.IndirizzoPLC))
             {
+                entries.Add(new PlcDbEntryDto
+                {
+                    Offset = -1,
+                    Nome = $"Errore lettura DB{dbNumber}",
+                    Valore = "Macchina non trovata o IP PLC non configurato",
+                    Tipo = "ERROR",
+                    IsReadOnly = true
+                });
                 return entries;
             }
             
@@ -240,16 +270,70 @@ public class PlcRecipeWriterService : IPlcRecipeWriterService
             
             if (connResult != 0)
             {
-                _logger.LogWarning("Connessione PLC fallita per lettura DB{Num}", dbNumber);
+                var errorText = plc.ErrorText(connResult);
+                _logger.LogWarning("Connessione PLC fallita per lettura DB{Num}: {Error}", dbNumber, errorText);
+                entries.Add(new PlcDbEntryDto
+                {
+                    Offset = -1,
+                    Nome = $"Errore lettura DB{dbNumber}",
+                    Valore = errorText,
+                    Tipo = "ERROR",
+                    IsReadOnly = true
+                });
                 return entries;
             }
             
             byte[] buffer = new byte[DB_SIZE];
             int readResult = plc.DBRead(dbNumber, 0, DB_SIZE, buffer);
             
+            if (readResult != 0 && dbNumber == DB56_NUMBER)
+            {
+                // Fallback progressivo per DB56 (ambiente sviluppo o DB piccoli)
+                int[] fallbackSizes = { 140, 100, 50, 34 };
+                bool fallbackSuccess = false;
+                
+                foreach (var size in fallbackSizes)
+                {
+                    _logger.LogInformation("Tentativo lettura DB56 con {Size} byte...", size);
+                    buffer = new byte[size];
+                    readResult = plc.DBRead(dbNumber, 0, size, buffer);
+                    
+                    if (readResult == 0)
+                    {
+                        _logger.LogInformation("✅ DB56 letto con fallback {Size} byte", size);
+                        fallbackSuccess = true;
+                        break;
+                    }
+                }
+                
+                if (!fallbackSuccess)
+                {
+                    _logger.LogWarning("⚠️ DB56 non presente sul PLC - il programma PLC non include il blocco DB56");
+                    entries.Add(new PlcDbEntryDto
+                    {
+                        Offset = -1,
+                        Nome = "DB56 non presente",
+                        Valore = "Il blocco DB56 non esiste su questo PLC. Verificare che il programma PLC includa il DB56 (esecuzione).",
+                        Tipo = "INFO",
+                        IsReadOnly = true
+                    });
+                    plc.Disconnect();
+                    return entries;
+                }
+            }
+            
             if (readResult != 0)
             {
-                _logger.LogWarning("Lettura DB{Num} fallita: errore {Code}", dbNumber, readResult);
+                var errorText = plc.ErrorText(readResult);
+                _logger.LogWarning("Lettura DB{Num} fallita: errore {Code} - {Text}", dbNumber, readResult, errorText);
+                entries.Add(new PlcDbEntryDto
+                {
+                    Offset = -1,
+                    Nome = $"Errore lettura DB{dbNumber}",
+                    Valore = errorText,
+                    Tipo = "ERROR",
+                    IsReadOnly = true
+                });
                 plc.Disconnect();
                 return entries;
             }
@@ -388,5 +472,90 @@ public class PlcRecipeWriterService : IPlcRecipeWriterService
         byte[] stringBytes = new byte[length];
         Array.Copy(buffer, offset, stringBytes, 0, length);
         return Encoding.ASCII.GetString(stringBytes).TrimEnd('\0', ' ');
+    }
+    
+    /// <summary>
+    /// Scansiona i DB disponibili su un PLC provando a leggere 2 byte da ciascuno
+    /// </summary>
+    public async Task<List<PlcDbScanResultDto>> ScanAvailableDbsAsync(Guid macchinaId, int maxDb = 100, CancellationToken ct = default)
+    {
+        var results = new List<PlcDbScanResultDto>();
+        
+        var macchina = await _context.Macchine.FindAsync(new object[] { macchinaId }, ct);
+        if (macchina == null || string.IsNullOrEmpty(macchina.IndirizzoPLC))
+        {
+            _logger.LogWarning("Scan DB: macchina {Id} non trovata o IP non configurato", macchinaId);
+            return results;
+        }
+        
+        var plc = new S7Client();
+        int connResult = plc.ConnectTo(macchina.IndirizzoPLC, 0, 1);
+        
+        if (connResult != 0)
+        {
+            _logger.LogWarning("Scan DB: connessione PLC {Ip} fallita: {Error}", macchina.IndirizzoPLC, plc.ErrorText(connResult));
+            return results;
+        }
+        
+        _logger.LogInformation("🔍 Scansione DB1-DB{Max} su PLC {Ip} ({Codice})...", maxDb, macchina.IndirizzoPLC, macchina.Codice);
+        
+        byte[] testBuffer = new byte[2];
+        
+        for (int db = 1; db <= maxDb; db++)
+        {
+            ct.ThrowIfCancellationRequested();
+            
+            int readResult = plc.DBRead(db, 0, 2, testBuffer);
+            
+            if (readResult == 0)
+            {
+                // DB esiste - determina dimensione con binary search
+                int size = DetectDbSize(plc, db);
+                
+                results.Add(new PlcDbScanResultDto
+                {
+                    DbNumber = db,
+                    Available = true,
+                    SizeBytes = size
+                });
+                
+                _logger.LogInformation("  ✅ DB{Num} disponibile ({Size} byte)", db, size);
+            }
+        }
+        
+        plc.Disconnect();
+        
+        _logger.LogInformation("🔍 Scansione completata: {Count} DB trovati", results.Count);
+        
+        return results;
+    }
+    
+    /// <summary>
+    /// Determina dimensione DB con binary search (evita "Address out of range")
+    /// </summary>
+    private int DetectDbSize(S7Client plc, int dbNumber)
+    {
+        int low = 2;
+        int high = 65536; // max teorico S7
+        int lastGood = low;
+        byte[] buf = new byte[2];
+        
+        while (low <= high)
+        {
+            int mid = (low + high) / 2;
+            int result = plc.DBRead(dbNumber, mid - 2, 2, buf);
+            
+            if (result == 0)
+            {
+                lastGood = mid;
+                low = mid + 1;
+            }
+            else
+            {
+                high = mid - 1;
+            }
+        }
+        
+        return lastGood;
     }
 }

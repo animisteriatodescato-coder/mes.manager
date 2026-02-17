@@ -1,7 +1,7 @@
 namespace MESManager.Application.DTOs;
 
 /// <summary>
-/// Request per caricamento manuale ricetta su DB52
+/// Request per caricamento manuale ricetta su DB55 (offset 100+)
 /// </summary>
 public class LoadRecipeRequest
 {

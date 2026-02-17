@@ -1,0 +1,28 @@
+{
+  "MachineId": "28AA30FC-DB87-4C93-AF91-3DFBC6B270E9",
+  "Numero": 2,
+  "Nome": "02",
+  "PlcIp": "192.168.17.26",
+  "Enabled": true,
+  "Offsets": {
+    "InizioSetup": 8,
+    "FineSetup": 10,
+    "NuovaProduzione": 12,
+    "FineProduzione": 14,
+    "QuantitaRaggiunta": 16,
+    "CicliFatti": 18,
+    "CicliScarti": 20,
+    "NumeroOperatore": 22,
+    "TempoMedioRil": 24,
+    "StatoEmergenza": 34,
+    "StatoManuale": 36,
+    "StatoAutomatico": 38,
+    "StatoCiclo": 40,
+    "StatoPezziRagg": 42,
+    "StatoAllarme": 44,
+    "BarcodeLavorazione": 46,
+    "QuantitaDaProd": 162,
+    "TempoMedio": 164,
+    "Figure": 170
+  }
+}

@@ -2,6 +2,7 @@
 @using MESManager.Application.DTOs
 @using MESManager.Web.Models
 @using MESManager.Web.Services
+@using MESManager.Web.Components.Dialogs
 @using Microsoft.JSInterop
 @using System.Text.Json
 @inject HttpClient Http
@@ -9,6 +10,8 @@
 @inject PreferencesService PreferencesService
 @inject IJSRuntime JSRuntime
 @inject IPageToolbarService PageToolbarService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 @implements IAsyncDisposable
 
 <PageTitle>Catalogo Commesse</PageTitle>
@@ -226,6 +229,10 @@
         {
             // Delay per assicurarsi che gli script siano caricati
             await Task.Delay(100);
+            
+            // Registra DotNetRef per commesseGrid
+            await JSRuntime.InvokeVoidAsync("commesseGrid.setDotNetRef", DotNetObjectReference.Create(this));
+            
             await InitializeGrid();
             
             // Sottoscrivi agli eventi di cambio statistiche
@@ -252,6 +259,31 @@
     }
 
     [JSInvokable]
+    public async Task ViewRicetta(string codiceArticolo)
+    {
+        try
+        {
+            var parameters = new DialogParameters<RicettaViewDialog>
+            {
+                { x => x.CodiceArticolo, codiceArticolo }
+            };
+            
+            var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Large,
+                CloseOnEscapeKey = true,
+                CloseButton = true
+            };
+            
+            await DialogService.ShowAsync<RicettaViewDialog>($"Ricetta: {codiceArticolo}", parameters, options);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore apertura ricetta: {ex.Message}", Severity.Error);
+        }
+    }
+
+    [JSInvokable]
     public async Task SaveGridStateFromJs()
     {
         await SaveGridState();
@@ -261,24 +293,7 @@
     {
         try
         {
-            // Verifica che window.commesseGrid esista
-            var exists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.commesseGrid !== 'undefined'");
-            if (!exists)
-            {
-                // commesseGrid is not defined
-                return;
-            }
-
-            // Serializza con camelCase e passa come stringa JSON da parsare in JS
-            var jsonOptions = new JsonSerializerOptions 
-            { 
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = false
-            };
-            var jsonData = JsonSerializer.Serialize(_commesse, jsonOptions);
-
-            // Passa il JSON come stringa e fallo parsare in JavaScript
-            await JSRuntime.InvokeVoidAsync("eval", $"commesseGrid.init('commesseGrid', JSON.parse({System.Text.Json.JsonSerializer.Serialize(jsonData)}), {System.Text.Json.JsonSerializer.Serialize(settings.ColumnStateJson)})");
+            await JSRuntime.InvokeVoidAsync("commesseGrid.init", "commesseGrid", _commesse, settings.ColumnStateJson);
             await ApplyUiSettings();
         }
         catch

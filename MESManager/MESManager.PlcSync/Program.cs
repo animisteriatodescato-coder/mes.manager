@@ -7,10 +7,17 @@ using Microsoft.EntityFrameworkCore;
 var builder = Host.CreateApplicationBuilder(args);
 
 // Carica configurazione database condivisa dalla root del progetto
-builder.Configuration.AddJsonFile(
-    Path.Combine(Directory.GetParent(builder.Environment.ContentRootPath)!.FullName, "appsettings.Database.json"),
-    optional: false,
-    reloadOnChange: true);
+var solutionRoot = Directory.GetParent(builder.Environment.ContentRootPath)!.FullName;
+var dbConfigPath = Path.Combine(solutionRoot, "appsettings.Database.json");
+var dbConfigEnvPath = Path.Combine(solutionRoot, $"appsettings.Database.{builder.Environment.EnvironmentName}.json");
+
+builder.Configuration.AddJsonFile(dbConfigPath, optional: false, reloadOnChange: true);
+
+// Override locale per ambiente (solo se presente)
+if (!builder.Environment.IsProduction() && File.Exists(dbConfigEnvPath))
+{
+    builder.Configuration.AddJsonFile(dbConfigEnvPath, optional: false, reloadOnChange: true);
+}
 
 // Bind PlcSync settings for options pattern
 builder.Services.Configure<MESManager.PlcSync.Configuration.PlcSyncSettings>(

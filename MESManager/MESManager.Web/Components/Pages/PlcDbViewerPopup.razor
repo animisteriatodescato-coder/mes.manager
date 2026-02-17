@@ -12,17 +12,13 @@
     <TitleContent>
         <MudText Typo="Typo.h6">
             <MudIcon Icon="@Icons.Material.Filled.DataObject" Class="mr-2" />
-            DB55 (Lettura) vs DB52 (Ricetta) - Macchina @NumeroMacchina
+            DB55 (Stato + Scrittura 100+) vs DB56 (Esecuzione) - Macchina @NumeroMacchina
         </MudText>
     </TitleContent>
     
     <DialogContent>
-        <!-- Barra Selezione Articolo (in alto, fuori dalle colonne) -->
-        <MudPaper Class="pa-3 mb-4" Elevation="3">
-            <MudText Typo="Typo.subtitle1" Class="mb-2">
-                <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Small" Class="mr-1" />
-                Salva DB55 come Ricetta Articolo
-            </MudText>
+        <!-- Barra controlli compatta -->
+        <MudPaper Class="pa-2 mb-2" Elevation="3">
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 <MudAutocomplete T="string" 
                                @bind-Value="_codiceArticoloSelezionato"
@@ -39,7 +35,7 @@
                                AdornmentIcon="@Icons.Material.Filled.Search"
                                AdornmentColor="Color.Primary"
                                MaxItems="50"
-                               Style="flex: 1; min-width: 300px;">
+                               Style="width: 200px;">
                     <ItemTemplate Context="item">
                         <MudText Typo="Typo.body2">@item</MudText>
                     </ItemTemplate>
@@ -49,13 +45,26 @@
                          Color="Color.Success" 
                          StartIcon="@Icons.Material.Filled.Save"
                          OnClick="SalvaDb55ComeRicettaArticoloAsync"
+                         Size="Size.Small"
                          Disabled="@(string.IsNullOrEmpty(_codiceArticoloSelezionato) || _loading)">
-                    Salva DB55 → Ricetta Articolo
+                    Salva Ricetta
                 </MudButton>
+                
+                <MudButton Variant="Variant.Outlined" 
+                         Color="Color.Info" 
+                         StartIcon="@Icons.Material.Filled.Download"
+                         Size="Size.Small"
+                         OnClick="EsportaJsonAsync"
+                         Disabled="@_loading">
+                    Export JSON
+                </MudButton>
+                
+                <MudSpacer />
+                
+                <MudText Typo="Typo.caption" Color="Color.Info">
+                    @_ultimoAggiornamento.ToString("HH:mm:ss")
+                </MudText>
             </MudStack>
-            <MudText Typo="Typo.caption" Color="Color.Info" Class="mt-2">
-                💡 Questa funzione salva la ricetta corrente (DB55) come ricetta master per l'articolo selezionato
-            </MudText>
         </MudPaper>
         <MudGrid>
             <!-- Colonna DB55 (Lettura - Stato attuale) -->
@@ -78,7 +87,7 @@
                         <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
                     }
                     
-                    <MudTable Items="@_db55Entries" Dense="true" Striped="true" Hover="true" FixedHeader="true" Height="400px">
+                    <MudTable Items="@_db55Entries" Dense="true" Striped="true" Hover="true" FixedHeader="true" Height="350px">
                         <HeaderContent>
                             <MudTh>Offset</MudTh>
                             <MudTh>Parametro</MudTh>
@@ -104,35 +113,35 @@
                                  Color="Color.Success" 
                                  StartIcon="@Icons.Material.Filled.ContentCopy"
                                  FullWidth="true"
-                                 OnClick="CopiaDb55ToDb52Async"
+                                 OnClick="CopiaDb55ToDb56Async"
                                  Disabled="@_loading">
-                            Copia DB55 → DB52
+                            Sincronizza DB56 → DB55
                         </MudButton>
                     </MudStack>
                 </MudPaper>
             </MudItem>
             
-            <!-- Colonna DB52 (Scrittura - Ricetta) -->
+            <!-- Colonna DB56 (Lettura tempi/valori esecuzione) -->
             <MudItem xs="12" md="6">
-                <MudPaper Class="pa-4" Elevation="2">
+                <MudPaper Class="pa-2" Elevation="2">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
                         <MudText Typo="Typo.h6" Color="Color.Secondary">
                             <MudIcon Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Class="mr-1" />
-                            DB52 - Ricetta
+                            DB56 - Esecuzione
                         </MudText>
                         <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
                                      Color="Color.Secondary" 
                                      Size="Size.Small"
-                                     OnClick="CaricaDb52Async" 
+                                     OnClick="CaricaDb56Async" 
                                      Disabled="@_loading" />
                     </MudStack>
                     
-                    @if (_loadingDb52)
+                    @if (_loadingDb56)
                     {
                         <MudProgressLinear Indeterminate="true" Color="Color.Secondary" Class="mb-2" />
                     }
                     
-                    <MudTable Items="@_db52Entries" Dense="true" Striped="true" Hover="true" FixedHeader="true" Height="400px">
+                    <MudTable Items="@_db56Entries" Dense="true" Striped="true" Hover="true" FixedHeader="true" Height="350px">
                         <HeaderContent>
                             <MudTh>Offset</MudTh>
                             <MudTh>Parametro</MudTh>
@@ -154,30 +163,13 @@
                     </MudTable>
                     
                     <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-3">
-                        DB52 contiene la ricetta attualmente programmata per la prossima lavorazione
+                        DB56 contiene i tempi/valori reali di esecuzione macchina
                     </MudText>
                 </MudPaper>
             </MudItem>
         </MudGrid>
         
-        <!-- Export JSON -->
-        <MudDivider Class="my-4" />
-        
-        <MudStack Row="true" Spacing="2">
-            <MudButton Variant="Variant.Outlined" 
-                     Color="Color.Info" 
-                     StartIcon="@Icons.Material.Filled.Download"
-                     OnClick="EsportaJsonAsync"
-                     Disabled="@_loading">
-                Esporta JSON
-            </MudButton>
-            
-            <MudSpacer />
-            
-            <MudText Typo="Typo.caption" Color="Color.Info">
-                Ultimo aggiornamento: @_ultimoAggiornamento.ToString("HH:mm:ss")
-            </MudText>
-        </MudStack>
+
     </DialogContent>
     
     <DialogActions>
@@ -191,19 +183,19 @@
     [Parameter] public string? NumeroMacchina { get; set; }
     
     private List<PlcDbEntryDto> _db55Entries = new();
-    private List<PlcDbEntryDto> _db52Entries = new();
+    private List<PlcDbEntryDto> _db56Entries = new();
     private string? _codiceArticoloSelezionato;
     
     private bool _loading = false;
     private bool _loadingDb55 = false;
-    private bool _loadingDb52 = false;
+    private bool _loadingDb56 = false;
     private DateTime _ultimoAggiornamento = DateTime.MinValue;
     
     protected override async Task OnInitializedAsync()
     {
         await Task.WhenAll(
             CaricaDb55Async(),
-            CaricaDb52Async()
+            CaricaDb56Async()
         );
     }
     
@@ -227,23 +219,23 @@
         }
     }
     
-    private async Task CaricaDb52Async()
+    private async Task CaricaDb56Async()
     {
-        _loadingDb52 = true;
+        _loadingDb56 = true;
         try
         {
-            _db52Entries = await RecipeWriter.ReadDb52Async(MacchinaId, CancellationToken.None);
+            _db56Entries = await RecipeWriter.ReadDb56Async(MacchinaId, CancellationToken.None);
             _ultimoAggiornamento = DateTime.Now;
-            Logger.LogInformation("DB52 caricato: {Count} entries", _db52Entries.Count);
+            Logger.LogInformation("DB56 caricato: {Count} entries", _db56Entries.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Errore caricamento DB52");
-            Snackbar.Add($"Errore caricamento DB52: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Errore caricamento DB56");
+            Snackbar.Add($"Errore caricamento DB56: {ex.Message}", Severity.Error);
         }
         finally
         {
-            _loadingDb52 = false;
+            _loadingDb56 = false;
         }
     }
     
@@ -326,17 +318,17 @@
         }
     }
     
-    private async Task CopiaDb55ToDb52Async()
+    private async Task CopiaDb55ToDb56Async()
     {
         _loading = true;
         try
         {
-            var result = await RecipeWriter.CopyDb55ToDb52Async(MacchinaId, CancellationToken.None);
+            var result = await RecipeWriter.CopyDb55ToDb56Async(MacchinaId, CancellationToken.None);
             
             if (result.Success)
             {
-                Snackbar.Add("✅ Ricetta copiata da DB55 a DB52", Severity.Success);
-                await CaricaDb52Async(); // Ricarica DB52 per vedere la modifica
+                Snackbar.Add("✅ Valori sincronizzati da DB56 a DB55 (offset 100+)", Severity.Success);
+                await CaricaDb56Async(); // Ricarica DB56 per vedere la modifica
             }
             else
             {
@@ -345,7 +337,7 @@
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Errore copia DB55→DB52");
+            Logger.LogError(ex, "Errore sincronizzazione DB56→DB55");
             Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
         }
         finally
@@ -364,7 +356,7 @@
                 NumeroMacchina,
                 Timestamp = DateTime.Now,
                 DB55 = _db55Entries,
-                DB52 = _db52Entries
+                DB56 = _db56Entries
             };
             
             var json = System.Text.Json.JsonSerializer.Serialize(export, new System.Text.Json.JsonSerializerOptions 

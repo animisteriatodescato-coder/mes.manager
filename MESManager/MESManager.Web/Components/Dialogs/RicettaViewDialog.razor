@@ -1,0 +1,133 @@
+@using MESManager.Application.DTOs
+@using MudBlazor
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<MudDialog Style="max-width: 1000px;" data-testid="dlg-ricetta-view">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Ricetta: @CodiceArticolo</MudText>
+            @if (ricetta != null && ricetta.TotaleParametri > 0)
+            {
+                <MudChip T="string" Color="Color.Info" Size="Size.Small">
+                    @ricetta.TotaleParametri parametri
+                </MudChip>
+            }
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        @if (isLoading)
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="3" Class="pa-6">
+                <MudProgressCircular Indeterminate="true" Size="Size.Large" />
+                <MudText Typo="Typo.body1">Caricamento ricetta in corso...</MudText>
+            </MudStack>
+        }
+        else if (ricetta == null)
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-4">
+                Nessuna ricetta trovata per l'articolo <strong>@CodiceArticolo</strong>.
+            </MudAlert>
+        }
+        else
+        {
+            <MudStack Spacing="2" Class="mb-3">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">
+                    @ricetta.DescrizioneArticolo
+                </MudText>
+                <MudDivider />
+            </MudStack>
+
+            <MudTable Items="@ricetta.Parametri" 
+                     Dense="true" 
+                     Hover="true" 
+                     Striped="true"
+                     FixedHeader="true"
+                     Height="450px">
+                <HeaderContent>
+                    <MudTh Style="width: 80px;">Cod.</MudTh>
+                    <MudTh>Descrizione Parametro</MudTh>
+                    <MudTh Style="width: 100px; text-align: center;">Indirizzo</MudTh>
+                    <MudTh Style="width: 80px; text-align: center;">Area</MudTh>
+                    <MudTh Style="width: 80px; text-align: center;">Tipo</MudTh>
+                    <MudTh Style="width: 80px; text-align: center;">UM</MudTh>
+                    <MudTh Style="width: 120px; text-align: right;"><strong>Valore</strong></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Cod.">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default">@context.CodiceParametro</MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Descrizione">@context.DescrizioneParametro</MudTd>
+                    <MudTd DataLabel="Indirizzo" Style="text-align: center;">@context.Indirizzo</MudTd>
+                    <MudTd DataLabel="Area" Style="text-align: center;">@context.Area</MudTd>
+                    <MudTd DataLabel="Tipo" Style="text-align: center;">@context.Tipo</MudTd>
+                    <MudTd DataLabel="UM" Style="text-align: center;">@(context.UM ?? "-")</MudTd>
+                    <MudTd DataLabel="Valore" Style="text-align: right;">
+                        <MudText Typo="Typo.body1" Color="Color.Primary"><strong>@context.Valore</strong></MudText>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close" Variant="Variant.Filled" Color="Color.Primary">Chiudi</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    
+    [Parameter] public string CodiceArticolo { get; set; } = string.Empty;
+    
+    private RicettaArticoloDto? ricetta;
+    private bool isLoading = true;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRicetta();
+    }
+    
+    private async Task LoadRicetta()
+    {
+        if (string.IsNullOrWhiteSpace(CodiceArticolo))
+        {
+            isLoading = false;
+            return;
+        }
+        
+        try
+        {
+            isLoading = true;
+            
+            await JS.InvokeVoidAsync("console.log", $"[RicettaViewDialog] Caricamento ricetta per: {CodiceArticolo}");
+            
+            // Usa endpoint diretto invece di search
+            var response = await Http.GetAsync($"/api/RicetteArticoli/{Uri.EscapeDataString(CodiceArticolo)}");
+            
+            await JS.InvokeVoidAsync("console.log", $"[RicettaViewDialog] Response status: {response.StatusCode}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                ricetta = await response.Content.ReadFromJsonAsync<RicettaArticoloDto>();
+                await JS.InvokeVoidAsync("console.log", $"[RicettaViewDialog] Ricetta caricata: {ricetta?.TotaleParametri ?? 0} parametri");
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                await JS.InvokeVoidAsync("console.error", $"[RicettaViewDialog] Error: {response.StatusCode} - {errorContent}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore caricamento ricetta: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+    
+    private void Close() => MudDialog.Close();
+}
