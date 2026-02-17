@@ -8,6 +8,12 @@ public class ParametroRicetta
     public string Valore { get; set; } = string.Empty;
     public string UnitaMisura { get; set; } = string.Empty;
     
+    // Campi importati da Gantt.ArticoliRicetta
+    public int? CodiceParametro { get; set; }
+    public int? Indirizzo { get; set; }
+    public string? Area { get; set; }
+    public string? Tipo { get; set; }
+    
     // Navigazioni
     public Ricetta Ricetta { get; set; } = null!;
 }

@@ -45,11 +45,11 @@ public class RicettaGanttService : IRicettaGanttService
             {
                 IdRigaRicetta = 0,
                 CodiceArticolo = codiceArticolo,
-                CodiceParametro = 0,
+                CodiceParametro = p.CodiceParametro ?? 0,
                 DescrizioneParametro = p.NomeParametro,
-                Indirizzo = 0,
-                Area = string.Empty,
-                Tipo = string.Empty,
+                Indirizzo = p.Indirizzo ?? 0,
+                Area = p.Area ?? string.Empty,
+                Tipo = p.Tipo ?? string.Empty,
                 UM = p.UnitaMisura,
                 Valore = int.TryParse(p.Valore, out var val) ? val : 0
             }).ToList();
@@ -92,7 +92,11 @@ public class RicettaGanttService : IRicettaGanttService
                         Parametri = articolo.Ricetta.Parametri.Select(p => new ParametroRicettaArticoloDto
                         {
                             CodiceArticolo = articolo.Codice,
+                            CodiceParametro = p.CodiceParametro ?? 0,
                             DescrizioneParametro = p.NomeParametro,
+                            Indirizzo = p.Indirizzo ?? 0,
+                            Area = p.Area ?? string.Empty,
+                            Tipo = p.Tipo ?? string.Empty,
                             UM = p.UnitaMisura,
                             Valore = int.TryParse(p.Valore, out var val) ? val : 0
                         }).ToList()

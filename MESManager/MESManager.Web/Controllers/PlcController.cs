@@ -490,7 +490,9 @@ public class PlcController : ControllerBase
                     RicettaId = ricetta.Id,
                     NomeParametro = entry.Nome,
                     Valore = entry.Valore,
-                    UnitaMisura = entry.UnitaMisura ?? string.Empty
+                    UnitaMisura = entry.UnitaMisura ?? string.Empty,
+                    Indirizzo = entry.Offset,  // Offset = Indirizzo PLC
+                    Tipo = entry.Tipo          // Tipo dato PLC (INT, REAL, etc.)
                 };
                 
                 _context.ParametriRicetta.Add(parametro);
