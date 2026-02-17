@@ -41,18 +41,24 @@ public class RicettaGanttService : IRicettaGanttService
                 return null;
             }
 
-            var parametri = articolo.Ricetta.Parametri.Select(p => new ParametroRicettaArticoloDto
-            {
-                IdRigaRicetta = 0,
-                CodiceArticolo = codiceArticolo,
-                CodiceParametro = p.CodiceParametro ?? 0,
-                DescrizioneParametro = p.NomeParametro,
-                Indirizzo = p.Indirizzo ?? 0,
-                Area = p.Area ?? string.Empty,
-                Tipo = p.Tipo ?? string.Empty,
-                UM = p.UnitaMisura,
-                Valore = int.TryParse(p.Valore, out var val) ? val : 0
-            }).ToList();
+            var parametriOrdinati = articolo.Ricetta.Parametri
+                .OrderBy(p => p.Indirizzo ?? 9999)
+                .ThenBy(p => p.NomeParametro)
+                .ToList();
+            
+            var parametri = parametriOrdinati
+                .Select((p, index) => new ParametroRicettaArticoloDto
+                {
+                    IdRigaRicetta = 0,
+                    CodiceArticolo = codiceArticolo,
+                    CodiceParametro = p.CodiceParametro ?? (index + 1), // Auto-genera se manca
+                    DescrizioneParametro = p.NomeParametro,
+                    Indirizzo = p.Indirizzo ?? 0,
+                    Area = p.Area ?? string.Empty,
+                    Tipo = p.Tipo ?? string.Empty,
+                    UM = p.UnitaMisura,
+                    Valore = int.TryParse(p.Valore, out var val) ? val : 0
+                }).ToList();
 
             return new RicettaArticoloDto
             {
@@ -85,21 +91,27 @@ public class RicettaGanttService : IRicettaGanttService
             {
                 if (articolo.Ricetta != null)
                 {
+                    var parametriOrdinati = articolo.Ricetta.Parametri
+                        .OrderBy(p => p.Indirizzo ?? 9999)
+                        .ThenBy(p => p.NomeParametro)
+                        .ToList();
+                    
                     var ricettaDto = new RicettaArticoloDto
                     {
                         CodiceArticolo = articolo.Codice,
                         DescrizioneArticolo = articolo.Descrizione,
-                        Parametri = articolo.Ricetta.Parametri.Select(p => new ParametroRicettaArticoloDto
-                        {
-                            CodiceArticolo = articolo.Codice,
-                            CodiceParametro = p.CodiceParametro ?? 0,
-                            DescrizioneParametro = p.NomeParametro,
-                            Indirizzo = p.Indirizzo ?? 0,
-                            Area = p.Area ?? string.Empty,
-                            Tipo = p.Tipo ?? string.Empty,
-                            UM = p.UnitaMisura,
-                            Valore = int.TryParse(p.Valore, out var val) ? val : 0
-                        }).ToList()
+                        Parametri = parametriOrdinati
+                            .Select((p, index) => new ParametroRicettaArticoloDto
+                            {
+                                CodiceArticolo = articolo.Codice,
+                                CodiceParametro = p.CodiceParametro ?? (index + 1), // Auto-genera se manca
+                                DescrizioneParametro = p.NomeParametro,
+                                Indirizzo = p.Indirizzo ?? 0,
+                                Area = p.Area ?? string.Empty,
+                                Tipo = p.Tipo ?? string.Empty,
+                                UM = p.UnitaMisura,
+                                Valore = int.TryParse(p.Valore, out var val) ? val : 0
+                            }).ToList()
                     };
 
                     response.Ricette.Add(ricettaDto);
