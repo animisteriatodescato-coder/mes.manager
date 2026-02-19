@@ -450,13 +450,14 @@ public class PlcController : ControllerBase
                 entries = await _recipeWriter.ReadDb55Async(request.MacchinaId, HttpContext.RequestAborted);
             }
             
-            // 3. Filtra solo i parametri scrivibili (IsReadOnly = false, offset >= 102)
-            var parametriScrivibili = entries.Where(e => !e.IsReadOnly && e.Offset >= 102).ToList();
+            // 3. Salva TUTTI i parametri (offset 0-196), anche quelli readonly
+            // Questo permette di visualizzare/modificare l'intera ricetta (100 parametri)
+            var parametriDaSalvare = entries.Where(e => e.Offset >= 0).ToList();
             
-            if (parametriScrivibili.Count == 0)
+            if (parametriDaSalvare.Count == 0)
             {
                 result.Success = false;
-                result.ErrorMessage = "Nessun parametro scrivibile trovato in DB55";
+                result.ErrorMessage = "Nessun parametro trovato in DB55";
                 return BadRequest(result);
             }
             
@@ -481,8 +482,12 @@ public class PlcController : ControllerBase
                 _context.ParametriRicetta.RemoveRange(ricetta.Parametri);
             }
             
-            // 5. Crea nuovi ParametroRicetta dai parametri scrivibili di DB55
-            foreach (var entry in parametriScrivibili)
+            // 5. Crea nuovi ParametroRicetta da TUTTI i parametri di DB55
+            // Ordina per Offset e assegna CodiceParametro sequenziale
+            var parametriOrdinati = parametriDaSalvare.OrderBy(e => e.Offset).ToList();
+            int codice = 1;
+            
+            foreach (var entry in parametriOrdinati)
             {
                 var parametro = new ParametroRicetta
                 {
@@ -491,8 +496,10 @@ public class PlcController : ControllerBase
                     NomeParametro = entry.Nome,
                     Valore = entry.Valore,
                     UnitaMisura = entry.UnitaMisura ?? string.Empty,
-                    Indirizzo = entry.Offset,  // Offset = Indirizzo PLC
-                    Tipo = entry.Tipo          // Tipo dato PLC (INT, REAL, etc.)
+                    CodiceParametro = codice++,   // Sequenziale: 1, 2, 3...
+                    Indirizzo = entry.Offset,      // Offset PLC: 0, 2, 4, 6...
+                    Area = "DB",                   // Area DB standard
+                    Tipo = entry.Tipo              // Tipo dato: INT, REAL, etc.
                 };
                 
                 _context.ParametriRicetta.Add(parametro);
@@ -503,7 +510,7 @@ public class PlcController : ControllerBase
             
             result.Success = true;
             result.RicettaId = ricetta.Id;
-            result.NumeroParametriSalvati = parametriScrivibili.Count;
+            result.NumeroParametriSalvati = parametriDaSalvare.Count;
             
             return Ok(result);
         }
