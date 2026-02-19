@@ -1,6 +1,7 @@
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
 using MESManager.Domain.Entities;
+using MESManager.Domain.Enums;
 using MESManager.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -73,27 +74,21 @@ public class PianificazioneEngineService : IPianificazioneEngineService
                 };
             }
 
-            // 2. Verifica blocco: commesse bloccate NON possono essere spostate
+            // 2. Commesse bloccate: permetti spostamento ma sblocca automaticamente
+            // (l'utente ha già confermato nel dialog JavaScript)
+            bool eraBloccata = commessa.Bloccata;
             if (commessa.Bloccata)
             {
-                _logger.LogWarning("Tentativo di spostare commessa bloccata {CommessaId}", request.CommessaId);
-                return new SpostaCommessaResponse
-                {
-                    Success = false,
-                    ErrorMessage = "Impossibile spostare una commessa bloccata. Sbloccarla prima di spostarla.",
-                    UpdateVersion = updateVersion
-                };
+                _logger.LogInformation("⚠️ Spostamento commessa bloccata {CommessaId} - sblocco automatico (utente ha confermato)", request.CommessaId);
+                commessa.Bloccata = false; // Sblocca per permettere spostamento
             }
-
-            // 3. Verifica produzione in corso
-            if (commessa.DataInizioProduzione != null && commessa.DataFineProduzione == null)
+            
+            // 3. Permetti spostamento anche se in produzione (con conferma utente già data)
+            // Il controllo di sicurezza è già stato fatto nel dialog JavaScript
+            if (commessa.StatoProgramma == StatoProgramma.InProduzione)
             {
-                return new SpostaCommessaResponse
-                {
-                    Success = false,
-                    ErrorMessage = "Impossibile spostare una commessa già in produzione",
-                    UpdateVersion = updateVersion
-                };
+                _logger.LogInformation("⚠️ Spostamento commessa InProduzione {Codice} - utente ha confermato override", 
+                    commessa.Codice);
             }
 
             // 4. Carica impostazioni, calendario e festivi
@@ -106,9 +101,26 @@ public class PianificazioneEngineService : IPianificazioneEngineService
             // 5. Salva macchina origine
             var macchinaOrigine = commessa.NumeroMacchina;
             
-            // 6. NUOVA LOGICA GANTT-FIRST: Normalizza data drag su orario lavorativo
+            // 6. GANTT-FIRST: Rispetta posizione esatta dell'utente
+            // Normalizza SOLO se cade in orario NON lavorativo (weekend/festivi/notte)
             DateTime dataInizioDesiderata = request.TargetDataInizio ?? DateTime.Now;
-            dataInizioDesiderata = NormalizzaSuOrarioLavorativo(dataInizioDesiderata, calendario, festivi);
+            
+            // Verifica se la data desiderata è in orario lavorativo
+            bool dentroOrarioLavorativo = IsInOrarioLavorativo(dataInizioDesiderata, calendario, festivi);
+            
+            if (!dentroOrarioLavorativo)
+            {
+                // Solo se FUORI orario, normalizza al prossimo slot valido
+                var dataPrimaDiNormalizzare = dataInizioDesiderata;
+                dataInizioDesiderata = NormalizzaSuOrarioLavorativo(dataInizioDesiderata, calendario, festivi);
+                _logger.LogInformation("⏰ Data fuori orario lavorativo: normalizzata da {Prima} a {Dopo}",
+                    dataPrimaDiNormalizzare, dataInizioDesiderata);
+            }
+            else
+            {
+                _logger.LogInformation("✅ Data dentro orario lavorativo: posizione esatta mantenuta {Data}",
+                    dataInizioDesiderata);
+            }
             
             // 7. Carica commesse macchina destinazione (esclusa quella da spostare)
             var commesseDestinazione = await _context.Commesse
@@ -149,8 +161,11 @@ public class PianificazioneEngineService : IPianificazioneEngineService
 
             if (hasOverlap && commessaSovrapposta != null)
             {
-                // ACCODAMENTO: Metti dopo l'ultima commessa sovrapposta
-                _logger.LogInformation("Sovrapposizione rilevata con {CodiceCommessa} - accodamento", commessaSovrapposta.Codice);
+                // ACCODAMENTO AUTOMATICO: Metti DOPO l'ultima commessa sovrapposta
+                _logger.LogInformation("🔄 ACCODAMENTO: Sovrapposizione rilevata con {CodiceCommessa} ({DataInizio}-{DataFine}) - accodamento automatico", 
+                    commessaSovrapposta.Codice, 
+                    commessaSovrapposta.DataInizioPrevisione,
+                    commessaSovrapposta.DataFinePrevisione);
                 
                 dataInizioEffettiva = commessaSovrapposta.DataFinePrevisione ?? dataInizioDesiderata;
                 dataFineCalcolata = _pianificazioneService.CalcolaDataFinePrevistaConFestivi(
@@ -167,11 +182,14 @@ public class PianificazioneEngineService : IPianificazioneEngineService
                 {
                     c.OrdineSequenza++;
                 }
+                
+                _logger.LogInformation("✅ Nuova posizione accodata: {DataInizio} (dopo {CommessaPrecedente})", 
+                    dataInizioEffettiva, commessaSovrapposta.Codice);
             }
             else
             {
                 // POSIZIONE ESATTA: Usa la data desiderata senza modifiche
-                _logger.LogInformation("Nessuna sovrapposizione - posizione esatta a {DataInizio}", dataInizioDesiderata);
+                _logger.LogInformation("✅ Nessuna sovrapposizione - posizione esatta mantenuta: {DataInizio}", dataInizioDesiderata);
                 
                 dataInizioEffettiva = dataInizioDesiderata;
                 
@@ -326,6 +344,23 @@ public class PianificazioneEngineService : IPianificazioneEngineService
         foreach (var commessa in commesseNonBloccate)
         {
             commessa.OrdineSequenza = ordineGlobale++;
+
+            // 🔒 PRESERVA DATE ESISTENTI se la commessa è già programmata con date valide
+            // e non ha vincoli che forzano il ricalcolo
+            bool preservaDateEsistenti = commessa.StatoProgramma == StatoProgramma.Programmata 
+                && commessa.DataInizioPrevisione.HasValue 
+                && commessa.DataFinePrevisione.HasValue
+                && !commessa.VincoloDataInizio.HasValue // Nessun vincolo che forza ricalcolo
+                && commessa.DataInizioPrevisione.Value > DateTime.Now; // Data ancora futura (non scaduta)
+
+            if (preservaDateEsistenti)
+            {
+                // Mantieni date esistenti, aggiorna solo cursore per prossima commessa
+                cursore = commessa.DataFinePrevisione;
+                _logger.LogDebug("🔒 Preservate date per commessa {Codice} (già programmata: {DataInizio})", 
+                    commessa.Codice, commessa.DataInizioPrevisione);
+                continue;
+            }
 
             // Determina data inizio rispettando vincoli
             DateTime dataInizio;
@@ -893,7 +928,8 @@ public class PianificazioneEngineService : IPianificazioneEngineService
     }
 
     /// <summary>
-    /// Ricalcola SOLO le commesse successive a quella appena spostata (ottimizzazione GANTT-FIRST)
+    /// Ricalcola SOLO le commesse successive a quella appena spostata SE ci sono sovrapposizioni
+    /// (ottimizzazione GANTT-FIRST: preserva posizioni esatte se non sovrapposte)
     /// </summary>
     private async Task RicalcolaCommesseSuccessiveAsync(int? numeroMacchina, Commessa commessaSpostata, ImpostazioniProduzione impostazioni, CalendarioLavoroDto calendario, HashSet<DateOnly> festivi)
     {
@@ -911,35 +947,82 @@ public class PianificazioneEngineService : IPianificazioneEngineService
             return;
         }
 
-        _logger.LogInformation("Ricalcolo {Count} commesse successive su macchina {Macchina}", commesseSuccessive.Count, numeroMacchina);
+        _logger.LogInformation("Verifica {Count} commesse successive su macchina {Macchina} per sovrapposizioni", commesseSuccessive.Count, numeroMacchina);
 
-        DateTime dataInizioCorrente = commessaSpostata.DataFinePrevisione ?? DateTime.Now;
+        DateTime? fineCommessaPrecedente = commessaSpostata.DataFinePrevisione;
+        int commesseRicalcolate = 0;
 
         foreach (var c in commesseSuccessive)
         {
-            // Rispetta vincoli data inizio se presenti
-            if (c.VincoloDataInizio.HasValue && c.VincoloDataInizio > dataInizioCorrente)
+            // Verifica se c'è sovrapposizione con la commessa precedente
+            bool hasSovrapposizione = false;
+            
+            if (fineCommessaPrecedente.HasValue && c.DataInizioPrevisione.HasValue)
             {
-                dataInizioCorrente = c.VincoloDataInizio.Value;
+                // Sovrapposizione se inizio commessa corrente < fine precedente
+                hasSovrapposizione = c.DataInizioPrevisione < fineCommessaPrecedente;
             }
 
-            c.DataInizioPrevisione = dataInizioCorrente;
+            if (hasSovrapposizione || !c.DataInizioPrevisione.HasValue)
+            {
+                // Ricalcola solo se c'è sovrapposizione o date mancanti
+                DateTime dataInizioCorrente = fineCommessaPrecedente ?? DateTime.Now;
 
-            var durataMinuti = CalcolaDurataConSetupDinamico(c, null, impostazioni);
-            c.DataFinePrevisione = _pianificazioneService.CalcolaDataFinePrevistaConFestivi(
-                dataInizioCorrente,
-                durataMinuti,
-                calendario,
-                festivi
-            );
+                // Rispetta vincoli data inizio se presenti
+                if (c.VincoloDataInizio.HasValue && c.VincoloDataInizio > dataInizioCorrente)
+                {
+                    dataInizioCorrente = c.VincoloDataInizio.Value;
+                }
 
-            dataInizioCorrente = c.DataFinePrevisione.Value;
+                c.DataInizioPrevisione = dataInizioCorrente;
+
+                var durataMinuti = CalcolaDurataConSetupDinamico(c, null, impostazioni);
+                c.DataFinePrevisione = _pianificazioneService.CalcolaDataFinePrevistaConFestivi(
+                    dataInizioCorrente,
+                    durataMinuti,
+                    calendario,
+                    festivi
+                );
+
+                commesseRicalcolate++;
+                _logger.LogDebug("🔄 Ricalcolata {Codice}: {Inizio} → {Fine} (sovrapposizione rilevata)",
+                    c.Codice, c.DataInizioPrevisione, c.DataFinePrevisione);
+            }
+            else
+            {
+                _logger.LogDebug("✅ Preservata {Codice}: {Inizio} → {Fine} (nessuna sovrapposizione)",
+                    c.Codice, c.DataInizioPrevisione, c.DataFinePrevisione);
+            }
+
+            // Aggiorna cursore per prossima iterazione
+            fineCommessaPrecedente = c.DataFinePrevisione;
         }
+        
+        _logger.LogInformation("✅ Ricalcolate {Ricalcolate}/{Totale} commesse successive su macchina {Macchina}",
+            commesseRicalcolate, commesseSuccessive.Count, numeroMacchina);
     }
 
     /// <summary>
     /// Normalizza una data agli orari lavorativi e salta giorni non lavorativi/festivi
     /// </summary>
+    /// <summary>
+    /// Verifica se una data è dentro orario lavorativo
+    /// </summary>
+    private bool IsInOrarioLavorativo(DateTime data, CalendarioLavoroDto calendario, HashSet<DateOnly> festivi)
+    {
+        // 1. Verifica che non sia festivo
+        if (festivi.Contains(DateOnly.FromDateTime(data)))
+            return false;
+        
+        // 2. Verifica che sia giorno lavorativo
+        if (!IsGiornoLavorativo(data, calendario))
+            return false;
+        
+        // 3. Verifica che sia dentro orario (con tolleranza 1 ora dopo fine)
+        var ora = TimeOnly.FromDateTime(data);
+        return ora >= calendario.OraInizio && ora < calendario.OraFine.AddHours(1);
+    }
+    
     private DateTime NormalizzaSuOrarioLavorativo(DateTime data, CalendarioLavoroDto calendario, HashSet<DateOnly> festivi)
     {
         // 1. Normalizza ora all'inizio lavoro se prima, o giorno dopo se dopo fine lavoro
@@ -1032,6 +1115,9 @@ public class PianificazioneEngineService : IPianificazioneEngineService
             // 3. Carica impostazioni, calendario, festivi
             var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
                 ?? throw new Exception("Impostazioni produzione mancanti");
+            var impostazioniGantt = await _context.ImpostazioniGantt.FirstOrDefaultAsync();
+            var bufferMinuti = impostazioniGantt?.BufferInizioProduzioneMinuti ?? 15;
+            
             var calendarioEntity = await _context.CalendarioLavoro.FirstOrDefaultAsync()
                 ?? throw new Exception("Calendario lavoro mancante");
             var calendario = new CalendarioLavoroDto
@@ -1123,20 +1209,29 @@ public class PianificazioneEngineService : IPianificazioneEngineService
             if (macchinaScelta.UltimaDataFine.HasValue)
             {
                 dataInizioCalcolata = macchinaScelta.UltimaDataFine.Value;
+                
+                // Normalizza su orario lavorativo
+                dataInizioCalcolata = NormalizzaSuOrarioLavorativo(dataInizioCalcolata, calendario, festivi);
             }
             else
             {
-                // Macchina vuota: parte dall'inizio orario lavorativo di oggi
-                dataInizioCalcolata = now.Date.AddHours(calendario.OraInizio.ToTimeSpan().TotalHours);
-            }
-
-            // Normalizza su orario lavorativo
-            dataInizioCalcolata = NormalizzaSuOrarioLavorativo(dataInizioCalcolata, calendario, festivi);
-
-            // Se la data è nel passato, parte da adesso
-            if (dataInizioCalcolata < now)
-            {
-                dataInizioCalcolata = NormalizzaSuOrarioLavorativo(now, calendario, festivi);
+                // Macchina vuota: parte dall'inizio orario lavorativo di oggi + BUFFER
+                var oraInizioTurno = now.Date.AddHours(calendario.OraInizio.ToTimeSpan().TotalHours);
+                var baseStart = now > oraInizioTurno ? now : oraInizioTurno;
+                
+                // ⭐ BUFFER: Aggiungi tempo configurabile per riorganizzazione prima che vada InProduzione
+                dataInizioCalcolata = baseStart.AddMinutes(bufferMinuti);
+                
+                _logger.LogInformation("🕒 Macchina vuota: buffer di {BufferMinuti} minuti applicato (da {BaseStart} a {DataInizio})",
+                    bufferMinuti, baseStart, dataInizioCalcolata);
+                
+                // Normalizza su orario lavorativo (MA mantieni il buffer!)
+                // Se cade fuori orario, sposta al prossimo orario lavorativo
+                if (dataInizioCalcolata.TimeOfDay < calendario.OraInizio.ToTimeSpan() || 
+                    dataInizioCalcolata.TimeOfDay > calendario.OraFine.ToTimeSpan())
+                {
+                    dataInizioCalcolata = NormalizzaSuOrarioLavorativo(dataInizioCalcolata, calendario, festivi);
+                }
             }
             
             _logger.LogInformation("✅ Macchina selezionata: M{Macchina} (carico={Ore}h, commesse={N})",
@@ -1155,6 +1250,9 @@ public class PianificazioneEngineService : IPianificazioneEngineService
             commessa.NumeroMacchina = macchinaSelezionata;
             commessa.DataInizioPrevisione = dataInizioCalcolata;
             commessa.DataFinePrevisione = dataFineCalcolata;
+            commessa.StatoProgramma = StatoProgramma.Programmata; // ⭐ Imposta subito come Programmata
+            commessa.Bloccata = false; // ⭐ NON bloccata finché non va InProduzione
+            commessa.DataCambioStatoProgramma = DateTime.Now;
             commessa.UltimaModifica = DateTime.UtcNow;
             
             // Calcola OrdineSequenza (massimo + 10)

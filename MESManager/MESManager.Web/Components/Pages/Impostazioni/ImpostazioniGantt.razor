@@ -159,8 +159,29 @@
                                         Min="0" 
                                         Max="480" 
                                         Step="5" 
-                                        Variant="Variant.Outlined" />
+                                        Variant="Variant.Outlined"
+                                        Class="mb-4" />
                     }
+
+                    <MudDivider Class="my-4" />
+                    
+                    <MudText Typo="Typo.h6" Class="mb-3">Buffer Inizio Produzione</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3" Color="Color.Secondary">
+                        Quando carichi una commessa su Gantt (macchina vuota), verrà aggiunto automaticamente questo tempo 
+                        prima dell'inizio produzione. Questo ti permette di riorganizzare le commesse prima che vadano automaticamente 
+                        in stato "InProduzione" (e vengano bloccate).
+                    </MudText>
+                    
+                    <MudNumericField @bind-Value="impostazioniGantt.BufferInizioProduzioneMinuti" 
+                                    Label="Buffer inizio produzione (minuti)" 
+                                    Min="0" 
+                                    Max="240" 
+                                    Step="5" 
+                                    Variant="Variant.Outlined"
+                                    HelperText="Raccomandato: 15-30 minuti"
+                                    Adornment="Adornment.Start"
+                                    AdornmentIcon="@Icons.Material.Filled.AccessTime"
+                                    Class="mb-4" />
 
                     <MudButton Variant="Variant.Filled" 
                               Color="Color.Primary" 

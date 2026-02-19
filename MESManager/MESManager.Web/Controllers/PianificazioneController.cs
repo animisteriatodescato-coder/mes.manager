@@ -43,8 +43,10 @@ public class PianificazioneController : ControllerBase
     {
         try
         {
-            await AutoCompletaCommesseAsync();
-
+            // ⚠️ IMPORTANTE: NON chiamare AutoCompletaCommesseAsync qui!
+            // L'aggiornamento stati deve essere fatto da un job schedulato separato,
+            // non ad ogni lettura del Gantt (altrimenti ogni refresh modifica i dati in modo imprevedibile)
+            
             // Ottieni le impostazioni di produzione (o usa valori di default)
             var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
                 ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
@@ -765,7 +767,8 @@ public class PianificazioneController : ControllerBase
         
         try
         {
-            await AutoCompletaCommesseAsync();
+            // ⚠️ IMPORTANTE: NON auto-completare qui, modifica solo lo stato di esportazione
+            // Se serve aggiornare stati, usare l'endpoint dedicato POST /aggiorna-stati
 
             // STEP 1: Carica tutte commesse (debug)
             var tutteCommesse = await _context.Commesse.ToListAsync();
@@ -963,6 +966,10 @@ public class PianificazioneController : ControllerBase
         var now = DateTime.Now;
         int updateCount = 0;
 
+        // Carica il buffer di grazia dalle impostazioni Gantt
+        var impostazioniGantt = await _context.ImpostazioniGantt.FirstOrDefaultAsync();
+        var bufferMinuti = impostazioniGantt?.BufferInizioProduzioneMinuti ?? 15;
+
         // 1. Commesse da completare: DataFinePrevisione nel passato
         var commesseDaCompletare = await _context.Commesse
             .Where(c => c.NumeroMacchina != null
@@ -985,11 +992,13 @@ public class PianificazioneController : ControllerBase
                 commessa.Codice, commessa.DataFinePrevisione);
         }
 
-        // 2. Commesse da mettere in produzione: DataInizioPrevisione nel passato, DataFinePrevisione nel futuro
+        // 2. Commesse da mettere in produzione: DataInizioPrevisione nel passato (oltre il buffer), DataFinePrevisione nel futuro
+        // ⚠️ IMPORTANTE: Rispetta il buffer di grazia per consentire riorganizzazione (default 15 minuti)
+        var sogliaProduzione = now.AddMinutes(-bufferMinuti); // Avvia solo se passati N minuti dall'inizio previsto
         var commesseDaAvviare = await _context.Commesse
             .Where(c => c.NumeroMacchina != null
                         && c.DataInizioPrevisione.HasValue
-                        && c.DataInizioPrevisione.Value <= now
+                        && c.DataInizioPrevisione.Value <= sogliaProduzione // Buffer di grazia applicato
                         && c.DataFinePrevisione.HasValue
                         && c.DataFinePrevisione.Value >= now
                         && c.StatoProgramma == StatoProgramma.Programmata)
@@ -998,13 +1007,14 @@ public class PianificazioneController : ControllerBase
         foreach (var commessa in commesseDaAvviare)
         {
             commessa.StatoProgramma = StatoProgramma.InProduzione;
+            commessa.Bloccata = true; // ⭐ AUTO-BLOCCO: protegge da spostamenti accidentali
             commessa.DataCambioStatoProgramma = DateTime.Now;
             commessa.DataInizioProduzione ??= commessa.DataInizioPrevisione;
             commessa.UltimaModifica = DateTime.UtcNow;
             updateCount++;
             
-            _logger.LogInformation("Auto-avviata produzione commessa {Codice} (data inizio prevista: {DataInizio})", 
-                commessa.Codice, commessa.DataInizioPrevisione);
+            _logger.LogInformation("Auto-avviata produzione commessa {Codice} (data inizio prevista: {DataInizio}, buffer: {Buffer} min) - AUTO-BLOCCATA", 
+                commessa.Codice, commessa.DataInizioPrevisione, bufferMinuti);
         }
 
         // 3. Commesse da programmare: hanno NumeroMacchina ma sono ancora NonProgrammata

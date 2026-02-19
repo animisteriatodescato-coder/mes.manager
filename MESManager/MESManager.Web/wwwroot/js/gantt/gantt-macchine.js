@@ -93,7 +93,7 @@ window.GanttMacchine = {
                 remove: false,
                 overrideItems: false
             },
-            stack: false,  // ❌ DISABILITATO stack: le commesse POSSONO sovrapporsi sulla stessa riga
+            stack: false,  // ❌ DISABILITATO: vogliamo accodamento su STESSA riga, non righe multiple
             stackSubgroups: false,
             orientation: 'top',
             groupOrder: 'order',
@@ -102,9 +102,9 @@ window.GanttMacchine = {
                 axis: 5
             },
             snap: function(date, scale, step) {
-                // Snap a inizio ora lavorativa (8:00)
-                const hour = 8 * 60 * 60 * 1000;
-                return Math.round(date / hour) * hour;
+                // Snap a intervalli di 15 minuti per posizionamento preciso
+                const interval = 15 * 60 * 1000; // 15 minuti in millisecondi
+                return Math.round(date / interval) * interval;
             },
             verticalScroll: true,
             zoomable: true,
@@ -165,11 +165,25 @@ window.GanttMacchine = {
                     return;
                 }
 
-                // LOCK: Double-check bloccata
+                // BLOCCO COMMESSE BLOCCATE: Se bloccata, chiedi conferma esplicita
                 if (item.bloccata) {
-                    alert('Impossibile spostare una commessa bloccata. Sbloccarla prima.');
-                    callback(null);
-                    return;
+                    const statoProd = item.statoProgramma || 'sconosciuto';
+                    const conferma = confirm(
+                        `⚠️ ATTENZIONE - COMMESSA BLOCCATA\n\n` +
+                        `La commessa "${item.codice}" è attualmente bloccata.\n` +
+                        `Stato: ${statoProd}\n\n` +
+                        `Nota: Le commesse in produzione sono bloccate automaticamente per evitare ` +
+                        `conflitti con la produzione reale.\n\n` +
+                        `Sei SICURO di volerla spostare?`
+                    );
+                    
+                    if (!conferma) {
+                        callback(null); // Annulla drag
+                        return;
+                    }
+                    
+                    // Se confermato, sblocca temporaneamente lato server
+                    console.log('⚠️ Utente ha confermato lo spostamento di commessa bloccata:', item.codice);
                 }
 
                 // Extract machine number from group code
@@ -185,6 +199,9 @@ window.GanttMacchine = {
 
                 console.log(`✓ Moving item ${item.id} to machine ${targetMacchina} at ${item.start}`);
 
+                // Salva la data richiesta per confronto post-accodamento
+                const targetDataInizio = item.start.toISOString();
+
                 try {
                     // Call server API to persist the move - URL CORRETTO
                     const response = await fetch('/api/pianificazione/sposta-commessa', {
@@ -195,7 +212,7 @@ window.GanttMacchine = {
                         body: JSON.stringify({
                             commessaId: item.id,
                             targetMacchina: targetMacchina,
-                            targetDataInizio: item.start.toISOString(),
+                            targetDataInizio: targetDataInizio,
                             insertBeforeCommessaId: null
                         })
                     });
@@ -219,6 +236,27 @@ window.GanttMacchine = {
                     console.log('✓ Move result:', result);
 
                     if (result.success) {
+                        // ⚠️ IMPORTANTE: Il server potrebbe aver ACCODATO la commessa (se c'era sovrapposizione)
+                        // Trova la nuova posizione calcolata dal server per questa commessa
+                        const commessaAggiornata = result.commesseAggiornate.find(c => c.id === item.id);
+                        
+                        if (commessaAggiornata) {
+                            // Aggiorna item con la posizione ESATTA calcolata dal server
+                            item.start = new Date(commessaAggiornata.dataInizioPrevisione);
+                            item.end = new Date(commessaAggiornata.dataFinePrevisione);
+                            
+                            // Log se la posizione è cambiata (accodamento)
+                            const dataRichiesta = new Date(targetDataInizio);
+                            const dataEffettiva = new Date(commessaAggiornata.dataInizioPrevisione);
+                            if (Math.abs(dataRichiesta - dataEffettiva) > 60000) { // Più di 1 minuto di differenza
+                                console.log('🔄 Commessa accodata dal server:', {
+                                    richiesta: dataRichiesta.toLocaleString(),
+                                    effettiva: dataEffettiva.toLocaleString(),
+                                    motivazione: 'Sovrapposizione rilevata - accodamento automatico'
+                                });
+                            }
+                        }
+                        
                         // Update all items with server-calculated positions
                         self.updateItemsFromServer(result.commesseAggiornate, result.updateVersion);
                         
@@ -231,7 +269,7 @@ window.GanttMacchine = {
                             self.dotNetHelper.invokeMethodAsync('OnCommessaMoved', result);
                         }
 
-                        callback(item); // Accept the move
+                        callback(item); // Accept the move with server position
                     } else {
                         alert('Errore: ' + result.errorMessage);
                         callback(null); // Cancel the move

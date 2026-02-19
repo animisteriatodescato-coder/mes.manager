@@ -40,6 +40,7 @@ public class ImpostazioniGanttAppService : IImpostazioniGanttAppService
 
         entity.AbilitaTempoAttrezzaggio = dto.AbilitaTempoAttrezzaggio;
         entity.TempoAttrezzaggioMinutiDefault = dto.TempoAttrezzaggioMinutiDefault;
+        entity.BufferInizioProduzioneMinuti = dto.BufferInizioProduzioneMinuti;
         entity.DataModifica = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
@@ -52,7 +53,8 @@ public class ImpostazioniGanttAppService : IImpostazioniGanttAppService
         {
             Id = entity.Id,
             AbilitaTempoAttrezzaggio = entity.AbilitaTempoAttrezzaggio,
-            TempoAttrezzaggioMinutiDefault = entity.TempoAttrezzaggioMinutiDefault
+            TempoAttrezzaggioMinutiDefault = entity.TempoAttrezzaggioMinutiDefault,
+            BufferInizioProduzioneMinuti = entity.BufferInizioProduzioneMinuti
         };
     }
 }
