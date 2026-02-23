@@ -94,6 +94,42 @@ Quando l'utente clicca "Carica su Gantt" dalla pagina Commesse Aperte, ora viene
 3. **Click Auto-Scheduler**: Comportamento identico a versione precedente
 4. **Click Annulla**: Nessun caricamento, operazione annullata
 
+### 🚀 Deploy Produzione
+
+**Data Deploy**: 23 Febbraio 2026 - 14:45  
+**Server**: 192.168.1.230  
+**Versione Precedente**: v1.47.0  
+**Versione Deployata**: v1.49.0 (include v1.48.0 + v1.49.0)  
+**Esito**: ✅ SUCCESSO  
+**Durata**: ~8 minuti
+
+**Modifiche Deployate**:
+- v1.48.0: Fix centralizzazione cliente (clienteDisplay in tutti i grid)
+- v1.49.0: Selezione macchina manuale prima carica Gantt
+
+**Procedura Deploy**:
+1. ✅ Build Release mode (0 errori)
+2. ✅ Publish Web + Worker + PlcSync (~163MB + 107MB + 103MB)
+3. ✅ Backup produzione creato: `backups/prod_v147_20260223_142509`
+4. ✅ Servizi fermati: Web/Worker/PlcSync (taskkill remoto)
+5. ✅ Copia file via robocopy (file protetti esclusi)
+6. ✅ Servizi riavviati: StartMESWeb task schedulato
+7. ✅ Verifica HTTP 200 + versione v1.49.0 confermata
+
+**Servizi Post-Deploy**:
+- MESManager.Web.exe (PID 91752) ✅
+- MESManager.Worker.exe (PID 103820) ✅
+- MESManager.PlcSync.exe (PID 111356) ✅
+
+**Verifica Funzionale**:
+- ✅ Server risponde: http://192.168.1.230:5156
+- ✅ Versione UI: v1.49.0 confermata
+- ⏳ Test utente: Catalogo Commesse (clienti corretti), Dialog macchine Gantt
+
+**File Protetti** (NON sovrascritti):
+- `appsettings.Secrets.json`
+- `appsettings.Database.json`
+
 ---
 
 ## 🔖 v1.48.0 - Fix Visualizzazione Cliente con Fallback Intelligente (23 Feb 2026)

@@ -1,0 +1,69 @@
+
+/**
+ * CONFIGURAZIONE DIMENSIONI LAYOUT - MESManager
+ * 
+ * Questo file centralizza tutte le configurazioni di dimensioni, altezze e font
+ * per facilitare la personalizzazione dell'interfaccia.
+ * 
+ * GUIDA VALORI:
+ * --appbar-height: Altezza barra principale (48px = Dense ridotto, 64px = Standard)
+ * --toolbar-padding: Padding toolbar Commesse (0.2rem = molto ridotto, 1rem = standard)
+ * --grid-offset: Offset totale per calcolare altezza griglia (somma di appbar + toolbar)
+ * --column-header-height: Altezza intestazioni colonne ag-Grid (32px = ridotto, 48px = standard)
+ * --font-size-*: Dimensioni font per vari elementi dell'interfaccia
+ */
+
+:root {
+    /* ========== ALTEZZE BARRE ========== */
+    --appbar-height: 44px;           /* Altezza app bar principale (MESManager) */
+    --toolbar-padding-y: 0.2rem;     /* Padding verticale toolbar Commesse */
+    --grid-offset: 150px;             /* Offset per altezza griglia (appbar + toolbar + margini) */
+    
+    /* ========== ALTEZZE AG-GRID ========== */
+    --column-header-height: 28px;    /* Altezza intestazioni colonne griglia */
+    --row-height: 38px;              /* Altezza righe griglia (sovrascritto da GridUiSettings) */
+    
+    /* ========== DIMENSIONI FONT ========== */
+    --font-size-appbar-title: 1.5rem;      /* MESManager title (h5) */
+    --font-size-toolbar-title: 1.25rem;    /* Commesse title (h6) */
+    --font-size-menu-item: 0.875rem;       /* Voci menu */
+    --font-size-button: 0.875rem;          /* Pulsanti */
+    
+    /* ========== SPAZIATURE ========== */
+    --toolbar-spacing: 1;            /* Spacing tra elementi toolbar MudStack */
+    --button-size: small;            /* Dimensione pulsanti: small, medium, large */
+}
+
+/* Applica altezza app bar */
+.mud-appbar.mud-appbar-dense {
+    min-height: var(--appbar-height) !important;
+}
+
+/* Applica padding toolbar Commesse */
+.toolbar-sticky {
+    padding: var(--toolbar-padding-y) 0 !important;
+}
+
+/* Altezza griglia calcolata dinamicamente */
+.commesse-grid-container {
+    height: calc(100vh - var(--grid-offset)) !important;
+}
+
+/* ========== RIDUZIONE PULSANTI 20% ========== */
+/* Pulsanti più compatti: ridotti del ~20% rispetto a default MudBlazor */
+.settings-panel .mud-button-root,
+.toolbar-sticky .mud-button-root {
+    font-size: 0.75rem !important;
+    padding: 3px 10px !important;
+    min-height: 30px !important;
+}
+
+.settings-panel .mud-icon-button-root,
+.toolbar-sticky .mud-icon-button-root {
+    padding: 4px !important;
+}
+
+.settings-panel .mud-button-root .mud-icon-root,
+.toolbar-sticky .mud-button-root .mud-icon-root {
+    font-size: 1.1rem !important;
+}

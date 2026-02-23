@@ -1,0 +1,8 @@
+/* Personalizzazioni ag-Grid */
+
+/* Stili zebra per le righe in dark mode */
+@media (prefers-color-scheme: dark) {
+    .ag-theme-alpine .ag-row-odd {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+}
