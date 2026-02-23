@@ -4,7 +4,94 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.49.0
+## 🔖 Versione Corrente: v1.50.0
+
+## 🔖 v1.50.0 - Centralizzazione Totale AG Grid (23 Feb 2026)
+
+**Data**: 23 Febbraio 2026
+
+### ♻️ Refactoring — Nessuna feature visibile, zero regressioni
+
+**Obiettivo**: Ridurre il codice duplicato nei 4 catalog Razor pages a **1 unico punto di modifica**
+per aggiungere una nuova griglia in ~10 minuti per un nuovo cliente.
+
+---
+
+#### Fase 1 — JavaScript (`ag-grid-factory.js`)
+
+- Creato `wwwroot/js/ag-grid-factory.js` — **factory unica** per tutti i catalog grid
+- `window.agGridFactory.setup(config)` registra `window[namespace]` con tutte le API standard:
+  `init`, `getState/setState/resetState`, `setQuickFilter`, `exportCsv`, `setUiVars`,
+  `toggleColumnPanel`, `getAllColumns/setColumnVisible`, `getStats`, `setCurrentUser`,
+  `registerDotNetRef/setDotNetRef`, `openRicetta`, `updateData`
+- Riscritti 4 file grid JS: ciascuno ora contiene **sole le `columnDefs` + chiamata setup**
+  - `commesse-grid.js`: 584 → 99 linee
+  - `articoli-grid.js`: 379 → 76 linee
+  - `clienti-grid.js`: 352 → 81 linee
+  - `anime-grid.js`: 584 → 159 linee
+- `App.razor`: aggiunto `<script src="/js/ag-grid-factory.js?v=1500">`
+- Eliminato `wwwroot/js/commesse-grid.js` (dead code legacy PascalCase)
+
+#### Fase 2 — Blazor UI (`GridSettingsPanel.razor`)
+
+- Creato `Components/Shared/GridSettingsPanel.razor` — pannello FontSize/RowHeight/Density/Zebra/GridLines condiviso
+- Sostituiti 4 pannelli inline identici con `<GridSettingsPanel @bind-Settings="settings" OnApplySettings="ApplyUiSettings" />`
+- `CatalogoCommesse`: rimosso MudDialog colonne (ora usa overlay overlay AG Grid nativo)
+
+#### Fase 3 — C# (`CatalogoGridBase.cs`)
+
+- Creato `Models/GridStats.cs` — model condiviso `Total/Filtered/Selected`
+- Creato `Models/GridUiSettings.cs`.`GetDensityPadding()` — elimina 4 switch identici
+- Creato `Components/Pages/Cataloghi/CatalogoGridBase.cs` — **abstract ComponentBase**
+  con tutti i metodi condivisi: `ApplyUiSettings`, `SaveSettings`, `FixGridState`,
+  `ResetToFixedState`, `ToggleColumnPanel`, `ExportCsv`, `UpdateGridStats`,
+  `LoadSavedSettings`, `InitializeGridJs`, `OnSearchDebounced`, `*_Public`, proprietà AppBar
+- 4 Razor pages aggiornate con `@inherits CatalogoGridBase` + 3 righe di identità:
+  ```razor
+  protected override string GridNamespace => "articoliGrid";
+  protected override string SettingsKey   => "articoli-grid";
+  protected override string PageKey       => "articoli";
+  ```
+
+### 📊 Risultati
+
+| File | Prima | Dopo | Risparmio |
+|------|-------|------|-----------|
+| `CatalogoArticoli.razor` | 392 | 167 | −225 |
+| `CatalogoClienti.razor` | 349 | 139 | −210 |
+| `CatalogoAnime.razor` | 455 | 222 | −233 |
+| `CatalogoCommesse.razor` | 387 | 165 | −222 |
+| `commesse-grid.js` | 297 | 99 | −198 |
+| `articoli-grid.js` | 379 | 76 | −303 |
+| `clienti-grid.js` | 352 | 81 | −271 |
+| `anime-grid.js` | 584 | 159 | −425 |
+| **Totale netto** | **~3195** | **~1108** | **−2087** |
+
+### 📁 File Modificati
+
+**Creati**:
+- `MESManager.Web/wwwroot/js/ag-grid-factory.js`
+- `MESManager.Web/Components/Shared/GridSettingsPanel.razor`
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoGridBase.cs`
+- `MESManager.Web/Models/GridStats.cs`
+
+**Modificati**:
+- `MESManager.Web/wwwroot/lib/ag-grid/commesse-grid.js`
+- `MESManager.Web/wwwroot/js/articoli-grid.js`
+- `MESManager.Web/wwwroot/js/clienti-grid.js`
+- `MESManager.Web/wwwroot/js/anime-grid.js`
+- `MESManager.Web/Components/App.razor`
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoArticoli.razor`
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoClienti.razor`
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoAnime.razor`
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoCommesse.razor`
+- `MESManager.Web/Models/GridUiSettings.cs`
+- `MESManager.Web/Constants/AppVersion.cs` — v1.50.0
+
+**Eliminati**:
+- `MESManager.Web/wwwroot/js/commesse-grid.js` (dead code)
+
+---
 
 ## 🔖 v1.49.0 - Selezione Macchina Manuale su Carica Gantt (23 Feb 2026)
 

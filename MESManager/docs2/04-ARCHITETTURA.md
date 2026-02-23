@@ -603,3 +603,64 @@ Per configurazione: [03-CONFIGURAZIONE.md](03-CONFIGURAZIONE.md)
 Per deploy: [01-DEPLOY.md](01-DEPLOY.md)  
 Per replica sistema: [05-REPLICA-SISTEMA.md](05-REPLICA-SISTEMA.md)  
 Per PLC: [07-PLC-SYNC.md](07-PLC-SYNC.md)
+
+---
+
+## 🧩 Pattern di Centralizzazione (v1.50.0+)
+
+### Catalog Grid Pattern
+
+Per aggiungere un **nuovo catalog con AG Grid**, creare:
+
+1. **Grid JS** (`wwwroot/lib/ag-grid/nuovotipo-grid.js`) — solo `columnDefs` + `agGridFactory.setup(...)`:
+```js
+const columnDefs = [ /* colonne specifiche */ ];
+agGridFactory.setup({
+    namespace: 'nuovoTipoGrid',
+    columnDefs,
+    exportFileName: 'export-nuovo-tipo.csv',
+    storageKeyBase: 'nuovo-tipo-grid-columnState',
+    eventName: 'nuovoTipoGridStatsChanged',
+});
+```
+
+2. **Razor Page** — usa `@inherits CatalogoGridBase`, 3 righe di identità, solo logica specifica:
+```razor
+@page "/cataloghi/nuovotipo"
+@inherits CatalogoGridBase
+@inject HttpClient Http
+
+@code {
+    protected override string GridNamespace => "nuovoTipoGrid";
+    protected override string SettingsKey   => "nuovo-tipo-grid";
+    protected override string PageKey       => "nuovotipo";
+
+    private List<NuovoTipoDto> _items = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        PageToolbarService.SetActivePage(PageKey, this);
+        _items = await Http.GetFromJsonAsync<List<NuovoTipoDto>>("api/NuovoTipo") ?? new();
+        totalRows = _items.Count;
+        await LoadSavedSettings();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) { await Task.Delay(100); await InitializeGridJs(_items); }
+    }
+}
+```
+
+**Tutto il resto** (settings, stats, search, export, AppBar, column panel, dispose) è gestito da `CatalogoGridBase`.
+
+### File architettura centralizzazione
+
+| File | Scopo |
+|------|-------|
+| `wwwroot/js/ag-grid-factory.js` | UNICA implementazione logica AG Grid |
+| `Components/Shared/GridSettingsPanel.razor` | UI pannello impostazioni condiviso |
+| `Components/Pages/Cataloghi/CatalogoGridBase.cs` | Base class C# per tutti i catalog |
+| `Models/GridStats.cs` | DTO stats griglia (Total/Filtered/Selected) |
+| `Models/GridUiSettings.cs` | Settings UI griglia + `GetDensityPadding()` |
+
