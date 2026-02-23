@@ -102,47 +102,106 @@ Quando l'utente clicca "Carica su Gantt" dalla pagina Commesse Aperte, ora viene
 
 ### 🐛 Bug Fixes
 
-**Problema**: Catalogo Commesse mostrava fornitori nella colonna Cliente invece dei clienti reali
+**Problema Iniziale**: Catalogo Commesse e Commesse Aperte mostravano clienti DIVERSI (TIM, TONER su Catalogo vs Fonderie corrette su Aperte)
 
-**Causa**: Duplicazione fonte dati - 2 campi per il cliente creava ambiguità:
-- `CompanyName` (da sincronizzazione Mago) → Conteneva dati misti (clienti + fornitori) ❌
-- `ClienteRagioneSociale` (da tabella Clienti via FK ClienteId) → Fonte corretta ma NULL se ClienteId mancante ⚠️
+**Causa Root (scoperta in 2 fasi)**:
+
+#### FASE 1 - Backend: Duplicazione fonte dati
+- `CompanyName` (da sincronizzazione Mago) → Dati corretti fonderie ✅
+- `ClienteRagioneSociale` (da tabella Clienti via FK ClienteId) → Dati errati fornitori ❌
 
 **Tentativo Iniziale Fallito**: 
-- Eliminato CompanyName → Causava campi vuoti per commesse senza ClienteId valorizzato ❌
-- Problema: Alcune commesse non hanno FK ClienteId valorizzato correttamente nella sync Mago
+- Priorità: `ClienteRagioneSociale ?? CompanyName ?? "N/D"` ❌
+- Risultato: Mostrava fornitori (TIM, TONER) invece delle fonderie
+- Problema: Tabella Clienti popolata con dati errati dalla sync Mago
 
-**Soluzione Definitiva**: Fallback intelligente con priorità INVERTITA (fix)
+**Fix Backend**:
 1. **Proprietà calcolata**: `ClienteDisplay => CompanyName ?? ClienteRagioneSociale ?? "N/D"`
-2. **Priorità** (corretta dopo feedback utente):
-   - 1ª scelta: `CompanyName` (dati Mago) ✅ FONTE CORRETTA
-   - 2ª scelta: `ClienteRagioneSociale` (tabella Clienti) ⚠️ Contiene dati errati
+2. **Priorità INVERTITA** (corretta dopo feedback utente):
+   - 1ª scelta: `CompanyName` (sync Mago) ✅ FONTE CORRETTA - fonderie reali
+   - 2ª scelta: `ClienteRagioneSociale` (tabella Clienti) ❌ Contiene fornitori
    - 3ª scelta: "N/D"
-3. **Motivo inversione**: Tabella Clienti popolata con dati errati, sync Mago è fonte affidabile
-3. **Frontend**: Tutti i grid usano `ClienteDisplay` / `clienteDisplay`
+
+#### FASE 2 - Frontend: File JS NON centralizzati (problema CRITICO)
+
+**Problema Reale Trovato**:
+Nonostante il fix backend, le 2 pagine mostravano ANCORA dati diversi perché i file JavaScript usavano campi DIVERSI:
+
+🔴 **PROBLEMA #1 (ROOT CAUSE)**:
+- File: `/lib/ag-grid/commesse-grid.js` (Catalogo Commesse)
+- Campo SBAGLIATO: `field: 'clienteRagioneSociale'` → mostrava TIM/TONER ❌
+- File: `/lib/ag-grid/commesse-aperte-grid.js` (Commesse Aperte)  
+- Campo CORRETTO: `field: 'clienteDisplay'` → mostrava fonderie ✅
+
+🔴 **PROBLEMA #2**:
+- File: `/lib/ag-grid/programma-macchine-grid.js`
+- 2 occorrenze di `clienteRagioneSociale` invece di `clienteDisplay`
+
+🔴 **PROBLEMA #3**:
+- Cache busting NON incrementato dopo modifiche JS
+- Browser serviva file cached vecchi (v=1455) invece dei nuovi
+
+**Soluzione Definitiva FASE 2**:
+1. ✅ `commesse-grid.js`: `clienteRagioneSociale` → `clienteDisplay` (linea 30)
+2. ✅ `commesse-aperte-grid.js`: fallback logico → campo centralizzato `clienteDisplay`
+3. ✅ `programma-macchine-grid.js`: 2 occorrenze aggiornate a `clienteDisplay`
+4. ✅ `App.razor`: Cache busting v=1455 → v=1457
+
+**Risultato**: TUTTE le pagine ora mostrano fonderie corrette (OLMAT, GDC CAST, VDP) - ZERO fornitori (TIM, TONER)
 
 ### 📁 File Modificati
+
+**Backend**:
 - `MESManager.Application/DTOs/CommessaDto.cs` - Aggiunta proprietà calcolata ClienteDisplay
 - `MESManager.Infrastructure/Services/CommessaAppService.cs` - Ripristinato mapping CompanyName
-- `MESManager.Web/wwwroot/js/commesse-grid.js` - Usa ClienteDisplay
-- `MESManager.Web/wwwroot/lib/ag-grid/commesse-aperte-grid.js` - Usa clienteDisplay
+
+**Frontend**:
+- `MESManager.Web/wwwroot/lib/ag-grid/commesse-grid.js` - clienteRagioneSociale → clienteDisplay ⭐
+- `MESManager.Web/wwwroot/lib/ag-grid/commesse-aperte-grid.js` - Usa clienteDisplay centralizzato ⭐
+- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` - 2 occorrenze aggiornate ⭐
+- `MESManager.Web/Components/App.razor` - Cache busting v=1457 ⭐
 - `MESManager.Web/Components/Pages/Programma/CommesseAperte.razor` - Etichette usano ClienteDisplay
-- `docs2/08-CHANGELOG.md` - Questa entry
+
+**Docs**:
+- `docs2/08-CHANGELOG.md` - Questa entry completa
 
 ### 📚 Principi Bibbia AI Applicati
-- ✅ **Priorità fonte corretta**: Usa ClienteRagioneSociale quando disponibile
-- ✅ **Backward compatible**: Fallback a CompanyName per commesse legacy
-- ✅ **Robustezza**: Nessun campo vuoto, sempre visualizzazione cliente
+- ✅ **UNA fonte di verità**: Campo centralizzato calcolato backend, tutti i FE lo leggono
+- ✅ **ZERO duplicazione logica**: Eliminata duplicazione calcolo cliente in FE
+- ✅ **Priorità fonte corretta**: CompanyName (Mago) è affidabile, ClienteId FK ha dati errati
+- ✅ **Backward compatible**: Fallback preserva funzionamento anche con dati legacy
+- ✅ **Cache busting**: Incremento seriale per forzare download nuovi JS
+
+### ⚠️ Lezioni Apprese
+
+**Debugging Multi-Layer**:
+1. ❌ NON fermarsi al fix backend se il problema persiste in UI
+2. ✅ Verificare contenuto REALE file serviti (non solo source code)
+3. ✅ Controllare matching field names esatto (case sensitivity JS)
+4. ✅ Incrementare SEMPRE cache busting dopo modifiche file statici
+
+**Centralizzazione**:
+- Backend: 1 proprietà calcolata (`ClienteDisplay`)
+- Frontend: TUTTI i grid usano lo STESSO campo (`clienteDisplay`)
+- Risultato: Impossibile vedere dati diversi su pagine diverse
 
 ### ⚠️ Note Tecniche
-- Campo `CompanyName` mantenuto per sync Mago e fallback
-- Soluzione temporanea fino a fix sync Mago (valorizzare sempre ClienteId)
-- Future improvement: Validare ClienteId durante sync per garantire fonte unica
+- Campo `CompanyName` è FONTE CORRETTA (sync Mago)
+- Campo `ClienteRagioneSociale` contiene dati errati (fornitori invece clienti)
+- Sync Mago popola `CompanyName` correttamente ma NON valorizza `ClienteId` FK
+- Soluzione attuale è definitiva - dati corretti garantiti
 
-### 🔧 TODO Futuro
-- [ ] Fix sync Mago: cercare e valorizzare ClienteId da tabella Clienti durante import
-- [ ] Migration dati: associare ClienteId alle commesse esistenti con CompanyName
-- [ ] Dopo migration: rimuovere CompanyName e usare solo ClienteRagioneSociale
+### 🔧 TODO Futuro (Data Quality)
+- [ ] Fix sync Mago: match CompanyName con tabella Clienti e valorizza ClienteId FK
+- [ ] Validazione: impedire inserimento fornitori in tabella Clienti
+- [ ] Dopo fix sync: monitorare che ClienteRagioneSociale = CompanyName
+- [ ] Eventuale cleanup: rimuovere fornitori da tabella Clienti
+
+### ✅ Verifica Completata
+- ✅ Utente conferma: entrambe pagine mostrano clienti IDENTICI e CORRETTI
+- ✅ Catalogo Commesse: fonderie (OLMAT, GDC CAST, VDP, FONDERIA ZARDO)
+- ✅ Commesse Aperte: fonderie (OLMAT, GDC CAST, VDP, FONDERIA ZARDO)
+- ❌ Nessun fornitore TIM o TONER visibile su nessuna pagina
 
 ---
 

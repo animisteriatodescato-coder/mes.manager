@@ -176,6 +176,7 @@ cd C:\Dev; dotnet run --project MESManager/MESManager.Web/MESManager.Web.csproj 
 **Test E2E Guideline**:
 - Modifica a `*.razor` componenti → Test OBBLIGATORIO
 - Modifica a JavaScript (`wwwroot/js`) → Test OBBLIGATORIO  
+- **⚠️ Modifica JS/CSS statici → INCREMENTA cache busting** (App.razor ?v=XXXX)
 - Modifica backend services → Test opzionale (ma consigliato)
 - Test fallito → Leggi `TestResults/Playwright/*/errors.txt` + screenshot
 
