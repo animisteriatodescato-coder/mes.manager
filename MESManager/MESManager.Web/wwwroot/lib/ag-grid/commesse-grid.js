@@ -27,7 +27,7 @@ window.commesseGrid = (function() {
             width: 300 
         },
         { 
-            field: 'clienteRagioneSociale', 
+            field: 'clienteDisplay', 
             headerName: 'Cliente', 
             sortable: true, 
             filter: true, 

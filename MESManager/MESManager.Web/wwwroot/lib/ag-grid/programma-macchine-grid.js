@@ -57,7 +57,7 @@ window.programmaMacchineGrid = (function() {
             suppressMenu: true,
             cellRenderer: params => {
                 if (params.data.isPlaceholder) return '';
-                const hasData = params.data && params.data.codiceAnime && params.data.clienteRagioneSociale;
+                const hasData = params.data && params.data.codiceAnime && params.data.clienteDisplay;
                 const icon = hasData ? '🖨️' : '⚠️';
                 const title = hasData ? 'Stampa Etichetta' : 'Dati incompleti - Clicca per dettagli';
                 const color = hasData ? '#1976d2' : '#ff9800';
@@ -149,7 +149,7 @@ window.programmaMacchineGrid = (function() {
             valueFormatter: params => params.value != null ? '€ ' + params.value.toFixed(2) : ''
         },
         { 
-            field: 'clienteRagioneSociale', 
+            field: 'clienteDisplay', 
             headerName: 'Cliente', 
             sortable: true, 
             filter: true, 

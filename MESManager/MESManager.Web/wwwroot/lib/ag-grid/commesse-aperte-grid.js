@@ -29,7 +29,7 @@ window.commesseAperteGrid = (function() {
     function hasDatiEtichettaCompleti(data) {
         return data && 
                data.codiceAnime && 
-               (data.clienteRagioneSociale || data.companyName); // Fallback intelligente
+               data.clienteDisplay; // Campo centralizzato con fallback backend
     }
 
     const columnDefs = [
