@@ -35,7 +35,7 @@
                                AdornmentIcon="@Icons.Material.Filled.Search"
                                AdornmentColor="Color.Primary"
                                MaxItems="50"
-                               Style="width: 200px;">
+                               Style="width: 240px;">
                     <ItemTemplate Context="item">
                         <MudText Typo="Typo.body2">@item</MudText>
                     </ItemTemplate>
@@ -44,10 +44,19 @@
                 <MudButton Variant="Variant.Filled" 
                          Color="Color.Success" 
                          StartIcon="@Icons.Material.Filled.Save"
-                         OnClick="SalvaDb55ComeRicettaArticoloAsync"
+                         OnClick="SalvaRicettaDaPlcAsync"
                          Size="Size.Small"
                          Disabled="@(string.IsNullOrEmpty(_codiceArticoloSelezionato) || _loading)">
-                    Salva Ricetta
+                    Salva Ricetta da DB56
+                </MudButton>
+                
+                <MudButton Variant="Variant.Filled" 
+                         Color="Color.Warning" 
+                         StartIcon="@Icons.Material.Filled.ContentCopy"
+                         Size="Size.Small"
+                         OnClick="CopiaDb55ToDb56Async"
+                         Disabled="@_loading">
+                    Sincronizza DB56 → DB55
                 </MudButton>
                 
                 <MudButton Variant="Variant.Outlined" 
@@ -87,7 +96,7 @@
                         <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
                     }
                     
-                    <MudTable Items="@_db55Entries" Dense="true" Striped="true" Hover="true" FixedHeader="true" Height="350px">
+                    <MudTable Items="@_db55Entries" Dense="true" Striped="true" Hover="true" FixedHeader="true" Height="500px">
                         <HeaderContent>
                             <MudTh>Offset</MudTh>
                             <MudTh>Parametro</MudTh>
@@ -107,17 +116,6 @@
                             </MudTd>
                         </RowTemplate>
                     </MudTable>
-                    
-                    <MudStack Row="true" Spacing="2" Class="mt-3">
-                        <MudButton Variant="Variant.Filled" 
-                                 Color="Color.Success" 
-                                 StartIcon="@Icons.Material.Filled.ContentCopy"
-                                 FullWidth="true"
-                                 OnClick="CopiaDb55ToDb56Async"
-                                 Disabled="@_loading">
-                            Sincronizza DB56 → DB55
-                        </MudButton>
-                    </MudStack>
                 </MudPaper>
             </MudItem>
             
@@ -141,7 +139,7 @@
                         <MudProgressLinear Indeterminate="true" Color="Color.Secondary" Class="mb-2" />
                     }
                     
-                    <MudTable Items="@_db56Entries" Dense="true" Striped="true" Hover="true" FixedHeader="true" Height="350px">
+                    <MudTable Items="@_db56Entries" Dense="true" Striped="true" Hover="true" FixedHeader="true" Height="500px">
                         <HeaderContent>
                             <MudTh>Offset</MudTh>
                             <MudTh>Parametro</MudTh>
@@ -267,10 +265,10 @@
     }
     
     /// <summary>
-    /// Salva DB55 corrente come ricetta master per articolo
-    /// NUOVA LOGICA: DB55 (lettura macchina) → salva come ricetta articolo nel database
+    /// Salva parametri runtime DB56 (offset 100-196) come ricetta master per articolo.
+    /// FONTE DATI: DB56 offset 100-196 (parametri esecuzione scritti dal PLC)
     /// </summary>
-    private async Task SalvaDb55ComeRicettaArticoloAsync()
+    private async Task SalvaRicettaDaPlcAsync()
     {
         if (string.IsNullOrEmpty(_codiceArticoloSelezionato))
             return;
@@ -278,22 +276,22 @@
         _loading = true;
         try
         {            
-            var request = new SaveDb55AsRecipeRequest
+            var request = new SaveRecipeFromPlcRequest
             {
                 MacchinaId = MacchinaId,
                 CodiceArticolo = _codiceArticoloSelezionato,
-                Entries = _db55Entries // Passa i dati già caricati
+                Entries = _db56Entries // DB56 offset 100-196 (parametri runtime macchina)
             };
             
-            var response = await HttpClient.PostAsJsonAsync("/api/plc/save-db55-as-recipe", request);
+            var response = await HttpClient.PostAsJsonAsync("/api/plc/save-recipe-from-plc", request);
             
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<SaveDb55AsRecipeResult>();
+                var result = await response.Content.ReadFromJsonAsync<SaveRecipeFromPlcResult>();
                 if (result != null && result.Success)
                 {
-                    Snackbar.Add($"✅ DB55 salvato come ricetta per articolo {_codiceArticoloSelezionato} ({result.NumeroParametriSalvati} parametri)", Severity.Success);
-                    Logger.LogInformation("DB55 salvato come ricetta per articolo {Codice} - {NumParametri} parametri", _codiceArticoloSelezionato, result.NumeroParametriSalvati);
+                    Snackbar.Add($"✅ Ricetta salvata da DB56 per articolo {_codiceArticoloSelezionato} ({result.NumeroParametriSalvati} parametri offset 100-196)", Severity.Success);
+                    Logger.LogInformation("Ricetta salvata da DB56 per articolo {Codice} - {NumParametri} parametri", _codiceArticoloSelezionato, result.NumeroParametriSalvati);
                 }
                 else
                 {

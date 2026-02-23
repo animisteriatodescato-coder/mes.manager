@@ -7,4 +7,5 @@ public interface IRicettaRepository
     Task<List<Articolo>> GetArticoliConRicettaAsync(string? searchTerm = null, int maxResults = 50);
     Task<Articolo?> GetArticoloConRicettaByCodeAsync(string codiceArticolo);
     Task<int> CountArticoliConRicettaAsync();
+    Task<Dictionary<Guid, RicettaInfo>> GetRicetteInfoByArticoloIdAsync(List<Guid> articoloIds);
 }

@@ -58,6 +58,9 @@ public static class DependencyInjection
         services.AddScoped<IQuoteAttachmentService, QuoteAttachmentService>();
         services.AddScoped<IQuotePdfGenerator, QuotePdfGenerator>();
         
+        // Lavorazioni Anime Services (v1.40.0 - Preventivi lavorazioni)
+        services.AddScoped<IWorkProcessingService, WorkProcessingService>();
+        
         // PLC Recipe Services (v1.33.0 - Trasmissione ricette a PLC)
         services.AddScoped<IRicettaGanttService, RicettaGanttService>();
         services.AddScoped<IPlcRecipeWriterService, PlcRecipeWriterService>();

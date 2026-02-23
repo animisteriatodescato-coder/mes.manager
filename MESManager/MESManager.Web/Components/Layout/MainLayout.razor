@@ -84,59 +84,192 @@
             <MudNavGroup Expanded="true">
                 <TitleContent>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 16px; display: inline-flex; align-items: center;">💩</span>
+                        <span style="font-size: 16px; display: inline-flex; align-items: center;">�</span>
                         <span style="line-height: normal;">Programma Irene</span>
                     </div>
                 </TitleContent>
                 <ChildContent>
-                    <MudNavLink Href="/programma/programma-macchine">Programma</MudNavLink>
-                    <MudNavLink Href="/programma/commesse-aperte">Commesse</MudNavLink>
-                    <MudNavLink Href="/programma/gantt-macchine">Gantt</MudNavLink>
+                    <MudNavLink Href="/programma/programma-macchine">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 13px;">🔧</span>
+                            <span>Programma</span>
+                        </div>
+                    </MudNavLink>
+                    <MudNavLink Href="/programma/commesse-aperte">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 13px;">📋</span>
+                            <span>Commesse</span>
+                        </div>
+                    </MudNavLink>
+                    <MudNavLink Href="/programma/gantt-macchine">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 13px;">📊</span>
+                            <span>Gantt</span>
+                        </div>
+                    </MudNavLink>
                 </ChildContent>
             </MudNavGroup>
             
             <MudNavGroup Title="Produzione" Icon="@Icons.Material.Filled.Factory" IconColor="Color.Warning">
-                <MudNavLink Href="/produzione/dashboard">Dashboard</MudNavLink>
-                <MudNavLink Href="/produzione/plc-realtime">PLC Realtime</MudNavLink>
-                <MudNavLink Href="/produzione/plc-storico">PLC Storico</MudNavLink>
-                <MudNavLink Href="/produzione/incollaggio">Incollaggio</MudNavLink>
+                <MudNavLink Href="/produzione/dashboard">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">📈</span>
+                        <span>Dashboard</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/produzione/plc-realtime">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">⚡</span>
+                        <span>PLC Realtime</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/produzione/plc-storico">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">📜</span>
+                        <span>PLC Storico</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/produzione/incollaggio">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">🔗</span>
+                        <span>Incollaggio</span>
+                    </div>
+                </MudNavLink>
             </MudNavGroup>
             
             <MudNavGroup Title="Cataloghi" Icon="@Icons.Material.Filled.LibraryBooks" IconColor="Color.Info">
-                <MudNavLink Href="/cataloghi/commesse">Commesse</MudNavLink>
-                <MudNavLink Href="/cataloghi/anime">Anime</MudNavLink>
-                <MudNavLink Href="/cataloghi/articoli">Articoli</MudNavLink>
-                <MudNavLink Href="/cataloghi/clienti">Clienti</MudNavLink>
-                <MudNavLink Href="/cataloghi/ricette">Ricette</MudNavLink>
-                <MudNavLink Href="/cataloghi/foto">Foto</MudNavLink>
-                <MudNavLink Href="/cataloghi/preventivi">Preventivi</MudNavLink>
-                <MudNavLink Href="/cataloghi/listini">Listini Prezzi</MudNavLink>
+                <MudNavLink Href="/cataloghi/commesse">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">📦</span>
+                        <span>Commesse</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/cataloghi/anime">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">🎯</span>
+                        <span>Anime</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/cataloghi/articoli">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">📁</span>
+                        <span>Articoli</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/cataloghi/clienti">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">👥</span>
+                        <span>Clienti</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/cataloghi/ricette">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">📝</span>
+                        <span>Ricette</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/cataloghi/preventivi-anime/nuovo">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">💰</span>
+                        <span>Preventivi Lavorazioni Anime</span>
+                    </div>
+                </MudNavLink>
             </MudNavGroup>
             
             <MudNavGroup Title="Manutenzioni" Icon="@Icons.Material.Filled.Build" IconColor="Color.Secondary">
-                <MudNavLink Href="/manutenzioni/alert">Alert</MudNavLink>
-                <MudNavLink Href="/manutenzioni/catalogo">Catalogo</MudNavLink>
+                <MudNavLink Href="/manutenzioni/alert">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">⚠️</span>
+                        <span>Alert</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/manutenzioni/catalogo">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">🔩</span>
+                        <span>Catalogo</span>
+                    </div>
+                </MudNavLink>
             </MudNavGroup>
             
             <MudNavGroup Title="Sync" Icon="@Icons.Material.Filled.Sync" IconColor="Color.Success">
-                <MudNavLink Href="/sync/gantt">Gantt</MudNavLink>
-                <MudNavLink Href="/sync/mago">Mago</MudNavLink>
-                <MudNavLink Href="/sync/macchine">Macchine</MudNavLink>
+                <MudNavLink Href="/sync/gantt">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">🔄</span>
+                        <span>Gantt</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/sync/mago">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">🧙</span>
+                        <span>Mago</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/sync/macchine">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">🤖</span>
+                        <span>Macchine</span>
+                    </div>
+                </MudNavLink>
             </MudNavGroup>
             
             <MudNavGroup Title="Statistiche" Icon="@Icons.Material.Filled.BarChart" IconColor="Color.Tertiary">
-                <MudNavLink Href="/statistiche/produzione">Produzione</MudNavLink>
-                <MudNavLink Href="/statistiche/ordini">Ordini</MudNavLink>
-                <MudNavLink Href="/statistiche/plc-storico">PLC Storico</MudNavLink>
+                <MudNavLink Href="/statistiche/produzione">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">📉</span>
+                        <span>Produzione</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/statistiche/ordini">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">📊</span>
+                        <span>Ordini</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/statistiche/plc-storico">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">📡</span>
+                        <span>PLC Storico</span>
+                    </div>
+                </MudNavLink>
             </MudNavGroup>
             
             <MudNavGroup Title="Impostazioni" Icon="@Icons.Material.Filled.Settings" IconColor="Color.Dark">
-                <MudNavLink Href="/impostazioni/gantt">Gantt Macchine</MudNavLink>
-                <MudNavLink Href="/impostazioni/tabelle">Tabelle</MudNavLink>
-                <MudNavLink Href="/impostazioni/utenti">Utenti</MudNavLink>
-                <MudNavLink Href="/impostazioni/operatori">Operatori</MudNavLink>
-                <MudNavLink Href="/impostazioni/generali">Generali</MudNavLink>
-                <MudNavLink Href="/impostazioni/issue-log" Icon="@Icons.Material.Filled.BugReport">Issue Log</MudNavLink>
+                <MudNavLink Href="/impostazioni/gantt">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">⚙️</span>
+                        <span>Gantt Macchine</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/impostazioni/tabelle">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">📊</span>
+                        <span>Tabelle</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/impostazioni/utenti">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">👤</span>
+                        <span>Utenti</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/impostazioni/operatori">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">👷</span>
+                        <span>Operatori</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/impostazioni/generali">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">🔧</span>
+                        <span>Generali</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/impostazioni/issue-log" Icon="@Icons.Material.Filled.BugReport">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">🐛</span>
+                        <span>Issue Log</span>
+                    </div>
+                </MudNavLink>
             </MudNavGroup>
         </MudNavMenu>
     </MudDrawer>

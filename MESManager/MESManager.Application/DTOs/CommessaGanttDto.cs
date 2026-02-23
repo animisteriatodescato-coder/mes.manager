@@ -53,4 +53,9 @@ public class CommessaGanttDto
     
     // Codice Cassa (dalla tabella Anime)
     public string? CodiceCassa { get; set; }
+    
+    // Ricetta configurata
+    public bool HasRicetta { get; set; }
+    public int NumeroParametri { get; set; }
+    public DateTime? RicettaUltimaModifica { get; set; }
 }

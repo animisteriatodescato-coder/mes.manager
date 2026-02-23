@@ -18,5 +18,6 @@ public enum QuoteStatus
 public enum QuoteRowType
 {
     Manual = 0,         // Riga inserita manualmente
-    FromPriceList = 1   // Riga da listino prezzi
+    FromPriceList = 1,  // Riga da listino prezzi
+    WorkProcessing = 2  // Riga lavorazione anime con calcolo automatico
 }

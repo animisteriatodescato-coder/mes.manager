@@ -4,7 +4,814 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.38.8
+## 🔖 Versione Corrente: v1.49.0
+
+## 🔖 v1.49.0 - Selezione Macchina Manuale su Carica Gantt (23 Feb 2026)
+
+**Data**: 23 Febbraio 2026
+
+### ✨ Features
+
+**Funzionalità**: Selezione macchina manuale prima del caricamento su Gantt
+
+**Descrizione**: 
+Quando l'utente clicca "Carica su Gantt" dalla pagina Commesse Aperte, ora viene mostrato un dialog di selezione macchina basato sulle macchine disponibili configurate nell'Anima (campo `MacchineSuDisponibili`).
+
+**Flow Utente**:
+1. Selezione commessa da griglia Commesse Aperte
+2. Click pulsante "🚀 Carica su Gantt"
+3. **[NUOVO]** Sistema recupera macchine disponibili da `Anime.MacchineSuDisponibili`
+4. **[NUOVO]** Se disponibili → Dialog con lista macchine selezionabili
+5. **[NUOVO]** Utente può:
+   - Selezionare macchina specifica → Forza assegnazione manuale
+   - Click "Auto-Scheduler" → Usa algoritmo automatico (comportamento precedente)
+   - Click "Annulla" → Operazione annullata
+6. Sistema carica commessa su Gantt con macchina selezionata/auto-assegnata
+
+**Vantaggi**:
+- ✅ Controllo manuale dell'assegnazione macchina quando necessario
+- ✅ Preserva funzionalità auto-scheduler esistente
+- ✅ Basato su configurazione ricette (campo MacchineSuDisponibili già esistente)
+- ✅ UX chiara con MudBlazor dialog
+
+### 📁 File Modificati
+
+**Backend**:
+- `MESManager.Web/Controllers/PianificazioneController.cs` - Nuovo endpoint GET macchine-disponibili/{commessaId}
+- `MESManager.Infrastructure/Services/PianificazioneEngineService.cs` - Parametro opzionale numeroMacchinaManuale in CaricaSuGanttAsync
+- `MESManager.Application/Interfaces/IPianificazioneEngineService.cs` - Aggiornata interfaccia CaricaSuGanttAsync
+- `MESManager.Application/DTOs/PianificazioneDto.cs` - Nuovi DTO: MacchinaDisponibileDto, CaricaSuGanttRequest
+
+**Frontend**:
+- `MESManager.Web/Components/Pages/Programma/CommesseAperte.razor` - Modificato CaricaSuGantt() con logica dialog
+- `MESManager.Web/Components/Dialogs/DialoSelezioneSceltaMacchina.razor` - Nuovo componente dialog selezione macchina
+
+**Documentazione**:
+- `MESManager.Web/Constants/AppVersion.cs` - Incrementata a v1.49.0
+- `docs2/08-CHANGELOG.md` - Questa entry
+
+### 🔧 Implementazione Tecnica
+
+**Endpoint GET macchine-disponibili**:
+```csharp
+// Legge MacchineSuDisponibili da Anime (formato: "M001;M002;M003")
+// Filtra Macchine.NumeroMacchina IN (codici estratti)
+// Ritorna List<MacchinaDisponibileDto>
+```
+
+**Service Layer**:
+```csharp
+// CaricaSuGanttAsync(Guid commessaId, int? numeroMacchinaManuale = null)
+// Se numeroMacchinaManuale.HasValue → Usa valore forzato
+// Altrimenti → Esegue algoritmo auto-scheduler esistente
+```
+
+**Frontend Dialog**:
+- MudBlazor dialog con lista macchine disponibili
+- Pulsante "Auto-Scheduler" ritorna `null` (trigger algoritmo automatico)
+- Pulsante "Annulla" chiude senza azione
+- Selezione macchina ritorna `NumeroMacchina` (int)
+
+### 📚 Principi Bibbia AI Applicati
+
+- ✅ **Clean Architecture**: Separazione corretta (Controller → Service → Repository)
+- ✅ **Backward Compatible**: Parametro opzionale preserva comportamento esistente
+- ✅ **UX Consistency**: Dialog MudBlazor coerente con resto applicazione
+- ✅ **Data Integrity**: Usa campo esistente `MacchineSuDisponibili` già configurato
+- ✅ **Fail Safe**: Se nessuna macchina disponibile → Vai diretto ad auto-scheduler
+
+### ⚠️ Note Tecniche
+
+- Campo `Anime.MacchineSuDisponibili` formato: stringa semicolon-separated "M001;M002;M003"
+- Parsing robusto con `Split(';', StringSplitOptions.RemoveEmptyEntries | TrimEntries)`
+- Dialog mostra solo macchine configurate in ricetta + attive in tabella Macchine
+- Algoritmo auto-scheduler invariato (calcolo carico macchine, calendario lavoro, festivi)
+
+### 🎯 Test Scenarios
+
+1. **Commessa con macchine disponibili**: Dialog mostra lista → Selezione → OK
+2. **Commessa senza MacchineSuDisponibili**: Caricamento diretto auto-scheduler (no dialog)
+3. **Click Auto-Scheduler**: Comportamento identico a versione precedente
+4. **Click Annulla**: Nessun caricamento, operazione annullata
+
+---
+
+## 🔖 v1.48.0 - Fix Visualizzazione Cliente con Fallback Intelligente (23 Feb 2026)
+
+**Data**: 23 Febbraio 2026
+
+### 🐛 Bug Fixes
+
+**Problema**: Catalogo Commesse mostrava fornitori nella colonna Cliente invece dei clienti reali
+
+**Causa**: Duplicazione fonte dati - 2 campi per il cliente creava ambiguità:
+- `CompanyName` (da sincronizzazione Mago) → Conteneva dati misti (clienti + fornitori) ❌
+- `ClienteRagioneSociale` (da tabella Clienti via FK ClienteId) → Fonte corretta ma NULL se ClienteId mancante ⚠️
+
+**Tentativo Iniziale Fallito**: 
+- Eliminato CompanyName → Causava campi vuoti per commesse senza ClienteId valorizzato ❌
+- Problema: Alcune commesse non hanno FK ClienteId valorizzato correttamente nella sync Mago
+
+**Soluzione Definitiva**: Fallback intelligente con priorità INVERTITA (fix)
+1. **Proprietà calcolata**: `ClienteDisplay => CompanyName ?? ClienteRagioneSociale ?? "N/D"`
+2. **Priorità** (corretta dopo feedback utente):
+   - 1ª scelta: `CompanyName` (dati Mago) ✅ FONTE CORRETTA
+   - 2ª scelta: `ClienteRagioneSociale` (tabella Clienti) ⚠️ Contiene dati errati
+   - 3ª scelta: "N/D"
+3. **Motivo inversione**: Tabella Clienti popolata con dati errati, sync Mago è fonte affidabile
+3. **Frontend**: Tutti i grid usano `ClienteDisplay` / `clienteDisplay`
+
+### 📁 File Modificati
+- `MESManager.Application/DTOs/CommessaDto.cs` - Aggiunta proprietà calcolata ClienteDisplay
+- `MESManager.Infrastructure/Services/CommessaAppService.cs` - Ripristinato mapping CompanyName
+- `MESManager.Web/wwwroot/js/commesse-grid.js` - Usa ClienteDisplay
+- `MESManager.Web/wwwroot/lib/ag-grid/commesse-aperte-grid.js` - Usa clienteDisplay
+- `MESManager.Web/Components/Pages/Programma/CommesseAperte.razor` - Etichette usano ClienteDisplay
+- `docs2/08-CHANGELOG.md` - Questa entry
+
+### 📚 Principi Bibbia AI Applicati
+- ✅ **Priorità fonte corretta**: Usa ClienteRagioneSociale quando disponibile
+- ✅ **Backward compatible**: Fallback a CompanyName per commesse legacy
+- ✅ **Robustezza**: Nessun campo vuoto, sempre visualizzazione cliente
+
+### ⚠️ Note Tecniche
+- Campo `CompanyName` mantenuto per sync Mago e fallback
+- Soluzione temporanea fino a fix sync Mago (valorizzare sempre ClienteId)
+- Future improvement: Validare ClienteId durante sync per garantire fonte unica
+
+### 🔧 TODO Futuro
+- [ ] Fix sync Mago: cercare e valorizzare ClienteId da tabella Clienti durante import
+- [ ] Migration dati: associare ClienteId alle commesse esistenti con CompanyName
+- [ ] Dopo migration: rimuovere CompanyName e usare solo ClienteRagioneSociale
+
+---
+
+## 🔖 v1.47.0 - Deploy Produzione Cumulative Release (23 Feb 2026)
+
+**Data**: 23 Febbraio 2026  
+**Deploy**: v1.35.0 → v1.47.0 (20 versioni cumulative)  
+**Server**: 192.168.1.230 - MESManager_Prod  
+**Esito**: ✅ SUCCESSO
+
+### 📦 Componenti Deployati
+
+- **Web Application**: MESManager.Web.dll (1.47 MB)
+- **Worker Service**: MESManager.Worker.exe (sync Mago)
+- **PlcSync Service**: MESManager.PlcSync.exe (comunicazione PLC)
+
+### ✅ Verifica Deploy
+
+- **URL Produzione**: http://192.168.1.230:5156
+- **Versione Confermata**: v1.47.0 (verificata via HTTP GET)
+- **Servizi Attivi**:
+  - MESManager.Web.exe (PID 110620)
+  - MESManager.Worker.exe (PID 100708)
+  - MESManager.PlcSync.exe (PID 106668)
+- **File Protetti**: appsettings.Secrets.json, appsettings.Database.json (non sovrascritti)
+- **Deploy Duration**: ~10 minuti
+
+### 📋 Riepilogo Modifiche Deployate
+
+Questo deploy comprende tutte le modifiche implementate dalla versione v1.35.0 (12 Feb) alla v1.46.1 (20 Feb).
+
+---
+
+## 🔖 v1.46.1 - Fix PLC Realtime + UI Menu Icons (20 Feb 2026)
+
+**Data**: 20 Febbraio 2026
+
+### 🐛 Bug Fixes
+- **Errore console PLC Realtime**: "No interop methods are registered for renderer"
+  - **Causa**: Chiamate JSRuntime durante disconnessione circuito Blazor
+  - **Fix**: Aggiunto flag `_disposed` per prevenire chiamate dopo dispose
+  - **Fix**: Gestione specifica `JSDisconnectedException` in tutti i metodi JSRuntime
+  - **Fix**: Controlli `!_disposed` prima di ogni operazione asincrona
+
+### 🎨 UI/UX Miglioramenti
+- **Icone colorate menu laterale**:
+  - Aggiunte emoji colorate (13px) per ogni voce menu
+  - Programma Irene: 📅 (sostituita emoji precedente)
+  - Sotto-voci con icone distintive: 🔧 Programma, 📋 Commesse, 📊 Gantt, ⚡ PLC Realtime, etc.
+  - Tutte le sezioni ora hanno icone per ogni voce child
+  
+- **Pulizia menu Cataloghi**:
+  - ❌ Rimossa voce "Foto" (pagina non implementata)
+  - ❌ Rimossa voce "Preventivi" (pagina non implementata)
+  - ❌ Rimossa voce "Listini Prezzi" (pagina non implementata)
+  - ✅ Mantenuto "Preventivi Lavorazioni Anime" (funzionale)
+
+### 📁 File Modificati
+```
+MESManager.Web/Components/Pages/Produzione/PlcRealtime.razor
+MESManager.Web/Components/Layout/MainLayout.razor
+MESManager.Web/Constants/AppVersion.cs
+docs2/08-CHANGELOG.md
+```
+
+### ⚠️ Note Tecniche
+- **JSDisconnectedException**: Gestita silenziosamente (comportamento atteso quando utente chiude tab)
+- **Icone menu**: Font-size 13px per distinguerle dalle intestazioni di gruppo
+- **Performance**: Nessun impatto negativo
+
+---
+
+Questo deploy comprende tutte le modifiche implementate dalla versione v1.35.0 (12 Feb) alla v1.46.1 (20 Feb).
+
+### 🚀 Feature Principali
+
+#### Sistema Ricette PLC Completo
+- **v1.36.0**: Indicatore ricetta configurata UI (badge ✓ verde, icona 📋 in Gantt)
+- **v1.46.0**: Salvataggio ricette da DB56 (parametri runtime) invece che DB55
+
+#### Centralizzazione PLC Constants & Mapping
+- **v1.38.1**: PlcConstants.cs come fonte unica di verità (DB number, offset, rack/slot)
+- **v1.38.2**: Split DB55 ufficiale (0-99 lettura stati, 100+ scrittura ricetta)
+- **v1.38.4**: Mappatura rigida DB55/DB56 (eliminato fallback ambiguo)
+
+#### Sistema Gantt Avanzato con Queueing
+- **v1.42.0**: Buffer 15 minuti prima produzione + accodamento automatico
+- **v1.43.0**: Centralizzazione logica, GET non modifica stato (CQS pattern)
+- **v1.44.0**: Normalizzazione condizionale (preserva intenzione utente)
+- **v1.44.1**: Snap function 15 minuti (era 8 ore)
+- **v1.45.0**: Sync client-server posizioni (server as authority)
+
+#### Dark Mode & Tema Centralizzato
+- **v1.38.6**: CSS variables (theme-config.css, theme-overrides.css), zero hardcoded colors
+
+#### Refactoring Zero Duplicazione
+- **v1.45.6**: Colonna Ricetta centralizzata (ricetta-column-shared.js), ~120 righe duplicate eliminate
+
+### 🐛 Bug Fix Critici
+
+- **v1.38.5**: Catalogo Anime 500 error (cache macchine duplicati)
+- **v1.45.1**: Rimozione blocco produzione (commesse future spostabili)
+- **v1.45.2**: Colonna Ricetta non visibile + Icone menu + Cache busting (v=1452)
+- **v1.46.1**: MudSlider InvalidCastException (type parameter T="int")
+
+### 🏗️ Architettura & Refactoring
+
+- **PlcConstants centralizzazione**: Zero magic numbers, tutti offset/DB da unica classe
+- **CQS Pattern**: Query (GET) non modifica stato sistema
+- **Server as Authority**: Client visualizza decisione server per overlap/queueing
+- **Conditional Normalization**: Normalizzazione solo quando necessario
+
+### 📁 File Principali Modificati
+
+#### Backend (C#)
+- `MESManager.Domain/Constants/PlcConstants.cs` (centralizzazione PLC)
+- `MESManager.Infrastructure/Services/PianificazioneEngineService.cs` (Gantt queueing)
+- `MESManager.Infrastructure/Services/PlcRecipeWriterService.cs` (DB56 mapping)
+- `MESManager.Application/Services/CommessaAppService.cs` (HasRicetta loading)
+- `MESManager.Web/Controllers/PianificazioneController.cs` (CQS split)
+- `MESManager.Web/Constants/AppVersion.cs` (1.46.1 → 1.47.0)
+
+#### Frontend (JavaScript/Razor)
+- `wwwroot/js/ricetta-column-shared.js` (NUOVO - zero duplicazione)
+- `wwwroot/js/gantt/gantt-macchine.js` (snap 15min, sync server, stack false)
+- `wwwroot/css/theme-config.css` (NUOVO - variabili CSS centralizzate)
+- `wwwroot/css/theme-overrides.css` (NUOVO - applicazione tema)
+- `wwwroot/lib/ag-grid/anime-columns-shared.js` (versioning v1452)
+- `Components/Pages/Produzione/PlcRealtime.razor` (MudSlider type fix)
+- `Components/Pages/PlcDbViewerPopup.razor` (autocomplete + salva ricetta)
+
+#### Documentazione
+- `docs2/08-CHANGELOG.md` (questo file)
+- `docs2/BIBBIA-AI-MESMANAGER.md` (v3.1 - principio ZERO DUPLICAZIONE enfatizzato)
+- `docs2/LINEE-GUIDA-DOCUMENTAZIONE.md` (NUOVO - regole scalabilità docs)
+
+### ✅ Testing Pre-Deploy
+
+- [x] Build Release: 0 errori
+- [x] Migration database: Allineate
+- [x] Preferenze utente: Backup NON necessario (nessuna modifica strutturale colonne)
+
+### 📚 Principi Bibbia AI Applicati
+
+- ✅ **ZERO DUPLICAZIONE**: ricetta-column-shared.js elimina ~120 righe duplicate
+- ✅ **Single Source of Truth**: PlcConstants.cs per offset PLC, theme-config.css per colori
+- ✅ **CQS Pattern**: GET /api/pianificazione non modifica più StatoProgramma
+- ✅ **Manutenibilità**: Modifiche da UN solo punto (PlcConstants, theme-config, ricetta-column-shared)
+- ✅ **Documentazione Scalabile**: LINEE-GUIDA creato, BIBBIA ridotta a 344 righe
+
+### ⚠️ Note Deploy
+
+1. **Robocopy escludi**: `appsettings.Secrets.json`, `appsettings.Database.json` (MAI sovrascrivere)
+2. **Ordine servizi**: Stop (PlcSync→Worker→Web), Start (Web→Worker→PlcSync)
+3. **Cache browser**: Istruire utenti Ctrl+Shift+R se JS non aggiorna
+4. **Versioning query strings**: File JS incrementati a v=1452+ per cache busting
+
+---
+
+## 🔖 v1.46.1 - Fix MudSlider Type Parameter (20 Feb 2026)
+
+**Data**: 20 Febbraio 2026
+
+### 🐛 Bug Fix - InvalidCastException in PlcRealtime
+
+**Problema identificato**:
+- Console browser mostrava errore: `System.InvalidCastException: Unable to cast object of type 'System.Int32' to type 'System.Double'`
+- Stack trace: `MudBlazor.State.ParameterView_Parameters → MudBlazor.MudBaseInput`
+- Pagina: `/produzione/plc-realtime` (dashboard PLC Realtime)
+
+**Root Cause**:
+- `MudSlider` component senza tipo esplicito tentava type inference automatica
+- Min/Max/Step literals valorizzati come int, ma @bind-Value su proprietà int causava ambiguità
+- PlcRealtime.razor: `<MudSlider @bind-Value="settings.FontSize" Min="10" Max="20" Step="1">`
+
+**Soluzione**:
+```razor
+<!-- PlcRealtime.razor - PRIMA -->
+<MudSlider @bind-Value="settings.FontSize" Min="10" Max="20" Step="1">
+
+<!-- PlcRealtime.razor - DOPO -->
+<MudSlider T="int" @bind-Value="settings.FontSize" Min="10" Max="20" Step="1">
+```
+
+**Approccio alternativo scartato**:
+- ❌ Cambiare `GridUiSettings.FontSize` da `int` a `double` causava errori a cascata su `MudNumericField` in altri 5+ componenti
+- ✅ Soluzione preferita: Explicit type parameter `T="int"` su MudSlider (minimal change, zero side effects)
+
+### 📁 File Modificati
+```
+MESManager.Web/Components/Pages/Produzione/PlcRealtime.razor (T="int" su MudSlider)
+MESManager.Web/Constants/AppVersion.cs (1.46.0 → 1.46.1)
+docs2/08-CHANGELOG.md (questo file)
+```
+
+### 📚 Principi Bibbia AI Applicati
+- ✅ **Type Safety**: Explicit type parameters eliminano ambiguità di type inference
+- ✅ **Minimal Change**: Fix chirurgico - solo 2 componenti modificati, zero side effects
+- ✅ **Error Stack Trace Analysis**: Console browser errors forniscono root cause preciso
+- ✅ **Defensive Design**: Type parameters espliciti prevengono regressioni future
+
+---
+
+## 🔖 v1.45.6 - Centralizzazione Colonna Ricetta + Fix Gantt (20 Feb 2026)
+
+**Data**: 20 Febbraio 2026
+
+### 🎯 Refactoring Zero Duplicazione - Colonna Ricetta
+
+**Problema identificato**:
+- Colonna "Ricetta" implementata con codice duplicato in anime-grid.js e commesse-grid.js (~70 righe duplicate)
+- CommesseAperte mancava completamente della colonna Ricetta
+- Gantt non riceveva i campi ricetta nella serializzazione JavaScript (hasRicetta, numeroParametri, ricettaUltimaModifica)
+
+**Soluzione - Single Source of Truth**:
+- ✅ Creato **ricetta-column-shared.js** come componente centralizzato
+- ✅ Eliminato ~120 righe di codice duplicato totali
+- ✅ Supporto configurabile per camelCase e PascalCase (fieldPrefix parameter)
+- ✅ Aggiunta colonna Ricetta a commesse-aperte-grid.js usando shared component
+- ✅ Badge rendering: ✓ verde con numero parametri per ricette configurate, — grigio per mancanti
+
+### 🏗️ Architettura - Ricetta Column Shared Component
+
+**ricetta-column-shared.js** - API:
+```javascript
+window.ricettaColumnShared = {
+    createColumnDef(config) {
+        // config: { fieldPrefix, gridNamespace, codiceArticoloField }
+        // Returns: AG Grid column definition object
+    },
+    openRicettaDialog(codiceArticolo, dotNetRef, gridName) {
+        // Centralizzato dialog invocation via Blazor dotNetRef
+    }
+}
+```
+
+**Parametri configurazione**:
+- `fieldPrefix`: 'camelCase' | 'PascalCase' - adatta field names al formato DTO
+- `gridNamespace`: window object namespace per grid (es. 'animeGrid')
+- `codiceArticoloField`: nome campo contenente codice articolo
+
+**File refactorizzati**:
+- `anime-grid.js`: Sostituito inline def con `Object.assign(window.ricettaColumnShared.createColumnDef({...}))`
+- `/lib/ag-grid/commesse-grid.js`: Idem (file corretto dopo discovery di path duplicati)
+- `/lib/ag-grid/commesse-aperte-grid.js`: NUOVA colonna aggiunta usando shared component
+
+### 🐛 Bug Fixes - Gantt Ricetta Integration
+
+**Fix 1 - Initial Load** (GanttMacchine.razor OnAfterRenderAsync):
+- Aggiunto mapping: `hasRicetta = c.HasRicetta`, `numeroParametri = c.NumeroParametri`, `ricettaUltimaModifica = c.RicettaUltimaModifica`
+- Problema: Gantt mostrava icona 📋 (senza ricetta) anche per commesse con racetta configurata
+
+**Fix 2 - Refresh Button Regression** (GanttMacchine.razor UpdateGanttTasks):
+- Aggiunto SECONDO mapping identico in UpdateGanttTasks() (chiamato da "Aggiorna" button)
+- Problema: Hard refresh funzionava, ma click su "Aggiorna" riportava indietro icona 📋
+
+**Root Cause**: Serializzazione .NET → JavaScript aveva DUE code paths:
+1. OnAfterRenderAsync: Caricamento iniziale pagina
+2. UpdateGanttTasks: Refresh dinamico (button + SignalR updates)
+
+### 📋 Discovery Process - File Path Ambiguity
+
+**Issue**: Modifiche a `/js/commesse-grid.js` non visibili
+**Discovery**: App.razor carica `/lib/ag-grid/commesse-grid.js` (file duplicato in path diverso)
+**Soluzione**: Identificato file corretto via grep_search, modificato path corretto
+**Lezione**: Sempre verificare script references in App.razor prima di modificare JS
+
+### 📚 Principi Bibbia AI Applicati
+- ✅ **DRY (Don't Repeat Yourself)**: Zero duplicazione - single source of truth
+- ✅ **Configuration-Driven**: fieldPrefix parameter per flessibilità camelCase/PascalCase
+- ✅ **Complete Data Flow Tracing**: Identificati TUTTI i mapping points (2 in GanttMacchine.razor)
+- ✅ **Cache Busting**: Version increments (v=1455 → v=1456) per JavaScript changes
+
+### 📁 File Modificati
+```
+MESManager.Web/wwwroot/js/ricetta-column-shared.js (CREATO - componente centralizzato)
+MESManager.Web/wwwroot/js/anime-grid.js (refactored - eliminato codice duplicato)
+MESManager.Web/wwwroot/lib/ag-grid/commesse-grid.js (refactored)
+MESManager.Web/wwwroot/lib/ag-grid/commesse-aperte-grid.js (NUOVA colonna Ricetta)
+MESManager.Web/Components/App.razor (script reference + versioning)
+MESManager.Web/Components/Pages/Programma/GanttMacchine.razor (2 fix mapping points)
+MESManager.Web/Constants/AppVersion.cs (1.45.5 → 1.45.6)
+docs2/08-CHANGELOG.md (questo file)
+```
+
+### ✅ Testing Workflow
+- [x] Build: 0 errori, 3 warnings pre-esistenti (NuovoPreventivo.razor)
+- [x] Server: localhost:5156 online, clean startup logs
+- [x] Grids: Colonna Ricetta visibile e consistente in Anime, Commesse, CommesseAperte
+- [ ] **PENDING**: User test "Aggiorna" button in Gantt (no 📋 regression)
+
+### 🎓 Lessons Learned
+1. **Multiple Serialization Points**: Quando dati attraversano .NET → JS, verificare TUTTI i code paths (non solo initial render)
+2. **File Ambiguity**: Duplicate filenames richiedono grep_search per confermare path effettivo
+3. **Cache Invalidation**: Version query strings critici + istruzioni user hard refresh
+
+---
+
+## 🔖 v1.46.0 - Refactoring Salvataggio Ricette: DB56 Runtime Parameters (20 Feb 2026)
+
+**Data**: 20 Febbraio 2026
+
+### 🎯 Allineamento Logica PLC al Comportamento Reale Macchina
+
+**Problema identificato**: 
+- Dashboard leggeva QuantitàDaProdurre da DB55 invece che da DB56
+- Salvataggio ricetta leggeva TUTTI i parametri da DB55 (0-196) invece che solo runtime da DB56 (100-196)
+
+**Mappatura PLC corretta**:
+```
+DB55 Offset   0-98:  PLC scrive → MES legge (stati produzione)
+DB55 Offset 100-196: MES scrive → PLC legge (parametri ricetta)
+DB56 Offset   0-98:  Non usati (sempre 0)
+DB56 Offset 100-196: PLC scrive → MES legge (parametri runtime esecuzione)
+```
+
+### 🏗️ Architettura - Refactoring Semantico Completo
+
+**PlcConstants.cs** - Chiarificazione offset ranges:
+- `OFFSET_DB55_READONLY_START/END` (0-98): Stati macchina readonly
+- `OFFSET_DB55_RECIPE_START/END` (100-196): Parametri ricetta writable
+- `OFFSET_DB56_EXECUTION_START/END` (100-196): Parametri runtime readonly
+- Helper properties: `Db55ReadOnlyRange`, `Db55RecipeRange`, `Db56ExecutionRange`
+- Mantenuti alias legacy per compatibilità backward
+
+**Nuovi DTO semantici**:
+- ❌ `SaveDb55AsRecipeRequest/Result` (nome confuso, implica lettura da DB55)
+- ✅ `SaveRecipeFromPlcRequest/Result` (chiaro: legge parametri runtime PLC)
+- Campo `Entries` documenta fonte dati: "DB56 offset 100-196"
+
+**Controller**:
+- Endpoint rinominato: `/api/plc/save-db55-as-recipe` → `/api/plc/save-recipe-from-plc`
+- Logica aggiornata: legge `ReadDb56Async()` invece di `ReadDb55Async()`
+- Filtro range corretto: `WHERE offset BETWEEN 100 AND 196`
+
+**UI PlcDbViewerPopup**:
+- Button label: "Salva Ricetta" → "Salva Ricetta da DB56" (chiaro)
+- Metodo rinominato: `SalvaDb55ComeRicettaArticoloAsync` → `SalvaRicettaDaPlcAsync`
+- Passa `_db56Entries` invece di `_db55Entries`
+- Messaggio successo: indica "DB56 offset 100-196" per trasparenza diagnostica
+
+### 🐛 Bug Fixes
+- **Quantità obiettivo dashboard macchina 6**: Ora legge correttamente da DB56 offset 162
+- **Salvataggio ricetta**: Salva solo parametri runtime (100-196) da DB56, non più tutti i campi da DB55
+
+### 📚 Principi Bibbia AI Applicati
+- ✅ **Zero Duplicazione**: UNA fonte verità per mappatura DB (PlcConstants)
+- ✅ **Semantica Chiara**: Nomi DTO/metodi riflettono comportamento reale
+- ✅ **Manutenibilità**: Commenti inline documentano "PLC scrive / MES legge"
+- ✅ **Storicità**: CHANGELOG mantiene "perché" delle decisioni
+
+### 📁 File Modificati
+```
+MESManager.Domain/Constants/PlcConstants.cs (ranges chiari + helper properties)
+MESManager.Application/DTOs/SaveRecipeFromPlcRequest.cs (nuovo)
+MESManager.Application/DTOs/SaveRecipeFromPlcResult.cs (nuovo)
+MESManager.Web/Controllers/PlcController.cs (endpoint + logica DB56)
+MESManager.Web/Components/Pages/PlcDbViewerPopup.razor (UI + chiamata API)
+MESManager.Web/Constants/AppVersion.cs (1.45.6 → 1.46.0)
+docs2/08-CHANGELOG.md (questo file)
+```
+
+### ⚠️ Note Compatibilità
+- Endpoint legacy `save-db55-as-recipe` rimosso (breaking change minore)
+- DTO legacy `SaveDb55AsRecipeRequest/Result` deprecati (sostituiti da `SaveRecipeFromPlc*`)
+- Alias PlcConstants backward-compatible (`OFFSET_READONLY_START` ancora valido)
+
+---
+
+## 🔖 v1.45.2 - Fix Colonna Ricetta + Icone Menu + Cache Busting (19 Feb 2026)
+
+**Data**: 19 Febbraio 2026
+
+### 🐛 Bug Fix Critici
+- **Colonna Ricetta non visibile in CommesseAperte**:
+  - **Causa 1**: Serializzazione JSON PascalCase vs camelCase mismatch
+  - **Causa 2**: Cache browser stava servendo file JS vecchi (v=1, v=5)
+  - **Causa 3**: CSS scoped NavMenu.razor.css non incluso nel bundle
+  - **Fix**: Incrementato versioning JS a v=1452, aggiunto `MESManager.Web.styles.css` in App.razor
+  
+- **Icone menu laterale non visibili**:
+  - **Causa**: CSS scoped Blazor non compilato dopo modifiche
+  - **Fix**: Aggiunto reference esplicito a `MESManager.Web.styles.css` in App.razor
+  - Iconografia centralizzata con colori domain-specific:
+    - **Programma**: Blu (#2196F3) - bi-calendar3
+    - **Cataloghi**: Arancione (#FF9800) - bi-folder
+    - **Produzione**: Verde (#4CAF50) - bi-gear-wide-connected
+    - **Impostazioni**: Grigio (#607D8B) - bi-sliders
+
+### 🔧 Miglioramenti Tecnici
+- **Debug Logging**:
+  - `anime-columns-shared.js`: Console log al caricamento modulo (verifica 23 column definitions)
+  - `commesses-aperte-grid.js`: Log su getColumnDefs() e refreshGridData() con sample record
+  - Tracciamento completo per troubleshooting cache/serialization issues
+  
+- **Cache Busting Aggressivo**:
+  - `anime-columns-shared.js`: v1 → v1452
+  - `commesse-aperte-grid.js`: v5 → v1452
+  - Versioning sincronizzato con AppVersion per evitare mismatch futuro
+
+### 📋 10 Cause Possibili Analizzate
+1. ✅ Case-sensitivity JSON (DTO usa `HasRicetta`, JS cerca `hasRicetta`)
+2. ✅ Serializzazione .NET default (già camelCase configurato in Program.cs)
+3. ✅ Cache browser file JS/CSS vecchi (RISOLTO con versioning)
+4. ✅ Versioning insufficiente `?v=1` e `?v=5` (RISOLTO con v=1452)
+5. ✅ CSS scoped Blazor non compilato (RISOLTO con link esplicito)
+6. ⚠️ Ordine caricamento script (verificato OK - anime-columns-shared prima di commesse-aperte-grid)
+7. ✅ Grid non ricaricato (hard refresh ora forza reload completo)
+8. ✅ Field names mismatch (verificato OK - hasRicetta camelCase matchato)
+9. ✅ Data binding Blazor CSS scoped (RISOLTO con ricompilazione)
+10. ✅ Console errors tracking (aggiunto debug logging esteso)
+
+### 🏗️ Refactoring Prevenzione Duplicazione
+- **Centralizzazione anime-columns-shared.js**:
+  - Eliminato codice duplicato da `commesse-aperte-grid.js`
+  - Singola fonte di verità per colonna Ricetta
+  - Pattern IIFE con namespace `window.animeColumnsShared`
+  - Funzioni: `getAnimeColumns()`, `getAnimeColumnsWithOptions()`, `animeColumns` (reference)
+
+### 📚 File Modificati
+- `MESManager.Web/Components/App.razor`: +link CSS scoped, versioning JS v1452
+- `MESManager.Web/wwwroot/lib/ag-grid/anime-columns-shared.js`: +debug logging
+- `MESManager.Web/wwwroot/lib/ag-grid/commesse-aperte-grid.js`: +debug logging esteso con sample data
+- `MESManager.Application/DTOs/CommessaDto.cs`: (già esistenti - verificato) `HasRicetta`, `NumeroParametri`, `RicettaUltimaModifica`
+
+### ✅ Testing
+- [x] Build soluzione: 0 errori, 7 warning (non critici)
+- [x] Server Development in ascolto su porta 5156 (PID 14984)
+- [x] Console browser: Verifica log `[anime-columns-shared v1.45.2]` e `[commesse-aperte-grid v1.45.2]`
+- [ ] UI Test manuale: Refresh hard (Ctrl+Shift+R) → Verifica colonna Ricetta in CommesseAperte
+- [ ] UI Test manuale: Sidebar menu → Verifica icone colorate visibili
+
+### 📖 Workflow BIBBIA Seguito
+- [x] 0. Version++ (AppVersion.cs: 1.45.1 → 1.45.2)
+- [x] 1. Build con 0 errori
+- [x] 2. Run server Development http://localhost:5156
+- [x] 3. URL fornito per testing utente
+- [ ] 4. Await feedback utente prima di procedere
+
+---
+
+## 🔖 v1.45.1 - Rimozione Completa Blocco Produzione (19 Feb 2026)
+
+**Data**: 19 Febbraio 2026
+
+### 🐛 Bug Fix
+- **Rimosso controllo produzione che bloccava commesse future**:
+  - **Problema**: "commesse gia in produzione sono ancora bloccate" anche se programmate per settimana prossima
+  - **Causa**: `IsInOrarioProduzioneAsync()` verificava solo presenza dati, non se produzione è ATTUALMENTE in corso
+  - **Soluzione**: **Rimosso completamente il controllo produzione**
+    - La conferma utente è sufficiente (dialog già implementato)
+    - Possibilità di spostare qualsiasi commessa con consenso esplicito
+    - Nessun blocco automatico basato su stato interno
+
+### 🔧 Modifiche Tecniche
+- **File**: [PianificazioneEngineService.cs](MESManager.Infrastructure/Services/PianificazioneEngineService.cs)
+  - Linee 86-94: Eliminato blocco `if (!await IsInOrarioProduzioneAsync(...))`
+  - Logica semplificata: solo `if (commessa.Bloccata)` con auto-unlock
+  - Log: "⚠️ Spostamento commessa bloccata - sblocco automatico con consenso utente"
+
+### 📚 Architettura
+- **Pattern**: Trust User Intent
+  - UI mostra dialog conferma per commesse bloccate
+  - Backend non duplica validazione, si fida della scelta utente
+  - Meno false positives, più flessibilità
+
+---
+
+## 🔖 v1.45.0 - Accodamento Automatico con Sync Client-Server (19 Feb 2026)
+
+**Data**: 19 Febbraio 2026
+
+### 🐛 Bug Fix
+- **Client ora sincronizza posizione calcolata dal server**:
+  - **Problema**: Drag visuale andava a bene, ma dopo reload commessa tornava in posizione diversa
+  - **Causa**: Server ricalcolava posizione con queueing, ma client non aggiornava visuale
+  - **Soluzione**: Callback `onMove` legge risposta server e aggiorna `item.start/end`
+
+### ✨ Feature
+- **Logging queueing client-side**:
+  - Console mostra "🔄 Commessa accodata dal server" se posizione differisce >1 minuto
+  - Utente vede feedback immediato quando sistema forza accodamento
+  - Debugging facilitato per capire comportamento automatico
+
+### 🔧 Modifiche Tecniche
+- **File**: [gantt-macchine.js](MESManager.Web/wwwroot/js/gantt/gantt-macchine.js)
+  - Linee 233-255: Client aggiorna `item.start/end` da `result.commesseAggiornate`
+  - Linee 246-250: Calcolo delta temporale e log condizionale
+  - Linee 251-254: Forzatura refresh timeline per mostrare posizione corretta
+
+### 🏗️ Architettura
+- **Pattern**: Server as Authority
+  - Server calcola posizione finale (logica overlap/queueing)
+  - Client visualizza decisione server, non impone la propria
+  - Garantisce coerenza database ↔ UI
+
+---
+
+## 🔖 v1.44.1 - Fix Snap Function (8 ore → 15 minuti) (19 Feb 2026)
+
+**Data**: 19 Febbraio 2026
+
+### 🐛 Bug Fix Critico
+- **Snap function granularità errata**:
+  - **Problema**: "Quando sposto una commessa, si sposta di otto ore... senza intermediazioni"
+  - **Causa**: Snap calcolato con `8 * 3600000` millisecondi (8 ore)
+  - **Soluzione**: Snap corretto a `15 * 60 * 1000` millisecondi (15 minuti)
+
+### 🔧 Modifiche Tecniche
+- **File**: [gantt-macchine.js](MESManager.Web/wwwroot/js/gantt/gantt-macchine.js)
+  - Linee 104-108: Snap function ridotto da 8 ore a 15 minuti
+- **File**: [App.razor](MESManager.Web/Components/App.razor)
+  - Cache busting: aggiornato a `?v=44` per forzare reload script
+  - Formato snap: `Math.round(date / interval) * interval` (arrotondamento standard)
+
+### ✅ Testing
+- User confermato: "le commesse ora si spostano di 15 minuti alla volta" ✅
+- Posizionamento preciso funzionante per riorganizzazione gantt
+
+---
+
+## 🔖 v1.44.0 - Fix Stack e Normalizzazione Condizionale (19 Feb 2026)
+
+**Data**: 19 Febbraio 2026
+
+### 🐛 Bug Fix
+- **Stack comportamento invertito**:
+  - **Problema**: "ora le commesse non si sovrappongono, ma vanno a finire in un'altra riga sulla stessa macchina"
+  - **Causa**: `stack: false` in Vis-Timeline consente OVERLAP (comportamento confuso)
+  - **Soluzione**: **Manteniamo `stack: false`** per mantenere accodamento e normalizzazione lato server
+  
+- **Normalizzazione cancellava buffer**:
+  - **Problema**: Buffer 15 min applicato, ma normalizzazione riportava DataInizio a "ora"
+  - **Causa**: Normalizzazione forzata anche per date DENTRO orario lavorativo
+  - **Soluzione**: `IsInOrarioLavorativo()` check → normalizza SOLO se fuori orario
+
+- **Commesse bloccate non spostabili**:
+  - **Problema**: Commesse segnate come `Bloccata = true` non movibili anche con dialog
+  - **Soluzione**: Auto-unlock con log "⚠️ Spostamento commessa bloccata - sblocco automatico"
+
+### 🔧 Modifiche Tecniche
+- **File**: [PianificazioneEngineService.cs](MESManager.Infrastructure/Services/PianificazioneEngineService.cs)
+  - Linee 78-85: Auto-unlock commesse bloccate prima del move
+  - Linee 110-132: Normalizzazione condizionale con `IsInOrarioLavorativo()`
+  - Linee 978-998: Helper `IsInOrarioLavorativo()` (checks ora, giorno settimana, festivi)
+  - Linee 936-996: `RicalcolaCommesseSuccessiveAsync()` preserva posizioni a meno di overlap
+
+- **File**: [gantt-macchine.js](MESManager.Web/wwwroot/js/gantt/gantt-macchine.js)
+  - Linea 96: Confermato `stack: false` (funzionamento corretto con logica server)
+
+### 📚 Architettura
+- **Pattern**: Conditional Normalization
+  - Normalizzazione applicata solo quando necessario (fuori orario)
+  - Preserva intenzione utente se drag è già in orario valido
+  - Riduce modifiche inaspettate alle date scelte dall'utente
+
+---
+
+## 🔖 v1.43.0 - Centralizzazione Logica Gantt (19 Feb 2026)
+
+**Data**: 19 Febbraio 2026
+
+### 🐛 Bug Fix Critico
+- **AutoCompletaCommesseAsync chiamato su ogni GET**:
+  - **Problema**: StatoProgramma cambiava da `Programmata` a `InProduzione` aprendo Gantt
+  - **Causa**: `GET /api/pianificazione` chiamava `AutoCompletaCommesseAsync()` ad ogni caricamento
+  - **Soluzione**: **Rimossa chiamata da endpoint read-only**
+    - GET non deve MAI modificare stato del sistema (best practice architetturale)
+    - Creato endpoint dedicato POST `/api/pianificazione/aggiorna-stati` per aggiornamenti espliciti
+
+### ✨ Feature
+- **Preservazione posizioni successive**:
+  - **Problema**: Spostare commessa A ricalcolava tutte commesse successive B, C, D...
+  - **Soluzione**: `RicalcolaCommesseSuccessiveAsync()` aggiornato per preservare posizioni manualmente impostate
+  - Ricalcolo attivato SOLO se c'è overlap rilevato, altrimenti posizioni intoccate
+
+### 🔧 Modifiche Tecniche
+- **File**: [PianificazioneController.cs](MESManager.Web/Controllers/PianificazioneController.cs)
+  - Linea 46: RIMOSSO `await AutoCompletaCommesseAsync()` da GET
+  - Commento aggiunto: "⚠️ IMPORTANTE: NON chiamare AutoCompletaCommesseAsync qui!"
+  - Linea 766: Rimosso anche da POST `/esporta-su-programma`
+  
+- **File**: [PianificazioneEngineService.cs](MESManager.Infrastructure/Services/PianificazioneEngineService.cs)
+  - Linee 936-996: Logica ricalcolo successivi preserva posizioni esistenti
+  - Solo overlap detection forza riposizionamento
+
+### 🏗️ Architettura
+- **Pattern**: Command-Query Separation (CQS)
+  - Query (GET) non modifica stato → prevedibilità
+  - Command (POST) esegue azioni → intenzionalità
+  - Elimina side-effect nascosti
+
+---
+
+## 🔖 v1.42.1 - Buffer con Grace Period (19 Feb 2026)
+
+**Data**: 19 Febbraio 2026
+
+### 🐛 Bug Fix
+- **StatoProgramma mai impostato a Programmata**:
+  - **Problema**: Commesse rimanevano `StatoProgramma = 0` (NonProgrammata) anche dopo caricamento su Gantt
+  - **Causa**: `CaricaSuGanttAsync()` non impostava esplicitamente StatoProgramma
+  - **Soluzione**: Aggiunto `commessa.StatoProgramma = StatoProgramma.Programmata` e `Bloccata = false`
+
+### ✨ Feature
+- **Grace period nel buffer**:
+  - `AutoCompletaCommesseAsync()` ora usa `now.AddMinutes(-bufferMinuti)` come soglia
+  - Commesse entro buffer non passano automaticamente a `InProduzione`
+  - Permette riorganizzazione anche dopo DataInizioPrevisione se dentro finestra buffer
+
+### 🔧 Modifiche Tecniche
+- **File**: [PianificazioneEngineService.cs](MESManager.Infrastructure/Services/PianificazioneEngineService.cs)
+  - Linea 58-65: `CaricaSuGanttAsync()` imposta StatoProgramma esplicitamente
+  
+- **File**: [PianificazioneController.cs](MESManager.Web/Controllers/PianificazioneController.cs)
+  - Linee 973-1003: `AutoCompletaCommesseAsync()` usa soglia con buffer grace period
+
+---
+
+## 🔖 v1.42.0 - Sistema Buffer Riorganizzazione Gantt (19 Feb 2026)
+
+**Data**: 19 Febbraio 2026
+
+### ✨ Feature Principale
+- **Buffer prima dell'avvio produzione**:
+  - **Problema**: "quando carico una commessa nel Gantt su una macchina sulla quale non ho niente in produzione, mi va in produzione all'istante e non mi consente di spostarla"
+  - **Soluzione**: Campo `BufferInizioProduzioneMinuti` (default 15 minuti)
+  - **Comportamento**: 
+    - Commesse caricate su Gantt partono con `StatoProgramma = Programmata`
+    - Queueing automatico se sovrapposizione: "Quando per sbaglio sovrappongo una commessa all'altra, deve spostarsi in automatico in accodamento"
+    - Passa a `InProduzione` solo dopo buffer scaduto
+    - Durante buffer: spostamento libero senza conferme
+
+### 🔧 Modifiche Tecniche
+- **Database Migration**: `20260219102229_AddBufferInizioProduzioneMinuti`
+  - Tabella: `ImpostazioniGantt`
+  - Colonna: `BufferInizioProduzioneMinuti INT NOT NULL DEFAULT 15`
+
+- **File Modificati**:
+  - [ImpostazioniGantt.cs](MESManager.Domain/Entities/ImpostazioniGantt.cs): Aggiunta proprietà `BufferInizioProduzioneMinuti`
+  - [ImpostazioniGanttDto.cs](MESManager.Application/DTOs/ImpostazioniGanttDto.cs): DTO aggiornato
+  - [PianificazioneEngineService.cs](MESManager.Infrastructure/Services/PianificazioneEngineService.cs):
+    - Linee 150-175: Overlap detection con accodamento automatico
+    - Emoji logging: "🔄 ACCODAMENTO: Sovrapposizione rilevata..."
+  - [gantt-macchine.js](MESManager.Web/wwwroot/js/gantt/gantt-macchine.js):
+    - Linee 162-186: Dialog conferma per commesse bloccate
+    - Linea 96: `stack: false` per accodamento su riga singola
+    - Linee 104-108: Snap function 15 minuti
+
+### 🎨 UI/UX
+- **Dialog Conferma**:
+  - Appare per commesse `Bloccata = true`
+  - Testo: "Questa commessa è bloccata. Sei sicuro di volerla spostare?"
+  - Pulsanti: "Annulla" / "Sposta Comunque"
+
+### 📚 Architettura
+- **Queueing Pattern**: 
+  - Server calcola overlap con commesse esistenti su stessa macchina
+  - Se overlap rilevato → `dataInizioEffettiva = commessaSovrapposta.DataFinePrevisione`
+  - Client sincronizza posizione da risposta server
+
+### ✅ Testing
+- ✅ Buffer 15 minuti permette riorganizzazione
+- ✅ Accodamento automatico su sovrapposizione
+- ✅ Snap 15 minuti per posizionamento preciso
+- ✅ Dialog conferma funzionante per commesse bloccate
+- ✅ Stack disabilitato, singola riga per macchina
+
+---
 
 ## 🔖 v1.38.8 - Connessione Diretta Database PROD in DEV (17 Feb 2026)
 

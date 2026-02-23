@@ -32,19 +32,31 @@ public static class PlcConstants
     // ============================================================================
     
     /// <summary>
-    /// Offsets 0-99: Parametri di LETTURA (stato macchina, cicli realizzati)
-    /// Questi sono READ-ONLY da MES → sono il "sensore" dello stato macchina
+    /// DB55 Offsets 0-98: Parametri di LETTURA stati macchina (READONLY da MES)
+    /// Scritti dal PLC, letti da MES (stati produzione, cicli, scarti, operatore, etc.)
     /// </summary>
-    public const int OFFSET_READONLY_START = 0;
-    public const int OFFSET_READONLY_END = 99;
+    public const int OFFSET_DB55_READONLY_START = 0;
+    public const int OFFSET_DB55_READONLY_END = 98;
     
     /// <summary>
-    /// Offsets 100+: Parametri di SCRITTURA (ricetta, tempi)
-    /// Questi sono scritti da MES quando programma la ricetta
-    /// Letti dal PLC durante i cicli
+    /// DB55 Offsets 100-196: Parametri RICETTA (WRITABLE da MES)
+    /// Scritti da MES, letti dal PLC (parametri ricetta per esecuzione)
     /// </summary>
-    public const int OFFSET_WRITABLE_START = 100;
-    public const int OFFSET_RECIPE_PARAMETERS_START = OFFSET_WRITABLE_START;
+    public const int OFFSET_DB55_RECIPE_START = 100;
+    public const int OFFSET_DB55_RECIPE_END = 196;
+    
+    /// <summary>
+    /// DB56 Offsets 100-196: Parametri ESECUZIONE runtime (READONLY da MES)
+    /// Scritti dal PLC durante esecuzione, letti da MES (tempi reali, figure, quantità)
+    /// </summary>
+    public const int OFFSET_DB56_EXECUTION_START = 100;
+    public const int OFFSET_DB56_EXECUTION_END = 196;
+    
+    // Alias legacy per compatibilità backward
+    public const int OFFSET_READONLY_START = OFFSET_DB55_READONLY_START;
+    public const int OFFSET_READONLY_END = OFFSET_DB55_READONLY_END;
+    public const int OFFSET_WRITABLE_START = OFFSET_DB55_RECIPE_START;
+    public const int OFFSET_RECIPE_PARAMETERS_START = OFFSET_DB55_RECIPE_START;
     
     // ============================================================================
     // DIMENSIONI BUFFER (fissi - derivati dalla struttura PLC)
@@ -97,12 +109,27 @@ public static class PlcConstants
     public static class Offsets
     {
         public static (int Start, int End) ReadOnlyRange => (OFFSET_READONLY_START, OFFSET_READONLY_END);
-        public static (int Start, int End) WritableRange => (OFFSET_WRITABLE_START, int.MaxValue);
+        public static (int Start, int End) WritableRange => (OFFSET_WRITABLE_START, OFFSET_DB55_RECIPE_END);
         public static int RecipeParametersStart => OFFSET_RECIPE_PARAMETERS_START;
+        
+        /// <summary>
+        /// Range DB55: stati macchina (PLC scrive, MES legge)
+        /// </summary>
+        public static (int Start, int End) Db55ReadOnlyRange => (OFFSET_DB55_READONLY_START, OFFSET_DB55_READONLY_END);
+        
+        /// <summary>
+        /// Range DB55: parametri ricetta (MES scrive, PLC legge)
+        /// </summary>
+        public static (int Start, int End) Db55RecipeRange => (OFFSET_DB55_RECIPE_START, OFFSET_DB55_RECIPE_END);
+        
+        /// <summary>
+        /// Range DB56: parametri esecuzione runtime (PLC scrive, MES legge)
+        /// </summary>
+        public static (int Start, int End) Db56ExecutionRange => (OFFSET_DB56_EXECUTION_START, OFFSET_DB56_EXECUTION_END);
 
         public static class Fields
         {
-            // DB55 (0-99) - Lettura stato macchina
+            // DB55 (0-98) - Lettura stato macchina (PLC → MES)
             public const int QuantitaRaggiunta = 16;
             public const int CicliFatti = 18;
             public const int CicliScarti = 20;
@@ -121,7 +148,7 @@ public static class PlcConstants
             public const int NuovaProduzione = 12;
             public const int FineProduzione = 14;
 
-            // DB56 (>=100) - Lettura esecuzione
+            // DB56 (100-196) - Lettura parametri esecuzione runtime (PLC → MES)
             public const int QuantitaDaProdurre = 162;
             public const int TempoMedio = 164;
             public const int Figure = 170;

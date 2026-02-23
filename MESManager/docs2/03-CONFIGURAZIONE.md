@@ -66,12 +66,42 @@ sqlcmd -S localhost\SQLEXPRESS01 -d MESManager_Prod -U fab -P password.123 -Q "S
 
 ### Ordine di Caricamento Configurazione
 
-L'applicazione carica le configurazioni in questo ordine (ultimo vince):
+#### Web Application (MESManager.Web)
+
+L'applicazione Web carica le configurazioni in questo ordine (ultimo vince):
 
 1. `appsettings.json` - Config base
 2. `appsettings.{Environment}.json` - Per ambiente (Development/Production)
-3. `appsettings.Secrets.json` - **Credenziali reali** (non in git)
-4. Variabili d'ambiente - Per container/cloud
+3. `appsettings.Secrets.encrypted` - **Credenziali cifrate DPAPI** (preferito su Windows)
+4. `appsettings.Secrets.json` - **Credenziali in chiaro** (fallback, non in git)
+5. `appsettings.Database.json` - Legacy (deprecato)
+6. Variabili d'ambiente - Per container/cloud
+
+#### Worker Service (MESManager.Worker)
+
+Il Worker carica le configurazioni in questo ordine:
+
+1. `appsettings.json` - Config base Worker
+2. `appsettings.Development.json` - Config Worker per ambiente
+3. **`appsettings.Secrets.json` (root)** - **Credenziali condivise con Web** ⭐ PREFERITO
+4. `appsettings.Database.json` (root) - Fallback legacy
+5. `appsettings.Database.{Environment}.json` - Override ambiente (opzionale)
+
+**⚠️ CRITICO**: Worker e Web **DEVONO** usare lo stesso database per ambiente!
+
+**Configurazione corretta** (file `appsettings.Secrets.json` nella root):
+```json
+{
+  "ConnectionStrings": {
+    "MESManagerDb": "Server=localhost\\SQLEXPRESS01;Database=MESManager_Dev;Integrated Security=True;TrustServerCertificate=True;",
+    "MagoDb": "Server=192.168.1.72\\SQLEXPRESS01;Database=TODESCATO_NET;User Id=Gantt;Password=Gantt2019;TrustServerCertificate=True;Connection Timeout=30;"
+  }
+}
+```
+
+**Errore comune**: Worker usa `appsettings.Database.json` (DB prod) mentre Web usa `appsettings.Secrets.json` (DB dev) → sincronizzazione manuale funziona, automatica fallisce!
+
+**Soluzione**: Worker ora usa stessa logica del Web (vedi [DEPLOY-LESSONS-LEARNED.md - Problema 7](storico/DEPLOY-LESSONS-LEARNED.md#-problema-7-sync-automatica-fallisce-worker-vs-web-database-diversi))
 
 ---
 

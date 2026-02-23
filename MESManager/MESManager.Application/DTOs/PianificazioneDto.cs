@@ -78,6 +78,17 @@ public class CreateFestivoRequest
 }
 
 /// <summary>
+/// Request per caricamento commessa su Gantt (opzionale: con macchina specifica)
+/// </summary>
+public class CaricaSuGanttRequest
+{
+    /// <summary>
+    /// Numero macchina manuale (se null, usa auto-scheduler)
+    /// </summary>
+    public int? NumeroMacchina { get; set; }
+}
+
+/// <summary>
 /// Response per caricamento automatico sul Gantt
 /// </summary>
 public class CaricaSuGanttResponse
@@ -116,4 +127,14 @@ public class CaricaSuGanttResponse
     public List<CommessaGanttDto> CommesseAggiornate { get; set; } = new();
     
     public long UpdateVersion { get; set; }
+}
+
+/// <summary>
+/// DTO per macchina disponibile (da ricetta/anima)
+/// </summary>
+public class MacchinaDisponibileDto
+{
+    public string Codice { get; set; } = string.Empty;
+    public string Nome { get; set; } = string.Empty;
+    public int? NumeroMacchina { get; set; }
 }

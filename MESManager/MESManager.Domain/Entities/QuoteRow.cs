@@ -32,6 +32,12 @@ public class QuoteRow
     public PriceListItem? PriceListItem { get; set; }
     
     /// <summary>
+    /// Riferimento al tipo lavorazione anime (se riga WorkProcessing)
+    /// </summary>
+    public Guid? WorkProcessingTypeId { get; set; }
+    public WorkProcessingType? WorkProcessingType { get; set; }
+    
+    /// <summary>
     /// Codice articolo/prodotto (opzionale, copiato da listino o manuale)
     /// </summary>
     public string? Code { get; set; }
@@ -80,4 +86,9 @@ public class QuoteRow
     /// Note specifiche della riga
     /// </summary>
     public string? Notes { get; set; }
+    
+    /// <summary>
+    /// Dati tecnici lavorazione anime (relazione 1:1 se RowType = WorkProcessing)
+    /// </summary>
+    public WorkProcessingTechnicalData? TechnicalData { get; set; }
 }

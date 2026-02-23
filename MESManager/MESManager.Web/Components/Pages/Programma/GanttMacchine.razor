@@ -277,7 +277,10 @@
                     bloccata = c.Bloccata,
                     vincoloDataInizio = c.VincoloDataInizio,
                     vincoloDataFine = c.VincoloDataFine,
-                    datiIncompleti = c.DatiIncompleti
+                    datiIncompleti = c.DatiIncompleti,
+                    hasRicetta = c.HasRicetta,
+                    numeroParametri = c.NumeroParametri,
+                    ricettaUltimaModifica = c.RicettaUltimaModifica
                 }).ToList()
             };
             
@@ -325,7 +328,10 @@
             bloccata = c.Bloccata,
             vincoloDataInizio = c.VincoloDataInizio,
             vincoloDataFine = c.VincoloDataFine,
-            datiIncompleti = c.DatiIncompleti
+            datiIncompleti = c.DatiIncompleti,
+            hasRicetta = c.HasRicetta,
+            numeroParametri = c.NumeroParametri,
+            ricettaUltimaModifica = c.RicettaUltimaModifica
         }).ToList();
         
         await JS.InvokeVoidAsync("GanttMacchine.updateTasks", tasks);

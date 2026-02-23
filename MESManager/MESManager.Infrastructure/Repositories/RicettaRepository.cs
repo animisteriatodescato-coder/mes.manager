@@ -58,4 +58,32 @@ public class RicettaRepository : IRicettaRepository
             .Where(a => a.Ricetta != null)
             .CountAsync();
     }
+    
+    public async Task<Dictionary<Guid, RicettaInfo>> GetRicetteInfoByArticoloIdAsync(List<Guid> articoloIds)
+    {
+        if (!articoloIds.Any())
+            return new Dictionary<Guid, RicettaInfo>();
+        
+        var result = await _context.Articoli
+            .Where(a => articoloIds.Contains(a.Id))
+            .Select(a => new
+            {
+                a.Id,
+                HasRicetta = a.Ricetta != null,
+                NumeroParametri = a.Ricetta != null ? a.Ricetta.Parametri.Count : 0,
+                UltimaModifica = a.Ricetta != null ? a.UltimaModifica : (DateTime?)null
+            })
+            .AsNoTracking()
+            .ToListAsync();
+        
+        return result
+            .Where(x => x.HasRicetta)
+            .ToDictionary(
+                x => x.Id,
+                x => new RicettaInfo
+                {
+                    NumeroParametri = x.NumeroParametri,
+                    UltimaModifica = x.UltimaModifica
+                });
+    }
 }

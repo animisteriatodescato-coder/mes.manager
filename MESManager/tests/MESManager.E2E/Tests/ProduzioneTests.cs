@@ -40,6 +40,52 @@ public class ProduzioneTests : PlaywrightTestBase
         await AssertNoConsoleErrors();
     }
 
+    [Fact(DisplayName = "PLC Realtime > Lifecycle completo (load + navigate away)")]
+    public async Task PlcRealtime_LifecycleComplete()
+    {
+        // Carica PLC Realtime
+        await Page.GotoAsync($"{BaseUrl}/produzione/plc-realtime");
+        await AssertVisibleByTestId("page-plc-realtime");
+        await Page.WaitForTimeoutAsync(1000); // Attende render completo
+        
+        // Naviga via (trigger dispose)
+        await Page.GotoAsync($"{BaseUrl}/cataloghi/commesse");
+        await Page.WaitForTimeoutAsync(1000); // Attende cleanup
+        
+        // Naviga di nuovo (test reinitialization)
+        await Page.GotoAsync($"{BaseUrl}/produzione/plc-realtime");
+        await AssertVisibleByTestId("page-plc-realtime");
+        
+        // Finale: naviga ad altra pagina per dispose finale
+        await Page.GotoAsync($"{BaseUrl}/");
+        
+        await AssertNoConsoleErrors();
+    }
+
+    [Fact(DisplayName = "PLC Realtime > Navigazione menu completa (tutte pagine Produzione)")]
+    public async Task PlcRealtime_NavigazioneProduzione()
+    {
+        // Test navigazione completa sezione Produzione
+        var promuzionePages = new[]
+        {
+            "/produzione/dashboard",
+            "/produzione/plc-realtime",
+            "/produzione/plc-storico",
+            "/produzione/incollaggio"
+        };
+
+        foreach (var page in promuzionePages)
+        {
+            await Page.GotoAsync($"{BaseUrl}{page}");
+            await Page.WaitForTimeoutAsync(500); // Attende stabilizzazione
+        }
+        
+        // Naviga via dalla sezione
+        await Page.GotoAsync($"{BaseUrl}/");
+        
+        await AssertNoConsoleErrors();
+    }
+
     [Fact(DisplayName = "PLC Storico > Pagina e griglia visibili")]
     public async Task PlcStorico_PageLoads()
     {

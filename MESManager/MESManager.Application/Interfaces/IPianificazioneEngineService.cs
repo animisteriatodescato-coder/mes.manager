@@ -61,5 +61,7 @@ public interface IPianificazioneEngineService
     /// Carica automaticamente una commessa sul Gantt con algoritmo intelligente.
     /// Considera: data consegna, carico macchine, disponibilità.
     /// </summary>
-    Task<CaricaSuGanttResponse> CaricaSuGanttAsync(Guid commessaId);
+    /// <param name="commessaId">ID della commessa da caricare</param>
+    /// <param name="numeroMacchinaManuale">Se specificato, forza il caricamento su questa macchina (bypass auto-scheduler)</param>
+    Task<CaricaSuGanttResponse> CaricaSuGanttAsync(Guid commessaId, int? numeroMacchinaManuale = null);
 }

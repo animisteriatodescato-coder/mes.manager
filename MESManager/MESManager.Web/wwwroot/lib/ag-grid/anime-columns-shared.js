@@ -10,6 +10,47 @@ window.animeColumnsShared = (function() {
      * Tutte nascoste di default (hide: true) - l'utente può mostrarle dal menu colonne
      */
     const animeColumns = [
+        // RICETTA - Badge con numero parametri (CLICCABILE per aprire ricetta)
+        { 
+            field: 'hasRicetta', 
+            headerName: 'Ricetta', 
+            sortable: true, 
+            filter: true, 
+            width: 100,
+            hide: false,
+            editable: false,
+            cellRenderer: params => {
+                if (!params.data) return '';
+                
+                const hasRicetta = params.data.hasRicetta;
+                const numParametri = params.data.numeroParametri || 0;
+                const dataModifica = params.data.ricettaUltimaModifica;
+                
+                if (hasRicetta && numParametri > 0) {
+                    const tooltip = dataModifica 
+                        ? `${numParametri} parametri - Agg: ${new Date(dataModifica).toLocaleDateString('it-IT')}`
+                        : `${numParametri} parametri`;
+                    
+                    // Usa il grid specifico se disponibile, fallback ad animeGrid
+                    const gridNamespace = window.commesseAperteGrid ? 'commesseAperteGrid' : 
+                                         window.commesseGrid ? 'commesseGrid' : 'animeGrid';
+                    const codArticolo = params.data.codiceArticolo || params.data.articoloCodice;
+                    
+                    return `<div style="display: flex; align-items: center; height: 100%; cursor: pointer;" 
+                                 onclick="window.${gridNamespace}.openRicetta('${codArticolo}')" 
+                                 title="${tooltip}">
+                        <span style="background-color: #4caf50; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                            ✓ ${numParametri}
+                        </span>
+                    </div>`;
+                } else {
+                    return `<div style="display: flex; align-items: center; height: 100%;" title="Nessuna ricetta">
+                        <span style="color: #999; font-size: 11px;">—</span>
+                    </div>`;
+                }
+            }
+        },
+        
         // Dimensioni
         { field: 'larghezza', headerName: 'Larghezza', sortable: true, filter: 'agNumberColumnFilter', width: 100, hide: true },
         { field: 'altezza', headerName: 'Altezza', sortable: true, filter: 'agNumberColumnFilter', width: 100, hide: true },
@@ -118,3 +159,6 @@ window.animeColumnsShared = (function() {
         animeColumns // Esposto per reference
     };
 })();
+
+// Debug: Verifica caricamento modulo
+console.log('[anime-columns-shared v1.45.2] Module loaded successfully with', window.animeColumnsShared.animeColumns.length, 'column definitions');

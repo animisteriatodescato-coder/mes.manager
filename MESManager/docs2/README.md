@@ -46,8 +46,8 @@
     - [SQL-SERVER-ANALYSIS.md](storico/SQL-SERVER-ANALYSIS.md)
 
 ### AI Assistant Setup  
-12. **[BIBBIA-AI-MESMANAGER.md](BIBBIA-AI-MESMANAGER.md)** - Prompt AI specifico MESManager
-13. **[BIBBIA-AI-GENERICA.md](BIBBIA-AI-GENERICA.md)** - Template AI per altri gestionali
+15. **[BIBBIA-AI-MESMANAGER.md](BIBBIA-AI-MESMANAGER.md)** - Prompt AI specifico MESManager (308 righe)
+16. **[LINEE-GUIDA-DOCUMENTAZIONE.md](LINEE-GUIDA-DOCUMENTAZIONE.md)** - ⭐ Regole per mantenere documentazione organizzata e scalabile
 14. **[bibbia-visualstudio-v2.txt](bibbia-visualstudio-v2.txt)** - Prompt iniziale compatto (copia-incolla)
 
 ---

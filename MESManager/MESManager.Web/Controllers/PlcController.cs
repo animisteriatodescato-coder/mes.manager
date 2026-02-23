@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using MESManager.Application.Interfaces;
 using MESManager.Application.DTOs;
 using MESManager.Domain.Entities;
+using MESManager.Domain.Constants;
 using MESManager.Infrastructure.Data;
 using MESManager.Infrastructure.Services;
 using System.Diagnostics;
@@ -423,12 +424,13 @@ public class PlcController : ControllerBase
     }
     
     /// <summary>
-    /// Salva DB55 corrente come ricetta master per un articolo nel database
+    /// Salva parametri runtime DB56 (offset 100-196) come ricetta master per un articolo.
+    /// FONTE DATI: DB56 offset 100-196 (parametri esecuzione macchina scritti dal PLC)
     /// </summary>
-    [HttpPost("save-db55-as-recipe")]
-    public async Task<ActionResult<SaveDb55AsRecipeResult>> SaveDb55AsRecipe([FromBody] SaveDb55AsRecipeRequest request)
+    [HttpPost("save-recipe-from-plc")]
+    public async Task<ActionResult<SaveRecipeFromPlcResult>> SaveRecipeFromPlc([FromBody] SaveRecipeFromPlcRequest request)
     {
-        var result = new SaveDb55AsRecipeResult();
+        var result = new SaveRecipeFromPlcResult();
         
         try
         {
@@ -443,21 +445,24 @@ public class PlcController : ControllerBase
                 return NotFound(result);
             }
             
-            // 2. Leggi DB55 se entries non fornite
+            // 2. Leggi DB56 (parametri esecuzione runtime) se entries non fornite
             var entries = request.Entries?.ToList();
             if (entries == null || entries.Count == 0)
             {
-                entries = await _recipeWriter.ReadDb55Async(request.MacchinaId, HttpContext.RequestAborted);
+                entries = await _recipeWriter.ReadDb56Async(request.MacchinaId, HttpContext.RequestAborted);
             }
             
-            // 3. Salva TUTTI i parametri (offset 0-196), anche quelli readonly
-            // Questo permette di visualizzare/modificare l'intera ricetta (100 parametri)
-            var parametriDaSalvare = entries.Where(e => e.Offset >= 0).ToList();
+            // 3. Filtra SOLO parametri DB56 offset 100-196 (range esecuzione macchina)
+            var parametriDaSalvare = entries
+                .Where(e => 
+                    e.Offset >= PlcConstants.OFFSET_DB56_EXECUTION_START && 
+                    e.Offset <= PlcConstants.OFFSET_DB56_EXECUTION_END)
+                .ToList();
             
             if (parametriDaSalvare.Count == 0)
             {
                 result.Success = false;
-                result.ErrorMessage = "Nessun parametro trovato in DB55";
+                result.ErrorMessage = $"Nessun parametro trovato in DB56 range {PlcConstants.OFFSET_DB56_EXECUTION_START}-{PlcConstants.OFFSET_DB56_EXECUTION_END}";
                 return BadRequest(result);
             }
             
@@ -482,7 +487,7 @@ public class PlcController : ControllerBase
                 _context.ParametriRicetta.RemoveRange(ricetta.Parametri);
             }
             
-            // 5. Crea nuovi ParametroRicetta da TUTTI i parametri di DB55
+            // 5. Crea nuovi ParametroRicetta da parametri DB56 (100-196)
             // Ordina per Offset e assegna CodiceParametro sequenziale
             var parametriOrdinati = parametriDaSalvare.OrderBy(e => e.Offset).ToList();
             int codice = 1;

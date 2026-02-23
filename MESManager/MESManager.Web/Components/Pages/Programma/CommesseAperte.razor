@@ -154,7 +154,7 @@
                             <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">Riepilogo Dati</MudText>
                             <MudSimpleTable Dense="true" Hover="true">
                                 <tbody>
-                                    <tr><td><strong>Cliente</strong></td><td>@(selectedCommessaForLabel.CompanyName ?? "N/D")</td></tr>
+                                    <tr><td><strong>Cliente</strong></td><td>@(selectedCommessaForLabel.ClienteDisplay ?? "N/D")</td></tr>
                                     <tr><td><strong>Codice Anima</strong></td><td>@(selectedCommessaForLabel.CodiceAnime ?? "N/D")</td></tr>
                                     <tr><td><strong>Numero Ordine</strong></td><td>@(selectedCommessaForLabel.InternalOrdNo ?? "N/D")</td></tr>
                                     <tr><td><strong>Sabbia</strong></td><td>@(selectedCommessaForLabel.SabbiaDescrizione ?? "N/D")</td></tr>
@@ -174,7 +174,7 @@
                                     </div>
                                     <div class="label-row client-row">
                                         <span class="label-field-name">CLIENTE</span>
-                                        <span class="label-field-value client-name">@(selectedCommessaForLabel.CompanyName ?? "")</span>
+                                        <span class="label-field-value client-name">@(selectedCommessaForLabel.ClienteDisplay ?? "")</span>
                                     </div>
                                     <div class="label-row code-row">
                                         <span class="label-field-name">CODICE ANIMA</span>
@@ -283,6 +283,14 @@
 <style>
     .commesse-aperte-page {
         position: relative;
+    }
+
+    /* Abilita selezione testo nelle celle della grid */
+    .ag-theme-alpine .ag-cell {
+        user-select: text !important;
+        -webkit-user-select: text !important;
+        -moz-user-select: text !important;
+        -ms-user-select: text !important;
     }
 
     .toolbar-sticky {
@@ -585,8 +593,9 @@
     }
 
     /// <summary>
-    /// 🚀 CARICA SU GANTT - Auto-scheduler intelligente v1.31
-    /// Prende la commessa selezionata e la carica sul Gantt con algoritmo smart
+    /// 🚀 CARICA SU GANTT - Auto-scheduler intelligente v1.48
+    /// Prende la commessa selezionata e mostra un dialog di selezione macchina
+    /// Se non si seleziona nulla, usa l'auto-scheduler
     /// </summary>
     private async Task CaricaSuGantt()
     {
@@ -625,19 +634,68 @@
                 }
             }
             
+            // 🎯 Carica macchine disponibili per questa commessa
+            List<MacchinaDisponibileDto>? macchineDisponibili = null;
+            try
+            {
+                macchineDisponibili = await Http.GetFromJsonAsync<List<MacchinaDisponibileDto>>($"api/pianificazione/macchine-disponibili/{commessa.Id}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Errore caricamento macchine disponibili: {ex.Message}");
+            }
+            
+            int? macchinaSelezionata = null;
+            
+            // 📋 Mostra dialog di selezione macchina solo se ci sono macchine disponibili
+            if (macchineDisponibili != null && macchineDisponibili.Any())
+            {
+                var dialogParameters = new DialogParameters
+                {
+                    ["Commessa"] = commessa,
+                    ["MacchineDisponibili"] = macchineDisponibili
+                };
+                
+                var dialogOptions = new DialogOptions 
+                { 
+                    MaxWidth = MaxWidth.Small, 
+                    FullWidth = true,
+                    CloseOnEscapeKey = true,
+                    CloseButton = true
+                };
+                
+                var dialog = await DialogService.ShowAsync<DialoSelezioneSceltaMacchina>("Seleziona Macchina", dialogParameters, dialogOptions);
+                var result = await dialog.Result;
+                
+                if (!result.Canceled && result.Data is int numeroMacchina)
+                {
+                    macchinaSelezionata = numeroMacchina;
+                }
+                else if (result.Canceled)
+                {
+                    // Utente ha annullato completamente, non caricare
+                    return;
+                }
+                // Se result.Data è null → auto-scheduler
+            }
+            
             Snackbar.Add("🚀 Caricamento in corso...", Severity.Info);
             
-            // Chiamata API
-            var response = await Http.PostAsync($"api/pianificazione/carica-su-gantt/{commessa.Id}", null);
+            // Chiamata API con macchina selezionata (o null per auto-scheduler)
+            var requestBody = macchinaSelezionata.HasValue 
+                ? new { NumeroMacchina = macchinaSelezionata.Value } 
+                : null;
+            
+            var response = await Http.PostAsJsonAsync($"api/pianificazione/carica-su-gantt/{commessa.Id}", requestBody);
             
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<CaricaSuGanttResponse>();
+                var apiResult = await response.Content.ReadFromJsonAsync<CaricaSuGanttResponse>();
                 
-                if (result != null && result.Success)
+                if (apiResult != null && apiResult.Success)
                 {
                     Snackbar.Add(
-                        $"✅ {commessa.Codice} caricata su macchina {result.MacchinaAssegnata} - {result.Motivazione}",
+                        $"✅ {commessa.Codice} caricata su macchina {apiResult.MacchinaAssegnata} - {apiResult.Motivazione}",
                         Severity.Success,
                         config => { config.VisibleStateDuration = 5000; }
                     );
@@ -648,7 +706,7 @@
                 }
                 else
                 {
-                    Snackbar.Add($"❌ Errore: {result?.ErrorMessage ?? "Risposta non valida"}", Severity.Error);
+                    Snackbar.Add($"❌ Errore: {apiResult?.ErrorMessage ?? "Risposta non valida"}", Severity.Error);
                 }
             }
             else
@@ -1107,7 +1165,7 @@
             </div>
             <div class='label-row client-row'>
                 <span class='label-field-name'>CLIENTE</span>
-                <span class='label-field-value client-name'>{System.Web.HttpUtility.HtmlEncode(c.CompanyName ?? "")}</span>
+                <span class='label-field-value client-name'>{System.Web.HttpUtility.HtmlEncode(c.ClienteDisplay ?? "")}</span>
             </div>
             <div class='label-row code-row'>
                 <span class='label-field-name'>CODICE ANIMA</span>
@@ -1151,7 +1209,7 @@
             </div>
             <div class='label-row client-row'>
                 <span class='label-field-name'>CLIENTE</span>
-                <span class='label-field-value client-name'>{System.Web.HttpUtility.HtmlEncode(c.CompanyName ?? "")}</span>
+                <span class='label-field-value client-name'>{System.Web.HttpUtility.HtmlEncode(c.ClienteDisplay ?? "")}</span>
             </div>
             <div class='label-row code-row'>
                 <span class='label-field-name'>CODICE ANIMA</span>

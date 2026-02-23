@@ -223,6 +223,40 @@ dotnet run --environment Development
 
 ---
 
+### Test Worker Service (Sync Mago)
+
+Per testare la sincronizzazione automatica da Mago:
+
+```powershell
+# 1. Verifica configurazione
+# Assicurati che appsettings.Secrets.json esista nella root con credenziali corrette
+
+# 2. Avvia Worker manualmente
+cd C:\Dev
+dotnet run --project MESManager/MESManager.Worker/MESManager.Worker.csproj --environment Development
+
+# 3. Osserva log - ogni 1 ora (o attendi 10 secondi per primo sync):
+# ✅ "Inizio sincronizzazione Mago"
+# ✅ "Sync Clienti: Nuovi=X, Aggiornati=Y"
+# ✅ "Sync Articoli: Nuovi=X, Aggiornati=Y"
+# ✅ "Sync Commesse: Nuovi=X, Aggiornati=Y"
+# ✅ "Sincronizzazione Mago completata"
+
+# 4. Verifica database (SQL Server Management Studio)
+SELECT TOP 10 * FROM LogSync ORDER BY DataOra DESC
+# Deve mostrare log recenti con Errori=0
+
+# 5. Ferma Worker: Ctrl+C
+```
+
+**⚠️ Nota**: Worker e Web **DEVONO** usare stesso database (vedi [03-CONFIGURAZIONE.md](03-CONFIGURAZIONE.md))
+
+**Errori comuni**:
+- `Server non trovato (error 26)` → Verifica connection string in `appsettings.Secrets.json`
+- `Sync Mago fallisce ma UI funziona` → Worker usa DB diverso da Web (vedi [DEPLOY-LESSONS-LEARNED Problema 7](storico/DEPLOY-LESSONS-LEARNED.md#-problema-7-sync-automatica-fallisce-worker-vs-web-database-diversi))
+
+---
+
 ## 📦 Test Migrazioni Database
 
 ### Creare Nuova Migration

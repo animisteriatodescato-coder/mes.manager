@@ -12,16 +12,25 @@
 ╔══════════════════════════════════════════════════════════════════════════╗
 ║  ⚠️  WORKFLOW VINCOLANTE - LEGGI PRIMA DI OGNI MODIFICA CODICE ⚠️        ║
 ╠══════════════════════════════════════════════════════════════════════════╣
+║  PRIMA DI SCRIVERE CODICE:                                              ║
+║                                                                          ║
+║  🚫 ZERO DUPLICAZIONE - Codice duplicato = ERRORE GRAVE                 ║
+║  ✅ UNA fonte di verità - Modificabile da UN solo punto                 ║
+║  ✅ Riutilizzo servizi/metodi esistenti - MAI copiare/incollare         ║
+║  ✅ Scalabile e manutenibile - Pensa "fra 5 anni"                       ║
+║                                                                          ║
+╠══════════════════════════════════════════════════════════════════════════╣
 ║  DOPO OGNI MODIFICA CODICE (features, fix, refactoring):                ║
 ║                                                                          ║
-║  0. ✅ Incrementa AppVersion.cs (anche micro-modifiche UI)             ║
+║  0. ✅ Incrementa AppVersion.cs (anche micro-modifiche UI)              ║
 ║  1. ✅ dotnet build --nologo (0 errori OBBLIGATORIO)                    ║
-║  2. ✅ AVVIA SERVER: run_task "Run MESManager Web Dev"                  ║
-║  3. ✅ Comunica URL test: http://localhost:5156/[pagina-modificata]     ║
-║  4. ⏸️  Attendi feedback utente PRIMA di chiudere/continuare           ║
+║  2. ✅ TEST AUTO: Se modifica UI → .\test-plc-realtime.ps1 -UseExisting ║
+║  3. ✅ AVVIA SERVER: dotnet run (background da C:\Dev)                  ║
+║  4. ✅ Comunica URL test: http://localhost:5156/[pagina-modificata]     ║
+║  5. ⏸️  Attendi feedback utente PRIMA di chiudere/continuare           ║
 ║                                                                          ║
-║  ❌ MAI saltare step 2-3: utente DEVE poter testare immediatamente      ║
-║  ❌ MAI dire "ho finito" senza server avviato                           ║
+║  ❌ MAI saltare step 2-4: utente DEVE poter testare immediatamente      ║
+║  ❌ MAI dire "ho finito" senza test auto + server avviato               ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 ```
 
@@ -100,132 +109,28 @@ I file in `/docs2` sono:
 
 ### ⚠️ REGOLE DI CRESCITA DOCUMENTALE
 
-**Problema da evitare**: BIBBIA che cresce a dismisura con dettagli implementativi.
+**Limite BIBBIA**: MAX 350 righe
 
-**Soluzione**: Separazione netta tra PROMPT (BIBBIA) e DETTAGLI (docs2/).
+**Principio**: BIBBIA = regole generali | docs2/ = dettagli implementativi
 
-#### DOVE Aggiungere Contenuto
-
-| Tipo Contenuto | File Destinazione | Esempio |
-|----------------|-------------------|---------|
-| **Regola generale progetto** | BIBBIA-AI-MESMANAGER.md | "Mai mescolare dev/prod" |
-| **Workflow operativo** | BIBBIA-AI-MESMANAGER.md | "Prima di ogni deploy..." |
-| **Procedura deploy** | 01-DEPLOY.md | Script robocopy completo |
-| **Script test specifici** | 09-TESTING-FRAMEWORK.md | Dettagli test-api.ps1 |
-| **Problema deploy risolto** | storico/DEPLOY-LESSONS-LEARNED.md | "Database prod mancante dati" |
-| **Fix bug specifico** | storico/FIX-[NOME]-[DATA].md | FIX-GANTT-STATI-COLORI |
-| **Algoritmo scheduling** | 04-SCHEDULING-ENGINE-PATTERNS.md | Job Shop, FJSS patterns |
-| **Configurazione PLC** | 07-PLC-SYNC.md | Offset, IP, connessioni |
-| **Test E2E** | 10-QA-UI-TESTING.md | Playwright, visual regression |
-
-#### BIBBIA: Solo Questo
-
-✅ **PERMESSO nella BIBBIA**:
-- Identità e ruolo AI
-- Stack tecnologico (linguaggi, framework)
-- Ambienti (dev/prod)
-- Indice file docs2/ (tabella)
-- Workflow obbligatori (checklist brevi)
-- Regole architetturali inviolabili (principi generali)
-- Metodo di risposta AI
-- Filosofia progetto
-- Esempi pratici (2-3 max, brevi)
-
-❌ **VIETATO nella BIBBIA**:
-- Script PowerShell completi (→ 09-TESTING-FRAMEWORK.md)
-- Lezioni deploy specifiche (→ storico/DEPLOY-LESSONS-LEARNED.md)
-- Dettagli endpoint API (→ 09-TESTING-FRAMEWORK.md o README specifico)
-- Query SQL lunghe (→ storico/ o 03-CONFIGURAZIONE.md)
-- Codice C# completo (→ storico/FIX-*.md)
-- Checklist deployment dettagliate (→ 01-DEPLOY.md)
-
-#### Limite Righe File
-
-| File | Max Righe | Azione se Superato |
-|------|-----------|-------------------|
-| BIBBIA-AI-MESMANAGER.md | **350** | Split dettagli → docs2/ |
-| 0X-[NOME].md | **800** | Crea sottopagine o split temi |
-| storico/FIX-*.md | **500** | OK (documenti puntuali) |
-| storico/DEPLOY-LESSONS-LEARNED.md | **1000** | Crea DEPLOY-LESSONS-2027.md |
-
-#### Template Decisione: "Dove Metto Questo?"
-
-```
-1. È una REGOLA GENERALE applicabile a tutto il progetto?
-   → SÌ: BIBBIA (se <20 righe) o file tematico docs2/
-   → NO: Vai al punto 2
-
-2. È un PROBLEMA RISOLTO durante deploy produzione?
-   → SÌ: storico/DEPLOY-LESSONS-LEARNED.md
-   → NO: Vai al punto 3
-
-3. È un FIX specifico con codice/analisi dettagliata?
-   → SÌ: storico/FIX-[DESCRIZIONE]-[DATA].md
-   → NO: Vai al punto 4
-
-4. È una PROCEDURA operativa (deploy, test, sviluppo)?
-   → SÌ: File numerato 01-10 pertinente
-   → NO: Considera creare nuovo file tematico
-```
+**Dettagli completi**: [LINEE-GUIDA-DOCUMENTAZIONE.md](docs2/LINEE-GUIDA-DOCUMENTAZIONE.md)
 
 ---
 
 ## 🔄 OBBLIGO DI AGGIORNAMENTO DOCS
 
-Durante il lavoro, quando emerge uno dei seguenti casi:
+Quando scopri bug, limiti tecnici o implementi soluzioni importanti:
+1. Segnala che va documentato
+2. Scegli il file corretto (storico/FIX-*.md o file tematico)
+3. Mantieni storicità (problema → causa → soluzione → impatto)
 
-- 🐛 Bug scoperto e risolto
-- 🏗️ Problema architetturale identificato
-- 🚧 Limite tecnico scoperto
-- ✅ Decisione importante presa
-- ⚠️ Errore commesso e corretto
-- 🔧 Workaround necessario applicato
-- 📏 Regola nuova da rispettare
-
-**DEVI**:
-
-1. **Segnalare** che la conoscenza va documentata
-2. **Decidere il file corretto** (vedi "Regole di Crescita Documentale" sopra)
-3. **Proporre**:
-   - File docs2/ da aggiornare (o crearne uno nuovo in storico/)
-   - Contenuto chiaro e pratico con esempi
-4. **Mantenere STORICITÀ**:
-   - Cosa non funzionava prima
-   - Perché falliva
-   - Soluzione adottata
-   - Conseguenze evitate
-
-### Template Aggiornamento Docs
-
-```markdown
-## [Data] - [Titolo Scoperta]
-
-### Problema
-[Cosa non funzionava]
-
-### Causa Root
-[Perché accadeva]
-
-### Soluzione Implementata
-[Cosa è stato fatto]
-```
-File modificati:
-- file1.cs
-- file2.js
-```
-
-### Impatto
-[Conseguenze e benefici]
-
-### Lezione Appresa
-[Regola da seguire in futuro]
-```
+**Template e regole**: [LINEE-GUIDA-DOCUMENTAZIONE.md](docs2/LINEE-GUIDA-DOCUMENTAZIONE.md)
 
 ---
 
 ## 🎯 WORKFLOW OPERATIVO OBBLIGATORIO
 
-### ⚠️ COMANDI STANDARD BUILD & RUN (USARE SEMPRE QUESTI)
+### ⚠️ COMANDI STANDARD BUILD → TEST → RUN (USARE SEMPRE QUESTI)
 
 ```powershell
 # 1. STOP SERVER (se già in esecuzione)
@@ -234,7 +139,11 @@ $proc = Get-NetTCPConnection -LocalPort 5156 -State Listen -ErrorAction Silently
 # 2. BUILD (dalla directory MESManager)
 cd C:\Dev\MESManager; dotnet build MESManager.sln --nologo
 
-# 3. RUN SERVER (background, dalla directory C:\Dev)
+# 3. TEST AUTOMATICI (OBBLIGATORIO se modifica UI/Blazor)
+cd C:\Dev\MESManager; .\test-plc-realtime.ps1 -UseExistingServer
+# ✅ Se VERDE → Continua | ❌ Se ROSSO → Leggi TestResults/Playwright/*/errors.txt
+
+# 4. RUN SERVER (background, dalla directory C:\Dev)
 cd C:\Dev; dotnet run --project MESManager/MESManager.Web/MESManager.Web.csproj --environment Development
 ```
 
@@ -242,67 +151,38 @@ cd C:\Dev; dotnet run --project MESManager/MESManager.Web/MESManager.Web.csproj 
 - ❌ NON usare `run_task` - gli ID nel workspace non funzionano
 - ✅ USA sempre `run_in_terminal` con `isBackground=true` per il server
 - ✅ BUILD dalla directory `C:\Dev\MESManager`
+- ✅ TEST da `C:\Dev\MESManager` con server GIÀ running (`-UseExistingServer`)
 - ✅ RUN dalla directory `C:\Dev`
+- ⚠️ Test automatici OBBLIGATORI per modifiche a: PlcRealtime.razor, MainLayout.razor, componenti Blazor critici
 
-### Prima di OGNI Operazione
+### Checklist Workflow
 
-```
-1. Leggi README.md in docs2/
-2. Identifica file docs2/ pertinente
-3. Verifica regole e vincoli
-4. Procedi con coerenza
-```
+**Prima di OGNI Operazione**: Leggi README.md e file docs2/ pertinente
 
-### Prima di OGNI Deploy
+**Prima di OGNI Deploy**: [08-CHANGELOG.md](docs2/08-CHANGELOG.md) + [storico/DEPLOY-LESSONS-LEARNED.md](docs2/storico/DEPLOY-LESSONS-LEARNED.md)
 
-```
-1. Leggi 08-CHANGELOG.md (workflow AI completo)
-2. Leggi storico/DEPLOY-LESSONS-LEARNED.md (checklist completa)
-3. Incrementa versione in AppVersion.cs (UNICO LUOGO - formato: "X.Y.Z")
-4. Aggiungi entry in CHANGELOG.md con dettaglio modifiche
-5. Segui 01-DEPLOY.md step-by-step
-6. Verifica versione online dopo deploy
-```
+**Prima di OGNI Commit**: Build + Test + Aggiorna docs2/
 
-### Prima di OGNI Commit
+**Prima di OGNI Modifica Database**: Migration EF + Test dev + Script SQL prod + Documenta
 
-```
-1. dotnet build --nologo (verifica 0 errori)
-2. Test manuale funzionalità
-3. Aggiorna docs2/ se necessario
-4. Commit con messaggio chiaro
-```
+### ⚠️ Testing & Validazione
 
-### Prima di OGNI Modifica Database
+**MAI dichiarare "funziona" senza**:
+- ✅ **Test E2E automatici**: `./test-plc-realtime.ps1` (per modifiche UI)
+- ✅ **Build 0 errori**: `dotnet build --nologo`
+- ✅ **Log visibile**: Console output senza errori rossi
+- ✅ **Test manuale**: URL comunicato, pagina testata visivamente
 
-```
-1. Crea migration EF Core
-2. Testa su DB dev locale
-3. Genera script SQL per prod
-4. Documenta in 03-CONFIGURAZIONE.md
-```
+**Test E2E Guideline**:
+- Modifica a `*.razor` componenti → Test OBBLIGATORIO
+- Modifica a JavaScript (`wwwroot/js`) → Test OBBLIGATORIO  
+- Modifica backend services → Test opzionale (ma consigliato)
+- Test fallito → Leggi `TestResults/Playwright/*/errors.txt` + screenshot
 
-### ⚠️ REGOLA CRITICA: Testing & Validazione
-
-**MAI dichiarare "funziona" senza:**
-
-1. **Test Script Eseguito** (`test-*.ps1`)
-2. **Logging Aggressivo nel Codice** ([OPERATION START] → [SUCCESS/ERROR])
-3. **Verifica Database BEFORE → AFTER** (delta verificato)
-4. **Test Manuale UI** (navigazione + dati corretti)
-
-**Template Pre-Dichiarazione Success:**
-```
-[ ] Build: 0 errori
-[ ] Test script: Passato ✅
-[ ] Log: Output visibile
-[ ] DB: Delta verificato
-[ ] UI: Manuale ok
-[ ] CHANGELOG: Aggiornato
-[ ] Docs2/: Aggiornato
-```
-
-**Dettagli**: Vedi [09-TESTING-FRAMEWORK.md](docs2/09-TESTING-FRAMEWORK.md)
+**Dettagli**: 
+- [09-TESTING-FRAMEWORK.md](docs2/09-TESTING-FRAMEWORK.md)
+- [10-QA-UI-TESTING.md](docs2/10-QA-UI-TESTING.md)
+- [TEST-AUTO-GUIDA.md](TEST-AUTO-GUIDA.md) ⭐ Guida rapida test automatici
 
 ---
 
@@ -355,100 +235,55 @@ Ogni run deve riportare:
 
 ## 🚫 REGOLE ARCHITETTURALI INVIOLABILI
 
-### 1. ZERO Duplicazione
-- Una sola fonte di verità per ogni dato
-- Nessun codice ripetuto
-- Consolidamento obbligatorio
+1. **ZERO Duplicazione** - UNA fonte di verità | Modificabile da UN punto | MAI copiare/incollare codice
+2. **Clean Architecture** - DI, Repository Pattern, layer rispettati
+3. **Ogni Modifica Indica** - File, impatti, docs2/ da aggiornare, migration DB
+4. **Database** - Dev ≠ Prod SEMPRE | Script SQL per prod | Migration EF per schema
+5. **Frontend** - UX stabile | Preferenze persistenti | Cross-browser
+6. **Deploy** - MAI sovrascrivere secrets | Versione in AppVersion.cs | Ordine servizi corretto | [01-DEPLOY.md](docs2/01-DEPLOY.md)
+7. **PLC** - IP in DB | Offset in JSON | Graceful shutdown | [07-PLC-SYNC.md](docs2/07-PLC-SYNC.md)
+8. **Sicurezza** - Secrets DPAPI | Parametrized queries | HTTPS prod
+9. **Testing** - Script test | Log [START/SUCCESS/ERROR] | DB verificato | UI testata | [09-TESTING-FRAMEWORK.md](docs2/09-TESTING-FRAMEWORK.md)
 
-### 2. Coerenza Strutturale
-- Clean Architecture rispettata
-- Dependency Injection sempre
-- Repository Pattern mantenuto
+---
 
-### 3. Ogni Modifica DEVE Indicare
-- File coinvolti (lista completa)
-- Impatti su altri moduli
-- Necessità aggiornamento docs2/
-- Migration DB se necessaria
+## 🚨 PRINCIPIO FONDAMENTALE: ZERO DUPLICAZIONE
 
-### 4. Database
-- **Dev ≠ Prod SEMPRE**
-- Script SQL obbligatori per prod
-- Migration EF Core per schema
-- Standard esistenti intoccabili senza piano migrazione
+### ⚠️ QUESTO È IL PROBLEMA PIÙ RICORRENTE - LEGGILO ATTENTAMENTE
 
-### 5. Frontend
-- UX stabile (no regressioni)
-- Stato persistente (preferenze utente)
-- Cross-browser compatibility
-- Mobile responsive (dove applicabile)
+**REGOLA INVIOLABILE**: Codice duplicato = technical debt = manutenzione impossibile = BUG garantiti
 
-### 6. Deploy
-- **MAI** sovrascrivere `appsettings.Secrets.json` o `appsettings.Database.json`
-- Versione **SEMPRE** aggiornata in `AppVersion.cs` (unico luogo)
-- Path corretti obbligatori (vedi 01-DEPLOY.md)
-- Ordine servizi: Stop (PlcSync→Worker→Web), Start (Web→Worker→PlcSync)
-- **VALIDAZIONE PRODUZIONE POST-DEPLOY** (lezione v1.30.10):
-  - Verificare che tabelle critiche abbiano dati: `ImpostazioniProduzione`, `CalendarioLavoro`
-  - Se mancanti, l'applicazione fallirà con "Impostazioni produzione mancanti"
-  - Fix: INSERT record default via script SQL o ADO.NET
-  - **PreferencesService**: Se utente è selezionato, preferenze vanno in DB (sopravvivono a deploy)
-  - **Column State**: Con v1.30.11, stato colonne AG Grid sincronizzato automaticamente con DB
-  - **Macchine attive**: "Carica su Gantt" richiede almeno 1 macchina con `AttivaInGantt = true`
+### ❌ VIETATO ASSOLUTAMENTE
 
-### 7. PLC Integration
-- IP macchine **SEMPRE** nel database
-- Offset PLC **SEMPRE** nei file JSON
-- Graceful shutdown obbligatorio (libera slot PLC)
-- Gestione riconnessioni automatica
+- ❌ Copiare/incollare codice | Duplicare logica business | Ripetere query SQL
+- ❌ Creare metodi simili con nomi diversi | Duplicare validazioni
 
-### 8. Sicurezza
-- Secrets cifrati (DPAPI su Windows)
-- Ruoli e autorizzazioni rispettati
-- SQL Injection prevention (parametrized queries)
-- HTTPS in produzione
+### ✅ OBBLIGATORIO SEMPRE - 4 Domande Prima di Scrivere Codice
 
-## 9. Testing & Debugging (CRITICO)
-- Test script per ogni feature importante
-- Log aggressivo con [OPERATION START/SUCCESS/ERROR]
-- Inspection pattern: BEFORE → UPDATE → AFTER
-- OrderBy mai su Guid - usare campo semantico (Codice, Nome, etc)
-- Nessuna dichiarazione "funziona" senza prova visibile
+1. ✅ Esiste già un servizio/metodo che fa questa cosa?
+2. ✅ Posso riutilizzare codice esistente?
+3. ✅ Se modifico questo domani, dovrò cambiare anche altro? → **SE SÌ = REFACTORING OBBLIGATORIO**
+4. ✅ Questo è modificabile da UN SOLO punto?
+
+### 🎯 Workflow Implementazione Feature
+
+1. **Cerca prima** - grep/semantic search per logica simile
+2. **Riutilizza** - Usa servizi esistenti | **Estendi** parametri se serve
+3. **Centralizza** - Nuovo servizio solo se logica completamente nuova
+
+**Pattern**: ValidationService centralizzato > duplicare validation in 2+ servizi
 
 ---
 
 ## 💡 METODO DI RISPOSTA
 
-### Se Manca Contesto
-→ Fai domande mirate, non assumere
+- Se manca contesto → Fai domande mirate
+- Se c'è rischio → Avviso preventivo
+- Se esistono alternative → Confronto pro/contro
 
-### Se C'è Rischio
-→ Avviso preventivo chiaro
+**Priorità**: Soluzione PIÙ SEMPLICE > PIÙ STABILE > PIÙ DOCUMENTABILE
 
-### Se Esistono Alternative
-→ Confronto breve pro/contro
-
-### Priorità Decisionale
-**Soluzione PIÙ SEMPLICE > PIÙ STABILE > PIÙ DOCUMENTABILE**
-
-### Formato Risposta Ideale
-
-```
-1. Analisi situazione
-2. Riferimento docs2/ pertinente
-3. Soluzione proposta
-4. File da modificare
-5. Impatti e rischi
-6. Necessità aggiornamento docs
-7. ✅ BUILD + RUN (OBBLIGATORIO PER MODIFICHE CODICE):
-   - dotnet build --nologo (0 errori)
-   - run_task "Run MESManager Web Dev"
-   - "✅ Server avviato - testa ora: http://localhost:5156/[pagina]"
-   - Attendi feedback utente
-8. 🔢 VERSIONING (se deploy imminente):
-   - Incrementa AppVersion.cs
-   - Aggiorna CHANGELOG.md
-```
+**Workflow risposta**: Analisi → Riferimenti docs2/ → 4 soluzioni prioritizzate → Implementazione → Build+Run → Attendi test utente
 
 ---
 
@@ -464,175 +299,66 @@ Pensa come se:
 
 ---
 
-## 🔍 ESEMPI PRATICI
+## 🔍 ESEMPIO WORKFLOW
 
-### Esempio 1: Richiesta Modifica Database
+**Utente**: "Aggiungi campo Email a Macchine"
 
-**Utente**: "Aggiungi campo Email a tabella Macchine"
-
-**Risposta AI**:
-```
-1. Analisi:
-   - Tabella Macchine in Domain/Entities/Macchina.cs
-   - Migration necessaria
-   - Impatto su PlcSync (nessuno)
-
-2. Riferimento docs:
-   - [02-SVILUPPO.md](docs2/02-SVILUPPO.md#test-migrazioni-database)
-   - [05-ARCHITETTURA.md](docs2/05-ARCHITETTURA.md#database-schema)
-
-3. Soluzione:
-   [propone codice migration]
-
-4. File modificati:
-   - Domain/Entities/Macchina.cs
-   - Infrastructure/Migrations/xxxxx_AddEmailToMacchine.cs
-
-5. Step:
-   - Aggiungi proprietà in Macchina.cs
-   - Crea migration: dotnet ef migrations add AddEmailToMacchine
-   - Testa su dev: dotnet ef database update
-   - Genera script SQL per prod
-
-6. Docs da aggiornare:
-   - [05-ARCHITETTURA.md](docs2/05-ARCHITETTURA.md) → Aggiorna schema Macchine
-```
-
-### Esempio 2: Deploy Urgente
-
-**Utente**: "pubblica"
-
-**Risposta AI**:
-```
-Seguo workflow da [08-CHANGELOG.md](docs2/08-CHANGELOG.md):
-
-FASE 1: Pre-controlli
-✓ Build: dotnet build --nologo
-✓ Versione attuale: v1.23 (da MainLayout.razor)
-
-FASE 2: Consolidamento
-→ Incremento versione: v1.23 → v1.24
-→ Aggiorno CHANGELOG.md con modifiche
-
-FASE 3: Build
-→ dotnet publish Web/Worker/PlcSync
-
-FASE 4: Deploy
-[mostra script completo da 01-DEPLOY.md]
-
-Procedo?
-```
+**AI**: Analizza → Riferisce docs2/ pertinenti → Propone 4 soluzioni → Implementa scelta → Build+Run → Attende test utente
 
 ---
 
-## ⚠️ REGOLA CRITICA: Dashboard e PLCRealtime
+## ⚠️ REGOLE CRITICHE - LINK RAPIDI
 
-### Visibilità Macchine nelle Dashboard
+### Dashboard e PLCRealtime
 
-Le pagine **Dashboard Produzione** e **PLC Realtime** mostrano SOLO macchine che soddisfano:
+**Problema comune**: Dashboard vuote o macchine non visibili
 
-1. ✅ Record presente in `PLCRealtime` (JOIN obbligatorio)
-2. ✅ `Macchina.IndirizzoPLC` NOT NULL e non vuoto
-3. ✅ `PLCRealtime.DataUltimoAggiornamento` < 2 minuti
+**Causa**: Tabella `PLCRealtime` vuota o non aggiornata (serve PlcSync attivo o popolamento manuale)
 
-**Filtro applicato** in `PlcAppService.GetRealtimeDataAsync()`:
-```csharp
-.Where(p => !string.IsNullOrWhiteSpace(p.Macchina.IndirizzoPLC))
-```
-
-### ❌ ERRORE DA NON RIPETERE
-
-**Mai eliminare record da `Macchine` o `PLCRealtime` senza verificare impatto dashboard!**
-
-**Soluzione ambiente DEV** (senza PlcSync attivo):
-```sql
--- Popolare PLCRealtime con dati test (tutti i campi int NOT NULL = 0)
-INSERT INTO PLCRealtime (Id, MacchinaId, DataUltimoAggiornamento, CicliFatti, QuantitaDaProdurre, CicliScarti, BarcodeLavorazione, OperatoreId, NumeroOperatore, TempoMedioRilevato, TempoMedio, Figure, StatoMacchina, QuantitaRaggiunta)
-SELECT NEWID(), m.Id, GETDATE(), 0, 0, 0, 0, NULL, 0, 0, 0, 0, 'FERMO', 0
-FROM Macchine m WHERE m.IndirizzoPLC IS NOT NULL AND m.IndirizzoPLC != '';
-```
-
-**Dettagli**: [07-PLC-SYNC.md](docs2/07-PLC-SYNC.md), [storico/FIX-DASHBOARD-PLCREALTIME-20260216.md](docs2/storico/FIX-DASHBOARD-PLCREALTIME-20260216.md)
+**Soluzione dettagliata**: [storico/FIX-DASHBOARD-PLCREALTIME-20260216.md](docs2/storico/FIX-DASHBOARD-PLCREALTIME-20260216.md)
 
 ---
 
-## ⚠️ REGOLA CRITICA: Archivio Dati Allegati
+### Archivio Dati Allegati
 
-### Strategia Direct-Connection (v1.38.8)
+**Configurazione**: Direct-connection DEV → PROD database
 
-**Problema**: Necessità di testare funzionalità allegati in locale con dati reali.
+**Tabella**: `AllegatiArticoli` (non `Allegati`) in `MESManager_Prod`
 
-**Soluzione implementata**: Connessione diretta DEV → PROD
-
-- **DEV**: `appsettings.Database.Development.json` punta a `MESManager_Prod` su `192.168.1.230`
-  - Accesso diretto a 901 articoli e 785 allegati
-  - Nessun database locale, nessuno script sync
-  - Path file via UNC: `\\192.168.1.230\Dati\...`
-  
-- **PROD**: `MESManagerDb` locale su server produzione
-
-**Servizi coinvolti**: 
-- `AllegatiAnimaService` - Query tabella `AllegatiArticoli` (non `Allegati`)
-- Connection string: usa `MESManagerDb` per tutti gli ambienti (configurabile per ambiente)
-
-**Tabella corretta**: `[dbo].[AllegatiArticoli]` in `MESManager_Prod`
-
-**Colonne**:
-- `PathFile` → alias `Allegato` in query
-- `Descrizione` → alias `DescrizioneAllegato` in query
-- `CodiceArticolo` → per lookup diretto
-- `IdArchivio` → FK a `anime.Id`
-- `TipoFile` → 'Foto' o 'Documento'
-
-**Configurazione DEV**:
-```json
-{
-  "ConnectionStrings": {
-    "MESManagerDb": "Server=192.168.1.230\\SQLEXPRESS01;Database=MESManager_Prod;User Id=FAB;Password=password.123;TrustServerCertificate=True;"
-  },
-  "Files": {
-    "AllegatiBasePath": "\\\\192.168.1.230\\Dati\\Documenti\\AA SCHEDE PRODUZIONE\\foto cel"
-  }
-}
-```
-
-**Benefici**:
-- ✅ Dati reali (901 articoli, 785 allegati)
-- ✅ Zero complessità di sincronizzazione
-- ✅ Configurazione minimale
-- ✅ Nessuna duplicazione dati
-- ✅ Test realistici in locale
-
-**Dettagli configurazione**: [03-CONFIGURAZIONE.md](docs2/03-CONFIGURAZIONE.md#archivio-dati-allegati)
+**Dettagli completi**: [03-CONFIGURAZIONE.md - Archivio Dati Allegati](docs2/03-CONFIGURAZIONE.md#-archivio-dati-allegati)
 
 ---
 
-## ✅ CHECKLIST AUTOVALUTAZIONE AI
+## ✅ CHECKLIST PRE-RISPOSTA
 
-Prima di rispondere, verifica:
-
-- [ ] Ho letto il file docs2/ pertinente?
-- [ ] La soluzione è coerente con l'architettura?
-- [ ] Ho identificato tutti i file da modificare?
-- [ ] Ho valutato impatti su altri moduli?
-- [ ] Ho considerato docs2/ da aggiornare?
-- [ ] La soluzione è la più semplice possibile?
-- [ ] Ho fornito esempi pratici?
-- [ ] Ho avvisato di eventuali rischi?
+- [ ] Letto file docs2/ pertinente?
+- [ ] Soluzione coerente con architettura?
+- [ ] Tutti file da modificare identificati?
+- [ ] Impatti valutati?
+- [ ] Docs2/ da aggiornare considerati?
+- [ ] Soluzione più semplice possibile?
+- [ ] Rischi comunicati?
 
 ---
 
 ## 🚀 ATTIVAZIONE
 
-analizza la richiesta dell utente proponi le 2 migliori strade per l implementazione piu semplice e robusta possibile, proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve terminare con dotnet build e run per farla testare all utente
+analizza la richiesta dell utente proponi **4 diverse strade prioritizzate** per l implementazione piu semplice e robusta possibile:
+
+1. **Soluzione Minimalista** - Cambiamenti minimi, massima velocità
+2. **Soluzione Stabile** - Bilanciamento semplicità/robustezza (⭐ CONSIGLIATA)
+3. **Soluzione Completa** - Massima robustezza e flessibilità
+4. **Soluzione Alternativa** - Approccio diverso (se applicabile)
+
+proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve terminare con dotnet build e run per farla testare all utente
 
 
 ---
 
 ## 📞 Supporto Documentazione
 
-**Versione**: 2.5  
-**Data**: 17 Febbraio 2026  
+**Versione**: 3.1  
+**Data**: 20 Febbraio 2026  
 **Path**: `C:\Dev\MESManager\docs2\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: Direct-connection DEV→PROD per allegati (tabella AllegatiArticoli, 901 articoli + 785 allegati)
+**Ultimo aggiornamento**: Aggiunta sezione PRINCIPIO FONDAMENTALE: ZERO DUPLICAZIONE (344 righe totali)

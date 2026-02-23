@@ -437,5 +437,189 @@ MESManager.Tests/
 
 ---
 
-**Fine Documentazione Rifattorizzazione Gantt Macchine v2.0**  
-**Prossimi Step**: Implementare UI Blazor avanzata + Test Suite completa
+## 🔄 AGGIORNAMENTI POST-v2.0 (19 Feb 2026)
+
+### v1.42.0 - v1.45.1: Buffer Sistema, Snap Precision, Stack Fix
+
+**Problema Riportato**:  
+> "quando carico una commessa nel Gantt su una macchina sulla quale non ho niente in produzione, mi va in produzione all'istante e non mi consente di spostarla"
+
+**Root Cause Analysis**:
+1. **Buffer mancante**: Nessun margine temporale tra caricamento e `InProduzione`
+2. **Snap grossolano**: Drag-drop saltava di 8 ore invece di 15 minuti
+3. **Stack invertito**: `stack: true` creava righe multiple invece di accodamento singolo
+4. **Normalizzazione aggressiva**: Date cancellate anche se dentro orario lavorativo
+5. **AutoCompleta su GET**: Endpoint read-only cambiava stato delle commesse
+6. **Blocco produzione rigido**: Commesse future bloccate se avevano dati produzione
+
+**Soluzioni Implementate**:
+
+#### 1. Buffer Riorganizzazione (v1.42.0)
+```csharp
+// ImpostazioniGantt.cs
+public int BufferInizioProduzioneMinuti { get; set; } = 15;
+
+// PianificazioneController.cs - AutoCompletaCommesseAsync()
+var sogliaProduzione = now.AddMinutes(-bufferMinuti);
+var commesseDaAvviare = await _context.Commesse
+    .Where(c => c.DataInizioPrevisione.Value <= sogliaProduzione)
+    .Where(c => c.StatoProgramma == StatoProgramma.Programmata)
+    .ToListAsync();
+```
+
+**Effetto**: Commesse caricate su Gantt rimangono `Programmata` per 15 minuti, permettendo riorganizzazione.
+
+---
+
+#### 2. Command-Query Separation (v1.43.0)
+```csharp
+// PianificazioneController.cs - GET /api/pianificazione
+[HttpGet]
+public async Task<ActionResult<List<CommessaPianificazioneDto>>> GetCommessePianificate()
+{
+    // ⚠️ IMPORTANTE: NON chiamare AutoCompletaCommesseAsync qui!
+    // GET deve essere read-only, senza side-effects
+    
+    var commesse = await _pianificazioneService.GetCommessePianificateAsync(filtro);
+    return Ok(commesse);
+}
+```
+
+**Effetto**: Aprire Gantt non cambia più `StatoProgramma` delle commesse.
+
+---
+
+#### 3. Normalizzazione Condizionale (v1.44.0)
+```csharp
+// PianificazioneEngineService.cs
+bool dentroOrarioLavorativo = IsInOrarioLavorativo(dataInizioDesiderata, calendario, festivi);
+
+if (!dentroOrarioLavorativo)
+{
+    // Normalizza SOLO se fuori orario
+    dataInizioDesiderata = NormalizzaSuOrarioLavorativo(...);
+}
+else
+{
+    // Preserva data scelta dall'utente
+    dataInizioEffettiva = dataInizioDesiderata;
+}
+
+private bool IsInOrarioLavorativo(DateTime data, CalendarioLavoroDto calendario, HashSet<DateOnly> festivi)
+{
+    var giorno = DateOnly.FromDateTime(data);
+    if (festivi.Contains(giorno)) return false;
+    
+    int giornoSettimana = (int)data.DayOfWeek;
+    if (giornoSettimana == 0 || giornoSettimana == 6) return false; // Dom/Sab
+    
+    var ora = data.TimeOfDay;
+    return ora >= calendario.OraInizio && ora < calendario.OraFine;
+}
+```
+
+**Effetto**: Buffer 15 minuti non viene cancellato da normalizzazione se drag è già in orario valido.
+
+---
+
+#### 4. Snap Precision Fix (v1.44.1)
+```javascript
+// gantt-macchine.js
+snap: function(date, scale, step) {
+    const interval = 15 * 60 * 1000; // 15 minuti (era 8 * 3600000 = 8 ore!)
+    return Math.round(date / interval) * interval;
+}
+```
+
+**Effetto**: Drag-drop ora posiziona commesse con precisione 15 minuti, non salti da 8 ore.
+
+---
+
+#### 5. Stack Single-Row (v1.44.0)
+```javascript
+// gantt-macchine.js - Vis-Timeline options
+stack: false,  // ❌ DISABILITATO: accodamento su STESSA riga
+
+// Comportamento:
+// - stack: true  → Vis-Timeline crea righe multiple per evitare overlap
+// - stack: false → Vis-Timeline consente overlap, logica accodamento lato server
+```
+
+**Effetto**: Commesse rimangono su singola riga per macchina, accodamento gestito da backend.
+
+---
+
+#### 6. Client-Server Position Sync (v1.45.0)
+```javascript
+// gantt-macchine.js - onMove callback
+fetch('/api/pianificazione/sposta', {
+    method: 'POST',
+    body: JSON.stringify({
+        commessaId: item.id,
+        nuovaDataInizio: dataRichiesta
+    })
+})
+.then(response => response.json())
+.then(result => {
+    // Sync posizione calcolata dal server (queueing)
+    const commessaAggiornata = result.commesseAggiornate.find(c => c.id === item.id);
+    if (commessaAggiornata) {
+        item.start = new Date(commessaAggiornata.dataInizioPrevisione);
+        item.end = new Date(commessaAggiornata.dataFinePrevisione);
+        
+        if (Math.abs(dataRichiesta - item.start) > 60000) {
+            console.log('🔄 Commessa accodata dal server', {
+                richiesta: dataRichiesta,
+                effettiva: item.start
+            });
+        }
+    }
+    timeline.setItems(items);
+});
+```
+
+**Effetto**: Se server rileva overlap e accoda commessa, client mostra posizione corretta subito.
+
+---
+
+#### 7. Trust User Intent (v1.45.1)
+```csharp
+// PianificazioneEngineService.cs
+if (commessa.Bloccata)
+{
+    _logger.LogInformation("⚠️ Spostamento commessa bloccata - sblocco automatico con consenso utente");
+    commessa.Bloccata = false;
+}
+
+// ❌ RIMOSSO controllo IsInOrarioProduzioneAsync()
+// Motivazione: verificava solo presenza dati, non se produzione è ATTUALMENTE in corso
+// Dialog UI già chiede conferma, backend si fida della scelta utente
+```
+
+**Effetto**: Commesse programmate per settimana prossima non sono bloccate, anche se hanno dati produzione.
+
+---
+
+### Pattern Architetturali Introdotti
+
+1. **Grace Period Pattern**: Buffer temporale per compensare latenza UX + decisioni utente
+2. **Conditional Normalization**: Applicare trasformazioni solo quando strettamente necessario
+3. **Server as Authority**: Client visualizza, server decide (queueing, overlap detection)
+4. **Trust User Intent**: Meno validazioni automatiche, più conferme esplicite
+
+### Metriche di Successo
+
+- ✅ **Riorganizzazione libera**: Buffer 15 min permette spostamenti senza blocchi istantanei
+- ✅ **Precisione posizionamento**: Snap 15 min consente granularità fine per scheduling manuale
+- ✅ **Accodamento automatico**: Sovrapposizioni risolte automaticamente senza righe multiple
+- ✅ **Coerenza dati**: Client-server sync elimina discrepanze visuale ↔ database
+- ✅ **Read-only safety**: GET endpoints mai modificano stato del sistema
+
+---
+
+**Fine Aggiornamenti Post-v2.0**  
+**Documentato da**: AI Session 2026-02-19  
+**Versioni**: v1.42.0 → v1.45.1  
+
+---
+

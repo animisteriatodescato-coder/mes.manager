@@ -16,6 +16,7 @@
     <!-- Vis-Timeline CSS -->
     <link rel="stylesheet" href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" />
     <link rel="stylesheet" href="/css/gantt-macchine.css?v=8" />
+    <link rel="stylesheet" href="MESManager.Web.styles.css" />
     
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet @rendermode="InteractiveServer" />
@@ -34,15 +35,18 @@
     <script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
     
     <!-- Custom Grid Scripts -->
-    <script src="/lib/ag-grid/anime-columns-shared.js?v=1"></script>
-    <script src="/lib/ag-grid/commesse-grid.js?v=10"></script>
-    <script src="/lib/ag-grid/commesse-aperte-grid.js?v=5"></script>
+    <!-- Shared components (MUST load first) -->
+    <script src="/js/ricetta-column-shared.js?v=1455"></script>
+    
+    <script src="/lib/ag-grid/anime-columns-shared.js?v=1454"></script>
+    <script src="/lib/ag-grid/commesse-grid.js?v=1455"></script>
+    <script src="/lib/ag-grid/commesse-aperte-grid.js?v=1455"></script>
     <script src="/lib/ag-grid/programma-macchine-grid.js?v=7"></script>
     <script src="/lib/ag-grid/plc-realtime-grid.js?v=3"></script>
     <script src="/lib/ag-grid/plc-storico-grid.js?v=1"></script>
     <script src="/js/articoli-grid.js?v=1"></script>
     <script src="/js/clienti-grid.js?v=1"></script>
-    <script src="/js/anime-grid.js?v=7"></script>
+    <script src="/js/anime-grid.js?v=1455"></script>
     <script src="/js/file-utils.js?v=1"></script>
     <script src="/js/gantt/gantt-macchine.js?v=45"></script>
     

@@ -29,7 +29,7 @@ window.commesseAperteGrid = (function() {
     function hasDatiEtichettaCompleti(data) {
         return data && 
                data.codiceAnime && 
-               data.clienteRagioneSociale;
+               (data.clienteRagioneSociale || data.companyName); // Fallback intelligente
     }
 
     const columnDefs = [
@@ -80,6 +80,12 @@ window.commesseAperteGrid = (function() {
             filter: true, 
             width: 150 
         },
+        // RICETTA - Badge con numero parametri (shared component)
+        window.ricettaColumnShared.createColumnDef({
+            fieldPrefix: 'camelCase',
+            gridNamespace: 'commesseAperteGrid',
+            codiceArticoloField: 'articoloCodice'
+        }),
         { 
             field: 'description', 
             headerName: 'Descrizione', 
@@ -97,7 +103,7 @@ window.commesseAperteGrid = (function() {
             valueFormatter: params => params.value != null ? '€ ' + params.value.toFixed(2) : ''
         },
         { 
-            field: 'companyName', 
+            field: 'clienteDisplay', 
             headerName: 'Cliente', 
             sortable: true, 
             filter: true, 
@@ -234,25 +240,35 @@ window.commesseAperteGrid = (function() {
     function getColumnDefs() {
         // Prende le colonne anime dal file condiviso se disponibile
         if (window.animeColumnsShared && window.animeColumnsShared.getAnimeColumns) {
-            return [...columnDefs, ...window.animeColumnsShared.getAnimeColumns()];
+            const animeColumns = window.animeColumnsShared.getAnimeColumns();
+            console.log('[commesse-aperte-grid v1.45.2] getColumnDefs: Loaded', animeColumns.length, 'anime columns from shared module');
+            return [...columnDefs, ...animeColumns];
         }
         // Fallback: usa colonne inline se il file condiviso non è caricato
-        console.warn('anime-columns-shared.js non caricato, uso colonne fallback');
+        console.warn('[commesse-aperte-grid] anime-columns-shared.js NON caricato, uso colonne fallback');
         return columnDefs;
     }
 
     // Funzione per ricaricare i dati della griglia
     async function refreshGridData() {
         try {
-            console.log('refreshGridData: starting...');
+            console.log('[commesse-aperte-grid v1.45.2] refreshGridData: Starting...');
             const response = await fetch('/api/Commesse');
             if (!response.ok) throw new Error('Failed to fetch');
             const allData = await response.json();
+            
+            // DEBUG: Log primi 2 record per verificare struttura dati
+            if (allData && allData.length > 0) {
+                console.log('[commesse-aperte-grid] Ricevuti', allData.length, 'record. Primo record:', allData[0]);
+                console.log('[commesse-aperte-grid] Check campo hasRicetta:', allData[0].hasRicetta, 'numeroParametri:', allData[0].numeroParametri);
+            }
+            
             // Filtra solo commesse aperte, rispettando il toggle showArchived
             const showArchived = window.commesseAperteShowArchived || false;
             const filteredData = showArchived 
                 ? allData.filter(c => c.stato === 'Aperta')
                 : allData.filter(c => c.stato === 'Aperta' && c.statoProgramma !== 'Archiviata');
+            
             safeApiCall(() => {
                 gridApi.setGridOption('rowData', filteredData);
                 console.log(`Grid refreshed with ${filteredData.length} rows (showArchived: ${showArchived})`);
@@ -655,6 +671,14 @@ window.commesseAperteGrid = (function() {
             gridApi.openToolPanel('columns');
         }
     }
+
+    function openRicetta(codiceArticolo) {
+        window.ricettaColumnShared.openRicettaDialog(
+            codiceArticolo, 
+            dotNetHelper, 
+            'commesseAperteGrid'
+        );
+    }
     
     function reinit(jsonData) {
         console.log('Reinitializing grid with fresh data...');
@@ -687,6 +711,7 @@ window.commesseAperteGrid = (function() {
         exportCsv: exportCsv,
         getStats: getStats,
         getSelectedRows: getSelectedRows,
-        toggleColumnPanel: toggleColumnPanel
+        toggleColumnPanel: toggleColumnPanel,
+        openRicetta: openRicetta
     };
 })();

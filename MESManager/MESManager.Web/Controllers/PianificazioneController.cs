@@ -353,17 +353,85 @@ public class PianificazioneController : ControllerBase
     }
 
     /// <summary>
-    /// 🚀 CARICA SUL GANTT - Auto-scheduler intelligente v1.31
-    /// Assegna automaticamente una commessa alla macchina con minore carico
+    /// Ottiene le macchine disponibili per una commessa (da campo MacchineSuDisponibili in Anime)
     /// </summary>
-    [HttpPost("carica-su-gantt/{commessaId}")]
-    public async Task<ActionResult<CaricaSuGanttResponse>> CaricaSuGantt(Guid commessaId)
+    [HttpGet("macchine-disponibili/{commessaId}")]
+    public async Task<ActionResult<List<MacchinaDisponibileDto>>> GetMacchineDisponibiliCommessa(Guid commessaId)
     {
         try
         {
-            _logger.LogInformation("🚀 [CARICA GANTT] Request per commessa {CommessaId}", commessaId);
+            var commessa = await _context.Commesse
+                .Include(c => c.Articolo)
+                .FirstOrDefaultAsync(c => c.Id == commessaId);
             
-            var result = await _engineService.CaricaSuGanttAsync(commessaId);
+            if (commessa == null)
+                return NotFound("Commessa non trovata");
+            
+            if (commessa.Articolo == null)
+                return Ok(new List<MacchinaDisponibileDto>());
+            
+            // Cerca l'anima corrispondente
+            var anima = await _context.Anime
+                .FirstOrDefaultAsync(a => a.CodiceArticolo == commessa.Articolo.Codice);
+            
+            if (anima == null || string.IsNullOrEmpty(anima.MacchineSuDisponibili))
+                return Ok(new List<MacchinaDisponibileDto>());
+            
+            // Parse macchine disponibili (formato: "M001;M002;M003")
+            var codiciMacchine = anima.MacchineSuDisponibili
+                .Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(m => m.Trim())
+                .ToList();
+            
+            // Carica macchine dal database
+            var macchine = await _context.Macchine
+                .Where(m => codiciMacchine.Contains(m.Codice) && m.AttivaInGantt)
+                .OrderBy(m => m.OrdineVisualizazione)
+                .Select(m => new MacchinaDisponibileDto
+                {
+                    Codice = m.Codice,
+                    Nome = m.Nome,
+                    NumeroMacchina = ExtractNumeroMacchina(m.Codice)
+                })
+                .ToListAsync();
+            
+            return Ok(macchine);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore recupero macchine disponibili per commessa {CommessaId}", commessaId);
+            return StatusCode(500, "Errore interno del server");
+        }
+    }
+    
+    private static int? ExtractNumeroMacchina(string codice)
+    {
+        var numStr = codice.Replace("M0", "").Replace("M", "");
+        return int.TryParse(numStr, out var n) ? n : null;
+    }
+
+    /// <summary>
+    /// 🚀 CARICA SUL GANTT - Auto-scheduler intelligente v1.31
+    /// Assegna automaticamente una commessa alla macchina con minore carico
+    /// Ora supporta selezione macchina manuale via request body
+    /// </summary>
+    [HttpPost("carica-su-gantt/{commessaId}")]
+    public async Task<ActionResult<CaricaSuGanttResponse>> CaricaSuGantt(Guid commessaId, [FromBody] CaricaSuGanttRequest? request = null)
+    {
+        try
+        {
+            var numeroMacchinaManuale = request?.NumeroMacchina;
+            
+            if (numeroMacchinaManuale.HasValue)
+            {
+                _logger.LogInformation("🚀 [CARICA GANTT] Request per commessa {CommessaId} su macchina manuale {Macchina}", commessaId, numeroMacchinaManuale);
+            }
+            else
+            {
+                _logger.LogInformation("🚀 [CARICA GANTT] Request per commessa {CommessaId} (auto-scheduler)", commessaId);
+            }
+            
+            var result = await _engineService.CaricaSuGanttAsync(commessaId, numeroMacchinaManuale);
             
             if (!result.Success)
             {

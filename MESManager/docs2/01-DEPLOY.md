@@ -182,23 +182,31 @@ echo "Exit Code: $LASTEXITCODE (0-7 = OK)"
 
 ### STEP 5: Riavvia Servizi
 
-**Ordine CRITICO**: Web → Worker → PlcSync
+**⚠️ NOTA**: Sul server attuale, Worker e PlcSync si avviano automaticamente (servizi/task schedulati al boot).
+È sufficiente avviare Web Application.
 
 ```powershell
-# 1. Avvia Web
+# 1. Avvia Web Application
 schtasks /S 192.168.1.230 /U Administrator /P "A123456!" /Run /TN "StartMESWeb"
 Start-Sleep 5
 
-# 2. Avvia Worker
-schtasks /S 192.168.1.230 /U Administrator /P "A123456!" /Run /TN "StartMESWorker"
-Start-Sleep 3
-
-# 3. Avvia PlcSync
-schtasks /S 192.168.1.230 /U Administrator /P "A123456!" /Run /TN "StartMESPlcSync"
-Start-Sleep 3
-
-# Verifica processi attivi
+# 2. Verifica che tutti i servizi siano attivi
 tasklist /S 192.168.1.230 /U Administrator /P "A123456!" | findstr MESManager
+
+# Output atteso:
+# MESManager.Web.exe
+# MESManager.Worker.exe  
+# MESManager.PlcSync.exe
+```
+
+**Se Worker o PlcSync NON sono attivi** (caso raro):
+```powershell
+# Avvia manualmente da percorso remoto
+Invoke-Command -ComputerName 192.168.1.230 -Credential (Get-Credential) -ScriptBlock {
+    Start-Process "C:\MESManager\Worker\MESManager.Worker.exe" -WindowStyle Hidden
+    Start-Sleep 2
+    Start-Process "C:\MESManager\PlcSync\MESManager.PlcSync.exe" -WindowStyle Hidden
+}
 ```
 
 ---

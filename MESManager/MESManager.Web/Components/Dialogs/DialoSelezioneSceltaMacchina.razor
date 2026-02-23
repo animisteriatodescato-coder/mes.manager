@@ -1,0 +1,96 @@
+@using MESManager.Application.DTOs
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body1" Class="mb-4">
+            Seleziona la macchina per la commessa <strong>@Commessa?.Codice</strong>
+        </MudText>
+        
+        @if (MacchineDisponibili != null && MacchineDisponibili.Any())
+        {
+            <MudText Typo="Typo.body2" Color="Color.Info" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-1" />
+                Macchine disponibili dalla scheda Anima:
+            </MudText>
+            
+            <MudList T="string" Dense="true" Class="mb-4">
+                @foreach (var macchina in MacchineDisponibili)
+                {
+                    <MudListItem T="string" 
+                                 OnClick="@(() => SelezionaMacchina(macchina.NumeroMacchina))"
+                                 Class="cursor-pointer hover-highlight">
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Settings" Color="Color.Primary" Class="mr-3" />
+                            <div>
+                                <MudText Typo="Typo.body1">@macchina.Codice - @macchina.Nome</MudText>
+                            </div>
+                        </div>
+                    </MudListItem>
+                    <MudDivider />
+                }
+            </MudList>
+            
+            <MudAlert Severity="Severity.Normal" Class="mt-4">
+                Oppure lascia che il sistema scelga automaticamente la macchina con minor carico
+            </MudAlert>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info">
+                Nessuna macchina disponibile specificata. Il sistema selezionerà automaticamente la macchina con minor carico.
+            </MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Color="Color.Default">Annulla</MudButton>
+        <MudButton OnClick="AutoScheduler" Color="Color.Primary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.AutoMode">
+            Auto-Scheduler
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+<style>
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    
+    .hover-highlight:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+    }
+</style>
+
+@code {
+    [CascadingParameter]
+    public IMudDialogInstance? MudDialog { get; set; }
+    
+    [Parameter]
+    public CommessaDto? Commessa { get; set; }
+    
+    [Parameter]
+    public List<MacchinaDisponibileDto>? MacchineDisponibili { get; set; }
+    
+    private void SelezionaMacchina(int? numeroMacchina)
+    {
+        if (!numeroMacchina.HasValue)
+        {
+            Snackbar.Add("⚠️ Numero macchina non valido", Severity.Warning);
+            return;
+        }
+        
+        // Ritorna il numero macchina selezionato
+        MudDialog?.Close(DialogResult.Ok(numeroMacchina.Value));
+    }
+    
+    private void AutoScheduler()
+    {
+        // Ritorna null per indicare auto-scheduler
+        MudDialog?.Close(DialogResult.Ok<int?>(null));
+    }
+    
+    private void Cancel()
+    {
+        MudDialog?.Cancel();
+    }
+}

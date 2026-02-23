@@ -1,7 +1,7 @@
 # 06 - Gantt Macchine - Analisi Tecnica
 
 > **Scopo**: Analisi dettagliata struttura e funzionamento del Gantt chart  
-> **Ultima Revisione**: 6 Febbraio 2026 - v1.29 (Fix Calendario Lavoro)
+> **Ultima Revisione**: 19 Febbraio 2026 - v1.45.1 (Buffer Sistema + Snap/Stack Fix)
 
 ---
 
@@ -9,6 +9,13 @@
 
 | Versione | Data | Milestone |
 |----------|------|-----------|
+| **v1.45.1** | 19 Feb 2026 | 🔓 Rimozione blocco produzione rigido (trust user intent) |
+| **v1.45.0** | 19 Feb 2026 | 🔄 Client-server position sync per accodamento automatico |
+| **v1.44.1** | 19 Feb 2026 | 🎯 Fix snap precision (8 ore → 15 minuti) |
+| **v1.44.0** | 19 Feb 2026 | 📐 Stack fix + normalizzazione condizionale |
+| **v1.43.0** | 19 Feb 2026 | 🔧 Command-Query Separation (AutoCompleta rimosso da GET) |
+| **v1.42.1** | 19 Feb 2026 | 🛡️ Buffer grace period + StatoProgramma fix |
+| **v1.42.0** | 19 Feb 2026 | ⏱️ Sistema buffer riorganizzazione (15 min default) |
 | **v1.29** | 6 Feb 2026 | 🐛 Fix CalendarioLavoro ignorato (date realistiche + export) |
 | **v1.28** | 5 Feb 2026 | 🎨 UX Revolution (gradazione, export, fix sovrapposizione) |
 | **v1.27** | 5 Feb 2026 | 🏗️ Refactoring completo (Clean Arch, -150 righe, N+1 fix) |

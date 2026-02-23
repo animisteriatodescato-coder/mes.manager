@@ -19,40 +19,15 @@ window.animeGrid = (function() {
         { field: 'id', headerName: 'ID', sortable: true, filter: true, width: 80, editable: false },
         { field: 'codiceArticolo', headerName: 'Codice', sortable: true, filter: true, width: 150, editable: false, cellStyle: {backgroundColor: '#f5f5f5'} },
         
-        // RICETTA - Badge con numero parametri
-        { 
-            field: 'hasRicetta', 
-            headerName: 'Ricetta', 
-            sortable: true, 
-            filter: true, 
-            width: 100,
-            editable: false,
-            cellRenderer: params => {
-                if (!params.data) return '';
-                
-                const hasRicetta = params.data.hasRicetta;
-                const numParametri = params.data.numeroParametri || 0;
-                const dataModifica = params.data.ricettaUltimaModifica;
-                
-                if (hasRicetta && numParametri > 0) {
-                    const tooltip = dataModifica 
-                        ? `${numParametri} parametri - Agg: ${new Date(dataModifica).toLocaleDateString('it-IT')}`
-                        : `${numParametri} parametri`;
-                    
-                    return `<div style="display: flex; align-items: center; height: 100%; cursor: pointer;" 
-                                 onclick="window.animeGrid.openRicetta('${params.data.codiceArticolo}')" 
-                                 title="${tooltip}">
-                        <span style="background-color: #4caf50; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
-                            ✓ ${numParametri}
-                        </span>
-                    </div>`;
-                } else {
-                    return `<div style="display: flex; align-items: center; height: 100%;" title="Nessuna ricetta">
-                        <span style="color: #999; font-size: 11px;">—</span>
-                    </div>`;
-                }
-            }
-        },
+        // RICETTA - Badge con numero parametri (shared component)
+        Object.assign(
+            window.ricettaColumnShared.createColumnDef({
+                fieldPrefix: 'camelCase',
+                gridNamespace: 'animeGrid',
+                codiceArticoloField: 'codiceArticolo'
+            }),
+            { editable: false }
+        ),
         
         { field: 'descrizioneArticolo', headerName: 'Descrizione Articolo', sortable: true, filter: true, width: 250, editable: false, cellStyle: {backgroundColor: '#f5f5f5'} },
         { field: 'cliente', headerName: 'Cliente', sortable: true, filter: true, width: 150, editable: false, cellStyle: {backgroundColor: '#f5f5f5'} },
@@ -579,11 +554,11 @@ window.animeGrid = (function() {
     }
 
     function openRicetta(codiceArticolo) {
-        if (window.animeGridDotNetRef) {
-            window.animeGridDotNetRef.invokeMethodAsync('ViewRicetta', codiceArticolo);
-        } else {
-            console.error('DotNet reference not registered for anime grid');
-        }
+        window.ricettaColumnShared.openRicettaDialog(
+            codiceArticolo, 
+            window.animeGridDotNetRef, 
+            'animeGrid'
+        );
     }
 
     return {

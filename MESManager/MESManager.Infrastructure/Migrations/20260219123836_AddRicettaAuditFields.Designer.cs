@@ -4,6 +4,7 @@ using MESManager.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MESManager.Infrastructure.Migrations
 {
     [DbContext(typeof(MesManagerDbContext))]
-    partial class MesManagerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260219123836_AddRicettaAuditFields")]
+    partial class AddRicettaAuditFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1299,16 +1302,11 @@ namespace MESManager.Infrastructure.Migrations
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(5,2)");
 
-                    b.Property<Guid?>("WorkProcessingTypeId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
 
                     b.HasIndex("PriceListItemId");
 
                     b.HasIndex("QuoteId");
-
-                    b.HasIndex("WorkProcessingTypeId");
 
                     b.ToTable("QuoteRows");
                 });
@@ -1499,208 +1497,6 @@ namespace MESManager.Infrastructure.Migrations
                     b.ToTable("UtentiApp");
                 });
 
-            modelBuilder.Entity("MESManager.Domain.Entities.WorkProcessingParameter", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("CostoAttrezzatura")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("EuroOra")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal>("ImballaggioOra")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal>("IncollaggioCostoOra")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<bool>("IsCurrent")
-                        .HasColumnType("bit");
-
-                    b.Property<decimal>("MargineDefaultPercent")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
-
-                    b.Property<decimal>("SabbiaCostoKg")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("ValidFrom")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ValidTo")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal>("VerniceCostoPezzo")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal>("VerniciaturaCostoOra")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<string>("VersionNotes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("WorkProcessingTypeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ValidFrom");
-
-                    b.HasIndex("ValidTo");
-
-                    b.HasIndex("WorkProcessingTypeId", "IsCurrent");
-
-                    b.ToTable("WorkProcessingParameters");
-                });
-
-            modelBuilder.Entity("MESManager.Domain.Entities.WorkProcessingTechnicalData", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("CostoAnimaCalcolato")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal>("CostoFuoriMacchina")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal>("CostoTotalePezzo")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Figure")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("ImballaggioOre")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal>("IncollaggioOre")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<int>("Lotto")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("MargineApplicatoPercent")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
-
-                    b.Property<decimal>("PesoKg")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal>("PrezzoVenditaPezzo")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<Guid>("QuoteRowId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("SpariOrari")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal>("VernicePesoKg")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal>("VerniciaturaPezziOra")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QuoteRowId")
-                        .IsUnique();
-
-                    b.ToTable("WorkProcessingTechnicalData");
-                });
-
-            modelBuilder.Entity("MESManager.Domain.Entities.WorkProcessingType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("Archiviato")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("Attivo")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Categoria")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Codice")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Descrizione")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Ordinamento")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Attivo");
-
-                    b.HasIndex("Categoria");
-
-                    b.HasIndex("Codice")
-                        .IsUnique();
-
-                    b.ToTable("WorkProcessingTypes");
-                });
-
             modelBuilder.Entity("MESManager.Domain.Entities.Commessa", b =>
                 {
                     b.HasOne("MESManager.Domain.Entities.Articolo", "Articolo")
@@ -1869,16 +1665,9 @@ namespace MESManager.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MESManager.Domain.Entities.WorkProcessingType", "WorkProcessingType")
-                        .WithMany("RighePreventivo")
-                        .HasForeignKey("WorkProcessingTypeId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("PriceListItem");
 
                     b.Navigation("Quote");
-
-                    b.Navigation("WorkProcessingType");
                 });
 
             modelBuilder.Entity("MESManager.Domain.Entities.Ricetta", b =>
@@ -1901,28 +1690,6 @@ namespace MESManager.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Commessa");
-                });
-
-            modelBuilder.Entity("MESManager.Domain.Entities.WorkProcessingParameter", b =>
-                {
-                    b.HasOne("MESManager.Domain.Entities.WorkProcessingType", "WorkProcessingType")
-                        .WithMany("Parametri")
-                        .HasForeignKey("WorkProcessingTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("WorkProcessingType");
-                });
-
-            modelBuilder.Entity("MESManager.Domain.Entities.WorkProcessingTechnicalData", b =>
-                {
-                    b.HasOne("MESManager.Domain.Entities.QuoteRow", "QuoteRow")
-                        .WithOne("TechnicalData")
-                        .HasForeignKey("MESManager.Domain.Entities.WorkProcessingTechnicalData", "QuoteRowId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("QuoteRow");
                 });
 
             modelBuilder.Entity("MESManager.Domain.Entities.Articolo", b =>
@@ -1970,11 +1737,6 @@ namespace MESManager.Infrastructure.Migrations
                     b.Navigation("Rows");
                 });
 
-            modelBuilder.Entity("MESManager.Domain.Entities.QuoteRow", b =>
-                {
-                    b.Navigation("TechnicalData");
-                });
-
             modelBuilder.Entity("MESManager.Domain.Entities.Ricetta", b =>
                 {
                     b.Navigation("Parametri");
@@ -1983,13 +1745,6 @@ namespace MESManager.Infrastructure.Migrations
             modelBuilder.Entity("MESManager.Domain.Entities.UtenteApp", b =>
                 {
                     b.Navigation("Preferenze");
-                });
-
-            modelBuilder.Entity("MESManager.Domain.Entities.WorkProcessingType", b =>
-                {
-                    b.Navigation("Parametri");
-
-                    b.Navigation("RighePreventivo");
                 });
 #pragma warning restore 612, 618
         }

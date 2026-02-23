@@ -1078,13 +1078,22 @@ public class PianificazioneEngineService : IPianificazioneEngineService
     /// 4. Seleziona macchina con minore carico E che rispetta data consegna
     /// 5. Accoda alla fine della coda della macchina selezionata
     /// </summary>
-    public async Task<CaricaSuGanttResponse> CaricaSuGanttAsync(Guid commessaId)
+    /// <param name="commessaId">ID della commessa da caricare</param>
+    /// <param name="numeroMacchinaManuale">Se specificato, forza il caricamento su questa macchina (bypass auto-scheduler)</param>
+    public async Task<CaricaSuGanttResponse> CaricaSuGanttAsync(Guid commessaId, int? numeroMacchinaManuale = null)
     {
         var updateVersion = DateTime.UtcNow.Ticks;
         
         try
         {
-            _logger.LogInformation("🚀 [AUTO-SCHEDULER] Caricamento commessa {CommessaId} sul Gantt", commessaId);
+            if (numeroMacchinaManuale.HasValue)
+            {
+                _logger.LogInformation("🚀 [AUTO-SCHEDULER] Caricamento commessa {CommessaId} su macchina manuale {Macchina}", commessaId, numeroMacchinaManuale);
+            }
+            else
+            {
+                _logger.LogInformation("🚀 [AUTO-SCHEDULER] Caricamento commessa {CommessaId} sul Gantt (auto-scheduler)", commessaId);
+            }
             
             // 1. Carica commessa con articolo
             var commessa = await _context.Commesse
@@ -1137,78 +1146,103 @@ public class PianificazioneEngineService : IPianificazioneEngineService
             // 4. Stima ore necessarie (default 8h, TODO: stimare da catalogo anime)
             decimal oreNecessarie = 8m;
             
-            // 5. Carica TUTTE le macchine attive nel Gantt (non solo quelle con commesse)
-            var macchineAttive = await _context.Macchine
-                .Where(m => m.AttivaInGantt)
-                .OrderBy(m => m.OrdineVisualizazione)
-                .ToListAsync();
+            // 5. Determina macchina target
+            int macchinaSelezionata;
+            string motivazione;
             
-            // Estrai numeri macchina dai codici (es. "M001" → 1, "M005" → 5)
-            var numeriMacchineAttive = macchineAttive
-                .Select(m => {
-                    var numStr = m.Codice.Replace("M0", "").Replace("M", "");
-                    return int.TryParse(numStr, out var n) ? n : (int?)null;
-                })
-                .Where(n => n.HasValue)
-                .Select(n => n!.Value)
-                .ToList();
-            
-            // Fallback: se non ci sono macchine configurate, usa macchina 1
-            if (!numeriMacchineAttive.Any())
+            if (numeroMacchinaManuale.HasValue)
             {
-                numeriMacchineAttive = new List<int> { 1 };
-                _logger.LogWarning("⚠️ Nessuna macchina attiva in Gantt, uso macchina 1 di default");
+                // 👉 SELEZIONE MANUALE: usa la macchina specificata
+                macchinaSelezionata = numeroMacchinaManuale.Value;
+                motivazione = $"Macchina M{macchinaSelezionata:D3} selezionata manualmente dall'utente";
+                _logger.LogInformation("👉 Macchina manuale M{Macchina} selezionata dall'utente", macchinaSelezionata);
+            }
+            else
+            {
+                // 🤖 AUTO-SCHEDULER: selezione automatica
+                // Carica TUTTE le macchine attive nel Gantt (non solo quelle con commesse)
+                var macchineAttive = await _context.Macchine
+                    .Where(m => m.AttivaInGantt)
+                    .OrderBy(m => m.OrdineVisualizazione)
+                    .ToListAsync();
+                
+                // Estrai numeri macchina dai codici (es. "M001" → 1, "M005" → 5)
+                var numeriMacchineAttive = macchineAttive
+                    .Select(m => {
+                        var numStr = m.Codice.Replace("M0", "").Replace("M", "");
+                        return int.TryParse(numStr, out var n) ? n : (int?)null;
+                    })
+                    .Where(n => n.HasValue)
+                    .Select(n => n!.Value)
+                    .ToList();
+                
+                // Fallback: se non ci sono macchine configurate, usa macchina 1
+                if (!numeriMacchineAttive.Any())
+                {
+                    numeriMacchineAttive = new List<int> { 1 };
+                    _logger.LogWarning("⚠️ Nessuna macchina attiva in Gantt, uso macchina 1 di default");
+                }
+                
+                // 6. Carica tutte le commesse assegnate per calcolare il carico
+                var tutteCommesseAssegnate = await _context.Commesse
+                    .Where(c => c.NumeroMacchina != null && c.DataInizioPrevisione != null)
+                    .OrderBy(c => c.NumeroMacchina)
+                    .ThenBy(c => c.OrdineSequenza)
+                    .ThenBy(c => c.DataInizioPrevisione)
+                    .ToListAsync();
+                
+                // 7. Calcola carico PER OGNI macchina attiva (anche quelle senza commesse = carico 0)
+                var commessePerMacchina = tutteCommesseAssegnate
+                    .GroupBy(c => c.NumeroMacchina!.Value)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+                
+                var caricoPerMacchina = numeriMacchineAttive
+                    .Select(numMacchina => {
+                        var commesseMacchina = commessePerMacchina.ContainsKey(numMacchina) 
+                            ? commessePerMacchina[numMacchina] 
+                            : new List<MESManager.Domain.Entities.Commessa>();
+                        return new
+                        {
+                            NumeroMacchina = numMacchina,
+                            UltimaDataFine = commesseMacchina.Any() 
+                                ? commesseMacchina.Max(c => c.DataFinePrevisione ?? c.DataInizioPrevisione) 
+                                : (DateTime?)null,
+                            NumeroCommesse = commesseMacchina.Count,
+                            OreTotali = commesseMacchina.Sum(c => (c.DataFinePrevisione.HasValue && c.DataInizioPrevisione.HasValue) 
+                                ? (decimal)(c.DataFinePrevisione.Value - c.DataInizioPrevisione.Value).TotalHours 
+                                : 8m)
+                        };
+                    })
+                    .OrderBy(x => x.OreTotali) // Macchina con MENO carico prima (0h = vuota = priorità!)
+                    .ToList();
+                
+                _logger.LogInformation("📊 Carico macchine (tutte {Count} attive): {Carico}", 
+                    numeriMacchineAttive.Count,
+                    string.Join(", ", caricoPerMacchina.Select(c => $"M{c.NumeroMacchina}={c.OreTotali:F1}h ({c.NumeroCommesse} comm.)")));
+                
+                // 8. Seleziona macchina migliore (con meno carico - le vuote hanno 0h!)
+                var macchinaScelta = caricoPerMacchina.First();
+                macchinaSelezionata = macchinaScelta.NumeroMacchina;
+                motivazione = $"Macchina M{macchinaSelezionata:D3} selezionata (carico minimo: {macchinaScelta.OreTotali:F1}h, {macchinaScelta.NumeroCommesse} commesse)";
+                
+                _logger.LogInformation("✅ Macchina selezionata: M{Macchina} (carico={Ore}h, commesse={N})",
+                    macchinaSelezionata, macchinaScelta.OreTotali, macchinaScelta.NumeroCommesse);
             }
             
-            // 6. Carica tutte le commesse assegnate per calcolare il carico
-            var tutteCommesseAssegnate = await _context.Commesse
-                .Where(c => c.NumeroMacchina != null && c.DataInizioPrevisione != null)
-                .OrderBy(c => c.NumeroMacchina)
-                .ThenBy(c => c.OrdineSequenza)
-                .ThenBy(c => c.DataInizioPrevisione)
-                .ToListAsync();
-            
-            // 7. Calcola carico PER OGNI macchina attiva (anche quelle senza commesse = carico 0)
-            var commessePerMacchina = tutteCommesseAssegnate
-                .GroupBy(c => c.NumeroMacchina!.Value)
-                .ToDictionary(g => g.Key, g => g.ToList());
-            
-            var caricoPerMacchina = numeriMacchineAttive
-                .Select(numMacchina => {
-                    var commesseMacchina = commessePerMacchina.ContainsKey(numMacchina) 
-                        ? commessePerMacchina[numMacchina] 
-                        : new List<MESManager.Domain.Entities.Commessa>();
-                    return new
-                    {
-                        NumeroMacchina = numMacchina,
-                        UltimaDataFine = commesseMacchina.Any() 
-                            ? commesseMacchina.Max(c => c.DataFinePrevisione ?? c.DataInizioPrevisione) 
-                            : (DateTime?)null,
-                        NumeroCommesse = commesseMacchina.Count,
-                        OreTotali = commesseMacchina.Sum(c => (c.DataFinePrevisione.HasValue && c.DataInizioPrevisione.HasValue) 
-                            ? (decimal)(c.DataFinePrevisione.Value - c.DataInizioPrevisione.Value).TotalHours 
-                            : 8m)
-                    };
-                })
-                .OrderBy(x => x.OreTotali) // Macchina con MENO carico prima (0h = vuota = priorità!)
-                .ToList();
-            
-            _logger.LogInformation("📊 Carico macchine (tutte {Count} attive): {Carico}", 
-                numeriMacchineAttive.Count,
-                string.Join(", ", caricoPerMacchina.Select(c => $"M{c.NumeroMacchina}={c.OreTotali:F1}h ({c.NumeroCommesse} comm.)")));
-            
-            // 8. Seleziona macchina migliore (con meno carico - le vuote hanno 0h!)
-            int macchinaSelezionata;
+            // 9. Calcola data inizio e fine
             DateTime dataInizioCalcolata;
-            
             var now = DateTime.Now;
-            var macchinaScelta = caricoPerMacchina.First();
-            macchinaSelezionata = macchinaScelta.NumeroMacchina;
+            
+            // Carica ultima commessa della macchina selezionata per accodamento
+            var ultimaCommessaMacchina = await _context.Commesse
+                .Where(c => c.NumeroMacchina == macchinaSelezionata)
+                .OrderByDescending(c => c.DataFinePrevisione)
+                .FirstOrDefaultAsync();
             
             // Accoda DOPO l'ultima commessa di questa macchina (se esiste)
-            if (macchinaScelta.UltimaDataFine.HasValue)
+            if (ultimaCommessaMacchina?.DataFinePrevisione.HasValue == true)
             {
-                dataInizioCalcolata = macchinaScelta.UltimaDataFine.Value;
+                dataInizioCalcolata = ultimaCommessaMacchina.DataFinePrevisione.Value;
                 
                 // Normalizza su orario lavorativo
                 dataInizioCalcolata = NormalizzaSuOrarioLavorativo(dataInizioCalcolata, calendario, festivi);
@@ -1234,10 +1268,7 @@ public class PianificazioneEngineService : IPianificazioneEngineService
                 }
             }
             
-            _logger.LogInformation("✅ Macchina selezionata: M{Macchina} (carico={Ore}h, commesse={N})",
-                macchinaSelezionata, macchinaScelta.OreTotali, macchinaScelta.NumeroCommesse);
-            
-            // 9. Calcola data fine con calendario (converti ore in minuti)
+            // 10. Calcola data fine con calendario (converti ore in minuti)
             int durataMinuti = (int)(oreNecessarie * 60);
             var dataFineCalcolata = _pianificazioneService.CalcolaDataFinePrevistaConFestivi(
                 dataInizioCalcolata,
@@ -1246,7 +1277,7 @@ public class PianificazioneEngineService : IPianificazioneEngineService
                 festivi
             );
             
-            // 10. Assegna alla commessa
+            // 11. Assegna alla commessa
             commessa.NumeroMacchina = macchinaSelezionata;
             commessa.DataInizioPrevisione = dataInizioCalcolata;
             commessa.DataFinePrevisione = dataFineCalcolata;
@@ -1266,7 +1297,7 @@ public class PianificazioneEngineService : IPianificazioneEngineService
             _logger.LogInformation("✨ Commessa {Codice} caricata su M{Macchina}: {DataInizio} → {DataFine} ({Ore}h)",
                 commessa.Codice, macchinaSelezionata, dataInizioCalcolata, dataFineCalcolata, oreNecessarie);
             
-            // 11. Ricarica commesse aggiornate per response (materializza prima, poi mappa)
+            // 12. Ricarica commesse aggiornate per response (materializza prima, poi mappa)
             var commesseDb = await _context.Commesse
                 .Include(c => c.Articolo)
                 .Where(c => c.NumeroMacchina == macchinaSelezionata)
@@ -1303,7 +1334,7 @@ public class PianificazioneEngineService : IPianificazioneEngineService
                 DataInizioCalcolata = dataInizioCalcolata,
                 DataFineCalcolata = dataFineCalcolata,
                 OreNecessarie = oreNecessarie,
-                Motivazione = $"Macchina M{macchinaSelezionata} selezionata (carico minimo: {macchinaScelta.OreTotali:F1}h, {macchinaScelta.NumeroCommesse} commesse)",
+                Motivazione = motivazione,
                 CommesseAggiornate = commesseAggiornate,
                 UpdateVersion = updateVersion
             };

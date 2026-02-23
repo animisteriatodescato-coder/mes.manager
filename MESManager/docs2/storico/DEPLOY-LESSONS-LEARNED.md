@@ -2,7 +2,7 @@
 
 > **Scopo**: Documenta errori reali risolti durante deploy in produzione  
 > **Obiettivo**: Evitare ripetizione degli stessi problemi  
-> **Ultima Modifica**: 11 Febbraio 2026
+> **Ultima Modifica**: 19 Febbraio 2026
 
 ---
 
@@ -16,6 +16,7 @@
 | **4** | Script Deploy Incompleto | v1.30.11 | 🟡 MEDIO | ✅ RISOLTO |
 | **5** | Nomi Clienti Errati (Mostra Fornitori) | v1.30.11 | 🔴 CRITICO | ✅ RISOLTO |
 | **6** | Preferenze Utente Resettate | v1.30.11 | 🟡 MEDIO | ✅ RISOLTO |
+| **7** | Sync Automatica Fallisce (Worker vs Web DB Diversi) | Feb 2026 | 🔴 CRITICO | ✅ RISOLTO |
 
 ---
 
@@ -378,6 +379,138 @@ Basata sulle 6 lezioni apprese:
 [ ] Smoke Test: Nomi cliente corretti (Mago CompanyName)
 [ ] ⭐ RESTORE/MIGRATION: Se cambi campi → SQL UPDATE REPLACE o script restore
 [ ] Comunicazione utenti: avvisare se devono riconfigurare grid
+[ ] ⭐ Sync Mago: Manuale e Automatica devono puntare stesso DB (verifica log)
+```
+
+---
+
+## 🔴 PROBLEMA 7: Sync Automatica Fallisce (Worker vs Web Database Diversi)
+
+**Data**: 19 Febbraio 2026
+
+### Sintomo
+- Sincronizzazione **manuale** da UI Blazor (pulsante "Sincronizza") → **funzionava** ✅
+- Sincronizzazione **automatica** dal Worker background service → **falliva con errore SQL** ❌
+
+### Root Cause
+**Worker e Web leggevano file configurazione DIVERSI**:
+
+| Componente | File Config | Database Target | Risultato |
+|------------|-------------|-----------------|-----------|
+| **Web** | `MESManager.Web/appsettings.Secrets.json` | `MESManager_Dev` su `localhost` | ✅ OK |
+| **Worker** | `appsettings.Database.json` (root) | `MESManager_Prod` su `192.168.1.230` | ❌ FAIL |
+
+**Problema**: In ambiente DEV, il database produzione (`192.168.1.230`) non era raggiungibile, causando errore:
+
+```
+Si è verificato un errore di rete o specifico dell'istanza mentre si cercava di stabilire 
+una connessione con SQL Server. Il server non è stato trovato o non è accessibile. 
+(provider: Interfacce di rete SQL, error: 26)
+```
+
+### Soluzione Implementata
+
+**1. Unificato caricamento configurazione nel Worker** ([MESManager.Worker/Program.cs](../../MESManager.Worker/Program.cs))
+
+**Prima** (❌):
+```csharp
+// Worker caricava SOLO appsettings.Database.json
+builder.Configuration.AddJsonFile(
+    Path.Combine(Directory.GetParent(builder.Environment.ContentRootPath)!.FullName, 
+    "appsettings.Database.json"), 
+    optional: false, reloadOnChange: true);
+```
+
+**Dopo** (✅):
+```csharp
+// Usa stessa logica del Web: Secrets.json > Database.json
+var solutionRoot = Directory.GetParent(builder.Environment.ContentRootPath)!.FullName;
+var secretsPath = Path.Combine(solutionRoot, "appsettings.Secrets.json");
+var dbConfigPath = Path.Combine(solutionRoot, "appsettings.Database.json");
+
+if (File.Exists(secretsPath))
+{
+    // Preferito: usa secrets condiviso con Web
+    builder.Configuration.AddJsonFile(secretsPath, optional: false, reloadOnChange: true);
+}
+else if (File.Exists(dbConfigPath))
+{
+    // Fallback legacy per produzione
+    builder.Configuration.AddJsonFile(dbConfigPath, optional: false, reloadOnChange: true);
+}
+```
+
+**2. Popolato `appsettings.Secrets.json` nella root** ([appsettings.Secrets.json](../../appsettings.Secrets.json))
+
+Prima era vuoto, ora contiene:
+```json
+{
+  "ConnectionStrings": {
+    "MESManagerDb": "Server=localhost\\SQLEXPRESS01;Database=MESManager_Dev;Integrated Security=True;TrustServerCertificate=True;",
+    "MagoDb": "Server=192.168.1.72\\SQLEXPRESS01;Database=TODESCATO_NET;User Id=Gantt;Password=Gantt2019;TrustServerCertificate=True;Connection Timeout=30;"
+  }
+}
+```
+
+**3. Fix Dependency Injection Worker** ([MESManager.Worker/Program.cs](../../MESManager.Worker/Program.cs))
+
+Aggiunto servizio mancante richiesto da Infrastructure:
+```csharp
+// Servizi Application mancanti richiesti da Infrastructure
+builder.Services.AddScoped<IPianificazioneService, PianificazioneService>();
+```
+
+### Risultati Verifica
+
+Dopo il fix, Worker avviato con successo:
+
+```
+info: MESManager.Worker.SyncMagoWorker[0]
+      Inizio sincronizzazione Mago alle 02/19/2026 11:48:07 +01:00
+info: MESManager.Worker.SyncMagoWorker[0]
+      Sincronizzazione Mago completata alle 02/19/2026 11:48:21 +01:00
+```
+
+✅ Worker e Web ora condividono stesso database DEV  
+✅ Sync automatica funziona correttamente  
+✅ Log salvati su `MESManager_Dev`
+
+### Lezione Appresa
+
+**❌ MAI fare questo:**
+- Configurazione database duplicata tra Web e Worker
+- File config diversi per stesso ambiente
+- Assumere che "funziona in manuale = funziona in automatico"
+
+**✅ SEMPRE fare questo:**
+- **Un solo file configurazione** per ambiente (preferibilmente `appsettings.Secrets.json`)
+- **Stessa logica caricamento config** per tutti i servizi (Web, Worker, PlcSync)
+- **Testare ENTRAMBE** le modalità (manuale UI + automatica Worker)
+- **Verificare log Worker** con `dotnet run --project MESManager.Worker --environment Development`
+
+### File Modificati
+
+| File | Modifica | Scopo |
+|------|----------|-------|
+| `MESManager.Worker/Program.cs` | Logica caricamento config unificata | Usa Secrets.json come Web |
+| `appsettings.Secrets.json` (root) | Popolato con credenziali DEV | Condiviso tra Web/Worker |
+| `MESManager.Worker/Program.cs` | Registrazione `IPianificazioneService` | Fix DI mancante |
+
+### Validazione Post-Fix
+
+```powershell
+# 1. Build Worker
+cd C:\Dev\MESManager
+dotnet build MESManager.Worker/MESManager.Worker.csproj --nologo
+
+# 2. Avvia Worker manualmente
+cd C:\Dev
+dotnet run --project MESManager/MESManager.Worker/MESManager.Worker.csproj --environment Development
+
+# 3. Verifica log - deve mostrare:
+# ✅ "Inizio sincronizzazione Mago"
+# ✅ "Sincronizzazione Mago completata"
+# ❌ NESSUN errore "server non trovato"
 ```
 
 ---
@@ -385,11 +518,13 @@ Basata sulle 6 lezioni apprese:
 ## 📚 RIFERIMENTI
 
 - [01-DEPLOY.md](../01-DEPLOY.md) - Procedura deploy completa
+- [03-CONFIGURAZIONE.md](../03-CONFIGURAZIONE.md) - Gestione secrets e config
 - [09-TESTING-FRAMEWORK.md](../09-TESTING-FRAMEWORK.md) - Testing e validazione
 - [08-CHANGELOG.md](../08-CHANGELOG.md) - Storico versioni
 
 ---
 
-**Versione**: 1.0  
+**Versione**: 1.1  
 **Data Creazione**: 11 Febbraio 2026  
+**Ultimo Aggiornamento**: 19 Febbraio 2026 - Aggiunto Problema 7 (Worker config)  
 **Manutenzione**: Aggiungere nuove lezioni man mano che emergono

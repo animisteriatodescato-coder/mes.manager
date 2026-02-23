@@ -58,6 +58,11 @@ public class MesManagerDbContext : DbContext
     public DbSet<QuoteAttachment> QuoteAttachments => Set<QuoteAttachment>();
     public DbSet<PriceList> PriceLists => Set<PriceList>();
     public DbSet<PriceListItem> PriceListItems => Set<PriceListItem>();
+    
+    // Modulo Lavorazioni Anime
+    public DbSet<WorkProcessingType> WorkProcessingTypes => Set<WorkProcessingType>();
+    public DbSet<WorkProcessingParameter> WorkProcessingParameters => Set<WorkProcessingParameter>();
+    public DbSet<WorkProcessingTechnicalData> WorkProcessingTechnicalData => Set<WorkProcessingTechnicalData>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -473,6 +478,100 @@ public class MesManagerDbContext : DbContext
         modelBuilder.Entity<PriceListItem>()
             .Property(i => i.VatRate)
             .HasPrecision(5, 2);
+
+        // =====================================
+        // MODULO LAVORAZIONI ANIME
+        // =====================================
+
+        // WorkProcessingType - Tipi lavorazione
+        modelBuilder.Entity<WorkProcessingType>()
+            .HasIndex(w => w.Codice)
+            .IsUnique();
+        
+        modelBuilder.Entity<WorkProcessingType>()
+            .HasIndex(w => w.Attivo);
+        
+        modelBuilder.Entity<WorkProcessingType>()
+            .HasIndex(w => w.Categoria);
+
+        // WorkProcessingParameter - Parametri per tipo
+        modelBuilder.Entity<WorkProcessingParameter>()
+            .HasOne(p => p.WorkProcessingType)
+            .WithMany(t => t.Parametri)
+            .HasForeignKey(p => p.WorkProcessingTypeId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder.Entity<WorkProcessingParameter>()
+            .HasIndex(p => new { p.WorkProcessingTypeId, p.IsCurrent });
+        
+        modelBuilder.Entity<WorkProcessingParameter>()
+            .HasIndex(p => p.ValidFrom);
+        
+        modelBuilder.Entity<WorkProcessingParameter>()
+            .HasIndex(p => p.ValidTo);
+
+        // Precisioni decimali parametri economici
+        modelBuilder.Entity<WorkProcessingParameter>()
+            .Property(p => p.EuroOra).HasPrecision(18, 4);
+        modelBuilder.Entity<WorkProcessingParameter>()
+            .Property(p => p.SabbiaCostoKg).HasPrecision(18, 4);
+        modelBuilder.Entity<WorkProcessingParameter>()
+            .Property(p => p.CostoAttrezzatura).HasPrecision(18, 4);
+        modelBuilder.Entity<WorkProcessingParameter>()
+            .Property(p => p.VerniceCostoPezzo).HasPrecision(18, 4);
+        modelBuilder.Entity<WorkProcessingParameter>()
+            .Property(p => p.VerniciaturaCostoOra).HasPrecision(18, 4);  
+        modelBuilder.Entity<WorkProcessingParameter>()
+            .Property(p => p.IncollaggioCostoOra).HasPrecision(18, 4);
+        modelBuilder.Entity<WorkProcessingParameter>()
+            .Property(p => p.ImballaggioOra).HasPrecision(18, 4);
+        modelBuilder.Entity<WorkProcessingParameter>()
+            .Property(p => p.MargineDefaultPercent).HasPrecision(5, 2);
+
+        // WorkProcessingTechnicalData - Dati tecnici riga preventivo
+        modelBuilder.Entity<WorkProcessingTechnicalData>()
+            .HasOne(d => d.QuoteRow)
+            .WithOne(r => r.TechnicalData)
+            .HasForeignKey<WorkProcessingTechnicalData>(d => d.QuoteRowId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder.Entity<WorkProcessingTechnicalData>()
+            .HasIndex(d => d.QuoteRowId)
+            .IsUnique();
+
+        // Precisioni decimali dati tecnici
+        modelBuilder.Entity<WorkProcessingTechnicalData>()
+            .Property(d => d.PesoKg).HasPrecision(18, 4);
+        modelBuilder.Entity<WorkProcessingTechnicalData>()
+            .Property(d => d.SpariOrari).HasPrecision(18, 4);
+        modelBuilder.Entity<WorkProcessingTechnicalData>()
+            .Property(d => d.VerniciaturaPezziOra).HasPrecision(18, 4);
+        modelBuilder.Entity<WorkProcessingTechnicalData>()
+            .Property(d => d.IncollaggioOre).HasPrecision(18, 4);
+        modelBuilder.Entity<WorkProcessingTechnicalData>()
+            .Property(d => d.ImballaggioOre).HasPrecision(18, 4);
+        modelBuilder.Entity<WorkProcessingTechnicalData>()
+            .Property(d => d.VernicePesoKg).HasPrecision(18, 4);
+        modelBuilder.Entity<WorkProcessingTechnicalData>()
+            .Property(d => d.CostoAnimaCalcolato).HasPrecision(18, 4);
+        modelBuilder.Entity<WorkProcessingTechnicalData>()
+            .Property(d => d.CostoFuoriMacchina).HasPrecision(18, 4);
+        modelBuilder.Entity<WorkProcessingTechnicalData>()
+            .Property(d => d.CostoTotalePezzo).HasPrecision(18, 4);
+        modelBuilder.Entity<WorkProcessingTechnicalData>()
+            .Property(d => d.MargineApplicatoPercent).HasPrecision(5, 2);
+        modelBuilder.Entity<WorkProcessingTechnicalData>()
+            .Property(d => d.PrezzoVenditaPezzo).HasPrecision(18, 4);
+
+        // QuoteRow - Estensione per lavorazioni
+        modelBuilder.Entity<QuoteRow>()
+            .HasOne(r => r.WorkProcessingType)
+            .WithMany(t => t.RighePreventivo)
+            .HasForeignKey(r => r.WorkProcessingTypeId)
+            .OnDelete(DeleteBehavior.SetNull);
+        
+        modelBuilder.Entity<QuoteRow>()
+            .HasIndex(r => r.WorkProcessingTypeId);
     }
 
     private static StatoCommessa ParseStatoCommessa(string? value)

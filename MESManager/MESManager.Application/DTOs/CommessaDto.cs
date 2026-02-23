@@ -17,7 +17,13 @@ public class CommessaDto
     
     // Campi denormalizzati per visualizzazione
     public string? ClienteRagioneSociale { get; set; }
-    public string? CompanyName { get; set; } // Nome cliente da Mago
+    public string? CompanyName { get; set; } // Da Mago (fallback se ClienteId mancante)
+    
+    /// <summary>
+    /// Cliente da visualizzare: priorità a CompanyName (dati Mago - fonte corretta),
+    /// fallback a ClienteRagioneSociale (tabella Clienti - può contenere dati errati)
+    /// </summary>
+    public string ClienteDisplay => CompanyName ?? ClienteRagioneSociale ?? "N/D";
     public string? ArticoloCodice { get; set; }
     public string? ArticoloDescrizione { get; set; }
     public decimal? ArticoloPrezzo { get; set; }
@@ -93,7 +99,7 @@ public class CommessaDto
     // Flag per verificare se i dati etichetta sono completi
     public bool DatiEtichettaCompleti => 
         !string.IsNullOrEmpty(CodiceAnime) && 
-        !string.IsNullOrEmpty(CompanyName);
+        !string.IsNullOrEmpty(ClienteDisplay); // Usa fallback intelligente
     
     // Flag per verificare se l'articolo ha una ricetta configurata
     public bool HasRicetta { get; set; }

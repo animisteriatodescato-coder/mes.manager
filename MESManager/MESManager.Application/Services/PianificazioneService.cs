@@ -6,6 +6,13 @@ namespace MESManager.Application.Services;
 
 public class PianificazioneService : IPianificazioneService
 {
+    private readonly IRicettaRepository _ricettaRepo;
+    
+    public PianificazioneService(IRicettaRepository ricettaRepo)
+    {
+        _ricettaRepo = ricettaRepo;
+    }
+    
     public int CalcolaDurataPrevistaMinuti(int tempoCicloSecondi, int numeroFigure, decimal quantitaRichiesta, int tempoSetupMinuti)
     {
         if (tempoCicloSecondi <= 0 || numeroFigure <= 0)
@@ -177,6 +184,15 @@ public class PianificazioneService : IPianificazioneService
         // animeLookup deve essere fornito dal chiamante che ha accesso al DbContext
         animeLookup ??= new Dictionary<string, Anime>();
         
+        // Batch lookup Ricette per performance
+        var articoloIds = commesse
+            .Where(c => c.ArticoloId.HasValue)
+            .Select(c => c.ArticoloId!.Value)
+            .Distinct()
+            .ToList();
+            
+        var ricetteLookup = await _ricettaRepo.GetRicetteInfoByArticoloIdAsync(articoloIds);
+        
         return await Task.FromResult(commesse.Select(c =>
         {
             Anime? anime = null;
@@ -251,7 +267,12 @@ public class PianificazioneService : IPianificazioneService
                 VincoloDataInizio = c.VincoloDataInizio,
                 VincoloDataFine = c.VincoloDataFine,
                 VincoloDataFineSuperato = vincoloDataFineSuperato,
-                ClasseLavorazione = c.ClasseLavorazione
+                ClasseLavorazione = c.ClasseLavorazione,
+                
+                // Ricetta configurata
+                HasRicetta = c.ArticoloId.HasValue && ricetteLookup.ContainsKey(c.ArticoloId.Value),
+                NumeroParametri = c.ArticoloId.HasValue && ricetteLookup.TryGetValue(c.ArticoloId.Value, out var ric) ? ric.NumeroParametri : 0,
+                RicettaUltimaModifica = c.ArticoloId.HasValue && ricetteLookup.TryGetValue(c.ArticoloId.Value, out var ric2) ? ric2.UltimaModifica : null
             };
         }).ToList());
     }
