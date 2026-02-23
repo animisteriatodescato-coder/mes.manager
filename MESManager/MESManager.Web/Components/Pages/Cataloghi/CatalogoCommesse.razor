@@ -1,18 +1,13 @@
-@page "/cataloghi/commesse"
+﻿@page "/cataloghi/commesse"
+@inherits CatalogoGridBase
 @using MESManager.Application.DTOs
 @using MESManager.Web.Models
 @using MESManager.Web.Services
 @using MESManager.Web.Components.Dialogs
-@using Microsoft.JSInterop
-@using System.Text.Json
 @inject HttpClient Http
 @inject NavigationManager Nav
-@inject PreferencesService PreferencesService
-@inject IJSRuntime JSRuntime
-@inject IPageToolbarService PageToolbarService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
-@implements IAsyncDisposable
 
 <PageTitle>Catalogo Commesse</PageTitle>
 
@@ -112,64 +107,34 @@
 </style>
 
 @code {
-    private List<CommessaDto> _commesse = new();
-    private GridUiSettings settings = new();
-    private bool showSettings = false;
-    private string searchText = string.Empty;
+    //  Identità griglia 
+    protected override string GridNamespace => "commesseGrid";
+    protected override string SettingsKey   => "commesse-grid";
+    protected override string PageKey       => "commesse";
 
-    private int totalRows = 0;
-    private int filteredRows = 0;
-    private int selectedRows = 0;
+    private List<CommessaDto> _commesse = new();
     private int aperteCount = 0;
     private int chiuseCount = 0;
-    private DateTime lastUpdate = DateTime.MinValue;
-    private bool isLoading = false;
-    private string gridStatus = "Pronto";
     private IJSObjectReference? jsModule;
-
-    private async Task OnSearchDebounced(string value)
-    {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("commesseGrid.setQuickFilter", value);
-        }
-        catch
-        {
-            // Error filtering grid
-        }
-    }
 
     protected override async Task OnInitializedAsync()
     {
-        PageToolbarService.SetActivePage("commesse", this);
-        
-        _commesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
-        
-        totalRows = _commesse.Count;
+        PageToolbarService.SetActivePage(PageKey, this);
+        _commesse   = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
+        totalRows   = _commesse.Count;
         aperteCount = _commesse.Count(c => c.Stato == "Aperta");
         chiuseCount = _commesse.Count(c => c.Stato == "Chiusa");
-        lastUpdate = DateTime.Now;
-        
-        var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("commesse-grid-settings");
-        if (savedSettings != null)
-        {
-            settings = savedSettings;
-        }
+        lastUpdate  = DateTime.Now;
+        await LoadSavedSettings();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // Delay per assicurarsi che gli script siano caricati
             await Task.Delay(100);
-            
-            // Registra DotNetRef per commesseGrid
             await JSRuntime.InvokeVoidAsync("commesseGrid.setDotNetRef", DotNetObjectReference.Create(this));
-            
-            await InitializeGrid();
-            
-            // Sottoscrivi agli eventi di cambio statistiche
+            await InitializeGridJs(_commesse);
             jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/stats-listener.js");
             await jsModule.InvokeVoidAsync("subscribeToStatsChanges", DotNetObjectReference.Create(this));
         }
@@ -178,18 +143,7 @@
     [JSInvokable]
     public async Task UpdateStats()
     {
-        try
-        {
-            var stats = await JSRuntime.InvokeAsync<GridStats>("commesseGrid.getStats");
-            totalRows = stats.Total;
-            filteredRows = stats.Filtered;
-            selectedRows = stats.Selected;
-            StateHasChanged();
-        }
-        catch
-        {
-            // Error updating stats
-        }
+        await UpdateGridStats();
     }
 
     [JSInvokable]
@@ -201,14 +155,12 @@
             {
                 { x => x.CodiceArticolo, codiceArticolo }
             };
-            
             var options = new DialogOptions
             {
                 MaxWidth = MaxWidth.Large,
                 CloseOnEscapeKey = true,
                 CloseButton = true
             };
-            
             await DialogService.ShowAsync<RicettaViewDialog>($"Ricetta: {codiceArticolo}", parameters, options);
         }
         catch (Exception ex)
@@ -220,167 +172,12 @@
     [JSInvokable]
     public async Task SaveGridStateFromJs()
     {
-        await SaveGridState();
-    }
-
-    private async Task InitializeGrid()
-    {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("commesseGrid.init", "commesseGrid", _commesse, settings.ColumnStateJson);
-            await ApplyUiSettings();
-        }
-        catch
-        {
-            // Error initializing grid
-        }
-    }
-
-    private async Task ToggleColumnPanel()
-    {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("commesseGrid.toggleColumnPanel");
-        }
-        catch
-        {
-            // Error toggling column panel
-        }
-    }
-
-    private async Task FixGridState()
-    {
-        try
-        {
-            var gridState = await JSRuntime.InvokeAsync<string>("commesseGrid.getState");
-            await PreferencesService.SetAsync("commesse-grid-fixed-state", gridState);
-            await PreferencesService.SetAsync("commesse-grid-fixed-settings", JsonSerializer.Serialize(settings));
-        }
-        catch { }
-    }
-
-    private async Task ResetToFixedState()
-    {
-        try
-        {
-            var fixedState = await PreferencesService.GetAsync<string>("commesse-grid-fixed-state");
-            var fixedSettings = await PreferencesService.GetAsync<string>("commesse-grid-fixed-settings");
-            
-            if (!string.IsNullOrEmpty(fixedState))
-            {
-                await JSRuntime.InvokeVoidAsync("commesseGrid.setState", fixedState);
-            }
-            else
-            {
-                await JSRuntime.InvokeVoidAsync("commesseGrid.resetState");
-            }
-            
-            if (!string.IsNullOrEmpty(fixedSettings))
-            {
-                settings = JsonSerializer.Deserialize<GridUiSettings>(fixedSettings) ?? new GridUiSettings();
-            }
-            else
-            {
-                settings = new GridUiSettings();
-            }
-            
-            await ApplyUiSettings();
-            StateHasChanged();
-        }
-        catch { }
-    }
-
-    private async Task ExportCsv()
-    {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("commesseGrid.exportCsv");
-        }
-        catch { }
-    }
-
-    private async Task ApplyUiSettings()
-    {
-        try
-        {
-            var densityPadding = GetDensityPadding();
-            await JSRuntime.InvokeVoidAsync("commesseGrid.setUiVars", 
-                settings.FontSize, 
-                settings.RowHeight, 
-                densityPadding,
-                settings.Zebra,
-                settings.GridLines);
-            await SaveSettings();
-            StateHasChanged();
-        }
-        catch { }
-    }
-
-    private string GetDensityPadding()
-    {
-        return settings.Density switch
-        {
-            "Compact" => "4px",
-            "Comfortable" => "12px",
-            _ => "8px"
-        };
-    }
-
-    private async Task SaveGridState()
-    {
         await SaveSettings();
     }
 
-    private async Task SaveSettings()
+    public override async ValueTask DisposeAsync()
     {
-        try
-        {
-            var state = await JSRuntime.InvokeAsync<string>("commesseGrid.getState");
-            settings.ColumnStateJson = state;
-            await PreferencesService.SetAsync("commesse-grid-settings", settings);
-        }
-        catch { }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        // Deregistra questa pagina
-        PageToolbarService.SetActivePage("commesse", null);
-        
-        if (jsModule != null)
-        {
-            await jsModule.DisposeAsync();
-        }
-        
-        try
-        {
-            await SaveSettings();
-        }
-        catch { }
-    }
-    
-    // Metodi pubblici per essere chiamati dalla AppBar
-    public async Task OnSearchDebounced_Public(string value)
-    {
-        searchText = value;
-        await OnSearchDebounced(value);
-    }
-    
-    public async Task ToggleColumnPanel_Public() => await ToggleColumnPanel();
-    public async Task ResetGrid_Public() => await ResetToFixedState();
-    public async Task ExportCsv_Public() => await ExportCsv();
-    public void ToggleSettings_Public()
-    {
-        showSettings = !showSettings;
-        StateHasChanged();
-    }
-
-    private class GridStats
-    {
-        public int Total { get; set; }
-        public int Filtered { get; set; }
-        public int Selected { get; set; }
+        if (jsModule != null) await jsModule.DisposeAsync();
+        await base.DisposeAsync();
     }
 }
-
-

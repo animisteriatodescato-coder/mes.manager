@@ -1,14 +1,9 @@
-@page "/cataloghi/clienti"
+﻿@page "/cataloghi/clienti"
+@inherits CatalogoGridBase
 @using MESManager.Web.Models
 @using MESManager.Web.Services
-@using Microsoft.JSInterop
-@using System.Text.Json
 @inject HttpClient Http
 @inject NavigationManager Nav
-@inject PreferencesService PreferencesService
-@inject IJSRuntime JSRuntime
-@inject IPageToolbarService PageToolbarService
-@implements IAsyncDisposable
 
 <PageTitle>Catalogo Clienti</PageTitle>
 
@@ -107,42 +102,21 @@
 </style>
 
 @code {
+    //  Identità griglia 
+    protected override string GridNamespace => "clientiGrid";
+    protected override string SettingsKey   => "clienti-grid";
+    protected override string PageKey       => "clienti";
+
     private List<ClienteDto> _clienti = new();
-    private GridUiSettings settings = new();
-    private bool showSettings = false;
-    private string searchText = string.Empty;
-    private IJSObjectReference? jsModule = null;
-
-    private int totalRows = 0;
-    private int filteredRows = 0;
-    private int selectedRows = 0;
-    private DateTime lastUpdate = DateTime.MinValue;
-    private bool isLoading = false;
-    private string gridStatus = "Pronto";
-
-    private async Task OnSearchDebounced(string value)
-    {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("clientiGrid.setQuickFilter", value);
-        }
-        catch
-        {
-            // Error filtering grid
-        }
-    }
+    private IJSObjectReference? jsModule;
 
     protected override async Task OnInitializedAsync()
     {
-        PageToolbarService.SetActivePage("clienti", this);
-        
-        _clienti = await Http.GetFromJsonAsync<List<ClienteDto>>("api/Clienti") ?? new();
-        
-        var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("clienti-grid-settings");
-        if (savedSettings != null)
-        {
-            settings = savedSettings;
-        }
+        PageToolbarService.SetActivePage(PageKey, this);
+        _clienti     = await Http.GetFromJsonAsync<List<ClienteDto>>("api/Clienti") ?? new();
+        totalRows    = _clienti.Count;
+        filteredRows = _clienti.Count;
+        await LoadSavedSettings();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -150,199 +124,33 @@
         if (firstRender)
         {
             await Task.Delay(100);
-            await InitializeGrid();
-            
-            // Subscribe to stats changes
+            await InitializeGridJs(_clienti);
             jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/stats-listener-clienti.js");
             await jsModule.InvokeVoidAsync("subscribeToStatsChanges", DotNetObjectReference.Create(this));
         }
     }
 
-    private async Task InitializeGrid()
-    {
-        try
-        {
-            var exists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.clientiGrid !== 'undefined'");
-            if (!exists)
-            {
-                // clientiGrid is not defined
-                return;
-            }
-
-            await JSRuntime.InvokeVoidAsync("clientiGrid.init", "clientiGrid", _clienti, settings.ColumnStateJson);
-            await ApplyUiSettings();
-        }
-        catch
-        {
-            // Error initializing grid
-        }
-    }
-
-    private async Task ToggleColumnPanel()
-    {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("clientiGrid.toggleColumnPanel");
-        }
-        catch { }
-    }
-
-    private async Task FixGridState()
-    {
-        try
-        {
-            var gridState = await JSRuntime.InvokeAsync<string>("clientiGrid.getState");
-            await PreferencesService.SetAsync("clienti-grid-fixed-state", gridState);
-            await PreferencesService.SetAsync("clienti-grid-fixed-settings", JsonSerializer.Serialize(settings));
-        }
-        catch { }
-    }
-
-    private async Task ResetToFixedState()
-    {
-        try
-        {
-            var fixedState = await PreferencesService.GetAsync<string>("clienti-grid-fixed-state");
-            var fixedSettings = await PreferencesService.GetAsync<string>("clienti-grid-fixed-settings");
-            
-            if (!string.IsNullOrEmpty(fixedState))
-            {
-                await JSRuntime.InvokeVoidAsync("clientiGrid.setState", fixedState);
-            }
-            else
-            {
-                await JSRuntime.InvokeVoidAsync("clientiGrid.resetState");
-            }
-            
-            if (!string.IsNullOrEmpty(fixedSettings))
-            {
-                settings = JsonSerializer.Deserialize<GridUiSettings>(fixedSettings) ?? new GridUiSettings();
-            }
-            else
-            {
-                settings = new GridUiSettings();
-            }
-            
-            await ApplyUiSettings();
-            StateHasChanged();
-        }
-        catch { }
-    }
-
-    private async Task ExportCsv()
-    {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("clientiGrid.exportCsv");
-        }
-        catch { }
-    }
-
-    private async Task ApplyUiSettings()
-    {
-        try
-        {
-            var densityPadding = GetDensityPadding();
-            await JSRuntime.InvokeVoidAsync("clientiGrid.setUiVars", 
-                settings.FontSize, 
-                settings.RowHeight, 
-                densityPadding,
-                settings.Zebra,
-                settings.GridLines);
-            await SaveSettings();
-            StateHasChanged();
-        }
-        catch { }
-    }
-
-    private string GetDensityPadding()
-    {
-        return settings.Density switch
-        {
-            "Compact" => "4px",
-            "Comfortable" => "12px",
-            _ => "8px"
-        };
-    }
-
-    private async Task SaveSettings()
-    {
-        try
-        {
-            var state = await JSRuntime.InvokeAsync<string>("clientiGrid.getState");
-            settings.ColumnStateJson = state;
-            await PreferencesService.SetAsync("clienti-grid-settings", settings);
-        }
-        catch { }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        // Deregistra questa pagina
-        PageToolbarService.SetActivePage("clienti", null);
-        
-        if (jsModule != null)
-        {
-            await jsModule.DisposeAsync();
-        }
-        
-        try
-        {
-            await SaveSettings();
-        }
-        catch { }
-    }
-    
     [JSInvokable]
     public async Task UpdateStats()
     {
-        try
-        {
-            var stats = await JSRuntime.InvokeAsync<GridStats>("clientiGrid.getStats");
-            totalRows = stats.Total;
-            filteredRows = stats.Filtered;
-            selectedRows = stats.Selected;
-            lastUpdate = DateTime.Now;
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[CLIENTI] Error updating stats: {ex.Message}");
-        }
+        await UpdateGridStats();
     }
-    
-    // Metodi pubblici per essere chiamati dalla AppBar
-    public async Task OnSearchDebounced_Public(string value)
+
+    public override async ValueTask DisposeAsync()
     {
-        searchText = value;
-        await OnSearchDebounced(value);
-    }
-    
-    public async Task ToggleColumnPanel_Public() => await ToggleColumnPanel();
-    public async Task ResetGrid_Public() => await ResetToFixedState();
-    public async Task ExportCsv_Public() => await ExportCsv();
-    public void ToggleSettings_Public()
-    {
-        showSettings = !showSettings;
-        StateHasChanged();
+        if (jsModule != null) await jsModule.DisposeAsync();
+        await base.DisposeAsync();
     }
 
     private class ClienteDto
     {
-        public Guid Id { get; set; }
-        public string Codice { get; set; } = string.Empty;
-        public string RagioneSociale { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Note { get; set; } = string.Empty;
-        public bool Attivo { get; set; }
-        public DateTime UltimaModifica { get; set; }
-        public DateTime TimestampSync { get; set; }
-    }
-    
-    private class GridStats
-    {
-        public int Total { get; set; }
-        public int Filtered { get; set; }
-        public int Selected { get; set; }
+        public Guid     Id              { get; set; }
+        public string   Codice          { get; set; } = string.Empty;
+        public string   RagioneSociale  { get; set; } = string.Empty;
+        public string   Email           { get; set; } = string.Empty;
+        public string   Note            { get; set; } = string.Empty;
+        public bool     Attivo          { get; set; }
+        public DateTime UltimaModifica  { get; set; }
+        public DateTime TimestampSync   { get; set; }
     }
 }

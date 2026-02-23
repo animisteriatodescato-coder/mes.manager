@@ -1,20 +1,15 @@
-@page "/cataloghi/anime"
+﻿@page "/cataloghi/anime"
+@inherits CatalogoGridBase
 @using MESManager.Web.Models
 @using MESManager.Web.Services
 @using MESManager.Application.DTOs
 @using MESManager.Application.Services
 @using MESManager.Web.Components.Dialogs
-@using Microsoft.JSInterop
-@using System.Text.Json
 @inject HttpClient Http
 @inject NavigationManager Nav
-@inject PreferencesService PreferencesService
 @inject CurrentUserService CurrentUserService
-@inject IJSRuntime JSRuntime
-@inject IPageToolbarService PageToolbarService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
-@implements IAsyncDisposable
 
 <PageTitle>Catalogo Anime</PageTitle>
 
@@ -107,71 +102,55 @@
 </style>
 
 @code {
+    //  Identità griglia 
+    protected override string GridNamespace => "animeGrid";
+    protected override string SettingsKey   => "anime-grid";
+    protected override string PageKey       => "anime";
+
     private List<AnimeDto> _anime = new();
-    private GridUiSettings settings = new();
-    private bool showSettings = false;
-    private string searchText = string.Empty;
     private DotNetObjectReference<CatalogoAnime>? _dotNetRef;
-
-    private int totalRows = 0;
-    private int filteredRows = 0;
-    private int selectedRows = 0;
-    private DateTime lastUpdate = DateTime.MinValue;
-    private bool isLoading = false;
-    private string gridStatus = "Pronto";
-    private bool _isDataLoaded = false;
+    private bool _isDataLoaded    = false;
     private bool _isGridInitialized = false;
-
-    private async Task OnSearchDebounced(string value)
-    {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("animeGrid.setQuickFilter", value);
-        }
-        catch
-        {
-            // Error filtering grid
-        }
-    }
 
     protected override async Task OnInitializedAsync()
     {
-        PageToolbarService.SetActivePage("anime", this);
-        
+        PageToolbarService.SetActivePage(PageKey, this);
         isLoading = true;
         gridStatus = "Caricamento...";
-        
+        StateHasChanged();
+
         _anime = await Http.GetFromJsonAsync<List<AnimeDto>>("api/Anime") ?? new();
-        
         _isDataLoaded = true;
         isLoading = false;
         gridStatus = "Pronto";
-        
-        var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("anime-grid-settings");
-        if (savedSettings != null)
-        {
-            settings = savedSettings;
-        }
+
+        await LoadSavedSettings();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // Aspetta che i dati siano caricati con un loop (max 30 secondi)
-            int maxWait = 150; // 150 * 200ms = 30 secondi
-            int waited = 0;
+            int maxWait = 150;
+            int waited  = 0;
             while (!_isDataLoaded && waited < maxWait)
             {
                 await Task.Delay(200);
                 waited++;
             }
-            
+
             if (_isDataLoaded && !_isGridInitialized)
             {
                 _isGridInitialized = true;
                 await Task.Delay(100);
-                await InitializeGrid();
+
+                var userId = CurrentUserService.CurrentUserId?.ToString() ?? "";
+                await JSRuntime.InvokeVoidAsync("animeGrid.setCurrentUser", userId);
+
+                _dotNetRef = DotNetObjectReference.Create(this);
+                await InitializeGridJs(_anime);
+                await JSRuntime.InvokeVoidAsync("animeGrid.registerDotNetRef", _dotNetRef);
+                await UpdateGridStats();
             }
         }
     }
@@ -183,166 +162,21 @@
             isLoading = true;
             gridStatus = "Aggiornamento...";
             StateHasChanged();
-            
+
             _anime = await Http.GetFromJsonAsync<List<AnimeDto>>("api/Anime") ?? new();
-            
             await JSRuntime.InvokeVoidAsync("animeGrid.updateData", _anime, null);
             await UpdateGridStats();
-            
+
             isLoading = false;
             gridStatus = "Pronto";
             StateHasChanged();
         }
         catch
         {
-            // Error refreshing grid data
             isLoading = false;
             gridStatus = "Errore";
             StateHasChanged();
         }
-    }
-
-    private async Task InitializeGrid()
-    {
-        try
-        {
-            var exists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.animeGrid !== 'undefined'");
-            if (!exists)
-            {
-                // animeGrid is not defined
-                return;
-            }
-
-            // Imposta l'utente corrente per la griglia (per salvare le preferenze per-utente)
-            var userId = CurrentUserService.CurrentUserId?.ToString() ?? "";
-            await JSRuntime.InvokeVoidAsync("animeGrid.setCurrentUser", userId);
-            
-            // Inizializza la grid con lo stato colonne salvato nelle preferenze
-            await JSRuntime.InvokeVoidAsync("animeGrid.init", "animeGrid", _anime, settings.ColumnStateJson);
-            
-            // Registra DotNetObjectReference per callback JS->Blazor (double-click)
-            _dotNetRef = DotNetObjectReference.Create(this);
-            await JSRuntime.InvokeVoidAsync("animeGrid.registerDotNetRef", _dotNetRef);
-            
-            await ApplyUiSettings();
-            
-            // Aggiorna le statistiche dopo l'inizializzazione
-            await UpdateGridStats();
-        }
-        catch
-        {
-            // Error initializing grid
-        }
-    }
-
-    private async Task ToggleColumnPanel()
-    {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("animeGrid.toggleColumnPanel");
-        }
-        catch { }
-    }
-
-    private async Task FixGridState()
-    {
-        try
-        {
-            var gridState = await JSRuntime.InvokeAsync<string>("animeGrid.getState");
-            await PreferencesService.SetAsync("anime-grid-fixed-state", gridState);
-            await PreferencesService.SetAsync("anime-grid-fixed-settings", JsonSerializer.Serialize(settings));
-        }
-        catch { }
-    }
-
-    private async Task ResetToFixedState()
-    {
-        try
-        {
-            var fixedState = await PreferencesService.GetAsync<string>("anime-grid-fixed-state");
-            var fixedSettings = await PreferencesService.GetAsync<string>("anime-grid-fixed-settings");
-            
-            if (!string.IsNullOrEmpty(fixedState))
-            {
-                await JSRuntime.InvokeVoidAsync("animeGrid.setState", fixedState);
-            }
-            else
-            {
-                await JSRuntime.InvokeVoidAsync("animeGrid.resetState");
-            }
-            
-            if (!string.IsNullOrEmpty(fixedSettings))
-            {
-                settings = JsonSerializer.Deserialize<GridUiSettings>(fixedSettings) ?? new GridUiSettings();
-            }
-            else
-            {
-                settings = new GridUiSettings();
-            }
-            
-            await ApplyUiSettings();
-            StateHasChanged();
-        }
-        catch { }
-    }
-
-    private async Task ExportCsv()
-    {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("animeGrid.exportCsv");
-        }
-        catch { }
-    }
-
-    private async Task ApplyUiSettings()
-    {
-        try
-        {
-            var densityPadding = GetDensityPadding();
-            await JSRuntime.InvokeVoidAsync("animeGrid.setUiVars", 
-                settings.FontSize, 
-                settings.RowHeight, 
-                densityPadding,
-                settings.Zebra,
-                settings.GridLines);
-            await SaveSettings();
-            StateHasChanged();
-        }
-        catch { }
-    }
-
-    private string GetDensityPadding()
-    {
-        return settings.Density switch
-        {
-            "Compact" => "4px",
-            "Comfortable" => "12px",
-            _ => "8px"
-        };
-    }
-
-    private async Task SaveSettings()
-    {
-        try
-        {
-            var state = await JSRuntime.InvokeAsync<string>("animeGrid.getState");
-            settings.ColumnStateJson = state;
-            await PreferencesService.SetAsync("anime-grid-settings", settings);
-        }
-        catch { }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        PageToolbarService.SetActivePage("anime", null);
-        
-        try
-        {
-            await SaveSettings();
-            _dotNetRef?.Dispose();
-        }
-        catch { }
     }
 
     [JSInvokable]
@@ -354,7 +188,6 @@
             {
                 { x => x.Anime, anime }
             };
-            
             var options = new DialogOptions
             {
                 MaxWidth = MaxWidth.Large,
@@ -362,18 +195,15 @@
                 CloseButton = true,
                 CloseOnEscapeKey = true
             };
-            
             var dialog = await DialogService.ShowAsync<AnimeEditDialog>("Modifica Anima", parameters, options);
             var result = await dialog.Result;
-            
+
             if (result != null && !result.Canceled && result.Data is AnimeDto updatedAnime)
             {
-                // Aggiorna i dati nella griglia
                 var index = _anime.FindIndex(a => a.Id == updatedAnime.Id);
                 if (index >= 0)
                 {
                     _anime[index] = updatedAnime;
-                    // Passa l'ID per mantenere la selezione sulla riga modificata
                     await JSRuntime.InvokeVoidAsync("animeGrid.updateData", _anime, updatedAnime.Id);
                     Snackbar.Add("Anima aggiornata con successo", Severity.Success);
                 }
@@ -381,11 +211,10 @@
         }
         catch (Exception ex)
         {
-            // Error opening edit dialog
             Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
         }
     }
-    
+
     [JSInvokable]
     public async Task ViewRicetta(string codiceArticolo)
     {
@@ -395,7 +224,6 @@
             {
                 { x => x.CodiceArticolo, codiceArticolo }
             };
-            
             var options = new DialogOptions
             {
                 MaxWidth = MaxWidth.Large,
@@ -403,7 +231,6 @@
                 CloseButton = true,
                 CloseOnEscapeKey = true
             };
-            
             await DialogService.ShowAsync<RicettaViewDialog>("Visualizza Ricetta", parameters, options);
         }
         catch (Exception ex)
@@ -411,44 +238,10 @@
             Snackbar.Add($"Errore apertura ricetta: {ex.Message}", Severity.Error);
         }
     }
-    
-    // Metodi pubblici per essere chiamati dalla AppBar
-    public async Task OnSearchDebounced_Public(string value)
-    {
-        searchText = value;
-        await OnSearchDebounced(value);
-    }
-    
-    public async Task ToggleColumnPanel_Public() => await ToggleColumnPanel();
-    public async Task ResetGrid_Public() => await ResetToFixedState();
-    public async Task ExportCsv_Public() => await ExportCsv();
-    public void ToggleSettings_Public()
-    {
-        showSettings = !showSettings;
-        StateHasChanged();
-    }
 
-    private async Task UpdateGridStats()
+    public override async ValueTask DisposeAsync()
     {
-        try
-        {
-            var stats = await JSRuntime.InvokeAsync<GridStats>("animeGrid.getStats");
-            totalRows = stats.Total;
-            filteredRows = stats.Filtered;
-            selectedRows = stats.Selected;
-            lastUpdate = DateTime.Now;
-            StateHasChanged();
-        }
-        catch
-        {
-            // Error updating stats
-        }
-    }
-
-    private class GridStats
-    {
-        public int Total { get; set; }
-        public int Filtered { get; set; }
-        public int Selected { get; set; }
+        _dotNetRef?.Dispose();
+        await base.DisposeAsync();
     }
 }

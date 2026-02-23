@@ -10,4 +10,12 @@ public class GridUiSettings
     public bool GridLines { get; set; } = true;
     public string? ColumnStateJson { get; set; }
     public string GlobalSearch { get; set; } = string.Empty;
+
+    /// <summary>Restituisce il padding CSS orizzontale per la densità scelta.</summary>
+    public string GetDensityPadding() => Density switch
+    {
+        "Compact"     => "4px",
+        "Comfortable" => "12px",
+        _             => "8px"
+    };
 }

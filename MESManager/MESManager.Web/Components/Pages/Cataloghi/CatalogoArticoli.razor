@@ -1,14 +1,9 @@
-@page "/cataloghi/articoli"
+﻿@page "/cataloghi/articoli"
+@inherits CatalogoGridBase
 @using MESManager.Web.Models
 @using MESManager.Web.Services
-@using Microsoft.JSInterop
-@using System.Text.Json
 @inject HttpClient Http
 @inject NavigationManager Nav
-@inject PreferencesService PreferencesService
-@inject IJSRuntime JSRuntime
-@inject IPageToolbarService PageToolbarService
-@implements IAsyncDisposable
 
 <PageTitle>Catalogo Articoli</PageTitle>
 
@@ -109,57 +104,29 @@
 </style>
 
 @code {
-    private List<ArticoloDto> _articoli = new();
-    private GridUiSettings settings = new();
-    private bool showSettings = false;
-    private string searchText = string.Empty;
-    private System.Threading.Timer? _statsTimer;
-    
-    // Footer stats
-    private int totalRows = 0;
-    private int filteredRows = 0;
-    private int selectedRows = 0;
-    private DateTime lastUpdate = DateTime.MinValue;
-    private bool isLoading = false;
-    private string gridStatus = "Pronto";
+    //  Identità griglia (cambia SOLO queste 3 righe per un nuovo cliente) 
+    protected override string GridNamespace => "articoliGrid";
+    protected override string SettingsKey   => "articoli-grid";
+    protected override string PageKey       => "articoli";
 
-    private async Task OnSearchDebounced(string value)
-    {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("articoliGrid.setQuickFilter", value);
-            await UpdateGridStats();
-        }
-        catch
-        {
-            // Error filtering grid
-        }
-    }
+    private List<ArticoloDto> _articoli = new();
+    private System.Threading.Timer? _statsTimer;
 
     protected override async Task OnInitializedAsync()
     {
         isLoading = true;
         gridStatus = "Caricamento...";
-        
-        // Registra questa pagina come attiva
-        PageToolbarService.SetActivePage("articoli", this);
-        
+        PageToolbarService.SetActivePage(PageKey, this);
         StateHasChanged();
-        
-        _articoli = await Http.GetFromJsonAsync<List<ArticoloDto>>("api/Articoli") ?? new();
-        
-        totalRows = _articoli.Count;
+
+        _articoli    = await Http.GetFromJsonAsync<List<ArticoloDto>>("api/Articoli") ?? new();
+        totalRows    = _articoli.Count;
         filteredRows = _articoli.Count;
-        lastUpdate = DateTime.Now;
-        isLoading = false;
-        gridStatus = "Pronto";
-        
-        var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("articoli-grid-settings");
-        if (savedSettings != null)
-        {
-            settings = savedSettings;
-        }
-        
+        lastUpdate   = DateTime.Now;
+        isLoading    = false;
+        gridStatus   = "Pronto";
+
+        await LoadSavedSettings();
         StateHasChanged();
     }
 
@@ -168,224 +135,28 @@
         if (firstRender)
         {
             await Task.Delay(100);
-            await InitializeGrid();
-            
-            // Avvia timer per aggiornare le statistiche
-            _statsTimer = new System.Threading.Timer(async _ =>
-            {
-                try
-                {
-                    await InvokeAsync(async () =>
-                    {
-                        await UpdateGridStats();
-                    });
-                }
-                catch
-                {
-                    // Error updating grid stats
-                }
-            }, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+            await InitializeGridJs(_articoli);
+
+            _statsTimer = new System.Threading.Timer(
+                async _ => { try { await InvokeAsync(UpdateGridStats); } catch { } },
+                null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
         }
     }
 
-    private async Task InitializeGrid()
+    public override async ValueTask DisposeAsync()
     {
-        try
-        {
-            var exists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.articoliGrid !== 'undefined'");
-            if (!exists)
-            {
-                // articoliGrid is not defined
-                return;
-            }
-
-            await JSRuntime.InvokeVoidAsync("articoliGrid.init", "articoliGrid", _articoli, settings.ColumnStateJson);
-            await ApplyUiSettings();
-            
-            // Aggiorna statistiche iniziali
-            await UpdateGridStats();
-        }
-        catch
-        {
-            // Error initializing grid
-        }
+        if (_statsTimer != null) { await _statsTimer.DisposeAsync(); _statsTimer = null; }
+        await base.DisposeAsync();
     }
-    
-    private async Task UpdateGridStats()
-    {
-        try
-        {
-            var stats = await JSRuntime.InvokeAsync<GridStats>("articoliGrid.getGridStats");
-            if (stats != null)
-            {
-                totalRows = _articoli.Count;
-                filteredRows = stats.Filtered;
-                selectedRows = stats.Selected;
-                StateHasChanged();
-            }
-        }
-        catch
-        {
-            // Error updating grid stats
-        }
-    }
-
-    private async Task ToggleColumnPanel()
-    {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("articoliGrid.toggleColumnPanel");
-        }
-        catch { }
-    }
-
-    private async Task FixGridState()
-    {
-        try
-        {
-            var gridState = await JSRuntime.InvokeAsync<string>("articoliGrid.getState");
-            await PreferencesService.SetAsync("articoli-grid-fixed-state", gridState);
-            await PreferencesService.SetAsync("articoli-grid-fixed-settings", JsonSerializer.Serialize(settings));
-        }
-        catch { }
-    }
-
-    private async Task ResetToFixedState()
-    {
-        try
-        {
-            var fixedState = await PreferencesService.GetAsync<string>("articoli-grid-fixed-state");
-            var fixedSettings = await PreferencesService.GetAsync<string>("articoli-grid-fixed-settings");
-            
-            if (!string.IsNullOrEmpty(fixedState))
-            {
-                await JSRuntime.InvokeVoidAsync("articoliGrid.setState", fixedState);
-            }
-            else
-            {
-                await JSRuntime.InvokeVoidAsync("articoliGrid.resetState");
-            }
-            
-            if (!string.IsNullOrEmpty(fixedSettings))
-            {
-                settings = JsonSerializer.Deserialize<GridUiSettings>(fixedSettings) ?? new GridUiSettings();
-            }
-            else
-            {
-                settings = new GridUiSettings();
-            }
-            
-            await ApplyUiSettings();
-            StateHasChanged();
-        }
-        catch { }
-    }
-
-    private async Task ExportCsv()
-    {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("articoliGrid.exportCsv");
-        }
-        catch { }
-    }
-
-    private async Task ApplyUiSettings()
-    {
-        try
-        {
-            var densityPadding = GetDensityPadding();
-            await JSRuntime.InvokeVoidAsync("articoliGrid.setUiVars", 
-                settings.FontSize, 
-                settings.RowHeight, 
-                densityPadding,
-                settings.Zebra,
-                settings.GridLines);
-            await SaveSettings();
-            StateHasChanged();
-        }
-        catch { }
-    }
-
-    private string GetDensityPadding()
-    {
-        return settings.Density switch
-        {
-            "Compact" => "4px",
-            "Comfortable" => "12px",
-            _ => "8px"
-        };
-    }
-
-    private async Task SaveSettings()
-    {
-        try
-        {
-            var state = await JSRuntime.InvokeAsync<string>("articoliGrid.getState");
-            settings.ColumnStateJson = state;
-            await PreferencesService.SetAsync("articoli-grid-settings", settings);
-        }
-        catch { }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        // Ferma il timer prima di tutto
-        if (_statsTimer != null)
-        {
-            await _statsTimer.DisposeAsync();
-            _statsTimer = null;
-        }
-        
-        // Deregistra questa pagina
-        PageToolbarService.SetActivePage("articoli", null);
-        
-        try
-        {
-            await SaveSettings();
-        }
-        catch { }
-    }
-    
-    // Metodi pubblici per essere chiamati dalla AppBar
-    public async Task OnSearchDebounced_Public(string value)
-    {
-        searchText = value;
-        await OnSearchDebounced(value);
-    }
-    
-    public async Task ToggleColumnPanel_Public() => await ToggleColumnPanel();
-    public async Task ResetGrid_Public() => await ResetToFixedState();
-    public async Task ExportCsv_Public() => await ExportCsv();
-    public void ToggleSettings_Public()
-    {
-        showSettings = !showSettings;
-        StateHasChanged();
-    }
-    
-    public string SearchText => searchText;
-    public int TotalRows => totalRows;
-    public int FilteredRows => filteredRows;
-    public int SelectedRows => selectedRows;
-    public DateTime LastUpdate => lastUpdate;
-    public bool IsLoading => isLoading;
-    public string GridStatus => gridStatus;
 
     private class ArticoloDto
     {
-        public Guid Id { get; set; }
-        public string Codice { get; set; } = string.Empty;
-        public string Descrizione { get; set; } = string.Empty;
-        public decimal Prezzo { get; set; }
-        public bool Attivo { get; set; }
-        public DateTime UltimaModifica { get; set; }
-        public DateTime TimestampSync { get; set; }
-    }
-    
-    private class GridStats
-    {
-        public int Total { get; set; }
-        public int Filtered { get; set; }
-        public int Selected { get; set; }
+        public Guid     Id              { get; set; }
+        public string   Codice          { get; set; } = string.Empty;
+        public string   Descrizione     { get; set; } = string.Empty;
+        public decimal  Prezzo          { get; set; }
+        public bool     Attivo          { get; set; }
+        public DateTime UltimaModifica  { get; set; }
+        public DateTime TimestampSync   { get; set; }
     }
 }
