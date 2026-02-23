@@ -1,0 +1,74 @@
+@using MESManager.Web.Models
+
+@*
+  GridSettingsPanel - Pannello Impostazioni UI condiviso
+  ======================================================
+  Centralizza FontSize / RowHeight / Density / Zebra / GridLines.
+  Un'unica modifica qui si propaga a tutti i catalog grid.
+
+  Utilizzo:
+    @if (showSettings)
+    {
+        <GridSettingsPanel @bind-Settings="settings" OnApplySettings="ApplyUiSettings" />
+    }
+*@
+
+@if (Settings != null)
+{
+    <MudPaper Class="pa-4 mt-2" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Wrap="Wrap.Wrap">
+
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudText>Font Size:</MudText>
+                <MudNumericField Value="@Settings.FontSize" Min="10" Max="24" Step="1"
+                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                 ValueChanged="@(async (int val) => { Settings.FontSize = val; await NotifyChanged(); })"
+                                 Style="width: 80px;" />
+            </MudStack>
+
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudText>Row Height:</MudText>
+                <MudNumericField Value="@Settings.RowHeight" Min="25" Max="80" Step="5"
+                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                 ValueChanged="@(async (int val) => { Settings.RowHeight = val; await NotifyChanged(); })"
+                                 Style="width: 80px;" />
+            </MudStack>
+
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudText>Density:</MudText>
+                <MudSelect Value="@Settings.Density"
+                           Variant="Variant.Outlined" Margin="Margin.Dense"
+                           ValueChanged="@(async (string val) => { Settings.Density = val; await NotifyChanged(); })"
+                           Style="width: 120px;">
+                    <MudSelectItem Value="@("Compact")">Compact</MudSelectItem>
+                    <MudSelectItem Value="@("Normal")">Normal</MudSelectItem>
+                    <MudSelectItem Value="@("Comfortable")">Comfortable</MudSelectItem>
+                </MudSelect>
+            </MudStack>
+
+            <MudCheckBox Value="@Settings.Zebra" Label="Zebra" Color="Color.Primary"
+                         ValueChanged="@(async (bool val) => { Settings.Zebra = val; await NotifyChanged(); })" />
+
+            <MudCheckBox Value="@Settings.GridLines" Label="Grid Lines" Color="Color.Primary"
+                         ValueChanged="@(async (bool val) => { Settings.GridLines = val; await NotifyChanged(); })" />
+
+        </MudStack>
+    </MudPaper>
+}
+
+@code {
+    /// <summary>Oggetto impostazioni della grid corrente.</summary>
+    [Parameter] public GridUiSettings? Settings { get; set; }
+
+    /// <summary>Callback per il two-way binding (@bind-Settings).</summary>
+    [Parameter] public EventCallback<GridUiSettings> SettingsChanged { get; set; }
+
+    /// <summary>Callback invocato dopo ogni modifica, per applicare le impostazioni alla grid.</summary>
+    [Parameter] public EventCallback OnApplySettings { get; set; }
+
+    private async Task NotifyChanged()
+    {
+        await SettingsChanged.InvokeAsync(Settings);
+        await OnApplySettings.InvokeAsync();
+    }
+}

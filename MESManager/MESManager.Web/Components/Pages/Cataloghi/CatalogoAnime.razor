@@ -39,43 +39,7 @@
         
         @if (showSettings)
         {
-            <MudPaper Class="pa-4 mt-2" Elevation="1">
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Wrap="Wrap.Wrap">
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudText>Font Size:</MudText>
-                        <MudNumericField Value="@settings.FontSize" Min="10" Max="24" Step="1" 
-                                        Variant="Variant.Outlined" Margin="Margin.Dense"
-                                        ValueChanged="@(async (int val) => { settings.FontSize = val; await ApplyUiSettings(); })" 
-                                        Style="width: 80px;" />
-                    </MudStack>
-                    
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudText>Row Height:</MudText>
-                        <MudNumericField Value="@settings.RowHeight" Min="25" Max="80" Step="5" 
-                                        Variant="Variant.Outlined" Margin="Margin.Dense"
-                                        ValueChanged="@(async (int val) => { settings.RowHeight = val; await ApplyUiSettings(); })" 
-                                        Style="width: 80px;" />
-                    </MudStack>
-                    
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudText>Density:</MudText>
-                        <MudSelect Value="@settings.Density" 
-                                  Variant="Variant.Outlined" Margin="Margin.Dense"
-                                  ValueChanged="@(async (string val) => { settings.Density = val; await ApplyUiSettings(); })" 
-                                  Style="width: 120px;">
-                            <MudSelectItem Value="@("Compact")">Compact</MudSelectItem>
-                            <MudSelectItem Value="@("Normal")">Normal</MudSelectItem>
-                            <MudSelectItem Value="@("Comfortable")">Comfortable</MudSelectItem>
-                        </MudSelect>
-                    </MudStack>
-                    
-                    <MudCheckBox Value="@settings.Zebra" Label="Zebra" Color="Color.Primary"
-                                ValueChanged="@(async (bool val) => { settings.Zebra = val; await ApplyUiSettings(); })" />
-                    
-                    <MudCheckBox Value="@settings.GridLines" Label="Grid Lines" Color="Color.Primary"
-                                ValueChanged="@(async (bool val) => { settings.GridLines = val; await ApplyUiSettings(); })" />
-                </MudStack>
-            </MudPaper>
+            <GridSettingsPanel @bind-Settings="settings" OnApplySettings="ApplyUiSettings" />
         }
     </div>
 
