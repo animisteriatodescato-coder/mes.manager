@@ -120,6 +120,46 @@ namespace MESManager.Web.Controllers
         }
 
         /// <summary>
+        /// Serve la N-esima foto dell'anima per anteprima in griglia (default: n=2, la seconda foto).
+        /// Ordinamento per Priorita. Restituisce 404 se la foto non esiste.
+        /// Usato dal cellRenderer fotoPreviewShared in tutte le griglie AG Grid.
+        /// </summary>
+        [HttpGet("preview-foto/{codiceArticolo}")]
+        public async Task<IActionResult> GetPreviewFoto(string codiceArticolo, [FromQuery] int n = 2)
+        {
+            _logger.LogDebug("GET /api/AllegatiAnima/preview-foto/{CodiceArticolo}?n={N} - START", codiceArticolo, n);
+
+            try
+            {
+                var allegati = await _allegatiService.GetAllegatiByCodiceArticoloAsync(codiceArticolo);
+                var foto = allegati.Foto
+                    .OrderBy(f => f.Priorita)
+                    .ElementAtOrDefault(n - 1);
+
+                if (foto == null)
+                {
+                    return NotFound();
+                }
+
+                // Serve il file direttamente dal PathCompleto (già presente nel DTO - zero query aggiuntive)
+                var content = await _allegatiService.GetFileContentAsync(foto.PathCompleto);
+                if (content == null)
+                {
+                    return NotFound();
+                }
+
+                var mimeType = await _allegatiService.GetFileMimeTypeAsync(foto.PathCompleto);
+                Response.Headers["Cache-Control"] = "public, max-age=300"; // 5 min cache browser
+                return File(content, mimeType ?? "image/jpeg", foto.NomeFile);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GET /api/AllegatiAnima/preview-foto/{CodiceArticolo}?n={N} - ERROR", codiceArticolo, n);
+                return StatusCode(500);
+            }
+        }
+
+        /// <summary>
         /// Upload di un nuovo allegato
         /// </summary>
         [HttpPost("upload/{codiceArticolo}")]

@@ -80,6 +80,10 @@ window.commesseAperteGrid = (function() {
             filter: true, 
             width: 150 
         },
+        // FOTO - Anteprima seconda immagine anima (shared component)
+        window.fotoPreviewShared.createColumnDef({
+            codiceArticoloField: 'articoloCodice'
+        }),
         // RICETTA - Badge con numero parametri (shared component)
         window.ricettaColumnShared.createColumnDef({
             fieldPrefix: 'camelCase',

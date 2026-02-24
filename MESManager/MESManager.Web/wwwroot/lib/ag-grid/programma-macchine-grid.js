@@ -132,6 +132,10 @@ window.programmaMacchineGrid = (function() {
             filter: true, 
             width: 150 
         },
+        // FOTO - Anteprima seconda immagine anima (shared component)
+        window.fotoPreviewShared.createColumnDef({
+            codiceArticoloField: 'articoloCodice'
+        }),
         { 
             field: 'description', 
             headerName: 'Descrizione', 

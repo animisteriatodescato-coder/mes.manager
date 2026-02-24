@@ -9,7 +9,7 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.50.0";
+    public const string Current = "1.51.0";
     
     /// <summary>
     /// Versione con prefisso 'v' per display UI

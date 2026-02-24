@@ -19,48 +19,41 @@ public partial class MainLayout : IDisposable
     
     [Inject]
     private AppBarContentService AppBarContentService { get; set; } = default!;
+
+    [Inject]
+    private AppSettingsService AppSettingsService { get; set; } = default!;
     
-    private bool _isDarkMode = true;
+    private bool _isDarkMode = false;
     private bool _drawerOpen = false;
     private string _currentCategory = string.Empty;
     private string _toolbarSearchText = string.Empty;
     private ErrorBoundary? _errorBoundary;
-    
-    private readonly MudTheme _theme = new()
-    {
-        PaletteLight = new PaletteLight
-        {
-            Primary = "#0a2f6e",        // Blu notte sfumato - ancora più scuro e professionale
-            Secondary = "#424242",
-            AppbarBackground = "#0a2f6e",  // AppBar con stesso blu notte
-            Surface = "#f8f9fa",           // Superficie grigio chiaro
-            Background = "#ffffff"         // Background bianco
-        },
-        PaletteDark = new PaletteDark
-        {
-            Primary = "#90caf9",
-            Secondary = "#e0e0e0",  // Grigio quasi bianco
-            AppbarBackground = "#1e1e1e",
-            TextPrimary = "rgba(255,255,255,0.95)",   // Testo principale quasi bianco
-            TextSecondary = "rgba(255,255,255,0.85)", // Testo secondario grigio chiarissimo
-            TextDisabled = "rgba(255,255,255,0.6)",   // Testo disabilitato più visibile
-            ActionDisabled = "rgba(255,255,255,0.5)", // Azioni disabilitate più visibili
-            Divider = "rgba(255,255,255,0.2)",        // Divisori più visibili
-            Surface = "#2d2d2d",                       // Superficie leggermente più chiara
-            Background = "#1a1a1a",                    // Background scuro
-            DrawerBackground = "#1e1e1e"              // Drawer stesso colore appbar
-        }
-    };
+
+    // Tema dinamico — costruito dai colori in AppSettings.
+    // NON readonly: viene ricostruito quando l'utente cambia la palette in ImpostazioniGenerali.
+    private MudTheme _theme = new();
     
     protected override async Task OnInitializedAsync()
     {
-        // Carica il tema salvato
-        var savedDarkMode = await PreferencesService.GetAsync<bool?>("isDarkMode");
-        if (savedDarkMode.HasValue)
+        // Costruisce il tema dai colori salvati in AppSettings
+        var settings = AppSettingsService.GetSettings();
+        _theme = BuildThemeFromSettings(settings);
+        _isDarkMode = settings.ThemeIsDarkMode;
+
+        // Retrocompatibilità: se ThemeIsDarkMode è ancora false (default) ma l'utente
+        // aveva salvato la preferenza nel vecchio sistema, usa quella.
+        if (!settings.ThemeIsDarkMode)
         {
-            _isDarkMode = savedDarkMode.Value;
+            var savedDarkMode = await PreferencesService.GetAsync<bool?>("isDarkMode");
+            if (savedDarkMode.HasValue)
+            {
+                _isDarkMode = savedDarkMode.Value;
+            }
         }
-        
+
+        // Ascolta i cambiamenti delle impostazioni (es. nuova palette da ImpostazioniGenerali)
+        AppSettingsService.OnSettingsChanged += OnAppSettingsChanged;
+
         // Sottoscrivi ai cambiamenti di pagina
         PageToolbarService.OnPageChanged += OnPageChanged;
         
@@ -73,9 +66,110 @@ public partial class MainLayout : IDisposable
     
     public void Dispose()
     {
+        AppSettingsService.OnSettingsChanged -= OnAppSettingsChanged;
         PageToolbarService.OnPageChanged -= OnPageChanged;
         NavManager.LocationChanged -= OnLocationChanged;
         AppBarContentService.OnChange -= OnAppBarContentChanged;
+    }
+
+    private void OnAppSettingsChanged()
+    {
+        var settings = AppSettingsService.GetSettings();
+        _theme = BuildThemeFromSettings(settings);
+        _isDarkMode = settings.ThemeIsDarkMode;
+        InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Costruisce un MudTheme dai colori salvati in AppSettings.
+    /// PUNTO CENTRALIZZATO per la creazione del tema — non costruire MudTheme altrove.
+    /// </summary>
+    private static MudTheme BuildThemeFromSettings(AppSettings settings)
+    {
+        var primary   = settings.ThemePrimaryColor;
+        var secondary = settings.ThemeSecondaryColor;
+        var accent    = settings.ThemeAccentColor;
+
+        return new MudTheme
+        {
+            PaletteLight = new PaletteLight
+            {
+                Primary           = primary,
+                Secondary         = secondary,
+                Tertiary          = accent,
+                AppbarBackground  = primary,
+                Surface           = "#f8f9fa",
+                Background        = "#ffffff"
+            },
+            PaletteDark = new PaletteDark
+            {
+                Primary           = LightenHex(primary, 0.35f),
+                Secondary         = secondary,
+                AppbarBackground  = "#1e1e1e",
+                TextPrimary       = "rgba(255,255,255,0.95)",
+                TextSecondary     = "rgba(255,255,255,0.85)",
+                TextDisabled      = "rgba(255,255,255,0.6)",
+                ActionDisabled    = "rgba(255,255,255,0.5)",
+                Divider           = "rgba(255,255,255,0.2)",
+                Surface           = "#2d2d2d",
+                Background        = "#1a1a1a",
+                DrawerBackground  = "#1e1e1e"
+            }
+        };
+    }
+
+    /// <summary>
+    /// Schiarisce un colore hex per adattarlo alla dark palette
+    /// (aumenta la luminosità in HSL fino a targetL).
+    /// </summary>
+    private static string LightenHex(string hex, float targetL)
+    {
+        try
+        {
+            hex = hex.TrimStart('#');
+            if (hex.Length != 6) return hex.Insert(0, "#");
+            byte r = Convert.ToByte(hex[..2], 16);
+            byte g = Convert.ToByte(hex[2..4], 16);
+            byte b = Convert.ToByte(hex[4..6], 16);
+
+            float rf = r / 255f, gf = g / 255f, bf = b / 255f;
+            float max = MathF.Max(rf, MathF.Max(gf, bf));
+            float min = MathF.Min(rf, MathF.Min(gf, bf));
+            float delta = max - min;
+            float l = (max + min) / 2f;
+            float s = delta < 0.001f ? 0f : delta / (1f - MathF.Abs(2f * l - 1f));
+            float h = 0f;
+            if (delta > 0.001f)
+            {
+                if (max == rf)      h = 60f * (((gf - bf) / delta) % 6f);
+                else if (max == gf) h = 60f * (((bf - rf) / delta) + 2f);
+                else                h = 60f * (((rf - gf) / delta) + 4f);
+            }
+            if (h < 0) h += 360f;
+
+            // Forza luminosità target (max 0.85 per non sfiorare il bianco)
+            l = MathF.Min(targetL + 0.35f, 0.85f);
+
+            float c = (1f - MathF.Abs(2f * l - 1f)) * s;
+            float x = c * (1f - MathF.Abs((h / 60f) % 2f - 1f));
+            float m = l - c / 2f;
+            float ro, go, bo;
+            if      (h < 60)  { ro = c; go = x; bo = 0; }
+            else if (h < 120) { ro = x; go = c; bo = 0; }
+            else if (h < 180) { ro = 0; go = c; bo = x; }
+            else if (h < 240) { ro = 0; go = x; bo = c; }
+            else if (h < 300) { ro = x; go = 0; bo = c; }
+            else              { ro = c; go = 0; bo = x; }
+
+            int ri = Math.Clamp((int)MathF.Round((ro + m) * 255f), 0, 255);
+            int gi = Math.Clamp((int)MathF.Round((go + m) * 255f), 0, 255);
+            int bi2 = Math.Clamp((int)MathF.Round((bo + m) * 255f), 0, 255);
+            return $"#{ri:X2}{gi:X2}{bi2:X2}";
+        }
+        catch
+        {
+            return hex.StartsWith('#') ? hex : $"#{hex}";
+        }
     }
     
     private void OnPageChanged()
@@ -324,8 +418,11 @@ public partial class MainLayout : IDisposable
     private async Task ToggleTheme()
     {
         _isDarkMode = !_isDarkMode;
-        // Salva la preferenza
+        // Salva in entrambi i sistemi per retrocompatibilità
         await PreferencesService.SetAsync("isDarkMode", _isDarkMode);
+        var settings = AppSettingsService.GetSettings();
+        settings.ThemeIsDarkMode = _isDarkMode;
+        await AppSettingsService.SaveSettingsAsync(settings);
     }
     
     private void ToggleDrawer()

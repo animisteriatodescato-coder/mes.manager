@@ -10,6 +10,11 @@
         { field: 'id', headerName: 'ID', sortable: true, filter: true, width: 80, editable: false },
         { field: 'codiceArticolo', headerName: 'Codice', sortable: true, filter: true, width: 150, editable: false, cellStyle: {backgroundColor: '#f5f5f5'} },
         
+        // FOTO - Anteprima seconda immagine anima (shared component)
+        window.fotoPreviewShared.createColumnDef({
+            codiceArticoloField: 'codiceArticolo'
+        }),
+        
         // RICETTA - Badge con numero parametri (shared component)
         Object.assign(
             window.ricettaColumnShared.createColumnDef({

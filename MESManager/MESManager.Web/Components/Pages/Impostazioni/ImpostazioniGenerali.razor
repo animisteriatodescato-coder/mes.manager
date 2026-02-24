@@ -56,6 +56,93 @@
         </MudItem>
     </MudGrid>
     
+    @* ── Sezione palette colori estratti dall'immagine ──────────────────── *@
+    @if (_settings.ThemePalette.Count > 0)
+    {
+        <MudPaper Class="pa-4 mt-4" Elevation="2">
+            <MudText Typo="Typo.h6" Class="mb-1">Tema Colori</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
+                Colori estratti dall'immagine di sfondo. Seleziona quale usare come Primario, Secondario e Accento.
+            </MudText>
+
+            @* Riga: selezione colore Primario *@
+            <div class="d-flex align-center gap-3 mb-3 flex-wrap">
+                <MudText Style="min-width:110px; font-weight:500;">Primario</MudText>
+                @foreach (var color in _settings.ThemePalette)
+                {
+                    bool isSelected = _settings.ThemePrimaryColor == color;
+                    <div @onclick="() => _settings.ThemePrimaryColor = color"
+                         style="width:48px; height:48px; border-radius:50%; background:@color;
+                                cursor:pointer; border: @(isSelected ? "3px solid #fff" : "2px solid transparent");
+                                box-shadow: @(isSelected ? "0 0 0 3px " + color : "0 2px 6px rgba(0,0,0,0.3)");
+                                transition: transform 0.15s ease;"
+                         title="@color">
+                        @if (isSelected)
+                        {
+                            <div style="display:flex; justify-content:center; align-items:center; height:100%;">
+                                <MudIcon Icon="@Icons.Material.Filled.Check" Style="color:white; font-size:22px;" />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            @* Riga: selezione colore Secondario *@
+            <div class="d-flex align-center gap-3 mb-3 flex-wrap">
+                <MudText Style="min-width:110px; font-weight:500;">Secondario</MudText>
+                @foreach (var color in _settings.ThemePalette)
+                {
+                    bool isSelected = _settings.ThemeSecondaryColor == color;
+                    <div @onclick="() => _settings.ThemeSecondaryColor = color"
+                         style="width:48px; height:48px; border-radius:50%; background:@color;
+                                cursor:pointer; border: @(isSelected ? "3px solid #fff" : "2px solid transparent");
+                                box-shadow: @(isSelected ? "0 0 0 3px " + color : "0 2px 6px rgba(0,0,0,0.3)");
+                                transition: transform 0.15s ease;"
+                         title="@color">
+                        @if (isSelected)
+                        {
+                            <div style="display:flex; justify-content:center; align-items:center; height:100%;">
+                                <MudIcon Icon="@Icons.Material.Filled.Check" Style="color:white; font-size:22px;" />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            @* Riga: selezione colore Accento *@
+            <div class="d-flex align-center gap-3 mb-4 flex-wrap">
+                <MudText Style="min-width:110px; font-weight:500;">Accento</MudText>
+                @foreach (var color in _settings.ThemePalette)
+                {
+                    bool isSelected = _settings.ThemeAccentColor == color;
+                    <div @onclick="() => _settings.ThemeAccentColor = color"
+                         style="width:48px; height:48px; border-radius:50%; background:@color;
+                                cursor:pointer; border: @(isSelected ? "3px solid #fff" : "2px solid transparent");
+                                box-shadow: @(isSelected ? "0 0 0 3px " + color : "0 2px 6px rgba(0,0,0,0.3)");
+                                transition: transform 0.15s ease;"
+                         title="@color">
+                        @if (isSelected)
+                        {
+                            <div style="display:flex; justify-content:center; align-items:center; height:100%;">
+                                <MudIcon Icon="@Icons.Material.Filled.Check" Style="color:white; font-size:22px;" />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <MudDivider Class="mb-3" />
+
+            <div class="d-flex align-center gap-4 flex-wrap">
+                <MudSwitch @bind-Value="_settings.ThemeIsDarkMode" Color="Color.Primary"
+                           Label="Modalità scura" />
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    (suggerita automaticamente in base alla luminosità dell'immagine)
+                </MudText>
+            </div>
+        </MudPaper>
+    }
+
     <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" 
                Size="Size.Large" OnClick="SalvaImpostazioni" StartIcon="@Icons.Material.Filled.Save"
                data-testid="btn-generali-salva">
@@ -93,7 +180,11 @@
             _settings.BackgroundImageUrl = url;
             
             await AppSettingsService.SaveSettingsAsync(_settings);
-            Snackbar.Add("Immagine di sfondo aggiornata!", Severity.Success);
+
+            // Ricarica le impostazioni per mostrare la palette appena estratta
+            _settings = AppSettingsService.GetSettings();
+
+            Snackbar.Add("Immagine di sfondo aggiornata! Scegli i colori del tema qui sotto.", Severity.Success);
         }
         catch (Exception ex)
         {

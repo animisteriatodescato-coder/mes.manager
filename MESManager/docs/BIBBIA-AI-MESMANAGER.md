@@ -260,6 +260,7 @@ Ogni run deve riportare:
 | Servizio allegati per nuova entità | `: AllegatoFileServiceBase` in `Application/Services/` |
 | Path di rete / MIME type allegati | `ConvertNetworkPath()` / `GetMimeType()` dalla base |
 | Colori tema / dark-light mode | `_theme` / `_isDarkMode` in `MainLayout.razor` → 1 punto |
+| **Tema dinamico da immagine** | `ColorExtractionService` → `AppSettingsService.ThemePalette` → `MainLayout.BuildThemeFromSettings()` |
 | Preferenze utente persistenti | `IPreferenzeUtenteService` → mai localStorage diretto |
 
 **Regola**: cerca prima con grep/semantic search → estendi → **mai duplica**.
@@ -375,8 +376,8 @@ proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve t
 
 ## 📞 Supporto Documentazione
 
-**Versione**: 3.4  
+**Versione**: 3.5  
 **Data**: 24 Febbraio 2026  
 **Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: Ripristino sezione PRINCIPIO FONDAMENTALE completa (4 sottosezioni) + PATTERN CENTRALIZZATI
+**Ultimo aggiornamento**: Strada 3 — tema dinamico da palette immagine (ColorExtractionService, AppSettingsService events, MainLayout.BuildThemeFromSettings, v1.51.0)
