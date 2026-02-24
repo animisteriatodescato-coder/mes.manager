@@ -66,6 +66,18 @@
                                Color="Color.Primary" Class="mb-1">
                         @((int)Math.Round(_settings.ThemeBgOpacity * 100))%
                     </MudSlider>
+
+                    <MudDivider Class="my-3" />
+                    <MudText Typo="Typo.body2" Style="font-weight:500;" Class="mb-1">Opacità pannelli (card/riquadri)</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                        Controlla quanto sono trasparenti i riquadri bianchi delle pagine rispetto allo sfondo.
+                        100% = completamente opaco (default MudBlazor). Valori più bassi lasciano trasparire l'immagine.
+                    </MudText>
+                    <MudSlider @bind-Value="_settings.ThemePanelOpacity"
+                               Min="0.1" Max="1.0" Step="0.01"
+                               Color="Color.Secondary" Class="mb-1">
+                        @((int)Math.Round(_settings.ThemePanelOpacity * 100))%
+                    </MudSlider>
                 }
             </MudPaper>
         </MudItem>

@@ -257,6 +257,12 @@ public class AppSettings
     public double ThemeBgOpacity { get; set; } = 0.12;
 
     /// <summary>
+    /// Opacità dei pannelli (MudPaper, MudCard) quando un'immagine di sfondo è attiva.
+    /// 1.0 = completamente opaco (nessuna trasparenza). Default 0.88.
+    /// </summary>
+    public double ThemePanelOpacity { get; set; } = 0.88;
+
+    /// <summary>
     /// Colori extra personalizzati aggiunti dall'utente alla palette (2 slot).
     /// Integrano i colori estratti automaticamente dall'immagine.
     /// </summary>
