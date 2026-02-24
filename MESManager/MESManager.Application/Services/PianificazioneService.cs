@@ -179,7 +179,8 @@ public class PianificazioneService : IPianificazioneService
     public async Task<List<CommessaGanttDto>> MapToGanttDtoBatchAsync(
         List<Commessa> commesse, 
         ImpostazioniProduzione impostazioni,
-        Dictionary<string, Anime>? animeLookup = null)
+        Dictionary<string, Anime>? animeLookup = null,
+        Dictionary<int, (int CicliFatti, int QuantitaDaProdurre)>? plcLookup = null)
     {
         // animeLookup deve essere fornito dal chiamante che ha accesso al DbContext
         animeLookup ??= new Dictionary<string, Anime>();
@@ -237,6 +238,16 @@ public class PianificazioneService : IPianificazioneService
                 vincoloDataFineSuperato = dataFinePrevisione > c.VincoloDataFine;
             }
             
+            // Avanzamento reale da PLC (se macchina connessa e QuantitaDaProdurre > 0)
+            int? cicliFattiPlc = null;
+            int? quantitaDaProdurrePlc = null;
+            if (plcLookup != null && c.NumeroMacchina.HasValue &&
+                plcLookup.TryGetValue(c.NumeroMacchina.Value, out var plcEntry))
+            {
+                cicliFattiPlc = plcEntry.CicliFatti;
+                quantitaDaProdurrePlc = plcEntry.QuantitaDaProdurre;
+            }
+
             return new CommessaGanttDto
             {
                 Id = c.Id,
@@ -260,7 +271,7 @@ public class PianificazioneService : IPianificazioneService
                 Stato = c.Stato.ToString(),
                 ColoreStato = GetColoreStato(c.Stato.ToString()),
                 StatoProgramma = c.StatoProgramma.ToString(),
-                PercentualeCompletamento = CalcolaPercentualeCompletamento(c),
+                PercentualeCompletamento = CalcolaPercentualeCompletamento(c, cicliFattiPlc, quantitaDaProdurrePlc),
                 DatiIncompleti = datiIncompleti,
                 Priorita = c.Priorita,
                 Bloccata = c.Bloccata,
@@ -278,15 +289,25 @@ public class PianificazioneService : IPianificazioneService
     }
     
     /// <summary>
-    /// Calcola la percentuale di completamento in base allo stato e alle date
+    /// Calcola la percentuale di completamento.
+    /// Priorità: dati PLC reali > calcolo date-based.
+    /// - cicliFattiPlc/quantitaDaProdurrePlc: da PLCRealtime (macchina connessa)
+    /// - Se PLC non disponibile o QuantitaDaProdurre=0 → fallback date-based
     /// </summary>
-    public decimal CalcolaPercentualeCompletamento(Commessa commessa)
+    public decimal CalcolaPercentualeCompletamento(Commessa commessa, int? cicliFattiPlc = null, int? quantitaDaProdurrePlc = null)
     {
+        // Completata con data fine effettiva → sempre 100%
         if (commessa.DataFineProduzione.HasValue)
+            return 100m;
+
+        // Dati PLC disponibili e validi → fonte più accurata del tempo trascorso
+        if (cicliFattiPlc.HasValue && quantitaDaProdurrePlc.HasValue && quantitaDaProdurrePlc.Value > 0)
         {
-            return 100m; // Completata
+            var pct = (decimal)cicliFattiPlc.Value / quantitaDaProdurrePlc.Value * 100m;
+            return Math.Min(99m, Math.Max(0m, pct));
         }
-        
+
+        // Fallback: calcolo date-based (PLC non connesso o QuantitaDaProdurre=0)
         if (commessa.DataInizioProduzione.HasValue && !commessa.DataFineProduzione.HasValue)
         {
             // In produzione: calcola in base al tempo trascorso
@@ -304,7 +325,7 @@ public class PianificazioneService : IPianificazioneService
             }
             return 50m; // Default in produzione senza date
         }
-        
+
         return 0m; // Non ancora iniziata
     }
 }

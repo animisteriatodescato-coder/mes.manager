@@ -39,10 +39,21 @@ public interface IPianificazioneService
     /// Mappa una lista di commesse a DTOs per il Gantt con batch loading ottimizzato.
     /// Elimina duplicazione e problema N+1 queries.
     /// </summary>
-    Task<List<CommessaGanttDto>> MapToGanttDtoBatchAsync(List<Commessa> commesse, ImpostazioniProduzione impostazioni, Dictionary<string, Anime>? animeLookup = null);
+    /// <summary>
+    /// Mappa una lista di commesse a DTOs per il Gantt con batch loading ottimizzato.
+    /// plcLookup: key = NumeroMacchina (int), value = (CicliFatti, QuantitaDaProdurre).
+    /// Se null o macchina assente → fallback date-based per PercentualeCompletamento.
+    /// </summary>
+    Task<List<CommessaGanttDto>> MapToGanttDtoBatchAsync(
+        List<Commessa> commesse,
+        ImpostazioniProduzione impostazioni,
+        Dictionary<string, Anime>? animeLookup = null,
+        Dictionary<int, (int CicliFatti, int QuantitaDaProdurre)>? plcLookup = null);
     
     /// <summary>
-    /// Calcola la percentuale di completamento di una commessa
+    /// Calcola la percentuale di completamento.
+    /// Priorità: dati PLC reali (cicliFattiPlc/quantitaDaProdurrePlc) > calcolo date-based.
+    /// Se PLC non disponibile o QuantitaDaProdurre=0 → fallback date-based.
     /// </summary>
-    decimal CalcolaPercentualeCompletamento(Commessa commessa);
+    decimal CalcolaPercentualeCompletamento(Commessa commessa, int? cicliFattiPlc = null, int? quantitaDaProdurrePlc = null);
 }

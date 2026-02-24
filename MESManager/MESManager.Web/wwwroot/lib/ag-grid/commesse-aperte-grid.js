@@ -84,6 +84,12 @@ window.commesseAperteGrid = (function() {
         window.fotoPreviewShared.createColumnDef({
             codiceArticoloField: 'articoloCodice'
         }),
+        // RICETTA - Bollino verde con numero parametri (shared component)
+        window.ricettaColumnShared.createColumnDef({
+            fieldPrefix: 'camelCase',
+            gridNamespace: 'commesseAperteGrid',
+            codiceArticoloField: 'articoloCodice'
+        }),
         { 
             field: 'description', 
             headerName: 'Descrizione', 

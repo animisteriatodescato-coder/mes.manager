@@ -70,23 +70,12 @@ window.programmaMacchineGrid = (function() {
                 }
             }
         },
-        {
-            field: 'hasRicetta',
-            headerName: '',
-            width: 50,
-            pinned: 'left',
-            sortable: true,
-            filter: false,
-            suppressMenu: true,
-            cellRenderer: params => {
-                if (params.data.isPlaceholder) return '';
-                const hasRicetta = params.data.hasRicetta === true;
-                const icon = hasRicetta ? '✅' : '⚠️';
-                const title = hasRicetta ? 'Ricetta configurata' : 'Ricetta mancante - Configurare prima di produrre';
-                const color = hasRicetta ? '#4caf50' : '#ff5722';
-                return `<div style="text-align:center;font-size:18px;color:${color}" title="${title}">${icon}</div>`;
-            }
-        },
+        // RICETTA - Bollino verde con numero parametri (shared component)
+        window.ricettaColumnShared.createColumnDef({
+            fieldPrefix: 'camelCase',
+            gridNamespace: 'programmaMacchineGrid',
+            codiceArticoloField: 'articoloCodice'
+        }),
         { 
             field: 'numeroMacchina', 
             headerName: 'MA', 
@@ -674,6 +663,14 @@ window.programmaMacchineGrid = (function() {
 
     function setDotNetHelper(helper) {
         dotNetHelper = helper;
+    }
+
+    function openRicetta(codiceArticolo) {
+        window.ricettaColumnShared.openRicettaDialog(
+            codiceArticolo,
+            dotNetHelper,
+            'programmaMacchineGrid'
+        );
     }
 
     function setQuickFilter(searchText) {
@@ -1279,6 +1276,7 @@ window.programmaMacchineGrid = (function() {
         generatePrintTable: generatePrintTable,
         printInNewWindow: printInNewWindow,
         printViaIframe: printViaIframe,
-        setDotNetHelper: setDotNetHelper
+        setDotNetHelper: setDotNetHelper,
+        openRicetta: openRicetta
     };
 })();

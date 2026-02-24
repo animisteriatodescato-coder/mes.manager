@@ -28,6 +28,18 @@
     .mud-drawer .mud-nav-group-header .mud-typography { font-weight: normal !important; }
 </style>
 
+@* CSS dark mode nav text *@
+@if (_isDarkMode) {
+    <style>
+        .mud-drawer [data-testid="nav-menu"] .mud-nav-link-text,
+        .mud-drawer [data-testid="nav-menu"] span:not([style]),
+        .mud-drawer .mud-nav-group-header .mud-typography,
+        .mud-drawer .mud-nav-group-header span {
+            color: rgba(200, 200, 200, 0.85) !important;
+        }
+    </style>
+}
+
 <MudLayout>
     <MudAppBar Elevation="1" data-testid="main-appbar">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />

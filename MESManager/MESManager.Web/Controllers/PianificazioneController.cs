@@ -74,7 +74,10 @@ public class PianificazioneController : ControllerBase
                 .ToDictionary(g => g.Key, g => g.First());
 
             // Usa metodo centralizzato con batch loading
-            var commesseGantt = await _pianificazioneService.MapToGanttDtoBatchAsync(commesse, impostazioni, animeLookup);
+            // Build lookup avanzamento PLC: macchine connesse (dati presenti negli ultimi 2 min)
+            var plcLookup = await BuildPlcLookupAsync();
+
+            var commesseGantt = await _pianificazioneService.MapToGanttDtoBatchAsync(commesse, impostazioni, animeLookup, plcLookup);
 
             return Ok(commesseGantt);
         }
@@ -1109,6 +1112,53 @@ public class PianificazioneController : ControllerBase
         }
 
         return updateCount;
+    }
+
+    /// <summary>
+    /// Costruisce un lookup NumeroMacchina → (CicliFatti, QuantitaDaProdurre) dai dati PLCRealtime.
+    /// Considera solo macchine con dati recenti (max 2 min) e QuantitaDaProdurre > 0.
+    /// Ritorna null se tabella vuota, nessuna macchina connessa o errore → CalcolaPercentualeCompletamento usa fallback date-based.
+    /// </summary>
+    private async Task<Dictionary<int, (int CicliFatti, int QuantitaDaProdurre)>?> BuildPlcLookupAsync()
+    {
+        const int timeoutMinutes = 2;
+        try
+        {
+            var cutoff = DateTime.Now.AddMinutes(-timeoutMinutes);
+            var plcRows = await _context.PLCRealtime
+                .Include(p => p.Macchina)
+                .Where(p => p.DataUltimoAggiornamento >= cutoff && p.QuantitaDaProdurre > 0)
+                .ToListAsync();
+
+            if (!plcRows.Any())
+            {
+                _logger.LogDebug("BuildPlcLookupAsync: nessuna macchina PLC connessa (timeout {Min} min). Avanzamento Gantt via calcolo date.", timeoutMinutes);
+                return null;
+            }
+
+            var lookup = new Dictionary<int, (int CicliFatti, int QuantitaDaProdurre)>();
+            foreach (var row in plcRows)
+            {
+                // Codice macchina es. "M01" → NumeroMacchina = 1
+                var codiceSenzaM = row.Macchina.Codice.Replace("M", "").Replace("m", "");
+                if (int.TryParse(codiceSenzaM, out var num))
+                {
+                    lookup[num] = (row.CicliFatti, row.QuantitaDaProdurre);
+                    _logger.LogDebug("PLC avanzamento Gantt: Macchina {Num} → {Fatti}/{Tot} cicli", num, row.CicliFatti, row.QuantitaDaProdurre);
+                }
+                else
+                {
+                    _logger.LogWarning("BuildPlcLookupAsync: codice macchina non parsabile come int: '{Codice}'", row.Macchina.Codice);
+                }
+            }
+
+            return lookup.Count > 0 ? lookup : null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "BuildPlcLookupAsync: errore caricamento dati PLC. Avanzamento Gantt via calcolo date per tutte le commesse.");
+            return null;
+        }
     }
 }
 
