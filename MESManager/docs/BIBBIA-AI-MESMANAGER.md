@@ -263,6 +263,7 @@ Ogni run deve riportare:
 | **Tema dinamico da immagine** | `ColorExtractionService` → `AppSettingsService.ThemePalette` → `MainLayout.BuildThemeFromSettings()` |
 | **Testo su sfondo Primary** | `AppSettings.ThemeTextOnPrimary` + `AppSettingsService.ComputeTextOnBackground()` → `AppbarText` in palette + `--mes-text-on-primary` CSS var |
 | **Testo brand su sfondo bianco** | `AppSettings.ThemePrimaryTextColor` + `AppSettingsService.ComputePrimaryTextColor()` → `--mes-primary-text` CSS var |
+| **Card con sfondo fisso bianco in dark mode** | Usare `color: #1a1a1a !important` + override `.mud-typography` figli — MAI `var(--mud-palette-text-primary)` su card con background hardcoded |
 | Preferenze utente persistenti | `IPreferenzeUtenteService` → mai localStorage diretto |
 
 **Regola**: cerca prima con grep/semantic search → estendi → **mai duplica**.
@@ -378,8 +379,8 @@ proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve t
 
 ## 📞 Supporto Documentazione
 
-**Versione**: 3.6  
+**Versione**: 3.7  
 **Data**: 24 Febbraio 2026  
 **Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: ThemeTextOnPrimary + ThemePrimaryTextColor — colori testo centralizzati con WCAG contrast (v1.51.1)
+**Ultimo aggiornamento**: Fix testi invisibili Dashboard dark mode — override MudBlazor su card bianche hardcoded (v1.51.2)
