@@ -267,13 +267,29 @@ Ogni run deve riportare:
 
 ## 🚨 PRINCIPIO FONDAMENTALE: ZERO DUPLICAZIONE
 
-**4 Domande da rispondere PRIMA di scrivere codice:**
+### ⚠️ QUESTO È IL PROBLEMA PIÙ RICORRENTE - LEGGILO ATTENTAMENTE
+
+**REGOLA INVIOLABILE**: Codice duplicato = technical debt = manutenzione impossibile = BUG garantiti
+
+### ❌ VIETATO ASSOLUTAMENTE
+
+- ❌ Copiare/incollare codice | Duplicare logica business | Ripetere query SQL
+- ❌ Creare metodi simili con nomi diversi | Duplicare validazioni
+
+### ✅ OBBLIGATORIO SEMPRE — 4 Domande Prima di Scrivere Codice
+
 1. ✅ Esiste già un servizio/metodo che fa questa cosa?
 2. ✅ Posso riutilizzare codice esistente?
-3. ✅ Se modifico questo domani, cambierò anche altro? → **SE SÌ = REFACTORING OBBLIGATORIO**
+3. ✅ Se modifico questo domani, dovrò cambiare anche altro? → **SE SÌ = REFACTORING OBBLIGATORIO**
 4. ✅ Questo è modificabile da UN SOLO punto?
 
-**Workflow**: Cerca prima (grep/semantic) → Riutilizza/Estendi → Centralizza. Nuovo servizio SOLO se logica completamente nuova.
+### 🎯 Workflow Implementazione Feature
+
+1. **Cerca prima** — grep/semantic search per logica simile
+2. **Riutilizza** — Usa servizi esistenti | **Estendi** parametri se serve
+3. **Centralizza** — Nuovo servizio solo se logica completamente nuova
+
+**Pattern concreto**: `ValidationService` centralizzato > duplicare validation in 2+ servizi
 
 ---
 
@@ -359,8 +375,8 @@ proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve t
 
 ## 📞 Supporto Documentazione
 
-**Versione**: 3.3  
+**Versione**: 3.4  
 **Data**: 24 Febbraio 2026  
 **Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: Aggiunta sezione 🔌 PATTERN CENTRALIZZATI + fix encoding frecce/emoji
+**Ultimo aggiornamento**: Ripristino sezione PRINCIPIO FONDAMENTALE completa (4 sottosezioni) + PATTERN CENTRALIZZATI
