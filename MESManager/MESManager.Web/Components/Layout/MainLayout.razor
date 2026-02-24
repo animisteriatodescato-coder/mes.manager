@@ -16,6 +16,7 @@
         --mes-primary: @(AppSettingsService.GetSettings().ThemePrimaryColor);
         --mes-primary-text: @(AppSettingsService.GetSettings().ThemePrimaryTextColor);
         --mes-nav-text: @(string.IsNullOrEmpty(AppSettingsService.GetSettings().ThemeNavTextColor) ? (_isDarkMode ? "#C8C8C8" : "#333333") : AppSettingsService.GetSettings().ThemeNavTextColor);
+        --mes-bg-opacity: @(AppSettingsService.GetSettings().ThemeBgOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
     }
     /* Drawer nav: icone +15% (13→15, 16→18), testo non bold */
     .mud-drawer [data-testid="nav-menu"] span[style*="font-size: 13px"] { font-size: 15px !important; }
@@ -38,6 +39,14 @@
 </style>
 
 <MudLayout>
+    @* Sfondo immagine su tutte le pagine (eccetto Home che ha il proprio) *@
+    @if (!IsHomePage() && !string.IsNullOrEmpty(AppSettingsService.GetSettings().BackgroundImageUrl))
+    {
+        <div aria-hidden="true" style="position:fixed;inset:0;z-index:0;pointer-events:none;
+                    background-image:url('@AppSettingsService.GetSettings().BackgroundImageUrl');
+                    background-size:cover;background-position:center;
+                    opacity:var(--mes-bg-opacity);"></div>
+    }
     <MudAppBar Elevation="1" data-testid="main-appbar">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
         @if (IsHomePage())

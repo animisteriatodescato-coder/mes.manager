@@ -52,6 +52,21 @@
                 {
                     <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mt-2" />
                 }
+
+                @* Opacità sfondo sulle pagine (non-Home) *@
+                @if (!string.IsNullOrEmpty(_settings.BackgroundImageUrl))
+                {
+                    <MudDivider Class="my-3" />
+                    <MudText Typo="Typo.body2" Style="font-weight:500;" Class="mb-1">Opacità sfondo altre pagine</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                        Nella Home l'immagine è sempre piena. Nelle altre pagine puoi regolarne la trasparenza.
+                    </MudText>
+                    <MudSlider @bind-Value="_settings.ThemeBgOpacity"
+                               Min="0.0" Max="1.0" Step="0.01"
+                               Color="Color.Primary" Class="mb-1">
+                        @((int)Math.Round(_settings.ThemeBgOpacity * 100))%
+                    </MudSlider>
+                }
             </MudPaper>
         </MudItem>
     </MudGrid>
@@ -68,7 +83,7 @@
             @* Riga: selezione colore Primario *@
             <div class="d-flex align-center gap-3 mb-3 flex-wrap">
                 <MudText Style="min-width:110px; font-weight:500;">Primario</MudText>
-                @foreach (var color in _settings.ThemePalette)
+                @foreach (var color in _settings.ThemePalette.Concat(_settings.ThemeExtraColors))
                 {
                     bool isSelected = _settings.ThemePrimaryColor == color;
                     <div @onclick="() => OnPrimaryColorSelected(color)"
@@ -90,7 +105,7 @@
             @* Riga: selezione colore Secondario *@
             <div class="d-flex align-center gap-3 mb-3 flex-wrap">
                 <MudText Style="min-width:110px; font-weight:500;">Secondario</MudText>
-                @foreach (var color in _settings.ThemePalette)
+                @foreach (var color in _settings.ThemePalette.Concat(_settings.ThemeExtraColors))
                 {
                     bool isSelected = _settings.ThemeSecondaryColor == color;
                     <div @onclick="() => _settings.ThemeSecondaryColor = color"
@@ -112,7 +127,7 @@
             @* Riga: selezione colore Accento *@
             <div class="d-flex align-center gap-3 mb-4 flex-wrap">
                 <MudText Style="min-width:110px; font-weight:500;">Accento</MudText>
-                @foreach (var color in _settings.ThemePalette)
+                @foreach (var color in _settings.ThemePalette.Concat(_settings.ThemeExtraColors))
                 {
                     bool isSelected = _settings.ThemeAccentColor == color;
                     <div @onclick="() => _settings.ThemeAccentColor = color"
@@ -139,6 +154,39 @@
                 <MudText Typo="Typo.caption" Color="Color.Secondary">
                     (suggerita automaticamente in base alla luminosità dell'immagine)
                 </MudText>
+            </div>
+
+            @* ── Colori extra personalizzati ─────────────────────────────── *@
+            <MudDivider Class="mt-4 mb-3" />
+            <MudText Typo="Typo.subtitle1" Style="font-weight:600;" Class="mb-1">Colori Extra</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-3">
+                Aggiungi fino a 2 colori personalizzati selezionabili come Primario, Secondario e Accento.
+            </MudText>
+            <div class="d-flex gap-4 flex-wrap">
+                <div class="d-flex align-center gap-2">
+                    <div style="width:40px;height:40px;border-radius:50%;
+                                background:@(_settings.ThemeExtraColors.Count > 0 ? _settings.ThemeExtraColors[0] : "#607D8B");
+                                border:2px solid rgba(128,128,128,0.4);
+                                box-shadow:0 2px 6px rgba(0,0,0,0.25);flex-shrink:0;"></div>
+                    <MudTextField @bind-Value="_settings.ThemeExtraColors[0]"
+                                  Label="Colore Extra 1"
+                                  Variant="Variant.Outlined"
+                                  Style="max-width:130px"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Colorize" />
+                </div>
+                <div class="d-flex align-center gap-2">
+                    <div style="width:40px;height:40px;border-radius:50%;
+                                background:@(_settings.ThemeExtraColors.Count > 1 ? _settings.ThemeExtraColors[1] : "#795548");
+                                border:2px solid rgba(128,128,128,0.4);
+                                box-shadow:0 2px 6px rgba(0,0,0,0.25);flex-shrink:0;"></div>
+                    <MudTextField @bind-Value="_settings.ThemeExtraColors[1]"
+                                  Label="Colore Extra 2"
+                                  Variant="Variant.Outlined"
+                                  Style="max-width:130px"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Colorize" />
+                </div>
             </div>
         </MudPaper>
     }
@@ -189,7 +237,7 @@
             </div>
 
             <MudButtonGroup Variant="Variant.Outlined" Color="Color.Default" Size="Size.Medium">
-                @foreach (var color in _settings.ThemePalette)
+                @foreach (var color in _settings.ThemePalette.Concat(_settings.ThemeExtraColors))
                 {
                     bool isSel = _settings.ThemePrimaryTextColor == color;
                     <MudButton Style="@GetPaletteButtonStyle(color)"
@@ -253,6 +301,9 @@
     protected override void OnInitialized()
     {
         _settings = AppSettingsService.GetSettings();
+        // Garantisci sempre 2 slot per colori extra
+        while (_settings.ThemeExtraColors.Count < 2)
+            _settings.ThemeExtraColors.Add(_settings.ThemeExtraColors.Count == 0 ? "#607D8B" : "#795548");
     }
 
     private async Task OnBackgroundImageSelected(IBrowserFile file)

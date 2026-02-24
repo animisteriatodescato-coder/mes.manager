@@ -250,4 +250,15 @@ public class AppSettings
     /// Stringa hex es. "#C8C8C8". Vuoto = auto (chiaro/scuro in base a dark mode).
     /// </summary>
     public string ThemeNavTextColor { get; set; } = "#C8C8C8";
+
+    /// <summary>
+    /// Opacità dello sfondo su pagine non-Home (0.0 = trasparente, 1.0 = pieno). Default 0.12.
+    /// </summary>
+    public double ThemeBgOpacity { get; set; } = 0.12;
+
+    /// <summary>
+    /// Colori extra personalizzati aggiunti dall'utente alla palette (2 slot).
+    /// Integrano i colori estratti automaticamente dall'immagine.
+    /// </summary>
+    public List<string> ThemeExtraColors { get; set; } = new() { "#607D8B", "#795548" };
 }
