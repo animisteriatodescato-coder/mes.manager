@@ -244,4 +244,10 @@ public class AppSettings
     /// Auto-calcolato; l'utente può sovrascrivere.
     /// </summary>
     public string ThemePrimaryTextColor { get; set; } = "#1565C0";
+
+    /// <summary>
+    /// Colore del testo nel menu laterale (Drawer).
+    /// Stringa hex es. "#C8C8C8". Vuoto = auto (chiaro/scuro in base a dark mode).
+    /// </summary>
+    public string ThemeNavTextColor { get; set; } = "#C8C8C8";
 }

@@ -375,7 +375,7 @@ public partial class MainLayout : IDisposable
             builder.AddAttribute(seq++, "Margin", Margin.Dense);
             builder.AddAttribute(seq++, "Style", "width: 200px; background-color: white; color: black;");
             builder.AddAttribute(seq++, "Immediate", true);
-            builder.AddAttribute(seq++, "DebounceInterval", 280);
+            builder.AddAttribute(seq++, "DebounceInterval", 280.0); // MudBlazor v8: DebounceInterval è double
             builder.AddAttribute(seq++, "OnDebounceIntervalElapsed", EventCallback.Factory.Create<string>(this, OnToolbarSearch));
             builder.CloseComponent();
             

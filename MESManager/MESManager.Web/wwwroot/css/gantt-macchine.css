@@ -201,47 +201,58 @@
 }
 
 /* ==========================================
-   DARK MODE - GANTT E GLOBALE
+   DARK MODE - GANTT (vis-timeline)
    ========================================== */
-/* Giorni della settimana e assi temporali sempre visibili in grigio chiarissimo */
+
+/* Sfondo scuro per tutti i pannelli vis-timeline */
+.mud-theme-dark #gantt-chart { border-color: #444 !important; }
+.mud-theme-dark .vis-panel,
+.mud-theme-dark .vis-panel.vis-background,
+.mud-theme-dark .vis-panel.vis-center,
+.mud-theme-dark .vis-background { background-color: #1a1a2e !important; }
+.mud-theme-dark .vis-panel.vis-left,
+.mud-theme-dark .vis-labelset { background-color: #16213e !important; }
+.mud-theme-dark .vis-panel.vis-top,
+.mud-theme-dark .vis-panel.vis-bottom { background-color: #0f3460 !important; }
+
+/* Label macchine */
+.mud-theme-dark .vis-label,
+.mud-theme-dark .vis-labelset .vis-label {
+    background-color: #16213e !important;
+    color: #e0e0e0 !important;
+    border-bottom-color: #333 !important;
+}
+.mud-theme-dark .vis-labelset .vis-label:hover { background-color: #1e3a5f !important; }
+
+/* Asse temporale: testo date */
 .mud-theme-dark .vis-time-axis .vis-text,
 .mud-theme-dark .vis-time-axis .vis-text.vis-major,
 .mud-theme-dark .vis-time-axis .vis-text.vis-minor {
-    color: #ffffff !important;
+    color: #e8e8e8 !important;
     opacity: 1 !important;
     font-weight: 600;
 }
 
-.mud-theme-dark .vis-labelset .vis-label {
-    color: #e0e0e0 !important;
-}
+/* Griglie asse temporale */
+.mud-theme-dark .vis-time-axis .vis-grid.vis-minor { border-color: #2a2a3e !important; }
+.mud-theme-dark .vis-time-axis .vis-grid.vis-major { border-color: #3a3a5e !important; }
+.mud-theme-dark .vis-time-axis { background-color: #0f3460 !important; }
 
-/* Dark mode globale MudBlazor: pulsanti, tabelle, menu */
-.mud-theme-dark .mud-button-text,
-.mud-theme-dark .mud-button-root,
-.mud-theme-dark .mud-table,
-.mud-theme-dark .mud-table-cell,
-.mud-theme-dark .mud-menu-item,
-.mud-theme-dark .mud-list-item,
-.mud-theme-dark .mud-typography,
-.mud-theme-dark .mud-input-root,
-.mud-theme-dark .mud-input-slot,
-.mud-theme-dark .mud-select,
-.mud-theme-dark .mud-select-input,
-.mud-theme-dark label,
-.mud-theme-dark .mud-input-label,
-.mud-theme-dark .mud-toolbar,
-.mud-theme-dark .mud-chip-text,
-.mud-theme-dark .ag-cell,
-.mud-theme-dark .ag-header-cell-text,
-.mud-theme-dark .ag-header-cell-label,
-.mud-theme-dark .ag-row,
-.mud-theme-dark .mud-nav-link,
-.mud-theme-dark .mud-drawer-content,
-.mud-theme-dark span,
-.mud-theme-dark p,
-.mud-theme-dark div {
-    color: #e0e0e0 !important;
+/* Area contenuto centrale */
+.mud-theme-dark .vis-content { background-color: #1a1a2e !important; }
+.mud-theme-dark .vis-group { border-bottom-color: #2a2a4e !important; }
+
+/* Oggi */
+.mud-theme-dark .vis-time-axis .vis-grid.vis-today { background-color: rgba(33,150,243,0.15) !important; }
+.mud-theme-dark .vis-current-time { background-color: #E91E63 !important; }
+
+/* MudBlazor: fix pulsanti Outlined in dark mode sulla pagina Gantt */
+.mud-theme-dark .mud-button-outlined.mud-button-outlined-default {
+    color: #c0c0c0 !important;
+    border-color: #c0c0c0 !important;
+}
+.mud-theme-dark .mud-button-outlined.mud-button-outlined-default:hover {
+    background-color: rgba(192,192,192,0.1) !important;
 }
 
 .vis-time-axis .vis-grid.vis-minor {

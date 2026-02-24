@@ -15,6 +15,7 @@
         --mes-text-on-primary: @(AppSettingsService.GetSettings().ThemeTextOnPrimary);
         --mes-primary: @(AppSettingsService.GetSettings().ThemePrimaryColor);
         --mes-primary-text: @(AppSettingsService.GetSettings().ThemePrimaryTextColor);
+        --mes-nav-text: @(string.IsNullOrEmpty(AppSettingsService.GetSettings().ThemeNavTextColor) ? (_isDarkMode ? "#C8C8C8" : "#333333") : AppSettingsService.GetSettings().ThemeNavTextColor);
     }
     /* Drawer nav: icone +15% (13→15, 16→18), testo non bold */
     .mud-drawer [data-testid="nav-menu"] span[style*="font-size: 13px"] { font-size: 15px !important; }
@@ -26,19 +27,15 @@
     .mud-drawer .mud-nav-group-header { font-weight: normal !important; }
     .mud-drawer .mud-nav-group-header span,
     .mud-drawer .mud-nav-group-header .mud-typography { font-weight: normal !important; }
+    /* Colore testo nav: usa impostazione utente (--mes-nav-text) */
+    .mud-drawer [data-testid="nav-menu"] .mud-nav-link-text,
+    .mud-drawer [data-testid="nav-menu"] .mud-nav-link-text span,
+    .mud-drawer [data-testid="nav-menu"] span:not([style]),
+    .mud-drawer .mud-nav-group-header .mud-typography,
+    .mud-drawer .mud-nav-group-header span {
+        color: var(--mes-nav-text) !important;
+    }
 </style>
-
-@* CSS dark mode nav text *@
-@if (_isDarkMode) {
-    <style>
-        .mud-drawer [data-testid="nav-menu"] .mud-nav-link-text,
-        .mud-drawer [data-testid="nav-menu"] span:not([style]),
-        .mud-drawer .mud-nav-group-header .mud-typography,
-        .mud-drawer .mud-nav-group-header span {
-            color: rgba(200, 200, 200, 0.85) !important;
-        }
-    </style>
-}
 
 <MudLayout>
     <MudAppBar Elevation="1" data-testid="main-appbar">
