@@ -13,39 +13,32 @@ namespace MESManager.Application.Services;
 /// <summary>
 /// Service per la gestione degli allegati articolo con storage locale
 /// </summary>
-public class AllegatoArticoloService : IAllegatoArticoloService
+public class AllegatoArticoloService : AllegatoFileServiceBase, IAllegatoArticoloService
 {
     private readonly IAllegatoArticoloRepository _repository;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AllegatoArticoloService> _logger;
-    private readonly string _allegatiBasePath;
     private readonly string _ganttConnectionString;
-    private readonly List<(string Source, string Target)> _pathMappings;
 
     public AllegatoArticoloService(
         IAllegatoArticoloRepository repository,
         IConfiguration configuration,
         IOptions<FileConfiguration> fileConfiguration,
         ILogger<AllegatoArticoloService> logger)
+        : base(logger, fileConfiguration.Value)
     {
         _repository = repository;
         _configuration = configuration;
         _logger = logger;
 
-        var fileConfig = fileConfiguration.Value;
-        
-        // Path base e mapping percorsi centralizzati in Files
-        _allegatiBasePath = FileConstants.GetAllegatiBasePath(fileConfig.AllegatiBasePath);
-        _pathMappings = ParsePathMappings(fileConfig.PathMappings);
-        
         // Connection string per Gantt - prova GanttDb prima di GanttConnection
         _ganttConnectionString = configuration.GetConnectionString("GanttDb") 
             ?? configuration.GetConnectionString("GanttConnection")
             ?? throw new InvalidOperationException("Connection string 'GanttDb' non trovata.");
         
         _logger.LogInformation("AllegatoArticoloService initialized. BasePath={Path}, PathMappings={Mappings}",
-            _allegatiBasePath,
-            string.Join("; ", _pathMappings.Select(m => $"{m.Source} -> {m.Target}")));
+            AllegatiBasePath,
+            string.Join("; ", PathMappings.Select(m => $"{m.Source} -> {m.Target}")));
     }
 
     public async Task<AllegatiArticoloResponse> GetAllegatiByArticoloAsync(string codiceArticolo, int? idArchivio = null)
@@ -95,7 +88,7 @@ public class AllegatoArticoloService : IAllegatoArticoloService
         var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
         var guid = Guid.NewGuid().ToString("N")[..16];
         var safeFileName = $"{request.CodiceArticolo}_{timestamp}_{guid}{extension}";
-        var fullPath = Path.Combine(_allegatiBasePath, safeFileName);
+        var fullPath = Path.Combine(AllegatiBasePath, safeFileName);
         
         // Salva file su disco
         await using (var outputStream = new FileStream(fullPath, FileMode.Create))
@@ -195,59 +188,11 @@ public class AllegatoArticoloService : IAllegatoArticoloService
         }
         
         var content = await File.ReadAllBytesAsync(localPath);
-        var contentType = GetContentType(allegato.Estensione ?? "");
+        var contentType = GetMimeType(allegato.Estensione ?? "");
         
         return (content, contentType, allegato.NomeFile ?? "file");
     }
     
-    private string ConvertNetworkPath(string path)
-    {
-        if (string.IsNullOrEmpty(path))
-            return path;
-
-        var convertedPath = path;
-        foreach (var (source, target) in _pathMappings)
-        {
-            if (convertedPath.StartsWith(source, StringComparison.OrdinalIgnoreCase))
-            {
-                convertedPath = convertedPath.Replace(source, target, StringComparison.OrdinalIgnoreCase);
-                break;
-            }
-        }
-
-        if (!File.Exists(convertedPath) && File.Exists(path))
-            return path;
-
-        return convertedPath;
-    }
-
-    private static List<(string Source, string Target)> ParsePathMappings(List<string>? mappings)
-    {
-        var result = new List<(string Source, string Target)>();
-
-        if (mappings != null)
-        {
-            foreach (var mapping in mappings)
-            {
-                if (string.IsNullOrWhiteSpace(mapping) || !mapping.Contains("->"))
-                    continue;
-
-                var parts = mapping.Split("->", 2, StringSplitOptions.TrimEntries);
-                if (parts.Length == 2 && !string.IsNullOrWhiteSpace(parts[0]) && !string.IsNullOrWhiteSpace(parts[1]))
-                {
-                    result.Add((parts[0], parts[1]));
-                }
-            }
-        }
-
-        if (result.Count == 0)
-        {
-            result.Add((@"P:\Documenti", @"C:\Dati\Documenti"));
-        }
-
-        return result;
-    }
-
     public async Task<ImportAllegatiResult> ImportFromGanttAsync(string codiceArticolo)
     {
         _logger.LogInformation("ImportFromGanttAsync: Importing for {CodiceArticolo}", codiceArticolo);
@@ -447,25 +392,4 @@ public class AllegatoArticoloService : IAllegatoArticoloService
         };
     }
 
-    private static string GetContentType(string extension)
-    {
-        return extension.ToLowerInvariant() switch
-        {
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".png" => "image/png",
-            ".gif" => "image/gif",
-            ".bmp" => "image/bmp",
-            ".webp" => "image/webp",
-            ".tiff" or ".tif" => "image/tiff",
-            ".pdf" => "application/pdf",
-            ".doc" => "application/msword",
-            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            ".xls" => "application/vnd.ms-excel",
-            ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            ".txt" => "text/plain",
-            ".csv" => "text/csv",
-            ".zip" => "application/zip",
-            _ => "application/octet-stream"
-        };
-    }
 }

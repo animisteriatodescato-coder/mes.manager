@@ -9,17 +9,16 @@ using MESManager.Domain.Constants;
 
 namespace MESManager.Application.Services
 {
-    public class AllegatiAnimaService : IAllegatiAnimaService
+    public class AllegatiAnimaService : AllegatoFileServiceBase, IAllegatiAnimaService
     {
         private readonly string _connectionString;
         private readonly ILogger<AllegatiAnimaService> _logger;
-        private readonly string _allegatiBasePath;
-        private readonly List<(string Source, string Target)> _pathMappings;
 
         public AllegatiAnimaService(
             ILogger<AllegatiAnimaService> logger, 
             IOptions<DatabaseConfiguration> dbConfig,
             IOptions<FileConfiguration> fileConfig)
+            : base(logger, fileConfig.Value)
         {
             _logger = logger;
             
@@ -28,13 +27,9 @@ namespace MESManager.Application.Services
             // In PROD: AllegatiDb non configurato, usa MESManagerDb locale
             _connectionString = dbConfig.Value.AllegatiDb ?? dbConfig.Value.MESManagerDb;
             
-            // Configurazione file centralizzata (Files)
-            _allegatiBasePath = FileConstants.GetAllegatiBasePath(fileConfig.Value.AllegatiBasePath);
-            _pathMappings = ParsePathMappings(fileConfig.Value.PathMappings);
-            
             _logger.LogInformation("AllegatiAnimaService initialized. ConnectionDb={ConnectionDb}, AllegatiBasePath={Path}, PathMappings={Mappings}", 
                 dbConfig.Value.AllegatiDb != null ? "AllegatiDb (remote)" : "MESManagerDb (local)",
-                _allegatiBasePath, string.Join("; ", _pathMappings.Select(m => $"{m.Source} -> {m.Target}")));
+                AllegatiBasePath, string.Join("; ", PathMappings.Select(m => $"{m.Source} -> {m.Target}")));
         }
 
         public async Task<AllegatiAnimaResponse> GetAllegatiByIdArchivioAsync(int idArchivio)
@@ -131,7 +126,7 @@ namespace MESManager.Application.Services
                 // Genera nome file univoco
                 var estensione = Path.GetExtension(nomeFile);
                 var nomeFileUnivoco = $"{codiceArticolo}_{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid():N}{estensione}";
-                var pathCompleto = Path.Combine(_allegatiBasePath, nomeFileUnivoco);
+                var pathCompleto = Path.Combine(AllegatiBasePath, nomeFileUnivoco);
 
                 // Salva il file su disco
                 var directory = Path.GetDirectoryName(pathCompleto);
@@ -268,26 +263,7 @@ namespace MESManager.Application.Services
         }
 
         public Task<string?> GetFileMimeTypeAsync(string path)
-        {
-            var ext = Path.GetExtension(path).ToLowerInvariant();
-            var mimeType = ext switch
-            {
-                ".jpg" or ".jpeg" => "image/jpeg",
-                ".png" => "image/png",
-                ".gif" => "image/gif",
-                ".bmp" => "image/bmp",
-                ".webp" => "image/webp",
-                ".tiff" or ".tif" => "image/tiff",
-                ".pdf" => "application/pdf",
-                ".doc" => "application/msword",
-                ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                ".xls" => "application/vnd.ms-excel",
-                ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                ".txt" => "text/plain",
-                _ => "application/octet-stream"
-            };
-            return Task.FromResult<string?>(mimeType);
-        }
+            => Task.FromResult<string?>(GetMimeType(path));
 
         public async Task<AllegatoAnimaDto?> GetAllegatoByIdAsync(int id)
         {
@@ -336,60 +312,5 @@ namespace MESManager.Application.Services
             }
         }
 
-        private string ConvertNetworkPath(string path)
-        {
-            // Il path nel DB è tipo: P:\Documenti\AA SCHEDE PRODUZIONE\foto cel\...
-            // Sul server è mappato secondo le configurazioni in FileConfiguration.PathMappings
-            if (string.IsNullOrEmpty(path))
-                return path;
-
-            var convertedPath = path;
-            foreach (var (source, target) in _pathMappings)
-            {
-                if (convertedPath.StartsWith(source, StringComparison.OrdinalIgnoreCase))
-                {
-                    convertedPath = convertedPath.Replace(source, target, StringComparison.OrdinalIgnoreCase);
-                    _logger.LogDebug("Path converted: {Original} -> {Converted}", path, convertedPath);
-                    break;
-                }
-            }
-
-            // Verifica se il file esiste, altrimenti prova il percorso originale
-            if (!File.Exists(convertedPath) && File.Exists(path))
-            {
-                _logger.LogDebug("Converted path not found, using original: {Path}", path);
-                return path;
-            }
-
-            return convertedPath;
-        }
-
-        private static List<(string Source, string Target)> ParsePathMappings(List<string>? mappings)
-        {
-            var result = new List<(string Source, string Target)>();
-
-            if (mappings != null)
-            {
-                foreach (var mapping in mappings)
-                {
-                    if (string.IsNullOrWhiteSpace(mapping) || !mapping.Contains("->"))
-                        continue;
-
-                    var parts = mapping.Split("->", 2, StringSplitOptions.TrimEntries);
-                    if (parts.Length == 2 && !string.IsNullOrWhiteSpace(parts[0]) && !string.IsNullOrWhiteSpace(parts[1]))
-                    {
-                        result.Add((parts[0], parts[1]));
-                    }
-                }
-            }
-
-            if (result.Count == 0)
-            {
-                result.Add((@"P:\Documenti", @"C:\Dati\Documenti"));
-                result.Add((@"P:\", @"C:\Dati\"));
-            }
-
-            return result;
-        }
     }
 }
