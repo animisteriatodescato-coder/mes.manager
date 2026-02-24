@@ -24,6 +24,18 @@
 }
 else
 {
+    @* Banner auto-capture *@
+    @if (_issue.IsAutoCapture)
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-3" Icon="@Icons.Material.Filled.SmartToy" Dense="true">
+            <strong>Auto-catturato</strong> — Questo issue è stato generato automaticamente dall'error interceptor del browser.
+            @if (!string.IsNullOrWhiteSpace(_issue.SourceUrl))
+            {
+                <text> Pagina: <em>@_issue.SourceUrl</em></text>
+            }
+        </MudAlert>
+    }
+
     @* Warning se risolto ma non documentato *@
     @if (_issue.Status == IssueStatus.Resolved && !_issue.DocsUpdated)
     {

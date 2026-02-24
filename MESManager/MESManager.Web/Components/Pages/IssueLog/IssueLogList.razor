@@ -67,18 +67,34 @@
     </MudGrid>
 </MudPaper>
 
-@* Pulsante Nuovo Issue *@
-<MudButton Variant="Variant.Filled" Color="Color.Success" Class="mb-4"
-           StartIcon="@Icons.Material.Filled.Add"
-           OnClick="@(() => Navigation.NavigateTo("/impostazioni/issue-log/new"))">
-    Nuovo Issue
-</MudButton>
+@* Barra superiore: pulsante Nuovo Issue + toggle Auto/Manuale *@
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Spacing="3">
+    <MudButton Variant="Variant.Filled" Color="Color.Success"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="@(() => Navigation.NavigateTo("/impostazioni/issue-log/new"))">
+        Nuovo Issue
+    </MudButton>
+
+    <MudToggleGroup T="string" @bind-Value="_filterAutoCapture" Color="Color.Primary"
+                    SelectionMode="SelectionMode.SingleSelection" Dense="true">
+        <MudToggleItem Value="@("tutti")" Text="Tutti" />
+        <MudToggleItem Value="@("auto")">
+            <MudIcon Icon="@Icons.Material.Filled.SmartToy" Size="Size.Small" Class="mr-1" />Auto
+            @if (_autoOpenCount > 0)
+            {
+                <MudBadge Content="@_autoOpenCount" Color="Color.Error" Class="ml-1" />
+            }
+        </MudToggleItem>
+        <MudToggleItem Value="@("manuale")" Text="Manuali" />
+    </MudToggleGroup>
+</MudStack>
 
 @* Tabella Issues *@
-<MudTable Items="@_issues" Hover="true" Dense="true" Striped="true" Elevation="2"
+<MudTable Items="@IssuesFiltrati" Hover="true" Dense="true" Striped="true" Elevation="2"
           OnRowClick="@((TableRowClickEventArgs<TechnicalIssue> args) => { if (args.Item != null) GoToDetail(args.Item); })"
           T="TechnicalIssue" Style="cursor: pointer;">
     <HeaderContent>
+        <MudTh Style="width: 30px;"></MudTh>
         <MudTh Style="width: 120px;">Data</MudTh>
         <MudTh Style="width: 100px;">Stato</MudTh>
         <MudTh Style="width: 80px;">Gravità</MudTh>
@@ -88,6 +104,14 @@
         <MudTh Style="width: 120px;">Docs</MudTh>
     </HeaderContent>
     <RowTemplate>
+        <MudTd>
+            @if (context.IsAutoCapture)
+            {
+                <MudTooltip Text="Catturato automaticamente">
+                    <MudIcon Icon="@Icons.Material.Filled.SmartToy" Size="Size.Small" Color="Color.Default" />
+                </MudTooltip>
+            }
+        </MudTd>
         <MudTd DataLabel="Data">@context.CreatedAt.ToString("dd/MM/yyyy HH:mm")</MudTd>
         <MudTd DataLabel="Stato">
             <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">
@@ -134,6 +158,17 @@
     private IssueSeverity? _filterSeverity;
     private IssueEnvironment? _filterEnvironment;
     private string? _searchTitle;
+    private string _filterAutoCapture = "tutti"; // "tutti" | "auto" | "manuale"
+
+    private int _autoOpenCount = 0;
+
+    // Filtra in memoria per auto/manuale dopo il caricamento dal DB
+    private List<TechnicalIssue> IssuesFiltrati => _filterAutoCapture switch
+    {
+        "auto"    => _issues.Where(i => i.IsAutoCapture).ToList(),
+        "manuale" => _issues.Where(i => !i.IsAutoCapture).ToList(),
+        _         => _issues
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -148,6 +183,10 @@
             _filterSeverity,
             _filterEnvironment,
             _searchTitle);
+
+        // Conta auto-catturati aperti per il badge
+        _autoOpenCount = _issues.Count(i => i.IsAutoCapture
+            && (i.Status == IssueStatus.Open || i.Status == IssueStatus.Investigating));
     }
 
     private async Task ApplicaFiltri()
@@ -162,6 +201,7 @@
         _filterSeverity = null;
         _filterEnvironment = null;
         _searchTitle = null;
+        _filterAutoCapture = "tutti";
         await CaricaIssues();
     }
 

@@ -25,6 +25,9 @@
 <body>
     <Routes @rendermode="InteractiveServer" />
     
+    <!-- Error Interceptor: DEVE essere il primo script per catturare tutti gli errori -->
+    <script src="/js/error-interceptor.js?v=1"></script>
+    
     <!-- MudBlazor JS -->
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     

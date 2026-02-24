@@ -52,4 +52,18 @@ public interface ITechnicalIssueService
     /// Genera il testo markdown per export AI
     /// </summary>
     string GenerateAIExportMarkdown(TechnicalIssue issue);
+
+    /// <summary>
+    /// Crea un issue da auto-capture (browser JS/HTTP errors).
+    /// Evita duplicati: se esiste già un issue aperto con lo stesso titolo nelle ultime 2 ore, restituisce null (non crea).
+    /// </summary>
+    Task<TechnicalIssue?> CreateAutoCaptureAsync(
+        string title,
+        string description,
+        string? logs,
+        string? sourceUrl,
+        IssueArea area,
+        IssueSeverity severity,
+        IssueEnvironment environment,
+        string? affectedVersion);
 }

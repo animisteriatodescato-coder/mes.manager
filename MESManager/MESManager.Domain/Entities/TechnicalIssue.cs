@@ -89,4 +89,15 @@ public class TechnicalIssue
     /// Utente che ha creato l'issue
     /// </summary>
     public string? CreatedBy { get; set; }
+
+    /// <summary>
+    /// True se l'issue è stato catturato automaticamente dal browser (JS/HTTP error interceptor).
+    /// False = creato manualmente dall'utente.
+    /// </summary>
+    public bool IsAutoCapture { get; set; } = false;
+
+    /// <summary>
+    /// URL della pagina in cui si è verificato l'errore (per auto-capture)
+    /// </summary>
+    public string? SourceUrl { get; set; }
 }

@@ -176,4 +176,50 @@ public class TechnicalIssueService : ITechnicalIssueService
 
         return sb.ToString();
     }
+
+    public async Task<TechnicalIssue?> CreateAutoCaptureAsync(
+        string title,
+        string description,
+        string? logs,
+        string? sourceUrl,
+        IssueArea area,
+        IssueSeverity severity,
+        IssueEnvironment environment,
+        string? affectedVersion)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        // Deduplicazione: se esiste già un issue auto-catturato con stesso titolo (esatto) nelle ultime 2 ore, non ne crea uno nuovo
+        var cutoff = DateTime.Now.AddHours(-2);
+        var duplicate = await context.TechnicalIssues
+            .Where(i => i.IsAutoCapture
+                     && i.Title == title
+                     && i.Status != IssueStatus.Resolved
+                     && i.Status != IssueStatus.Documented
+                     && i.CreatedAt >= cutoff)
+            .FirstOrDefaultAsync();
+
+        if (duplicate != null)
+            return null; // duplicato: non creare
+
+        var issue = new TechnicalIssue
+        {
+            CreatedAt = DateTime.Now,
+            Title = title,
+            Description = description,
+            Logs = logs,
+            SourceUrl = sourceUrl,
+            Area = area,
+            Severity = severity,
+            Environment = environment,
+            AffectedVersion = affectedVersion,
+            Status = IssueStatus.Open,
+            IsAutoCapture = true,
+            CreatedBy = "AUTO-CAPTURE"
+        };
+
+        context.TechnicalIssues.Add(issue);
+        await context.SaveChangesAsync();
+        return issue;
+    }
 }
