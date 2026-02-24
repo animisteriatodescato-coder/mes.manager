@@ -1,6 +1,17 @@
 {
-  "BackgroundImageUrl": "/images/background-20260113131553.png",
+  "BackgroundImageUrl": "/images/background-20260224103802.jpg",
   "NomeAzienda": "",
   "Indirizzo": "",
-  "Email": ""
+  "Email": "",
+  "ThemePalette": [
+    "#CA2B53",
+    "#532BCA",
+    "#2BA2CA",
+    "#CA2BA2",
+    "#CA532B"
+  ],
+  "ThemePrimaryColor": "#CA2B53",
+  "ThemeSecondaryColor": "#2BA2CA",
+  "ThemeAccentColor": "#CA2BA2",
+  "ThemeIsDarkMode": true
 }

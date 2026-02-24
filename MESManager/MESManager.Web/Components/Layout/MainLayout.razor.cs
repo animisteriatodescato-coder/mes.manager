@@ -89,6 +89,7 @@ public partial class MainLayout : IDisposable
         var primary   = settings.ThemePrimaryColor;
         var secondary = settings.ThemeSecondaryColor;
         var accent    = settings.ThemeAccentColor;
+        var textOnPrimary = settings.ThemeTextOnPrimary;
 
         return new MudTheme
         {
@@ -98,6 +99,7 @@ public partial class MainLayout : IDisposable
                 Secondary         = secondary,
                 Tertiary          = accent,
                 AppbarBackground  = primary,
+                AppbarText        = textOnPrimary,   // TESTO APPBAR — centrale qui
                 Surface           = "#f8f9fa",
                 Background        = "#ffffff"
             },
@@ -106,6 +108,7 @@ public partial class MainLayout : IDisposable
                 Primary           = LightenHex(primary, 0.35f),
                 Secondary         = secondary,
                 AppbarBackground  = "#1e1e1e",
+                AppbarText        = "rgba(255,255,255,0.95)",
                 TextPrimary       = "rgba(255,255,255,0.95)",
                 TextSecondary     = "rgba(255,255,255,0.85)",
                 TextDisabled      = "rgba(255,255,255,0.6)",

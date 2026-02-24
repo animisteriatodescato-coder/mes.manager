@@ -76,6 +76,12 @@ public class AppSettingsService
                     _settings.ThemeSecondaryColor = palette.Colors[1];
                 if (_settings.ThemeAccentColor == AppSettings.DefaultAccentColor && palette.Colors.Count >= 3)
                     _settings.ThemeAccentColor = palette.Colors[2];
+
+                // Auto-calcola il testo sull'AppBar/Primary (bianco o scuro) dalla luminanza del Primary
+                _settings.ThemeTextOnPrimary = ComputeTextOnBackground(_settings.ThemePrimaryColor);
+
+                // Auto-calcola la versione scurita del Primary per testi su sfondo bianco
+                _settings.ThemePrimaryTextColor = ComputePrimaryTextColor(_settings.ThemePrimaryColor);
             }
 
             return imageUrl;
@@ -88,6 +94,93 @@ public class AppSettingsService
     }
 
     private void NotifySettingsChanged() => OnSettingsChanged?.Invoke();
+
+    /// <summary>
+    /// Calcola il colore del testo ottimale (bianco o nero) per avere contrasto leggibile
+    /// su uno sfondo del colore indicato. Segue la soglia WCAG relative luminance.
+    /// PUNTO CENTRALIZZATO: usare questo per derivare TextOnPrimary, TextOnSecondary, ecc.
+    /// </summary>
+    public static string ComputeTextOnBackground(string hexColor)
+    {
+        try
+        {
+            var hex = hexColor.TrimStart('#');
+            if (hex.Length != 6) return "#FFFFFF";
+            byte r = Convert.ToByte(hex[..2], 16);
+            byte g = Convert.ToByte(hex[2..4], 16);
+            byte b = Convert.ToByte(hex[4..6], 16);
+
+            // Luminanza relativa WCAG 2.1
+            static float Lin(byte c) { float v = c / 255f; return v <= 0.04045f ? v / 12.92f : MathF.Pow((v + 0.055f) / 1.055f, 2.4f); }
+            float lum = 0.2126f * Lin(r) + 0.7152f * Lin(g) + 0.0722f * Lin(b);
+
+            // Soglia WCAG: testo scuro se la luminanza è > 0.179 (rapporto 4.5:1 contro bianco/nero)
+            return lum > 0.179f ? "#1A1A1A" : "#FFFFFF";
+        }
+        catch
+        {
+            return "#FFFFFF";
+        }
+    }
+
+    /// <summary>
+    /// Restituisce una versione del colore Primary garantita leggibile su sfondo bianco
+    /// (contrasto ≥ 3:1 per testi grandi). Se il Primary è già abbastanza scuro, lo restituisce
+    /// invariato; altrimenti lo scurisce fino a lightness ≤ 38%.
+    /// PUNTO CENTRALIZZATO: usare questo per text-color di elementi su sfondo bianco.
+    /// </summary>
+    public static string ComputePrimaryTextColor(string hexColor)
+    {
+        try
+        {
+            var hex = hexColor.TrimStart('#');
+            if (hex.Length != 6) return "#1565C0";
+            byte r = Convert.ToByte(hex[..2], 16);
+            byte g = Convert.ToByte(hex[2..4], 16);
+            byte b = Convert.ToByte(hex[4..6], 16);
+
+            float rf = r / 255f, gf = g / 255f, bf = b / 255f;
+            float max = MathF.Max(rf, MathF.Max(gf, bf));
+            float min = MathF.Min(rf, MathF.Min(gf, bf));
+            float delta = max - min;
+            float l = (max + min) / 2f;
+
+            // Se già abbastanza scuro (luminosità ≤ 38%) → restituisce il colore invariato
+            if (l <= 0.38f) return $"#{r:X2}{g:X2}{b:X2}";
+
+            float s = delta < 0.001f ? 0f : delta / (1f - MathF.Abs(2f * l - 1f));
+            float h = 0f;
+            if (delta > 0.001f)
+            {
+                if (max == rf)      h = 60f * (((gf - bf) / delta) % 6f);
+                else if (max == gf) h = 60f * (((bf - rf) / delta) + 2f);
+                else                h = 60f * (((rf - gf) / delta) + 4f);
+            }
+            if (h < 0) h += 360f;
+
+            // Forza lightness a 0.35 (garantisce contrasto ≥ 3:1 su bianco per testi grandi)
+            float targetL = 0.35f;
+            float c = (1f - MathF.Abs(2f * targetL - 1f)) * s;
+            float x = c * (1f - MathF.Abs((h / 60f) % 2f - 1f));
+            float m = targetL - c / 2f;
+            float ro, go, bo;
+            if      (h < 60)  { ro = c; go = x; bo = 0; }
+            else if (h < 120) { ro = x; go = c; bo = 0; }
+            else if (h < 180) { ro = 0; go = c; bo = x; }
+            else if (h < 240) { ro = 0; go = x; bo = c; }
+            else if (h < 300) { ro = x; go = 0; bo = c; }
+            else              { ro = c; go = 0; bo = x; }
+
+            int ri = Math.Clamp((int)MathF.Round((ro + m) * 255f), 0, 255);
+            int gi = Math.Clamp((int)MathF.Round((go + m) * 255f), 0, 255);
+            int bi2 = Math.Clamp((int)MathF.Round((bo + m) * 255f), 0, 255);
+            return $"#{ri:X2}{gi:X2}{bi2:X2}";
+        }
+        catch
+        {
+            return "#1565C0";
+        }
+    }
 
     private AppSettings LoadSettings()
     {
@@ -136,4 +229,19 @@ public class AppSettings
 
     /// <summary>Modalità scura — suggerita automaticamente, poi controllata dall'utente.</summary>
     public bool ThemeIsDarkMode { get; set; } = false;
+
+    // ── Colori testo ──────────────────────────────────────────────────────────
+    /// <summary>
+    /// Colore del testo su sfondi PRIMARY (AppBar, bottoni Filled, card header).
+    /// Auto-calcolato dalla luminanza del Primary: bianco su Primary scuro, scuro su Primary chiaro.
+    /// PUNTO CENTRALIZZATO: aggiornare questo per correggere testo invisibile sull'AppBar.
+    /// </summary>
+    public string ThemeTextOnPrimary { get; set; } = "#FFFFFF";
+
+    /// <summary>
+    /// Versione scurita del Primary, garantisce leggibilità (contrasto ≥ 3:1) su sfondo bianco.
+    /// Usato per testi che usano il colore del brand su sfondi chiari (numeri macchina, badge, ecc.).
+    /// Auto-calcolato; l'utente può sovrascrivere.
+    /// </summary>
+    public string ThemePrimaryTextColor { get; set; } = "#1565C0";
 }

@@ -71,7 +71,7 @@
                 @foreach (var color in _settings.ThemePalette)
                 {
                     bool isSelected = _settings.ThemePrimaryColor == color;
-                    <div @onclick="() => _settings.ThemePrimaryColor = color"
+                    <div @onclick="() => OnPrimaryColorSelected(color)"
                          style="width:48px; height:48px; border-radius:50%; background:@color;
                                 cursor:pointer; border: @(isSelected ? "3px solid #fff" : "2px solid transparent");
                                 box-shadow: @(isSelected ? "0 0 0 3px " + color : "0 2px 6px rgba(0,0,0,0.3)");
@@ -143,6 +143,66 @@
         </MudPaper>
     }
 
+    @* ── Sezione colori testo — sempre visibile ──────────────────────────── *@
+    <MudPaper Class="pa-4 mt-4" Elevation="2">
+        <MudText Typo="Typo.h6" Class="mb-1">Colori Testo</MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
+            Controlla la leggibilità del testo nelle componenti che usano il colore Primary
+            (AppBar, numeri macchina nel Dashboard, bottoni).
+        </MudText>
+
+        @* ── Riga 1: testo su sfondo Primary (AppBar) *@
+        <div class="d-flex align-center gap-4 mb-4 flex-wrap">
+            <MudText Style="min-width:160px; font-weight:500;">Testo su AppBar</MudText>
+
+            @* Preview live: sfondo primary, testo in ThemeTextOnPrimary *@
+            <div style="width:140px; height:52px; border-radius:8px;
+                        background:@_settings.ThemePrimaryColor;
+                        display:flex; align-items:center; justify-content:center;
+                        color:@_settings.ThemeTextOnPrimary; font-weight:700; font-size:1.05rem;
+                        box-shadow:0 2px 8px rgba(0,0,0,0.25);">
+                Aa 12:34
+            </div>
+
+            <MudButtonGroup Variant="Variant.Outlined" Color="Color.Default" Size="Size.Medium">
+                <MudButton Style="background:#FFFFFF; color:#1A1A1A; font-weight:700;"
+                           Variant="@(_settings.ThemeTextOnPrimary == "#FFFFFF" ? Variant.Filled : Variant.Outlined)"
+                           OnClick="SetTextOnPrimaryWhite">Bianco</MudButton>
+                <MudButton Style="background:#1A1A1A; color:#FFFFFF; font-weight:700;"
+                           Variant="@(_settings.ThemeTextOnPrimary == "#1A1A1A" ? Variant.Filled : Variant.Outlined)"
+                           OnClick="SetTextOnPrimaryBlack">Nero</MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.AutoAwesome" Color="Color.Info"
+                           OnClick="AutoTextColors" title="Ricalcola automaticamente da WCAG">Auto</MudButton>
+            </MudButtonGroup>
+        </div>
+
+        @* ── Riga 2: colore del brand per testi su sfondo bianco (numeri macchina, badge) *@
+        <div class="d-flex align-center gap-4 flex-wrap">
+            <MudText Style="min-width:160px; font-weight:500;">Brand su sfondo chiaro</MudText>
+
+            @* Preview: sfondo bianco, testo in ThemePrimaryTextColor *@
+            <div style="width:140px; height:52px; border-radius:8px;
+                        background:#f8f9fa; border:1px solid #e0e0e0;
+                        display:flex; align-items:center; justify-content:center;
+                        color:@_settings.ThemePrimaryTextColor; font-weight:800; font-size:1.8rem;">
+                42
+            </div>
+
+            <MudButtonGroup Variant="Variant.Outlined" Color="Color.Default" Size="Size.Medium">
+                @foreach (var color in _settings.ThemePalette)
+                {
+                    bool isSel = _settings.ThemePrimaryTextColor == color;
+                    <MudButton Style="@GetPaletteButtonStyle(color)"
+                               Variant="@(isSel ? Variant.Filled : Variant.Outlined)"
+                               OnClick="() => _settings.ThemePrimaryTextColor = color"
+                               title="@color">A</MudButton>
+                }
+                <MudButton StartIcon="@Icons.Material.Filled.AutoAwesome" Color="Color.Info"
+                           OnClick="AutoTextColors" title="Ricalcola automaticamente">Auto</MudButton>
+            </MudButtonGroup>
+        </div>
+    </MudPaper>
+
     <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" 
                Size="Size.Large" OnClick="SalvaImpostazioni" StartIcon="@Icons.Material.Filled.Save"
                data-testid="btn-generali-salva">
@@ -208,5 +268,40 @@
         {
             Snackbar.Add($"Errore nel salvataggio: {ex.Message}", Severity.Error);
         }
+    }
+
+    // ── Metodi colori tema ────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Seleziona il colore Primary dalla palette E ricalcola i testi derivati automaticamente.
+    /// </summary>
+    private void OnPrimaryColorSelected(string color)
+    {
+        _settings.ThemePrimaryColor = color;
+        _settings.ThemeTextOnPrimary = AppSettingsService.ComputeTextOnBackground(color);
+        _settings.ThemePrimaryTextColor = AppSettingsService.ComputePrimaryTextColor(color);
+    }
+
+    private void SetTextOnPrimary(string color)
+    {
+        _settings.ThemeTextOnPrimary = color;
+    }
+
+    private void SetTextOnPrimaryWhite() => SetTextOnPrimary("#FFFFFF");
+    private void SetTextOnPrimaryBlack() => SetTextOnPrimary("#1A1A1A");
+
+    /// <summary>Stile CSS per i bottoni della palette nella selezione "Brand su sfondo chiaro".</summary>
+    private string GetPaletteButtonStyle(string color)
+    {
+        var textColor = AppSettingsService.ComputeTextOnBackground(color);
+        return $"background:{color}; color:{textColor}; min-width:36px; padding:0 8px;";
+    }
+
+    /// <summary>Ricalcola automaticamente i colori testo in base al Primary attuale.</summary>
+    private void AutoTextColors()
+    {
+        _settings.ThemeTextOnPrimary = AppSettingsService.ComputeTextOnBackground(_settings.ThemePrimaryColor);
+        _settings.ThemePrimaryTextColor = AppSettingsService.ComputePrimaryTextColor(_settings.ThemePrimaryColor);
+        Snackbar.Add("Colori testo ricalcolati automaticamente.", Severity.Info);
     }
 }

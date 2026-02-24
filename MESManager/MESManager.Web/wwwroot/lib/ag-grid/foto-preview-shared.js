@@ -1,46 +1,67 @@
 /**
  * Colonna Anteprima Foto condivisa per tutte le griglie AG Grid
  * =============================================================
- * UN UNICO punto di modifica per il rendering dell'anteprima immagine.
- * Si propaga automaticamente a tutte le griglie che la usano:
- *   - animeGrid, commesseGrid, commesseAperteGrid, programmaMacchineGrid
- *
- * Utilizza l'endpoint: GET /api/AllegatiAnima/preview-foto/{codiceArticolo}?n=2
- * Il browser gestisce automaticamente caching e richieste HTTP.
- * Se l'immagine non esiste (404), viene nascosta silenziosamente.
- *
- * Utilizzo in ogni file grid:
- *   window.fotoPreviewShared.createColumnDef({
- *       codiceArticoloField: 'articoloCodice',  // nome campo nel rowData
- *       photoIndex: 2,                           // numero foto (default: 2)
- *       hide: false                              // visibile di default
- *   })
+ * - Immagine si adatta all'altezza della riga
+ * - Hover > 1 secondo: popup a 3x per l'ispezione visiva
  */
 window.fotoPreviewShared = (function () {
 
-    /**
-     * Chiamata dall'attributo onerror delle img di anteprima.
-     * Nasconde l'immagine e mostra un trattino se il file non esiste.
-     * Funzione named per evitare escaping HTML complesso nel cellRenderer.
-     */
+    // ID del popup attivo (per evitare duplicati)
+    var _popupEl = null;
+    var _hoverTimer = null;
+
+    function removePopup() {
+        if (_hoverTimer) { clearTimeout(_hoverTimer); _hoverTimer = null; }
+        if (_popupEl && _popupEl.parentNode) { _popupEl.parentNode.removeChild(_popupEl); }
+        _popupEl = null;
+    }
+
+    function showPopup(src, anchorEl) {
+        removePopup();
+        var rect = anchorEl.getBoundingClientRect();
+        var popup = document.createElement('div');
+        popup.style.cssText = [
+            'position:fixed',
+            'z-index:99999',
+            'background:#fff',
+            'border:2px solid #1976d2',
+            'border-radius:6px',
+            'box-shadow:0 8px 32px rgba(0,0,0,0.35)',
+            'padding:4px',
+            'pointer-events:none',
+            'transition:opacity 0.15s',
+            'opacity:0'
+        ].join(';');
+
+        var img = document.createElement('img');
+        img.src = src;
+        img.style.cssText = 'max-width:210px;max-height:210px;object-fit:contain;display:block;border-radius:4px;';
+        img.onerror = function () { removePopup(); };
+        popup.appendChild(img);
+        document.body.appendChild(popup);
+        _popupEl = popup;
+
+        // Posiziona vicino alla cella, evitando di uscire dallo schermo
+        var left = rect.right + 8;
+        var top  = rect.top - 4;
+        if (left + 226 > window.innerWidth)  { left = rect.left - 226; }
+        if (top  + 218 > window.innerHeight) { top  = window.innerHeight - 222; }
+        if (top < 4) { top = 4; }
+        popup.style.left = left + 'px';
+        popup.style.top  = top  + 'px';
+
+        // fade in
+        requestAnimationFrame(function () { popup.style.opacity = '1'; });
+    }
+
     function onImgError(img) {
         try {
             img.style.display = 'none';
-            var wrapper = img.parentElement;
-            if (wrapper) {
-                wrapper.innerHTML = '<span style="color:#ccc;font-size:11px;">—</span>';
-            }
+            var w = img.parentElement;
+            if (w) w.innerHTML = '<span style="color:#ccc;font-size:11px;">—</span>';
         } catch (e) { /* silent */ }
     }
 
-    /**
-     * Crea la definizione della colonna Anteprima Foto
-     * @param {Object} config - Configurazione
-     * @param {string} config.codiceArticoloField - Nome del campo codice articolo nel row data (default: 'articoloCodice')
-     * @param {number} config.photoIndex          - Numero della foto da mostrare, 1=prima, 2=seconda (default: 2)
-     * @param {boolean} config.hide               - Se nascondere la colonna di default (default: false)
-     * @returns {Object} Definizione colonna AG Grid
-     */
     function createColumnDef(config) {
         config = config || {};
         var codiceField = config.codiceArticoloField || 'articoloCodice';
@@ -63,13 +84,24 @@ window.fotoPreviewShared = (function () {
                     return '<span style="color:#ccc;font-size:11px;">—</span>';
                 }
                 var src = '/api/AllegatiAnima/preview-foto/' + encodeURIComponent(codice) + '?n=' + photoIndex;
+
                 var img = document.createElement('img');
-                img.src   = src;
+                img.src = src;
                 img.title = 'Foto ' + photoIndex + ': ' + codice;
-                img.style.cssText = 'max-height:calc(100% - 4px);max-width:62px;object-fit:contain;border-radius:2px;display:block;';
+                // Altezza 100% = si adatta alla riga; larghezza massima = larghezza colonna - 8px padding
+                img.style.cssText = 'height:100%;width:100%;object-fit:contain;border-radius:2px;display:block;cursor:zoom-in;';
                 img.onerror = function () { window.fotoPreviewShared.onImgError(this); };
+
+                // Hover con ritardo 1 secondo → popup 3x
+                img.addEventListener('mouseenter', function () {
+                    var self = this;
+                    _hoverTimer = setTimeout(function () { showPopup(src, self); }, 1000);
+                });
+                img.addEventListener('mouseleave', removePopup);
+
                 var wrapper = document.createElement('div');
-                wrapper.style.cssText = 'display:flex;align-items:center;justify-content:center;height:100%;padding:1px 2px;';
+                // overflow:hidden taglia l'immagine che deborda; height:100% la vincola alla riga
+                wrapper.style.cssText = 'display:flex;align-items:center;justify-content:center;height:100%;width:100%;padding:2px;box-sizing:border-box;overflow:hidden;';
                 wrapper.appendChild(img);
                 return wrapper;
             }
@@ -83,4 +115,4 @@ window.fotoPreviewShared = (function () {
 
 })();
 
-console.log('[foto-preview-shared v1.50.1] Module loaded');
+console.log('[foto-preview-shared v1.50.3] Module loaded');

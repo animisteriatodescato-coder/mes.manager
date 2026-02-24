@@ -230,21 +230,16 @@
     }
 
     .machine-card.status-non-connessa .machine-number {
-        background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #9e9e9e;
     }
 
     .machine-number {
         font-weight: 800;
         font-size: 3rem;
-        background: linear-gradient(135deg, var(--mud-palette-primary) 0%, #1976d2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        /* --mes-primary-text = versione scurita del Primary garantita leggibile su sfondo bianco.
+           Calcolata da AppSettingsService.ComputePrimaryTextColor() e iniettata da MainLayout. */
+        color: var(--mes-primary-text, var(--mud-palette-primary));
         letter-spacing: -1px;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
     }
 
     .status-chip {
