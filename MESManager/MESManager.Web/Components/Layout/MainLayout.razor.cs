@@ -383,7 +383,7 @@ public partial class MainLayout : IDisposable
             builder.OpenComponent<MudButton>(seq++);
             builder.AddAttribute(seq++, "Variant", Variant.Text);
             builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.ViewColumn);
-            builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnToolbarToggleColumns));
+            builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, async (_) => await OnToolbarToggleColumns()));
             builder.AddAttribute(seq++, "Color", Color.Inherit);
             builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 => b2.AddContent(0, "Colonne")));
             builder.CloseComponent();
@@ -392,7 +392,7 @@ public partial class MainLayout : IDisposable
             builder.OpenComponent<MudButton>(seq++);
             builder.AddAttribute(seq++, "Variant", Variant.Text);
             builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.Refresh);
-            builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnToolbarReset));
+            builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, async (_) => await OnToolbarReset()));
             builder.AddAttribute(seq++, "Color", Color.Inherit);
             builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 => b2.AddContent(0, "Reset")));
             builder.CloseComponent();
@@ -401,7 +401,7 @@ public partial class MainLayout : IDisposable
             builder.OpenComponent<MudButton>(seq++);
             builder.AddAttribute(seq++, "Variant", Variant.Text);
             builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.Settings);
-            builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create(this, OnToolbarToggleSettings));
+            builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, (_) => { OnToolbarToggleSettings(); }));
             builder.AddAttribute(seq++, "Color", Color.Inherit);
             builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 => b2.AddContent(0, "Impostazioni")));
             builder.CloseComponent();

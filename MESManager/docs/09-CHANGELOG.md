@@ -4,7 +4,98 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.50.0
+## 🔖 Versione Corrente: v1.52.0
+
+## 🔖 v1.52.0 - Gantt Avanzamento Reale da PLC (24 Feb 2026)
+
+**Data**: 24 Febbraio 2026
+
+### 🎯 Feature — Avanzamento commesse Gantt da dati PLC reali
+
+**Obiettivo**: Le barre del Gantt mostrano la percentuale di avanzamento reale
+letta dalla macchina (CicliFatti/QuantitaDaProdurre), non più calcolata dal tempo
+trascorso. La linea rossa (ora attuale) cade esattamente al punto dell'avanzamento.
+
+#### Backend
+
+- `CommessaGanttDto` — nuovo campo `AvanzamentoDaPlc` (bool): segnala al JS se
+  il dato viene dal PLC reale o dal calcolo date-based
+- `IPianificazioneService` / `PianificazioneService` — `MapToGanttDtoBatchAsync`
+  + parametro opzionale `plcLookup: Dictionary<int,(CicliFatti,QuantitaDaProdurre)>?`;
+  `CalcolaPercentualeCompletamento` + parametri opzionali PLC con fallback date-based
+- `PianificazioneService` — lookup PLC applicato **solo alla prima commessa attiva
+  per macchina** (min `OrdineSequenza` senza `DataFineProduzione`), le altre usano
+  il calcolo date-based
+- `PianificazioneController` — nuovo metodo privato `BuildPlcLookupAsync()`: carica
+  `PLCRealtime` con `DataUltimoAggiornamento >= now-2min` AND `QuantitaDaProdurre > 0`,
+  mappa `Codice "M01" → NumeroMacchina 1`, log `LogDebug` per ogni macchina trovata
+  e `LogWarning` per codici non parsabili; ritorna `null` se nessuna macchina connessa
+  → `CalcolaPercentualeCompletamento` usa automaticamente il fallback date-based
+
+#### Frontend JS (`gantt-macchine.js` → `?v=46`)
+
+- `createItemsFromTasks`: se `avanzamentoDaPlc=true` usa il valore server invece
+  di ricalcolare localmente con le date
+- **Posizionamento barra**: se `avanzamentoDaPlc=true` ricalcola `start`/`end` da `now`
+  in modo che la linea rossa cada esattamente al punto della %:
+  `start = now - (progress% × durataMinuti)`,  `end = now + ((100-progress%) × durataMinuti)`
+- `currentProgress = undefined` per commesse PLC → il timer client non sovrascrive
+  il valore server ogni 60 secondi
+
+#### Edge-case gestiti
+
+| Caso | Comportamento |
+|---|---|
+| Commessa `InProduzione`, PLC connesso | % = CicliFatti / QuantitaDaProdurre |
+| Commessa `InProduzione`, PLC offline (> 2 min) | Fallback date-based, `AvanzamentoDaPlc=false` |
+| `QuantitaDaProdurre = 0` | Fallback date-based (evita divisione per zero) |
+| Commessa non la prima della macchina | Fallback date-based (non è quella in produzione) |
+| Nessuna commessa sul Gantt | 0% senza errori |
+| Eccezione DB nel BuildPlcLookup | Log Warning + fallback date-based per tutte |
+
+#### File modificati
+
+- `MESManager.Application/DTOs/CommessaGanttDto.cs`
+- `MESManager.Application/Interfaces/IPianificazioneService.cs`
+- `MESManager.Application/Services/PianificazioneService.cs`
+- `MESManager.Web/Controllers/PianificazioneController.cs`
+- `MESManager.Web/Components/Pages/Programma/GanttMacchine.razor`
+- `MESManager.Web/wwwroot/js/gantt/gantt-macchine.js` (`?v=46`)
+- `MESManager.Web/Components/App.razor`
+
+---
+
+## 🔖 v1.51.x - UI/UX Dark Mode + Temi + Fix vari (23-24 Feb 2026)
+
+### v1.51.5 — ThemeNavTextColor + Gantt dark mode fix
+- `AppSettings.ThemeNavTextColor` — colore testo nav configurabile da Impostazioni
+- Gantt dark mode: fix mirato su `.vis-item` border senza distruggere colori stato
+- CSS var `--mes-nav-text` per consistenza tema
+
+### v1.51.4 — Ricetta bollino verde + nav testo
+- Bollino verde ✅ in Commesse Aperte e Programma Macchine per commesse con ricetta configurata
+- NavMenu: testo più chiaro in dark mode (contrasto migliorato)
+
+### v1.51.3 — NavMenu + Commesse Aperte
+- Commesse Aperte: rimossa colonna `hasRicetta` ridondante (già visibile come bollino)
+- NavMenu: icone +15%, font +1px, rimosso bold
+
+### v1.51.2 — Dashboard dark mode
+- Fix testi invisibili in dark mode su `.machine-card` con sfondo bianco hardcoded
+- Forza `color: #1a1a1a !important` + override `.mud-typography` figli
+- Regola aggiunta in BIBBIA v3.7: card con sfondo fisso bianco NON usare `var(--mud-palette-text-primary)`
+
+### v1.51.1 — Colori testo centralizzati
+- `AppSettings.ThemeTextOnPrimary` + `AppSettingsService.ComputeTextOnBackground()` → `AppbarText` in palette
+- `AppSettings.ThemePrimaryTextColor` + `AppSettingsService.ComputePrimaryTextColor()` → `--mes-primary-text`
+- CSS var `--mes-text-on-primary` per testo su sfondo Primary
+
+### v1.51.0 — Tema dinamico da immagine
+- `ColorExtractionService` — estrae palette da immagine logo
+- `AppSettingsService.ThemePalette` — applica palette a `MainLayout.BuildThemeFromSettings()`
+- Tema MudBlazor generato dinamicamente da colore primario estratto
+
+---
 
 ## 🔖 v1.50.0 - Centralizzazione Totale AG Grid (23 Feb 2026)
 

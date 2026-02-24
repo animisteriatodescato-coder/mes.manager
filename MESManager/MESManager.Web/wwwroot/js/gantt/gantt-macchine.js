@@ -347,9 +347,14 @@ window.GanttMacchine = {
             .map(task => {
                 const groupId = self.machineMap.get(task.numeroMacchina) || 'M01';
                 
-                // CALCOLO AVANZAMENTO: basato su finestra pianificata
+                // CALCOLO AVANZAMENTO:
+                // - Se avanzamentoDaPlc=true → usa valore server (CicliFatti/QuantitaDaProdurre reale)
+                // - Altrimenti → calcolo date-based sulla finestra pianificata
                 let progress = task.percentualeCompletamento || 0;
-                if (task.dataInizioPrevisione && task.dataFinePrevisione) {
+                if (task.avanzamentoDaPlc) {
+                    // Dati PLC reali: usa direttamente il valore dal server
+                    progress = task.percentualeCompletamento || 0;
+                } else if (task.dataInizioPrevisione && task.dataFinePrevisione) {
                     const now = new Date();
                     const start = new Date(task.dataInizioPrevisione);
                     const end = new Date(task.dataFinePrevisione);
@@ -395,9 +400,22 @@ window.GanttMacchine = {
                 const displayCode = task.codice || task.id;
                 const percentagePrefix = `${Math.round(progress)}% `;
                 
-                // Fallback date (se non ci sono usiamo now, ma dovrebbero sempre esserci)
-                const dataInizio = task.dataInizioPrevisione || task.dataInizio || new Date().toISOString();
-                const dataFine = task.dataFinePrevisione || task.dataFine || new Date(Date.now() + 8*60*60*1000).toISOString();
+                // Posizionamento barra:
+                // - avanzamentoDaPlc=true: ricalcola start/end da "now" in modo che la linea rossa
+                //   cada esattamente al punto della percentuale (es. 95% → 95% della barra è nel passato)
+                // - altrimenti: usa le date pianificate originali
+                let dataInizio, dataFine;
+                if (task.avanzamentoDaPlc && task.durataMinuti > 0 && progress < 100) {
+                    const now = new Date();
+                    const durataMs = task.durataMinuti * 60 * 1000;
+                    const progressRatio = Math.min(1, Math.max(0, progress / 100));
+                    dataInizio = new Date(now.getTime() - progressRatio * durataMs).toISOString();
+                    dataFine   = new Date(now.getTime() + (1 - progressRatio) * durataMs).toISOString();
+                } else {
+                    // Fallback: date pianificate (o now se mancanti)
+                    dataInizio = task.dataInizioPrevisione || task.dataInizio || new Date().toISOString();
+                    dataFine   = task.dataFinePrevisione   || task.dataFine   || new Date(Date.now() + 8*60*60*1000).toISOString();
+                }
                 
                 const classNames = [
                     'commessa-item',
@@ -421,8 +439,8 @@ window.GanttMacchine = {
                     vincoloDataFine: task.vincoloDataFine,
                     datiIncompleti: task.datiIncompleti || false,
                     hasRicetta: task.hasRicetta || false,
-                    // Store progress per update
-                    currentProgress: progress
+                    // Store progress per update (undefined se da PLC: non sovrascrivere con timer date-based)
+                    currentProgress: task.avanzamentoDaPlc ? undefined : progress
                 };
             });
     },

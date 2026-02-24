@@ -184,6 +184,13 @@ public class PianificazioneService : IPianificazioneService
     {
         // animeLookup deve essere fornito dal chiamante che ha accesso al DbContext
         animeLookup ??= new Dictionary<string, Anime>();
+
+        // Pre-calcola la "prima commessa attiva" per macchina (nessuna DataFineProduzione, min OrdineSequenza)
+        // Solo queste ricevono l'avanzamento PLC reale; le altre usano il calcolo date-based
+        var primeCommesseAttivePerMacchina = commesse
+            .Where(c => c.NumeroMacchina.HasValue && !c.DataFineProduzione.HasValue)
+            .GroupBy(c => c.NumeroMacchina!.Value)
+            .ToDictionary(g => g.Key, g => g.OrderBy(c => c.OrdineSequenza).First().Id);
         
         // Batch lookup Ricette per performance
         var articoloIds = commesse
@@ -238,11 +245,16 @@ public class PianificazioneService : IPianificazioneService
                 vincoloDataFineSuperato = dataFinePrevisione > c.VincoloDataFine;
             }
             
-            // Avanzamento reale da PLC (se macchina connessa e QuantitaDaProdurre > 0)
+            // Avanzamento reale da PLC: solo per la PRIMA commessa attiva della macchina
+            // (prima per OrdineSequenza senza DataFineProduzione = quella in produzione adesso)
             int? cicliFattiPlc = null;
             int? quantitaDaProdurrePlc = null;
-            if (plcLookup != null && c.NumeroMacchina.HasValue &&
-                plcLookup.TryGetValue(c.NumeroMacchina.Value, out var plcEntry))
+            var isFirstCommessaAttiva = c.NumeroMacchina.HasValue
+                && primeCommesseAttivePerMacchina.TryGetValue(c.NumeroMacchina.Value, out var firstId)
+                && firstId == c.Id;
+
+            if (plcLookup != null && isFirstCommessaAttiva &&
+                plcLookup.TryGetValue(c.NumeroMacchina!.Value, out var plcEntry))
             {
                 cicliFattiPlc = plcEntry.CicliFatti;
                 quantitaDaProdurrePlc = plcEntry.QuantitaDaProdurre;
@@ -272,6 +284,7 @@ public class PianificazioneService : IPianificazioneService
                 ColoreStato = GetColoreStato(c.Stato.ToString()),
                 StatoProgramma = c.StatoProgramma.ToString(),
                 PercentualeCompletamento = CalcolaPercentualeCompletamento(c, cicliFattiPlc, quantitaDaProdurrePlc),
+                AvanzamentoDaPlc = cicliFattiPlc.HasValue && quantitaDaProdurrePlc.HasValue && quantitaDaProdurrePlc.Value > 0,
                 DatiIncompleti = datiIncompleti,
                 Priorita = c.Priorita,
                 Bloccata = c.Bloccata,

@@ -34,6 +34,13 @@ public class CommessaGanttDto
     // Percentuale completamento
     public decimal PercentualeCompletamento { get; set; }
     
+    /// <summary>
+    /// True = PercentualeCompletamento proviene da dati PLC reali (CicliFatti/QuantitaDaProdurre).
+    /// False = calcolo date-based (PLC non connesso o commessa non ancora in produzione).
+    /// Il JS del Gantt usa questo flag per decidere se usare il valore server o ricalcolare localmente.
+    /// </summary>
+    public bool AvanzamentoDaPlc { get; set; }
+    
     // Indicatore dati incompleti (per triangolino avviso nel Gantt)
     public bool DatiIncompleti { get; set; }
     

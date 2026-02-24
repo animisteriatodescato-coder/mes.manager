@@ -280,7 +280,8 @@
                     datiIncompleti = c.DatiIncompleti,
                     hasRicetta = c.HasRicetta,
                     numeroParametri = c.NumeroParametri,
-                    ricettaUltimaModifica = c.RicettaUltimaModifica
+                    ricettaUltimaModifica = c.RicettaUltimaModifica,
+                    avanzamentoDaPlc = c.AvanzamentoDaPlc
                 }).ToList()
             };
             
@@ -331,7 +332,8 @@
             datiIncompleti = c.DatiIncompleti,
             hasRicetta = c.HasRicetta,
             numeroParametri = c.NumeroParametri,
-            ricettaUltimaModifica = c.RicettaUltimaModifica
+            ricettaUltimaModifica = c.RicettaUltimaModifica,
+            avanzamentoDaPlc = c.AvanzamentoDaPlc
         }).ToList();
         
         await JS.InvokeVoidAsync("GanttMacchine.updateTasks", tasks);

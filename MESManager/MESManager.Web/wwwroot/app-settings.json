@@ -11,9 +11,10 @@
     "#CA532B"
   ],
   "ThemePrimaryColor": "#CA2B53",
-  "ThemeSecondaryColor": "#2BA2CA",
+  "ThemeSecondaryColor": "#CA2BA2",
   "ThemeAccentColor": "#CA2BA2",
   "ThemeIsDarkMode": true,
   "ThemeTextOnPrimary": "#1A1A1A",
-  "ThemePrimaryTextColor": "#2BA2CA"
+  "ThemePrimaryTextColor": "#2BA2CA",
+  "ThemeNavTextColor": "#C8C8C8"
 }
