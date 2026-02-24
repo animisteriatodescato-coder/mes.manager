@@ -84,12 +84,6 @@ window.commesseAperteGrid = (function() {
         window.fotoPreviewShared.createColumnDef({
             codiceArticoloField: 'articoloCodice'
         }),
-        // RICETTA - Badge con numero parametri (shared component)
-        window.ricettaColumnShared.createColumnDef({
-            fieldPrefix: 'camelCase',
-            gridNamespace: 'commesseAperteGrid',
-            codiceArticoloField: 'articoloCodice'
-        }),
         { 
             field: 'description', 
             headerName: 'Descrizione', 

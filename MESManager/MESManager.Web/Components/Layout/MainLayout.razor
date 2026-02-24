@@ -16,6 +16,12 @@
         --mes-primary: @(AppSettingsService.GetSettings().ThemePrimaryColor);
         --mes-primary-text: @(AppSettingsService.GetSettings().ThemePrimaryTextColor);
     }
+    /* Drawer nav: aumenta font di 1px su tutti i testi e loghi */
+    .mud-drawer [data-testid="nav-menu"] span[style*="font-size: 13px"] { font-size: 14px !important; }
+    .mud-drawer [data-testid="nav-menu"] span[style*="font-size: 16px"] { font-size: 17px !important; }
+    .mud-drawer [data-testid="nav-menu"] span:not([style]) { font-size: 15px; }
+    .mud-drawer [data-testid="nav-menu"] .mud-nav-link-text { font-size: 15px !important; }
+    .mud-drawer [data-testid="nav-menu"] .mud-list-item-text span { font-size: 15px !important; }
 </style>
 
 <MudLayout>
@@ -83,7 +89,7 @@
     <MudDrawer @bind-Open="_drawerOpen" Elevation="2">
         <MudDrawerHeader Style="display: flex; justify-content: space-between; align-items: center;">
             <MudText Typo="Typo.h6">Menu</MudText>
-            <MudText Typo="Typo.caption" Style="@($"font-family: monospace; color: {(_isDarkMode ? "rgba(230,230,230,0.5)" : "rgba(0,0,0,0.3)")}; font-size: 10px;")">
+            <MudText Typo="Typo.caption" Style="@($"font-family: monospace; color: {(_isDarkMode ? "rgba(230,230,230,0.5)" : "rgba(0,0,0,0.3)")}; font-size: 11px;")">
                 @AppVersion.Display
             </MudText>
         </MudDrawerHeader>
