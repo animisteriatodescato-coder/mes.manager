@@ -4,7 +4,7 @@
 > 
 > Questo file definisce regole, contesto e workflow vincolanti per ogni interazione AI sul progetto MESManager.
 > 
-**Nota**: Questo è il prompt base. Dettagli specifici sono nei file `docs/` dedicati.
+> **Nota**: Questo è il prompt base. Dettagli specifici sono nei file `docs/` dedicati.
 
 ---
 
@@ -38,7 +38,7 @@
 
 ## 📋 IDENTITÀ E RUOLO
 
-AUsa il modello Codex più avanzato disponibile.
+Usa il modello Codex più avanzato disponibile.
 Analizza l'intero workspace.
 Agisci come **Senior Software Architect, Maintainer e Storico Tecnico** del progetto MESManager.
 
@@ -109,7 +109,7 @@ I file in `/docs` sono:
 
 ### ⚠️ REGOLE DI CRESCITA DOCUMENTALE
 
-**Limite BIBBIA**: MAX 350 righe
+**Limite BIBBIA**: ~350-400 righe (sforabile solo per contenuto strettamente necessario)
 
 **Principio**: BIBBIA = regole generali | docs/ = dettagli implementativi
 
@@ -241,38 +241,39 @@ Ogni run deve riportare:
 3. **Ogni Modifica Indica** - File, impatti, docs/ da aggiornare, migration DB
 4. **Database** - Dev ≠ Prod SEMPRE | Script SQL per prod | Migration EF per schema
 5. **Frontend** - UX stabile | Preferenze persistenti | Cross-browser
-**Deploy** - MAI sovrascrivere secrets | Versione in AppVersion.cs | Ordine servizi corretto | [01-DEPLOY.md](docs/01-DEPLOY.md)
+6. **Deploy** - MAI sovrascrivere secrets | Versione in AppVersion.cs | Ordine servizi corretto | [01-DEPLOY.md](docs/01-DEPLOY.md)
 7. **PLC** - IP in DB | Offset in JSON | Graceful shutdown | [08-PLC-SYNC.md](docs/08-PLC-SYNC.md)
 8. **Sicurezza** - Secrets DPAPI | Parametrized queries | HTTPS prod
 9. **Testing** - Script test | Log [START/SUCCESS/ERROR] | DB verificato | UI testata | [11-TESTING-FRAMEWORK.md](docs/11-TESTING-FRAMEWORK.md)
 
 ---
 
+## 🔌 PATTERN CENTRALIZZATI — USA QUESTI, NON DUPLICARE
+
+> ⚠️ Esistono già. Usarli è **OBBLIGATORIO**. Reimplementare = bug architetturale.
+
+| Vuoi fare... | Estendi/Usa |
+|---|---|
+| Nuova griglia catalogo | `@inherits CatalogoGridBase` in `Components/Pages/Cataloghi/` |
+| Config JS griglia AG Grid | `wwwroot/js/ag-grid-factory.js` → `agGridFactory.setup({...})` |
+| Pannello impostazioni griglia | `<GridSettingsPanel @bind-Settings="settings" />` |
+| Servizio allegati per nuova entità | `: AllegatoFileServiceBase` in `Application/Services/` |
+| Path di rete / MIME type allegati | `ConvertNetworkPath()` / `GetMimeType()` dalla base |
+| Colori tema / dark-light mode | `_theme` / `_isDarkMode` in `MainLayout.razor` → 1 punto |
+| Preferenze utente persistenti | `IPreferenzeUtenteService` → mai localStorage diretto |
+
+**Regola**: cerca prima con grep/semantic search → estendi → **mai duplica**.
+---
+
 ## 🚨 PRINCIPIO FONDAMENTALE: ZERO DUPLICAZIONE
 
-### ⚠️ QUESTO È IL PROBLEMA PIÙ RICORRENTE - LEGGILO ATTENTAMENTE
-
-**REGOLA INVIOLABILE**: Codice duplicato = technical debt = manutenzione impossibile = BUG garantiti
-
-### ❌ VIETATO ASSOLUTAMENTE
-
-- ❌ Copiare/incollare codice | Duplicare logica business | Ripetere query SQL
-- ❌ Creare metodi simili con nomi diversi | Duplicare validazioni
-
-### ✅ OBBLIGATORIO SEMPRE - 4 Domande Prima di Scrivere Codice
-
+**4 Domande da rispondere PRIMA di scrivere codice:**
 1. ✅ Esiste già un servizio/metodo che fa questa cosa?
 2. ✅ Posso riutilizzare codice esistente?
-3. ✅ Se modifico questo domani, dovrò cambiare anche altro? → **SE SÌ = REFACTORING OBBLIGATORIO**
+3. ✅ Se modifico questo domani, cambierò anche altro? → **SE SÌ = REFACTORING OBBLIGATORIO**
 4. ✅ Questo è modificabile da UN SOLO punto?
 
-### 🎯 Workflow Implementazione Feature
-
-1. **Cerca prima** - grep/semantic search per logica simile
-2. **Riutilizza** - Usa servizi esistenti | **Estendi** parametri se serve
-3. **Centralizza** - Nuovo servizio solo se logica completamente nuova
-
-**Pattern**: ValidationService centralizzato > duplicare validation in 2+ servizi
+**Workflow**: Cerca prima (grep/semantic) → Riutilizza/Estendi → Centralizza. Nuovo servizio SOLO se logica completamente nuova.
 
 ---
 
@@ -358,8 +359,8 @@ proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve t
 
 ## 📞 Supporto Documentazione
 
-**Versione**: 3.2  
+**Versione**: 3.3  
 **Data**: 24 Febbraio 2026  
 **Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: Aggiunta sezione PRINCIPIO FONDAMENTALE: ZERO DUPLICAZIONE (344 righe totali)
+**Ultimo aggiornamento**: Aggiunta sezione 🔌 PATTERN CENTRALIZZATI + fix encoding frecce/emoji
