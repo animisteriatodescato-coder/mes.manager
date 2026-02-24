@@ -238,7 +238,8 @@ window.commesseAperteGrid = (function() {
     function getColumnDefs() {
         // Prende le colonne anime dal file condiviso se disponibile
         if (window.animeColumnsShared && window.animeColumnsShared.getAnimeColumns) {
-            const animeColumns = window.animeColumnsShared.getAnimeColumns();
+            const animeColumns = window.animeColumnsShared.getAnimeColumns()
+                .filter(col => col.field !== 'hasRicetta'); // rimossa colonna Ricetta su richiesta
             console.log('[commesse-aperte-grid v1.45.2] getColumnDefs: Loaded', animeColumns.length, 'anime columns from shared module');
             return [...columnDefs, ...animeColumns];
         }

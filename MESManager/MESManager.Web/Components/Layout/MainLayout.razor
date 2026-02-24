@@ -16,12 +16,16 @@
         --mes-primary: @(AppSettingsService.GetSettings().ThemePrimaryColor);
         --mes-primary-text: @(AppSettingsService.GetSettings().ThemePrimaryTextColor);
     }
-    /* Drawer nav: aumenta font di 1px su tutti i testi e loghi */
-    .mud-drawer [data-testid="nav-menu"] span[style*="font-size: 13px"] { font-size: 14px !important; }
-    .mud-drawer [data-testid="nav-menu"] span[style*="font-size: 16px"] { font-size: 17px !important; }
-    .mud-drawer [data-testid="nav-menu"] span:not([style]) { font-size: 15px; }
-    .mud-drawer [data-testid="nav-menu"] .mud-nav-link-text { font-size: 15px !important; }
-    .mud-drawer [data-testid="nav-menu"] .mud-list-item-text span { font-size: 15px !important; }
+    /* Drawer nav: icone +15% (13→15, 16→18), testo non bold */
+    .mud-drawer [data-testid="nav-menu"] span[style*="font-size: 13px"] { font-size: 15px !important; }
+    .mud-drawer [data-testid="nav-menu"] span[style*="font-size: 16px"] { font-size: 18px !important; }
+    .mud-drawer [data-testid="nav-menu"] span:not([style]) { font-size: 15px; font-weight: normal !important; }
+    .mud-drawer [data-testid="nav-menu"] .mud-nav-link-text { font-size: 15px !important; font-weight: normal !important; }
+    .mud-drawer [data-testid="nav-menu"] .mud-list-item-text span { font-size: 15px !important; font-weight: normal !important; }
+    .mud-drawer [data-testid="nav-menu"] .mud-nav-link-text span { font-weight: normal !important; }
+    .mud-drawer .mud-nav-group-header { font-weight: normal !important; }
+    .mud-drawer .mud-nav-group-header span,
+    .mud-drawer .mud-nav-group-header .mud-typography { font-weight: normal !important; }
 </style>
 
 <MudLayout>
