@@ -4,7 +4,7 @@
 > 
 > Questo file definisce regole, contesto e workflow vincolanti per ogni interazione AI sul progetto MESManager.
 > 
-> **Nota**: Questo è il prompt base. Dettagli specifici sono nei file `docs2/` dedicati.
+**Nota**: Questo è il prompt base. Dettagli specifici sono nei file `docs/` dedicati.
 
 ---
 
@@ -51,7 +51,7 @@ Questa chat **NON è generica**: è vincolata al contesto reale del progetto e a
 ### Progetto
 - **Nome**: MESManager
 - **Path**: `C:\Dev\MESManager`
-- **Documentazione**: `C:\Dev\MESManager\docs2` (fonte di verità)
+- **Documentazione**: `C:\Dev\MESManager\docs` (fonte di verità)
 
 ### Stack Tecnologico
 ```
@@ -76,32 +76,32 @@ Deploy:      Manuale controllato Windows Server
 
 ## 📚 DOCUMENTAZIONE = FONTE DI VERITÀ ASSOLUTA
 
-La cartella `/docs2` rappresenta la **bibbia del progetto**.
+La cartella `/docs` rappresenta la **bibbia del progetto**.
 
 Non è solo documentazione: è un **sistema di regole, decisioni, errori e soluzioni reali** che DEVE evolversi mantenendo storicità.
 
-### File Vincolanti (docs2/)
+### File Vincolanti (docs/)
 
 | File | Scopo | Quando Usarlo |
 |------|-------|---------------|
-| [README.md](docs2/README.md) | Indice e quick reference | Prima lettura sempre |
-| [01-DEPLOY.md](docs2/01-DEPLOY.md) | Deploy su server | Ogni pubblicazione |
-| [02-SVILUPPO.md](docs2/02-SVILUPPO.md) | Workflow sviluppo | Ogni modifica codice |
-| [03-CONFIGURAZIONE.md](docs2/03-CONFIGURAZIONE.md) | Database, secrets, PLC | Setup e troubleshooting |
-| [04-SCHEDULING-ENGINE-PATTERNS.md](docs2/04-SCHEDULING-ENGINE-PATTERNS.md) | ⭐ Algoritmi scheduling | PRIMA di implementare scheduling |
-| [04-ARCHITETTURA.md](docs2/04-ARCHITETTURA.md) | Clean Architecture, servizi | Implementazione feature |
-| [05-REPLICA-SISTEMA.md](docs2/05-REPLICA-SISTEMA.md) | Setup nuovo ambiente | Installazione da zero |
-| [06-GANTT-ANALISI.md](docs2/06-GANTT-ANALISI.md) | Analisi Gantt chart | Modifiche pianificazione |
-| [07-PLC-SYNC.md](docs2/07-PLC-SYNC.md) | Sincronizzazione PLC | Problemi PLC |
-| [08-CHANGELOG.md](docs2/08-CHANGELOG.md) | Storico versioni + workflow AI | **Ogni deploy** |
-| [09-TESTING-FRAMEWORK.md](docs2/09-TESTING-FRAMEWORK.md) | ⭐ Testing, debugging, script | Feature nuove, debug |
-| [10-QA-UI-TESTING.md](docs2/10-QA-UI-TESTING.md) | Test E2E e visual | Automation QA |
-| [09-BUSINESS.md](docs2/09-BUSINESS.md) | Commerciale e demo | Presentazioni clienti |
-| [storico/DEPLOY-LESSONS-LEARNED.md](docs2/storico/DEPLOY-LESSONS-LEARNED.md) | ⚠️ Lezioni deploy produzione | PRIMA di ogni deploy |
+| [README.md](docs/README.md) | Indice e quick reference | Prima lettura sempre |
+| [01-DEPLOY.md](docs/01-DEPLOY.md) | Deploy su server | Ogni pubblicazione |
+| [02-SVILUPPO.md](docs/02-SVILUPPO.md) | Workflow sviluppo | Ogni modifica codice |
+| [03-CONFIGURAZIONE.md](docs/03-CONFIGURAZIONE.md) | Database, secrets, PLC | Setup e troubleshooting |
+| [05-SCHEDULING-ENGINE.md](docs/05-SCHEDULING-ENGINE.md) | ⭐ Algoritmi scheduling | PRIMA di implementare scheduling |
+| [04-ARCHITETTURA.md](docs/04-ARCHITETTURA.md) | Clean Architecture, servizi | Implementazione feature |
+| [06-REPLICA-SISTEMA.md](docs/06-REPLICA-SISTEMA.md) | Setup nuovo ambiente | Installazione da zero |
+| [07-GANTT-ANALISI.md](docs/07-GANTT-ANALISI.md) | Analisi Gantt chart | Modifiche pianificazione |
+| [08-PLC-SYNC.md](docs/08-PLC-SYNC.md) | Sincronizzazione PLC | Problemi PLC |
+| [09-CHANGELOG.md](docs/09-CHANGELOG.md) | Storico versioni + workflow AI | **Ogni deploy** |
+| [11-TESTING-FRAMEWORK.md](docs/11-TESTING-FRAMEWORK.md) | ⭐ Testing, debugging, script | Feature nuove, debug |
+| [12-QA-UI-TESTING.md](docs/12-QA-UI-TESTING.md) | Test E2E e visual | Automation QA |
+| [10-BUSINESS.md](docs/10-BUSINESS.md) | Commerciale e demo | Presentazioni clienti |
+| [storico/DEPLOY-LESSONS-LEARNED.md](docs/storico/DEPLOY-LESSONS-LEARNED.md) | ⚠️ Lezioni deploy produzione | PRIMA di ogni deploy |
 
 ### Regole Documentazione
 
-I file in `/docs2` sono:
+I file in `/docs` sono:
 - ✅ **VINCOLANTI** - Non ignorabili
 - ✅ **EVOLUTIVI** - Aggiornati ad ogni scoperta
 - ✅ **STORICI** - Mantengono "perché" delle decisioni
@@ -111,9 +111,9 @@ I file in `/docs2` sono:
 
 **Limite BIBBIA**: MAX 350 righe
 
-**Principio**: BIBBIA = regole generali | docs2/ = dettagli implementativi
+**Principio**: BIBBIA = regole generali | docs/ = dettagli implementativi
 
-**Dettagli completi**: [LINEE-GUIDA-DOCUMENTAZIONE.md](docs2/LINEE-GUIDA-DOCUMENTAZIONE.md)
+**Dettagli completi**: [LINEE-GUIDA-DOCUMENTAZIONE.md](docs/LINEE-GUIDA-DOCUMENTAZIONE.md)
 
 ---
 
@@ -124,7 +124,7 @@ Quando scopri bug, limiti tecnici o implementi soluzioni importanti:
 2. Scegli il file corretto (storico/FIX-*.md o file tematico)
 3. Mantieni storicità (problema → causa → soluzione → impatto)
 
-**Template e regole**: [LINEE-GUIDA-DOCUMENTAZIONE.md](docs2/LINEE-GUIDA-DOCUMENTAZIONE.md)
+**Template e regole**: [LINEE-GUIDA-DOCUMENTAZIONE.md](docs/LINEE-GUIDA-DOCUMENTAZIONE.md)
 
 ---
 
@@ -157,11 +157,11 @@ cd C:\Dev; dotnet run --project MESManager/MESManager.Web/MESManager.Web.csproj 
 
 ### Checklist Workflow
 
-**Prima di OGNI Operazione**: Leggi README.md e file docs2/ pertinente
+**Prima di OGNI Operazione**: Leggi README.md e file docs/ pertinente
 
-**Prima di OGNI Deploy**: [08-CHANGELOG.md](docs2/08-CHANGELOG.md) + [storico/DEPLOY-LESSONS-LEARNED.md](docs2/storico/DEPLOY-LESSONS-LEARNED.md)
+**Prima di OGNI Deploy**: [09-CHANGELOG.md](docs/09-CHANGELOG.md) + [storico/DEPLOY-LESSONS-LEARNED.md](docs/storico/DEPLOY-LESSONS-LEARNED.md)
 
-**Prima di OGNI Commit**: Build + Test + Aggiorna docs2/
+**Prima di OGNI Commit**: Build + Test + Aggiorna docs/
 
 **Prima di OGNI Modifica Database**: Migration EF + Test dev + Script SQL prod + Documenta
 
@@ -181,8 +181,8 @@ cd C:\Dev; dotnet run --project MESManager/MESManager.Web/MESManager.Web.csproj 
 - Test fallito → Leggi `TestResults/Playwright/*/errors.txt` + screenshot
 
 **Dettagli**: 
-- [09-TESTING-FRAMEWORK.md](docs2/09-TESTING-FRAMEWORK.md)
-- [10-QA-UI-TESTING.md](docs2/10-QA-UI-TESTING.md)
+- [11-TESTING-FRAMEWORK.md](docs/11-TESTING-FRAMEWORK.md)
+- [12-QA-UI-TESTING.md](docs/12-QA-UI-TESTING.md)
 - [TEST-AUTO-GUIDA.md](TEST-AUTO-GUIDA.md) ⭐ Guida rapida test automatici
 
 ---
@@ -238,13 +238,13 @@ Ogni run deve riportare:
 
 1. **ZERO Duplicazione** - UNA fonte di verità | Modificabile da UN punto | MAI copiare/incollare codice
 2. **Clean Architecture** - DI, Repository Pattern, layer rispettati
-3. **Ogni Modifica Indica** - File, impatti, docs2/ da aggiornare, migration DB
+3. **Ogni Modifica Indica** - File, impatti, docs/ da aggiornare, migration DB
 4. **Database** - Dev ≠ Prod SEMPRE | Script SQL per prod | Migration EF per schema
 5. **Frontend** - UX stabile | Preferenze persistenti | Cross-browser
-6. **Deploy** - MAI sovrascrivere secrets | Versione in AppVersion.cs | Ordine servizi corretto | [01-DEPLOY.md](docs2/01-DEPLOY.md)
-7. **PLC** - IP in DB | Offset in JSON | Graceful shutdown | [07-PLC-SYNC.md](docs2/07-PLC-SYNC.md)
+**Deploy** - MAI sovrascrivere secrets | Versione in AppVersion.cs | Ordine servizi corretto | [01-DEPLOY.md](docs/01-DEPLOY.md)
+7. **PLC** - IP in DB | Offset in JSON | Graceful shutdown | [08-PLC-SYNC.md](docs/08-PLC-SYNC.md)
 8. **Sicurezza** - Secrets DPAPI | Parametrized queries | HTTPS prod
-9. **Testing** - Script test | Log [START/SUCCESS/ERROR] | DB verificato | UI testata | [09-TESTING-FRAMEWORK.md](docs2/09-TESTING-FRAMEWORK.md)
+9. **Testing** - Script test | Log [START/SUCCESS/ERROR] | DB verificato | UI testata | [11-TESTING-FRAMEWORK.md](docs/11-TESTING-FRAMEWORK.md)
 
 ---
 
@@ -284,7 +284,7 @@ Ogni run deve riportare:
 
 **Priorità**: Soluzione PIÙ SEMPLICE > PIÙ STABILE > PIÙ DOCUMENTABILE
 
-**Workflow risposta**: Analisi → Riferimenti docs2/ → 4 soluzioni prioritizzate → Implementazione → Build+Run → Attendi test utente
+**Workflow risposta**: Analisi → Riferimenti docs/ → 4 soluzioni prioritizzate → Implementazione → Build+Run → Attendi test utente
 
 ---
 
@@ -292,7 +292,7 @@ Ogni run deve riportare:
 
 Pensa come se:
 - ✅ Questo progetto dovesse vivere **10 anni**
-- ✅ Altre persone dovessero capirlo **solo leggendo docs2/**
+- ✅ Altre persone dovessero capirlo **solo leggendo docs/**
 - ✅ Ogni decisione fosse **irreversibile**
 - ✅ Ogni errore costasse **molto tempo**
 
@@ -304,7 +304,7 @@ Pensa come se:
 
 **Utente**: "Aggiungi campo Email a Macchine"
 
-**AI**: Analizza → Riferisce docs2/ pertinenti → Propone 4 soluzioni → Implementa scelta → Build+Run → Attende test utente
+**AI**: Analizza → Riferisce docs/ pertinenti → Propone 4 soluzioni → Implementa scelta → Build+Run → Attende test utente
 
 ---
 
@@ -316,7 +316,7 @@ Pensa come se:
 
 **Causa**: Tabella `PLCRealtime` vuota o non aggiornata (serve PlcSync attivo o popolamento manuale)
 
-**Soluzione dettagliata**: [storico/FIX-DASHBOARD-PLCREALTIME-20260216.md](docs2/storico/FIX-DASHBOARD-PLCREALTIME-20260216.md)
+**Soluzione dettagliata**: [storico/FIX-DASHBOARD-PLCREALTIME-20260216.md](docs/storico/FIX-DASHBOARD-PLCREALTIME-20260216.md)
 
 ---
 
@@ -326,17 +326,17 @@ Pensa come se:
 
 **Tabella**: `AllegatiArticoli` (non `Allegati`) in `MESManager_Prod`
 
-**Dettagli completi**: [03-CONFIGURAZIONE.md - Archivio Dati Allegati](docs2/03-CONFIGURAZIONE.md#-archivio-dati-allegati)
+**Dettagli completi**: [03-CONFIGURAZIONE.md - Archivio Dati Allegati](docs/03-CONFIGURAZIONE.md#-archivio-dati-allegati)
 
 ---
 
 ## ✅ CHECKLIST PRE-RISPOSTA
 
-- [ ] Letto file docs2/ pertinente?
+- [ ] Letto file docs/ pertinente?
 - [ ] Soluzione coerente con architettura?
 - [ ] Tutti file da modificare identificati?
 - [ ] Impatti valutati?
-- [ ] Docs2/ da aggiornare considerati?
+- [ ] Docs/ da aggiornare considerati?
 - [ ] Soluzione più semplice possibile?
 - [ ] Rischi comunicati?
 
@@ -358,8 +358,8 @@ proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve t
 
 ## 📞 Supporto Documentazione
 
-**Versione**: 3.1  
-**Data**: 20 Febbraio 2026  
-**Path**: `C:\Dev\MESManager\docs2\BIBBIA-AI-MESMANAGER.md`  
+**Versione**: 3.2  
+**Data**: 24 Febbraio 2026  
+**Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
 **Ultimo aggiornamento**: Aggiunta sezione PRINCIPIO FONDAMENTALE: ZERO DUPLICAZIONE (344 righe totali)

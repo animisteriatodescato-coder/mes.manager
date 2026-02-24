@@ -374,9 +374,9 @@ public async Task AutoCompletaCommesse_CambiaStato_QuandoDataInizioPrevistaPassa
 
 ## 📚 DOCUMENTAZIONE CORRELATA
 
-- [06-GANTT-ANALISI.md](../06-GANTT-ANALISI.md) - Architettura Gantt completa
+- [07-GANTT-ANALISI.md](../07-GANTT-ANALISI.md) - Architettura Gantt completa
 - [GANTT-REFACTORING-v2.0.md](../GANTT-REFACTORING-v2.0.md) - Refactoring precedente
-- [08-CHANGELOG.md](../08-CHANGELOG.md) - Storico versioni
+- [09-CHANGELOG.md](../09-CHANGELOG.md) - Storico versioni
 
 ---
 

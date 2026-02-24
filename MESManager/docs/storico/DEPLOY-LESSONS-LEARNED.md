@@ -351,7 +351,7 @@ WHERE Chiave LIKE '%grid%'
 ### File Modificati
 - `scripts/backup-preferenze-utente.ps1` - Script backup
 - `scripts/restore-preferenze-utente.ps1` - Script restore
-- `docs2/01-DEPLOY.md` - Aggiunto procedura backup/restore
+- `docs/01-DEPLOY.md` - Aggiunto procedura backup/restore
 
 ---
 
@@ -519,8 +519,8 @@ dotnet run --project MESManager/MESManager.Worker/MESManager.Worker.csproj --env
 
 - [01-DEPLOY.md](../01-DEPLOY.md) - Procedura deploy completa
 - [03-CONFIGURAZIONE.md](../03-CONFIGURAZIONE.md) - Gestione secrets e config
-- [09-TESTING-FRAMEWORK.md](../09-TESTING-FRAMEWORK.md) - Testing e validazione
-- [08-CHANGELOG.md](../08-CHANGELOG.md) - Storico versioni
+- [11-TESTING-FRAMEWORK.md](../11-TESTING-FRAMEWORK.md) - Testing e validazione
+- [09-CHANGELOG.md](../09-CHANGELOG.md) - Storico versioni
 
 ---
 

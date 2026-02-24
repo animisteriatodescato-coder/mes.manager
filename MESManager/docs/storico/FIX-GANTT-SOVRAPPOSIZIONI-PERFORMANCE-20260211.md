@@ -200,7 +200,7 @@ stack: false  // Commesse rimangono sulla timeline, overlap visibile
 ### Medio Termine
 1. Aggiungere unit test per `createItemsFromTasks()`
 2. Performance profiling automatico (Lighthouse CI?)
-3. Documentare opzioni vis-timeline in 06-GANTT-ANALISI.md
+3. Documentare opzioni vis-timeline in 07-GANTT-ANALISI.md
 
 ### Lungo Termine
 1. Considerare ESLint rule per bloccare console.log in commit
@@ -216,8 +216,8 @@ stack: false  // Commesse rimangono sulla timeline, overlap visibile
 - **Fix correlati**: 
   - `FIX-GANTT-STATI-COLORI-20260211.md` (fix colori precedente)
 - **Documentazione**:
-  - [06-GANTT-ANALISI.md](../06-GANTT-ANALISI.md) (da aggiornare)
-  - [09-TESTING-FRAMEWORK.md](../09-TESTING-FRAMEWORK.md)
+  - [07-GANTT-ANALISI.md](../07-GANTT-ANALISI.md) (da aggiornare)
+  - [11-TESTING-FRAMEWORK.md](../11-TESTING-FRAMEWORK.md)
 - **Vis-Timeline Docs**: https://visjs.github.io/vis-timeline/docs/timeline/#Configuration_Options
 
 ---

@@ -1330,7 +1330,7 @@ darkenColor: function(hex, percent) {
 
 ### 5. Documentazione è Risparmio Futuro
 **Problema**: Dimenticare perché decisione presa  
-**Soluzione**: Docs2/ con cronistoria + lezioni  
+**Soluzione**: docs/ con cronistoria + lezioni  
 **Regola**: Ogni modifica documentata subito
 
 ---

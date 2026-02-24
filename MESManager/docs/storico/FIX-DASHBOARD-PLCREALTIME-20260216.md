@@ -192,7 +192,7 @@ Se **mancano record in `PLCRealtime`** → eseguire [`scripts/fix-plcrealtime-da
 
 - **Entity**: [MESManager.Domain/Entities/PLCRealtime.cs](../../MESManager.Domain/Entities/PLCRealtime.cs)
 - **Service**: [MESManager.Infrastructure/Services/PlcAppService.cs](../../MESManager.Infrastructure/Services/PlcAppService.cs) - `GetRealtimeDataAsync()`
-- **Documentazione PLC**: [07-PLC-SYNC.md](../07-PLC-SYNC.md)
+- **Documentazione PLC**: [08-PLC-SYNC.md](../08-PLC-SYNC.md)
 - **BIBBIA**: [BIBBIA-AI-MESMANAGER.md](../BIBBIA-AI-MESMANAGER.md) - Sezione "Dashboard e PLCRealtime"
 
 ---

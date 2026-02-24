@@ -242,9 +242,9 @@ function hasDatiEtichettaCompleti(data) {
 7. `MESManager.Web/Components/Pages/Programma/CommesseAperte.razor` - Label print
 
 ### Docs
-8. `docs2/08-CHANGELOG.md` - Entry v1.48.0 completa
-9. `docs2/BIBBIA-AI-MESMANAGER.md` - Regola cache busting
-10. `docs2/storico/FIX-CENTRALIZZAZIONE-CLIENTE-20260223.md` - Questo file
+8. `docs/09-CHANGELOG.md` - Entry v1.48.0 completa
+9. `docs/BIBBIA-AI-MESMANAGER.md` - Regola cache busting
+10. `docs/storico/FIX-CENTRALIZZAZIONE-CLIENTE-20260223.md` - Questo file
 
 ---
 
@@ -412,7 +412,7 @@ Quando si verifica problema "dati diversi su pagine diverse":
 ## 📚 Riferimenti
 
 - [BIBBIA-AI-MESMANAGER.md](../BIBBIA-AI-MESMANAGER.md) - Principio ZERO DUPLICAZIONE
-- [08-CHANGELOG.md](../08-CHANGELOG.md#v1480) - Entry versione v1.48.0
+- [09-CHANGELOG.md](../09-CHANGELOG.md#v1480) - Entry versione v1.48.0
 - [04-ARCHITETTURA.md](../04-ARCHITETTURA.md) - Clean Architecture, DTO patterns
 
 ---

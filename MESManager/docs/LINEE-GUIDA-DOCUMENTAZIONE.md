@@ -7,7 +7,7 @@
 ## 🎯 Principio Fondamentale
 
 **BIBBIA = Prompt AI Generale**  
-**docs2/ = Dettagli Implementativi**
+**docs/ = Dettagli Implementativi**
 
 La BIBBIA deve rimanere **sotto 350 righe** e contenere solo:
 - Regole generali
@@ -15,7 +15,7 @@ La BIBBIA deve rimanere **sotto 350 righe** e contenere solo:
 - Indice documenti
 - Riferimenti rapidi
 
-Tutto il resto va nei documenti tematici di `docs2/`.
+Tutto il resto va nei documenti tematici di `docs/`.
 
 ---
 
@@ -26,13 +26,13 @@ Tutto il resto va nei documenti tematici di `docs2/`.
 | **Regola generale progetto** | BIBBIA-AI-MESMANAGER.md | "Mai mescolare dev/prod" |
 | **Workflow operativo** | BIBBIA-AI-MESMANAGER.md | "Prima di ogni deploy..." |
 | **Procedura deploy** | 01-DEPLOY.md | Script robocopy completo |
-| **Script test specifici** | 09-TESTING-FRAMEWORK.md | Dettagli test-api.ps1 |
+| **Script test specifici** | 11-TESTING-FRAMEWORK.md | Dettagli test-api.ps1 |
 | **Problema deploy risolto** | storico/DEPLOY-LESSONS-LEARNED.md | "Database prod mancante dati" |
 | **Fix bug specifico** | storico/FIX-[NOME]-[DATA].md | FIX-GANTT-STATI-COLORI |
-| **Algoritmo scheduling** | 04-SCHEDULING-ENGINE-PATTERNS.md | Job Shop, FJSS patterns |
-| **Configurazione PLC** | 07-PLC-SYNC.md | Offset, IP, connessioni |
+| **Algoritmo scheduling** | 05-SCHEDULING-ENGINE.md | Job Shop, FJSS patterns |
+| **Configurazione PLC** | 08-PLC-SYNC.md | Offset, IP, connessioni |
 | **Configurazione Database** | 03-CONFIGURAZIONE.md | Connection strings, allegati |
-| **Test E2E** | 10-QA-UI-TESTING.md | Playwright, visual regression |
+| **Test E2E** | 12-QA-UI-TESTING.md | Playwright, visual regression |
 | **Linee guida docs** | LINEE-GUIDA-DOCUMENTAZIONE.md | Questo file |
 
 ---
@@ -42,7 +42,7 @@ Tutto il resto va nei documenti tematici di `docs2/`.
 - Identità e ruolo AI
 - Stack tecnologico (linguaggi, framework)
 - Ambienti (dev/prod)
-- Indice file docs2/ (tabella)
+- Indice file docs/ (tabella)
 - Workflow obbligatori (checklist brevi - max 10 righe)
 - Regole architetturali inviolabili (principi generali)
 - Metodo di risposta AI
@@ -53,9 +53,9 @@ Tutto il resto va nei documenti tematici di `docs2/`.
 
 ## ❌ VIETATO nella BIBBIA
 
-- Script PowerShell completi (→ 09-TESTING-FRAMEWORK.md)
+- Script PowerShell completi (→ 11-TESTING-FRAMEWORK.md)
 - Lezioni deploy specifiche (→ storico/DEPLOY-LESSONS-LEARNED.md)
-- Dettagli endpoint API (→ 09-TESTING-FRAMEWORK.md o README specifico)
+- Dettagli endpoint API (→ 11-TESTING-FRAMEWORK.md o README specifico)
 - Query SQL lunghe (→ storico/ o 03-CONFIGURAZIONE.md)
 - Codice C# completo (→ storico/FIX-*.md)
 - Checklist deployment dettagliate (→ 01-DEPLOY.md)
@@ -69,7 +69,7 @@ Tutto il resto va nei documenti tematici di `docs2/`.
 
 | File | Max Righe | Azione se Superato |
 |------|-----------|-------------------|
-| BIBBIA-AI-MESMANAGER.md | **350** | Split dettagli → docs2/ |
+| BIBBIA-AI-MESMANAGER.md | **350** | Split dettagli → docs/ |
 | 0X-[NOME].md | **800** | Crea sottopagine o split temi |
 | storico/FIX-*.md | **500** | OK (documenti puntuali) |
 | storico/DEPLOY-LESSONS-LEARNED.md | **1000** | Crea DEPLOY-LESSONS-2027.md |
@@ -144,7 +144,7 @@ Durante il lavoro, quando emerge uno dei seguenti casi:
 1. **Segnalare** che la conoscenza va documentata
 2. **Decidere il file corretto** (vedi tabella "DOVE Aggiungere Contenuto")
 3. **Proporre**:
-   - File docs2/ da aggiornare (o crearne uno nuovo in storico/)
+   - File docs/ da aggiornare (o crearne uno nuovo in storico/)
    - Contenuto chiaro e pratico con esempi
 4. **Mantenere STORICITÀ**:
    - Cosa non funzionava prima
@@ -154,7 +154,7 @@ Durante il lavoro, quando emerge uno dei seguenti casi:
 
 ---
 
-## 📖 File docs2/ - Descrizione Completa
+## 📖 File docs/ - Descrizione Completa
 
 ### File Principali (01-10)
 
@@ -164,14 +164,14 @@ Durante il lavoro, quando emerge uno dei seguenti casi:
 | **02-SVILUPPO.md** | Workflow sviluppo locale | Setup, debug, migration, testing |
 | **03-CONFIGURAZIONE.md** | Config database, secrets, PLC | Connection strings, allegati, IP macchine |
 | **04-ARCHITETTURA.md** | Clean Architecture, servizi | Layer, DI, repository pattern |
-| **04-SCHEDULING-ENGINE-PATTERNS.md** | Algoritmi scheduling | Job Shop, FJSS, vincoli, ottimizzazione |
-| **05-REPLICA-SISTEMA.md** | Setup nuovo ambiente | Installazione completa da zero |
-| **06-GANTT-ANALISI.md** | Gantt chart dettagli | Syncfusion, task, timeline, caricamento |
-| **07-PLC-SYNC.md** | Sincronizzazione PLC | Sharp7, offset, stati macchina |
-| **08-CHANGELOG.md** | Storico versioni | Workflow AI, deploy tracking |
-| **09-TESTING-FRAMEWORK.md** | Testing e debugging | Script PowerShell, pattern test, log |
-| **10-QA-UI-TESTING.md** | Test E2E e visual | Playwright, baselines, CI/CD |
-| **09-BUSINESS.md** | Commerciale e demo | Pitch, prezzi, presentazioni |
+| **05-SCHEDULING-ENGINE.md** | Algoritmi scheduling | Job Shop, FJSS, vincoli, ottimizzazione |
+| **06-REPLICA-SISTEMA.md** | Setup nuovo ambiente | Installazione completa da zero |
+| **07-GANTT-ANALISI.md** | Gantt chart dettagli | Syncfusion, task, timeline, caricamento |
+| **08-PLC-SYNC.md** | Sincronizzazione PLC | Sharp7, offset, stati macchina |
+| **09-CHANGELOG.md** | Storico versioni | Workflow AI, deploy tracking |
+| **11-TESTING-FRAMEWORK.md** | Testing e debugging | Script PowerShell, pattern test, log |
+| **12-QA-UI-TESTING.md** | Test E2E e visual | Playwright, baselines, CI/CD |
+| **10-BUSINESS.md** | Commerciale e demo | Pitch, prezzi, presentazioni |
 
 ### File Storico
 
@@ -192,23 +192,23 @@ Questi file possono essere più lunghi (fino a 500-1000 righe) perché documenta
 - [ ] Nessun codice completo (solo snippet <10 righe)
 - [ ] Nessun esempio pratico lungo (sintetizza o sposta)
 - [ ] File < 350 righe
-- [ ] Riferimenti a docs2/ per dettagli
+- [ ] Riferimenti a docs/ per dettagli
 - [ ] Versione e data aggiornate a fine file
 
-### Quando Crei/Aggiorni File docs2/
+### Quando Crei/Aggiorni File docs/
 
 - [ ] Nome file chiaro e posizionamento corretto (numerato o storico/)
 - [ ] Header con scopo del documento
 - [ ] Sezioni ben strutturate con H2/H3
 - [ ] Esempi pratici dove serve
-- [ ] Link incrociati ad altri docs2/
+- [ ] Link incrociati ad altri docs/
 - [ ] Storicità mantenuta (non riscrivere completamente, aggiungi sezioni)
 
 ---
 
 ## 🎯 Obiettivo Finale
 
-Ogni persona (umana o AI) che legge `docs2/` deve:
+Ogni persona (umana o AI) che legge `docs/` deve:
 1. Trovare rapidamente l'informazione cercata
 2. Capire il "perché" dietro ogni decisione
 3. Poter replicare setup/procedure senza aiuto
@@ -220,4 +220,4 @@ Ogni persona (umana o AI) che legge `docs2/` deve:
 
 **Versione**: 1.0  
 **Data**: 20 Febbraio 2026  
-**Path**: `C:\Dev\MESManager\docs2\LINEE-GUIDA-DOCUMENTAZIONE.md`
+**Path**: ``C:\Dev\MESManager\docs\LINEE-GUIDA-DOCUMENTAZIONE.md`

@@ -282,7 +282,7 @@ ORDER BY Codice
    - Motiva PERCHÉ il bug esisteva
    - Spiega COME è stato risolto
 
-2. **Rileggi la BIBBIA** (docs2/bibbia-*)
+2. **Rileggi la BIBBIA** (docs/bibbia-*)
    - I tuoi fix respettano la architettura?
    - Hai violato qualche regola critica?
    - Documenta la lezione appresa
@@ -295,7 +295,7 @@ ORDER BY Codice
 4. **Review Finale Checklist**
    ```markdown
    - [ ] CHANGELOG aggiornato
-   - [ ] Docs2/ aggiornato
+   - [ ] docs/ aggiornato
    - [ ] BIBBIA aggiornato
    - [ ] Test script creato/aggiornato
    - [ ] Logging aggressivo implementato

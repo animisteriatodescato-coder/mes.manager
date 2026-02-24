@@ -252,8 +252,8 @@ $env:E2E_USE_EXISTING_SERVER = "1"
 
 ## 📚 Riferimenti
 
-- [10-QA-UI-TESTING.md](docs2/10-QA-UI-TESTING.md): Documentazione completa E2E
-- [09-TESTING-FRAMEWORK.md](docs2/09-TESTING-FRAMEWORK.md): Testing patterns & best practices
+- [10-QA-UI-TESTING.md](docs/10-QA-UI-TESTING.md): Documentazione completa E2E
+- [09-TESTING-FRAMEWORK.md](docs/09-TESTING-FRAMEWORK.md): Testing patterns & best practices
 - [Playwright .NET Docs](https://playwright.dev/dotnet/): API reference ufficiale
 
 ---

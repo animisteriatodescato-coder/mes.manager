@@ -11,7 +11,7 @@
 | **Deploy su server** | [01-DEPLOY.md](01-DEPLOY.md) |
 | **Sviluppo locale** | [02-SVILUPPO.md](02-SVILUPPO.md) |
 | **Configurare sistema** | [03-CONFIGURAZIONE.md](03-CONFIGURAZIONE.md) |
-| **Implementare scheduling** | [04-SCHEDULING-ENGINE-PATTERNS.md](04-SCHEDULING-ENGINE-PATTERNS.md) ⭐ NEW |
+| **Implementare scheduling** | [05-SCHEDULING-ENGINE.md](05-SCHEDULING-ENGINE.md) ⭐ NEW |
 | **Capire architettura** | [05-ARCHITETTURA.md](05-ARCHITETTURA.md) |
 | **Replicare sistema** | [06-REPLICA-SISTEMA.md](06-REPLICA-SISTEMA.md) |
 
@@ -26,17 +26,17 @@
 
 ### Tecnici (architettura e implementazione)
 4. **[04-ARCHITETTURA.md](04-ARCHITETTURA.md)** - Clean Architecture, servizi, integrazioni
-5. **[04-SCHEDULING-ENGINE-PATTERNS.md](04-SCHEDULING-ENGINE-PATTERNS.md)** - ⭐ Algoritmi scheduling (Job Shop, FJSS, RCPSP) + pattern Odoo/OR-Tools
-6. **[05-REPLICA-SISTEMA.md](05-REPLICA-SISTEMA.md)** - Setup completo nuovo ambiente
-7. **[06-GANTT-ANALISI.md](06-GANTT-ANALISI.md)** - Analisi dettagliata Gantt v2.0
-8. **[07-PLC-SYNC.md](07-PLC-SYNC.md)** - Sincronizzazione PLC e troubleshooting
+5. **[05-SCHEDULING-ENGINE.md](05-SCHEDULING-ENGINE.md)** - ⭐ Algoritmi scheduling (Job Shop, FJSS, RCPSP) + pattern Odoo/OR-Tools
+6. **[06-REPLICA-SISTEMA.md](06-REPLICA-SISTEMA.md)** - Setup completo nuovo ambiente
+7. **[07-GANTT-ANALISI.md](07-GANTT-ANALISI.md)** - Analisi dettagliata Gantt v2.0
+8. **[08-PLC-SYNC.md](08-PLC-SYNC.md)** - Sincronizzazione PLC e troubleshooting
 9. **[GANTT-REFACTORING-v2.0.md](GANTT-REFACTORING-v2.0.md)** - Rifattorizzazione scheduling robusto
 
 ### Changelog e Business
-10. **[08-CHANGELOG.md](08-CHANGELOG.md)** - Storico versioni e workflow AI deploy
-11. **[09-BUSINESS.md](09-BUSINESS.md)** - Commerciale, demo, scheda tecnica
-12. **[09-TESTING-FRAMEWORK.md](09-TESTING-FRAMEWORK.md)** - Framework unit/integration testing
-13. **[10-QA-UI-TESTING.md](10-QA-UI-TESTING.md)** - Testing UI e automazione QA
+10. **[09-CHANGELOG.md](09-CHANGELOG.md)** - Storico versioni e workflow AI deploy
+11. **[10-BUSINESS.md](10-BUSINESS.md)** - Commerciale, demo, scheda tecnica
+12. **[11-TESTING-FRAMEWORK.md](11-TESTING-FRAMEWORK.md)** - Framework unit/integration testing
+13. **[12-QA-UI-TESTING.md](12-QA-UI-TESTING.md)** - Testing UI e automazione QA
 
 ### Storico e Fix
 14. **[storico/](storico/)** - Fix risolti, report diagnostici, analisi tecniche
@@ -74,11 +74,11 @@
 
 ## 🗂️ Struttura Documenti vs Vecchia Docs
 
-| Vecchio (docs/) | Nuovo (docs2/) | Motivo |
+| Vecchio (docs/) | Nuovo (docs/) | Motivo |
 |-----------------|----------------|--------|
 | DEPLOY-GUIDA-DEFINITIVA.md<br>GUIDA-DEPLOY-SICURO.md<br>GUIDA-SVILUPPO-LOCALE.md | **01-DEPLOY.md**<br>**02-SVILUPPO.md** | 3 file con 70% duplicazioni → 2 file focalizzati |
 | DATABASE-CONFIG-README.md<br>SECURITY-CONFIG.md | **03-CONFIGURAZIONE.md** | 2 file sovrapposti → 1 file completo |
-| *(nessuno - new)* | **04-SCHEDULING-ENGINE-PATTERNS.md** ⭐ | NEW: Algoritmi consolidati (Odoo, OR-Tools, Dolibarr) |
+| *(nessuno - new)* | **05-SCHEDULING-ENGINE.md** ⭐ | NEW: Algoritmi consolidati (Odoo, OR-Tools, Dolibarr) |
 | GUIDA-REPLICA-SISTEMA.md<br>SERVIZI.md | **05-ARCHITETTURA.md**<br>**06-REPLICA-SISTEMA.md** | Separati ruoli architetturali da replica pratica |
 | GanttAnalysis.md | **07-GANTT-ANALISI.md** | Rinominato per coerenza numerica |
 | SCHEMA-SINCRONIZZAZIONE-PLC.md | **08-PLC-SYNC.md** | Rinominato per coerenza |
@@ -118,14 +118,14 @@ Nuovo contenuto da documentare?
 │  └─ → 01-DEPLOY.md, 02-SVILUPPO.md, etc.
 │
 └─ È un ALGORITMO o PATTERN nuovo?
-   └─ → 04-SCHEDULING-ENGINE-PATTERNS.md
+   └─ → 05-SCHEDULING-ENGINE.md
 ```
 
 ### Limiti Dimensioni File
 
 | File | Max Righe | Se Superato |
 |------|-----------|-------------|
-| **BIBBIA-AI-MESMANAGER.md** | 350 | Split dettagli → docs2/ |
+| **BIBBIA-AI-MESMANAGER.md** | 350 | Split dettagli → docs/ |
 | **File 01-10** | 800 | Crea sottopagine o split |
 | **storico/FIX-*.md** | 500 | OK (documenti puntuali) |
 | **storico/DEPLOY-LESSONS** | 1000 | Split annuale |

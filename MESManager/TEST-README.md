@@ -394,7 +394,7 @@ curl http://localhost:5156/api/pianificazione/debug-commesse
 
 - [Script Source](/test-api.ps1)
 - [Launcher Source](/start-web.ps1)
-- [Bibbia AI - Testing Section](/docs2/BIBBIA-AI-MESMANAGER.md#-testing-e-debug-infrastructure)
+- [Bibbia AI - Testing Section](/docs/BIBBIA-AI-MESMANAGER.md#-testing-e-debug-infrastructure)
 - [Controller Debug Endpoint](/MESManager.Web/Controllers/PianificazioneController.cs#L613)
 
 ---

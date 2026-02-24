@@ -27,7 +27,7 @@ MESManager/
 ├── MESManager.Worker/        ← Sync ERP Mago (batch)
 ├── MESManager.PlcSync/       ← Lettura dati PLC Siemens S7
 ├── MESManager.Sync/          ← Servizi di sincronizzazione
-└── docs2/                    ← Documentazione tecnica
+└── docs/                    ← Documentazione tecnica
 ```
 
 ---
@@ -270,13 +270,13 @@ appsettings.Database.*.json       ← credenziali database alternativa
 
 ## Documentazione tecnica completa
 
-Per approfondire: `docs2/` — in particolare:
+Per approfondire: `docs/` — in particolare:
 
 | File | Contenuto |
 |---|---|
 | `04-ARCHITETTURA.md` | Struttura Clean Architecture + pattern centralizzazione griglia |
 | `01-DEPLOY.md` | Guida deploy dettagliata produzione |
 | `03-CONFIGURAZIONE.md` | Tutti i parametri di configurazione |
-| `07-PLC-SYNC.md` | Configurazione integrazione PLC Siemens S7 |
-| `08-CHANGELOG.md` | Versione corrente e storico modifiche |
-| `05-REPLICA-SISTEMA.md` | Come replicare il sistema per un nuovo cliente |
+| `08-PLC-SYNC.md` | Configurazione integrazione PLC Siemens S7 |
+| `09-CHANGELOG.md` | Versione corrente e storico modifiche |
+| `06-REPLICA-SISTEMA.md` | Come replicare il sistema per un nuovo cliente |
