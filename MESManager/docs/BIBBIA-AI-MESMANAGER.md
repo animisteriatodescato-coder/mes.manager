@@ -31,12 +31,95 @@
 ║                                                                          ║
 ║  ❌ MAI saltare step 2-4: utente DEVE poter testare immediatamente      ║
 ║  ❌ MAI dire "ho finito" senza test auto + server avviato               ║
+╠══════════════════════════════════════════════════════════════════════════╣
+║  QUANDO L'UTENTE CHIEDE DEPLOY ("fai il deploy", "deploya"):            ║
+║                                                                          ║
+║  🚀 L'AI ESEGUE TUTTO IN AUTONOMIA — non chiedere mai all'utente        ║
+║     1. dotnet publish -c Release -o publish\Web                         ║
+║     2. taskkill PlcSync → Worker → Web (ordine CRITICO)                 ║
+║     3. robocopy publish\Web → \\192.168.1.230\c$\MESManager            ║
+║        /XF Secrets.json Database.json *.log *.pdb /XD Worker PlcSync   ║
+║     4. schtasks /Run /TN StartMESWeb + Start-Sleep 8                    ║
+║     5. tasklist → verifica 3 processi MESManager attivi                 ║
+║     6. Riporta esito con dettaglio file copiati e servizi UP            ║
+║                                                                          ║
+║  ❌ MAI lasciare comandi al copia-incolla per l'utente                  ║
+║  ❌ MAI chiedere "vuoi che esegua?" — ESEGUI E BASTA                    ║
+║  ❌ MAI fermarsi a metà deploy: o si completa o si indica blocco        ║
+║  ✅ Credenziali fisse: 192.168.1.230 / Administrator / A123456!         ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 ```
 
 ---
 
-## 📋 IDENTITÀ E RUOLO
+## � DEPLOY AUTONOMO — REGOLA ASSOLUTA INVIOLABILE
+
+> **⛔ QUESTA REGOLA NON HA ECCEZIONI. MAI.**
+
+Quando l'utente scrive qualsiasi variante di:
+- "fai il deploy"
+- "deploya"
+- "metti in produzione"
+- "aggiorna il server"
+- "prepariamoci al deploy"
+
+**L'AI ESEGUE L'INTERO DEPLOY DA SOLA, SENZA CHIEDERE NULLA ALL'UTENTE.**
+
+### Sequenza deploy obbligatoria
+
+```powershell
+# 1. PUBLISH (se non già fatto nella stessa sessione)
+cd C:\Dev\MESManager
+dotnet publish MESManager.Web\MESManager.Web.csproj -c Release -o publish\Web --nologo
+
+# 2. STOP servizi (ordine CRITICO: PlcSync → Worker → Web)
+taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /IM MESManager.PlcSync.exe /F
+taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /IM MESManager.Worker.exe /F
+taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /IM MESManager.Web.exe /F
+Start-Sleep 3
+
+# 3. COPIA (escludi SEMPRE secrets e config produzione)
+robocopy "C:\Dev\MESManager\publish\Web" "\\192.168.1.230\c$\MESManager" `
+    /E /IS /IT `
+    /XF appsettings.Secrets.json appsettings.Database.json appsettings.Secrets.encrypted "*.log" "*.pdb" `
+    /XD logs SyncBackups Worker PlcSync `
+    /NFL /NDL /NJH
+# exit code 0-7 = OK, >7 = errore
+
+# 4. RIAVVIO
+schtasks /S 192.168.1.230 /U Administrator /P "A123456!" /Run /TN "StartMESWeb"
+Start-Sleep 8
+
+# 5. VERIFICA
+tasklist /S 192.168.1.230 /U Administrator /P "A123456!" | findstr MESManager
+# Atteso: MESManager.Web.exe + MESManager.Worker.exe + MESManager.PlcSync.exe
+```
+
+### Regole critiche
+
+| Regola | Dettaglio |
+|---|---|
+| ❌ MAI chiedere all'utente di eseguire comandi | L'AI usa `run_in_terminal` direttamente |
+| ❌ MAI lasciare istruzioni di copia-incolla | Esegui, non descrivere |
+| ❌ MAI sovrascrivere `appsettings.Secrets.json` / `appsettings.Database.json` | `/XF` obbligatorio nel robocopy |
+| ❌ MAI fermare Worker/PlcSync se non modificati | Per questa versione: solo Web |
+| ✅ SEMPRE verificare 3 processi attivi dopo riavvio | `tasklist` con `findstr MESManager` |
+| ✅ SEMPRE riportare esito: file copiati, exit code, servizi UP | Conferma concisa all'utente |
+
+### Credenziali produzione (fisse)
+
+```
+Server:    192.168.1.230
+User:      Administrator
+Password:  A123456!
+Percorso:  C:\MESManager\
+Porta app: 5156
+Task:      StartMESWeb
+```
+
+---
+
+## �📋 IDENTITÀ E RUOLO
 
 Usa il modello Codex più avanzato disponibile.
 Analizza l'intero workspace.
@@ -241,7 +324,7 @@ Ogni run deve riportare:
 3. **Ogni Modifica Indica** - File, impatti, docs/ da aggiornare, migration DB
 4. **Database** - Dev ≠ Prod SEMPRE | Script SQL per prod | Migration EF per schema
 5. **Frontend** - UX stabile | Preferenze persistenti | Cross-browser
-6. **Deploy** - MAI sovrascrivere secrets | Versione in AppVersion.cs | Ordine servizi corretto | [01-DEPLOY.md](docs/01-DEPLOY.md)
+6. **Deploy** - MAI sovrascrivere secrets | Versione in AppVersion.cs | Ordine servizi: PlcSync→Worker→Web | **L'AI ESEGUE IN AUTONOMIA** — vedi sezione `DEPLOY AUTONOMO` | [01-DEPLOY.md](docs/01-DEPLOY.md)
 7. **PLC** - IP in DB | Offset in JSON | Graceful shutdown | [08-PLC-SYNC.md](docs/08-PLC-SYNC.md)
 8. **Sicurezza** - Secrets DPAPI | Parametrized queries | HTTPS prod
 9. **Testing** - Script test | Log [START/SUCCESS/ERROR] | DB verificato | UI testata | [11-TESTING-FRAMEWORK.md](docs/11-TESTING-FRAMEWORK.md)
