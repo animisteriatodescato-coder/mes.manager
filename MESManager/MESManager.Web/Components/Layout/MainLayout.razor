@@ -15,7 +15,7 @@
         --mes-text-on-primary: @(AppSettingsService.GetSettings().ThemeTextOnPrimary);
         --mes-primary: @(AppSettingsService.GetSettings().ThemePrimaryColor);
         --mes-primary-text: @(AppSettingsService.GetSettings().ThemePrimaryTextColor);
-        --mes-nav-text: @(string.IsNullOrEmpty(AppSettingsService.GetSettings().ThemeNavTextColor) ? (_isDarkMode ? "#C8C8C8" : "#333333") : AppSettingsService.GetSettings().ThemeNavTextColor);
+        --mes-nav-text: @(string.IsNullOrEmpty(AppSettingsService.GetSettings().ThemeNavTextColor) ? (_isDarkMode ? "#FFFFFF" : "#1A1A1A") : AppSettingsService.GetSettings().ThemeNavTextColor);
         --mes-bg-opacity: @(AppSettingsService.GetSettings().ThemeBgOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
         --mes-panel-opacity: @(AppSettingsService.GetSettings().ThemePanelOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
     }
@@ -38,6 +38,31 @@
         color: var(--mes-nav-text) !important;
     }
 </style>
+@{
+    var _bgActive = !string.IsNullOrEmpty(AppSettingsService.GetSettings().BackgroundImageUrl);
+    var _panelOpStr = AppSettingsService.GetSettings().ThemePanelOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+}
+@if (_bgActive)
+{
+    <style>
+        /* Glass panels: semi-trasparenza pannelli quando immagine sfondo attiva.
+           Iniettato dinamicamente da MainLayout – vince su tutte le regole CSS esterne. */
+        .mud-paper, .mud-card {
+            background-color: rgba(255,255,255,@_panelOpStr) !important;
+            background:        rgba(255,255,255,@_panelOpStr) !important;
+        }
+        .mud-theme-dark .mud-paper, .mud-theme-dark .mud-card {
+            background-color: rgba(30,30,50,@_panelOpStr) !important;
+            background:        rgba(30,30,50,@_panelOpStr) !important;
+        }
+        /* Drawer e AppBar: ripristina sfondo tema (non devono essere trasparenti) */
+        .mud-appbar,
+        .mud-drawer, .mud-drawer-content {
+            background-color: unset !important;
+            background:        unset !important;
+        }
+    </style>
+}
 
 <MudLayout Class="@(!string.IsNullOrEmpty(AppSettingsService.GetSettings().BackgroundImageUrl) ? "mes-has-bg" : "")">
     @* Sfondo immagine su tutte le pagine (eccetto Home che ha il proprio) *@

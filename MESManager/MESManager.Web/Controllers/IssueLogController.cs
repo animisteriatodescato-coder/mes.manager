@@ -79,6 +79,7 @@ public class IssueLogController : ControllerBase
         {
             "fetch_error" when statusCode.HasValue => $"[HTTP {statusCode}]",
             "fetch_error"                          => "[HTTP Error]",
+            "resource_error"                       => "[Risorsa 404]",
             "js_error"                             => "[JS Error]",
             "promise_rejection"                    => "[Promise Rejection]",
             "console_error"                        => "[Console Error]",
@@ -137,6 +138,7 @@ public class IssueLogController : ControllerBase
         {
             "fetch_error" when dto.StatusCode >= 500 => IssueSeverity.High,
             "fetch_error" when dto.StatusCode >= 400 => IssueSeverity.Low,
+            "resource_error"                         => IssueSeverity.Low,
             "js_error"                               => IssueSeverity.Medium,
             "promise_rejection"                      => IssueSeverity.Medium,
             _                                        => IssueSeverity.Low

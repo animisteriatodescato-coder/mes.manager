@@ -249,7 +249,10 @@ public class AppSettings
     /// Colore del testo nel menu laterale (Drawer).
     /// Stringa hex es. "#C8C8C8". Vuoto = auto (chiaro/scuro in base a dark mode).
     /// </summary>
-    public string ThemeNavTextColor { get; set; } = "#C8C8C8";
+    /// <summary>
+    /// Colore testo nav. Stringa hex es. "#FFFFFF". Vuoto (default) = automatico: bianco in dark, quasi-nero in light.
+    /// </summary>
+    public string ThemeNavTextColor { get; set; } = "";  // vuoto = auto
 
     /// <summary>
     /// Opacità dello sfondo su pagine non-Home (0.0 = trasparente, 1.0 = pieno). Default 0.12.
