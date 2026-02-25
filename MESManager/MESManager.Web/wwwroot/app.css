@@ -164,25 +164,12 @@ h1:focus {
 }
 
 /* ========================================================================
-   Glass panels — opacità centralizzata per MudPaper e MudCard
-   Attivi quando l'utente ha impostato un'immagine di sfondo (classe mes-has-bg).
-   La variabile --mes-panel-opacity è iniettata da MainLayout.razor.
+   Glass panels — z-index e struttura per effetto vetro con sfondo attivo.
+   Le regole background-color vengono iniettate inline da MainLayout.razor
+   (scoped a .mud-main-content per non toccare AppBar/Drawer).
    ======================================================================== */
-.mes-has-bg .mud-paper,
-.mes-has-bg .mud-card {
-    background-color: rgba(255, 255, 255, var(--mes-panel-opacity, 0.88)) !important;
+.mes-has-bg .mud-main-content .mud-paper,
+.mes-has-bg .mud-main-content .mud-card {
     position: relative;
     z-index: 1;
-}
-/* Dark mode: base scuro invece di bianco */
-.mud-theme-dark .mes-has-bg .mud-paper,
-.mud-theme-dark .mes-has-bg .mud-card {
-    background-color: rgba(30, 30, 50, var(--mes-panel-opacity, 0.88)) !important;
-}
-/* AppBar e Drawer: non toccare (gestiti dal tema) */
-.mes-has-bg .mud-appbar,
-.mes-has-bg .mud-drawer-content,
-.mes-has-bg .mud-drawer {
-    position: relative;
-    z-index: 200;
 }

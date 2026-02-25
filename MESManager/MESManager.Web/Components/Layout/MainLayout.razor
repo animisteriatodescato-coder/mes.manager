@@ -45,21 +45,49 @@
 @if (_bgActive)
 {
     <style>
-        /* Glass panels: semi-trasparenza pannelli quando immagine sfondo attiva.
-           Iniettato dinamicamente da MainLayout – vince su tutte le regole CSS esterne. */
-        .mud-paper, .mud-card {
+        /* ===== GLASS EFFECT — iniettato dinamicamente da MainLayout =====
+           Scoped a .mud-main-content: AppBar e Drawer sono fratelli (non figli) di
+           MudMainContent e NON vengono toccati da queste regole.
+           Questo blocco viene iniettato DOPO i CSS di MudBlazor → vince per ordine DOM. */
+
+        /* Pannelli nel contenuto pagina */
+        .mud-main-content .mud-paper,
+        .mud-main-content .mud-card {
             background-color: rgba(255,255,255,@_panelOpStr) !important;
             background:        rgba(255,255,255,@_panelOpStr) !important;
         }
-        .mud-theme-dark .mud-paper, .mud-theme-dark .mud-card {
+        .mud-theme-dark .mud-main-content .mud-paper,
+        .mud-theme-dark .mud-main-content .mud-card {
             background-color: rgba(30,30,50,@_panelOpStr) !important;
             background:        rgba(30,30,50,@_panelOpStr) !important;
         }
-        /* Drawer e AppBar: ripristina sfondo tema (non devono essere trasparenti) */
-        .mud-appbar,
-        .mud-drawer, .mud-drawer-content {
-            background-color: unset !important;
-            background:        unset !important;
+
+        /* Barre sticky e footer di pagina: SOLIDI — il contenuto scorre sotto,
+           non deve trasparire attraverso di essi */
+        .mud-main-content .toolbar-sticky,
+        .mud-main-content .footer-info,
+        .mud-main-content .settings-panel {
+            background-color: var(--mud-palette-surface) !important;
+            backdrop-filter: none !important;
+        }
+
+        /* AppBar: semi-trasparente con blur — usa colore primary del tema */
+        .mud-appbar {
+            background-color: color-mix(in srgb,
+                var(--mes-primary) calc(@_panelOpStr * 100%),
+                transparent) !important;
+            backdrop-filter: blur(12px) saturate(1.4);
+            -webkit-backdrop-filter: blur(12px) saturate(1.4);
+        }
+
+        /* Drawer: semi-trasparente con blur */
+        .mud-drawer,
+        .mud-drawer-content {
+            background-color: color-mix(in srgb,
+                var(--mud-palette-surface) calc(@_panelOpStr * 100%),
+                transparent) !important;
+            backdrop-filter: blur(12px) saturate(1.4);
+            -webkit-backdrop-filter: blur(12px) saturate(1.4);
         }
     </style>
 }
