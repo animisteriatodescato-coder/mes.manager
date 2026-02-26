@@ -8,6 +8,7 @@
 
 <PageTitle>Pianificazione Produzione - Gantt</PageTitle>
 
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-pianificazione">
 <MudText Typo="Typo.h4" Class="mb-4">📅 Pianificazione Produzione</MudText>
 
 <MudPaper Class="pa-4 mb-4">
@@ -154,6 +155,7 @@ else
         Nessuna commessa pianificata. Assicurati che le commesse abbiano una macchina assegnata e date di pianificazione.
     </MudAlert>
 }
+</MudContainer>
 
 @code {
     private List<CommessaGanttDto> commesseGantt = new();

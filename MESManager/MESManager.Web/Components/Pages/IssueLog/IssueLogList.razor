@@ -8,6 +8,7 @@
 
 <PageTitle>Issue Log - Archivio Bug & Errori</PageTitle>
 
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-issue-log-list">
 <MudText Typo="Typo.h4" Class="mb-4">
     <MudIcon Icon="@Icons.Material.Filled.BugReport" Class="mr-2" />
     Archivio Bug & Errori
@@ -148,6 +149,7 @@
         <MudText>Nessun issue trovato</MudText>
     </NoRecordsContent>
 </MudTable>
+</MudContainer>
 
 @code {
     private List<TechnicalIssue> _issues = new();

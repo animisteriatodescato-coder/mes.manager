@@ -6,7 +6,8 @@
 
 <PageTitle>Gestione Operatori</PageTitle>
 
-<MudPaper Class="pa-4" data-testid="page-gestione-operatori">
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-gestione-operatori">
+<MudPaper Class="pa-4">
     <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenCreateDialog" Class="mb-4" data-testid="btn-operatori-nuovo">
         <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-2" /> Nuovo Operatore
     </MudButton>
@@ -71,6 +72,7 @@
         <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveOperatore" data-testid="btn-operatori-salva">Salva</MudButton>
     </DialogActions>
 </MudDialog>
+</MudContainer>
 
 @code {
     private List<OperatoreDto>? operatori;

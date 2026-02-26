@@ -2,6 +2,7 @@
 
 <PageTitle>Catalogo Manutenzioni</PageTitle>
 
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-catalogo-manutenzioni">
 <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mb-4" StartIcon="@Icons.Material.Filled.Add">
     Nuova Manutenzione
 </MudButton>
@@ -20,6 +21,7 @@
         <MudTd><MudChip T="string" Size="Size.Small">@context.Stato</MudChip></MudTd>
     </RowTemplate>
 </MudTable>
+</MudContainer>
 
 @code {
     private List<ManutenzioneDto> _manutenzioni = new();

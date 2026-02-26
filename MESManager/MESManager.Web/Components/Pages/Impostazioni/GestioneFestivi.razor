@@ -6,7 +6,8 @@
 
 <PageTitle>Gestione Festivi</PageTitle>
 
-<MudPaper Class="pa-4 mb-4" data-testid="page-gestione-festivi">
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-gestione-festivi">
+<MudPaper Class="pa-4 mb-4">
     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
         <MudIcon Icon="@Icons.Material.Filled.Event" Size="Size.Large" Color="Color.Primary" />
         <MudText Typo="Typo.h5">Gestione Festivi</MudText>
@@ -139,6 +140,7 @@ else
         </MudButton>
     </DialogActions>
 </MudDialog>
+</MudContainer>
 
 @code {
     private List<FestivoDto> _festivi = new();

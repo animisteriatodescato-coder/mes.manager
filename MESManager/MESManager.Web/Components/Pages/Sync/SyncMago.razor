@@ -9,6 +9,7 @@
 
 <PageTitle>Sincronizzazione Mago</PageTitle>
 
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-sync-mago">
 <MudGrid>
     <MudItem xs="12" md="6">
         <MudPaper Class="pa-4">
@@ -180,6 +181,8 @@
         </RowTemplate>
     </MudTable>
 </MudPaper>
+
+</MudContainer>
 
 @code {
     private List<SyncState> _syncStates = new();

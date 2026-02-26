@@ -6,7 +6,8 @@
 
 <PageTitle>Gestione Utenti</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4" data-testid="page-gestione-utenti">Gestione Utenti App</MudText>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-gestione-utenti">
+<MudText Typo="Typo.h4" Class="mb-4">Gestione Utenti App</MudText>
 
 <MudPaper Class="pa-4 mb-4">
     <MudGrid>
@@ -126,6 +127,7 @@
         <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="ConfermaColore" data-testid="btn-utente-colore-conferma">Conferma</MudButton>
     </DialogActions>
 </MudDialog>
+</MudContainer>
 
 @code {
     private List<UtenteApp> _utenti = new();

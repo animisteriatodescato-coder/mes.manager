@@ -7,6 +7,7 @@
 
 <PageTitle>Analisi PLC Storico</PageTitle>
 
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-statistiche-plc-storico">
 <MudPaper Class="pa-4 mb-4">
     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
         <MudDatePicker Label="Da" @bind-Date="dataInizio" 
@@ -232,6 +233,7 @@ else if (!_loading)
         </MudStack>
     </MudPaper>
 }
+</MudContainer>
 
 @code {
     private List<PlcStoricoDto> _data = new();
