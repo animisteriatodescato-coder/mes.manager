@@ -52,7 +52,13 @@
     height: calc(100vh - var(--grid-offset)) !important;
 }
 
-/* ========== RIDUZIONE PULSANTI 20% ========== */
+/* Footer statistiche griglia */
+.footer-info {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    background-color: var(--mud-palette-surface);
+}
 /* Pulsanti più compatti: ridotti del ~20% rispetto a default MudBlazor */
 .settings-panel .mud-button-root,
 .toolbar-sticky .mud-button-root {

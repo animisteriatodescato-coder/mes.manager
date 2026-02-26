@@ -19,8 +19,6 @@
 <div class="mes-grid-page" data-testid="page-programma-macchine">
     <MudPaper Class="settings-panel toolbar-sticky pa-2 mb-1" Elevation="1">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
-            <MudSpacer />
-            
             <MudTextField @bind-Value="searchText"
                          Placeholder="Cerca in tutte le colonne..."
                          Variant="Variant.Outlined"
@@ -29,6 +27,7 @@
                          Immediate="true"
                          DebounceInterval="280"
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
+            <MudSpacer />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshData" data-testid="btn-refresh">Aggiorna</MudButton>
             <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />

@@ -7,9 +7,9 @@
 
 <PageTitle>Catalogo Articoli</PageTitle>
 
-<div class="articoli-page" data-testid="page-catalogo-articoli">
-    <div class="settings-panel">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
+<div class="mes-grid-page" data-testid="page-catalogo-articoli">
+    <MudPaper Class="settings-panel toolbar-sticky pa-2 mb-1" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
             <MudTextField @bind-Value="searchText"
                          data-testid="input-articoli-search"
                          Placeholder="Cerca in tutte le colonne..."
@@ -19,21 +19,21 @@
                          Immediate="true"
                          DebounceInterval="280"
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
+            <MudSpacer />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel" data-testid="btn-articoli-columns">Colonne</MudButton>
             <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv" data-testid="btn-articoli-export">Export CSV</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)" data-testid="btn-articoli-settings">Impostazioni</MudButton>
         </MudStack>
-    </div>
+    </MudPaper>
     
     @if (showSettings)
     {
         <GridSettingsPanel @bind-Settings="settings" OnApplySettings="ApplyUiSettings" />
     }
 
-        <div id="articoliGrid" class="ag-theme-alpine" 
-            data-testid="grid-catalogo-articoli"
-         style="width: 100%; height: calc(100vh - 150px);">
+    <div id="articoliGrid" class="ag-theme-alpine mes-ag-grid" 
+         data-testid="grid-catalogo-articoli">
     </div>
 
     <MudPaper Class="footer-info pa-1 mt-2" Elevation="1">
@@ -56,27 +56,6 @@
 </div>
 
 <style>
-    .articoli-page {
-        position: relative;
-    }
-
-    .toolbar-sticky {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background: var(--mud-palette-surface);
-        padding: 0.1 rem 0;
-        margin-bottom: 0.2rem;
-    }
-    
-    .footer-info {
-        position: sticky;
-        bottom: 0;
-        z-index: 10;
-        background: var(--mud-palette-surface);
-        border-top: 2px solid var(--mud-palette-primary);
-    }
-
     /* Gestione Colonne in dark mode */
     @@media (prefers-color-scheme: dark) {
         .ag-theme-alpine .ag-side-bar,

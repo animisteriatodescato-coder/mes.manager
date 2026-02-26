@@ -13,9 +13,9 @@
 
 <PageTitle>Catalogo Anime</PageTitle>
 
-<div class="anime-page" data-testid="page-catalogo-anime">
-    <div class="settings-panel">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
+<div class="mes-grid-page" data-testid="page-catalogo-anime">
+    <MudPaper Class="settings-panel toolbar-sticky pa-2 mb-1" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
             <MudTextField @bind-Value="searchText"
                          data-testid="input-anime-search"
                          Placeholder="Cerca in tutte le colonne..."
@@ -25,6 +25,7 @@
                          Immediate="true"
                          DebounceInterval="280"
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
+            <MudSpacer />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshGridData" data-testid="btn-anime-refresh">Aggiorna</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel" data-testid="btn-anime-columns">Colonne</MudButton>
             <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
@@ -36,11 +37,10 @@
         {
             <GridSettingsPanel @bind-Settings="settings" OnApplySettings="ApplyUiSettings" />
         }
-    </div>
+    </MudPaper>
 
-        <div id="animeGrid" class="ag-theme-alpine" 
-            data-testid="grid-catalogo-anime"
-         style="width: 100%; height: calc(100vh - 150px);">
+    <div id="animeGrid" class="ag-theme-alpine mes-ag-grid" 
+         data-testid="grid-catalogo-anime">
     </div>
 
     <MudPaper Class="footer-info pa-1 mt-2" Elevation="1">
@@ -63,19 +63,6 @@
 </div>
 
 <style>
-    .anime-page {
-        position: relative;
-    }
-
-    .toolbar-sticky {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background: var(--mud-palette-surface);
-        padding: 0.1rem 0;
-        margin-bottom: 0.2rem;
-    }
-
     @@media (prefers-color-scheme: dark) {
         .ag-theme-alpine .ag-side-bar,
         .ag-theme-alpine .ag-tool-panel-wrapper,

@@ -18,12 +18,9 @@
 
 <PageTitle>Commesse Aperte</PageTitle>
 
-<div class="commesse-aperte-page" data-testid="page-commesse-aperte" style="display: flex; flex-direction: column; height: calc(100vh - 100px); overflow: hidden;">
-    <div class="settings-panel">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
-            <MudSpacer />
-
-            
+<div class="mes-grid-page" data-testid="page-commesse-aperte">
+    <MudPaper Class="settings-panel toolbar-sticky pa-2 mb-1" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
             <MudTextField @bind-Value="searchText"
                          Placeholder="Cerca in tutte le colonne..."
                          Variant="Variant.Outlined"
@@ -37,6 +34,7 @@
                        Label="Archiviate" 
                        T="bool"
                        ValueChanged="@OnShowArchivedChanged" />
+            <MudSpacer />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshGridData" data-testid="btn-refresh">Aggiorna</MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Timeline" OnClick="@CaricaSuGantt" data-testid="btn-carica-su-gantt">
                 🚀 Carica su Gantt
@@ -87,11 +85,10 @@
                 </MudStack>
             </MudPaper>
         }
-    </div>
+    </MudPaper>
 
-        <div id="commesseAperteGrid" class="ag-theme-alpine" 
-            data-testid="grid-commesse"
-         style="width: 100%; flex: 1; min-height: 0;">
+    <div id="commesseAperteGrid" class="ag-theme-alpine mes-ag-grid" 
+         data-testid="grid-commesse">
     </div>
 
     <MudDialog @bind-Visible="showColumnDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Medium }">
@@ -281,25 +278,12 @@
 </div>
 
 <style>
-    .commesse-aperte-page {
-        position: relative;
-    }
-
     /* Abilita selezione testo nelle celle della grid */
     .ag-theme-alpine .ag-cell {
         user-select: text !important;
         -webkit-user-select: text !important;
         -moz-user-select: text !important;
         -ms-user-select: text !important;
-    }
-
-    .toolbar-sticky {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background: var(--mud-palette-surface);
-        padding: 0.1 rem 0;
-        margin-bottom: 0.2rem;
     }
 
     /* Gestione Colonne in dark mode */

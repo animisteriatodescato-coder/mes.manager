@@ -11,12 +11,9 @@
 
 <PageTitle>Catalogo Commesse</PageTitle>
 
-<div class="commesse-page" data-testid="page-catalogo-commesse">
-    <div class="settings-panel">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
-            <MudSpacer />
-
-            
+<div class="mes-grid-page" data-testid="page-catalogo-commesse">
+    <MudPaper Class="settings-panel toolbar-sticky pa-2 mb-1" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
             <MudTextField @bind-Value="searchText"
                          data-testid="input-commesse-search"
                          Placeholder="Cerca in tutte le colonne..."
@@ -26,6 +23,7 @@
                          Immediate="true"
                          DebounceInterval="280"
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
+            <MudSpacer />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel" data-testid="btn-commesse-columns">Colonne</MudButton>
             <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv" data-testid="btn-commesse-export">Export CSV</MudButton>
@@ -36,11 +34,10 @@
         {
             <GridSettingsPanel @bind-Settings="settings" OnApplySettings="ApplyUiSettings" />
         }
-    </div>
+    </MudPaper>
 
-        <div id="commesseGrid" class="ag-theme-alpine" 
-            data-testid="commesse-grid"
-         style="width: 100%; height: calc(100vh - 150px);">
+    <div id="commesseGrid" class="ag-theme-alpine mes-ag-grid" 
+         data-testid="commesse-grid">
     </div>
 
     <MudPaper Class="footer-info pa-1 mt-2" Elevation="1">
@@ -67,19 +64,6 @@
 </div>
 
 <style>
-    .commesse-page {
-        position: relative;
-    }
-
-    .toolbar-sticky {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background: var(--mud-palette-surface);
-        padding: 0.1 rem 0;
-        margin-bottom: 0.2rem;
-    }
-
     /* Gestione Colonne in dark mode */
     @@media (prefers-color-scheme: dark) {
         .ag-theme-alpine .ag-side-bar,

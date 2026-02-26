@@ -7,9 +7,9 @@
 
 <PageTitle>Catalogo Clienti</PageTitle>
 
-<div class="clienti-page" data-testid="page-catalogo-clienti" style="display: flex; flex-direction: column; height: calc(100vh - 100px); overflow: hidden;">
-    <div class="settings-panel">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
+<div class="mes-grid-page" data-testid="page-catalogo-clienti">
+    <MudPaper Class="settings-panel toolbar-sticky pa-2 mb-1" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
             <MudTextField @bind-Value="searchText"
                          data-testid="input-clienti-search"
                          Placeholder="Cerca in tutte le colonne..."
@@ -19,24 +19,24 @@
                          Immediate="true"
                          DebounceInterval="280"
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
+            <MudSpacer />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel" data-testid="btn-clienti-columns">Colonne</MudButton>
             <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv" data-testid="btn-clienti-export">Export CSV</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)" data-testid="btn-clienti-settings">Impostazioni</MudButton>
         </MudStack>
-    </div>
+    </MudPaper>
     
     @if (showSettings)
     {
         <GridSettingsPanel @bind-Settings="settings" OnApplySettings="ApplyUiSettings" />
     }
 
-        <div id="clientiGrid" class="ag-theme-alpine" 
-            data-testid="grid-catalogo-clienti"
-         style="width: 100%; flex: 1; min-height: 0;">
+    <div id="clientiGrid" class="ag-theme-alpine mes-ag-grid" 
+         data-testid="grid-catalogo-clienti">
     </div>
 
-    <MudPaper Class="footer-info pa-1" Elevation="0" Style="flex-shrink: 0;">
+    <MudPaper Class="footer-info pa-1" Elevation="0">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
             <MudText Typo="Typo.caption" Color="Color.Secondary">Totale righe: <strong>@totalRows</strong></MudText>
             <MudDivider Vertical="true" FlexItem="true" />
@@ -56,23 +56,10 @@
 </div>
 
 <style>
-    .clienti-page {
-        position: relative;
-    }
-
     .clienti-page .footer-info {
         box-shadow: none;
         border-top: none;
         margin-top: 0;
-    }
-
-    .toolbar-sticky {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background: var(--mud-palette-surface);
-        padding: 0.1 rem 0;
-        margin-bottom: 0.2rem;
     }
 
     /* Gestione Colonne in dark mode */

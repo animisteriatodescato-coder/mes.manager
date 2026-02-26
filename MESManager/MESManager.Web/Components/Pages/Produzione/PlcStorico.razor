@@ -11,10 +11,9 @@
 
 <PageTitle>PLC Storico</PageTitle>
 
-<div class="plc-storico-page" data-testid="page-plc-storico">
-    <div class="toolbar-sticky">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
-            <MudSpacer />
+<div class="mes-grid-page" data-testid="page-plc-storico">
+    <MudPaper Class="settings-panel toolbar-sticky pa-2 mb-1" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
             
             <MudSelect T="string" Label="Colonna filtro" @bind-Value="selectedFilterColumn" 
                       data-testid="select-plc-storico-colonna"
@@ -57,31 +56,19 @@
                          Immediate="true"
                          DebounceInterval="280"
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
+            <MudSpacer />
             
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel" data-testid="btn-plc-storico-colonne">Colonne</MudButton>
             <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
         </MudStack>
-    </div>
+    </MudPaper>
 
-        <div id="plcStoricoGrid" class="ag-theme-alpine" 
-            data-testid="grid-plc-storico"
-         style="width: 100%; height: calc(100vh - 200px);">
+    <div id="plcStoricoGrid" class="ag-theme-alpine mes-ag-grid" 
+         data-testid="grid-plc-storico">
     </div>
 </div>
 
 <style>
-    .plc-storico-page {
-        position: relative;
-    }
-
-    .toolbar-sticky {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background: var(--mud-palette-surface);
-        padding: 0.5rem 0;
-        margin-bottom: 0.5rem;
-    }
 </style>
 
 @code {
