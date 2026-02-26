@@ -48,18 +48,20 @@ window.ricettaColumnShared = (function() {
                         </span>
                     </div>`;
                 } else {
-                    // Cella vuota: cliccabile per aprire il dialog di importazione
+                    // Cella vuota: chip cliccabile (stesso stile del badge verde, colore grigio)
                     const codiceArticolo = params.data[codiceArticoloField];
-                    const onClickHandler = codiceArticolo
-                        ? `window.${config.gridNamespace}.openImportaRicetta('${codiceArticolo}')`
-                        : '';
-                    const style = codiceArticolo
-                        ? 'cursor: pointer; display: flex; align-items: center; height: 100%;'
-                        : 'display: flex; align-items: center; height: 100%;';
-                    const tooltip = codiceArticolo ? 'Clicca per importare ricetta da macchina' : 'Nessuna ricetta';
-
-                    return `<div style="${style}" onclick="${onClickHandler}" title="${tooltip}">
-                        <span style="color: #bbb; font-size: 11px; text-decoration: underline dotted; text-underline-offset: 2px;">— importa</span>
+                    if (!codiceArticolo) {
+                        return `<div style="display:flex;align-items:center;height:100%;">
+                            <span style="color:#bbb;font-size:11px;">—</span>
+                        </div>`;
+                    }
+                    const onClickHandler = `window.${config.gridNamespace}.openImportaRicetta('${codiceArticolo}')`;
+                    return `<div style="display:flex;align-items:center;height:100%;cursor:pointer;"
+                                 onclick="${onClickHandler}"
+                                 title="Importa ricetta da macchina">
+                        <span style="background-color:#9e9e9e;color:white;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">
+                            ↓ importa
+                        </span>
                     </div>`;
                 }
             }
