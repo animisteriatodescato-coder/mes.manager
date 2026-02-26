@@ -41,25 +41,29 @@
 @{
     var _bgActive = !string.IsNullOrEmpty(AppSettingsService.GetSettings().BackgroundImageUrl);
     var _panelOpStr = AppSettingsService.GetSettings().ThemePanelOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+    // Usa _isDarkMode (variabile C# Blazor) per generare il colore corretto direttamente —
+    // evita dipendenza dal selettore .mud-theme-dark che può non matchare in tutti i contesti Blazor Server
+    var _glassPanel = _isDarkMode
+        ? $"rgba(18,18,28,{_panelOpStr})"      // dark: grigio scuro quasi nero
+        : $"rgba(255,255,255,{_panelOpStr})";   // light: bianco semi-trasparente
+    var _glassGrid  = _isDarkMode
+        ? $"rgba(22,22,32,{_panelOpStr})"
+        : $"rgba(255,255,255,{_panelOpStr})";
 }
 @if (_bgActive)
 {
     <style>
         /* ===== GLASS EFFECT — iniettato dinamicamente da MainLayout =====
-           Scoped a .mud-main-content: AppBar e Drawer sono fratelli (non figli) di
-           MudMainContent e NON vengono toccati da queste regole.
-           Questo blocco viene iniettato DOPO i CSS di MudBlazor → vince per ordine DOM. */
+           Colore calcolato server-side da _isDarkMode → nessuna dipendenza da .mud-theme-dark.
+           Scoped a .mud-main-content: AppBar e Drawer sono fratelli, NON figli. */
 
         /* Pannelli nel contenuto pagina */
         .mud-main-content .mud-paper,
         .mud-main-content .mud-card {
-            background-color: rgba(255,255,255,@_panelOpStr) !important;
-            background:        rgba(255,255,255,@_panelOpStr) !important;
-        }
-        .mud-theme-dark .mud-main-content .mud-paper,
-        .mud-theme-dark .mud-main-content .mud-card {
-            background-color: rgba(30,30,50,@_panelOpStr) !important;
-            background:        rgba(30,30,50,@_panelOpStr) !important;
+            background-color: @_glassPanel !important;
+            background:        @_glassPanel !important;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         /* AppBar: semi-trasparente con blur — usa colore primary del tema */
@@ -92,19 +96,18 @@
             background: transparent !important;
         }
 
-        /* AG Grid container: glass effect sul wrapper root */
+        /* AG Grid: glass solo sul wrapper esterno — NON sulle righe/viewport interni.
+           Le righe mantengono i colori del tema Alpine (bianche in light, scure in dark)
+           garantendo leggibilità del testo in ogni condizione. */
         .mud-main-content .ag-theme-alpine .ag-root-wrapper,
         .mud-main-content .ag-theme-alpine-dark .ag-root-wrapper {
-            background-color: rgba(255,255,255,@_panelOpStr) !important;
+            background-color: @_glassGrid !important;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
         }
-        .mud-theme-dark .mud-main-content .ag-theme-alpine .ag-root-wrapper,
-        .mud-theme-dark .mud-main-content .ag-theme-alpine-dark .ag-root-wrapper {
-            background-color: rgba(30,30,50,@_panelOpStr) !important;
-        }
-        /* Header e body AG Grid trasparenti */
+        /* Header trasparente: eredita il glass dal root-wrapper */
         .mud-main-content .ag-theme-alpine .ag-header,
-        .mud-main-content .ag-theme-alpine .ag-body-viewport,
-        .mud-main-content .ag-theme-alpine .ag-center-cols-viewport {
+        .mud-main-content .ag-theme-alpine-dark .ag-header {
             background-color: transparent !important;
         }
     </style>
