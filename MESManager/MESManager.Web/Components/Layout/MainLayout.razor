@@ -41,21 +41,26 @@
 @{
     var _bgActive = !string.IsNullOrEmpty(AppSettingsService.GetSettings().BackgroundImageUrl);
     var _panelOpStr = AppSettingsService.GetSettings().ThemePanelOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
-    // Usa _isDarkMode (variabile C# Blazor) per generare il colore corretto direttamente —
-    // evita dipendenza dal selettore .mud-theme-dark che può non matchare in tutti i contesti Blazor Server
+    // Colori calcolati server-side da _isDarkMode — evita dipendenza da .mud-theme-dark CSS
     var _glassPanel = _isDarkMode
         ? $"rgba(18,18,28,{_panelOpStr})"      // dark: grigio scuro quasi nero
         : $"rgba(255,255,255,{_panelOpStr})";   // light: bianco semi-trasparente
-    var _glassGrid  = _isDarkMode
+    var _glassGrid = _isDarkMode
         ? $"rgba(22,22,32,{_panelOpStr})"
-        : $"rgba(255,255,255,{_panelOpStr})";
+        : $"rgba(248,248,252,{_panelOpStr})";   // light: grigio leggermente più scuro del bianco
+    // Righe griglia: grigio chiaro in light, grigio scuro in dark
+    var _rowEven  = _isDarkMode ? "rgba(32,32,44,0.92)"  : "rgba(248,248,252,0.96)";
+    var _rowOdd   = _isDarkMode ? "rgba(26,26,38,0.92)"  : "rgba(240,240,246,0.96)";
+    // Drawer: in dark mode mix con nero per ottenere tono molto più scuro
+    var _drawerBg = _isDarkMode
+        ? $"color-mix(in srgb, var(--mes-primary) 35%, #050508)"   // dark: quasi nero con tocco di primary
+        : $"color-mix(in srgb, var(--mes-primary) calc({_panelOpStr} * 100%), transparent)"; // light: primary semi-trasparente
 }
 @if (_bgActive)
 {
     <style>
         /* ===== GLASS EFFECT — iniettato dinamicamente da MainLayout =====
-           Colore calcolato server-side da _isDarkMode → nessuna dipendenza da .mud-theme-dark.
-           Scoped a .mud-main-content: AppBar e Drawer sono fratelli, NON figli. */
+           Colori calcolati server-side da _isDarkMode → leggibilità garantita in light/dark. */
 
         /* Pannelli nel contenuto pagina */
         .mud-main-content .mud-paper,
@@ -66,7 +71,7 @@
             -webkit-backdrop-filter: blur(8px);
         }
 
-        /* AppBar: semi-trasparente con blur — usa colore primary del tema */
+        /* AppBar: semi-trasparente con blur */
         .mud-appbar {
             background-color: color-mix(in srgb,
                 var(--mes-primary) calc(@_panelOpStr * 100%),
@@ -75,11 +80,9 @@
             -webkit-backdrop-filter: blur(12px) saturate(1.4);
         }
 
-        /* Drawer: stesso colore primario dell'AppBar — un unico colore uniforme */
+        /* Drawer: colore calcolato server-side (dark → quasi nero, light → primary semitrasparente) */
         .mud-drawer {
-            background-color: color-mix(in srgb,
-                var(--mes-primary) calc(@_panelOpStr * 100%),
-                transparent) !important;
+            background-color: @_drawerBg !important;
             backdrop-filter: blur(12px) saturate(1.4);
             -webkit-backdrop-filter: blur(12px) saturate(1.4);
         }
@@ -96,19 +99,23 @@
             background: transparent !important;
         }
 
-        /* AG Grid: glass solo sul wrapper esterno — NON sulle righe/viewport interni.
-           Le righe mantengono i colori del tema Alpine (bianche in light, scure in dark)
-           garantendo leggibilità del testo in ogni condizione. */
+        /* AG Grid: glass sul wrapper esterno.
+           Header: NON trasparente — lascia Alpine gestire il proprio colore per leggibilità.
+           Righe: tinta grigia per coerenza con il tema glass. */
         .mud-main-content .ag-theme-alpine .ag-root-wrapper,
         .mud-main-content .ag-theme-alpine-dark .ag-root-wrapper {
             background-color: @_glassGrid !important;
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
         }
-        /* Header trasparente: eredita il glass dal root-wrapper */
-        .mud-main-content .ag-theme-alpine .ag-header,
-        .mud-main-content .ag-theme-alpine-dark .ag-header {
-            background-color: transparent !important;
+        /* Righe pari e dispari: grigio sfumato invece di bianco pieno */
+        .mud-main-content .ag-theme-alpine .ag-row-even,
+        .mud-main-content .ag-theme-alpine-dark .ag-row-even {
+            background-color: @_rowEven !important;
+        }
+        .mud-main-content .ag-theme-alpine .ag-row-odd,
+        .mud-main-content .ag-theme-alpine-dark .ag-row-odd {
+            background-color: @_rowOdd !important;
         }
     </style>
 }
