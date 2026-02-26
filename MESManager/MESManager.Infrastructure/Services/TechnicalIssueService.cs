@@ -177,6 +177,22 @@ public class TechnicalIssueService : ITechnicalIssueService
         return sb.ToString();
     }
 
+    public async Task MarkAsExportedAsync(IEnumerable<int> ids)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var idList = ids.ToList();
+        var issues = await context.TechnicalIssues
+            .Where(i => idList.Contains(i.Id))
+            .ToListAsync();
+        var now = DateTime.Now;
+        foreach (var issue in issues)
+        {
+            issue.ExportedToAI = true;
+            issue.ExportedToAIAt = now;
+        }
+        await context.SaveChangesAsync();
+    }
+
     public async Task<TechnicalIssue?> CreateAutoCaptureAsync(
         string title,
         string description,

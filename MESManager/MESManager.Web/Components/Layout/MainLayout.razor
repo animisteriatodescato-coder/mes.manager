@@ -140,6 +140,29 @@
         .mud-main-content .ag-theme-alpine-dark .ag-cell {
             color: @_rowText !important;
         }
+
+        /* ── MudTable rows ──────────────────────────────────────────── */
+        /* Righe opache su sfondo immagine (stessa palette delle AG Grid rows) */
+        .mud-main-content .mud-table tbody .mud-table-row:nth-child(even),
+        .mud-main-content .mud-table tbody .mud-table-row:nth-child(even) td {
+            background-color: @_rowEven !important;
+        }
+        .mud-main-content .mud-table tbody .mud-table-row:nth-child(odd),
+        .mud-main-content .mud-table tbody .mud-table-row:nth-child(odd) td {
+            background-color: @_rowOdd !important;
+        }
+        /* Testo MudTable: leggibile in dark/light */
+        .mud-main-content .mud-table .mud-td,
+        .mud-main-content .mud-table .mud-th {
+            color: @_rowText !important;
+        }
+        /* Header MudTable: stesso tono del drawer/appbar */
+        .mud-main-content .mud-table thead tr {
+            background-color: @_gridHeaderBg !important;
+        }
+        .mud-main-content .mud-table thead .mud-th {
+            color: rgba(255,255,255,0.95) !important;
+        }
     </style>
 }
 

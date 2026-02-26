@@ -54,6 +54,11 @@ public interface ITechnicalIssueService
     string GenerateAIExportMarkdown(TechnicalIssue issue);
 
     /// <summary>
+    /// Segna una lista di issue come esportati per AI.
+    /// </summary>
+    Task MarkAsExportedAsync(IEnumerable<int> ids);
+
+    /// <summary>
     /// Crea un issue da auto-capture (browser JS/HTTP errors).
     /// Evita duplicati: se esiste già un issue aperto con lo stesso titolo nelle ultime 2 ore, restituisce null (non crea).
     /// </summary>

@@ -100,4 +100,15 @@ public class TechnicalIssue
     /// URL della pagina in cui si è verificato l'errore (per auto-capture)
     /// </summary>
     public string? SourceUrl { get; set; }
+
+    /// <summary>
+    /// True se l'issue è stato esportato per AI (tramite Export Bulk in Issue Log).
+    /// Usato per non riesportare gli stessi errori due volte.
+    /// </summary>
+    public bool ExportedToAI { get; set; } = false;
+
+    /// <summary>
+    /// Data dell'ultima esportazione per AI
+    /// </summary>
+    public DateTime? ExportedToAIAt { get; set; }
 }
