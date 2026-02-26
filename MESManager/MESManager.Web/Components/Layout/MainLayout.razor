@@ -46,21 +46,26 @@
         ? $"rgba(18,18,28,{_panelOpStr})"      // dark: grigio scuro quasi nero
         : $"rgba(255,255,255,{_panelOpStr})";   // light: bianco semi-trasparente
     var _glassGrid = _isDarkMode
-        ? $"rgba(22,22,32,{_panelOpStr})"
-        : $"rgba(248,248,252,{_panelOpStr})";   // light: grigio leggermente più scuro del bianco
-    // Righe griglia: grigio chiaro in light, grigio scuro in dark
-    var _rowEven  = _isDarkMode ? "rgba(32,32,44,0.92)"  : "rgba(248,248,252,0.96)";
-    var _rowOdd   = _isDarkMode ? "rgba(26,26,38,0.92)"  : "rgba(240,240,246,0.96)";
-    // Drawer: in dark mode mix con nero per ottenere tono molto più scuro
+        ? $"rgba(28,28,40,{_panelOpStr})"
+        : $"rgba(248,248,252,{_panelOpStr})";
+    // Righe: in dark mode grigio medio visibile (NON nero), in light mode grigio chiaro
+    var _rowEven = _isDarkMode ? "rgba(48,48,66,0.97)"  : "rgba(250,250,253,0.97)";
+    var _rowOdd  = _isDarkMode ? "rgba(38,38,54,0.97)"  : "rgba(240,240,248,0.97)";
+    // Testo celle: bianco in dark, scuro in light
+    var _rowText = _isDarkMode ? "rgba(230,230,240,0.95)" : "rgba(30,30,40,0.95)";
+    // Header griglia: stesso tono del drawer (primary scuro), testo bianco
+    var _gridHeaderBg = _isDarkMode
+        ? "color-mix(in srgb, var(--mes-primary) 40%, #080810)"
+        : "color-mix(in srgb, var(--mes-primary) 75%, #1a1a2e)";
+    // Drawer: in dark mode quasi nero con tocco di primary
     var _drawerBg = _isDarkMode
-        ? $"color-mix(in srgb, var(--mes-primary) 35%, #050508)"   // dark: quasi nero con tocco di primary
-        : $"color-mix(in srgb, var(--mes-primary) calc({_panelOpStr} * 100%), transparent)"; // light: primary semi-trasparente
+        ? $"color-mix(in srgb, var(--mes-primary) 35%, #050508)"
+        : $"color-mix(in srgb, var(--mes-primary) calc({_panelOpStr} * 100%), transparent)";
 }
 @if (_bgActive)
 {
     <style>
-        /* ===== GLASS EFFECT — iniettato dinamicamente da MainLayout =====
-           Colori calcolati server-side da _isDarkMode → leggibilità garantita in light/dark. */
+        /* ===== GLASS EFFECT — iniettato dinamicamente da MainLayout ===== */
 
         /* Pannelli nel contenuto pagina */
         .mud-main-content .mud-paper,
@@ -71,7 +76,7 @@
             -webkit-backdrop-filter: blur(8px);
         }
 
-        /* AppBar: semi-trasparente con blur */
+        /* AppBar */
         .mud-appbar {
             background-color: color-mix(in srgb,
                 var(--mes-primary) calc(@_panelOpStr * 100%),
@@ -80,13 +85,12 @@
             -webkit-backdrop-filter: blur(12px) saturate(1.4);
         }
 
-        /* Drawer: colore calcolato server-side (dark → quasi nero, light → primary semitrasparente) */
+        /* Drawer: stesso stile dell'AppBar, dark = quasi nero */
         .mud-drawer {
             background-color: @_drawerBg !important;
             backdrop-filter: blur(12px) saturate(1.4);
             -webkit-backdrop-filter: blur(12px) saturate(1.4);
         }
-        /* Tutti i figli del drawer: transparent per non spezzare l'uniformità */
         .mud-drawer .mud-drawer-content,
         .mud-drawer .mud-drawer-header,
         .mud-drawer .mud-navmenu,
@@ -99,16 +103,31 @@
             background: transparent !important;
         }
 
-        /* AG Grid: glass sul wrapper esterno.
-           Header: NON trasparente — lascia Alpine gestire il proprio colore per leggibilità.
-           Righe: tinta grigia per coerenza con il tema glass. */
+        /* ── AG Grid ────────────────────────────────────────────────── */
+
+        /* Wrapper root: glass di base */
         .mud-main-content .ag-theme-alpine .ag-root-wrapper,
         .mud-main-content .ag-theme-alpine-dark .ag-root-wrapper {
             background-color: @_glassGrid !important;
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
         }
-        /* Righe pari e dispari: grigio sfumato invece di bianco pieno */
+
+        /* Header colonne: stesso tono del drawer/appbar, testo sempre bianco */
+        .mud-main-content .ag-theme-alpine .ag-header,
+        .mud-main-content .ag-theme-alpine-dark .ag-header,
+        .mud-main-content .ag-theme-alpine .ag-header-row,
+        .mud-main-content .ag-theme-alpine-dark .ag-header-row {
+            background-color: @_gridHeaderBg !important;
+        }
+        .mud-main-content .ag-theme-alpine .ag-header-cell,
+        .mud-main-content .ag-theme-alpine-dark .ag-header-cell,
+        .mud-main-content .ag-theme-alpine .ag-header-cell-text,
+        .mud-main-content .ag-theme-alpine-dark .ag-header-cell-text {
+            color: rgba(255,255,255,0.95) !important;
+        }
+
+        /* Righe pari/dispari con testo leggibile */
         .mud-main-content .ag-theme-alpine .ag-row-even,
         .mud-main-content .ag-theme-alpine-dark .ag-row-even {
             background-color: @_rowEven !important;
@@ -116,6 +135,11 @@
         .mud-main-content .ag-theme-alpine .ag-row-odd,
         .mud-main-content .ag-theme-alpine-dark .ag-row-odd {
             background-color: @_rowOdd !important;
+        }
+        /* Testo celle: forzato per visibilità in dark/light */
+        .mud-main-content .ag-theme-alpine .ag-cell,
+        .mud-main-content .ag-theme-alpine-dark .ag-cell {
+            color: @_rowText !important;
         }
     </style>
 }
