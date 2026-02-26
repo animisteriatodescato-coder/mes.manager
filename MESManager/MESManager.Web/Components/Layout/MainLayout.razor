@@ -57,10 +57,11 @@
     var _gridHeaderBg = _isDarkMode
         ? "color-mix(in srgb, var(--mes-primary) 40%, #080810)"
         : "color-mix(in srgb, var(--mes-primary) 75%, #1a1a2e)";
-    // Drawer: in dark mode quasi nero con tocco di primary
-    var _drawerBg = _isDarkMode
+    // AppBar + Drawer: in dark mode quasi nero con tocco di primary (stessa formula)
+    var _appBarBg = _isDarkMode
         ? $"color-mix(in srgb, var(--mes-primary) 35%, #050508)"
         : $"color-mix(in srgb, var(--mes-primary) calc({_panelOpStr} * 100%), transparent)";
+    var _drawerBg = _appBarBg;
 }
 @if (_bgActive)
 {
@@ -76,11 +77,9 @@
             -webkit-backdrop-filter: blur(8px);
         }
 
-        /* AppBar */
+        /* AppBar: stessa formula del drawer — dark=quasi nero, light=primary trasparente */
         .mud-appbar {
-            background-color: color-mix(in srgb,
-                var(--mes-primary) calc(@_panelOpStr * 100%),
-                transparent) !important;
+            background-color: @_appBarBg !important;
             backdrop-filter: blur(12px) saturate(1.4);
             -webkit-backdrop-filter: blur(12px) saturate(1.4);
         }

@@ -149,12 +149,19 @@ window.commesseAperteGrid = (function() {
             filter: true, 
             width: 180,
             cellRenderer: params => {
-                const stati = [
-                    { value: 'NonProgrammata', label: 'Non Programmata', color: '#9e9e9e', bg: '#f5f5f5' },
-                    { value: 'Programmata', label: 'Programmata', color: '#1976d2', bg: '#e3f2fd' },
-                    { value: 'InProduzione', label: 'In Produzione', color: '#ff9800', bg: '#fff3e0' },
-                    { value: 'Completata', label: 'Completata', color: '#4caf50', bg: '#e8f5e9' },
-                    { value: 'Archiviata', label: 'Archiviata', color: '#616161', bg: '#eeeeee' }
+                const isDark = document.body.classList.contains('mud-theme-dark');
+                const stati = isDark ? [
+                    { value: 'NonProgrammata', label: 'Non Programmata', color: '#bdbdbd', bg: 'rgba(70,70,82,0.9)' },
+                    { value: 'Programmata',    label: 'Programmata',     color: '#64b5f6', bg: 'rgba(25,118,210,0.30)' },
+                    { value: 'InProduzione',   label: 'In Produzione',   color: '#ffb74d', bg: 'rgba(230,115,0,0.30)' },
+                    { value: 'Completata',     label: 'Completata',      color: '#81c784', bg: 'rgba(56,142,60,0.30)' },
+                    { value: 'Archiviata',     label: 'Archiviata',      color: '#9e9e9e', bg: 'rgba(55,55,65,0.9)' }
+                ] : [
+                    { value: 'NonProgrammata', label: 'Non Programmata', color: '#555555', bg: '#e8e8e8' },
+                    { value: 'Programmata',    label: 'Programmata',     color: '#1565c0', bg: '#e3f2fd' },
+                    { value: 'InProduzione',   label: 'In Produzione',   color: '#e65100', bg: '#fff3e0' },
+                    { value: 'Completata',     label: 'Completata',      color: '#2e7d32', bg: '#e8f5e9' },
+                    { value: 'Archiviata',     label: 'Archiviata',      color: '#424242', bg: '#e0e0e0' }
                 ];
                 
                 const currentValue = params.value || 'NonProgrammata';
