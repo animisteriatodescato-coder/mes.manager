@@ -137,8 +137,13 @@ window.commesseAperteGrid = (function() {
             filter: true, 
             width: 120,
             cellStyle: params => {
-                if (params.value === 'Aperta') return { backgroundColor: '#e8f5e9', color: '#2e7d32' };
-                if (params.value === 'Chiusa') return { backgroundColor: '#fce4ec', color: '#c2185b' };
+                const isDark = document.body.classList.contains('mud-theme-dark');
+                if (params.value === 'Aperta') return isDark
+                    ? { backgroundColor: 'rgba(27,94,32,0.90)',  color: '#a5d6a7', fontWeight: 'bold' }
+                    : { backgroundColor: '#c8e6c9', color: '#1b5e20', fontWeight: 'bold' };
+                if (params.value === 'Chiusa') return isDark
+                    ? { backgroundColor: 'rgba(136,14,79,0.80)',  color: '#f48fb1', fontWeight: 'bold' }
+                    : { backgroundColor: '#fce4ec', color: '#880e4f', fontWeight: 'bold' };
                 return null;
             }
         },

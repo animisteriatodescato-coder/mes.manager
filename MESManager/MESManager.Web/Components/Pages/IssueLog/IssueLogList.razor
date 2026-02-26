@@ -77,18 +77,21 @@
                    OnClick="@(() => Navigation.NavigateTo("/impostazioni/issue-log/new"))">
             Nuovo Issue
         </MudButton>
-        <MudButtonGroup Variant="Variant.Outlined" Size="Size.Medium">
+        <div class="d-flex" style="border: 1px solid var(--mud-palette-lines-default); border-radius: 4px; overflow: hidden;">
             <MudButton Color="@(_filterAutoCapture == "tutti" ? Color.Primary : Color.Default)"
                        Variant="@(_filterAutoCapture == "tutti" ? Variant.Filled : Variant.Outlined)"
-                       OnClick="@(() => _filterAutoCapture = "tutti")">Tutti</MudButton>
+                       Style="border-radius:0; border-right: 1px solid var(--mud-palette-lines-default); min-width:70px;"
+                       OnClick="SetFiltroTutti">Tutti</MudButton>
             <MudButton Color="@(_filterAutoCapture == "auto" ? Color.Primary : Color.Default)"
                        Variant="@(_filterAutoCapture == "auto" ? Variant.Filled : Variant.Outlined)"
                        StartIcon="@Icons.Material.Filled.SmartToy"
-                       OnClick="@(() => _filterAutoCapture = "auto")">Auto @(_autoOpenCount > 0 ? $"({_autoOpenCount})" : "")</MudButton>
+                       Style="border-radius:0; border-right: 1px solid var(--mud-palette-lines-default); min-width:100px;"
+                       OnClick="SetFiltroAuto">Auto @(_autoOpenCount > 0 ? $"({_autoOpenCount})" : "")</MudButton>
             <MudButton Color="@(_filterAutoCapture == "manuale" ? Color.Primary : Color.Default)"
                        Variant="@(_filterAutoCapture == "manuale" ? Variant.Filled : Variant.Outlined)"
-                       OnClick="@(() => _filterAutoCapture = "manuale")">Manuali</MudButton>
-        </MudButtonGroup>
+                       Style="border-radius:0; min-width:80px;"
+                       OnClick="SetFiltroManuale">Manuali</MudButton>
+        </div>
     </MudStack>
     <MudTooltip Text="Esporta errori selezionati nel formato pronto per VS Code Copilot Chat">
         <MudButton Variant="Variant.Filled" Color="Color.Secondary"
@@ -100,9 +103,9 @@
 </MudStack>
 
 @* Tabella Issues *@
-<MudTable Items="@IssuesFiltrati" Hover="true" Dense="true" Striped="true" Elevation="2"
+<MudTable Items="@IssuesFiltrati" Hover="true" Dense="true" Striped="true" Elevation="3"
           OnRowClick="@((TableRowClickEventArgs<TechnicalIssue> args) => { if (args.Item != null) GoToDetail(args.Item); })"
-          T="TechnicalIssue" Style="cursor: pointer;">
+          T="TechnicalIssue" Style="cursor: pointer; background-color: var(--mud-palette-surface) !important;">
     <HeaderContent>
         <MudTh Style="width: 24px;"></MudTh>
         <MudTh Style="width: 24px;"></MudTh>
@@ -306,6 +309,10 @@
         _filterEnvironment = null; _searchTitle = null; _filterAutoCapture = "tutti";
         await CaricaIssues();
     }
+
+    private void SetFiltroTutti() { _filterAutoCapture = "tutti"; StateHasChanged(); }
+    private void SetFiltroAuto() { _filterAutoCapture = "auto"; StateHasChanged(); }
+    private void SetFiltroManuale() { _filterAutoCapture = "manuale"; StateHasChanged(); }
 
     private void GoToDetail(TechnicalIssue issue) =>
         Navigation.NavigateTo($"/impostazioni/issue-log/{issue.Id}");
