@@ -5,6 +5,7 @@
 @inject IRicettaGanttService RicettaService
 @inject IAnimeService AnimeService
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject ILogger<PlcDbViewerPopup> Logger
 @inject HttpClient HttpClient
 
@@ -318,6 +319,15 @@
     
     private async Task CopiaDb55ToDb56Async()
     {
+        // Chiedi conferma prima di sincronizzare ricette sulla macchina
+        var confirm = await DialogService.ShowMessageBox(
+            "Conferma sincronizzazione",
+            $"Sincronizzare i valori DB56 → DB55 sulla macchina {NumeroMacchina}? L'operazione sovrascriverà i parametri correnti in DB55.",
+            yesText: "Sì, sincronizza",
+            cancelText: "Annulla");
+
+        if (confirm != true) return;
+
         _loading = true;
         try
         {

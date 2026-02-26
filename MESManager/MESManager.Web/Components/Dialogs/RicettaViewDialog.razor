@@ -2,6 +2,7 @@
 @using MudBlazor
 @inject HttpClient Http
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject IJSRuntime JS
 
 <MudDialog Style="max-width: 1000px;" data-testid="dlg-ricetta-view">
@@ -72,15 +73,29 @@
         }
     </DialogContent>
     <DialogActions>
+        @if (ShowImportButton && !string.IsNullOrEmpty(CodiceArticolo))
+        {
+            <MudButton OnClick="ApriImportaRicettaAsync"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Download"
+                       data-testid="btn-importa-ricetta-da-macchina">
+                Importa da Macchina
+            </MudButton>
+        }
+        <MudSpacer />
         <MudButton OnClick="Close" Variant="Variant.Filled" Color="Color.Primary">Chiudi</MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
-    
+
     [Parameter] public string CodiceArticolo { get; set; } = string.Empty;
-    
+
+    /// <summary>Se true, mostra il pulsante "Importa da Macchina" nel footer del dialog.</summary>
+    [Parameter] public bool ShowImportButton { get; set; } = false;
+
     private RicettaArticoloDto? ricetta;
     private bool isLoading = true;
     
@@ -129,5 +144,28 @@
         }
     }
     
+    private async Task ApriImportaRicettaAsync()
+    {
+        var parameters = new DialogParameters<ImportaRicettaMacchinaDialog>
+        {
+            { x => x.CodiceArticolo, CodiceArticolo }
+        };
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
+        };
+        var dialog = await DialogService.ShowAsync<ImportaRicettaMacchinaDialog>(
+            "Importa Ricetta da Macchina", parameters, options);
+        var result = await dialog.Result;
+        // Se l'import ha avuto successo, ricarica la ricetta nel dialog corrente
+        if (result is { Canceled: false, Data: true })
+        {
+            await LoadRicetta();
+        }
+    }
+
     private void Close() => MudDialog.Close();
 }

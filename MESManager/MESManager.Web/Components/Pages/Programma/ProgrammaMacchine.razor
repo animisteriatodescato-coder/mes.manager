@@ -621,6 +621,55 @@
     }
 
     [JSInvokable]
+    public async Task ViewRicetta(string codiceArticolo)
+    {
+        try
+        {
+            var parameters = new DialogParameters<RicettaViewDialog>
+            {
+                { x => x.CodiceArticolo, codiceArticolo },
+                { x => x.ShowImportButton, true }
+            };
+            var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Large,
+                FullWidth = true,
+                CloseButton = true,
+                CloseOnEscapeKey = true
+            };
+            await DialogService.ShowAsync<RicettaViewDialog>($"Ricetta: {codiceArticolo}", parameters, options);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore apertura ricetta: {ex.Message}", Severity.Error);
+        }
+    }
+
+    [JSInvokable]
+    public async Task ImportaRicetta(string codiceArticolo)
+    {
+        try
+        {
+            var parameters = new DialogParameters<ImportaRicettaMacchinaDialog>
+            {
+                { x => x.CodiceArticolo, codiceArticolo }
+            };
+            var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true,
+                CloseButton = true,
+                CloseOnEscapeKey = true
+            };
+            await DialogService.ShowAsync<ImportaRicettaMacchinaDialog>("Importa Ricetta da Macchina", parameters, options);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore importazione ricetta: {ex.Message}", Severity.Error);
+        }
+    }
+
+    [JSInvokable]
     public async Task OnMachineSelectionChanged(string commessaId, string? numeroMacchina)
     {
         // Ricarica i dati per riflettere le modifiche

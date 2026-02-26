@@ -348,8 +348,14 @@ window.agGridFactory = (function () {
                     window[config.dotNetRefVar],
                     config.namespace
                 );
-            };
-        }
+            };            // Apre dialog ImportaRicettaMacchinaDialog per celle senza ricetta
+            api.openImportaRicetta = (codiceArticolo) => {
+                window.ricettaColumnShared.openImportaRicettaDialog(
+                    codiceArticolo,
+                    window[config.dotNetRefVar],
+                    config.namespace
+                );
+            };        }
 
         // ── Opzione: updateData per aggiornamento riga in-place (anime) ───────
         if (config.hasUpdateData) {

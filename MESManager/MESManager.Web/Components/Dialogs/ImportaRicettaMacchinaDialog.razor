@@ -1,0 +1,217 @@
+@using MESManager.Application.DTOs
+@using MudBlazor
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject ILogger<ImportaRicettaMacchinaDialog> Logger
+
+<MudDialog data-testid="dlg-importa-ricetta-macchina">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.Download" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Importa Ricetta da Macchina</MudText>
+            @if (!string.IsNullOrEmpty(CodiceArticolo))
+            {
+                <MudChip T="string" Color="Color.Info" Size="Size.Small">@CodiceArticolo</MudChip>
+            }
+        </MudStack>
+    </TitleContent>
+
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="3" Class="pa-6">
+                <MudProgressCircular Indeterminate="true" Size="Size.Large" />
+                <MudText Typo="Typo.body1">@_loadingMessage</MudText>
+            </MudStack>
+        }
+        else if (_importSuccess)
+        {
+            <MudAlert Severity="Severity.Success" Class="mb-3" Icon="@Icons.Material.Filled.CheckCircle">
+                <MudText Typo="Typo.body1">Ricetta importata con successo!</MudText>
+                <MudText Typo="Typo.body2" Class="mt-1">
+                    <strong>@_risultatoParametri parametri</strong> salvati per articolo
+                    <strong>@CodiceArticolo</strong> dalla macchina
+                    <strong>@(_macchinaSelezionata?.Codice) — @(_macchinaSelezionata?.Nome)</strong>.
+                </MudText>
+            </MudAlert>
+        }
+        else
+        {
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                Seleziona la macchina da cui leggere i parametri runtime (DB56 offset&nbsp;100-196)
+                da salvare come ricetta per <strong>@CodiceArticolo</strong>.
+            </MudText>
+
+            @if (_macchine.Count == 0)
+            {
+                <MudAlert Severity="Severity.Warning">Nessuna macchina attiva trovata.</MudAlert>
+            }
+            else
+            {
+                <MudList T="MacchinaDto" Dense="true">
+                    @foreach (var m in _macchine)
+                    {
+                        bool selected = _macchinaSelezionata?.Id == m.Id;
+                        <MudListItem T="MacchinaDto"
+                                     OnClick="@(() => OnMacchinaSelected(m))"
+                                     Style="@(selected ? "background: rgba(25,118,210,0.08); border-radius: 6px;" : "cursor:pointer;")">
+                            <div class="d-flex align-center gap-3 py-1">
+                                <MudIcon Icon="@Icons.Material.Filled.Settings"
+                                         Color="@(selected ? Color.Primary : Color.Default)" />
+                                <div style="flex:1;">
+                                    <MudText Typo="Typo.body1"><strong>@m.Codice</strong> — @m.Nome</MudText>
+                                    @if (!string.IsNullOrEmpty(m.IndirizzoPLC))
+                                    {
+                                        <MudText Typo="Typo.caption" Color="Color.Success">
+                                            <MudIcon Icon="@Icons.Material.Filled.Link" Size="Size.Small" /> PLC: @m.IndirizzoPLC
+                                        </MudText>
+                                    }
+                                    else
+                                    {
+                                        <MudText Typo="Typo.caption" Color="Color.Warning">
+                                            <MudIcon Icon="@Icons.Material.Filled.LinkOff" Size="Size.Small" /> PLC non configurato
+                                        </MudText>
+                                    }
+                                </div>
+                                @if (selected)
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Primary" />
+                                }
+                            </div>
+                        </MudListItem>
+                        <MudDivider />
+                    }
+                </MudList>
+
+                @if (_macchinaSelezionata != null)
+                {
+                    <MudAlert Severity="Severity.Info" Class="mt-3" Icon="@Icons.Material.Filled.Info">
+                        <MudText Typo="Typo.body2">
+                            Verranno importati i parametri DB56 (offset 100-196) attualmente presenti su
+                            <strong>@_macchinaSelezionata.Codice — @_macchinaSelezionata.Nome</strong>
+                            come ricetta per <strong>@CodiceArticolo</strong>.<br />
+                            <span style="color:#d32f2f;">⚠ La ricetta esistente verrà sovrascritta.</span>
+                        </MudText>
+                    </MudAlert>
+                }
+            }
+        }
+    </DialogContent>
+
+    <DialogActions>
+        @if (_importSuccess)
+        {
+            <MudButton OnClick="Close" Variant="Variant.Filled" Color="Color.Primary">Chiudi</MudButton>
+        }
+        else
+        {
+            <MudButton OnClick="Cancel" Disabled="@_loading">Annulla</MudButton>
+            <MudButton OnClick="ImportaAsync"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Download"
+                       Disabled="@(_macchinaSelezionata == null || _loading)">
+                Importa Ricetta
+            </MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+
+    /// <summary>Codice articolo per cui importare la ricetta.</summary>
+    [Parameter] public string CodiceArticolo { get; set; } = string.Empty;
+
+    private List<MacchinaDto> _macchine = new();
+    private MacchinaDto? _macchinaSelezionata;
+    private bool _loading = true;
+    private bool _importSuccess;
+    private string _loadingMessage = "Caricamento macchine...";
+    private int _risultatoParametri;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMacchineAsync();
+    }
+
+    private async Task LoadMacchineAsync()
+    {
+        try
+        {
+            _loading = true;
+            _loadingMessage = "Caricamento macchine...";
+            var all = await Http.GetFromJsonAsync<List<MacchinaDto>>("/api/Macchine") ?? new();
+            // Solo macchine attive in Gantt, ordinate per codice
+            _macchine = all.Where(m => m.AttivaInGantt).OrderBy(m => m.Codice).ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Errore caricamento macchine per ImportaRicettaMacchinaDialog");
+            Snackbar.Add($"Errore caricamento macchine: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OnMacchinaSelected(MacchinaDto m)
+    {
+        _macchinaSelezionata = _macchinaSelezionata?.Id == m.Id ? null : m;
+    }
+
+    private async Task ImportaAsync()
+    {
+        if (_macchinaSelezionata == null || string.IsNullOrEmpty(CodiceArticolo)) return;
+
+        _loading = true;
+        _loadingMessage = $"Importazione parametri da {_macchinaSelezionata.Codice}...";
+
+        try
+        {
+            var request = new SaveRecipeFromPlcRequest
+            {
+                MacchinaId = _macchinaSelezionata.Id,
+                CodiceArticolo = CodiceArticolo
+                // Entries = null → il controller legge DB56 direttamente dal PLC
+            };
+
+            var response = await Http.PostAsJsonAsync("/api/plc/save-recipe-from-plc", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<SaveRecipeFromPlcResult>();
+                if (result?.Success == true)
+                {
+                    _risultatoParametri = result.NumeroParametriSalvati;
+                    _importSuccess = true;
+                    Logger.LogInformation("[ImportaRicetta] Ricetta importata: {Codice} da {Macchina}, {N} parametri",
+                        CodiceArticolo, _macchinaSelezionata.Codice, _risultatoParametri);
+                }
+                else
+                {
+                    Snackbar.Add($"❌ Errore importazione: {result?.ErrorMessage}", Severity.Error);
+                }
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"❌ Errore HTTP {response.StatusCode}: {error}", Severity.Error);
+                Logger.LogError("[ImportaRicetta] HTTP {StatusCode}: {Error}", response.StatusCode, error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Errore importazione ricetta per {Codice}", CodiceArticolo);
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void Close() => MudDialog.Close(DialogResult.Ok(_importSuccess));
+    private void Cancel() => MudDialog.Cancel();
+}

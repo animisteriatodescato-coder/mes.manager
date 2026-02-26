@@ -684,12 +684,13 @@ window.commesseAperteGrid = (function() {
             'commesseAperteGrid'
         );
     }
-    
-    function reinit(jsonData) {
-        console.log('Reinitializing grid with fresh data...');
-        const data = JSON.parse(jsonData);
-        const savedState = getState();
-        init('commesseAperteGrid', data, savedState);
+
+    function openImportaRicetta(codiceArticolo) {
+        window.ricettaColumnShared.openImportaRicettaDialog(
+            codiceArticolo,
+            dotNetHelper,
+            'commesseAperteGrid'
+        );
     }
     
     function updateRowData(jsonData) {
@@ -717,6 +718,7 @@ window.commesseAperteGrid = (function() {
         getStats: getStats,
         getSelectedRows: getSelectedRows,
         toggleColumnPanel: toggleColumnPanel,
-        openRicetta: openRicetta
+        openRicetta: openRicetta,
+        openImportaRicetta: openImportaRicetta
     };
 })();

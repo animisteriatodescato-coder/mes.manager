@@ -546,9 +546,19 @@
     
     /// <summary>
     /// Carica manualmente la prossima ricetta da Gantt su DB55 (offset 100+)
+    /// Chiede conferma prima di inviare alla macchina.
     /// </summary>
     private async Task CaricaProssimaRicettaAsync(Guid macchinaId)
     {
+        // Chiedi conferma prima di inviare la ricetta alla macchina
+        var confirm = await DialogService.ShowMessageBox(
+            "Conferma invio ricetta",
+            "Caricare la prossima ricetta da Gantt su questa macchina?",
+            yesText: "Sì, carica",
+            cancelText: "Annulla");
+
+        if (confirm != true) return;
+
         try
         {
             var response = await Http.PostAsync($"/api/plc/load-next-recipe-manual/{macchinaId}", null);

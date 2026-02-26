@@ -48,8 +48,18 @@ window.ricettaColumnShared = (function() {
                         </span>
                     </div>`;
                 } else {
-                    return `<div style="display: flex; align-items: center; height: 100%;" title="Nessuna ricetta">
-                        <span style="color: #999; font-size: 11px;">—</span>
+                    // Cella vuota: cliccabile per aprire il dialog di importazione
+                    const codiceArticolo = params.data[codiceArticoloField];
+                    const onClickHandler = codiceArticolo
+                        ? `window.${config.gridNamespace}.openImportaRicetta('${codiceArticolo}')`
+                        : '';
+                    const style = codiceArticolo
+                        ? 'cursor: pointer; display: flex; align-items: center; height: 100%;'
+                        : 'display: flex; align-items: center; height: 100%;';
+                    const tooltip = codiceArticolo ? 'Clicca per importare ricetta da macchina' : 'Nessuna ricetta';
+
+                    return `<div style="${style}" onclick="${onClickHandler}" title="${tooltip}">
+                        <span style="color: #bbb; font-size: 11px; text-decoration: underline dotted; text-underline-offset: 2px;">— importa</span>
                     </div>`;
                 }
             }
@@ -57,30 +67,46 @@ window.ricettaColumnShared = (function() {
     }
     
     /**
-     * Funzione helper per aprire dialog ricetta
-     * Da chiamare dai metodi openRicetta() delle singole griglie
-     * 
-     * @param {string} codiceArticolo - Codice articolo
+     * Funzione helper per aprire dialog ricetta (cella verde con parametri)
+     * @param {string} codiceArticolo
      * @param {Object} dotNetRef - Reference Blazor
-     * @param {string} gridName - Nome griglia per log
+     * @param {string} gridName
      */
     function openRicettaDialog(codiceArticolo, dotNetRef, gridName) {
         if (!codiceArticolo) {
             console.warn(`[${gridName}] openRicetta chiamato senza codiceArticolo`);
             return;
         }
-        
         console.log(`[${gridName}] Apertura ricetta per:`, codiceArticolo);
-        
         if (dotNetRef) {
             dotNetRef.invokeMethodAsync('ViewRicetta', codiceArticolo);
         } else {
             console.error(`[${gridName}] DotNetRef non registrato`);
         }
     }
+
+    /**
+     * Funzione helper per aprire dialog importa ricetta (cella vuota)
+     * @param {string} codiceArticolo
+     * @param {Object} dotNetRef - Reference Blazor
+     * @param {string} gridName
+     */
+    function openImportaRicettaDialog(codiceArticolo, dotNetRef, gridName) {
+        if (!codiceArticolo) {
+            console.warn(`[${gridName}] openImportaRicetta chiamato senza codiceArticolo`);
+            return;
+        }
+        console.log(`[${gridName}] Importa ricetta per:`, codiceArticolo);
+        if (dotNetRef) {
+            dotNetRef.invokeMethodAsync('ImportaRicetta', codiceArticolo);
+        } else {
+            console.error(`[${gridName}] DotNetRef non registrato per ImportaRicetta`);
+        }
+    }
     
     return {
         createColumnDef: createColumnDef,
-        openRicettaDialog: openRicettaDialog
+        openRicettaDialog: openRicettaDialog,
+        openImportaRicettaDialog: openImportaRicettaDialog
     };
 })();

@@ -673,6 +673,14 @@ window.programmaMacchineGrid = (function() {
         );
     }
 
+    function openImportaRicetta(codiceArticolo) {
+        window.ricettaColumnShared.openImportaRicettaDialog(
+            codiceArticolo,
+            dotNetHelper,
+            'programmaMacchineGrid'
+        );
+    }
+
     function setQuickFilter(searchText) {
         safeApiCall(() => {
             gridApi.setGridOption('quickFilterText', searchText);
@@ -1277,6 +1285,7 @@ window.programmaMacchineGrid = (function() {
         printInNewWindow: printInNewWindow,
         printViaIframe: printViaIframe,
         setDotNetHelper: setDotNetHelper,
-        openRicetta: openRicetta
+        openRicetta: openRicetta,
+        openImportaRicetta: openImportaRicetta
     };
 })();
