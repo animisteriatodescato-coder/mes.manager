@@ -348,6 +348,10 @@ Ogni run deve riportare:
 | **Testo brand su sfondo bianco** | `AppSettings.ThemePrimaryTextColor` + `AppSettingsService.ComputePrimaryTextColor()` → `--mes-primary-text` CSS var |
 | **Card con sfondo fisso bianco in dark mode** | Usare `color: #1a1a1a !important` + override `.mud-typography` figli — MAI `var(--mud-palette-text-primary)` su card con background hardcoded |
 | Preferenze utente persistenti | `IPreferenzeUtenteService` → mai localStorage diretto |
+| **Colonna Ricetta in AG Grid** | `ricetta-column-shared.js` → `window.ricettaColumnShared.createColumnDef(config)` — usato da tutte le 4 grid con ricetta. Chip verde `✓ N` = ha ricetta. Chip grigio `↓ importa` = senza ricetta cliccabile. Cache-bust in `App.razor` (`?v=NNNN`) |
+| **Visualizzare ricetta articolo** | `RicettaViewDialog.razor` — param `CodiceArticolo` + `ShowImportButton=true` per abilitare "Importa da Macchina" |
+| **Importare ricetta da macchina** | `ImportaRicettaMacchinaDialog.razor` — param `CodiceArticolo`. Usa `GET /api/Macchine` + `POST /api/plc/save-recipe-from-plc` (`Entries=null` → legge DB56 live). MAI duplicare questa logica. |
+| **Azione pericolosa PLC (invia a macchina)** | Sempre `await DialogService.ShowMessageBox(...)` confirm prima — vedi `DashboardProduzione.razor` e `PlcDbViewerPopup.razor` |
 
 **Regola**: cerca prima con grep/semantic search → estendi → **mai duplica**.
 ---

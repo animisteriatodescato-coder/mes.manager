@@ -4,7 +4,164 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.52.0
+## 🔖 Versione Corrente: v1.53.4
+
+---
+
+## 🔖 v1.53.4 - Fix CommesseAperte crash + Dashboard dark server-side (26 Feb 2026)
+
+**Data**: 26 Febbraio 2026
+
+### 🐛 Fix — commesse-aperte-grid.js ReferenceError
+- `commesse-aperte-grid.js`: rimosso `reinit` dall'oggetto return — la funzione non esisteva
+  nel file, causava `ReferenceError` al caricamento della grid CommesseAperte
+
+### 🎨 Fix — Dashboard dark mode gestita C# server-side
+- `MainLayout`: `.mud-card:not(.machine-card)` — machine-card esclusa dal glass override
+- Aggiunto blocco CSS server-side (`_isDarkMode`) per `.machine-card`:
+  - dark: `radial-gradient` scuro + testo `rgba(230,230,240,0.97)`
+  - light: `radial-gradient` bianco/grigio + testo `#1a1a1a`
+  - `.machine-number` e `.section-title` colorati correttamente
+- `DashboardProduzione.razor`: rimossi override `.mud-theme-dark` (ora in MainLayout)
+
+### 🎨 Fix — Colonna Ricetta: chip grigio per celle senza ricetta
+- `ricetta-column-shared.js` (`?v=1456`): cella vuota mostra chip grigio `↓ importa`
+  con stesso stile (border-radius 12px, font 11px bold) del chip verde `✓ N`
+  Cliccabile → apre `ImportaRicettaMacchinaDialog` direttamente
+
+#### File modificati
+- `MESManager.Web/wwwroot/lib/ag-grid/commesse-aperte-grid.js`
+- `MESManager.Web/Components/Layouts/MainLayout.razor`
+- `MESManager.Web/Components/Pages/Produzione/DashboardProduzione.razor`
+- `MESManager.Web/wwwroot/js/ricetta-column-shared.js` (`?v=1456`)
+- `MESManager.Web/Components/App.razor`
+
+---
+
+## 🔖 v1.53.3 - Dashboard dark glow + MudTable righe opache (26 Feb 2026)
+
+**Data**: 26 Febbraio 2026
+
+### 🎨 Fix — Dashboard machine-card dark mode
+- `.machine-card` dark: `radial-gradient` scuro, `.machine-number` `rgba(255,255,255,0.98)`
+- Box-shadow glow +20% su tutti gli stati (`0.25→0.45`, `0.2→0.40`)
+- Inset glow: `60px→70px` per effetto più visibile
+
+### 🎨 Fix — MudTable righe opache (glass layout)
+- `MainLayout`: aggiunto styling per tutte le `MudTable`:
+  - `tbody tr:nth-child(even/odd)`: usa `_rowEven`/`_rowOdd` (stesso delle AG Grid)
+  - `thead`: `_gridHeaderBg`
+  - `.mud-th`/`.mud-td`: `_rowText` per leggibilità
+- Fix trasparenza in `GestioneUtenti`, `IssueLog` e tutte le pagine con `MudTable`
+
+#### File modificati
+- `MESManager.Web/Components/Layouts/MainLayout.razor`
+- `MESManager.Web/Components/Pages/Produzione/DashboardProduzione.razor`
+
+---
+
+## 🔖 v1.53.2 - AppBar dark + Stato grid dark mode (26 Feb 2026)
+
+**Data**: 26 Febbraio 2026
+
+### 🎨 Fix — AppBar colore dark allineato al Drawer
+- `MainLayout`: AppBar usa stessa formula Drawer in dark mode (`color-mix(primary 35%, #050508)`)
+  — prima era sempre `primary` semi-trasparente = più chiaro del Drawer
+
+### 🎨 Fix — StatoProgramma illeggibile in dark mode
+- `commesse-aperte-grid.js`: renderer `StatoProgramma` ora rileva `.mud-theme-dark`
+  - dark: `NonProgrammata` grigio chiaro su sfondo scuro; `Programmata`/`Completata` saturati
+  - light: `NonProgrammata` `#555` su `#e8e8e8` (contrasto migliorato)
+
+### 🧹 Fix — GestioneUtenti titolo duplicato
+- `GestioneUtenti.razor`: rimosso `MudText h4 "Gestione Utenti App"` (già nell'AppBar)
+
+#### File modificati
+- `MESManager.Web/Components/Layouts/MainLayout.razor`
+- `MESManager.Web/wwwroot/lib/ag-grid/commesse-aperte-grid.js`
+- `MESManager.Web/Components/Pages/Impostazioni/GestioneUtenti.razor`
+
+---
+
+## 🔖 v1.53.1 - Conferma azioni PLC + Import Ricetta da macchina (26 Feb 2026)
+
+**Data**: 26 Febbraio 2026
+
+### 🔐 Feature — Conferma prima di inviare a macchine
+- `DashboardProduzione.razor`: `ShowMessageBox` confirm prima di `CaricaProssimaRicettaAsync`
+- `PlcDbViewerPopup.razor`: `ShowMessageBox` confirm prima di `CopiaDb55ToDb56Async` (Sincronizza ricette)
+
+### 🆕 Feature — Importa Ricetta da macchina nelle griglie
+- **Nuovo**: `ImportaRicettaMacchinaDialog.razor`
+  - Carica macchine da `GET /api/Macchine` (filtro `AttivaInGantt`)
+  - Seleziona macchina → `POST /api/plc/save-recipe-from-plc` (`Entries=null` → legge DB56 live)
+  - Mostra esito con numero parametri salvati; su successo ricarica ricetta nel dialog padre
+- `RicettaViewDialog.razor`: param `ShowImportButton` + bottone **Importa da Macchina**
+  → apre `ImportaRicettaMacchinaDialog`, su OK ricarica ricetta nel dialog
+- `ricetta-column-shared.js`: cella senza ricetta mostra `↓ importa` cliccabile
+- `ag-grid-factory.js`: espone `openImportaRicetta` quando `hasRicetta=true`
+- `commesse-aperte-grid.js` + `programma-macchine-grid.js`: espongono `openImportaRicetta`
+- `CatalogoAnime`, `CatalogoCommesse`, `CommesseAperte`, `ProgrammaMacchine`:
+  - `[JSInvokable] ViewRicetta` aggiornato con `ShowImportButton=true`
+  - Aggiunto `[JSInvokable] ImportaRicetta` (apre dialog direttamente)
+  - `CommesseAperte`: aggiunto anche `ViewRicetta` (era mancante)
+
+> **Zero duplicazione**: API `POST /api/plc/save-recipe-from-plc` riusata as-is.
+> `ImportaRicettaMacchinaDialog` è un singolo componente usato da tutte le 4 pagine.
+
+#### File modificati
+- `MESManager.Web/Components/Dialogs/ImportaRicettaMacchinaDialog.razor` (**NEW**)
+- `MESManager.Web/Components/Dialogs/RicettaViewDialog.razor`
+- `MESManager.Web/Components/Pages/Produzione/DashboardProduzione.razor`
+- `MESManager.Web/Components/Pages/PlcDbViewerPopup.razor`
+- `MESManager.Web/wwwroot/js/ricetta-column-shared.js`
+- `MESManager.Web/wwwroot/js/ag-grid-factory.js`
+- `MESManager.Web/wwwroot/lib/ag-grid/commesse-aperte-grid.js`
+- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js`
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoAnime.razor`
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoCommesse.razor`
+- `MESManager.Web/Components/Pages/Programma/CommesseAperte.razor`
+- `MESManager.Web/Components/Pages/Programma/ProgrammaMacchine.razor`
+
+---
+
+## 🔖 v1.52.9 - Grid headers opachi + righe grigie + drawer dark (25 Feb 2026)
+
+**Data**: 25 Febbraio 2026
+
+- `MainLayout` AG Grid: rimosso `transparent` su `.ag-header` — Alpine gestisce il colore nativamente
+- AG Grid rows: `.ag-row-even`/`.ag-row-odd` con tinta grigia (light: `248`/`240`, dark: `32`/`26`)
+- Drawer dark mode: `color-mix(primary 35%, #050508)` = quasi nero con tocco brand
+- Drawer light mode: invariato (primary semi-trasparente)
+
+---
+
+## 🔖 v1.52.8 - Glass effect dark mode + Grid trasparenza corretta (25 Feb 2026)
+
+**Data**: 25 Febbraio 2026
+
+- `MainLayout`: usa `_isDarkMode` C# (server-side) invece di `.mud-theme-dark` CSS selector
+  — elimina il pannello bianco in dark mode al primo render
+- Dark glass: `rgba(18,18,28)` grigio scuro invece di `rgba(30,30,50)`
+- AG Grid: rimossi override `transparent` su `.ag-body-viewport`/`.ag-center-cols-viewport`
+  — righe AG Grid mantengono colori tema Alpine (leggibili)
+  — `ProgrammaMacchine` allineato a tutti gli altri cataloghi
+- Solo `.ag-root-wrapper` riceve glass + solo `.ag-header` transparent
+- `backdrop-filter: blur` aggiunto su `mud-paper`/`card` e `ag-root-wrapper`
+
+---
+
+## 🔖 v1.52.7 - Unificazione layout completa tutte le pagine (25 Feb 2026)
+
+**Data**: 25 Febbraio 2026
+
+- Tutte le pagine non-grid wrappate in `MudContainer MaxWidth.ExtraLarge`
+- `MainLayout` glass: `MudContainer` riceve `background + border-radius + backdrop-filter`
+- Allineamento padding/margin consistente su tutte le pagine
+
+---
+
+## 🔖 v1.52.0
 
 ## 🔖 v1.52.0 - Gantt Avanzamento Reale da PLC (24 Feb 2026)
 
