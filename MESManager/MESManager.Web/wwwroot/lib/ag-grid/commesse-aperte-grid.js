@@ -710,7 +710,6 @@ window.commesseAperteGrid = (function() {
 
     return {
         init: init,
-        reinit: reinit,
         updateRowData: updateRowData,
         setDotNetHelper: setDotNetHelper,
         setCurrentUser: setCurrentUser,

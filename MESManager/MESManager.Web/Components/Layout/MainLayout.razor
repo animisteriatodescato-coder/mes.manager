@@ -68,13 +68,36 @@
     <style>
         /* ===== GLASS EFFECT — iniettato dinamicamente da MainLayout ===== */
 
-        /* Pannelli nel contenuto pagina */
-        .mud-main-content .mud-paper,
-        .mud-main-content .mud-card {
+        /* Pannelli nel contenuto pagina — esclude le machine-card della dashboard (hanno stile proprio) */
+        .mud-main-content .mud-paper:not(.machine-card),
+        .mud-main-content .mud-card:not(.machine-card) {
             background-color: @_glassPanel !important;
             background:        @_glassPanel !important;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
+        }
+
+        /* Dashboard machine-card: dark/light gestito server-side (C# _isDarkMode) */
+        .machine-card {
+            background: @(_isDarkMode
+                ? "radial-gradient(ellipse at center, rgba(62,62,82,0.97) 0%, rgba(40,40,58,0.98) 55%, rgba(22,22,36,0.99) 100%)"
+                : "radial-gradient(ellipse at center, #ffffff 30%, #e2e6ea 80%, #cfd5db 100%)") !important;
+        }
+        .machine-card,
+        .machine-card .mud-typography,
+        .machine-card .mud-card-header,
+        .machine-card .mud-card-content,
+        .machine-card .mud-card-actions,
+        .machine-card .mud-input-label,
+        .machine-card p,
+        .machine-card span:not(.mud-chip-content) {
+            color: @(_isDarkMode ? "rgba(230,230,240,0.95)" : "#1a1a1a") !important;
+        }
+        .machine-card .machine-number {
+            color: @(_isDarkMode ? "rgba(255,255,255,0.98)" : "var(--mes-primary-text, var(--mud-palette-primary))") !important;
+        }
+        .machine-card .section-title {
+            color: @(_isDarkMode ? "rgba(200,200,215,0.80)" : "#333333") !important;
         }
 
         /* AppBar: stessa formula del drawer — dark=quasi nero, light=primary trasparente */

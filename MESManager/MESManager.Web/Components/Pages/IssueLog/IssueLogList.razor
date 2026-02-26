@@ -5,20 +5,21 @@
 @inject ITechnicalIssueService IssueService
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
-<PageTitle>Issue Log - Archivio Bug & Errori</PageTitle>
+<PageTitle>Issue Log - Archivio Bug &amp; Errori</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-issue-log-list">
 <MudText Typo="Typo.h4" Class="mb-4">
     <MudIcon Icon="@Icons.Material.Filled.BugReport" Class="mr-2" />
-    Archivio Bug & Errori
+    Archivio Bug &amp; Errori
 </MudText>
 
 @* Filtri *@
 <MudPaper Class="pa-4 mb-4" Elevation="2">
     <MudGrid>
         <MudItem xs="12" sm="6" md="2">
-            <MudSelect T="IssueStatus?" Label="Stato" @bind-Value="_filterStatus" 
+            <MudSelect T="IssueStatus?" Label="Stato" @bind-Value="_filterStatus"
                        Variant="Variant.Outlined" Clearable="true" Dense="true">
                 @foreach (var s in Enum.GetValues<IssueStatus>())
                 {
@@ -27,7 +28,7 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" sm="6" md="2">
-            <MudSelect T="IssueArea?" Label="Area" @bind-Value="_filterArea" 
+            <MudSelect T="IssueArea?" Label="Area" @bind-Value="_filterArea"
                        Variant="Variant.Outlined" Clearable="true" Dense="true">
                 @foreach (var a in Enum.GetValues<IssueArea>())
                 {
@@ -36,7 +37,7 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" sm="6" md="2">
-            <MudSelect T="IssueSeverity?" Label="Gravità" @bind-Value="_filterSeverity" 
+            <MudSelect T="IssueSeverity?" Label="Gravita" @bind-Value="_filterSeverity"
                        Variant="Variant.Outlined" Clearable="true" Dense="true">
                 @foreach (var sv in Enum.GetValues<IssueSeverity>())
                 {
@@ -45,7 +46,7 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" sm="6" md="2">
-            <MudSelect T="IssueEnvironment?" Label="Ambiente" @bind-Value="_filterEnvironment" 
+            <MudSelect T="IssueEnvironment?" Label="Ambiente" @bind-Value="_filterEnvironment"
                        Variant="Variant.Outlined" Clearable="true" Dense="true">
                 @foreach (var e in Enum.GetValues<IssueEnvironment>())
                 {
@@ -54,12 +55,12 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" sm="6" md="2">
-            <MudTextField @bind-Value="_searchTitle" Label="Cerca titolo" 
+            <MudTextField @bind-Value="_searchTitle" Label="Cerca titolo"
                           Variant="Variant.Outlined" Adornment="Adornment.End"
                           AdornmentIcon="@Icons.Material.Filled.Search" Dense="true" />
         </MudItem>
         <MudItem xs="12" sm="6" md="2" Class="d-flex align-end gap-2">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
                        StartIcon="@Icons.Material.Filled.FilterAlt"
                        OnClick="ApplicaFiltri">Filtra</MudButton>
             <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
@@ -68,26 +69,34 @@
     </MudGrid>
 </MudPaper>
 
-@* Barra superiore: pulsante Nuovo Issue + toggle Auto/Manuale *@
-<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Spacing="3">
-    <MudButton Variant="Variant.Filled" Color="Color.Success"
-               StartIcon="@Icons.Material.Filled.Add"
-               OnClick="@(() => Navigation.NavigateTo("/impostazioni/issue-log/new"))">
-        Nuovo Issue
-    </MudButton>
-
-    <MudToggleGroup T="string" @bind-Value="_filterAutoCapture" Color="Color.Primary"
-                    SelectionMode="SelectionMode.SingleSelection" Dense="true">
-        <MudToggleItem Value="@("tutti")" Text="Tutti" />
-        <MudToggleItem Value="@("auto")">
-            <MudIcon Icon="@Icons.Material.Filled.SmartToy" Size="Size.Small" Class="mr-1" />Auto
-            @if (_autoOpenCount > 0)
-            {
-                <MudBadge Content="@_autoOpenCount" Color="Color.Error" Class="ml-1" />
-            }
-        </MudToggleItem>
-        <MudToggleItem Value="@("manuale")" Text="Manuali" />
-    </MudToggleGroup>
+@* Barra azioni *@
+<MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3" Wrap="Wrap.Wrap">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudButton Variant="Variant.Filled" Color="Color.Success"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="@(() => Navigation.NavigateTo("/impostazioni/issue-log/new"))">
+            Nuovo Issue
+        </MudButton>
+        <MudButtonGroup Variant="Variant.Outlined" Size="Size.Medium">
+            <MudButton Color="@(_filterAutoCapture == "tutti" ? Color.Primary : Color.Default)"
+                       Variant="@(_filterAutoCapture == "tutti" ? Variant.Filled : Variant.Outlined)"
+                       OnClick="@(() => _filterAutoCapture = "tutti")">Tutti</MudButton>
+            <MudButton Color="@(_filterAutoCapture == "auto" ? Color.Primary : Color.Default)"
+                       Variant="@(_filterAutoCapture == "auto" ? Variant.Filled : Variant.Outlined)"
+                       StartIcon="@Icons.Material.Filled.SmartToy"
+                       OnClick="@(() => _filterAutoCapture = "auto")">Auto @(_autoOpenCount > 0 ? $"({_autoOpenCount})" : "")</MudButton>
+            <MudButton Color="@(_filterAutoCapture == "manuale" ? Color.Primary : Color.Default)"
+                       Variant="@(_filterAutoCapture == "manuale" ? Variant.Filled : Variant.Outlined)"
+                       OnClick="@(() => _filterAutoCapture = "manuale")">Manuali</MudButton>
+        </MudButtonGroup>
+    </MudStack>
+    <MudTooltip Text="Esporta errori selezionati nel formato pronto per VS Code Copilot Chat">
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary"
+                   StartIcon="@Icons.Material.Filled.IosShare"
+                   OnClick="AprireExportDialog">
+            Esporta per AI @(_nonExportatiCount > 0 ? $"({_nonExportatiCount})" : "")
+        </MudButton>
+    </MudTooltip>
 </MudStack>
 
 @* Tabella Issues *@
@@ -95,17 +104,18 @@
           OnRowClick="@((TableRowClickEventArgs<TechnicalIssue> args) => { if (args.Item != null) GoToDetail(args.Item); })"
           T="TechnicalIssue" Style="cursor: pointer;">
     <HeaderContent>
-        <MudTh Style="width: 30px;"></MudTh>
-        <MudTh Style="width: 120px;">Data</MudTh>
-        <MudTh Style="width: 100px;">Stato</MudTh>
-        <MudTh Style="width: 80px;">Gravità</MudTh>
-        <MudTh Style="width: 70px;">Ambiente</MudTh>
-        <MudTh Style="width: 100px;">Area</MudTh>
+        <MudTh Style="width: 24px;"></MudTh>
+        <MudTh Style="width: 24px;"></MudTh>
+        <MudTh Style="width: 115px;">Data</MudTh>
+        <MudTh Style="width: 95px;">Stato</MudTh>
+        <MudTh Style="width: 75px;">Gravita</MudTh>
+        <MudTh Style="width: 65px;">Ambiente</MudTh>
+        <MudTh Style="width: 90px;">Area</MudTh>
         <MudTh>Titolo</MudTh>
-        <MudTh Style="width: 120px;">Docs</MudTh>
+        <MudTh Style="width: 90px;">Docs</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd>
+        <MudTd Style="padding: 0 4px;">
             @if (context.IsAutoCapture)
             {
                 <MudTooltip Text="Catturato automaticamente">
@@ -113,19 +123,23 @@
                 </MudTooltip>
             }
         </MudTd>
-        <MudTd DataLabel="Data">@context.CreatedAt.ToString("dd/MM/yyyy HH:mm")</MudTd>
-        <MudTd DataLabel="Stato">
-            <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">
-                @context.Status
-            </MudChip>
+        <MudTd Style="padding: 0 4px;">
+            @if (context.ExportedToAI)
+            {
+                <MudTooltip Text="@($"Esportato il {context.ExportedToAIAt:dd/MM HH:mm}")">
+                    <MudIcon Icon="@Icons.Material.Filled.MarkEmailRead" Size="Size.Small" Color="Color.Success" />
+                </MudTooltip>
+            }
         </MudTd>
-        <MudTd DataLabel="Gravità">
-            <MudChip T="string" Size="Size.Small" Color="@GetSeverityColor(context.Severity)">
-                @context.Severity
-            </MudChip>
+        <MudTd DataLabel="Data">@context.CreatedAt.ToString("dd/MM/yy HH:mm")</MudTd>
+        <MudTd DataLabel="Stato">
+            <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">@context.Status</MudChip>
+        </MudTd>
+        <MudTd DataLabel="Gravita">
+            <MudChip T="string" Size="Size.Small" Color="@GetSeverityColor(context.Severity)">@context.Severity</MudChip>
         </MudTd>
         <MudTd DataLabel="Ambiente">
-            <MudChip T="string" Size="Size.Small" 
+            <MudChip T="string" Size="Size.Small"
                      Color="@(context.Environment == IssueEnvironment.Prod ? Color.Error : Color.Info)">
                 @context.Environment
             </MudChip>
@@ -135,9 +149,9 @@
         <MudTd DataLabel="Docs">
             @if (context.Status == IssueStatus.Resolved && !context.DocsUpdated)
             {
-                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.Warning">
-                    Non documentato
-                </MudChip>
+                <MudTooltip Text="Risolto ma non documentato">
+                    <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Size="Size.Small" />
+                </MudTooltip>
             }
             else if (context.DocsUpdated)
             {
@@ -149,22 +163,113 @@
         <MudText>Nessun issue trovato</MudText>
     </NoRecordsContent>
 </MudTable>
+
+@* Dialog Export per AI *@
+<MudDialog @bind-Visible="_exportDialogVisible" Options="@(new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true })">
+    <TitleContent>
+        <MudIcon Icon="@Icons.Material.Filled.IosShare" Class="mr-2" />
+        Esporta per VS Code Copilot Chat
+    </TitleContent>
+    <DialogContent>
+        @if (_exportStep == 1)
+        {
+            <MudText Class="mb-3" Color="Color.Secondary">
+                Seleziona gli errori da includere. Quelli non ancora esportati sono pre-selezionati.
+            </MudText>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="SelezionaTutti">Seleziona tutti</MudButton>
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="DeselezionaTutti">Deseleziona tutti</MudButton>
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info" OnClick="SelezionaNonesportati">Solo non esportati</MudButton>
+                <MudSpacer />
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    @_exportSelection.Count(kv => kv.Value) selezionati
+                </MudText>
+            </MudStack>
+            <div style="max-height: 380px; overflow-y: auto;">
+                <MudTable Items="@_issues" Dense="true" Hover="true" Elevation="0" T="TechnicalIssue">
+                    <HeaderContent>
+                        <MudTh Style="width:44px;">
+                            <MudCheckBox T="bool" Value="@_tuttiSelezionati" ValueChanged="ToggleTutti" Color="Color.Primary" />
+                        </MudTh>
+                        <MudTh Style="width:110px;">Data</MudTh>
+                        <MudTh Style="width:80px;">Gravita</MudTh>
+                        <MudTh Style="width:70px;">Area</MudTh>
+                        <MudTh>Titolo</MudTh>
+                        <MudTh Style="width:80px;">Export</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd Style="padding: 0 8px;">
+                            <MudCheckBox T="bool" Value="@GetSelected(context.Id)"
+                                         ValueChanged="@((v) => SetSelected(context.Id, v))"
+                                         Color="Color.Primary" />
+                        </MudTd>
+                        <MudTd>@context.CreatedAt.ToString("dd/MM HH:mm")</MudTd>
+                        <MudTd>
+                            <MudChip T="string" Size="Size.Small" Color="@GetSeverityColor(context.Severity)">@context.Severity</MudChip>
+                        </MudTd>
+                        <MudTd>@context.Area</MudTd>
+                        <MudTd>
+                            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 350px; display:block;">@context.Title</span>
+                        </MudTd>
+                        <MudTd>
+                            @if (context.ExportedToAI)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.MarkEmailRead" Size="Size.Small" Color="Color.Success"
+                                         Title="@($"Esportato {context.ExportedToAIAt:dd/MM HH:mm}")" />
+                            }
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </div>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Success" Dense="true" Class="mb-3">
+                @_ultimiExportatiCount issue marcati come esportati. Copia il testo e incollalo in Copilot Chat.
+            </MudAlert>
+            <MudTextField @bind-Value="_exportMarkdown" Lines="22" ReadOnly="true"
+                          Variant="Variant.Outlined"
+                          Style="font-family: monospace; font-size: 11px;" />
+        }
+    </DialogContent>
+    <DialogActions>
+        @if (_exportStep == 1)
+        {
+            <MudButton Color="Color.Default" OnClick="@(() => _exportDialogVisible = false)">Annulla</MudButton>
+            <MudButton Color="Color.Secondary" Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.IosShare"
+                       Disabled="@(_exportSelection.Count(kv => kv.Value) == 0)"
+                       OnClick="EseguiExport">
+                Esporta @(_exportSelection.Count(kv => kv.Value)) issue
+            </MudButton>
+        }
+        else
+        {
+            <MudButton Color="Color.Default" OnClick="@(() => { _exportStep = 1; _exportDialogVisible = false; })">Chiudi</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.ContentCopy"
+                       OnClick="CopiaExportMarkdown">
+                Copia negli appunti
+            </MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
 </MudContainer>
 
 @code {
     private List<TechnicalIssue> _issues = new();
-    
-    // Filtri
+
     private IssueStatus? _filterStatus;
     private IssueArea? _filterArea;
     private IssueSeverity? _filterSeverity;
     private IssueEnvironment? _filterEnvironment;
     private string? _searchTitle;
-    private string _filterAutoCapture = "tutti"; // "tutti" | "auto" | "manuale"
+    private string _filterAutoCapture = "tutti";
 
     private int _autoOpenCount = 0;
+    private int _nonExportatiCount = 0;
 
-    // Filtra in memoria per auto/manuale dopo il caricamento dal DB
     private List<TechnicalIssue> IssuesFiltrati => _filterAutoCapture switch
     {
         "auto"    => _issues.Where(i => i.IsAutoCapture).ToList(),
@@ -172,44 +277,148 @@
         _         => _issues
     };
 
-    protected override async Task OnInitializedAsync()
-    {
-        await CaricaIssues();
-    }
+    private bool _exportDialogVisible = false;
+    private int _exportStep = 1;
+    private Dictionary<int, bool> _exportSelection = new();
+    private string _exportMarkdown = string.Empty;
+    private int _ultimiExportatiCount = 0;
+
+    private bool _tuttiSelezionati =>
+        _exportSelection.Count > 0 && _exportSelection.All(kv => kv.Value);
+
+    protected override async Task OnInitializedAsync() => await CaricaIssues();
 
     private async Task CaricaIssues()
     {
         _issues = await IssueService.GetAllAsync(
-            _filterStatus,
-            _filterArea,
-            _filterSeverity,
-            _filterEnvironment,
-            _searchTitle);
-
-        // Conta auto-catturati aperti per il badge
+            _filterStatus, _filterArea, _filterSeverity, _filterEnvironment, _searchTitle);
         _autoOpenCount = _issues.Count(i => i.IsAutoCapture
+            && (i.Status == IssueStatus.Open || i.Status == IssueStatus.Investigating));
+        _nonExportatiCount = _issues.Count(i => !i.ExportedToAI
             && (i.Status == IssueStatus.Open || i.Status == IssueStatus.Investigating));
     }
 
-    private async Task ApplicaFiltri()
-    {
-        await CaricaIssues();
-    }
+    private async Task ApplicaFiltri() => await CaricaIssues();
 
     private async Task ResetFiltri()
     {
-        _filterStatus = null;
-        _filterArea = null;
-        _filterSeverity = null;
-        _filterEnvironment = null;
-        _searchTitle = null;
-        _filterAutoCapture = "tutti";
+        _filterStatus = null; _filterArea = null; _filterSeverity = null;
+        _filterEnvironment = null; _searchTitle = null; _filterAutoCapture = "tutti";
         await CaricaIssues();
     }
 
-    private void GoToDetail(TechnicalIssue issue)
-    {
+    private void GoToDetail(TechnicalIssue issue) =>
         Navigation.NavigateTo($"/impostazioni/issue-log/{issue.Id}");
+
+    private void AprireExportDialog()
+    {
+        _exportStep = 1;
+        _exportSelection = _issues.ToDictionary(
+            i => i.Id,
+            i => !i.ExportedToAI && (i.Status == IssueStatus.Open || i.Status == IssueStatus.Investigating));
+        _exportDialogVisible = true;
+    }
+
+    private bool GetSelected(int id) => _exportSelection.TryGetValue(id, out var v) && v;
+    private void SetSelected(int id, bool value) => _exportSelection[id] = value;
+
+    private void ToggleTutti(bool value)
+    {
+        foreach (var id in _exportSelection.Keys.ToList()) _exportSelection[id] = value;
+    }
+    private void SelezionaTutti()
+    {
+        foreach (var id in _exportSelection.Keys.ToList()) _exportSelection[id] = true;
+    }
+    private void DeselezionaTutti()
+    {
+        foreach (var id in _exportSelection.Keys.ToList()) _exportSelection[id] = false;
+    }
+    private void SelezionaNonesportati()
+    {
+        foreach (var issue in _issues)
+            _exportSelection[issue.Id] = !issue.ExportedToAI
+                && (issue.Status == IssueStatus.Open || issue.Status == IssueStatus.Investigating);
+    }
+
+    private async Task EseguiExport()
+    {
+        var selezionati = _exportSelection.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
+        var issues = _issues.Where(i => selezionati.Contains(i.Id))
+                            .OrderByDescending(i => i.Severity).ThenByDescending(i => i.CreatedAt)
+                            .ToList();
+        _exportMarkdown = GeneraMarkdownExport(issues);
+        _ultimiExportatiCount = issues.Count;
+        await IssueService.MarkAsExportedAsync(selezionati);
+        foreach (var issue in _issues.Where(i => selezionati.Contains(i.Id)))
+        {
+            issue.ExportedToAI = true;
+            issue.ExportedToAIAt = DateTime.Now;
+        }
+        _nonExportatiCount = _issues.Count(i => !i.ExportedToAI
+            && (i.Status == IssueStatus.Open || i.Status == IssueStatus.Investigating));
+        _exportStep = 2;
+    }
+
+    private async Task CopiaExportMarkdown()
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", _exportMarkdown);
+        Snackbar.Add("Testo copiato negli appunti!", Severity.Success);
+    }
+
+    private static string GeneraMarkdownExport(List<TechnicalIssue> issues)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("# Bug Report - MESManager");
+        sb.AppendLine($"> Generato il {DateTime.Now:dd/MM/yyyy HH:mm} - {issues.Count} issue da correggere");
+        sb.AppendLine();
+        sb.AppendLine("**Contesto**: Progetto MESManager (.NET 8, Blazor Server, SQL Server, EF Core, MudBlazor, AG Grid, Sharp7 PLC).");
+        sb.AppendLine("**Regola**: Zero duplicazione. Leggi docs/BIBBIA-AI-MESMANAGER.md prima di ogni modifica.");
+        sb.AppendLine();
+        sb.AppendLine("---");
+        sb.AppendLine();
+        for (int i = 0; i < issues.Count; i++)
+        {
+            var issue = issues[i];
+            sb.AppendLine($"## Issue #{i + 1} - {issue.Title}");
+            sb.AppendLine();
+            sb.AppendLine($"| Campo | Valore |");
+            sb.AppendLine($"|---|---|");
+            sb.AppendLine($"| ID DB | {issue.Id} |");
+            sb.AppendLine($"| Gravita | **{issue.Severity}** |");
+            sb.AppendLine($"| Area | {issue.Area} |");
+            sb.AppendLine($"| Ambiente | {issue.Environment} |");
+            sb.AppendLine($"| Stato | {issue.Status} |");
+            sb.AppendLine($"| Versione | {issue.AffectedVersion ?? "n/d"} |");
+            if (!string.IsNullOrWhiteSpace(issue.SourceUrl))
+                sb.AppendLine($"| Pagina | {issue.SourceUrl} |");
+            sb.AppendLine($"| Catturato il | {issue.CreatedAt:dd/MM/yyyy HH:mm} |");
+            sb.AppendLine();
+            if (!string.IsNullOrWhiteSpace(issue.Description))
+            {
+                sb.AppendLine("**Descrizione:**");
+                sb.AppendLine(issue.Description);
+                sb.AppendLine();
+            }
+            if (!string.IsNullOrWhiteSpace(issue.Logs))
+            {
+                sb.AppendLine("**Log / Stack trace:**");
+                sb.AppendLine("```");
+                sb.AppendLine(issue.Logs.Trim());
+                sb.AppendLine("```");
+                sb.AppendLine();
+            }
+            if (!string.IsNullOrWhiteSpace(issue.ReproSteps))
+            {
+                sb.AppendLine("**Passi per riprodurre:**");
+                sb.AppendLine(issue.ReproSteps);
+                sb.AppendLine();
+            }
+            sb.AppendLine("---");
+            sb.AppendLine();
+        }
+        sb.AppendLine("**Richiesta**: Per ciascun issue analizza la causa radice, proponi la soluzione piu semplice, elenca i file da modificare e indica se serve aggiornare la documentazione in docs/.");
+        return sb.ToString();
     }
 
     private Color GetStatusColor(IssueStatus status) => status switch
