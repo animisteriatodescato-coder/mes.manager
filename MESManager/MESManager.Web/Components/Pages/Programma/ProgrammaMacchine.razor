@@ -16,8 +16,8 @@
 
 <PageTitle>Programma Macchine</PageTitle>
 
-<div class="programma-macchine-page" data-testid="page-programma-macchine">
-    <div class="settings-panel">
+<div class="mes-grid-page" data-testid="page-programma-macchine">
+    <MudPaper Class="settings-panel toolbar-sticky pa-2 mb-1" Elevation="1">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
             <MudSpacer />
             
@@ -74,11 +74,10 @@
                 </MudStack>
             </MudPaper>
         }
-    </div>
+    </MudPaper>
 
-    <div id="programmaMacchineGrid" class="ag-theme-alpine" 
-         data-testid="grid-programma"
-         style="width: 100%; height: calc(100vh - 150px);">
+    <div id="programmaMacchineGrid" class="ag-theme-alpine mes-ag-grid" 
+         data-testid="grid-programma">
     </div>
 
     <MudDialog @bind-Visible="showColumnDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true }">
@@ -293,10 +292,6 @@
 </div>
 
 <style>
-    .programma-macchine-page {
-        position: relative;
-    }
-
     #printableCommesse {
         display: none;
     }
@@ -354,7 +349,7 @@
 
     @@media print {
         /* Hide the page content */
-        .programma-macchine-page,
+        .mes-grid-page,
         .settings-panel,
         .footer-info,
         #programmaMacchineGrid,

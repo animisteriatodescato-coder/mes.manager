@@ -39,8 +39,11 @@
     min-height: var(--appbar-height) !important;
 }
 
-/* Applica padding toolbar Commesse */
+/* Sticky toolbar + padding */
 .toolbar-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     padding: var(--toolbar-padding-y) 0 !important;
 }
 

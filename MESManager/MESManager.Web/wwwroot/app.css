@@ -173,3 +173,13 @@ h1:focus {
     position: relative;
     z-index: 1;
 }
+
+/* ============ MES GRID PAGE — struttura comune pagine AG Grid ============ */
+.mes-grid-page {
+    position: relative;
+}
+
+.mes-ag-grid {
+    width: 100%;
+    height: calc(100vh - var(--grid-offset));
+}

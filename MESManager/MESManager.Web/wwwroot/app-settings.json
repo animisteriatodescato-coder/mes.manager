@@ -17,8 +17,8 @@
   "ThemeTextOnPrimary": "#1A1A1A",
   "ThemePrimaryTextColor": "#2BA2CA",
   "ThemeNavTextColor": "#333333",
-  "ThemeBgOpacity": 0.09,
-  "ThemePanelOpacity": 0.82,
+  "ThemeBgOpacity": 0.23,
+  "ThemePanelOpacity": 0.57,
   "ThemeExtraColors": [
     "#607D8B",
     "#795548"

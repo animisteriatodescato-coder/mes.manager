@@ -62,15 +62,6 @@
             background:        rgba(30,30,50,@_panelOpStr) !important;
         }
 
-        /* Barre sticky e footer di pagina: SOLIDI — il contenuto scorre sotto,
-           non deve trasparire attraverso di essi */
-        .mud-main-content .toolbar-sticky,
-        .mud-main-content .footer-info,
-        .mud-main-content .settings-panel {
-            background-color: var(--mud-palette-surface) !important;
-            backdrop-filter: none !important;
-        }
-
         /* AppBar: semi-trasparente con blur — usa colore primary del tema */
         .mud-appbar {
             background-color: color-mix(in srgb,
@@ -80,14 +71,41 @@
             -webkit-backdrop-filter: blur(12px) saturate(1.4);
         }
 
-        /* Drawer: semi-trasparente con blur */
-        .mud-drawer,
-        .mud-drawer-content {
+        /* Drawer: stesso colore primario dell'AppBar — un unico colore uniforme */
+        .mud-drawer {
             background-color: color-mix(in srgb,
-                var(--mud-palette-surface) calc(@_panelOpStr * 100%),
+                var(--mes-primary) calc(@_panelOpStr * 100%),
                 transparent) !important;
             backdrop-filter: blur(12px) saturate(1.4);
             -webkit-backdrop-filter: blur(12px) saturate(1.4);
+        }
+        /* Tutti i figli del drawer: transparent per non spezzare l'uniformità */
+        .mud-drawer .mud-drawer-content,
+        .mud-drawer .mud-drawer-header,
+        .mud-drawer .mud-navmenu,
+        .mud-drawer .mud-nav-group,
+        .mud-drawer .mud-nav-group-items,
+        .mud-drawer .mud-nav-link,
+        .mud-drawer .mud-list,
+        .mud-drawer [data-testid="nav-menu"] {
+            background-color: transparent !important;
+            background: transparent !important;
+        }
+
+        /* AG Grid container: glass effect sul wrapper root */
+        .mud-main-content .ag-theme-alpine .ag-root-wrapper,
+        .mud-main-content .ag-theme-alpine-dark .ag-root-wrapper {
+            background-color: rgba(255,255,255,@_panelOpStr) !important;
+        }
+        .mud-theme-dark .mud-main-content .ag-theme-alpine .ag-root-wrapper,
+        .mud-theme-dark .mud-main-content .ag-theme-alpine-dark .ag-root-wrapper {
+            background-color: rgba(30,30,50,@_panelOpStr) !important;
+        }
+        /* Header e body AG Grid trasparenti */
+        .mud-main-content .ag-theme-alpine .ag-header,
+        .mud-main-content .ag-theme-alpine .ag-body-viewport,
+        .mud-main-content .ag-theme-alpine .ag-center-cols-viewport {
+            background-color: transparent !important;
         }
     </style>
 }
