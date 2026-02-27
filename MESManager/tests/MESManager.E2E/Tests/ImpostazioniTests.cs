@@ -112,4 +112,23 @@ public class ImpostazioniTests : PlaywrightTestBase
         await AssertVisibleByTestId("btn-calendario-salva");
         await AssertNoConsoleErrors();
     }
+
+    [Fact(DisplayName = "Gestione Utenti > MudTable opacità (visual)")]
+    [Trait("Category", "Visual")]
+    public async Task GestioneUtenti_TableOpacity()
+    {
+        await Page.GotoAsync($"{BaseUrl}/impostazioni/utenti");
+        await AssertVisibleByTestId("table-utenti");
+        
+        // Attendi rendering completo
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(500);
+
+        // Screenshot della tabella
+        var table = Page.GetByTestId("table-utenti");
+        var visualHelper = new VisualRegressionHelper(Page, "GestioneUtenti");
+        await visualHelper.AssertMatchesBaseline("mudtable-opacity", table);
+        
+        await AssertNoConsoleErrors();
+    }
 }
