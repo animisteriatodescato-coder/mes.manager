@@ -401,7 +401,7 @@ window.programmaMacchineGrid = (function() {
         
         const gridDiv = document.getElementById(gridId);
         if (!gridDiv) {
-            console.error('[JS-PROGRAMMA] ❌ Grid element not found:', gridId);
+            console.warn('[JS-PROGRAMMA] ⚠️ Grid element not found:', gridId, '(pagina non attiva, ignora)');
             return;
         }
         console.log('[JS-PROGRAMMA] ✅ Grid element found');

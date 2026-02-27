@@ -164,26 +164,31 @@
             color: @_rowText !important;
         }
 
-        /* ── MudTable rows ──────────────────────────────────────────── */
-        /* MudBlazor: .mud-table è div wrapper, la vera tabella è .mud-table-root */
-        .mud-main-content .mud-table-root tbody tr:nth-child(even),
-        .mud-main-content .mud-table-root tbody tr:nth-child(even) td {
-            background-color: @_rowEven !important;
-        }
-        .mud-main-content .mud-table-root tbody tr:nth-child(odd),
-        .mud-main-content .mud-table-root tbody tr:nth-child(odd) td {
+        /* ── MudTable ──────────────────────────────────────────── */
+        /* Copriamo tutti i livelli: container -> table -> tr -> td */
+        .mud-main-content .mud-table-container,
+        .mud-main-content .mud-table-root {
             background-color: @_rowOdd !important;
         }
-        /* Testo MudTable celle */
-        .mud-main-content .mud-table-root td,
-        .mud-main-content .mud-table-root th {
+        /* Righe dispari (default) */
+        .mud-main-content .mud-table-root tr {
+            background-color: @_rowOdd !important;
+        }
+        /* Righe pari: colore alternato */
+        .mud-main-content .mud-table-root tbody tr:nth-child(even) {
+            background-color: @_rowEven !important;
+        }
+        /* Celle: ereditano dal tr, testo leggibile */
+        .mud-main-content .mud-table-root td {
+            background-color: inherit !important;
             color: @_rowText !important;
         }
-        /* Header MudTable */
+        /* Header: stesso tono del drawer */
         .mud-main-content .mud-table-root thead tr {
             background-color: @_gridHeaderBg !important;
         }
         .mud-main-content .mud-table-root thead th {
+            background-color: inherit !important;
             color: rgba(255,255,255,0.95) !important;
         }
     </style>

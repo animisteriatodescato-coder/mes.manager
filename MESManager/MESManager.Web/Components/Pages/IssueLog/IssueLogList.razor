@@ -10,10 +10,6 @@
 <PageTitle>Issue Log - Archivio Bug &amp; Errori</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-issue-log-list">
-<MudText Typo="Typo.h4" Class="mb-4">
-    <MudIcon Icon="@Icons.Material.Filled.BugReport" Class="mr-2" />
-    Archivio Bug &amp; Errori
-</MudText>
 
 @* Filtri *@
 <MudPaper Class="pa-4 mb-4" Elevation="2">
@@ -105,7 +101,7 @@
 @* Tabella Issues *@
 <MudTable Items="@IssuesFiltrati" Hover="true" Dense="true" Striped="true" Elevation="3"
           OnRowClick="@((TableRowClickEventArgs<TechnicalIssue> args) => { if (args.Item != null) GoToDetail(args.Item); })"
-          T="TechnicalIssue" Style="cursor: pointer; background-color: var(--mud-palette-surface) !important;">
+          T="TechnicalIssue" Style="cursor: pointer;">
     <HeaderContent>
         <MudTh Style="width: 24px;"></MudTh>
         <MudTh Style="width: 24px;"></MudTh>
