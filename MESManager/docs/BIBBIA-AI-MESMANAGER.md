@@ -245,6 +245,7 @@ cd C:\Dev; dotnet run --project MESManager/MESManager.Web/MESManager.Web.csproj 
 **Prima di OGNI Deploy**: [09-CHANGELOG.md](docs/09-CHANGELOG.md) + [storico/DEPLOY-LESSONS-LEARNED.md](docs/storico/DEPLOY-LESSONS-LEARNED.md)
 
 **Prima di OGNI Commit**: Build + Test + Aggiorna docs/
+**Dopo OGNI Commit**: Push automatico su GitHub via hook post-commit (remote: `animisteriatodescato-coder/mes.manager`)
 
 **Prima di OGNI Modifica Database**: Migration EF + Test dev + Script SQL prod + Documenta
 

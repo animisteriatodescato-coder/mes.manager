@@ -14,9 +14,10 @@ cd C:\Dev\MESManager
 # Verifica stato Git
 git status
 
-# Commit modifiche pendenti
+# Commit modifiche pendenti e push automatico su GitHub
 git add .
 git commit -m "descrizione modifiche"
+# Il push su GitHub avviene automaticamente tramite hook post-commit
 ```
 
 ---
@@ -88,9 +89,8 @@ Apri: http://localhost:5156
 cd C:\Dev\MESManager
 git add .
 git commit -m "feat: descrizione della modifica"
-
-# Push (opzionale)
-git push
+# ✅ Push su GitHub avviene AUTOMATICAMENTE (hook post-commit)
+# Se necessario push manuale: git push origin main
 ```
 
 ---
