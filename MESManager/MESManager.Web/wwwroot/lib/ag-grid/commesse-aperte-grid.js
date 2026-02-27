@@ -140,7 +140,7 @@ window.commesseAperteGrid = (function() {
                 const isDark = document.body.classList.contains('mud-theme-dark');
                 if (params.value === 'Aperta') return isDark
                     ? { backgroundColor: 'rgba(27,94,32,0.90)',  color: '#a5d6a7', fontWeight: 'bold' }
-                    : { backgroundColor: '#c8e6c9', color: '#1b5e20', fontWeight: 'bold' };
+                    : { backgroundColor: '#2e7d32', color: '#ffffff', fontWeight: 'bold' };
                 if (params.value === 'Chiusa') return isDark
                     ? { backgroundColor: 'rgba(136,14,79,0.80)',  color: '#f48fb1', fontWeight: 'bold' }
                     : { backgroundColor: '#fce4ec', color: '#880e4f', fontWeight: 'bold' };

@@ -165,25 +165,25 @@
         }
 
         /* ── MudTable rows ──────────────────────────────────────────── */
-        /* Righe opache su sfondo immagine (stessa palette delle AG Grid rows) */
-        .mud-main-content .mud-table tbody .mud-table-row:nth-child(even),
-        .mud-main-content .mud-table tbody .mud-table-row:nth-child(even) td {
+        /* MudBlazor: .mud-table è div wrapper, la vera tabella è .mud-table-root */
+        .mud-main-content .mud-table-root tbody tr:nth-child(even),
+        .mud-main-content .mud-table-root tbody tr:nth-child(even) td {
             background-color: @_rowEven !important;
         }
-        .mud-main-content .mud-table tbody .mud-table-row:nth-child(odd),
-        .mud-main-content .mud-table tbody .mud-table-row:nth-child(odd) td {
+        .mud-main-content .mud-table-root tbody tr:nth-child(odd),
+        .mud-main-content .mud-table-root tbody tr:nth-child(odd) td {
             background-color: @_rowOdd !important;
         }
-        /* Testo MudTable: leggibile in dark/light */
-        .mud-main-content .mud-table .mud-td,
-        .mud-main-content .mud-table .mud-th {
+        /* Testo MudTable celle */
+        .mud-main-content .mud-table-root td,
+        .mud-main-content .mud-table-root th {
             color: @_rowText !important;
         }
-        /* Header MudTable: stesso tono del drawer/appbar */
-        .mud-main-content .mud-table thead tr {
+        /* Header MudTable */
+        .mud-main-content .mud-table-root thead tr {
             background-color: @_gridHeaderBg !important;
         }
-        .mud-main-content .mud-table thead .mud-th {
+        .mud-main-content .mud-table-root thead th {
             color: rgba(255,255,255,0.95) !important;
         }
     </style>
