@@ -4,6 +4,7 @@
 @using System.Globalization
 @inject PlcDataService PlcService
 @inject ISnackbar Snackbar
+@inject HttpClient Http
 
 <PageTitle>Analisi PLC Storico</PageTitle>
 
@@ -272,12 +273,13 @@ else if (!_loading)
     {
         try
         {
-            // Carica lista macchine per il filtro
-            var allData = await PlcService.LoadStoricoDataAsync(DateTime.Today.AddDays(-30), DateTime.Today);
-            macchineDisponibili = allData
-                .Where(x => !string.IsNullOrEmpty(x.MacchinaNumero))
-                .Select(x => x.MacchinaNumero)
-                .Distinct()
+            // FONTE DI VERITÀ: api/Macchine?hasPlc=true
+            // Lista macchine con PLC configurato — stessa sorgente di Dashboard e SyncMacchine.
+            // NON derivare la lista dai dati storici: mostrerebbe macchine non più configurate.
+            var macchineConfigurate = await Http.GetFromJsonAsync<List<MacchinaDto>>("api/Macchine?hasPlc=true") ?? new();
+            macchineDisponibili = macchineConfigurate
+                .Select(x => x.Codice)
+                .Where(n => !string.IsNullOrEmpty(n))
                 .OrderBy(x => x)
                 .ToList();
         }
@@ -299,7 +301,8 @@ else if (!_loading)
 
             if (!string.IsNullOrEmpty(selectedMacchina))
             {
-                _data = _data.Where(x => x.MacchinaNumero == selectedMacchina).ToList();
+                // MacchianaNome = Macchina.Codice (es. "M002") — coerente con macchineDisponibili
+                _data = _data.Where(x => x.MacchianaNome == selectedMacchina).ToList();
             }
 
             if (_data.Any())

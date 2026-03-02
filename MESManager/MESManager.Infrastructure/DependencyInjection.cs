@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MESManager.Application.Interfaces;
+using MESManager.Application.Services;
 using MESManager.Infrastructure.Data;
 using MESManager.Infrastructure.Services;
-using MESManager.Application.Services;
 using MESManager.Infrastructure.Repositories;
 
 namespace MESManager.Infrastructure;
@@ -65,6 +65,9 @@ public static class DependencyInjection
         services.AddScoped<IRicettaGanttService, RicettaGanttService>();
         services.AddScoped<IPlcRecipeWriterService, PlcRecipeWriterService>();
         services.AddScoped<IRecipeAutoLoaderService, RecipeAutoLoaderService>();
+        // Analisi Operatori (v1.54.2 - Performance/premi produttivi)
+        services.AddScoped<IOperatoreAnalisiService, OperatoreAnalisiService>();
+
         // Aggiungi altri servizi qui quando implementati
 
         return services;

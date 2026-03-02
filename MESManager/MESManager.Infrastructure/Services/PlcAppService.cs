@@ -74,6 +74,8 @@ public class PlcAppService : IPlcAppService
         var query = _context.PLCStorico
             .Include(p => p.Macchina)
             .Include(p => p.Operatore)
+            // Filtra solo macchine con PLC configurato — coerente con GetRealtimeDataAsync
+            .Where(p => !string.IsNullOrWhiteSpace(p.Macchina.IndirizzoPLC))
             .Where(p => p.MacchinaId == macchinaId);
 
         if (from.HasValue)
@@ -166,7 +168,8 @@ public class PlcAppService : IPlcAppService
         var query = _context.PLCStorico
             .Include(p => p.Macchina)
             .Include(p => p.Operatore)
-            .AsQueryable();
+            // Filtra solo macchine con PLC configurato — coerente con GetRealtimeDataAsync
+            .Where(p => !string.IsNullOrWhiteSpace(p.Macchina.IndirizzoPLC));
 
         if (from.HasValue)
             query = query.Where(p => p.DataOra >= from.Value);

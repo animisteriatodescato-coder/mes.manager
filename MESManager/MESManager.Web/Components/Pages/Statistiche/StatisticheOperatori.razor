@@ -1,0 +1,610 @@
+@page "/statistiche/operatori"
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@using System.Globalization
+@inject IOperatoreAnalisiService AnalisiService
+@inject IPlcAppService PlcService
+@inject ISnackbar Snackbar
+
+<PageTitle>Analisi Operatori</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-statistiche-operatori">
+
+    @* ── FILTRI ── *@
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+            <MudDatePicker Label="Dal" @bind-Date="_dal"
+                           Variant="Variant.Outlined" Margin="Margin.Dense" />
+            <MudDatePicker Label="Al" @bind-Date="_al"
+                           Variant="Variant.Outlined" Margin="Margin.Dense" />
+            <MudSelect T="string" Label="Macchina" @bind-Value="_filtraMacchina"
+                       Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:180px">
+                <MudSelectItem T="string" Value="@("")">Tutte</MudSelectItem>
+                @foreach (var m in _macchineDisponibili)
+                {
+                    <MudSelectItem T="string" Value="@m">@m</MudSelectItem>
+                }
+            </MudSelect>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Analytics"
+                       OnClick="Analizza" Disabled="@_loading">
+                @if (_loading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Analizza
+            </MudButton>
+            <MudSpacer />
+            @if (_result != null)
+            {
+                <MudChip T="string" Color="Color.Info" Size="Size.Small">
+                    @_result.TotaleRecord record · @_result.Operatori.Count operatori
+                </MudChip>
+            }
+        </MudStack>
+    </MudPaper>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+    }
+
+    @if (_result != null && _result.Operatori.Any())
+    {
+        @* ── KPI GLOBALI ── *@
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Large" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle2">Operatori Attivi</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@_result.Operatori.Count</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.PrecisionManufacturing" Size="Size.Large" Color="Color.Success" />
+                        <MudText Typo="Typo.subtitle2">Cicli Totali</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_result.CicliGlobali.ToString("N0")</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Large" Color="Color.Error" />
+                        <MudText Typo="Typo.subtitle2">Scarto Globale</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Error">@_result.ScartGlobalePercent.ToString("F2")%</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.Speed" Size="Size.Large" Color="Color.Warning" />
+                        <MudText Typo="Typo.subtitle2">Efficienza Media</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Warning">@_result.EfficienzaGlobale.ToString("F1")%</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        @* ── TABS ── *@
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Class="mb-4"
+                 @bind-ActivePanelIndex="_activeTab">
+
+            @* ════ TAB 1: RANKING ════ *@
+            <MudTabPanel Text="🏆 Ranking & Premi">
+                <MudGrid Class="mt-3">
+
+                    @* Grafico comparativo Cicli vs Scarti *@
+                    <MudItem xs="12" md="8">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Cicli vs Scarti per Operatore</MudText>
+                            <MudChart ChartType="ChartType.Bar"
+                                      ChartSeries="@_rankingChartSeries"
+                                      XAxisLabels="@_rankingLabels"
+                                      Width="100%" Height="280px"
+                                      ChartOptions="@_rankingChartOptions" />
+                        </MudPaper>
+                    </MudItem>
+
+                    @* Grafico % Scarti con linea soglia *@
+                    <MudItem xs="12" md="4">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">% Scarti per Operatore</MudText>
+                            <MudChart ChartType="ChartType.Bar"
+                                      ChartSeries="@_scartiPercentChartSeries"
+                                      XAxisLabels="@_rankingLabels"
+                                      Width="100%" Height="280px"
+                                      ChartOptions="@_scartiChartOptions" />
+                        </MudPaper>
+                    </MudItem>
+
+                    @* ── CLASSIFICA COMPLETA ── *@
+                    <MudItem xs="12">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Classifica Completa — Clicca per drill-down</MudText>
+                            <MudSimpleTable Dense="true" Striped="true" Hover="true">
+                                <thead>
+                                    <tr>
+                                        <th style="width:40px">#</th>
+                                        <th>Operatore</th>
+                                        <th style="text-align:right">Cicli</th>
+                                        <th style="text-align:right">Scarti</th>
+                                        <th style="text-align:right">% Scarti</th>
+                                        <th style="text-align:right">Efficienza</th>
+                                        <th style="text-align:right">Fermi</th>
+                                        <th style="text-align:right">Setup</th>
+                                        <th style="text-align:right">Score</th>
+                                        <th>Valutazione</th>
+                                        <th style="width:60px"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{var rank = 1;}
+                                    @foreach (var op in _result.Operatori)
+                                    {
+                                        var isSelected = _operatoreSelezionato?.NumeroOperatore == op.NumeroOperatore;
+                                        <tr style="cursor:pointer; @(isSelected ? "background:rgba(25,118,210,0.12);" : "")"
+                                            @onclick="@(() => SelezionaOperatore(op))">
+                                            <td>
+                                                <strong>@(rank == 1 ? "🥇" : rank == 2 ? "🥈" : rank == 3 ? "🥉" : rank.ToString())</strong>
+                                            </td>
+                                            <td><strong>@op.Nome</strong></td>
+                                            <td style="text-align:right">@op.CicliTotali.ToString("N0")</td>
+                                            <td style="text-align:right">@op.ScartiTotali.ToString("N0")</td>
+                                            <td style="text-align:right;color:@(op.PercentualeScarti > _result.ScartGlobalePercent * 1.5 ? "#e53935" : op.PercentualeScarti > _result.ScartGlobalePercent ? "#f57c00" : "#43a047")">
+                                                @op.PercentualeScarti.ToString("F2")%
+                                            </td>
+                                            <td style="text-align:right;color:@(op.EfficienzaMedia >= 90 ? "#43a047" : op.EfficienzaMedia >= 70 ? "#f57c00" : "#e53935")">
+                                                @op.EfficienzaMedia.ToString("F1")%
+                                            </td>
+                                            <td style="text-align:right;color:@(op.NumeroFermi > 20 ? "#e53935" : op.NumeroFermi > 10 ? "#f57c00" : "#43a047")">
+                                                @op.NumeroFermi
+                                            </td>
+                                            <td style="text-align:right">@op.NumeroSetup</td>
+                                            <td style="text-align:right"><strong>@op.ScoreComposito.ToString("F0")</strong></td>
+                                            <td>
+                                                <span style="background:@op.BadgeColore;color:white;padding:2px 8px;border-radius:12px;font-size:12px;white-space:nowrap">
+                                                    @op.BadgeLabel
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <MudIconButton Icon="@Icons.Material.Filled.ZoomIn"
+                                                               Size="Size.Small" Color="Color.Primary"
+                                                               OnClick="@(() => DrillDown(op))" />
+                                            </td>
+                                        </tr>
+                                        rank++;
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                        </MudPaper>
+                    </MudItem>
+
+                    @* Grafico Fermi per Operatore *@
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Fermi Macchina per Operatore (snapshot)</MudText>
+                            <MudChart ChartType="ChartType.Bar"
+                                      ChartSeries="@_fermiChartSeries"
+                                      XAxisLabels="@_rankingLabels"
+                                      Width="100%" Height="260px"
+                                      ChartOptions="@_fermiChartOptions" />
+                        </MudPaper>
+                    </MudItem>
+
+                    @* Grafico Efficienza per Operatore *@
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Efficienza per Operatore (%)</MudText>
+                            <MudChart ChartType="ChartType.Bar"
+                                      ChartSeries="@_efficienzaChartSeries"
+                                      XAxisLabels="@_rankingLabels"
+                                      Width="100%" Height="260px"
+                                      ChartOptions="@_efficienzaChartOptions" />
+                        </MudPaper>
+                    </MudItem>
+
+                </MudGrid>
+            </MudTabPanel>
+
+            @* ════ TAB 2: DRILL-DOWN ════ *@
+            <MudTabPanel Text="🔍 Dettaglio Operatore">
+                @if (_operatoreSelezionato == null)
+                {
+                    <MudPaper Class="pa-8 mt-4" Elevation="0">
+                        <MudStack AlignItems="AlignItems.Center" Spacing="3">
+                            <MudIcon Icon="@Icons.Material.Filled.PersonSearch" Size="Size.Large" Color="Color.Default" />
+                            <MudText Typo="Typo.h6" Color="Color.Default">Seleziona un operatore dalla classifica</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Clicca su una riga nel tab Ranking oppure usa il selettore qui sotto
+                            </MudText>
+                            <MudSelect T="OperatoreAnalisiDto" Label="Oppure scegli operatore"
+                                       Value="_operatoreSelezionato"
+                                       ValueChanged="SelezionaOperatore"
+                                       Variant="Variant.Outlined" Style="min-width:260px">
+                                @foreach (var op in _result.Operatori)
+                                {
+                                    <MudSelectItem T="OperatoreAnalisiDto" Value="@op">@op.Nome</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudStack>
+                    </MudPaper>
+                }
+                else
+                {
+                    <MudGrid Class="mt-3">
+                        @* Header operatore selezionato *@
+                        <MudItem xs="12">
+                            <MudPaper Class="pa-3" Elevation="1" Style="@($"border-left: 4px solid {_operatoreSelezionato.BadgeColore}")">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                                    <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Large" Color="Color.Primary" />
+                                    <div>
+                                        <MudText Typo="Typo.h5">@_operatoreSelezionato.Nome</MudText>
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                            Op. #@_operatoreSelezionato.NumeroOperatore · Score: <strong>@_operatoreSelezionato.ScoreComposito.ToString("F0")</strong>
+                                        </MudText>
+                                    </div>
+                                    <MudSpacer />
+                                    <span style="background:@_operatoreSelezionato.BadgeColore;color:white;padding:4px 14px;border-radius:16px;font-size:14px">
+                                        @_operatoreSelezionato.BadgeLabel
+                                    </span>
+                                    <MudSelect T="OperatoreAnalisiDto" Label="Cambia operatore"
+                                               Value="_operatoreSelezionato"
+                                               ValueChanged="SelezionaOperatore"
+                                               Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:200px">
+                                        @foreach (var op in _result.Operatori)
+                                        {
+                                            <MudSelectItem T="OperatoreAnalisiDto" Value="@op">@op.Nome</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+
+                        @* KPI cards operatore *@
+                        <MudItem xs="6" sm="4" md="2">
+                            <MudPaper Class="pa-3" Elevation="2">
+                                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Cicli</MudText>
+                                    <MudText Typo="Typo.h5" Color="Color.Primary">@_operatoreSelezionato.CicliTotali.ToString("N0")</MudText>
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="6" sm="4" md="2">
+                            <MudPaper Class="pa-3" Elevation="2">
+                                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Scarti</MudText>
+                                    <MudText Typo="Typo.h5" Color="Color.Error">@_operatoreSelezionato.ScartiTotali.ToString("N0")</MudText>
+                                    <MudText Typo="Typo.caption">@_operatoreSelezionato.PercentualeScarti.ToString("F2")%</MudText>
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="6" sm="4" md="2">
+                            <MudPaper Class="pa-3" Elevation="2">
+                                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Efficienza</MudText>
+                                    <MudText Typo="Typo.h5" Color="Color.Warning">@_operatoreSelezionato.EfficienzaMedia.ToString("F1")%</MudText>
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="6" sm="4" md="2">
+                            <MudPaper Class="pa-3" Elevation="2">
+                                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Fermi</MudText>
+                                    <MudText Typo="Typo.h5" Color="Color.Error">@_operatoreSelezionato.NumeroFermi</MudText>
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="6" sm="4" md="2">
+                            <MudPaper Class="pa-3" Elevation="2">
+                                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Setup</MudText>
+                                    <MudText Typo="Typo.h5" Color="Color.Info">@_operatoreSelezionato.NumeroSetup</MudText>
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="6" sm="4" md="2">
+                            <MudPaper Class="pa-3" Elevation="2">
+                                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Tempo Ciclo</MudText>
+                                    <MudText Typo="Typo.h5" Color="Color.Default">@_operatoreSelezionato.TempoMedioCicloRilevato.ToString("F1")s</MudText>
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+
+                        @* Trend Cicli giornalieri *@
+                        <MudItem xs="12" md="6">
+                            <MudPaper Class="pa-4" Elevation="2">
+                                <MudText Typo="Typo.h6" Class="mb-3">Cicli Giornalieri</MudText>
+                                <MudChart ChartType="ChartType.Line"
+                                          ChartSeries="@_trendCicliSeries"
+                                          XAxisLabels="@_trendLabels"
+                                          Width="100%" Height="220px"
+                                          ChartOptions="@_trendLineOptions" />
+                            </MudPaper>
+                        </MudItem>
+
+                        @* Trend Fermi giornalieri *@
+                        <MudItem xs="12" md="6">
+                            <MudPaper Class="pa-4" Elevation="2">
+                                <MudText Typo="Typo.h6" Class="mb-3">Fermi Macchina Giornalieri</MudText>
+                                <MudChart ChartType="ChartType.Line"
+                                          ChartSeries="@_trendFermiSeries"
+                                          XAxisLabels="@_trendLabels"
+                                          Width="100%" Height="220px"
+                                          ChartOptions="@_trendFermiLineOptions" />
+                            </MudPaper>
+                        </MudItem>
+
+                        @* Distribuzione stati *@
+                        <MudItem xs="12" md="5">
+                            <MudPaper Class="pa-4" Elevation="2">
+                                <MudText Typo="Typo.h6" Class="mb-3">Distribuzione Stati Macchina</MudText>
+                                @if (_statoDonutData.Length > 0)
+                                {
+                                    <MudChart ChartType="ChartType.Donut"
+                                              InputData="@_statoDonutData"
+                                              InputLabels="@_statoDonutLabels"
+                                              Width="100%" Height="250px" />
+                                }
+                                else
+                                {
+                                    <MudText Color="Color.Secondary">Nessun dato stati disponibile</MudText>
+                                }
+                            </MudPaper>
+                        </MudItem>
+
+                        @* Trend % Scarti *@
+                        <MudItem xs="12" md="7">
+                            <MudPaper Class="pa-4" Elevation="2">
+                                <MudText Typo="Typo.h6" Class="mb-3">% Scarti Giornalieri</MudText>
+                                <MudChart ChartType="ChartType.Line"
+                                          ChartSeries="@_trendScartiPercSeries"
+                                          XAxisLabels="@_trendLabels"
+                                          Width="100%" Height="250px"
+                                          ChartOptions="@_trendScartiOptions" />
+                            </MudPaper>
+                        </MudItem>
+
+                        @* Tabella dettaglio giornaliero *@
+                        <MudItem xs="12">
+                            <MudPaper Class="pa-4" Elevation="2">
+                                <MudText Typo="Typo.h6" Class="mb-3">Dettaglio Giornaliero</MudText>
+                                <MudSimpleTable Dense="true" Striped="true">
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th style="text-align:right">Cicli</th>
+                                            <th style="text-align:right">Scarti</th>
+                                            <th style="text-align:right">% Scarti</th>
+                                            <th style="text-align:right">Fermi</th>
+                                            <th style="text-align:right">Setup</th>
+                                            <th style="text-align:right">Efficienza</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var g in _operatoreSelezionato.TrendGiornaliero)
+                                        {
+                                            <tr>
+                                                <td>@g.Data.ToString("ddd dd/MM", new CultureInfo("it-IT"))</td>
+                                                <td style="text-align:right">@g.Cicli.ToString("N0")</td>
+                                                <td style="text-align:right">@g.Scarti.ToString("N0")</td>
+                                                <td style="text-align:right;color:@(g.PercentualeScarti > 5 ? "#e53935" : g.PercentualeScarti > 2 ? "#f57c00" : "#43a047")">
+                                                    @g.PercentualeScarti.ToString("F2")%
+                                                </td>
+                                                <td style="text-align:right;color:@(g.Fermi > 5 ? "#e53935" : g.Fermi > 2 ? "#f57c00" : "#43a047")">
+                                                    @g.Fermi
+                                                </td>
+                                                <td style="text-align:right">@g.Setup</td>
+                                                <td style="text-align:right;color:@(g.Efficienza >= 90 ? "#43a047" : g.Efficienza >= 70 ? "#f57c00" : g.Efficienza > 0 ? "#e53935" : "#9e9e9e")">
+                                                    @(g.Efficienza > 0 ? g.Efficienza.ToString("F1") + "%" : "—")
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </MudSimpleTable>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+                }
+            </MudTabPanel>
+
+        </MudTabs>
+    }
+    else if (!_loading && _hasSearched)
+    {
+        <MudPaper Class="pa-8" Elevation="1">
+            <MudStack AlignItems="AlignItems.Center" Spacing="4">
+                <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Warning" />
+                <MudText Typo="Typo.h6" Color="Color.Warning">Nessun dato operatori trovato</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Nessun record PLC con operatore assegnato nel periodo @_dal?.ToString("dd/MM/yyyy") – @_al?.ToString("dd/MM/yyyy")
+                </MudText>
+            </MudStack>
+        </MudPaper>
+    }
+    else if (!_loading)
+    {
+        <MudPaper Class="pa-8" Elevation="0">
+            <MudStack AlignItems="AlignItems.Center" Spacing="3">
+                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Large" Color="Color.Default" />
+                <MudText Typo="Typo.h6">Seleziona periodo e clicca "Analizza"</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Verranno calcolati cicli, scarti, fermi, efficienza e score per i premi produttivi.
+                </MudText>
+            </MudStack>
+        </MudPaper>
+    }
+
+</MudContainer>
+
+@code {
+    // ── State ──
+    private DateTime? _dal = DateTime.Today.AddDays(-7);
+    private DateTime? _al = DateTime.Today.AddDays(1);
+    private string _filtraMacchina = "";
+    private List<string> _macchineDisponibili = new();
+    private bool _loading = false;
+    private bool _hasSearched = false;
+    private int _activeTab = 0;
+
+    private OperatoreAnalisiResult? _result;
+    private OperatoreAnalisiDto? _operatoreSelezionato;
+
+    // ── Chart data – Ranking tab ──
+    private List<ChartSeries> _rankingChartSeries = new();
+    private List<ChartSeries> _scartiPercentChartSeries = new();
+    private List<ChartSeries> _fermiChartSeries = new();
+    private List<ChartSeries> _efficienzaChartSeries = new();
+    private string[] _rankingLabels = Array.Empty<string>();
+
+    // ── Chart data – Drill-down tab ──
+    private List<ChartSeries> _trendCicliSeries = new();
+    private List<ChartSeries> _trendFermiSeries = new();
+    private List<ChartSeries> _trendScartiPercSeries = new();
+    private string[] _trendLabels = Array.Empty<string>();
+    private double[] _statoDonutData = Array.Empty<double>();
+    private string[] _statoDonutLabels = Array.Empty<string>();
+
+    // ── Chart options ──
+    private ChartOptions _rankingChartOptions = new() { YAxisTicks = 100 };
+    private ChartOptions _scartiChartOptions = new() { YAxisTicks = 1 };
+    private ChartOptions _fermiChartOptions = new() { YAxisTicks = 5 };
+    private ChartOptions _efficienzaChartOptions = new() { YAxisTicks = 10, MaxNumYAxisTicks = 10 };
+    private ChartOptions _trendLineOptions = new() { YAxisTicks = 50, LineStrokeWidth = 2 };
+    private ChartOptions _trendFermiLineOptions = new() { YAxisTicks = 1, LineStrokeWidth = 2 };
+    private ChartOptions _trendScartiOptions = new() { YAxisTicks = 1, LineStrokeWidth = 2 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Carica lista macchine disponibili per il filtro
+            var sample = await PlcService.GetAllStoricoAsync(DateTime.Today.AddDays(-30), DateTime.Today);
+            _macchineDisponibili = sample
+                .Where(x => !string.IsNullOrEmpty(x.MacchinaNumero))
+                .Select(x => x.MacchinaNumero)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
+        }
+        catch { /* Ignora errori iniziali */ }
+    }
+
+    private async Task Analizza()
+    {
+        if (_dal == null || _al == null) return;
+
+        _loading = true;
+        _hasSearched = true;
+        _operatoreSelezionato = null;
+        StateHasChanged();
+
+        try
+        {
+            _result = await AnalisiService.AnalizzaAsync(
+                _dal.Value,
+                _al.Value,
+                string.IsNullOrEmpty(_filtraMacchina) ? null : _filtraMacchina);
+
+            if (_result.Operatori.Any())
+                BuildRankingCharts();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore analisi operatori: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SelezionaOperatore(OperatoreAnalisiDto? op)
+    {
+        _operatoreSelezionato = op;
+        if (op != null)
+        {
+            BuildDrillDownCharts(op);
+            _activeTab = 1;
+        }
+        StateHasChanged();
+    }
+
+    private void DrillDown(OperatoreAnalisiDto op)
+    {
+        SelezionaOperatore(op);
+    }
+
+    // ── Build Charts – Ranking ──
+    private void BuildRankingCharts()
+    {
+        if (_result == null) return;
+
+        var ops = _result.Operatori;
+        _rankingLabels = ops
+            .Select(o => o.Nome.Length > 10 ? o.Nome[..10] + "…" : o.Nome)
+            .ToArray();
+
+        _rankingChartSeries = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Cicli", Data = ops.Select(o => (double)o.CicliTotali).ToArray() },
+            new ChartSeries { Name = "Scarti", Data = ops.Select(o => (double)o.ScartiTotali).ToArray() }
+        };
+
+        _scartiPercentChartSeries = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "% Scarti", Data = ops.Select(o => Math.Round(o.PercentualeScarti, 2)).ToArray() }
+        };
+
+        _fermiChartSeries = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Fermi", Data = ops.Select(o => (double)o.NumeroFermi).ToArray() },
+            new ChartSeries { Name = "Setup", Data = ops.Select(o => (double)o.NumeroSetup).ToArray() }
+        };
+
+        _efficienzaChartSeries = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Efficienza %", Data = ops.Select(o => Math.Round(o.EfficienzaMedia, 1)).ToArray() }
+        };
+    }
+
+    // ── Build Charts – Drill-down ──
+    private void BuildDrillDownCharts(OperatoreAnalisiDto op)
+    {
+        var trend = op.TrendGiornaliero;
+        if (!trend.Any()) return;
+
+        _trendLabels = trend.Select(g => g.Data.ToString("dd/MM")).ToArray();
+
+        _trendCicliSeries = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Cicli/Giorno", Data = trend.Select(g => (double)g.Cicli).ToArray() }
+        };
+
+        _trendFermiSeries = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Fermi/Giorno", Data = trend.Select(g => (double)g.Fermi).ToArray() },
+            new ChartSeries { Name = "Setup/Giorno", Data = trend.Select(g => (double)g.Setup).ToArray() }
+        };
+
+        _trendScartiPercSeries = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "% Scarti", Data = trend.Select(g => Math.Round(g.PercentualeScarti, 2)).ToArray() }
+        };
+
+        // Stato donut (top 6 stati per leggibilità)
+        var topStati = op.StatoBreakdown
+            .OrderByDescending(kv => kv.Value)
+            .Take(6)
+            .ToList();
+        _statoDonutLabels = topStati.Select(kv => kv.Key).ToArray();
+        _statoDonutData = topStati.Select(kv => (double)kv.Value).ToArray();
+    }
+}

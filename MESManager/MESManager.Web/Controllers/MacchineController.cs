@@ -19,9 +19,19 @@ public class MacchineController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<MacchinaDto>>> Get()
+    public async Task<ActionResult<List<MacchinaDto>>> Get([FromQuery] bool? hasPlc = null)
     {
-        var macchine = await _context.Macchine
+        var query = _context.Macchine.AsQueryable();
+
+        // hasPlc=true → solo macchine con IndirizzoPLC configurato (usate da Dashboard, Storico PLC, etc.)
+        // hasPlc=false → solo macchine senza PLC
+        // hasPlc assente → tutte le macchine
+        if (hasPlc == true)
+            query = query.Where(m => !string.IsNullOrWhiteSpace(m.IndirizzoPLC));
+        else if (hasPlc == false)
+            query = query.Where(m => string.IsNullOrWhiteSpace(m.IndirizzoPLC));
+
+        var macchine = await query
             .OrderBy(m => m.Codice)
             .Select(m => new MacchinaDto
             {
