@@ -4,7 +4,123 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.53.4
+## 🔖 Versione Corrente: v1.54.1
+
+---
+
+## 🔖 v1.54.1 - Tabelle opache via app.css globals + Drawer dark mode fix (2 Mar 2026)
+
+**Data**: 2 Marzo 2026
+
+### 🐛 Fix ROOT CAUSE — MudTable righe trasparenti (definitivo)
+
+Causa radice identificata: le regole CSS inline nei `<style>` tag di `MainLayout.razor`
+vengono processate da Blazor Server con comportamento incoerente durante i re-render SignalR.
+Soluzione definitiva: CSS spostato in `wwwroot/app.css` (file statico globale, caricato
+nell'`<head>` — garantito globale, nessun problema di scoping Blazor).
+
+- `app.css`: aggiunte regole `.mud-table-root .mud-table-row`, `.mud-table-root td`,
+  `.mud-table-root .mud-table-cell` usando `var(--mes-row-odd/even/text)` e
+  `var(--mes-grid-header-bg)` — CSS variables iniettate da MainLayout nel `:root`
+- `app.css`: `.mud-table-toolbar` anch'esso opaco (area sopra tabella)
+- `MainLayout.razor` `:root {}`: aggiunte 5 nuove CSS variables:
+  `--mes-row-odd`, `--mes-row-even`, `--mes-row-text`,
+  `--mes-grid-header-bg`, `--mes-glass-grid`
+- Colori righe ora **completamente opachi** (rimosso alpha 0.97 → hex solidi):
+  dark `#262636`/`#303042`, light `#F0F0F8`/`#FAFAFD`
+- Drawer dark mode: `_appBarBg` ripristinato a `#0E101C` in dark (era diventato
+  sempre `var(--mes-primary)` = verde anche in dark mode)
+- AG Grid: CSS vars stesse usate anche per le grids
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css`
+- `MESManager.Web/Components/Layout/MainLayout.razor`
+- `MESManager.Web/Constants/AppVersion.cs`
+
+---
+
+## 🔖 v1.54.0 - CSS tables fuori @if, AppBar testo nav, color picker (2 Mar 2026)
+
+**Data**: 2 Marzo 2026
+
+### 🐛 Fix — Tabelle trasparenti (terzo tentativo)
+- `_gridHeaderBg` e `_appBarBg`: rimosso `color-mix(in srgb, var(--mes-primary) 40%, #080810)`
+  — la funzione `color-mix()` causava **fallimento del parsing dell'intero blocco `<style>`**
+  rendendo tutte le regole CSS della sezione inefficaci
+- Sostituiti con valori `rgba()` letterali (dark: `rgba(20,24,40,0.97)`, light: `rgba(30,40,70,0.92)`)
+- Tabella CSS spostata fuori da `@if (_bgActive)` — era condizionale allo sfondo attivo!
+- Selettori potenziati: `.mud-table`, `.mud-table-container`, `.mud-table-root` senza
+  prefisso `.mud-main-content` (che poteva non matchare)
+- `tbody td` con `background-color` esplicito (no `inherit`)
+
+### 🎨 Fix — AppBar testo sempre bianco
+- `MainLayout.razor` always-active `<style>`: aggiunta regola CSS che applica
+  `var(--mes-nav-text)` a `.mud-appbar`, `.mud-toolbar`, `.mud-typography` ecc.
+  — prima `--mes-nav-text` era applicato SOLO al `.mud-drawer`
+
+### 🎨 Feature — Color picker Impostazioni Generali
+- `ImpostazioniGenerali.razor`: `PickerVariant.Inline` tiny → `PickerVariant.Static`
+  con toggle visibility (`_showPicker1`, `_showPicker2`, `_showNavPicker`)
+- Bottoni colore testo nav: rimosso "Grigio Medio" (#888888), "Scuro" → "Nero" (#000000)
+- Label sezione: "Colore Testo Menu Laterale + AppBar"
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor`
+- `MESManager.Web/Components/Pages/Impostazioni/ImpostazioniGenerali.razor`
+- `MESManager.Web/Constants/AppVersion.cs`
+
+---
+
+## 🔖 v1.53.9 - Color picker palette + bottoni colore nav (2 Mar 2026)
+
+**Data**: 2 Marzo 2026
+
+### 🎨 Feature — Colori Extra: palette visiva cliccabile
+- `ImpostazioniGenerali.razor`: `MudColorPicker` per Colore Extra 1 e 2
+  (`PickerVariant.Inline` con campo hex manuale + pulsante colore come trigger)
+- Sezione nav text: `MudColorPicker` per colore personalizzato
+- `_extraColor1`, `_extraColor2`, `_navTextColor`: property con getter/setter
+  per conversione `MudColor ↔ string hex`
+
+### 🧹 UI — Pulizia bottoni colore
+- Rimosso bottone "Grigio Medio" (#888888)
+- "Scuro" rinominato in "Nero" (#000000)
+
+#### File modificati
+- `MESManager.Web/Components/Pages/Impostazioni/ImpostazioniGenerali.razor`
+- `MESManager.Web/Constants/AppVersion.cs`
+
+---
+
+## 🔖 v1.53.8 - CSS tabelle fuori dal blocco @if condizionale (2 Mar 2026)
+
+**Data**: 2 Marzo 2026
+
+### 🐛 Fix — CRITICAL BUG: CSS tabelle era dentro @if (_bgActive)
+- `MainLayout.razor`: tutto il CSS MudTable era dentro `@if (_bgActive)` che si
+  attiva SOLO quando `BackgroundImageUrl` è impostata. Senza sfondo = CSS mai applicato
+- Spostato blocco `<style>` tabelle FUORI dall'`@if` → sempre attivo
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor`
+- `MESManager.Web/Constants/AppVersion.cs`
+
+---
+
+## 🔖 v1.53.5 - Fix inline style MudTable IssueLog + selettori CSS 3 livelli (1 Mar 2026)
+
+**Data**: 1 Marzo 2026
+
+### 🐛 Fix — IssueLogList: inline !important bloccava override CSS
+- `IssueLogList.razor`: rimosso `Style="background-color: ... !important"` inline
+  sulla `MudTable` — impossibile sovrascrivere da MainLayout (specificità CSS)
+- `MainLayout`: selettori CSS aumentati a coprire tutti e 3 i livelli della struttura
+  MudBlazor: `mud-table > mud-table-container > mud-table-root`
+
+#### File modificati
+- `MESManager.Web/Components/Pages/IssueLog/IssueLogList.razor`
+- `MESManager.Web/Components/Layout/MainLayout.razor`
+- `MESManager.Web/Constants/AppVersion.cs`
 
 ---
 

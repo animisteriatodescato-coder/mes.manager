@@ -419,6 +419,28 @@ Pensa come se:
 
 ## ⚠️ REGOLE CRITICHE - LINK RAPIDI
 
+### CSS Globali e Blazor Server (⚠️ LESSON LEARNED v1.54.x)
+
+**Problema ricorrente**: Le regole CSS scritte nei tag `<style>` inline di `MainLayout.razor`
+(anche fuori da `@if`) possono essere ignorate da Blazor Server durante i re-render SignalR.
+
+**Regola fissa**: CSS globali (tabelle, grids, layout) vanno in `wwwroot/app.css`.
+Le CSS variables calcolate C# (`--mes-row-odd`, ecc.) vanno nel blocco `:root {}` del
+primo `<style>` di MainLayout (quello con le variabili `--mes-*`), che funziona correttamente.
+
+**Pattern corretto**:
+```
+MainLayout.razor → :root { --mes-row-odd: @(_isDarkMode ? "#262636" : "#F0F0F8"); }
+wwwroot/app.css  → .mud-table-root td { background-color: var(--mes-row-odd) !important; }
+```
+
+**Anti-pattern** (causa trasparenza):
+```
+MainLayout.razor → <style> .mud-table-root td { background-color: @_rowOdd !important; } </style>
+```
+
+---
+
 ### Dashboard e PLCRealtime
 
 **Problema comune**: Dashboard vuote o macchine non visibili
@@ -467,8 +489,8 @@ proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve t
 
 ## 📞 Supporto Documentazione
 
-**Versione**: 3.7  
-**Data**: 24 Febbraio 2026  
+**Versione**: 3.8  
+**Data**: 2 Marzo 2026  
 **Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: Fix testi invisibili Dashboard dark mode — override MudBlazor su card bianche hardcoded (v1.51.2)
+**Ultimo aggiornamento**: Deploy v1.54.1 — tabelle opache via app.css globals, CSS vars in :root, drawer dark fix
