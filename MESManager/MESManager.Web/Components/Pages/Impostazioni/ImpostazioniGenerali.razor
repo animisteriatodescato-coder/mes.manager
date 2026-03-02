@@ -176,10 +176,10 @@
             </MudText>
             <div class="d-flex gap-4 flex-wrap">
                 <div class="d-flex align-center gap-2">
-                    <div style="width:40px;height:40px;border-radius:50%;
-                                background:@(_settings.ThemeExtraColors.Count > 0 ? _settings.ThemeExtraColors[0] : "#607D8B");
-                                border:2px solid rgba(128,128,128,0.4);
-                                box-shadow:0 2px 6px rgba(0,0,0,0.25);flex-shrink:0;"></div>
+                    <MudColorPicker @bind-Value="_extraColor1" PickerVariant="PickerVariant.Inline"
+                                    ColorPickerView="ColorPickerView.Spectrum"
+                                    Style="width:60px;height:60px;"
+                                    DisableAlpha="true" />
                     <MudTextField @bind-Value="_settings.ThemeExtraColors[0]"
                                   Label="Colore Extra 1"
                                   Variant="Variant.Outlined"
@@ -188,10 +188,10 @@
                                   AdornmentIcon="@Icons.Material.Filled.Colorize" />
                 </div>
                 <div class="d-flex align-center gap-2">
-                    <div style="width:40px;height:40px;border-radius:50%;
-                                background:@(_settings.ThemeExtraColors.Count > 1 ? _settings.ThemeExtraColors[1] : "#795548");
-                                border:2px solid rgba(128,128,128,0.4);
-                                box-shadow:0 2px 6px rgba(0,0,0,0.25);flex-shrink:0;"></div>
+                    <MudColorPicker @bind-Value="_extraColor2" PickerVariant="PickerVariant.Inline"
+                                    ColorPickerView="ColorPickerView.Spectrum"
+                                    Style="width:60px;height:60px;"
+                                    DisableAlpha="true" />
                     <MudTextField @bind-Value="_settings.ThemeExtraColors[1]"
                                   Label="Colore Extra 2"
                                   Variant="Variant.Outlined"
@@ -263,11 +263,11 @@
         </div>
     </MudPaper>
 
-    @* ── Sezione colore testo menu laterale ──────────────────────────── *@
+    @* ── Sezione colore testo menu laterale + AppBar ──────────────────────────── *@
     <MudPaper Class="pa-4 mt-4" Elevation="2">
-        <MudText Typo="Typo.h6" Class="mb-1">Colore Testo Menu Laterale</MudText>
+        <MudText Typo="Typo.h6" Class="mb-1">Colore Testo Menu Laterale + AppBar</MudText>
         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
-            Colore del testo delle voci del menu laterale (Drawer). "Auto" = bianco in dark mode, quasi-nero in light mode.
+            Colora il testo del menu laterale (Drawer) E la barra del titolo in alto (AppBar). "Auto" = bianco in dark mode, quasi-nero in light mode.
         </MudText>
         <div class="d-flex align-center gap-4 flex-wrap">
             <MudText Style="min-width:160px; font-weight:500;">Colore voce menu</MudText>
@@ -292,17 +292,20 @@
                 <MudButton Style="background:#C8C8C8; color:#1A1A1A; font-weight:700;"
                            Variant="@(_settings.ThemeNavTextColor == "#C8C8C8" ? Variant.Filled : Variant.Outlined)"
                            OnClick="@(() => _settings.ThemeNavTextColor = "#C8C8C8")">Grigio Chiaro</MudButton>
-                <MudButton Style="background:#888888; color:#FFFFFF; font-weight:700;"
-                           Variant="@(_settings.ThemeNavTextColor == "#888888" ? Variant.Filled : Variant.Outlined)"
-                           OnClick="@(() => _settings.ThemeNavTextColor = "#888888")">Grigio Medio</MudButton>
-                <MudButton Style="background:#333333; color:#FFFFFF; font-weight:700;"
-                           Variant="@(_settings.ThemeNavTextColor == "#333333" ? Variant.Filled : Variant.Outlined)"
-                           OnClick="@(() => _settings.ThemeNavTextColor = "#333333")">Scuro</MudButton>
+                <MudButton Style="background:#000000; color:#FFFFFF; font-weight:700;"
+                           Variant="@(_settings.ThemeNavTextColor == "#000000" ? Variant.Filled : Variant.Outlined)"
+                           OnClick="@(() => _settings.ThemeNavTextColor = "#000000")">Nero</MudButton>
             </MudButtonGroup>
-            <MudTextField @bind-Value="_settings.ThemeNavTextColor"
-                          Label="Hex" Variant="Variant.Outlined" Style="max-width:110px"
-                          Adornment="Adornment.Start"
-                          AdornmentIcon="@Icons.Material.Filled.Colorize" />
+            <div class="d-flex align-center gap-2">
+                <MudColorPicker @bind-Value="_navTextColor" PickerVariant="PickerVariant.Inline"
+                                ColorPickerView="ColorPickerView.Spectrum"
+                                Style="width:48px;height:48px;"
+                                DisableAlpha="true" />
+                <MudTextField @bind-Value="_settings.ThemeNavTextColor"
+                              Label="Hex Personalizzato" Variant="Variant.Outlined" Style="max-width:150px"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Colorize" />
+            </div>
         </div>
     </MudPaper>
 
@@ -316,6 +319,23 @@
 @code {
     private AppSettings _settings = new();
     private bool _isUploading = false;
+
+    // ── Variabili per MudColorPicker (convertono da/verso hex string) ──
+    private MudBlazor.Utilities.MudColor _extraColor1 
+    { 
+        get => new MudBlazor.Utilities.MudColor(_settings.ThemeExtraColors[0]); 
+        set => _settings.ThemeExtraColors[0] = value.Value;
+    }
+    private MudBlazor.Utilities.MudColor _extraColor2 
+    { 
+        get => new MudBlazor.Utilities.MudColor(_settings.ThemeExtraColors[1]); 
+        set => _settings.ThemeExtraColors[1] = value.Value;
+    }
+    private MudBlazor.Utilities.MudColor _navTextColor 
+    { 
+        get => new MudBlazor.Utilities.MudColor(string.IsNullOrEmpty(_settings.ThemeNavTextColor) ? "#FFFFFF" : _settings.ThemeNavTextColor); 
+        set => _settings.ThemeNavTextColor = value.Value;
+    }
 
     protected override void OnInitialized()
     {
