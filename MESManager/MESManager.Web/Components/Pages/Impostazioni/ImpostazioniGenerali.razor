@@ -175,30 +175,52 @@
                 Aggiungi fino a 2 colori personalizzati selezionabili come Primario, Secondario e Accento.
             </MudText>
             <div class="d-flex gap-4 flex-wrap">
-                <div class="d-flex align-center gap-2">
-                    <MudColorPicker @bind-Value="_extraColor1" PickerVariant="PickerVariant.Inline"
-                                    ColorPickerView="ColorPickerView.Spectrum"
-                                    Style="width:60px;height:60px;"
-                                    DisableAlpha="true" />
+                <div class="d-flex align-center gap-3">
+                    <div style="width:52px;height:52px;border-radius:8px;flex-shrink:0;
+                                background:@(_settings.ThemeExtraColors[0]);
+                                border:2px solid rgba(128,128,128,0.4);
+                                box-shadow:0 2px 8px rgba(0,0,0,0.3);
+                                cursor:pointer;"
+                         @onclick="@(() => _showPicker1 = !_showPicker1)"
+                         title="Clicca per aprire palette">
+                    </div>
                     <MudTextField @bind-Value="_settings.ThemeExtraColors[0]"
-                                  Label="Colore Extra 1"
-                                  Variant="Variant.Outlined"
-                                  Style="max-width:130px"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Colorize" />
+                                  Label="Colore Extra 1" Variant="Variant.Outlined"
+                                  Style="max-width:140px" />
                 </div>
-                <div class="d-flex align-center gap-2">
-                    <MudColorPicker @bind-Value="_extraColor2" PickerVariant="PickerVariant.Inline"
-                                    ColorPickerView="ColorPickerView.Spectrum"
-                                    Style="width:60px;height:60px;"
-                                    DisableAlpha="true" />
+                @if (_showPicker1)
+                {
+                    <div class="pa-2" style="background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3);z-index:100;">
+                        <MudColorPicker @bind-Value="_extraColor1" PickerVariant="PickerVariant.Static"
+                                        ColorPickerView="ColorPickerView.Spectrum" DisableAlpha="true"
+                                        DisableInputs="false" />
+                        <MudButton Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled"
+                                   OnClick="@(() => _showPicker1 = false)" Class="mt-1 ml-2">OK</MudButton>
+                    </div>
+                }
+                <div class="d-flex align-center gap-3">
+                    <div style="width:52px;height:52px;border-radius:8px;flex-shrink:0;
+                                background:@(_settings.ThemeExtraColors[1]);
+                                border:2px solid rgba(128,128,128,0.4);
+                                box-shadow:0 2px 8px rgba(0,0,0,0.3);
+                                cursor:pointer;"
+                         @onclick="@(() => _showPicker2 = !_showPicker2)"
+                         title="Clicca per aprire palette">
+                    </div>
                     <MudTextField @bind-Value="_settings.ThemeExtraColors[1]"
-                                  Label="Colore Extra 2"
-                                  Variant="Variant.Outlined"
-                                  Style="max-width:130px"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Colorize" />
+                                  Label="Colore Extra 2" Variant="Variant.Outlined"
+                                  Style="max-width:140px" />
                 </div>
+                @if (_showPicker2)
+                {
+                    <div class="pa-2" style="background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3);z-index:100;">
+                        <MudColorPicker @bind-Value="_extraColor2" PickerVariant="PickerVariant.Static"
+                                        ColorPickerView="ColorPickerView.Spectrum" DisableAlpha="true"
+                                        DisableInputs="false" />
+                        <MudButton Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled"
+                                   OnClick="@(() => _showPicker2 = false)" Class="mt-1 ml-2">OK</MudButton>
+                    </div>
+                }
             </div>
         </MudPaper>
     }
@@ -296,16 +318,28 @@
                            Variant="@(_settings.ThemeNavTextColor == "#000000" ? Variant.Filled : Variant.Outlined)"
                            OnClick="@(() => _settings.ThemeNavTextColor = "#000000")">Nero</MudButton>
             </MudButtonGroup>
-            <div class="d-flex align-center gap-2">
-                <MudColorPicker @bind-Value="_navTextColor" PickerVariant="PickerVariant.Inline"
-                                ColorPickerView="ColorPickerView.Spectrum"
-                                Style="width:48px;height:48px;"
-                                DisableAlpha="true" />
+            <div class="d-flex align-center gap-3 mt-2">
+                <div style="width:52px;height:52px;border-radius:8px;flex-shrink:0;
+                            background:@(string.IsNullOrEmpty(_settings.ThemeNavTextColor) ? "#FFFFFF" : _settings.ThemeNavTextColor);
+                            border:2px solid rgba(128,128,128,0.4);
+                            box-shadow:0 2px 8px rgba(0,0,0,0.3);
+                            cursor:pointer;"
+                     @onclick="@(() => _showNavPicker = !_showNavPicker)"
+                     title="Clicca per aprire palette personalizzata">
+                </div>
                 <MudTextField @bind-Value="_settings.ThemeNavTextColor"
-                              Label="Hex Personalizzato" Variant="Variant.Outlined" Style="max-width:150px"
-                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Colorize" />
+                              Label="Hex Personalizzato" Variant="Variant.Outlined" Style="max-width:180px" />
             </div>
+            @if (_showNavPicker)
+            {
+                <div class="pa-2 mt-2" style="background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3);z-index:100;">
+                    <MudColorPicker @bind-Value="_navTextColor" PickerVariant="PickerVariant.Static"
+                                    ColorPickerView="ColorPickerView.Spectrum" DisableAlpha="true"
+                                    DisableInputs="false" />
+                    <MudButton Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled"
+                               OnClick="@(() => _showNavPicker = false)" Class="mt-1 ml-2">OK</MudButton>
+                </div>
+            }
         </div>
     </MudPaper>
 
@@ -321,20 +355,24 @@
     private bool _isUploading = false;
 
     // ── Variabili per MudColorPicker (convertono da/verso hex string) ──
+    private bool _showPicker1 = false;
+    private bool _showPicker2 = false;
+    private bool _showNavPicker = false;
+
     private MudBlazor.Utilities.MudColor _extraColor1 
     { 
         get => new MudBlazor.Utilities.MudColor(_settings.ThemeExtraColors[0]); 
-        set => _settings.ThemeExtraColors[0] = value.Value;
+        set { _settings.ThemeExtraColors[0] = value.Value; }
     }
     private MudBlazor.Utilities.MudColor _extraColor2 
     { 
         get => new MudBlazor.Utilities.MudColor(_settings.ThemeExtraColors[1]); 
-        set => _settings.ThemeExtraColors[1] = value.Value;
+        set { _settings.ThemeExtraColors[1] = value.Value; }
     }
     private MudBlazor.Utilities.MudColor _navTextColor 
     { 
         get => new MudBlazor.Utilities.MudColor(string.IsNullOrEmpty(_settings.ThemeNavTextColor) ? "#FFFFFF" : _settings.ThemeNavTextColor); 
-        set => _settings.ThemeNavTextColor = value.Value;
+        set { _settings.ThemeNavTextColor = value.Value; }
     }
 
     protected override void OnInitialized()

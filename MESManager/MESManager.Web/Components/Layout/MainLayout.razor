@@ -37,6 +37,17 @@
     .mud-drawer .mud-nav-group-header span {
         color: var(--mes-nav-text) !important;
     }
+    /* AppBar: testo e titolo seguono lo stesso colore del menu laterale */
+    .mud-appbar .mud-toolbar-appbar,
+    .mud-appbar .mud-toolbar,
+    .mud-appbar .mud-typography,
+    .mud-appbar h1, .mud-appbar h2, .mud-appbar h3, .mud-appbar h4, .mud-appbar h5, .mud-appbar h6,
+    .mud-appbar span:not(.mud-chip-content):not(.mud-icon-root),
+    [data-testid="main-appbar"],
+    [data-testid="main-appbar"] .mud-typography,
+    [data-testid="main-appbar"] span:not(.mud-icon-root) {
+        color: var(--mes-nav-text) !important;
+    }
 </style>
 @{
     var _bgActive = !string.IsNullOrEmpty(AppSettingsService.GetSettings().BackgroundImageUrl);
@@ -48,50 +59,48 @@
     var _glassGrid = _isDarkMode
         ? $"rgba(28,28,40,{_panelOpStr})"
         : $"rgba(248,248,252,{_panelOpStr})";
-    // Righe: in dark mode grigio medio visibile (NON nero), in light mode grigio chiaro
-    var _rowEven = _isDarkMode ? "rgba(48,48,66,0.97)"  : "rgba(250,250,253,0.97)";
-    var _rowOdd  = _isDarkMode ? "rgba(38,38,54,0.97)"  : "rgba(240,240,248,0.97)";
+    // Righe: in dark mode grigio medio visibile (NON nero), in light mode grigio chiaro — FULLY OPAQUE
+    var _rowEven = _isDarkMode ? "#303042" : "#FAFAFD";
+    var _rowOdd  = _isDarkMode ? "#262636" : "#F0F0F8";
     // Testo celle: bianco in dark, scuro in light
-    var _rowText = _isDarkMode ? "rgba(230,230,240,0.95)" : "rgba(30,30,40,0.95)";
-    // Header griglia: stesso tono del drawer (primary scuro), testo bianco
-    var _gridHeaderBg = _isDarkMode
-        ? "color-mix(in srgb, var(--mes-primary) 40%, #080810)"
-        : "color-mix(in srgb, var(--mes-primary) 75%, #1a1a2e)";
-    // AppBar + Drawer: in dark mode quasi nero con tocco di primary (stessa formula)
-    var _appBarBg = _isDarkMode
-        ? $"color-mix(in srgb, var(--mes-primary) 35%, #050508)"
-        : $"color-mix(in srgb, var(--mes-primary) calc({_panelOpStr} * 100%), transparent)";
+    var _rowText = _isDarkMode ? "#E6E6F0" : "#1E1E28";
+    // Header griglia: colore scuro senza color-mix (evita CSS parsing failure)
+    var _gridHeaderBg = _isDarkMode ? "#14182A" : "#1E2846";
+    // AppBar + Drawer: usa var(--mes-primary) per coerenza col tema
+    var _appBarBg = "var(--mes-primary)";
     var _drawerBg = _appBarBg;
 }
 
 <style>
-    /* ===== TABELLE OPACHE — SEMPRE ATTIVO (v1.53.7+) ===== */
+    /* ===== TABELLE OPACHE — SEMPRE ATTIVO (v1.53.8+) ===== */
     
     /* ── MudTable ──────────────────────────────────────────── */
-    /* Copriamo tutti i livelli: container -> table -> tr -> td */
-    .mud-main-content .mud-table-container,
-    .mud-main-content .mud-table-root {
+    /* Copriamo tutti i livelli: mud-table (div) > mud-table-container > mud-table-root */
+    .mud-table,
+    .mud-table-container,
+    .mud-table-root {
         background-color: @_rowOdd !important;
     }
-    /* Righe dispari (default) */
-    .mud-main-content .mud-table-root tr {
+    /* Righe: background esplicito senza dipendere dal parent */
+    .mud-table-root tbody tr {
         background-color: @_rowOdd !important;
     }
-    /* Righe pari: colore alternato */
-    .mud-main-content .mud-table-root tbody tr:nth-child(even) {
+    .mud-table-root tbody tr:nth-child(even) {
         background-color: @_rowEven !important;
     }
-    /* Celle: ereditano dal tr, testo leggibile */
-    .mud-main-content .mud-table-root td {
-        background-color: inherit !important;
+    /* Celle: stesso colore del tr (no inherit che potrebbe sparire) */
+    .mud-table-root tbody td {
+        background-color: @_rowOdd !important;
         color: @_rowText !important;
     }
-    /* Header: stesso tono del drawer */
-    .mud-main-content .mud-table-root thead tr {
-        background-color: @_gridHeaderBg !important;
+    .mud-table-root tbody tr:nth-child(even) td {
+        background-color: @_rowEven !important;
+        color: @_rowText !important;
     }
-    .mud-main-content .mud-table-root thead th {
-        background-color: inherit !important;
+    /* Header */
+    .mud-table-root thead tr,
+    .mud-table-root thead th {
+        background-color: @_gridHeaderBg !important;
         color: rgba(255,255,255,0.95) !important;
     }
 
