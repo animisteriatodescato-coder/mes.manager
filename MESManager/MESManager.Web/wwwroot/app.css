@@ -183,3 +183,50 @@ h1:focus {
     width: 100%;
     height: calc(100vh - var(--grid-offset));
 }
+
+/* ============================================================
+   MudTable opaca — usa CSS vars iniettate da MainLayout :root
+   (spostato da Razor style inline a file globale per garantire
+    che le regole siano applicate senza problemi di scoping Blazor)
+   ============================================================ */
+
+/* Wrapper e contenitore */
+.mud-table,
+.mud-table-container,
+.mud-table-root {
+    background-color: var(--mes-row-odd, #F0F0F8) !important;
+}
+
+/* Header: colore scuro */
+.mud-table-root thead tr,
+.mud-table-root thead th,
+.mud-table-root .mud-table-head tr,
+.mud-table-root .mud-table-head th {
+    background-color: var(--mes-grid-header-bg, #1E2846) !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Righe corpo — MudBlazor usa .mud-table-row sulla <tr> */
+.mud-table-root .mud-table-row {
+    background-color: var(--mes-row-odd, #F0F0F8) !important;
+}
+.mud-table-root .mud-table-row:nth-child(even) {
+    background-color: var(--mes-row-even, #FAFAFD) !important;
+}
+
+/* Celle — forziamo singola cella per evitare transparent ereditato */
+.mud-table-root td,
+.mud-table-root .mud-table-cell {
+    background-color: var(--mes-row-odd, #F0F0F8) !important;
+    color: var(--mes-row-text, #1E1E28) !important;
+}
+.mud-table-root .mud-table-row:nth-child(even) td,
+.mud-table-root .mud-table-row:nth-child(even) .mud-table-cell {
+    background-color: var(--mes-row-even, #FAFAFD) !important;
+    color: var(--mes-row-text, #1E1E28) !important;
+}
+
+/* MudTable toolbar (area sopra la tabella con titolo/ricerca) */
+.mud-table-toolbar {
+    background-color: var(--mes-row-odd, #F0F0F8) !important;
+}

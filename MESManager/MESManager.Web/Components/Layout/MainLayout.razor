@@ -18,6 +18,12 @@
         --mes-nav-text: @(string.IsNullOrEmpty(AppSettingsService.GetSettings().ThemeNavTextColor) ? (_isDarkMode ? "#FFFFFF" : "#1A1A1A") : AppSettingsService.GetSettings().ThemeNavTextColor);
         --mes-bg-opacity: @(AppSettingsService.GetSettings().ThemeBgOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
         --mes-panel-opacity: @(AppSettingsService.GetSettings().ThemePanelOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+        /* Colori tabelle — calcolati server-side, usati da app.css via var() */
+        --mes-row-odd:  @(_isDarkMode ? "#262636" : "#F0F0F8");
+        --mes-row-even: @(_isDarkMode ? "#303042" : "#FAFAFD");
+        --mes-row-text: @(_isDarkMode ? "#E6E6F0" : "#1E1E28");
+        --mes-grid-header-bg: @(_isDarkMode ? "#14182A" : "#1E2846");
+        --mes-glass-grid: @(_isDarkMode ? $"rgba(28,28,40,{AppSettingsService.GetSettings().ThemePanelOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)})" : $"rgba(248,248,252,{AppSettingsService.GetSettings().ThemePanelOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)})");
     }
     /* Drawer nav: icone +15% (13→15, 16→18), testo non bold */
     .mud-drawer [data-testid="nav-menu"] span[style*="font-size: 13px"] { font-size: 15px !important; }
@@ -66,79 +72,40 @@
     var _rowText = _isDarkMode ? "#E6E6F0" : "#1E1E28";
     // Header griglia: colore scuro senza color-mix (evita CSS parsing failure)
     var _gridHeaderBg = _isDarkMode ? "#14182A" : "#1E2846";
-    // AppBar + Drawer: usa var(--mes-primary) per coerenza col tema
-    var _appBarBg = "var(--mes-primary)";
+    // AppBar + Drawer: primary in light, scuro in dark (dark mode deve restare scuro)
+    var _appBarBg = _isDarkMode ? "#0E101C" : "var(--mes-primary)";
     var _drawerBg = _appBarBg;
 }
 
 <style>
-    /* ===== TABELLE OPACHE — SEMPRE ATTIVO (v1.53.8+) ===== */
-    
-    /* ── MudTable ──────────────────────────────────────────── */
-    /* Copriamo tutti i livelli: mud-table (div) > mud-table-container > mud-table-root */
-    .mud-table,
-    .mud-table-container,
-    .mud-table-root {
-        background-color: @_rowOdd !important;
+    /* ── AG Grid — usa CSS vars definite in :root sopra ─────────────────── */
+    .ag-theme-alpine .ag-root-wrapper,
+    .ag-theme-alpine-dark .ag-root-wrapper {
+        background-color: var(--mes-glass-grid) !important;
     }
-    /* Righe: background esplicito senza dipendere dal parent */
-    .mud-table-root tbody tr {
-        background-color: @_rowOdd !important;
+    .ag-theme-alpine .ag-header,
+    .ag-theme-alpine-dark .ag-header,
+    .ag-theme-alpine .ag-header-row,
+    .ag-theme-alpine-dark .ag-header-row {
+        background-color: var(--mes-grid-header-bg) !important;
     }
-    .mud-table-root tbody tr:nth-child(even) {
-        background-color: @_rowEven !important;
-    }
-    /* Celle: stesso colore del tr (no inherit che potrebbe sparire) */
-    .mud-table-root tbody td {
-        background-color: @_rowOdd !important;
-        color: @_rowText !important;
-    }
-    .mud-table-root tbody tr:nth-child(even) td {
-        background-color: @_rowEven !important;
-        color: @_rowText !important;
-    }
-    /* Header */
-    .mud-table-root thead tr,
-    .mud-table-root thead th {
-        background-color: @_gridHeaderBg !important;
+    .ag-theme-alpine .ag-header-cell,
+    .ag-theme-alpine-dark .ag-header-cell,
+    .ag-theme-alpine .ag-header-cell-text,
+    .ag-theme-alpine-dark .ag-header-cell-text {
         color: rgba(255,255,255,0.95) !important;
     }
-
-    /* ── AG Grid ────────────────────────────────────────────────── */
-
-    /* Wrapper root: colore di base opaco */
-    .mud-main-content .ag-theme-alpine .ag-root-wrapper,
-    .mud-main-content .ag-theme-alpine-dark .ag-root-wrapper {
-        background-color: @_glassGrid !important;
+    .ag-theme-alpine .ag-row-even,
+    .ag-theme-alpine-dark .ag-row-even {
+        background-color: var(--mes-row-even) !important;
     }
-
-    /* Header colonne: stesso tono del drawer/appbar, testo sempre bianco */
-    .mud-main-content .ag-theme-alpine .ag-header,
-    .mud-main-content .ag-theme-alpine-dark .ag-header,
-    .mud-main-content .ag-theme-alpine .ag-header-row,
-    .mud-main-content .ag-theme-alpine-dark .ag-header-row {
-        background-color: @_gridHeaderBg !important;
+    .ag-theme-alpine .ag-row-odd,
+    .ag-theme-alpine-dark .ag-row-odd {
+        background-color: var(--mes-row-odd) !important;
     }
-    .mud-main-content .ag-theme-alpine .ag-header-cell,
-    .mud-main-content .ag-theme-alpine-dark .ag-header-cell,
-    .mud-main-content .ag-theme-alpine .ag-header-cell-text,
-    .mud-main-content .ag-theme-alpine-dark .ag-header-cell-text {
-        color: rgba(255,255,255,0.95) !important;
-    }
-
-    /* Righe pari/dispari con testo leggibile */
-    .mud-main-content .ag-theme-alpine .ag-row-even,
-    .mud-main-content .ag-theme-alpine-dark .ag-row-even {
-        background-color: @_rowEven !important;
-    }
-    .mud-main-content .ag-theme-alpine .ag-row-odd,
-    .mud-main-content .ag-theme-alpine-dark .ag-row-odd {
-        background-color: @_rowOdd !important;
-    }
-    /* Testo celle: forzato per visibilità in dark/light */
-    .mud-main-content .ag-theme-alpine .ag-cell,
-    .mud-main-content .ag-theme-alpine-dark .ag-cell {
-        color: @_rowText !important;
+    .ag-theme-alpine .ag-cell,
+    .ag-theme-alpine-dark .ag-cell {
+        color: var(--mes-row-text) !important;
     }
 </style>
 
