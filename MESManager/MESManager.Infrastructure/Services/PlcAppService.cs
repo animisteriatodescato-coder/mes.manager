@@ -163,7 +163,7 @@ public class PlcAppService : IPlcAppService
         }).ToList();
     }
 
-    public async Task<List<PlcStoricoDto>> GetAllStoricoAsync(DateTime? from, DateTime? to)
+    public async Task<List<PlcStoricoDto>> GetAllStoricoAsync(DateTime? from, DateTime? to, int? limit = 5000)
     {
         var query = _context.PLCStorico
             .Include(p => p.Macchina)
@@ -177,10 +177,11 @@ public class PlcAppService : IPlcAppService
         if (to.HasValue)
             query = query.Where(p => p.DataOra <= to.Value);
 
-        var result = await query
-            .OrderByDescending(p => p.DataOra)
-            .Take(5000)
-            .ToListAsync();
+        var orderedQuery = query.OrderByDescending(p => p.DataOra);
+
+        var result = limit.HasValue
+            ? await orderedQuery.Take(limit.Value).ToListAsync()
+            : await orderedQuery.ToListAsync();
 
         return result.Select(p =>
         {

@@ -41,12 +41,16 @@ public class OperatoreAnalisiService : IOperatoreAnalisiService
         DateTime al,
         string? filtraMacchina = null)
     {
-        // Carica tutti i dati storici del periodo
-        var tuttiDati = await _plcService.GetAllStoricoAsync(dal, al.AddDays(1));
+        // Carica tutti i dati storici del periodo SENZA limite di record.
+        // NOTA: limit = null rimuove il Take(5000) — sicuro perché il filtro date è obbligatorio.
+        var tuttiDati = await _plcService.GetAllStoricoAsync(dal, al.AddDays(1), limit: null);
 
         // Filtra per macchina se richiesto
         if (!string.IsNullOrEmpty(filtraMacchina))
             tuttiDati = tuttiDati.Where(x => x.MacchinaNumero == filtraMacchina).ToList();
+
+        // Ordina per timestamp ASC: necessario per il calcolo incrementi consecutivi
+        tuttiDati = tuttiDati.OrderBy(x => x.MacchinaId).ThenBy(x => x.BarcodeLavorazione).ThenBy(x => x.Timestamp).ToList();
 
         // Considera solo record con operatore assegnato
         var conOperatore = tuttiDati
@@ -78,19 +82,34 @@ public class OperatoreAnalisiService : IOperatoreAnalisiService
             .FirstOrDefault() ?? $"Operatore {numeroOp}";
 
         // ---- PRODUZIONE ----
-        // Per ogni combinazione macchina+commessa, prendi l'ultimo snapshot (valore cumulativo)
-        // e il primo (baseline). La differenza è la produzione effettiva in quel turno.
+        // CicliFatti nel DB è il contatore CUMULATIVO del PLC per quella commessa/barcode.
+        // Usiamo la SOMMA DEGLI INCREMENTI CONSECUTIVI (max(0, r[i]-r[i-1])) per ogni
+        // gruppo macchina+barcode:  questo gestisce correttamente:
+        //   - Contatori già avanzati a inizio periodo (partiamo dall'incremento reale)
+        //   - Reset del contatore mid-period (Math.Max(0,...) ignora decrementi)
         var latestPerMacchinaCommessa = records
             .GroupBy(r => new { r.MacchinaId, r.BarcodeLavorazione })
             .Select(g =>
             {
                 var ordinati = g.OrderBy(x => x.Timestamp).ToList();
-                var primo = ordinati.First();
                 var ultimo = ordinati.Last();
+
+                // Somma incrementi positivi tra snapshot consecutivi
+                int cicli = 0, scarti = 0;
+                for (int i = 1; i < ordinati.Count; i++)
+                {
+                    cicli  += Math.Max(0, ordinati[i].CicliFatti  - ordinati[i - 1].CicliFatti);
+                    scarti += Math.Max(0, ordinati[i].CicliScarti - ordinati[i - 1].CicliScarti);
+                }
+
+                // Se c'è un solo snapshot nel periodo (es. cambio stato),
+                // non possiamo calcolare un delta: lasciamo 0 per quel gruppo.
+                // Il valore è comunque conteggiato nel gruppo successivo quando arriva 
+                // un altro snapshot con il contatore avanzato.
                 return new
                 {
-                    Cicli = Math.Max(0, ultimo.CicliFatti - primo.CicliFatti),
-                    Scarti = Math.Max(0, ultimo.CicliScarti - primo.CicliScarti),
+                    Cicli = cicli,
+                    Scarti = scarti,
                     UltimoTempoMedioRil = ultimo.TempoMedioRilevato,
                     UltimoTempoMedio = ultimo.TempoMedio
                 };
@@ -137,10 +156,16 @@ public class OperatoreAnalisiService : IOperatoreAnalisiService
                     .Select(gc =>
                     {
                         var ord = gc.OrderBy(x => x.Timestamp).ToList();
+                        int c = 0, s = 0;
+                        for (int i = 1; i < ord.Count; i++)
+                        {
+                            c += Math.Max(0, ord[i].CicliFatti  - ord[i - 1].CicliFatti);
+                            s += Math.Max(0, ord[i].CicliScarti - ord[i - 1].CicliScarti);
+                        }
                         return new
                         {
-                            Cicli = Math.Max(0, ord.Last().CicliFatti - ord.First().CicliFatti),
-                            Scarti = Math.Max(0, ord.Last().CicliScarti - ord.First().CicliScarti),
+                            Cicli = c,
+                            Scarti = s,
                             TempoMedio = ord.Last().TempoMedio,
                             TempoMedioRil = ord.Last().TempoMedioRilevato
                         };
