@@ -15,15 +15,23 @@
         --mes-text-on-primary: @(AppSettingsService.GetSettings().ThemeTextOnPrimary);
         --mes-primary: @(AppSettingsService.GetSettings().ThemePrimaryColor);
         --mes-primary-text: @(AppSettingsService.GetSettings().ThemePrimaryTextColor);
-        --mes-nav-text: @(string.IsNullOrEmpty(AppSettingsService.GetSettings().ThemeNavTextColor) ? (_isDarkMode ? "#FFFFFF" : "#1A1A1A") : AppSettingsService.GetSettings().ThemeNavTextColor);
+        --mes-nav-text: @(string.IsNullOrEmpty(AppSettingsService.GetSettings().ThemeNavTextColor) ? MesDesignTokens.NavTextAuto(_isDarkMode) : AppSettingsService.GetSettings().ThemeNavTextColor);
         --mes-bg-opacity: @(AppSettingsService.GetSettings().ThemeBgOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
         --mes-panel-opacity: @(AppSettingsService.GetSettings().ThemePanelOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
-        /* Colori tabelle — calcolati server-side, usati da app.css via var() */
-        --mes-row-odd:  @(_isDarkMode ? "#262636" : "#F0F0F8");
-        --mes-row-even: @(_isDarkMode ? "#303042" : "#FAFAFD");
-        --mes-row-text: @(_isDarkMode ? "#E6E6F0" : "#1E1E28");
-        --mes-grid-header-bg: @(_isDarkMode ? "#14182A" : "#1E2846");
-        --mes-glass-grid: @(_isDarkMode ? $"rgba(28,28,40,{AppSettingsService.GetSettings().ThemePanelOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)})" : $"rgba(248,248,252,{AppSettingsService.GetSettings().ThemePanelOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)})");
+        /* Colori tabelle — token centralizzati via MesDesignTokens (zero hardcoding) */
+        --mes-row-odd:  @MesDesignTokens.RowOdd(_isDarkMode);
+        --mes-row-even: @MesDesignTokens.RowEven(_isDarkMode);
+        --mes-row-text: @MesDesignTokens.RowText(_isDarkMode);
+        --mes-grid-header-bg: @MesDesignTokens.GridHeaderBg(_isDarkMode);
+        --mes-glass-grid: @MesDesignTokens.GlassGrid(_isDarkMode, AppSettingsService.GetSettings().ThemePanelOpacity);
+        /* Token AG Grid panel — used by app.css (.mud-theme-dark) and catalog/program pages */
+        --mes-text-primary:    @MesDesignTokens.RowText(_isDarkMode);
+        --mes-bg-secondary:    @(_isDarkMode ? MesDesignTokens.AgPanelBgDark : "#F5F5F5");
+        --mes-bg-surface:      @(_isDarkMode ? MesDesignTokens.AgInputBgDark : "#FFFFFF");
+        --mes-grid-border:     @(_isDarkMode ? MesDesignTokens.AgInputBorderDark : "#e0e0e0");
+        --mes-ag-panel-bg:     @(_isDarkMode ? MesDesignTokens.AgPanelBgDark : "#FFFFFF");
+        --mes-ag-input-bg:     @(_isDarkMode ? MesDesignTokens.AgInputBgDark : "#FFFFFF");
+        --mes-ag-input-border: @(_isDarkMode ? MesDesignTokens.AgInputBorderDark : "#e0e0e0");
     }
     /* Drawer nav: icone +15% (13→15, 16→18), testo non bold */
     .mud-drawer [data-testid="nav-menu"] span[style*="font-size: 13px"] { font-size: 15px !important; }
@@ -56,25 +64,17 @@
     }
 </style>
 @{
-    var _bgActive = !string.IsNullOrEmpty(AppSettingsService.GetSettings().BackgroundImageUrl);
-    var _panelOpStr = AppSettingsService.GetSettings().ThemePanelOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
-    // Colori calcolati server-side da _isDarkMode — evita dipendenza da .mud-theme-dark CSS
-    var _glassPanel = _isDarkMode
-        ? $"rgba(18,18,28,{_panelOpStr})"      // dark: grigio scuro quasi nero
-        : $"rgba(255,255,255,{_panelOpStr})";   // light: bianco semi-trasparente
-    var _glassGrid = _isDarkMode
-        ? $"rgba(28,28,40,{_panelOpStr})"
-        : $"rgba(248,248,252,{_panelOpStr})";
-    // Righe: in dark mode grigio medio visibile (NON nero), in light mode grigio chiaro — FULLY OPAQUE
-    var _rowEven = _isDarkMode ? "#303042" : "#FAFAFD";
-    var _rowOdd  = _isDarkMode ? "#262636" : "#F0F0F8";
-    // Testo celle: bianco in dark, scuro in light
-    var _rowText = _isDarkMode ? "#E6E6F0" : "#1E1E28";
-    // Header griglia: colore scuro senza color-mix (evita CSS parsing failure)
-    var _gridHeaderBg = _isDarkMode ? "#14182A" : "#1E2846";
-    // AppBar + Drawer: primary in light, scuro in dark (dark mode deve restare scuro)
-    var _appBarBg = _isDarkMode ? "#0E101C" : "var(--mes-primary)";
-    var _drawerBg = _appBarBg;
+    var _bgActive    = !string.IsNullOrEmpty(AppSettingsService.GetSettings().BackgroundImageUrl);
+    var _panelOp     = AppSettingsService.GetSettings().ThemePanelOpacity;
+    // Token centralizzati — tutti i valori provengono da MesDesignTokens (zero hardcoding)
+    var _glassPanel  = MesDesignTokens.GlassPanel(_isDarkMode, _panelOp);
+    var _glassGrid   = MesDesignTokens.GlassGrid(_isDarkMode, _panelOp);
+    var _rowEven     = MesDesignTokens.RowEven(_isDarkMode);
+    var _rowOdd      = MesDesignTokens.RowOdd(_isDarkMode);
+    var _rowText     = MesDesignTokens.RowText(_isDarkMode);
+    var _gridHeaderBg = MesDesignTokens.GridHeaderBg(_isDarkMode);
+    var _appBarBg    = MesDesignTokens.AppBarBg(_isDarkMode);
+    var _drawerBg    = _appBarBg;
 }
 
 <style>
@@ -123,11 +123,9 @@
             -webkit-backdrop-filter: blur(8px);
         }
 
-        /* Dashboard machine-card: dark/light gestito server-side (C# _isDarkMode) */
+        /* Dashboard machine-card: token da MesDesignTokens (dark mode anche senza sfondo globale) */
         .machine-card {
-            background: @(_isDarkMode
-                ? "radial-gradient(ellipse at center, rgba(62,62,82,0.97) 0%, rgba(40,40,58,0.98) 55%, rgba(22,22,36,0.99) 100%)"
-                : "radial-gradient(ellipse at center, #ffffff 30%, #e2e6ea 80%, #cfd5db 100%)") !important;
+            background: @MesDesignTokens.MachineCardBg(_isDarkMode) !important;
         }
         .machine-card,
         .machine-card .mud-typography,
@@ -137,13 +135,13 @@
         .machine-card .mud-input-label,
         .machine-card p,
         .machine-card span:not(.mud-chip-content) {
-            color: @(_isDarkMode ? "rgba(230,230,240,0.95)" : "#1a1a1a") !important;
+            color: @MesDesignTokens.MachineCardText(_isDarkMode) !important;
         }
         .machine-card .machine-number {
-            color: @(_isDarkMode ? "rgba(255,255,255,0.98)" : "var(--mes-primary-text, var(--mud-palette-primary))") !important;
+            color: @MesDesignTokens.MachineCardNumber(_isDarkMode) !important;
         }
         .machine-card .section-title {
-            color: @(_isDarkMode ? "rgba(200,200,215,0.80)" : "#333333") !important;
+            color: @MesDesignTokens.MachineCardTextMuted(_isDarkMode) !important;
         }
 
         /* AppBar: stessa formula del drawer — dark=quasi nero, light=primary trasparente */
@@ -253,7 +251,7 @@
     <MudDrawer @bind-Open="_drawerOpen" Elevation="2">
         <MudDrawerHeader Style="display: flex; justify-content: space-between; align-items: center;">
             <MudText Typo="Typo.h6">Menu</MudText>
-            <MudText Typo="Typo.caption" Style="@($"font-family: monospace; color: {(_isDarkMode ? "rgba(230,230,230,0.5)" : "rgba(0,0,0,0.3)")}; font-size: 11px;")">
+            <MudText Typo="Typo.caption" Style="@($"font-family: monospace; color: {MesDesignTokens.VersionTextColor(_isDarkMode)}; font-size: 11px;")">
                 @AppVersion.Display
             </MudText>
         </MudDrawerHeader>

@@ -230,3 +230,94 @@ h1:focus {
 .mud-table-toolbar {
     background-color: var(--mes-row-odd, #F0F0F8) !important;
 }
+
+/* ==========================================================================
+   AG Grid — Column/Filter panel in DARK MODE
+   UNICA copia in tutta l'app (rimossa da 5 file .razor).
+   Usa .mud-theme-dark (classe applicata da MudThemeProvider) invece di
+   @media (prefers-color-scheme: dark) che leggeva la preferenza OS.
+   Valori color agganciati alle CSS vars di MainLayout :root.
+   ========================================================================== */
+
+.mud-theme-dark .ag-theme-alpine .ag-side-bar,
+.mud-theme-dark .ag-theme-alpine .ag-tool-panel-wrapper,
+.mud-theme-dark .ag-theme-alpine .ag-column-select-panel,
+.mud-theme-dark .ag-theme-alpine .ag-column-panel {
+    background-color: var(--mes-ag-panel-bg, #1E2030) !important;
+}
+
+.mud-theme-dark .ag-theme-alpine .ag-column-select-header,
+.mud-theme-dark .ag-theme-alpine .ag-column-select-column-label,
+.mud-theme-dark .ag-theme-alpine .ag-column-select-column-group,
+.mud-theme-dark .ag-theme-alpine .ag-column-select-header-label,
+.mud-theme-dark .ag-theme-alpine .ag-filter-toolpanel-header {
+    color: var(--mes-row-text, #E6E6F0) !important;
+}
+
+.mud-theme-dark .ag-theme-alpine .ag-input-field-input,
+.mud-theme-dark .ag-theme-alpine .ag-text-field-input {
+    background-color: var(--mes-ag-input-bg, #262636) !important;
+    color: var(--mes-row-text, #E6E6F0) !important;
+    border-color: var(--mes-ag-input-border, #4a4a6a) !important;
+}
+
+/* ==========================================================================
+   CONTRASTO UNIVERSALE — Bottoni Filled Primary e Chip Primary
+   Garantisce leggibilità del testo su qualsiasi colore Primary scelto dall'utente.
+   Il colore è calcolato via luminanza WCAG (AppSettingsService.ComputeTextOnBackground)
+   e iniettato in --mes-text-on-primary da MainLayout :root.
+   Questo override lavora in sinergia con PrimaryContrastText nella MudBlazor Palette.
+   ========================================================================== */
+
+.mud-button-filled.mud-button-color-primary .mud-button-label,
+.mud-button-filled-primary .mud-button-label {
+    color: var(--mes-text-on-primary, #FFFFFF) !important;
+}
+
+.mud-chip-color-primary .mud-chip-content {
+    color: var(--mes-text-on-primary, #FFFFFF) !important;
+}
+
+.mud-fab.mud-fab-color-primary .mud-button-label,
+.mud-icon-button.mud-icon-button-color-primary .mud-icon-root {
+    color: var(--mes-text-on-primary, #FFFFFF) !important;
+}
+
+/* ==========================================================================
+   MACHINE CARD — Dark mode standalone
+   Garantisce contrasto corretto nella Dashboard anche SENZA sfondo globale attivo.
+   Prima era condizionale a _bgActive (senza sfondo, il dark mode non applicava).
+   ========================================================================== */
+
+.mud-theme-dark .machine-card {
+    background: radial-gradient(ellipse at center, rgba(62,62,82,0.97) 0%, rgba(40,40,58,0.98) 55%, rgba(22,22,36,0.99) 100%) !important;
+}
+
+.mud-theme-dark .machine-card,
+.mud-theme-dark .machine-card .mud-typography,
+.mud-theme-dark .machine-card .mud-card-header,
+.mud-theme-dark .machine-card .mud-card-content,
+.mud-theme-dark .machine-card .mud-card-actions,
+.mud-theme-dark .machine-card .mud-input-label,
+.mud-theme-dark .machine-card p,
+.mud-theme-dark .machine-card span:not(.mud-chip-content) {
+    color: rgba(230,230,240,0.95) !important;
+}
+
+.mud-theme-dark .machine-card .machine-number {
+    color: rgba(255,255,255,0.98) !important;
+}
+
+.mud-theme-dark .machine-card .section-title {
+    color: rgba(200,200,215,0.80) !important;
+}
+
+/* ==========================================================================
+   LINK IN TABELLE — dark mode
+   Evita che i link nelle celle MudTable ereditino un colore non leggibile.
+   ========================================================================== */
+
+.mud-theme-dark .mud-table-root td a,
+.mud-theme-dark .mud-table-root .mud-table-cell a {
+    color: var(--mes-primary, #7ca7e0) !important;
+}

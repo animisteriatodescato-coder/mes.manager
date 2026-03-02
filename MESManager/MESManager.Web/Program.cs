@@ -145,6 +145,10 @@ builder.Services.AddScoped<AppBarContentService>();
 builder.Services.AddSingleton<ColorExtractionService>();
 builder.Services.AddSingleton<AppSettingsService>();
 
+// Tema dark/light — Scoped (una istanza per circuito Blazor Server = per sessione utente)
+// I componenti che dipendono da IsDarkMode iniettano IThemeModeService anziché accedere a MainLayout
+builder.Services.AddScoped<IThemeModeService, ThemeModeService>();
+
 // Servizio Singleton per gestione stato real-time PLC (avviato automaticamente)
 builder.Services.AddSingleton<RealtimeStateService>();
 

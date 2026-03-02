@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
+using MESManager.Web.Constants;
 using MESManager.Web.Services;
 
 namespace MESManager.Web.Components.Layout;
@@ -22,7 +23,14 @@ public partial class MainLayout : IDisposable
 
     [Inject]
     private AppSettingsService AppSettingsService { get; set; } = default!;
-    
+
+    /// <summary>
+    /// Servizio dark mode iniettabile. Sincronizzato con _isDarkMode a ogni cambiamento.
+    /// I componenti figli iniettano questo servizio per reagire al cambio di tema.
+    /// </summary>
+    [Inject]
+    private IThemeModeService ThemeModeService { get; set; } = default!;
+
     private bool _isDarkMode = false;
     private bool _drawerOpen = false;
     private string _currentCategory = string.Empty;
@@ -51,6 +59,9 @@ public partial class MainLayout : IDisposable
             }
         }
 
+        // Sincronizza il servizio iniettabile con la modalità iniziale
+        ThemeModeService.UpdateMode(_isDarkMode);
+
         // Ascolta i cambiamenti delle impostazioni (es. nuova palette da ImpostazioniGenerali)
         AppSettingsService.OnSettingsChanged += OnAppSettingsChanged;
 
@@ -77,6 +88,8 @@ public partial class MainLayout : IDisposable
         var settings = AppSettingsService.GetSettings();
         _theme = BuildThemeFromSettings(settings);
         _isDarkMode = settings.ThemeIsDarkMode;
+        // Propaga ai componenti figli che usano IThemeModeService
+        ThemeModeService.UpdateMode(_isDarkMode);
         InvokeAsync(StateHasChanged);
     }
 
@@ -91,32 +104,38 @@ public partial class MainLayout : IDisposable
         var accent    = settings.ThemeAccentColor;
         var textOnPrimary = settings.ThemeTextOnPrimary;
 
+        // In dark palette, Primary is lightened → compute its contrast text accordingly
+        var darkPrimary = LightenHex(primary, 0.35f);
+        var textOnDarkPrimary = AppSettingsService.ComputeTextOnBackground(darkPrimary);
+
         return new MudTheme
         {
             PaletteLight = new PaletteLight
             {
-                Primary           = primary,
-                Secondary         = secondary,
-                Tertiary          = accent,
-                AppbarBackground  = primary,
-                AppbarText        = textOnPrimary,   // TESTO APPBAR — centrale qui
-                Surface           = "#f8f9fa",
-                Background        = "#ffffff"
+                Primary              = primary,
+                Secondary            = secondary,
+                Tertiary             = accent,
+                AppbarBackground     = primary,
+                AppbarText           = textOnPrimary,       // Testo AppBar — calcolato da luminanza
+                PrimaryContrastText  = textOnPrimary,       // Testo bottoni Filled Primary / Chip Primary
+                Surface              = "#f8f9fa",
+                Background           = "#ffffff"
             },
             PaletteDark = new PaletteDark
             {
-                Primary           = LightenHex(primary, 0.35f),
-                Secondary         = secondary,
-                AppbarBackground  = "#1e1e1e",
-                AppbarText        = "rgba(255,255,255,0.95)",
-                TextPrimary       = "rgba(255,255,255,0.95)",
-                TextSecondary     = "rgba(255,255,255,0.85)",
-                TextDisabled      = "rgba(255,255,255,0.6)",
-                ActionDisabled    = "rgba(255,255,255,0.5)",
-                Divider           = "rgba(255,255,255,0.2)",
-                Surface           = "#2d2d2d",
-                Background        = "#1a1a1a",
-                DrawerBackground  = "#1e1e1e"
+                Primary              = darkPrimary,
+                Secondary            = secondary,
+                AppbarBackground     = "#1e1e1e",
+                AppbarText           = "rgba(255,255,255,0.95)",
+                PrimaryContrastText  = textOnDarkPrimary,   // Testo bottoni Filled Primary in dark mode
+                TextPrimary          = "rgba(255,255,255,0.95)",
+                TextSecondary        = "rgba(255,255,255,0.85)",
+                TextDisabled         = "rgba(255,255,255,0.6)",
+                ActionDisabled       = "rgba(255,255,255,0.5)",
+                Divider              = "rgba(255,255,255,0.2)",
+                Surface              = "#2d2d2d",
+                Background           = "#1a1a1a",
+                DrawerBackground     = "#1e1e1e"
             }
         };
     }
@@ -421,6 +440,8 @@ public partial class MainLayout : IDisposable
     private async Task ToggleTheme()
     {
         _isDarkMode = !_isDarkMode;
+        // Propaga ai componenti figli che usano IThemeModeService
+        ThemeModeService.UpdateMode(_isDarkMode);
         // Salva in entrambi i sistemi per retrocompatibilità
         await PreferencesService.SetAsync("isDarkMode", _isDarkMode);
         var settings = AppSettingsService.GetSettings();

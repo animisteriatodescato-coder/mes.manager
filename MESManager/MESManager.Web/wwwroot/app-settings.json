@@ -10,7 +10,7 @@
     "#CA2BA2",
     "#CA532B"
   ],
-  "ThemePrimaryColor": "#0D8B",
+  "ThemePrimaryColor": "#ffcf7dff",
   "ThemeSecondaryColor": "#CA2BA2",
   "ThemeAccentColor": "#CA532B",
   "ThemeIsDarkMode": true,
@@ -20,7 +20,7 @@
   "ThemeBgOpacity": 0.4,
   "ThemePanelOpacity": 0.83,
   "ThemeExtraColors": [
-    "#0D8B",
+    "#ffcf7dff",
     "#795548"
   ]
 }

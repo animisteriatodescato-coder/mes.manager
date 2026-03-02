@@ -62,32 +62,6 @@
     </MudPaper>
 </div>
 
-<style>
-    @@media (prefers-color-scheme: dark) {
-        .ag-theme-alpine .ag-side-bar,
-        .ag-theme-alpine .ag-tool-panel-wrapper,
-        .ag-theme-alpine .ag-column-select-panel,
-        .ag-theme-alpine .ag-column-panel {
-            background-color: #1e1e1e !important;
-        }
-
-        .ag-theme-alpine .ag-column-select-header,
-        .ag-theme-alpine .ag-column-select-column-label,
-        .ag-theme-alpine .ag-column-select-column-group,
-        .ag-theme-alpine .ag-column-select-header-label,
-        .ag-theme-alpine .ag-filter-toolpanel-header {
-            color: #201e1e !important;
-        }
-
-        .ag-theme-alpine .ag-input-field-input,
-        .ag-theme-alpine .ag-text-field-input {
-            background-color: #2d2d2d !important;
-            color: #333232 !important;
-            border-color: #444 !important;
-        }
-    }
-</style>
-
 @code {
     //  Identità griglia 
     protected override string GridNamespace => "animeGrid";

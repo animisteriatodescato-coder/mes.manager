@@ -345,6 +345,8 @@ Ogni run deve riportare:
 | Path di rete / MIME type allegati | `ConvertNetworkPath()` / `GetMimeType()` dalla base |
 | Colori tema / dark-light mode | `_theme` / `_isDarkMode` in `MainLayout.razor` → 1 punto |
 | **Tema dinamico da immagine** | `ColorExtractionService` → `AppSettingsService.ThemePalette` → `MainLayout.BuildThemeFromSettings()` |
+| **Token colori / grafica** | `MesDesignTokens` in `Constants/` → UNICA fonte di verità per tutti i colori hardcoded. MAI scrivere hex direttamente nei file |
+| **Dark mode iniettabile** | `IThemeModeService` (Scoped) → inietta nei componenti che reagiscono a dark/light. `UpdateMode()` chiamato solo da MainLayout |
 | **Testo su sfondo Primary** | `AppSettings.ThemeTextOnPrimary` + `AppSettingsService.ComputeTextOnBackground()` → `AppbarText` in palette + `--mes-text-on-primary` CSS var |
 | **Testo brand su sfondo bianco** | `AppSettings.ThemePrimaryTextColor` + `AppSettingsService.ComputePrimaryTextColor()` → `--mes-primary-text` CSS var |
 | **Card con sfondo fisso bianco in dark mode** | Usare `color: #1a1a1a !important` + override `.mud-typography` figli — MAI `var(--mud-palette-text-primary)` su card con background hardcoded |
@@ -441,6 +443,36 @@ MainLayout.razor → <style> .mud-table-root td { background-color: @_rowOdd !im
 
 ---
 
+### Dark Mode CSS: `.mud-theme-dark` NON `@media (prefers-color-scheme: dark)` (⚠️ LESSON LEARNED v1.55.0)
+
+**Problema ricorrente**: Usare `@media (prefers-color-scheme: dark)` negli `<style>` delle pagine.
+Questa media query legge la preferenza **OS** — NON il toggle MudBlazor. Se OS=light ma app=dark, le regole non si attivano mai.
+
+**Regola fissa**: Dark mode CSS → usa SEMPRE `.mud-theme-dark` (classe applicata da `MudThemeProvider`).
+
+**Pattern corretto**:
+```
+app.css → .mud-theme-dark .ag-theme-alpine .ag-side-bar { background: var(--mes-ag-panel-bg); }
+```
+
+**Anti-pattern** (non funziona con toggle app):
+```
+*.razor → @media (prefers-color-scheme: dark) { .ag-theme-alpine … { … } }
+```
+
+---
+
+### Token Grafici: `MesDesignTokens` è la fonte di verità (v1.55.0)
+
+**Regola**: Qualsiasi colore hardcoded DEVE provenire da `Constants/MesDesignTokens.cs`.
+MAI scrivere `"#262636"` o `"rgba(62,62,82"` direttamente nei `.razor` o nel C#.
+
+```
+MesDesignTokens.RowOdd(isDark) → MainLayout :root { --mes-row-odd } → app.css var(--mes-row-odd)
+```
+
+---
+
 ### Dashboard e PLCRealtime
 
 **Problema comune**: Dashboard vuote o macchine non visibili
@@ -489,8 +521,8 @@ proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve t
 
 ## 📞 Supporto Documentazione
 
-**Versione**: 3.8  
+**Versione**: 3.9  
 **Data**: 2 Marzo 2026  
 **Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: Deploy v1.54.1 — tabelle opache via app.css globals, CSS vars in :root, drawer dark fix
+**Ultimo aggiornamento**: v1.55.0 — Design Token System (MesDesignTokens), IThemeModeService, fix dark mode `@media` → `.mud-theme-dark`, contrasto universale bottoni/chip, AG Grid panel dark unificato in app.css

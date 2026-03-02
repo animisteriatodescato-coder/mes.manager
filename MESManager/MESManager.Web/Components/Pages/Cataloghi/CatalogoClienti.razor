@@ -61,31 +61,7 @@
         border-top: none;
         margin-top: 0;
     }
-
-    /* Gestione Colonne in dark mode */
-    @@media (prefers-color-scheme: dark) {
-        .ag-theme-alpine .ag-side-bar,
-        .ag-theme-alpine .ag-tool-panel-wrapper,
-        .ag-theme-alpine .ag-column-select-panel,
-        .ag-theme-alpine .ag-column-panel {
-            background-color: var(--mes-bg-secondary) !important;
-        }
-
-        .ag-theme-alpine .ag-column-select-header,
-        .ag-theme-alpine .ag-column-select-column-label,
-        .ag-theme-alpine .ag-column-select-column-group,
-        .ag-theme-alpine .ag-column-select-header-label,
-        .ag-theme-alpine .ag-filter-toolpanel-header {
-            color: var(--mes-text-primary) !important;
-        }
-
-        .ag-theme-alpine .ag-input-field-input,
-        .ag-theme-alpine .ag-text-field-input {
-            background-color: var(--mes-bg-surface) !important;
-            color: var(--mes-text-primary) !important;
-            border-color: var(--mes-grid-border) !important;
-        }
-    }
+    /* Dark mode AG Grid panel: centralizzato in app.css via .mud-theme-dark */
 </style>
 
 @code {
