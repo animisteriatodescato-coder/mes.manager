@@ -63,10 +63,80 @@
         : $"color-mix(in srgb, var(--mes-primary) calc({_panelOpStr} * 100%), transparent)";
     var _drawerBg = _appBarBg;
 }
+
+<style>
+    /* ===== TABELLE OPACHE — SEMPRE ATTIVO (v1.53.7+) ===== */
+    
+    /* ── MudTable ──────────────────────────────────────────── */
+    /* Copriamo tutti i livelli: container -> table -> tr -> td */
+    .mud-main-content .mud-table-container,
+    .mud-main-content .mud-table-root {
+        background-color: @_rowOdd !important;
+    }
+    /* Righe dispari (default) */
+    .mud-main-content .mud-table-root tr {
+        background-color: @_rowOdd !important;
+    }
+    /* Righe pari: colore alternato */
+    .mud-main-content .mud-table-root tbody tr:nth-child(even) {
+        background-color: @_rowEven !important;
+    }
+    /* Celle: ereditano dal tr, testo leggibile */
+    .mud-main-content .mud-table-root td {
+        background-color: inherit !important;
+        color: @_rowText !important;
+    }
+    /* Header: stesso tono del drawer */
+    .mud-main-content .mud-table-root thead tr {
+        background-color: @_gridHeaderBg !important;
+    }
+    .mud-main-content .mud-table-root thead th {
+        background-color: inherit !important;
+        color: rgba(255,255,255,0.95) !important;
+    }
+
+    /* ── AG Grid ────────────────────────────────────────────────── */
+
+    /* Wrapper root: colore di base opaco */
+    .mud-main-content .ag-theme-alpine .ag-root-wrapper,
+    .mud-main-content .ag-theme-alpine-dark .ag-root-wrapper {
+        background-color: @_glassGrid !important;
+    }
+
+    /* Header colonne: stesso tono del drawer/appbar, testo sempre bianco */
+    .mud-main-content .ag-theme-alpine .ag-header,
+    .mud-main-content .ag-theme-alpine-dark .ag-header,
+    .mud-main-content .ag-theme-alpine .ag-header-row,
+    .mud-main-content .ag-theme-alpine-dark .ag-header-row {
+        background-color: @_gridHeaderBg !important;
+    }
+    .mud-main-content .ag-theme-alpine .ag-header-cell,
+    .mud-main-content .ag-theme-alpine-dark .ag-header-cell,
+    .mud-main-content .ag-theme-alpine .ag-header-cell-text,
+    .mud-main-content .ag-theme-alpine-dark .ag-header-cell-text {
+        color: rgba(255,255,255,0.95) !important;
+    }
+
+    /* Righe pari/dispari con testo leggibile */
+    .mud-main-content .ag-theme-alpine .ag-row-even,
+    .mud-main-content .ag-theme-alpine-dark .ag-row-even {
+        background-color: @_rowEven !important;
+    }
+    .mud-main-content .ag-theme-alpine .ag-row-odd,
+    .mud-main-content .ag-theme-alpine-dark .ag-row-odd {
+        background-color: @_rowOdd !important;
+    }
+    /* Testo celle: forzato per visibilità in dark/light */
+    .mud-main-content .ag-theme-alpine .ag-cell,
+    .mud-main-content .ag-theme-alpine-dark .ag-cell {
+        color: @_rowText !important;
+    }
+</style>
+
 @if (_bgActive)
 {
     <style>
-        /* ===== GLASS EFFECT — iniettato dinamicamente da MainLayout ===== */
+        /* ===== GLASS EFFECT — solo con sfondo attivo ===== */
 
         /* Pannelli nel contenuto pagina — esclude le machine-card della dashboard (hanno stile proprio) */
         .mud-main-content .mud-paper:not(.machine-card),
@@ -125,71 +195,11 @@
             background: transparent !important;
         }
 
-        /* ── AG Grid ────────────────────────────────────────────────── */
-
-        /* Wrapper root: glass di base */
+        /* ── Backdrop blur per griglie (solo con sfondo) ── */
         .mud-main-content .ag-theme-alpine .ag-root-wrapper,
         .mud-main-content .ag-theme-alpine-dark .ag-root-wrapper {
-            background-color: @_glassGrid !important;
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
-        }
-
-        /* Header colonne: stesso tono del drawer/appbar, testo sempre bianco */
-        .mud-main-content .ag-theme-alpine .ag-header,
-        .mud-main-content .ag-theme-alpine-dark .ag-header,
-        .mud-main-content .ag-theme-alpine .ag-header-row,
-        .mud-main-content .ag-theme-alpine-dark .ag-header-row {
-            background-color: @_gridHeaderBg !important;
-        }
-        .mud-main-content .ag-theme-alpine .ag-header-cell,
-        .mud-main-content .ag-theme-alpine-dark .ag-header-cell,
-        .mud-main-content .ag-theme-alpine .ag-header-cell-text,
-        .mud-main-content .ag-theme-alpine-dark .ag-header-cell-text {
-            color: rgba(255,255,255,0.95) !important;
-        }
-
-        /* Righe pari/dispari con testo leggibile */
-        .mud-main-content .ag-theme-alpine .ag-row-even,
-        .mud-main-content .ag-theme-alpine-dark .ag-row-even {
-            background-color: @_rowEven !important;
-        }
-        .mud-main-content .ag-theme-alpine .ag-row-odd,
-        .mud-main-content .ag-theme-alpine-dark .ag-row-odd {
-            background-color: @_rowOdd !important;
-        }
-        /* Testo celle: forzato per visibilità in dark/light */
-        .mud-main-content .ag-theme-alpine .ag-cell,
-        .mud-main-content .ag-theme-alpine-dark .ag-cell {
-            color: @_rowText !important;
-        }
-
-        /* ── MudTable ──────────────────────────────────────────── */
-        /* Copriamo tutti i livelli: container -> table -> tr -> td */
-        .mud-main-content .mud-table-container,
-        .mud-main-content .mud-table-root {
-            background-color: @_rowOdd !important;
-        }
-        /* Righe dispari (default) */
-        .mud-main-content .mud-table-root tr {
-            background-color: @_rowOdd !important;
-        }
-        /* Righe pari: colore alternato */
-        .mud-main-content .mud-table-root tbody tr:nth-child(even) {
-            background-color: @_rowEven !important;
-        }
-        /* Celle: ereditano dal tr, testo leggibile */
-        .mud-main-content .mud-table-root td {
-            background-color: inherit !important;
-            color: @_rowText !important;
-        }
-        /* Header: stesso tono del drawer */
-        .mud-main-content .mud-table-root thead tr {
-            background-color: @_gridHeaderBg !important;
-        }
-        .mud-main-content .mud-table-root thead th {
-            background-color: inherit !important;
-            color: rgba(255,255,255,0.95) !important;
         }
     </style>
 }
