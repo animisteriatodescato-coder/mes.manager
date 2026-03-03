@@ -8,7 +8,7 @@
     const columnDefs = [
         // READONLY - da sync commesse
         { field: 'id', headerName: 'ID', sortable: true, filter: true, width: 80, editable: false },
-        { field: 'codiceArticolo', headerName: 'Codice', sortable: true, filter: true, width: 150, editable: false, cellStyle: () => ({ backgroundColor: document.documentElement.classList.contains('mud-theme-dark') ? '#232535' : '#f5f5f5' }) },
+        { field: 'codiceArticolo', headerName: 'Codice', sortable: true, filter: true, width: 150, editable: false, cellClass: 'mes-readonly-cell' },
         
         // FOTO - Anteprima seconda immagine anima (shared component)
         window.fotoPreviewShared.createColumnDef({
@@ -25,8 +25,8 @@
             { editable: false }
         ),
         
-        { field: 'descrizioneArticolo', headerName: 'Descrizione Articolo', sortable: true, filter: true, width: 250, editable: false, cellStyle: () => ({ backgroundColor: document.documentElement.classList.contains('mud-theme-dark') ? '#232535' : '#f5f5f5' }) },
-        { field: 'cliente', headerName: 'Cliente', sortable: true, filter: true, width: 150, editable: false, cellStyle: () => ({ backgroundColor: document.documentElement.classList.contains('mud-theme-dark') ? '#232535' : '#f5f5f5' }) },
+        { field: 'descrizioneArticolo', headerName: 'Descrizione Articolo', sortable: true, filter: true, width: 250, editable: false, cellClass: 'mes-readonly-cell' },
+        { field: 'cliente', headerName: 'Cliente', sortable: true, filter: true, width: 150, editable: false, cellClass: 'mes-readonly-cell' },
         
         // EDITABLE - campi modificabili
         { field: 'ubicazione', headerName: 'Ubicazione', sortable: true, filter: true, width: 150, editable: true },
@@ -85,7 +85,9 @@
             editable: false,
             cellStyle: params => {
                 if (!(params.value > 0)) return null;
-                return document.documentElement.classList.contains('mud-theme-dark')
+                const dark = document.body.classList.contains('mud-theme-dark') ||
+                             document.documentElement.classList.contains('mud-theme-dark');
+                return dark
                     ? { backgroundColor: '#1b3a22', color: '#80c783', fontWeight: 'bold' }
                     : { backgroundColor: '#e8f5e9', color: '#2e7d32', fontWeight: 'bold' };
             },
@@ -100,7 +102,9 @@
             editable: false,
             cellStyle: params => {
                 if (!(params.value > 0)) return null;
-                return document.documentElement.classList.contains('mud-theme-dark')
+                const dark = document.body.classList.contains('mud-theme-dark') ||
+                             document.documentElement.classList.contains('mud-theme-dark');
+                return dark
                     ? { backgroundColor: '#0d2740', color: '#90caf9', fontWeight: 'bold' }
                     : { backgroundColor: '#e3f2fd', color: '#1565c0', fontWeight: 'bold' };
             },

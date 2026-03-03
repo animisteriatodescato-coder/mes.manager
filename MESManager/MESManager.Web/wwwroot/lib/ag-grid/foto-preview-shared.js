@@ -79,7 +79,7 @@ window.fotoPreviewShared = (function () {
     function createColumnDef(config) {
         config = config || {};
         var codiceField = config.codiceArticoloField || 'articoloCodice';
-        var photoIndex  = config.photoIndex           || 1;
+        var photoIndex  = config.photoIndex           || 2;
         var hide        = config.hide !== undefined   ? config.hide : false;
 
         return {
@@ -97,7 +97,7 @@ window.fotoPreviewShared = (function () {
                 if (!codice) {
                     return '<span style="color:#ccc;font-size:11px;">—</span>';
                 }
-                var src = '/api/AllegatiAnima/preview-foto/' + encodeURIComponent(codice) + '?n=' + photoIndex;
+                var src = '/api/AllegatiAnima/preview-foto/' + encodeURIComponent(codice) + '?n=' + photoIndex + '&_t=' + Date.now();
 
                 var img = document.createElement('img');
                 img.src = src;

@@ -65,7 +65,8 @@
             filter: true, 
             width: 120,
             cellStyle: params => {
-                const dark = document.documentElement.classList.contains('mud-theme-dark');
+                const dark = document.body.classList.contains('mud-theme-dark') ||
+                             document.documentElement.classList.contains('mud-theme-dark');
                 if (params.value === 'Aperta') return dark
                     ? { backgroundColor: '#1b3a22', color: '#80c783', fontWeight: 'bold' }
                     : { backgroundColor: '#e8f5e9', color: '#2e7d32' };

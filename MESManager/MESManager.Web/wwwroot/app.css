@@ -261,6 +261,14 @@ h1:focus {
     border-color: var(--mes-ag-input-border, #4a4a6a) !important;
 }
 
+/* Colonne read-only (Codice, Descrizione, Cliente) — sfondo grigio */
+.ag-theme-alpine .mes-readonly-cell {
+    background-color: #f5f5f5 !important;
+}
+.mud-theme-dark .ag-theme-alpine .mes-readonly-cell {
+    background-color: #232535 !important;
+}
+
 /* ==========================================================================
    CONTRASTO UNIVERSALE — Bottoni Filled Primary e Chip Primary
    Garantisce leggibilità del testo su qualsiasi colore Primary scelto dall'utente.

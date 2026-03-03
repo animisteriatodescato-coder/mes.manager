@@ -24,6 +24,8 @@
  *   onRowDoubleClicked:  (event) => {}           -> callback doppio click
  */
 window.agGridFactory = (function () {
+    // Registry: ogni grid registra qui il proprio refreshCells — richiamato al cambio tema
+    var _gridRefreshFns = [];
 
     function setup(config) {
         let gridApi = null;
@@ -95,6 +97,12 @@ window.agGridFactory = (function () {
                         }
                     }
                     console.log('[' + config.namespace + '] Grid ready, rows:', gridApi.getDisplayedRowCount());
+                    // Registra per refresh automatico al cambio dark/light mode
+                    _gridRefreshFns.push(function () {
+                        if (gridApi && isGridInitialized) {
+                            try { gridApi.refreshCells({ force: true }); } catch (e) {}
+                        }
+                    });
                 },
                 onColumnVisible: saveColumnState,
                 onColumnResized: (p) => { if (p.finished) saveColumnState(); },
@@ -387,6 +395,25 @@ window.agGridFactory = (function () {
         window[config.namespace] = api;
         console.log('[agGridFactory] Registered:', config.namespace);
     }
+
+    // ── MutationObserver: refresh tutte le griglie quando mud-theme-dark cambia ─
+    (function () {
+        var observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (m) {
+                if (m.attributeName !== 'class') return;
+                var wasDark = m.oldValue ? m.oldValue.split(/\s+/).indexOf('mud-theme-dark') >= 0 : false;
+                var isDark  = m.target.classList.contains('mud-theme-dark');
+                if (wasDark !== isDark) {
+                    setTimeout(function () {
+                        _gridRefreshFns.forEach(function (fn) { try { fn(); } catch (e) {} });
+                    }, 30);
+                }
+            });
+        });
+        [document.body, document.documentElement].forEach(function (el) {
+            observer.observe(el, { attributes: true, attributeOldValue: true });
+        });
+    })();
 
     return { setup };
 })();
