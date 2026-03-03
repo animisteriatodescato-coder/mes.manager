@@ -4,7 +4,75 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.54.1
+## 🔖 Versione Corrente: v1.55.1
+
+---
+
+## 🔖 v1.55.1 - Fix dark mode JS cellStyle + foto photoIndex (3 Mar 2026)
+
+**Data**: 3 Marzo 2026
+
+### 🐛 Fix — AG Grid cellStyle dark mode in JavaScript
+
+Dopo v1.55.0 (Design Token System CSS), i cellStyle definiti nei file JS delle grids
+continuavano a usare colori hardcoded light-only, invisibili in dark mode.
+
+**commesse-grid.js** — colonna `Stato`:
+- `Aperta` dark: `#1b3a22` bg / `#80c783` text (era solo `#e8f5e9`/`#2e7d32`)
+- `Chiusa` dark: `#3a1828` bg / `#f48fb1` text (era solo `#fce4ec`/`#c2185b`)
+- Tecnica: `document.documentElement.classList.contains('mud-theme-dark')`
+
+**anime-grid.js** — colonne read-only Codice/Descrizione/Cliente:
+- Bg dark: `#232535` (era sempre `#f5f5f5` bianco → testo invisibile su sfondo scuro)
+
+**anime-grid.js** — colonne N.Foto / N.Doc:
+- N.Foto dark: `#1b3a22` / `#80c783`
+- N.Doc dark: `#0d2740` / `#90caf9`
+
+### 🐛 Fix — Foto non visibile alla prima aggiunta
+
+`foto-preview-shared.js`: `photoIndex` default cambiato da `2` → `1`.
+La colonna mostrava sempre la **seconda** foto (`?n=2`), quindi se l'utente caricava
+solo 1 foto il controller restituiva 404 → cella mostrava `—`.
+
+#### File modificati
+- `MESManager.Web/wwwroot/lib/ag-grid/commesse-grid.js`
+- `MESManager.Web/wwwroot/js/anime-grid.js`
+- `MESManager.Web/wwwroot/lib/ag-grid/foto-preview-shared.js`
+- `MESManager.Web/Components/App.razor` (cache bust v++)
+- `MESManager.Web/Constants/AppVersion.cs`
+
+#### Test E2E
+- ✅ 9/9 test Cataloghi superati (`dotnet test --filter "Feature=Cataloghi"`)
+
+---
+
+## 🔖 v1.55.0 - Design Token System + IThemeModeService (3 Mar 2026)
+
+**Data**: 3 Marzo 2026
+
+### ✨ Feature — Centralizzazione grafica completa (Solution 3)
+
+Implementazione del Design Token System per eliminare tutti i colori hardcoded
+sparsi nel codice C# e CSS. Architettura:
+
+**Nuovi file:**
+- `Constants/MesDesignTokens.cs`: unica fonte di verità per tutti gli hex color, con metodi
+  `RowOdd(bool dark)`, `RowEven`, `GridHeaderBg`, `GlassPanel`, `MachineCardBg/Text/TextMuted/Number`, ecc.
+- `Services/IThemeModeService.cs` + `ThemeModeService.cs`: servizio iniettabile (Scoped)
+  per propagare il flag `IsDarkMode` a tutti i componenti senza dipendere da MainLayout
+
+**File modificati:**
+- `MainLayout.razor.cs`: inietta `IThemeModeService`, chiama `UpdateMode()` ad ogni cambio tema
+- `MainLayout.razor`: tutti i colori hardcoded → `MesDesignTokens.*(_isDarkMode)`, zero hex inline
+- `Program.cs`: `AddScoped<IThemeModeService, ThemeModeService>()`
+- `app.css`: AG Grid panel dark, contrast universale button/chip, machine card standalone dark
+- 5 pagine Catalogo: rimossi blocchi `@media (prefers-color-scheme: dark)` errati
+  (leggevano preferenza OS invece di toggle MudBlazor)
+
+#### Lesson Learned
+`@media (prefers-color-scheme: dark)` legge la preferenza del **sistema operativo**,
+NON il toggle in-app MudBlazor. Usare sempre `.mud-theme-dark` come classe CSS.
 
 ---
 
