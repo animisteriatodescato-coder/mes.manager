@@ -261,12 +261,58 @@ h1:focus {
     border-color: var(--mes-ag-input-border, #4a4a6a) !important;
 }
 
-/* Colonne read-only (Codice, Descrizione, Cliente) — sfondo grigio */
+/* ==========================================================================
+   AG GRID — Tutte le classi condizionali delle celle (unica fonte di verità)
+   Approccio: cellClassRules (JS) + colore (CSS). Il cascade .mud-theme-dark
+   risponde automaticamente al toggle tema senza alcun JS refresh.
+   ========================================================================== */
+
+/* Colonne read-only (Codice, Descrizione, Cliente) */
 .ag-theme-alpine .mes-readonly-cell {
     background-color: #f5f5f5 !important;
 }
 .mud-theme-dark .ag-theme-alpine .mes-readonly-cell {
     background-color: #232535 !important;
+}
+
+/* Stato commessa */
+.ag-theme-alpine .mes-stato-aperta {
+    background-color: #e8f5e9 !important;
+    color: #2e7d32 !important;
+    font-weight: bold;
+}
+.ag-theme-alpine .mes-stato-chiusa {
+    background-color: #fce4ec !important;
+    color: #c2185b !important;
+    font-weight: bold;
+}
+.mud-theme-dark .ag-theme-alpine .mes-stato-aperta {
+    background-color: #1b3a22 !important;
+    color: #80c783 !important;
+}
+.mud-theme-dark .ag-theme-alpine .mes-stato-chiusa {
+    background-color: #3a1828 !important;
+    color: #f48fb1 !important;
+}
+
+/* Contatori allegati (N.Foto verde, N.Doc blu) */
+.ag-theme-alpine .mes-count-foto {
+    background-color: #e8f5e9 !important;
+    color: #2e7d32 !important;
+    font-weight: bold;
+}
+.ag-theme-alpine .mes-count-doc {
+    background-color: #e3f2fd !important;
+    color: #1565c0 !important;
+    font-weight: bold;
+}
+.mud-theme-dark .ag-theme-alpine .mes-count-foto {
+    background-color: #1b3a22 !important;
+    color: #80c783 !important;
+}
+.mud-theme-dark .ag-theme-alpine .mes-count-doc {
+    background-color: #0d2740 !important;
+    color: #90caf9 !important;
 }
 
 /* ==========================================================================

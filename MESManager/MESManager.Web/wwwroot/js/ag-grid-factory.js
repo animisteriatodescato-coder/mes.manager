@@ -24,8 +24,8 @@
  *   onRowDoubleClicked:  (event) => {}           -> callback doppio click
  */
 window.agGridFactory = (function () {
-    // Registry: ogni grid registra qui il proprio refreshCells — richiamato al cambio tema
-    var _gridRefreshFns = [];
+    // Registry gridApi: usato da refreshAllGrids() per forzare re-render su cambio tema
+    var _registeredApis = [];
 
     function setup(config) {
         let gridApi = null;
@@ -97,12 +97,8 @@ window.agGridFactory = (function () {
                         }
                     }
                     console.log('[' + config.namespace + '] Grid ready, rows:', gridApi.getDisplayedRowCount());
-                    // Registra per refresh automatico al cambio dark/light mode
-                    _gridRefreshFns.push(function () {
-                        if (gridApi && isGridInitialized) {
-                            try { gridApi.refreshCells({ force: true }); } catch (e) {}
-                        }
-                    });
+                    // Registra gridApi nel registry centrale per refreshAllGrids()
+                    _registeredApis.push({ ns: config.namespace, api: gridApi });
                 },
                 onColumnVisible: saveColumnState,
                 onColumnResized: (p) => { if (p.finished) saveColumnState(); },
@@ -396,24 +392,15 @@ window.agGridFactory = (function () {
         console.log('[agGridFactory] Registered:', config.namespace);
     }
 
-    // ── MutationObserver: refresh tutte le griglie quando mud-theme-dark cambia ─
-    (function () {
-        var observer = new MutationObserver(function (mutations) {
-            mutations.forEach(function (m) {
-                if (m.attributeName !== 'class') return;
-                var wasDark = m.oldValue ? m.oldValue.split(/\s+/).indexOf('mud-theme-dark') >= 0 : false;
-                var isDark  = m.target.classList.contains('mud-theme-dark');
-                if (wasDark !== isDark) {
-                    setTimeout(function () {
-                        _gridRefreshFns.forEach(function (fn) { try { fn(); } catch (e) {} });
-                    }, 30);
-                }
-            });
+    // ── refreshAllGrids: chiamabile da Blazor (MainLayout.ToggleTheme) ──────────
+    // Forza re-render di tutte le celle registrate. NON necessario per i colori
+    // basati su cellClassRules + CSS (il cascade gestisce automaticamente il tema),
+    // ma utile per invalidare altre logiche di rendering custom.
+    function refreshAllGrids() {
+        _registeredApis.forEach(function (entry) {
+            try { entry.api.refreshCells({ force: true }); } catch (e) {}
         });
-        [document.body, document.documentElement].forEach(function (el) {
-            observer.observe(el, { attributes: true, attributeOldValue: true });
-        });
-    })();
+    }
 
-    return { setup };
+    return { setup, refreshAllGrids };
 })();

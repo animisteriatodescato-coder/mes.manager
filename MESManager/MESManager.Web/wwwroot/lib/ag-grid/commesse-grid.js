@@ -64,16 +64,12 @@
             sortable: true, 
             filter: true, 
             width: 120,
-            cellStyle: params => {
-                const dark = document.body.classList.contains('mud-theme-dark') ||
-                             document.documentElement.classList.contains('mud-theme-dark');
-                if (params.value === 'Aperta') return dark
-                    ? { backgroundColor: '#1b3a22', color: '#80c783', fontWeight: 'bold' }
-                    : { backgroundColor: '#e8f5e9', color: '#2e7d32' };
-                if (params.value === 'Chiusa') return dark
-                    ? { backgroundColor: '#3a1828', color: '#f48fb1', fontWeight: 'bold' }
-                    : { backgroundColor: '#fce4ec', color: '#c2185b' };
-                return null;
+            // cellClassRules: AG Grid aggiunge la classe CSS alla cella.
+            // Il colore è definito in app.css (.mes-stato-*), che risponde
+            // automaticamente a .mud-theme-dark senza nessun JS refresh.
+            cellClassRules: {
+                'mes-stato-aperta': params => params.value === 'Aperta',
+                'mes-stato-chiusa':  params => params.value === 'Chiusa'
             }
         },
         { field: 'riferimentoOrdineCliente', headerName: 'Rif. Cliente', sortable: true, filter: true, width: 150 },

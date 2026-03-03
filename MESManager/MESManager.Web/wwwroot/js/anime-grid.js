@@ -83,14 +83,8 @@
             filter: true, 
             width: 90,
             editable: false,
-            cellStyle: params => {
-                if (!(params.value > 0)) return null;
-                const dark = document.body.classList.contains('mud-theme-dark') ||
-                             document.documentElement.classList.contains('mud-theme-dark');
-                return dark
-                    ? { backgroundColor: '#1b3a22', color: '#80c783', fontWeight: 'bold' }
-                    : { backgroundColor: '#e8f5e9', color: '#2e7d32', fontWeight: 'bold' };
-            },
+            // cellClassRules: colore definito in app.css (.mes-count-*)
+            cellClassRules: { 'mes-count-foto': params => params.value > 0 },
             valueFormatter: params => params.value || 0
         },
         { 
@@ -100,14 +94,7 @@
             filter: true, 
             width: 90,
             editable: false,
-            cellStyle: params => {
-                if (!(params.value > 0)) return null;
-                const dark = document.body.classList.contains('mud-theme-dark') ||
-                             document.documentElement.classList.contains('mud-theme-dark');
-                return dark
-                    ? { backgroundColor: '#0d2740', color: '#90caf9', fontWeight: 'bold' }
-                    : { backgroundColor: '#e3f2fd', color: '#1565c0', fontWeight: 'bold' };
-            },
+            cellClassRules: { 'mes-count-doc': params => params.value > 0 },
             valueFormatter: params => params.value || 0
         },
         { 
