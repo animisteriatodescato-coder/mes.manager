@@ -79,7 +79,7 @@ window.fotoPreviewShared = (function () {
     function createColumnDef(config) {
         config = config || {};
         var codiceField = config.codiceArticoloField || 'articoloCodice';
-        var photoIndex  = config.photoIndex           || 2;
+        var photoIndex  = config.photoIndex           || 1;
         var hide        = config.hide !== undefined   ? config.hide : false;
 
         return {

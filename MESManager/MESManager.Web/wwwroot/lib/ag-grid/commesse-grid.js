@@ -65,8 +65,13 @@
             filter: true, 
             width: 120,
             cellStyle: params => {
-                if (params.value === 'Aperta') return { backgroundColor: '#e8f5e9', color: '#2e7d32' };
-                if (params.value === 'Chiusa') return { backgroundColor: '#fce4ec', color: '#c2185b' };
+                const dark = document.documentElement.classList.contains('mud-theme-dark');
+                if (params.value === 'Aperta') return dark
+                    ? { backgroundColor: '#1b3a22', color: '#80c783', fontWeight: 'bold' }
+                    : { backgroundColor: '#e8f5e9', color: '#2e7d32' };
+                if (params.value === 'Chiusa') return dark
+                    ? { backgroundColor: '#3a1828', color: '#f48fb1', fontWeight: 'bold' }
+                    : { backgroundColor: '#fce4ec', color: '#c2185b' };
                 return null;
             }
         },
