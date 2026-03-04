@@ -17,9 +17,10 @@
             filter: true, 
             width: 150 
         },
-        // FOTO - Anteprima seconda immagine anima (shared component)
+        // FOTO - Anteprima prima immagine anima per priorità (n=1)
         window.fotoPreviewShared.createColumnDef({
-            codiceArticoloField: 'articoloCodice'
+            codiceArticoloField: 'articoloCodice',
+            photoIndex: 1
         }),
         // RICETTA - Badge con numero parametri (shared component)
         window.ricettaColumnShared.createColumnDef({

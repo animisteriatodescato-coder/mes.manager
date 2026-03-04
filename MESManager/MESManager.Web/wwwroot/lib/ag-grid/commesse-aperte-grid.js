@@ -80,9 +80,10 @@ window.commesseAperteGrid = (function() {
             filter: true, 
             width: 150 
         },
-        // FOTO - Anteprima seconda immagine anima (shared component)
+        // FOTO - Anteprima prima immagine anima per priorità (n=1)
         window.fotoPreviewShared.createColumnDef({
-            codiceArticoloField: 'articoloCodice'
+            codiceArticoloField: 'articoloCodice',
+            photoIndex: 1
         }),
         // RICETTA - Bollino verde con numero parametri (shared component)
         window.ricettaColumnShared.createColumnDef({
@@ -136,15 +137,11 @@ window.commesseAperteGrid = (function() {
             sortable: true, 
             filter: true, 
             width: 120,
-            cellStyle: params => {
-                const isDark = document.body.classList.contains('mud-theme-dark');
-                if (params.value === 'Aperta') return isDark
-                    ? { backgroundColor: 'rgba(27,94,32,0.90)',  color: '#a5d6a7', fontWeight: 'bold' }
-                    : { backgroundColor: '#2e7d32', color: '#ffffff', fontWeight: 'bold' };
-                if (params.value === 'Chiusa') return isDark
-                    ? { backgroundColor: 'rgba(136,14,79,0.80)',  color: '#f48fb1', fontWeight: 'bold' }
-                    : { backgroundColor: '#fce4ec', color: '#880e4f', fontWeight: 'bold' };
-                return null;
+            // cellClassRules: stesso approccio di commesse-grid.js - CSS in app.css
+            // risponde automaticamente a .mud-theme-dark senza JS refresh
+            cellClassRules: {
+                'mes-stato-aperta': params => params.value === 'Aperta',
+                'mes-stato-chiusa':  params => params.value === 'Chiusa'
             }
         },
         { 

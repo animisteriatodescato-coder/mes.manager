@@ -121,9 +121,10 @@ window.programmaMacchineGrid = (function() {
             filter: true, 
             width: 150 
         },
-        // FOTO - Anteprima seconda immagine anima (shared component)
+        // FOTO - Anteprima prima immagine anima per priorità (n=1)
         window.fotoPreviewShared.createColumnDef({
-            codiceArticoloField: 'articoloCodice'
+            codiceArticoloField: 'articoloCodice',
+            photoIndex: 1
         }),
         { 
             field: 'description', 
@@ -190,12 +191,20 @@ window.programmaMacchineGrid = (function() {
             filter: true, 
             width: 160,
             cellRenderer: params => {
-                const stati = [
-                    { value: 'NonProgrammata', label: 'Non Programmata', color: '#9e9e9e', bg: '#f5f5f5' },
-                    { value: 'Programmata', label: 'Programmata', color: '#1976d2', bg: '#e3f2fd' },
-                    { value: 'InProduzione', label: 'In Produzione', color: '#ff9800', bg: '#fff3e0' },
-                    { value: 'Completata', label: 'Completata', color: '#4caf50', bg: '#e8f5e9' },
-                    { value: 'Archiviata', label: 'Archiviata', color: '#616161', bg: '#eeeeee' }
+                // Stesso schema colori di commesse-aperte-grid.js per consistenza dark/light
+                const isDark = document.body.classList.contains('mud-theme-dark');
+                const stati = isDark ? [
+                    { value: 'NonProgrammata', label: 'Non Programmata', color: '#e0e0e0', bg: '#424252' },
+                    { value: 'Programmata',    label: 'Programmata',     color: '#90caf9', bg: '#0d2f6b' },
+                    { value: 'InProduzione',   label: 'In Produzione',   color: '#ffcc80', bg: '#6d3200' },
+                    { value: 'Completata',     label: 'Completata',      color: '#a5d6a7', bg: '#1a4a1f' },
+                    { value: 'Archiviata',     label: 'Archiviata',      color: '#9e9e9e', bg: '#2e2e3e' }
+                ] : [
+                    { value: 'NonProgrammata', label: 'Non Programmata', color: '#ffffff', bg: '#757575' },
+                    { value: 'Programmata',    label: 'Programmata',     color: '#ffffff', bg: '#1565c0' },
+                    { value: 'InProduzione',   label: 'In Produzione',   color: '#ffffff', bg: '#bf360c' },
+                    { value: 'Completata',     label: 'Completata',      color: '#ffffff', bg: '#2e7d32' },
+                    { value: 'Archiviata',     label: 'Archiviata',      color: '#ffffff', bg: '#616161' }
                 ];
                 
                 const currentValue = params.value || 'NonProgrammata';
@@ -204,7 +213,7 @@ window.programmaMacchineGrid = (function() {
                 let options = '';
                 stati.forEach(s => {
                     const selected = currentValue === s.value ? 'selected' : '';
-                    options += `<option value="${s.value}" ${selected} style="color:${s.color}">${s.label}</option>`;
+                    options += `<option value="${s.value}" ${selected}>${s.label}</option>`;
                 });
                 
                 const currentStato = stati.find(s => s.value === currentValue) || stati[0];
