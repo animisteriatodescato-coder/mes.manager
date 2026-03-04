@@ -107,6 +107,34 @@
     .ag-theme-alpine-dark .ag-cell {
         color: var(--mes-row-text) !important;
     }
+    /* ── Classi condizionali (cellClassRules) — iniettate DAL SERVER con _isDarkMode
+       Questo style block carica DOPO i CDN AG Grid, garantendo la cascata corretta  */
+    /* Colonne read-only (Codice, Descrizione, Cliente) */
+    .ag-theme-alpine .ag-cell.mes-readonly-cell {
+        background-color: @(_isDarkMode ? "#1a1a2e" : "#f5f5f5") !important;
+    }
+    /* Stato commessa */
+    .ag-theme-alpine .ag-cell.mes-stato-aperta {
+        background-color: @(_isDarkMode ? "#1b3a22" : "#e8f5e9") !important;
+        color: @(_isDarkMode ? "#80c783" : "#2e7d32") !important;
+        font-weight: bold;
+    }
+    .ag-theme-alpine .ag-cell.mes-stato-chiusa {
+        background-color: @(_isDarkMode ? "#3a1828" : "#fce4ec") !important;
+        color: @(_isDarkMode ? "#f48fb1" : "#c2185b") !important;
+        font-weight: bold;
+    }
+    /* Contatori allegati */
+    .ag-theme-alpine .ag-cell.mes-count-foto {
+        background-color: @(_isDarkMode ? "#1b3a22" : "#e8f5e9") !important;
+        color: @(_isDarkMode ? "#80c783" : "#2e7d32") !important;
+        font-weight: bold;
+    }
+    .ag-theme-alpine .ag-cell.mes-count-doc {
+        background-color: @(_isDarkMode ? "#0d2740" : "#e3f2fd") !important;
+        color: @(_isDarkMode ? "#90caf9" : "#1565c0") !important;
+        font-weight: bold;
+    }
 </style>
 
 @if (_bgActive)
