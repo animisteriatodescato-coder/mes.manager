@@ -132,9 +132,10 @@ namespace MESManager.Web.Controllers
             try
             {
                 var allegati = await _allegatiService.GetAllegatiByCodiceArticoloAsync(codiceArticolo);
-                var foto = allegati.Foto
-                    .OrderBy(f => f.Priorita)
-                    .ElementAtOrDefault(n - 1);
+                var fotoOrdinate = allegati.Foto.OrderBy(f => f.Priorita).ThenBy(f => f.Id).ToList();
+                // Cerca la n-esima foto; se non esiste (es. n=2 ma c'è solo 1 foto) usa la prima
+                var foto = fotoOrdinate.ElementAtOrDefault(n - 1)
+                           ?? fotoOrdinate.FirstOrDefault();
 
                 if (foto == null)
                 {

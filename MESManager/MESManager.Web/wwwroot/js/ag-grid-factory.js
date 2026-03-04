@@ -385,6 +385,17 @@ window.agGridFactory = (function () {
                     gridApi.setGridOption('rowData', data);
                 }
             };
+
+            // Refresha solo la cella fotoPreview di una riga (usato dopo upload foto da dialog)
+            // Chiamare anche quando il dialog viene annullato, per mostrare foto appena caricate
+            api.refreshFotoRow = (animeId) => {
+                if (!gridApi) return;
+                gridApi.forEachNode(node => {
+                    if (node.data && node.data.id === animeId) {
+                        gridApi.refreshCells({ rowNodes: [node], columns: ['fotoPreview'], force: true });
+                    }
+                });
+            };
         }
 
         // ── Registra il namespace su window ──────────────────────────────────

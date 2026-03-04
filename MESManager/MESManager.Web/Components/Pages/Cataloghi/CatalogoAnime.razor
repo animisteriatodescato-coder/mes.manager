@@ -169,6 +169,11 @@
                     Snackbar.Add("Anima aggiornata con successo", Severity.Success);
                 }
             }
+            else
+            {
+                // Dialog annullato: refresha comunque la cella foto per mostrare foto appena caricate/eliminate
+                await JSRuntime.InvokeVoidAsync("animeGrid.refreshFotoRow", anime.Id);
+            }
         }
         catch (Exception ex)
         {

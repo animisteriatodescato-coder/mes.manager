@@ -10,9 +10,10 @@
         { field: 'id', headerName: 'ID', sortable: true, filter: true, width: 80, editable: false },
         { field: 'codiceArticolo', headerName: 'Codice', sortable: true, filter: true, width: 150, editable: false, cellClass: 'mes-readonly-cell' },
         
-        // FOTO - Anteprima seconda immagine anima (shared component)
+        // FOTO - Anteprima PRIMA immagine anima (n=1: prima per priorità)
         window.fotoPreviewShared.createColumnDef({
-            codiceArticoloField: 'codiceArticolo'
+            codiceArticoloField: 'codiceArticolo',
+            photoIndex: 1
         }),
         
         // RICETTA - Badge con numero parametri (shared component)
