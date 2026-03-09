@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MESManager.Application.Services;
 using MESManager.Application.DTOs;
+using MESManager.Application.Interfaces;
 
 namespace MESManager.Web.Controllers
 {
@@ -11,11 +12,16 @@ namespace MESManager.Web.Controllers
     public class AllegatiAnimaController : ControllerBase
     {
         private readonly AllegatiAnimaService _allegatiService;
+        private readonly IAllegatoArticoloService _allegatoArticoloService;
         private readonly ILogger<AllegatiAnimaController> _logger;
 
-        public AllegatiAnimaController(AllegatiAnimaService allegatiService, ILogger<AllegatiAnimaController> logger)
+        public AllegatiAnimaController(
+            AllegatiAnimaService allegatiService,
+            IAllegatoArticoloService allegatoArticoloService,
+            ILogger<AllegatiAnimaController> logger)
         {
             _allegatiService = allegatiService;
+            _allegatoArticoloService = allegatoArticoloService;
             _logger = logger;
         }
 
@@ -120,38 +126,52 @@ namespace MESManager.Web.Controllers
         }
 
         /// <summary>
-        /// Serve la N-esima foto dell'anima per anteprima in griglia (default: n=2, la seconda foto).
-        /// Ordinamento per Priorita. Restituisce 404 se la foto non esiste.
-        /// Usato dal cellRenderer fotoPreviewShared in tutte le griglie AG Grid.
+        /// Serve la N-esima foto dell'anima per anteprima in griglia (default: n=1, la prima foto).
+        /// USA IAllegatoArticoloService - stessa pipeline del dialog di upload.
+        /// Ordinamento per Priorita. Se n-esima non esiste, usa la prima disponibile.
+        /// Restituisce 404 se nessuna foto esiste per quell'articolo.
         /// </summary>
         [HttpGet("preview-foto/{codiceArticolo}")]
-        public async Task<IActionResult> GetPreviewFoto(string codiceArticolo, [FromQuery] int n = 2)
+        public async Task<IActionResult> GetPreviewFoto(string codiceArticolo, [FromQuery] int n = 1)
         {
             _logger.LogDebug("GET /api/AllegatiAnima/preview-foto/{CodiceArticolo}?n={N} - START", codiceArticolo, n);
 
             try
             {
-                var allegati = await _allegatiService.GetAllegatiByCodiceArticoloAsync(codiceArticolo);
+                // FIX: usa IAllegatoArticoloService (stesso service del dialog di upload)
+                // AllegatiAnimaService usava Archivio='ARTICO' ma AllegatoArticoloService
+                // usa la tabella AllegatiArticoli senza quel filtro -> vede tutte le foto caricate
+                var allegati = await _allegatoArticoloService.GetAllegatiByArticoloAsync(codiceArticolo);
                 var fotoOrdinate = allegati.Foto.OrderBy(f => f.Priorita).ThenBy(f => f.Id).ToList();
-                // Cerca la n-esima foto; se non esiste (es. n=2 ma c'è solo 1 foto) usa la prima
-                var foto = fotoOrdinate.ElementAtOrDefault(n - 1)
-                           ?? fotoOrdinate.FirstOrDefault();
 
-                if (foto == null)
+                if (!fotoOrdinate.Any())
                 {
+                    _logger.LogInformation(
+                        "GET preview-foto/{CodiceArticolo}: nessuna foto trovata in AllegatiArticoli",
+                        codiceArticolo);
                     return NotFound();
                 }
 
-                // Serve il file direttamente dal PathCompleto (già presente nel DTO - zero query aggiuntive)
-                var content = await _allegatiService.GetFileContentAsync(foto.PathCompleto);
-                if (content == null)
+                // Cerca la n-esima foto; fallback alla prima se n-esima non esiste
+                var foto = fotoOrdinate.ElementAtOrDefault(n - 1) ?? fotoOrdinate.First();
+
+                _logger.LogDebug(
+                    "GET preview-foto/{CodiceArticolo}: trovata foto Id={Id}, File={File}, Priorita={P}",
+                    codiceArticolo, foto.Id, foto.NomeFile, foto.Priorita);
+
+                // GetFileContentAsync(int id) converte path di rete -> locale internamente
+                var fileResult = await _allegatoArticoloService.GetFileContentAsync(foto.Id);
+                if (fileResult == null)
                 {
+                    _logger.LogWarning(
+                        "GET preview-foto/{CodiceArticolo}: file non trovato su disco per Id={Id}, Path={Path}",
+                        codiceArticolo, foto.Id, foto.PathFile);
                     return NotFound();
                 }
 
-                var mimeType = await _allegatiService.GetFileMimeTypeAsync(foto.PathCompleto);
-                Response.Headers["Cache-Control"] = "public, max-age=300"; // 5 min cache browser
-                return File(content, mimeType ?? "image/jpeg", foto.NomeFile);
+                // no-cache: il JS già usa _t=Date.now() come cache-buster -> non serve cache browser
+                Response.Headers["Cache-Control"] = "no-store";
+                return File(fileResult.Value.Content, fileResult.Value.ContentType, fileResult.Value.FileName);
             }
             catch (Exception ex)
             {
