@@ -116,4 +116,8 @@ public static class MesDesignTokens
     public const string CssVarAgPanelBg       = "--mes-ag-panel-bg";
     public const string CssVarAgInputBg       = "--mes-ag-input-bg";
     public const string CssVarAgInputBorder   = "--mes-ag-input-border";
+    public const string CssVarAppBarBg        = "--mes-appbar-bg";
+    public const string CssVarDrawerBg        = "--mes-drawer-bg";
+    public const string CssVarButtonColor     = "--mes-button-color";
+    public const string CssVarButtonText      = "--mes-button-text";
 }

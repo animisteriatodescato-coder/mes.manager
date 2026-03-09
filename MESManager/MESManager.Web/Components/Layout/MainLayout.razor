@@ -10,20 +10,43 @@
 <MudSnackbarProvider />
 
 @* CSS variables custom: accessibili da tutti i file CSS dell'app come var(--mes-*) *@
+@{
+    var _s           = AppSettingsService.GetSettings();
+    var _bgActive    = !string.IsNullOrEmpty(_s.BackgroundImageUrl);
+    var _panelOp     = _s.ThemePanelOpacity;
+    // Token centralizzati — tutti i valori provengono da MesDesignTokens (zero hardcoding)
+    var _glassPanel  = MesDesignTokens.GlassPanel(_isDarkMode, _panelOp);
+    var _glassGrid   = MesDesignTokens.GlassGrid(_isDarkMode, _panelOp);
+    var _rowEven     = MesDesignTokens.RowEven(_isDarkMode);
+    var _rowOdd      = MesDesignTokens.RowOdd(_isDarkMode);
+    var _rowText     = MesDesignTokens.RowText(_isDarkMode);
+    var _gridHeaderBg = MesDesignTokens.GridHeaderBg(_isDarkMode);
+    // AppBar e Drawer: colori SEPARATI — se l'utente ha personalizzato usa quello, altrimenti auto
+    var _appBarBgAuto = MesDesignTokens.AppBarBg(_isDarkMode);
+    var _appBarBg    = !string.IsNullOrEmpty(_s.ThemeAppBarBgColor) ? _s.ThemeAppBarBgColor : _appBarBgAuto;
+    var _drawerBg    = !string.IsNullOrEmpty(_s.ThemeDrawerBgColor) ? _s.ThemeDrawerBgColor : _appBarBg;
+    // Pulsanti: colore separato dal Primary del tema
+    var _buttonColor = !string.IsNullOrEmpty(_s.ThemeButtonColor) ? _s.ThemeButtonColor : _s.ThemePrimaryColor;
+    var _buttonText  = !string.IsNullOrEmpty(_s.ThemeButtonTextColor) ? _s.ThemeButtonTextColor : AppSettingsService.ComputeTextOnBackground(_buttonColor);
+}
 <style>
     :root {
-        --mes-text-on-primary: @(AppSettingsService.GetSettings().ThemeTextOnPrimary);
-        --mes-primary: @(AppSettingsService.GetSettings().ThemePrimaryColor);
-        --mes-primary-text: @(AppSettingsService.GetSettings().ThemePrimaryTextColor);
-        --mes-nav-text: @(string.IsNullOrEmpty(AppSettingsService.GetSettings().ThemeNavTextColor) ? MesDesignTokens.NavTextAuto(_isDarkMode) : AppSettingsService.GetSettings().ThemeNavTextColor);
-        --mes-bg-opacity: @(AppSettingsService.GetSettings().ThemeBgOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
-        --mes-panel-opacity: @(AppSettingsService.GetSettings().ThemePanelOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+        --mes-text-on-primary: @(_s.ThemeTextOnPrimary);
+        --mes-primary: @(_s.ThemePrimaryColor);
+        --mes-primary-text: @(_s.ThemePrimaryTextColor);
+        --mes-nav-text: @(string.IsNullOrEmpty(_s.ThemeNavTextColor) ? MesDesignTokens.NavTextAuto(_isDarkMode) : _s.ThemeNavTextColor);
+        --mes-bg-opacity: @(_s.ThemeBgOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+        --mes-panel-opacity: @(_s.ThemePanelOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+        --mes-appbar-bg: @_appBarBg;
+        --mes-drawer-bg: @_drawerBg;
+        --mes-button-color: @_buttonColor;
+        --mes-button-text: @_buttonText;
         /* Colori tabelle — token centralizzati via MesDesignTokens (zero hardcoding) */
         --mes-row-odd:  @MesDesignTokens.RowOdd(_isDarkMode);
         --mes-row-even: @MesDesignTokens.RowEven(_isDarkMode);
         --mes-row-text: @MesDesignTokens.RowText(_isDarkMode);
         --mes-grid-header-bg: @MesDesignTokens.GridHeaderBg(_isDarkMode);
-        --mes-glass-grid: @MesDesignTokens.GlassGrid(_isDarkMode, AppSettingsService.GetSettings().ThemePanelOpacity);
+        --mes-glass-grid: @MesDesignTokens.GlassGrid(_isDarkMode, _panelOp);
         /* Token AG Grid panel — used by app.css (.mud-theme-dark) and catalog/program pages */
         --mes-text-primary:    @MesDesignTokens.RowText(_isDarkMode);
         --mes-bg-secondary:    @(_isDarkMode ? MesDesignTokens.AgPanelBgDark : "#F5F5F5");
@@ -63,19 +86,6 @@
         color: var(--mes-nav-text) !important;
     }
 </style>
-@{
-    var _bgActive    = !string.IsNullOrEmpty(AppSettingsService.GetSettings().BackgroundImageUrl);
-    var _panelOp     = AppSettingsService.GetSettings().ThemePanelOpacity;
-    // Token centralizzati — tutti i valori provengono da MesDesignTokens (zero hardcoding)
-    var _glassPanel  = MesDesignTokens.GlassPanel(_isDarkMode, _panelOp);
-    var _glassGrid   = MesDesignTokens.GlassGrid(_isDarkMode, _panelOp);
-    var _rowEven     = MesDesignTokens.RowEven(_isDarkMode);
-    var _rowOdd      = MesDesignTokens.RowOdd(_isDarkMode);
-    var _rowText     = MesDesignTokens.RowText(_isDarkMode);
-    var _gridHeaderBg = MesDesignTokens.GridHeaderBg(_isDarkMode);
-    var _appBarBg    = MesDesignTokens.AppBarBg(_isDarkMode);
-    var _drawerBg    = _appBarBg;
-}
 
 <style>
     /* ── AG Grid — usa CSS vars definite in :root sopra ─────────────────── */
@@ -137,6 +147,39 @@
     }
 </style>
 
+<style>
+    /* ══ AppBar + Drawer: colori separati — sempre applicati (con o senza sfondo) ════════ */
+    .mud-appbar {
+        background-color: var(--mes-appbar-bg) !important;
+    }
+    .mud-drawer {
+        background-color: var(--mes-drawer-bg) !important;
+    }
+    /* Trasparenza interna drawer: sfondo transparent per tutti i blocchi figli */
+    .mud-drawer .mud-drawer-content,
+    .mud-drawer .mud-drawer-header,
+    .mud-drawer .mud-navmenu,
+    .mud-drawer .mud-nav-group,
+    .mud-drawer .mud-nav-group-items,
+    .mud-drawer .mud-nav-link,
+    .mud-drawer .mud-list,
+    .mud-drawer [data-testid="nav-menu"] {
+        background-color: transparent !important;
+        background: transparent !important;
+    }
+    /* ══ Pulsanti principali (Color.Primary Variant.Filled) — colore separato dal Primary ═══ */
+    .mud-button-root.mud-button-filled-primary {
+        background-color: var(--mes-button-color) !important;
+        color: var(--mes-button-text) !important;
+    }
+    .mud-button-root.mud-button-filled-primary .mud-icon-root {
+        color: var(--mes-button-text) !important;
+    }
+    .mud-button-root.mud-button-filled-primary:hover {
+        filter: brightness(0.90);
+    }
+</style>
+
 @if (_bgActive)
 {
     <style>
@@ -172,29 +215,15 @@
             color: @MesDesignTokens.MachineCardTextMuted(_isDarkMode) !important;
         }
 
-        /* AppBar: stessa formula del drawer — dark=quasi nero, light=primary trasparente */
+        /* AppBar + Drawer: sfondo via CSS var (già impostato nel blocco sempre-attivo),
+           qui aggiungiamo solo il blur per l'effetto vetro con sfondo immagine */
         .mud-appbar {
-            background-color: @_appBarBg !important;
             backdrop-filter: blur(12px) saturate(1.4);
             -webkit-backdrop-filter: blur(12px) saturate(1.4);
         }
-
-        /* Drawer: stesso stile dell'AppBar, dark = quasi nero */
         .mud-drawer {
-            background-color: @_drawerBg !important;
             backdrop-filter: blur(12px) saturate(1.4);
             -webkit-backdrop-filter: blur(12px) saturate(1.4);
-        }
-        .mud-drawer .mud-drawer-content,
-        .mud-drawer .mud-drawer-header,
-        .mud-drawer .mud-navmenu,
-        .mud-drawer .mud-nav-group,
-        .mud-drawer .mud-nav-group-items,
-        .mud-drawer .mud-nav-link,
-        .mud-drawer .mud-list,
-        .mud-drawer [data-testid="nav-menu"] {
-            background-color: transparent !important;
-            background: transparent !important;
         }
 
         /* ── Backdrop blur per griglie (solo con sfondo) ── */

@@ -270,4 +270,26 @@ public class AppSettings
     /// Integrano i colori estratti automaticamente dall'immagine.
     /// </summary>
     public List<string> ThemeExtraColors { get; set; } = new() { "#607D8B", "#795548" };
+
+    // ── Colori elementi UI separati ────────────────────────────────────────────
+
+    /// <summary>
+    /// Colore sfondo AppBar (barra superiore). Vuoto = usa ThemePrimaryColor (comportamento precedente).
+    /// </summary>
+    public string ThemeAppBarBgColor { get; set; } = "";
+
+    /// <summary>
+    /// Colore sfondo Drawer (menu laterale). Vuoto = segue ThemeAppBarBgColor o Primary.
+    /// </summary>
+    public string ThemeDrawerBgColor { get; set; } = "";
+
+    /// <summary>
+    /// Colore pulsanti principali (Color.Primary Variant.Filled). Vuoto = usa ThemePrimaryColor.
+    /// </summary>
+    public string ThemeButtonColor { get; set; } = "";
+
+    /// <summary>
+    /// Colore testo pulsanti principali. Vuoto = calcolato automaticamente dalla luminanza di ThemeButtonColor.
+    /// </summary>
+    public string ThemeButtonTextColor { get; set; } = "";
 }

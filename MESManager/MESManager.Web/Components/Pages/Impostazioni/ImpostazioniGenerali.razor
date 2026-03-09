@@ -343,6 +343,138 @@
         </div>
     </MudPaper>
 
+    @* ── Sezione colori AppBar, Menu laterale e Pulsanti ────────────────────────────────────────── *@
+    <MudPaper Class="pa-4 mt-4" Elevation="2">
+        <MudText Typo="Typo.h6" Class="mb-1">Colori Barra Superiore, Menu Laterale e Pulsanti</MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
+            Personalizza i colori di sfondo della barra superiore (AppBar), del menu laterale (Drawer) e dei pulsanti
+            principali in modo indipendente. Lascia vuoto per usare automaticamente il colore Primary del tema.
+        </MudText>
+
+        @* ── Riga 1: AppBar background ─────────────────────────────────────── *@
+        <div class="d-flex align-center gap-4 mb-4 flex-wrap">
+            <MudText Style="min-width:160px; font-weight:500;">Barra superiore</MudText>
+            <div style="@($"width:190px;height:52px;border-radius:8px;background:{(!string.IsNullOrEmpty(_settings.ThemeAppBarBgColor) ? _settings.ThemeAppBarBgColor : _settings.ThemePrimaryColor)};display:flex;align-items:center;justify-content:center;color:{_settings.ThemeTextOnPrimary};font-weight:700;font-size:0.9rem;box-shadow:0 2px 8px rgba(0,0,0,0.25);")">
+                ☰ Todescato MES
+            </div>
+            <MudButtonGroup Variant="Variant.Outlined" Color="Color.Default" Size="Size.Medium">
+                <MudButton Color="Color.Info"
+                           Variant="@(string.IsNullOrEmpty(_settings.ThemeAppBarBgColor) ? Variant.Filled : Variant.Outlined)"
+                           OnClick="@(() => _settings.ThemeAppBarBgColor = string.Empty)">Auto (Primary)</MudButton>
+                @foreach (var color in _settings.ThemePalette.Concat(_settings.ThemeExtraColors))
+                {
+                    bool isSel = _settings.ThemeAppBarBgColor == color;
+                    <div @onclick="() => _settings.ThemeAppBarBgColor = color"
+                         style="@($"width:36px;height:36px;border-radius:4px;background:{color};cursor:pointer;border:{(isSel ? "3px solid #fff" : "2px solid transparent")};box-shadow:{(isSel ? "0 0 0 2px "+color : "0 2px 4px rgba(0,0,0,0.3)")};display:inline-flex;align-items:center;justify-content:center;")"
+                         title="@color">
+                        @if (isSel) { <MudIcon Icon="@Icons.Material.Filled.Check" Style="color:white;font-size:16px;" /> }
+                    </div>
+                }
+            </MudButtonGroup>
+            <div class="d-flex align-center gap-3 mt-2">
+                <div style="@($"width:42px;height:42px;border-radius:8px;background:{(string.IsNullOrEmpty(_settings.ThemeAppBarBgColor) ? _settings.ThemePrimaryColor : _settings.ThemeAppBarBgColor)};border:2px solid rgba(128,128,128,0.4);cursor:pointer;")"
+                     @onclick="@(() => _showAppBarPicker = !_showAppBarPicker)" title="Apri palette">
+                </div>
+                <MudTextField @bind-Value="_settings.ThemeAppBarBgColor"
+                              Label="Hex (vuoto=auto)" Variant="Variant.Outlined" Style="max-width:180px" />
+            </div>
+            @if (_showAppBarPicker)
+            {
+                <div class="pa-2 mt-2" style="background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3);z-index:100;">
+                    <MudColorPicker @bind-Value="_appBarBgColor" PickerVariant="PickerVariant.Static"
+                                    ColorPickerView="ColorPickerView.Spectrum" DisableAlpha="true" DisableInputs="false" />
+                    <MudButton Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled"
+                               OnClick="@(() => _showAppBarPicker = false)" Class="mt-1 ml-2">OK</MudButton>
+                </div>
+            }
+        </div>
+
+        @* ── Riga 2: Drawer (menu laterale) background ──────────────────────────── *@
+        <div class="d-flex align-center gap-4 mb-4 flex-wrap">
+            <MudText Style="min-width:160px; font-weight:500;">Menu laterale</MudText>
+            @{
+                var _drawerPreviewBg = !string.IsNullOrEmpty(_settings.ThemeDrawerBgColor)
+                    ? _settings.ThemeDrawerBgColor
+                    : (!string.IsNullOrEmpty(_settings.ThemeAppBarBgColor) ? _settings.ThemeAppBarBgColor : _settings.ThemePrimaryColor);
+            }
+            <div style="@($"width:190px;height:52px;border-radius:8px;background:{_drawerPreviewBg};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:#FFFFFF;box-shadow:0 2px 8px rgba(0,0,0,0.3);")">
+                📁 Commesse
+            </div>
+            <MudButtonGroup Variant="Variant.Outlined" Color="Color.Default" Size="Size.Medium">
+                <MudButton Color="Color.Info"
+                           Variant="@(string.IsNullOrEmpty(_settings.ThemeDrawerBgColor) ? Variant.Filled : Variant.Outlined)"
+                           OnClick="@(() => _settings.ThemeDrawerBgColor = string.Empty)">Auto (come AppBar)</MudButton>
+                @foreach (var color in _settings.ThemePalette.Concat(_settings.ThemeExtraColors))
+                {
+                    bool isSel = _settings.ThemeDrawerBgColor == color;
+                    <div @onclick="() => _settings.ThemeDrawerBgColor = color"
+                         style="@($"width:36px;height:36px;border-radius:4px;background:{color};cursor:pointer;border:{(isSel ? "3px solid #fff" : "2px solid transparent")};box-shadow:{(isSel ? "0 0 0 2px "+color : "0 2px 4px rgba(0,0,0,0.3)")};display:inline-flex;align-items:center;justify-content:center;")"
+                         title="@color">
+                        @if (isSel) { <MudIcon Icon="@Icons.Material.Filled.Check" Style="color:white;font-size:16px;" /> }
+                    </div>
+                }
+            </MudButtonGroup>
+            <div class="d-flex align-center gap-3 mt-2">
+                <div style="@($"width:42px;height:42px;border-radius:8px;background:{(string.IsNullOrEmpty(_settings.ThemeDrawerBgColor) ? _settings.ThemePrimaryColor : _settings.ThemeDrawerBgColor)};border:2px solid rgba(128,128,128,0.4);cursor:pointer;")"
+                     @onclick="@(() => _showDrawerPicker = !_showDrawerPicker)" title="Apri palette">
+                </div>
+                <MudTextField @bind-Value="_settings.ThemeDrawerBgColor"
+                              Label="Hex (vuoto=auto)" Variant="Variant.Outlined" Style="max-width:180px" />
+            </div>
+            @if (_showDrawerPicker)
+            {
+                <div class="pa-2 mt-2" style="background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3);z-index:100;">
+                    <MudColorPicker @bind-Value="_drawerBgColor" PickerVariant="PickerVariant.Static"
+                                    ColorPickerView="ColorPickerView.Spectrum" DisableAlpha="true" DisableInputs="false" />
+                    <MudButton Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled"
+                               OnClick="@(() => _showDrawerPicker = false)" Class="mt-1 ml-2">OK</MudButton>
+                </div>
+            }
+        </div>
+
+        @* ── Riga 3: Colore pulsanti principali ──────────────────────────────────── *@
+        <div class="d-flex align-center gap-4 flex-wrap">
+            <MudText Style="min-width:160px; font-weight:500;">Pulsanti principali</MudText>
+            @{
+                var _btnPreviewBg   = !string.IsNullOrEmpty(_settings.ThemeButtonColor) ? _settings.ThemeButtonColor : _settings.ThemePrimaryColor;
+                var _btnPreviewText = !string.IsNullOrEmpty(_settings.ThemeButtonTextColor) ? _settings.ThemeButtonTextColor : _settings.ThemeTextOnPrimary;
+            }
+            <div style="@($"width:190px;height:52px;border-radius:8px;background:{_btnPreviewBg};display:flex;align-items:center;justify-content:center;color:{_btnPreviewText};font-weight:700;font-size:0.9rem;box-shadow:0 2px 8px rgba(0,0,0,0.25);")">
+                💾 Salva / Aggiungi
+            </div>
+            <MudButtonGroup Variant="Variant.Outlined" Color="Color.Default" Size="Size.Medium">
+                <MudButton Color="Color.Info"
+                           Variant="@(string.IsNullOrEmpty(_settings.ThemeButtonColor) ? Variant.Filled : Variant.Outlined)"
+                           OnClick="ResetButtonColors">Auto (Primary)</MudButton>
+                @foreach (var color in _settings.ThemePalette.Concat(_settings.ThemeExtraColors))
+                {
+                    bool isSel = _settings.ThemeButtonColor == color;
+                    <div @onclick="() => OnButtonColorSelected(color)"
+                         style="@($"width:36px;height:36px;border-radius:4px;background:{color};cursor:pointer;border:{(isSel ? "3px solid #fff" : "2px solid transparent")};box-shadow:{(isSel ? "0 0 0 2px "+color : "0 2px 4px rgba(0,0,0,0.3)")};display:inline-flex;align-items:center;justify-content:center;")"
+                         title="@color">
+                        @if (isSel) { <MudIcon Icon="@Icons.Material.Filled.Check" Style="color:white;font-size:16px;" /> }
+                    </div>
+                }
+            </MudButtonGroup>
+            <div class="d-flex align-center gap-3 mt-2">
+                <div style="@($"width:42px;height:42px;border-radius:8px;background:{(string.IsNullOrEmpty(_settings.ThemeButtonColor) ? _settings.ThemePrimaryColor : _settings.ThemeButtonColor)};border:2px solid rgba(128,128,128,0.4);cursor:pointer;")"
+                     @onclick="@(() => _showButtonPicker = !_showButtonPicker)" title="Apri palette">
+                </div>
+                <MudTextField @bind-Value="_settings.ThemeButtonColor"
+                              Label="Hex (vuoto=auto)" Variant="Variant.Outlined" Style="max-width:180px" />
+            </div>
+            @if (_showButtonPicker)
+            {
+                <div class="pa-2 mt-2" style="background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3);z-index:100;">
+                    <MudColorPicker @bind-Value="_buttonMudColor" PickerVariant="PickerVariant.Static"
+                                    ColorPickerView="ColorPickerView.Spectrum" DisableAlpha="true" DisableInputs="false" />
+                    <MudButton Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled"
+                               OnClick="@(() => _showButtonPicker = false)" Class="mt-1 ml-2">OK</MudButton>
+                </div>
+            }
+        </div>
+    </MudPaper>
+
     <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" 
                Size="Size.Large" OnClick="SalvaImpostazioni" StartIcon="@Icons.Material.Filled.Save"
                data-testid="btn-generali-salva">
@@ -358,6 +490,10 @@
     private bool _showPicker1 = false;
     private bool _showPicker2 = false;
     private bool _showNavPicker = false;
+    // Picker per AppBar, Drawer, Button
+    private bool _showAppBarPicker = false;
+    private bool _showDrawerPicker = false;
+    private bool _showButtonPicker = false;
 
     private MudBlazor.Utilities.MudColor _extraColor1 
     { 
@@ -373,6 +509,34 @@
     { 
         get => new MudBlazor.Utilities.MudColor(string.IsNullOrEmpty(_settings.ThemeNavTextColor) ? "#FFFFFF" : _settings.ThemeNavTextColor); 
         set { _settings.ThemeNavTextColor = value.Value; }
+    }
+
+    private MudBlazor.Utilities.MudColor _appBarBgColor
+    {
+        get => new MudBlazor.Utilities.MudColor(string.IsNullOrEmpty(_settings.ThemeAppBarBgColor) ? _settings.ThemePrimaryColor : _settings.ThemeAppBarBgColor);
+        set { _settings.ThemeAppBarBgColor = value.Value; }
+    }
+    private MudBlazor.Utilities.MudColor _drawerBgColor
+    {
+        get => new MudBlazor.Utilities.MudColor(string.IsNullOrEmpty(_settings.ThemeDrawerBgColor) ? _settings.ThemePrimaryColor : _settings.ThemeDrawerBgColor);
+        set { _settings.ThemeDrawerBgColor = value.Value; }
+    }
+    private MudBlazor.Utilities.MudColor _buttonMudColor
+    {
+        get => new MudBlazor.Utilities.MudColor(string.IsNullOrEmpty(_settings.ThemeButtonColor) ? _settings.ThemePrimaryColor : _settings.ThemeButtonColor);
+        set { _settings.ThemeButtonColor = value.Value; _settings.ThemeButtonTextColor = AppSettingsService.ComputeTextOnBackground(value.Value); }
+    }
+
+    private void OnButtonColorSelected(string color)
+    {
+        _settings.ThemeButtonColor = color;
+        _settings.ThemeButtonTextColor = AppSettingsService.ComputeTextOnBackground(color);
+    }
+
+    private void ResetButtonColors()
+    {
+        _settings.ThemeButtonColor = string.Empty;
+        _settings.ThemeButtonTextColor = string.Empty;
     }
 
     protected override void OnInitialized()
