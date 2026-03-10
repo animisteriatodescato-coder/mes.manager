@@ -24,6 +24,9 @@ public partial class MainLayout : IDisposable
     [Inject]
     private AppSettingsService AppSettingsService { get; set; } = default!;
 
+    [Inject]
+    private UserThemeService UserThemeService { get; set; } = default!;
+
     /// <summary>
     /// Servizio dark mode iniettabile. Sincronizzato con _isDarkMode a ogni cambiamento.
     /// I componenti figli iniettano questo servizio per reagire al cambio di tema.
@@ -62,8 +65,9 @@ public partial class MainLayout : IDisposable
         // Sincronizza il servizio iniettabile con la modalità iniziale
         ThemeModeService.UpdateMode(_isDarkMode);
 
-        // Ascolta i cambiamenti delle impostazioni (es. nuova palette da ImpostazioniGenerali)
+        // Ascolta i cambiamenti delle impostazioni globali e del tema per-utente
         AppSettingsService.OnSettingsChanged += OnAppSettingsChanged;
+        UserThemeService.OnUserThemeChanged += OnUserThemeChanged;
 
         // Sottoscrivi ai cambiamenti di pagina
         PageToolbarService.OnPageChanged += OnPageChanged;
@@ -75,9 +79,28 @@ public partial class MainLayout : IDisposable
         AppBarContentService.OnChange += OnAppBarContentChanged;
     }
     
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Carica il tema personale dell'utente (richiede JS — non disponibile prima)
+            await UserThemeService.LoadUserThemeAsync();
+            // Se l'utente ha un tema personale, ricostruisci il tema con quei valori
+            if (UserThemeService.HasUserTheme)
+            {
+                var userSettings = UserThemeService.GetEffectiveSettings();
+                _theme = BuildThemeFromSettings(userSettings);
+                _isDarkMode = userSettings.ThemeIsDarkMode;
+                ThemeModeService.UpdateMode(_isDarkMode);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
     public void Dispose()
     {
         AppSettingsService.OnSettingsChanged -= OnAppSettingsChanged;
+        UserThemeService.OnUserThemeChanged -= OnUserThemeChanged;
         PageToolbarService.OnPageChanged -= OnPageChanged;
         NavManager.LocationChanged -= OnLocationChanged;
         AppBarContentService.OnChange -= OnAppBarContentChanged;
@@ -85,12 +108,27 @@ public partial class MainLayout : IDisposable
 
     private void OnAppSettingsChanged()
     {
-        var settings = AppSettingsService.GetSettings();
+        var settings = UserThemeService.GetEffectiveSettings();
         _theme = BuildThemeFromSettings(settings);
         _isDarkMode = settings.ThemeIsDarkMode;
-        // Propaga ai componenti figli che usano IThemeModeService
         ThemeModeService.UpdateMode(_isDarkMode);
         InvokeAsync(StateHasChanged);
+    }
+
+    private void OnUserThemeChanged()
+    {
+        InvokeAsync(async () =>
+        {
+            // Se non è ancora caricato (utente appena cambiato), ricarica dal DB
+            if (!UserThemeService.IsLoaded)
+                await UserThemeService.LoadUserThemeAsync();
+
+            var settings = UserThemeService.GetEffectiveSettings();
+            _theme = BuildThemeFromSettings(settings);
+            _isDarkMode = settings.ThemeIsDarkMode;
+            ThemeModeService.UpdateMode(_isDarkMode);
+            StateHasChanged();
+        });
     }
 
     /// <summary>

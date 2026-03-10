@@ -1,6 +1,7 @@
 @page "/impostazioni/generali"
 @using MESManager.Web.Services
 @inject AppSettingsService AppSettingsService
+@inject UserThemeService UserThemeService
 @inject ISnackbar Snackbar
 
 <PageTitle>Impostazioni Generali</PageTitle>
@@ -478,7 +479,13 @@
     <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" 
                Size="Size.Large" OnClick="SalvaImpostazioni" StartIcon="@Icons.Material.Filled.Save"
                data-testid="btn-generali-salva">
-        Salva Impostazioni
+        Salva Impostazioni Personali
+    </MudButton>
+    <MudButton Variant="Variant.Outlined" Color="Color.Warning"
+               Size="Size.Large" OnClick="SalvaImpostazioniGlobali" StartIcon="@Icons.Material.Filled.AdminPanelSettings"
+               Class="ml-3"
+               data-testid="btn-generali-salva-globale">
+        Salva come Default Globale
     </MudButton>
 </MudContainer>
 
@@ -541,10 +548,27 @@
 
     protected override void OnInitialized()
     {
-        _settings = AppSettingsService.GetSettings();
+        _settings = UserThemeService.GetEffectiveSettings();
         // Garantisci sempre 2 slot per colori extra
         while (_settings.ThemeExtraColors.Count < 2)
             _settings.ThemeExtraColors.Add(_settings.ThemeExtraColors.Count == 0 ? "#607D8B" : "#795548");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var hadUserThemeBefore = UserThemeService.HasUserTheme;
+            await UserThemeService.LoadUserThemeAsync();
+            // Se ora abbiamo un tema personale che non avevamo prima, aggiorna i campi
+            if (!hadUserThemeBefore && UserThemeService.HasUserTheme)
+            {
+                _settings = UserThemeService.GetEffectiveSettings();
+                while (_settings.ThemeExtraColors.Count < 2)
+                    _settings.ThemeExtraColors.Add(_settings.ThemeExtraColors.Count == 0 ? "#607D8B" : "#795548");
+                StateHasChanged();
+            }
+        }
     }
 
     private async Task OnBackgroundImageSelected(IBrowserFile file)
@@ -571,6 +595,8 @@
 
             // Ricarica le impostazioni per mostrare la palette appena estratta
             _settings = AppSettingsService.GetSettings();
+            // Aggiorna anche il tema personale con la nuova palette
+            await UserThemeService.SaveUserThemeAsync(_settings);
 
             Snackbar.Add("Immagine di sfondo aggiornata! Scegli i colori del tema qui sotto.", Severity.Success);
         }
@@ -589,12 +615,27 @@
     {
         try
         {
-            await AppSettingsService.SaveSettingsAsync(_settings);
-            Snackbar.Add("Impostazioni salvate con successo!", Severity.Success);
+            // Salva come preferenza personale dell'utente (DB se utente selezionato, localStorage altrimenti)
+            await UserThemeService.SaveUserThemeAsync(_settings);
+            Snackbar.Add("Impostazioni personali salvate!", Severity.Success);
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Errore nel salvataggio: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SalvaImpostazioniGlobali()
+    {
+        try
+        {
+            // Salva nel file globale di sistema (app-settings.json) per tutti gli utenti
+            await AppSettingsService.SaveSettingsAsync(_settings);
+            Snackbar.Add("Impostazioni globali aggiornate!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nel salvataggio globale: {ex.Message}", Severity.Error);
         }
     }
 

@@ -24,6 +24,10 @@ app.log
 app.error.log
 web-run.log
 
+# Impostazioni runtime (generate a runtime, non da committare)
+wwwroot/app-settings.json
+MESManager.Web/wwwroot/app-settings.json
+
 # Build outputs
 bin/
 obj/

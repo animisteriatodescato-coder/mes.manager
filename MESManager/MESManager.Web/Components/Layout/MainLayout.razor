@@ -11,7 +11,7 @@
 
 @* CSS variables custom: accessibili da tutti i file CSS dell'app come var(--mes-*) *@
 @{
-    var _s           = AppSettingsService.GetSettings();
+    var _s           = UserThemeService.GetEffectiveSettings();
     var _bgActive    = !string.IsNullOrEmpty(_s.BackgroundImageUrl);
     var _panelOp     = _s.ThemePanelOpacity;
     // Token centralizzati — tutti i valori provengono da MesDesignTokens (zero hardcoding)

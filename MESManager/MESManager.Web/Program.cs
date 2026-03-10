@@ -126,6 +126,7 @@ builder.Services.AddScoped(sp => new HttpClient
 
 // Custom Services
 builder.Services.AddScoped<PreferencesService>();
+builder.Services.AddScoped<UserThemeService>();
 builder.Services.AddScoped<AnimeImportService>();
 builder.Services.AddScoped<AnimeExcelImportService>();
 builder.Services.AddScoped<AllegatiAnimaService>();

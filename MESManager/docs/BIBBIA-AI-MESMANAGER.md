@@ -81,7 +81,7 @@ Start-Sleep 3
 # 3. COPIA (escludi SEMPRE secrets e config produzione)
 robocopy "C:\Dev\MESManager\publish\Web" "\\192.168.1.230\c$\MESManager" `
     /E /IS /IT `
-    /XF appsettings.Secrets.json appsettings.Database.json appsettings.Secrets.encrypted "*.log" "*.pdb" `
+    /XF appsettings.Secrets.json appsettings.Database.json appsettings.Secrets.encrypted "*.log" "*.pdb" app-settings.json `
     /XD logs SyncBackups Worker PlcSync `
     /NFL /NDL /NJH
 # exit code 0-7 = OK, >7 = errore
