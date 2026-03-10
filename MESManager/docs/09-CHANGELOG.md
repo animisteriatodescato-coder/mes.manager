@@ -4,7 +4,50 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.55.1
+## 🔖 Versione Corrente: v1.55.9
+
+---
+
+## 🔖 v1.55.9 - Naming foto {codice} {priorità}, header griglia = colore drawer (10 Mar 2026)
+
+**Data**: 10 Marzo 2026
+
+### ✨ Feature — Naming file foto per priorità
+
+Le foto caricate vengono ora salvate con nome `{CodiceArticolo} {Priorita}{ext}` (es. `23503 2.jpg`).
+
+- Upload: `safeFileName = $"{request.CodiceArticolo} {request.Priorita}{extension}"` — sovrascrive se stessa priorità già esiste
+- Cambio priorità: il file su disco viene rinominato automaticamente + `PathFile`/`NomeFile` aggiornati nel DB
+- `NomeFile` nel DB rispecchia ora il nome fisico del file
+
+### ✨ Feature — Header colonne griglia segue colore menu laterale
+
+`--mes-grid-header-bg` in `MainLayout.razor` ora usa `var(--mes-drawer-bg)` invece di `MesDesignTokens.GridHeaderBg()` (blu fisso). L'intestazione delle colonne AG Grid e MudTable segue automaticamente il colore del drawer impostato dall'utente.
+
+### 🐛 Fix — Preview foto usa priorità esatta
+
+`AllegatiAnimaController.GetPreviewFoto`: il parametro `n` è ora la **priorità esatta** (non indice). Default `n=2`. Restituisce 404 se non esiste foto con quella priorità — nessun fallback.  
+Tutti i grid: `photoIndex: 2`.
+
+#### File modificati
+- `MESManager.Application/Services/AllegatoArticoloService.cs` — naming + rename on priority change
+- `MESManager.Web/Controllers/AllegatiAnimaController.cs` — n = priorità esatta, default 2
+- `MESManager.Web/Components/Layout/MainLayout.razor` — header bg = drawer bg
+- `MESManager.Web/wwwroot/js/anime-grid.js` — photoIndex: 2
+- `MESManager.Web/wwwroot/lib/ag-grid/commesse-grid.js` — photoIndex: 2
+- `MESManager.Web/wwwroot/lib/ag-grid/commesse-aperte-grid.js` — photoIndex: 2
+- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` — photoIndex: 2
+- `MESManager.Web/Constants/AppVersion.cs` — 1.55.8 → 1.55.9
+
+---
+
+## 🔖 v1.55.8 - ROOT CAUSE fix preview foto (10 Mar 2026)
+
+**Data**: 10 Marzo 2026
+
+### 🐛 Fix — Preview foto usava servizio sbagliato (Archivio mismatch)
+
+`AllegatiAnimaController.GetPreviewFoto` usava `AllegatiAnimaService` che legge con `WHERE Archivio='ARTICO'`, ma le foto salvate dal dialog hanno `Archivio='Articoli'` → zero match garantito. Corretto usando `IAllegatoArticoloService.GetAllegatiByArticoloAsync` (stessa pipeline del dialog).
 
 ---
 

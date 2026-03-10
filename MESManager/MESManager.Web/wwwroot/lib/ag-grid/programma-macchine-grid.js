@@ -124,7 +124,7 @@ window.programmaMacchineGrid = (function() {
         // FOTO - Anteprima prima immagine anima per priorità (n=1)
         window.fotoPreviewShared.createColumnDef({
             codiceArticoloField: 'articoloCodice',
-            photoIndex: 1
+            photoIndex: 2
         }),
         { 
             field: 'description', 

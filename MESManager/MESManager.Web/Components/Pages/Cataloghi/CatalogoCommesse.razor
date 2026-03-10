@@ -152,6 +152,44 @@
     }
 
     [JSInvokable]
+    public async Task OnRowDoubleClick(string articoloCodice)
+    {
+        try
+        {
+            var anime = await Http.GetFromJsonAsync<AnimeDto>($"/api/Anime/by-codice/{Uri.EscapeDataString(articoloCodice)}");
+
+            if (anime == null)
+            {
+                Snackbar.Add($"Anima con codice {articoloCodice} non trovata", Severity.Warning);
+                return;
+            }
+
+            var parameters = new DialogParameters<AnimeEditDialog>
+            {
+                { x => x.Anime, anime }
+            };
+            var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Large,
+                FullWidth = true,
+                CloseButton = true,
+                CloseOnEscapeKey = true
+            };
+            var dialog = await DialogService.ShowAsync<AnimeEditDialog>("Modifica Anima", parameters, options);
+            var result = await dialog.Result;
+
+            if (result != null && !result.Canceled && result.Data is AnimeDto updatedAnime)
+            {
+                Snackbar.Add("Anima aggiornata con successo", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+    }
+
+    [JSInvokable]
     public async Task SaveGridStateFromJs()
     {
         await SaveSettings();

@@ -84,13 +84,11 @@ public class AllegatoArticoloService : AllegatoFileServiceBase, IAllegatoArticol
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
         var isFoto = FileConstants.FotoExtensions.Contains(extension);
         
-        // Genera nome file univoco
-        var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
-        var guid = Guid.NewGuid().ToString("N")[..16];
-        var safeFileName = $"{request.CodiceArticolo}_{timestamp}_{guid}{extension}";
+        // Nome file = "{CodiceArticolo} {Priorita}{ext}" — convenzione naming MESManager
+        var safeFileName = $"{request.CodiceArticolo} {request.Priorita}{extension}";
         var fullPath = Path.Combine(AllegatiBasePath, safeFileName);
         
-        // Salva file su disco
+        // Salva file su disco (FileMode.Create sovrascrive se già esiste stessa priorità)
         await using (var outputStream = new FileStream(fullPath, FileMode.Create))
         {
             await fileStream.CopyToAsync(outputStream);
@@ -105,7 +103,7 @@ public class AllegatoArticoloService : AllegatoFileServiceBase, IAllegatoArticol
             IdArchivio = request.IdArchivio,
             CodiceArticolo = request.CodiceArticolo,
             PathFile = fullPath,
-            NomeFile = fileName,
+            NomeFile = safeFileName,
             Descrizione = request.Descrizione,
             Priorita = request.Priorita,
             TipoFile = isFoto ? "Foto" : "Documento",
@@ -162,6 +160,19 @@ public class AllegatoArticoloService : AllegatoFileServiceBase, IAllegatoArticol
             return false;
         }
         
+        // Rinomina file su disco per riflettere la nuova priorità
+        var ext = allegato.Estensione ?? Path.GetExtension(allegato.PathFile ?? "");
+        var dir = Path.GetDirectoryName(allegato.PathFile ?? AllegatiBasePath) ?? AllegatiBasePath;
+        var newFileName = $"{allegato.CodiceArticolo} {priorita}{ext}";
+        var newPath = Path.Combine(dir, newFileName);
+        if (!string.IsNullOrEmpty(allegato.PathFile) && allegato.PathFile != newPath && File.Exists(allegato.PathFile))
+        {
+            File.Move(allegato.PathFile, newPath, overwrite: true);
+            allegato.PathFile = newPath;
+            allegato.NomeFile = newFileName;
+            _logger.LogInformation("File rinominato: {OldPath} -> {NewPath}", allegato.PathFile, newPath);
+        }
+
         allegato.Priorita = priorita;
         await _repository.UpdateAsync(allegato);
         _logger.LogInformation("Allegato priorità updated: Id={Id}, Priorita={Priorita}", id, priorita);

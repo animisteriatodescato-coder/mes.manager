@@ -128,32 +128,27 @@ namespace MESManager.Web.Controllers
         /// <summary>
         /// Serve la N-esima foto dell'anima per anteprima in griglia (default: n=1, la prima foto).
         /// USA IAllegatoArticoloService - stessa pipeline del dialog di upload.
-        /// Ordinamento per Priorita. Se n-esima non esiste, usa la prima disponibile.
-        /// Restituisce 404 se nessuna foto esiste per quell'articolo.
+        /// n = priorità esatta da cercare. Restituisce 404 se non esiste foto con quella priorità.
         /// </summary>
         [HttpGet("preview-foto/{codiceArticolo}")]
-        public async Task<IActionResult> GetPreviewFoto(string codiceArticolo, [FromQuery] int n = 1)
+        public async Task<IActionResult> GetPreviewFoto(string codiceArticolo, [FromQuery] int n = 2)
         {
             _logger.LogDebug("GET /api/AllegatiAnima/preview-foto/{CodiceArticolo}?n={N} - START", codiceArticolo, n);
 
             try
             {
-                // FIX: usa IAllegatoArticoloService (stesso service del dialog di upload)
-                // AllegatiAnimaService usava Archivio='ARTICO' ma AllegatoArticoloService
-                // usa la tabella AllegatiArticoli senza quel filtro -> vede tutte le foto caricate
                 var allegati = await _allegatoArticoloService.GetAllegatiByArticoloAsync(codiceArticolo);
-                var fotoOrdinate = allegati.Foto.OrderBy(f => f.Priorita).ThenBy(f => f.Id).ToList();
 
-                if (!fotoOrdinate.Any())
+                // n è la PRIORITÀ esatta: mostra solo la foto con Priorita == n
+                var foto = allegati.Foto.FirstOrDefault(f => f.Priorita == n);
+
+                if (foto == null)
                 {
                     _logger.LogInformation(
-                        "GET preview-foto/{CodiceArticolo}: nessuna foto trovata in AllegatiArticoli",
-                        codiceArticolo);
+                        "GET preview-foto/{CodiceArticolo}: nessuna foto con Priorita={N}",
+                        codiceArticolo, n);
                     return NotFound();
                 }
-
-                // Cerca la n-esima foto; fallback alla prima se n-esima non esiste
-                var foto = fotoOrdinate.ElementAtOrDefault(n - 1) ?? fotoOrdinate.First();
 
                 _logger.LogDebug(
                     "GET preview-foto/{CodiceArticolo}: trovata foto Id={Id}, File={File}, Priorita={P}",

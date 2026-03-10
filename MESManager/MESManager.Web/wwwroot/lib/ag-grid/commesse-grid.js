@@ -20,7 +20,7 @@
         // FOTO - Anteprima prima immagine anima per priorità (n=1)
         window.fotoPreviewShared.createColumnDef({
             codiceArticoloField: 'articoloCodice',
-            photoIndex: 1
+            photoIndex: 2
         }),
         // RICETTA - Badge con numero parametri (shared component)
         window.ricettaColumnShared.createColumnDef({
@@ -101,6 +101,11 @@
         eventName: 'commesseGridStatsChanged',
         rowSelection: 'single',
         dotNetRefVar: 'commesseGridDotNetRef',
-        hasRicetta: true
+        hasRicetta: true,
+        onRowDoubleClicked: (event) => {
+            if (window.commesseGridDotNetRef && event.data && event.data.articoloCodice) {
+                window.commesseGridDotNetRef.invokeMethodAsync('OnRowDoubleClick', event.data.articoloCodice);
+            }
+        }
     });
 })();

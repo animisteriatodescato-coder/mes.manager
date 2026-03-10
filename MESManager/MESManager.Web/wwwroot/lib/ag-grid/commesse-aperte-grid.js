@@ -83,7 +83,7 @@ window.commesseAperteGrid = (function() {
         // FOTO - Anteprima prima immagine anima per priorità (n=1)
         window.fotoPreviewShared.createColumnDef({
             codiceArticoloField: 'articoloCodice',
-            photoIndex: 1
+            photoIndex: 2
         }),
         // RICETTA - Bollino verde con numero parametri (shared component)
         window.ricettaColumnShared.createColumnDef({
@@ -155,7 +155,7 @@ window.commesseAperteGrid = (function() {
                 const stati = isDark ? [
                     { value: 'NonProgrammata', label: 'Non Programmata', color: '#e0e0e0', bg: '#424252' },
                     { value: 'Programmata',    label: 'Programmata',     color: '#90caf9', bg: '#0d2f6b' },
-                    { value: 'InProduzione',   label: 'In Produzione',   color: '#ffcc80', bg: '#6d3200' },
+                    { value: 'InProduzione',   label: 'In Produzione',   color: '#fab956', bg: '#6d3200' },
                     { value: 'Completata',     label: 'Completata',      color: '#a5d6a7', bg: '#1a4a1f' },
                     { value: 'Archiviata',     label: 'Archiviata',      color: '#9e9e9e', bg: '#2e2e3e' }
                 ] : [

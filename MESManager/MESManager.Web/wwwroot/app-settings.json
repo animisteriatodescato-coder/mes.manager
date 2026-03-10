@@ -10,7 +10,7 @@
     "#CA2BA2",
     "#CA532B"
   ],
-  "ThemePrimaryColor": "#ffcf7dff",
+  "ThemePrimaryColor": "#136724ff",
   "ThemeSecondaryColor": "#CA2BA2",
   "ThemeAccentColor": "#CA532B",
   "ThemeIsDarkMode": true,
@@ -20,7 +20,11 @@
   "ThemeBgOpacity": 0.4,
   "ThemePanelOpacity": 0.83,
   "ThemeExtraColors": [
-    "#ffcf7dff",
+    "#136724ff",
     "#795548"
-  ]
+  ],
+  "ThemeAppBarBgColor": "#0203020d",
+  "ThemeDrawerBgColor": "#02020200",
+  "ThemeButtonColor": "",
+  "ThemeButtonTextColor": ""
 }

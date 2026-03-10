@@ -13,7 +13,7 @@
         // FOTO - Anteprima PRIMA immagine anima (n=1: prima per priorità)
         window.fotoPreviewShared.createColumnDef({
             codiceArticoloField: 'codiceArticolo',
-            photoIndex: 1
+            photoIndex: 2
         }),
         
         // RICETTA - Badge con numero parametri (shared component)
