@@ -197,13 +197,13 @@ h1:focus {
     background-color: var(--mes-row-odd, #F0F0F8) !important;
 }
 
-/* Header: colore scuro */
+/* Header: sfondo = drawer, testo = nav-text (stesso adattamento del menu laterale) */
 .mud-table-root thead tr,
 .mud-table-root thead th,
 .mud-table-root .mud-table-head tr,
 .mud-table-root .mud-table-head th {
     background-color: var(--mes-grid-header-bg, #1E2846) !important;
-    color: rgba(255, 255, 255, 0.95) !important;
+    color: var(--mes-nav-text, rgba(255,255,255,0.95)) !important;
 }
 
 /* Righe corpo — MudBlazor usa .mud-table-row sulla <tr> */

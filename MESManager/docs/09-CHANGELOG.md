@@ -4,7 +4,25 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.55.9
+## 🔖 Versione Corrente: v1.55.10
+
+---
+
+## 🔖 v1.55.10 - Fix testo header griglia (10 Mar 2026)
+
+**Data**: 10 Marzo 2026
+
+### 🐛 Fix — Testo intestazione colonne illeggibile su sfondo chiaro
+
+Il testo degli header AG Grid e MudTable era hardcoded `rgba(255,255,255,0.95)` (bianco fisso). Con `--mes-grid-header-bg` che ora segue `--mes-drawer-bg`, in light mode lo sfondo è chiaro e il testo bianco diventava invisibile.
+
+Soluzione: `color: var(--mes-nav-text)` — stessa variabile CSS del menu laterale, si adatta automaticamente a qualsiasi tema urente/scuro.
+Incluso il fix all'icona di ordinamento colonna (`.ag-header-icon`).
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor` — ag-header-cell-text → var(--mes-nav-text)
+- `MESManager.Web/wwwroot/app.css` — mud-table-head th → var(--mes-nav-text)
+- `MESManager.Web/Constants/AppVersion.cs` — 1.55.9 → 1.55.10
 
 ---
 
