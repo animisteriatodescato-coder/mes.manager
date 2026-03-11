@@ -7,6 +7,7 @@ namespace MESManager.Application.DTOs;
 public class ParametroRicettaArticoloDto
 {
     public int IdRigaRicetta { get; set; }
+    public Guid ParametroId { get; set; }
     public string CodiceArticolo { get; set; } = string.Empty;
     public int CodiceParametro { get; set; }
     public string DescrizioneParametro { get; set; } = string.Empty;

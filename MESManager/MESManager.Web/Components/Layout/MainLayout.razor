@@ -9,23 +9,13 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-@* CSS variables custom: accessibili da tutti i file CSS dell'app come var(--mes-*) *@
+@* CSS variables custom: accessibili da tutti i file CSS dell'app come var(--mes-*)
+   Fornisce i valori iniziali (SSR). ThemeCssService.ApplyAsync() li aggiorna dopo il primo render. *@
 @{
-    var _s           = UserThemeService.GetEffectiveSettings();
-    var _bgActive    = !string.IsNullOrEmpty(_s.BackgroundImageUrl);
-    var _panelOp     = _s.ThemePanelOpacity;
-    // Token centralizzati — tutti i valori provengono da MesDesignTokens (zero hardcoding)
-    var _glassPanel  = MesDesignTokens.GlassPanel(_isDarkMode, _panelOp);
-    var _glassGrid   = MesDesignTokens.GlassGrid(_isDarkMode, _panelOp);
-    var _rowEven     = MesDesignTokens.RowEven(_isDarkMode);
-    var _rowOdd      = MesDesignTokens.RowOdd(_isDarkMode);
-    var _rowText     = MesDesignTokens.RowText(_isDarkMode);
-    var _gridHeaderBg = MesDesignTokens.GridHeaderBg(_isDarkMode);
-    // AppBar e Drawer: colori SEPARATI — se l'utente ha personalizzato usa quello, altrimenti auto
-    var _appBarBgAuto = MesDesignTokens.AppBarBg(_isDarkMode);
-    var _appBarBg    = !string.IsNullOrEmpty(_s.ThemeAppBarBgColor) ? _s.ThemeAppBarBgColor : _appBarBgAuto;
-    var _drawerBg    = !string.IsNullOrEmpty(_s.ThemeDrawerBgColor) ? _s.ThemeDrawerBgColor : _appBarBg;
-    // Pulsanti: colore separato dal Primary del tema
+    var _s          = UserThemeService.GetEffectiveSettings();
+    var _panelOp    = _s.ThemePanelOpacity;
+    var _appBarBg   = !string.IsNullOrEmpty(_s.ThemeAppBarBgColor) ? _s.ThemeAppBarBgColor : MesDesignTokens.AppBarBg(_isDarkMode);
+    var _drawerBg   = !string.IsNullOrEmpty(_s.ThemeDrawerBgColor) ? _s.ThemeDrawerBgColor : _appBarBg;
     var _buttonColor = !string.IsNullOrEmpty(_s.ThemeButtonColor) ? _s.ThemeButtonColor : _s.ThemePrimaryColor;
     var _buttonText  = !string.IsNullOrEmpty(_s.ThemeButtonTextColor) ? _s.ThemeButtonTextColor : AppSettingsService.ComputeTextOnBackground(_buttonColor);
 }
@@ -55,6 +45,22 @@
         --mes-ag-panel-bg:     @(_isDarkMode ? MesDesignTokens.AgPanelBgDark : "#FFFFFF");
         --mes-ag-input-bg:     @(_isDarkMode ? MesDesignTokens.AgInputBgDark : "#FFFFFF");
         --mes-ag-input-border: @(_isDarkMode ? MesDesignTokens.AgInputBorderDark : "#e0e0e0");
+        /* Glass effect + Machine card — aggiornati da ThemeCssService su ogni cambio */
+        --mes-glass-panel:             @MesDesignTokens.GlassPanel(_isDarkMode, _panelOp);
+        --mes-machine-card-bg:         @MesDesignTokens.MachineCardBg(_isDarkMode);
+        --mes-machine-card-text:       @MesDesignTokens.MachineCardText(_isDarkMode);
+        --mes-machine-card-text-muted: @MesDesignTokens.MachineCardTextMuted(_isDarkMode);
+        --mes-machine-card-number:     @MesDesignTokens.MachineCardNumber(_isDarkMode);
+        /* AG Grid celle condizionali — aggiornate da ThemeCssService su dark mode toggle */
+        --mes-readonly-cell-bg:   @(_isDarkMode ? "#1a1a2e" : "#f5f5f5");
+        --mes-stato-aperta-bg:    @(_isDarkMode ? "#1b3a22" : "#e8f5e9");
+        --mes-stato-aperta-color: @(_isDarkMode ? "#80c783" : "#2e7d32");
+        --mes-stato-chiusa-bg:    @(_isDarkMode ? "#3a1828" : "#fce4ec");
+        --mes-stato-chiusa-color: @(_isDarkMode ? "#f48fb1" : "#c2185b");
+        --mes-count-foto-bg:      @(_isDarkMode ? "#1b3a22" : "#e8f5e9");
+        --mes-count-foto-color:   @(_isDarkMode ? "#80c783" : "#2e7d32");
+        --mes-count-doc-bg:       @(_isDarkMode ? "#0d2740" : "#e3f2fd");
+        --mes-count-doc-color:    @(_isDarkMode ? "#90caf9" : "#1565c0");
     }
     /* Drawer nav: icone +15% (13→15, 16→18), testo non bold */
     .mud-drawer [data-testid="nav-menu"] span[style*="font-size: 13px"] { font-size: 15px !important; }
@@ -119,32 +125,31 @@
     .ag-theme-alpine-dark .ag-cell {
         color: var(--mes-row-text) !important;
     }
-    /* ── Classi condizionali (cellClassRules) — iniettate DAL SERVER con _isDarkMode
-       Questo style block carica DOPO i CDN AG Grid, garantendo la cascata corretta  */
+    /* ── Classi condizionali (cellClassRules) — usano CSS vars aggiornate da ThemeCssService */
     /* Colonne read-only (Codice, Descrizione, Cliente) */
     .ag-theme-alpine .ag-cell.mes-readonly-cell {
-        background-color: @(_isDarkMode ? "#1a1a2e" : "#f5f5f5") !important;
+        background-color: var(--mes-readonly-cell-bg) !important;
     }
     /* Stato commessa */
     .ag-theme-alpine .ag-cell.mes-stato-aperta {
-        background-color: @(_isDarkMode ? "#1b3a22" : "#e8f5e9") !important;
-        color: @(_isDarkMode ? "#80c783" : "#2e7d32") !important;
+        background-color: var(--mes-stato-aperta-bg) !important;
+        color: var(--mes-stato-aperta-color) !important;
         font-weight: bold;
     }
     .ag-theme-alpine .ag-cell.mes-stato-chiusa {
-        background-color: @(_isDarkMode ? "#3a1828" : "#fce4ec") !important;
-        color: @(_isDarkMode ? "#f48fb1" : "#c2185b") !important;
+        background-color: var(--mes-stato-chiusa-bg) !important;
+        color: var(--mes-stato-chiusa-color) !important;
         font-weight: bold;
     }
     /* Contatori allegati */
     .ag-theme-alpine .ag-cell.mes-count-foto {
-        background-color: @(_isDarkMode ? "#1b3a22" : "#e8f5e9") !important;
-        color: @(_isDarkMode ? "#80c783" : "#2e7d32") !important;
+        background-color: var(--mes-count-foto-bg) !important;
+        color: var(--mes-count-foto-color) !important;
         font-weight: bold;
     }
     .ag-theme-alpine .ag-cell.mes-count-doc {
-        background-color: @(_isDarkMode ? "#0d2740" : "#e3f2fd") !important;
-        color: @(_isDarkMode ? "#90caf9" : "#1565c0") !important;
+        background-color: var(--mes-count-doc-bg) !important;
+        color: var(--mes-count-doc-color) !important;
         font-weight: bold;
     }
 </style>
@@ -182,60 +187,56 @@
     }
 </style>
 
-@if (_bgActive)
-{
-    <style>
-        /* ===== GLASS EFFECT — solo con sfondo attivo ===== */
+<style>
+    /* ══ Machine card — sempre applicato, indipendente dallo sfondo ════════════ */
+    .machine-card {
+        background: var(--mes-machine-card-bg) !important;
+    }
+    .machine-card,
+    .machine-card .mud-typography,
+    .machine-card .mud-card-header,
+    .machine-card .mud-card-content,
+    .machine-card .mud-card-actions,
+    .machine-card .mud-input-label,
+    .machine-card p,
+    .machine-card span:not(.mud-chip-content) {
+        color: var(--mes-machine-card-text) !important;
+    }
+    .machine-card .machine-number {
+        color: var(--mes-machine-card-number) !important;
+    }
+    .machine-card .section-title {
+        color: var(--mes-machine-card-text-muted) !important;
+    }
 
-        /* Pannelli nel contenuto pagina — esclude le machine-card della dashboard (hanno stile proprio) */
-        .mud-main-content .mud-paper:not(.machine-card),
-        .mud-main-content .mud-card:not(.machine-card) {
-            background-color: @_glassPanel !important;
-            background:        @_glassPanel !important;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-        }
+    /* ══ Glass effect — attivo solo quando MudLayout ha classe .mes-has-bg ════ */
 
-        /* Dashboard machine-card: token da MesDesignTokens (dark mode anche senza sfondo globale) */
-        .machine-card {
-            background: @MesDesignTokens.MachineCardBg(_isDarkMode) !important;
-        }
-        .machine-card,
-        .machine-card .mud-typography,
-        .machine-card .mud-card-header,
-        .machine-card .mud-card-content,
-        .machine-card .mud-card-actions,
-        .machine-card .mud-input-label,
-        .machine-card p,
-        .machine-card span:not(.mud-chip-content) {
-            color: @MesDesignTokens.MachineCardText(_isDarkMode) !important;
-        }
-        .machine-card .machine-number {
-            color: @MesDesignTokens.MachineCardNumber(_isDarkMode) !important;
-        }
-        .machine-card .section-title {
-            color: @MesDesignTokens.MachineCardTextMuted(_isDarkMode) !important;
-        }
+    /* Pannelli nel contenuto pagina — esclude le machine-card */
+    .mes-has-bg .mud-main-content .mud-paper:not(.machine-card),
+    .mes-has-bg .mud-main-content .mud-card:not(.machine-card) {
+        background-color: var(--mes-glass-panel) !important;
+        background:        var(--mes-glass-panel) !important;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
 
-        /* AppBar + Drawer: sfondo via CSS var (già impostato nel blocco sempre-attivo),
-           qui aggiungiamo solo il blur per l'effetto vetro con sfondo immagine */
-        .mud-appbar {
-            backdrop-filter: blur(12px) saturate(1.4);
-            -webkit-backdrop-filter: blur(12px) saturate(1.4);
-        }
-        .mud-drawer {
-            backdrop-filter: blur(12px) saturate(1.4);
-            -webkit-backdrop-filter: blur(12px) saturate(1.4);
-        }
+    /* AppBar + Drawer — blur aggiuntivo con sfondo immagine */
+    .mes-has-bg .mud-appbar {
+        backdrop-filter: blur(12px) saturate(1.4);
+        -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    }
+    .mes-has-bg .mud-drawer {
+        backdrop-filter: blur(12px) saturate(1.4);
+        -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    }
 
-        /* ── Backdrop blur per griglie (solo con sfondo) ── */
-        .mud-main-content .ag-theme-alpine .ag-root-wrapper,
-        .mud-main-content .ag-theme-alpine-dark .ag-root-wrapper {
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-        }
-    </style>
-}
+    /* Backdrop blur griglie con sfondo attivo */
+    .mes-has-bg .mud-main-content .ag-theme-alpine .ag-root-wrapper,
+    .mes-has-bg .mud-main-content .ag-theme-alpine-dark .ag-root-wrapper {
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+    }
+</style>
 
 <MudLayout Class="@(!string.IsNullOrEmpty(AppSettingsService.GetSettings().BackgroundImageUrl) ? "mes-has-bg" : "")">
     @* Sfondo immagine su tutte le pagine (eccetto Home che ha il proprio) *@

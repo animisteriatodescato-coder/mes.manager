@@ -95,4 +95,27 @@ public class RicetteArticoliController : ControllerBase
             return StatusCode(500, new { message = "Errore durante conteggio", error = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Aggiorna il valore di un singolo parametro ricetta
+    /// </summary>
+    [HttpPut("parametro/{parametroId:guid}/valore")]
+    public async Task<IActionResult> UpdateValoreParametro(Guid parametroId, [FromBody] UpdateValoreRequest request)
+    {
+        try
+        {
+            var updated = await _ricettaService.UpdateValoreParametroAsync(parametroId, request.Valore);
+            if (!updated)
+                return NotFound(new { message = $"Parametro {parametroId} non trovato" });
+
+            return Ok(new { message = "Valore aggiornato", parametroId, valore = request.Valore });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore durante aggiornamento valore parametro {ParametroId}", parametroId);
+            return StatusCode(500, new { message = "Errore durante aggiornamento", error = ex.Message });
+        }
+    }
 }
+
+public record UpdateValoreRequest(int Valore);

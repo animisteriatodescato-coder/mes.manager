@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 using MudBlazor;
 using MESManager.Web.Constants;
 using MESManager.Web.Services;
@@ -33,6 +34,12 @@ public partial class MainLayout : IDisposable
     /// </summary>
     [Inject]
     private IThemeModeService ThemeModeService { get; set; } = default!;
+
+    [Inject]
+    private IJSRuntime JS { get; set; } = default!;
+
+    [Inject]
+    private ThemeCssService ThemeCssService { get; set; } = default!;
 
     private bool _isDarkMode = false;
     private bool _drawerOpen = false;
@@ -83,6 +90,10 @@ public partial class MainLayout : IDisposable
     {
         if (firstRender)
         {
+            // Applica subito le CSS vars via JS (live update da primo render)
+            var initSettings = UserThemeService.GetEffectiveSettings();
+            await ThemeCssService.ApplyAsync(JS, initSettings, _isDarkMode);
+
             // Carica il tema personale dell'utente (richiede JS — non disponibile prima)
             await UserThemeService.LoadUserThemeAsync();
             // Se l'utente ha un tema personale, ricostruisci il tema con quei valori
@@ -92,6 +103,7 @@ public partial class MainLayout : IDisposable
                 _theme = BuildThemeFromSettings(userSettings);
                 _isDarkMode = userSettings.ThemeIsDarkMode;
                 ThemeModeService.UpdateMode(_isDarkMode);
+                await ThemeCssService.ApplyAsync(JS, userSettings, _isDarkMode);
                 await InvokeAsync(StateHasChanged);
             }
         }
@@ -112,7 +124,11 @@ public partial class MainLayout : IDisposable
         _theme = BuildThemeFromSettings(settings);
         _isDarkMode = settings.ThemeIsDarkMode;
         ThemeModeService.UpdateMode(_isDarkMode);
-        InvokeAsync(StateHasChanged);
+        InvokeAsync(async () =>
+        {
+            await ThemeCssService.ApplyAsync(JS, settings, _isDarkMode);
+            StateHasChanged();
+        });
     }
 
     private void OnUserThemeChanged()
@@ -127,6 +143,7 @@ public partial class MainLayout : IDisposable
             _theme = BuildThemeFromSettings(settings);
             _isDarkMode = settings.ThemeIsDarkMode;
             ThemeModeService.UpdateMode(_isDarkMode);
+            await ThemeCssService.ApplyAsync(JS, settings, _isDarkMode);
             StateHasChanged();
         });
     }
@@ -485,6 +502,8 @@ public partial class MainLayout : IDisposable
         var settings = AppSettingsService.GetSettings();
         settings.ThemeIsDarkMode = _isDarkMode;
         await AppSettingsService.SaveSettingsAsync(settings);
+        // Aggiorna CSS vars live senza aspettare il re-render Blazor
+        await ThemeCssService.ApplyAsync(JS, UserThemeService.GetEffectiveSettings(), _isDarkMode);
     }
     
     private void ToggleDrawer()

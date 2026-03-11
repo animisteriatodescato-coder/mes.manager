@@ -1,0 +1,116 @@
+@*
+    ColorTokenPicker.razor — selettore colore token centralizzato
+
+    Elimina la duplicazione dei selettori colore in ImpostazioniGenerali:
+    un solo componente riutilizzabile gestisce swatch + palette circles + picker + hex input.
+
+    Parametri:
+      Label        — etichetta visibile a sinistra (vuoto = nascosta)
+      LabelWidth   — min-width dell'etichetta (default "120px")
+      Value        — colore hex corrente (#RRGGBB), vuoto = "auto"
+      ValueChanged — EventCallback per @bind-Value
+      Palette      — lista colori da mostrare come cerchi cliccabili
+      ShowAuto     — mostra bottone "Auto" che imposta Value=""
+      AutoLabel    — testo del bottone Auto (default "Auto")
+      ShowHexInput — mostra campo hex testuale editabile
+      FallbackColor— colore visualizzato nello swatch quando Value è vuoto
+*@
+
+<div class="d-flex flex-wrap align-center gap-3 mb-3">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <MudText Style="@($"min-width:{LabelWidth}; font-weight:500;")">@Label</MudText>
+    }
+
+    @* Swatch preview — click per aprire il picker full-spectrum *@
+    @{
+        var resolvedColor = string.IsNullOrEmpty(Value) ? FallbackColor : Value;
+    }
+    <div @onclick="TogglePicker"
+         style="@($"width:48px;height:48px;border-radius:8px;flex-shrink:0;cursor:pointer;background:{resolvedColor};border:2px solid rgba(128,128,128,0.4);box-shadow:0 2px 8px rgba(0,0,0,0.3);")"
+         title="Apri selettore colore">
+    </div>
+
+    @* Bottone Auto *@
+    @if (ShowAuto)
+    {
+        <MudButton Size="Size.Small" Color="Color.Info"
+                   Variant="@(string.IsNullOrEmpty(Value) ? Variant.Filled : Variant.Outlined)"
+                   OnClick="SelectAuto">@AutoLabel</MudButton>
+    }
+
+    @* Cerchi palette *@
+    @foreach (var color in Palette)
+    {
+        bool isSelected = Value == color;
+        <div @onclick="() => SelectColor(color)"
+             style="@($"width:40px;height:40px;border-radius:50%;background:{color};cursor:pointer;border:{(isSelected ? "3px solid #fff" : "2px solid transparent")};box-shadow:{(isSelected ? "0 0 0 3px " + color : "0 2px 6px rgba(0,0,0,0.3)")};display:flex;justify-content:center;align-items:center;")"
+             title="@color">
+            @if (isSelected)
+            {
+                <MudIcon Icon="@Icons.Material.Filled.Check" Style="color:white;font-size:20px;" />
+            }
+        </div>
+    }
+
+    @* Campo hex testuale *@
+    @if (ShowHexInput)
+    {
+        <MudTextField T="string" Value="@Value" ValueChanged="SetHex"
+                      Label="Hex" Variant="Variant.Outlined" Style="max-width:140px" />
+    }
+</div>
+
+@* Color picker full-spectrum — toggled dal click sullo swatch *@
+@if (_showPicker)
+{
+    <div class="pa-2 mb-3"
+         style="background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3);z-index:200;display:inline-block;">
+        <MudColorPicker Value="_pickerColor" ValueChanged="OnPickerColorChanged"
+                        PickerVariant="PickerVariant.Static"
+                        ColorPickerView="ColorPickerView.Spectrum"
+                        DisableAlpha="true" DisableInputs="false" />
+        <MudButton Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled"
+                   OnClick="ClosePicker" Class="mt-1 ml-2">OK</MudButton>
+    </div>
+}
+
+@code {
+    [Parameter] public string               Label         { get; set; } = "";
+    [Parameter] public string               LabelWidth    { get; set; } = "120px";
+    [Parameter] public string               Value         { get; set; } = "";
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public List<string>         Palette       { get; set; } = new();
+    [Parameter] public bool                 ShowAuto      { get; set; } = false;
+    [Parameter] public string               AutoLabel     { get; set; } = "Auto";
+    [Parameter] public bool                 ShowHexInput  { get; set; } = false;
+    [Parameter] public string               FallbackColor { get; set; } = "#1976D2";
+
+    private bool _showPicker;
+    private MudBlazor.Utilities.MudColor _pickerColor = new("#1976D2");
+
+    protected override void OnParametersSet()
+    {
+        var c = string.IsNullOrEmpty(Value) ? FallbackColor : Value;
+        try   { _pickerColor = new MudBlazor.Utilities.MudColor(c); }
+        catch { _pickerColor = new MudBlazor.Utilities.MudColor("#1976D2"); }
+    }
+
+    private void TogglePicker() => _showPicker = !_showPicker;
+    private void ClosePicker()  => _showPicker = false;
+
+    private async Task OnPickerColorChanged(MudBlazor.Utilities.MudColor color)
+    {
+        _pickerColor = color;
+        await ValueChanged.InvokeAsync(color.Value);
+    }
+
+    private async Task SelectColor(string color)
+    {
+        _showPicker = false;
+        await ValueChanged.InvokeAsync(color);
+    }
+
+    private Task SelectAuto() => ValueChanged.InvokeAsync(string.Empty);
+    private Task SetHex(string hex) => ValueChanged.InvokeAsync(hex);
+}

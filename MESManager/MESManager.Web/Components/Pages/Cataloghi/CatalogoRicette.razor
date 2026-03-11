@@ -1,7 +1,10 @@
 @page "/cataloghi/ricette"
 @using MESManager.Application.DTOs
+@using MudBlazor
+@using MESManager.Web.Components.Dialogs
 @inject HttpClient Http
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <PageTitle>Catalogo Ricette</PageTitle>
 
@@ -123,8 +126,13 @@
                     <MudTd DataLabel="Area" Style="text-align: center;">@context.Area</MudTd>
                     <MudTd DataLabel="Tipo" Style="text-align: center;">@context.Tipo</MudTd>
                     <MudTd DataLabel="UM" Style="text-align: center;">@(context.UM ?? "-")</MudTd>
-                    <MudTd DataLabel="Valore" Style="text-align: right;">
-                        <MudText Typo="Typo.body1" Color="Color.Primary"><strong>@context.Valore</strong></MudText>
+                    <MudTd DataLabel="Valore" Style="text-align: right; cursor: pointer;">
+                        <MudTooltip Text="Doppio clic per modificare">
+                            <MudText @ondblclick="@(async () => await OpenModificaAsync(context))"
+                                     Typo="Typo.body1" Color="Color.Primary">
+                                <strong>@context.Valore</strong>
+                            </MudText>
+                        </MudTooltip>
                     </MudTd>
                 </RowTemplate>
             </MudTable>
@@ -255,6 +263,34 @@
         ricettaSelezionata = null;
         searchPerformed = false;
         lastSearchTerm = string.Empty;
+    }
+
+    private async Task OpenModificaAsync(ParametroRicettaArticoloDto parametro)
+    {
+        var dlgParams = new DialogParameters<ModificaValoreRicettaDialog>
+        {
+            { x => x.Parametro, parametro }
+        };
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.ExtraSmall,
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
+        };
+        var dialog = await DialogService.ShowAsync<ModificaValoreRicettaDialog>("", dlgParams, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: int newVal })
+        {
+            parametro.Valore = newVal;
+            var response = await Http.PutAsJsonAsync(
+                $"/api/RicetteArticoli/parametro/{parametro.ParametroId}/valore",
+                new { Valore = newVal });
+            if (response.IsSuccessStatusCode)
+                Snackbar.Add($"{parametro.DescrizioneParametro} → {newVal}", Severity.Success);
+            else
+                Snackbar.Add("Errore durante il salvataggio", Severity.Error);
+        }
     }
 }
 

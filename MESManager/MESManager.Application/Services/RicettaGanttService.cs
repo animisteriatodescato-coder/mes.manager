@@ -50,6 +50,7 @@ public class RicettaGanttService : IRicettaGanttService
                 .Select((p, index) => new ParametroRicettaArticoloDto
                 {
                     IdRigaRicetta = 0,
+                    ParametroId = p.Id,
                     CodiceArticolo = codiceArticolo,
                     CodiceParametro = p.CodiceParametro ?? (index + 1), // Auto-genera se manca
                     DescrizioneParametro = p.NomeParametro,
@@ -104,6 +105,7 @@ public class RicettaGanttService : IRicettaGanttService
                             .Select((p, index) => new ParametroRicettaArticoloDto
                             {
                                 CodiceArticolo = articolo.Codice,
+                                ParametroId = p.Id,
                                 CodiceParametro = p.CodiceParametro ?? (index + 1), // Auto-genera se manca
                                 DescrizioneParametro = p.NomeParametro,
                                 Indirizzo = p.Indirizzo ?? 0,
@@ -191,6 +193,27 @@ public class RicettaGanttService : IRicettaGanttService
         {
             _logger.LogError(ex, "Errore durante lettura articoli con ricetta");
             return new List<ArticoloConRicettaDto>();
+        }
+    }
+
+    /// <summary>
+    /// Aggiorna il valore di un singolo parametro ricetta
+    /// </summary>
+    public async Task<bool> UpdateValoreParametroAsync(Guid parametroId, int nuovoValore)
+    {
+        try
+        {
+            var updated = await _ricettaRepo.UpdateValoreParametroAsync(parametroId, nuovoValore);
+            if (updated)
+                _logger.LogInformation("UpdateValoreParametroAsync: parametro {Id} aggiornato a {Valore}", parametroId, nuovoValore);
+            else
+                _logger.LogWarning("UpdateValoreParametroAsync: parametro {Id} non trovato", parametroId);
+            return updated;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore durante aggiornamento valore parametro {Id}", parametroId);
+            throw;
         }
     }
 }

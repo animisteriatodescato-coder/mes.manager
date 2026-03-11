@@ -16,6 +16,11 @@ public interface IRicettaGanttService
     /// Ottiene lista articoli che hanno parametri ricetta configurati
     /// </summary>
     Task<List<ArticoloConRicettaDto>> GetArticoliConRicettaAsync();
+
+    /// <summary>
+    /// Aggiorna il valore di un singolo parametro ricetta
+    /// </summary>
+    Task<bool> UpdateValoreParametroAsync(Guid parametroId, int nuovoValore);
 }
 
 /// <summary>

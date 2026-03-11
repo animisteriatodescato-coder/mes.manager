@@ -86,4 +86,15 @@ public class RicettaRepository : IRicettaRepository
                     UltimaModifica = x.UltimaModifica
                 });
     }
+
+    public async Task<bool> UpdateValoreParametroAsync(Guid parametroId, int nuovoValore)
+    {
+        var parametro = await _context.ParametriRicetta.FindAsync(parametroId);
+        if (parametro == null)
+            return false;
+
+        parametro.Valore = nuovoValore.ToString();
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }

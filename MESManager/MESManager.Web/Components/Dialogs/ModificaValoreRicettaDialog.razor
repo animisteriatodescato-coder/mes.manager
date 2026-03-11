@@ -1,0 +1,64 @@
+@using MESManager.Application.DTOs
+@using MudBlazor
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Modifica Parametro</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudStack Spacing="1">
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary">
+                    <strong>@(Parametro?.DescrizioneParametro)</strong>
+                </MudText>
+                <MudStack Row="true" Spacing="2">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default">Cod. @(Parametro?.CodiceParametro)</MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Info">Ind. @(Parametro?.Indirizzo)</MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Secondary">@(Parametro?.Area)</MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default">@(Parametro?.Tipo)</MudChip>
+                    @if (!string.IsNullOrEmpty(Parametro.UM))
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Tertiary">@Parametro.UM</MudChip>
+                    }
+                </MudStack>
+            </MudStack>
+            <MudDivider />
+            <MudNumericField T="int"
+                             @bind-Value="_nuovoValore"
+                             Label="Nuovo Valore"
+                             HelperText="@($"Valore attuale: {Parametro?.Valore}{(string.IsNullOrEmpty(Parametro?.UM) ? "" : " " + Parametro.UM)}")"
+                             Variant="Variant.Outlined"
+                             Immediate="true"
+                             AutoFocus="true"
+                             data-testid="input-nuovo-valore" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Annulla</MudButton>
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Save"
+                   OnClick="Confirm"
+                   data-testid="btn-salva-valore">
+            Salva
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public ParametroRicettaArticoloDto? Parametro { get; set; }
+
+    private int _nuovoValore;
+
+    protected override void OnInitialized()
+    {
+        _nuovoValore = Parametro?.Valore ?? 0;
+    }
+
+    private void Confirm() => MudDialog.Close(DialogResult.Ok(_nuovoValore));
+    private void Cancel() => MudDialog.Cancel();
+}

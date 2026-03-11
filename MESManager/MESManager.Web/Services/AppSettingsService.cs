@@ -292,4 +292,32 @@ public class AppSettings
     /// Colore testo pulsanti principali. Vuoto = calcolato automaticamente dalla luminanza di ThemeButtonColor.
     /// </summary>
     public string ThemeButtonTextColor { get; set; } = "";
+
+    /// <summary>
+    /// Crea una copia profonda delle impostazioni.
+    /// Usato da ImpostazioniGenerali per il draft pattern: si lavora sul clone
+    /// e si persiste solo al Salva, evitando side-effect accidentali sul live theme.
+    /// </summary>
+    public static AppSettings Clone(AppSettings source) => new()
+    {
+        BackgroundImageUrl   = source.BackgroundImageUrl,
+        NomeAzienda          = source.NomeAzienda,
+        Indirizzo            = source.Indirizzo,
+        Email                = source.Email,
+        ThemePalette         = new List<string>(source.ThemePalette),
+        ThemePrimaryColor    = source.ThemePrimaryColor,
+        ThemeSecondaryColor  = source.ThemeSecondaryColor,
+        ThemeAccentColor     = source.ThemeAccentColor,
+        ThemeIsDarkMode      = source.ThemeIsDarkMode,
+        ThemeTextOnPrimary   = source.ThemeTextOnPrimary,
+        ThemePrimaryTextColor = source.ThemePrimaryTextColor,
+        ThemeNavTextColor    = source.ThemeNavTextColor,
+        ThemeBgOpacity       = source.ThemeBgOpacity,
+        ThemePanelOpacity    = source.ThemePanelOpacity,
+        ThemeExtraColors     = new List<string>(source.ThemeExtraColors),
+        ThemeAppBarBgColor   = source.ThemeAppBarBgColor,
+        ThemeDrawerBgColor   = source.ThemeDrawerBgColor,
+        ThemeButtonColor     = source.ThemeButtonColor,
+        ThemeButtonTextColor = source.ThemeButtonTextColor,
+    };
 }
