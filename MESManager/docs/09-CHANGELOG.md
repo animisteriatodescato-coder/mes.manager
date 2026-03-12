@@ -4,7 +4,83 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.55.10
+## 🔖 Versione Corrente: v1.55.12
+
+---
+
+## 🔖 v1.55.12 - Refactor sistema tema: ThemeCssService + ColorTokenPicker + CSS vars live (12 Mar 2026)
+
+**Data**: 12 Marzo 2026
+
+### ♻️ Refactor — Alt1+Alt2: draft pattern, CSS vars via JS Interop, picker riusabile
+
+Ristrutturazione completa della gestione tema/colori in `ImpostazioniGenerali`. Eliminata triplicazione del codice (6 bool/6 MudColor picker inline), rimosso CSS interpolato server-side, aggiunto live-preview senza re-render Blazor, introdotto draft pattern (modifica senza salvataggio immediato).
+
+#### Nuovi file
+- `wwwroot/js/theme-vars.js` — `window.mesTheme.apply(vars)` aggiorna CSS custom properties su `:root` via JS Interop, senza re-render Blazor
+- `Services/ThemeCssService.cs` — **unica sorgente di verità** per la mappatura `AppSettings → CSS vars`. `BuildVars(AppSettings, bool isDarkMode)` produce `Dictionary<string,string>` con 30+ vars `--mes-*`. `ApplyAsync(IJSRuntime, AppSettings, bool)` chiama il JS.
+- `Components/Shared/ColorTokenPicker.razor` — componente riusabile per selezione colore: palette di cerchi, popup `MudColorPicker`, pulsante Auto opzionale, input hex opzionale. Parametri: `Label`, `Value`/`ValueChanged`, `Palette`, `ShowAuto`, `ShowHexInput`, `FallbackColor`.
+
+#### File modificati
+- `AppSettingsService.cs` — aggiunto `AppSettings.Clone(source)` (deep copy)
+- `Program.cs` — `builder.Services.AddScoped<ThemeCssService>()`
+- `App.razor` — script tag `theme-vars.js?v=1`
+- `MainLayout.razor.cs` — inject `IJSRuntime`+`ThemeCssService`; tutti i punti di cambio tema (`OnAfterRenderAsync`, `OnAppSettingsChanged`, `OnUserThemeChanged`, `ToggleTheme`) chiamano `ThemeCssService.ApplyAsync`
+- `MainLayout.razor` — CSS vars `:root` estesi (glass panel, machine card, AG Grid celle condizionali); rimosso `@if (_bgActive)` sostituito con selettori `.mes-has-bg`; celle AG Grid usano `var(--mes-xxx)` invece di `@(_isDarkMode ? "..." : "...")`
+- `ImpostazioniGenerali.razor` — draft pattern (`_draft` = copia di lavoro), `ApplyPreviewAsync` per live-preview, `ColorTokenPicker` per Primary/Secondary/Accent/Nav/AppBar/Drawer/Button, pulsanti Salva/SalvaGlobale su draft
+
+#### Problemi eliminati
+| Prima | Dopo |
+|-------|------|
+| `@if (_settings.ThemePalette.Count > 0)` — sezione colori nascosta senza immagine | Sempre visibile |
+| 6 bool `_showPickerX` + 6 `MudColor _pickerX` duplicati ×3 | `ColorTokenPicker` riusabile |
+| CSS interpolato `style="background:@_settings.ThemePrimaryColor"` | `var(--mes-primary)` |
+| Nessuna anteprima live — cambia solo al salvataggio | `ApplyPreviewAsync` su ogni modifica |
+| `@if (_bgActive)` — stili macchina-card condizionali | Sempre applicati, `.mes-has-bg` per glass |
+
+#### File modificati
+- `MESManager.Web/wwwroot/js/theme-vars.js` *(nuovo)*
+- `MESManager.Web/Services/ThemeCssService.cs` *(nuovo)*
+- `MESManager.Web/Components/Shared/ColorTokenPicker.razor` *(nuovo)*
+- `MESManager.Web/Services/AppSettingsService.cs`
+- `MESManager.Web/Program.cs`
+- `MESManager.Web/App.razor`
+- `MESManager.Web/Components/Layout/MainLayout.razor`
+- `MESManager.Web/Components/Layout/MainLayout.razor.cs`
+- `MESManager.Web/Components/Pages/Impostazioni/ImpostazioniGenerali.razor`
+- `MESManager.Web/Constants/AppVersion.cs` — 1.55.11 → 1.55.12
+
+---
+
+## 🔖 v1.55.11 - Modifica valori ricetta da dialog (12 Mar 2026)
+
+**Data**: 12 Marzo 2026
+
+### ✨ Feature — Editing inline valori parametri ricetta
+
+Doppio clic sul valore di un parametro ricetta apre un mini-dialog (`ModificaValoreRicettaDialog`) che mostra nome, indirizzo, area, tipo, UM del parametro e un campo numerico per inserire il nuovo valore. Il salvataggio chiama `PUT /api/RicetteArticoli/parametro/{guid}/valore` e aggiorna il DB via EF. Funziona sia nel dialog `RicettaViewDialog` (aperto da ProgrammaMacchine / CommesseAperte) che nella pagina `CatalogoRicette`.
+
+#### Dettagli tecnici
+- `ParametroRicettaArticoloDto` — aggiunto campo `Guid ParametroId`
+- `RicettaGanttService` — mappato `ParametroId = p.Id` in entrambe le query (get + search)
+- `IRicettaRepository` / `RicettaRepository` — aggiunto `UpdateValoreParametroAsync(Guid, int)` con `FindAsync` + `SaveChangesAsync`
+- `IRicettaGanttService` / `RicettaGanttService` — aggiunto `UpdateValoreParametroAsync`
+- `RicetteArticoliController` — aggiunto `PUT parametro/{parametroId:guid}/valore` con DTO `UpdateValoreRequest(int Valore)`
+- `ModificaValoreRicettaDialog.razor` — nuovo componente dialog con chip info + `MudNumericField` autoFocus
+- `RicettaViewDialog.razor` — colonna Valore con `@ondblclick` + `MudTooltip`
+- `CatalogoRicette.razor` — stessa logica + aggiunto `@using MESManager.Web.Components.Dialogs` + `@inject IDialogService`
+
+#### File modificati
+- `MESManager.Application/DTOs/ArticoloRicettaDto.cs`
+- `MESManager.Application/Interfaces/IRicettaRepository.cs`
+- `MESManager.Application/Interfaces/IRicettaGanttService.cs`
+- `MESManager.Application/Services/RicettaGanttService.cs`
+- `MESManager.Infrastructure/Repositories/RicettaRepository.cs`
+- `MESManager.Web/Controllers/RicetteArticoliController.cs`
+- `MESManager.Web/Components/Dialogs/ModificaValoreRicettaDialog.razor` *(nuovo)*
+- `MESManager.Web/Components/Dialogs/RicettaViewDialog.razor`
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoRicette.razor`
+- `MESManager.Web/Constants/AppVersion.cs` — 1.55.10 → 1.55.11
 
 ---
 

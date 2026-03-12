@@ -151,7 +151,7 @@ Services/
 ```
 Components/
 ├── Layout/
-│   ├── MainLayout.razor
+│   ├── MainLayout.razor         ← applica CSS vars via ThemeCssService
 │   └── NavMenu.razor
 ├── Pages/
 │   ├── Produzione/
@@ -159,8 +159,10 @@ Components/
 │   ├── Cataloghi/
 │   ├── Statistiche/
 │   └── Impostazioni/
+│       └── ImpostazioniGenerali.razor  ← draft pattern + live preview
 └── Shared/
-    └── UserColorIndicator.razor
+    ├── UserColorIndicator.razor
+    └── ColorTokenPicker.razor    ← picker tema riusabile (v1.55.12)
 
 Controllers/
 ├── PianificazioneController.cs
@@ -168,10 +170,18 @@ Controllers/
 ├── CommesseController.cs
 └── ...
 
+Services/
+├── AppSettingsService.cs         ← Singleton, impostazioni globali + Clone()
+├── UserThemeService.cs           ← Scoped, preferenze per-utente
+├── ThemeModeService.cs           ← Scoped, toggle dark/light
+├── ThemeCssService.cs            ← Scoped, AppSettings→CSS vars (v1.55.12)
+└── ...
+
 wwwroot/
 ├── js/
 │   ├── gantt/
 │   ├── ag-grid/
+│   ├── theme-vars.js             ← window.mesTheme.apply() (v1.55.12)
 │   └── ...
 ├── css/
 └── lib/
@@ -542,6 +552,12 @@ builder.Services.AddScoped<ICommessaAppService, CommessaAppService>();
 builder.Services.AddScoped<IMacchinaAppService, MacchinaAppService>();
 builder.Services.AddScoped<IPlcAppService, PlcAppService>();
 
+// Theme System (v1.55.12)
+builder.Services.AddSingleton<AppSettingsService>();      // impostazioni globali
+builder.Services.AddScoped<UserThemeService>();           // preferenze per-utente
+builder.Services.AddScoped<IThemeModeService, ThemeModeService>(); // dark/light
+builder.Services.AddScoped<ThemeCssService>();           // AppSettings → CSS vars
+
 // Blazor
 builder.Services.AddServerSideBlazor();
 builder.Services.AddMudServices();
@@ -663,4 +679,74 @@ agGridFactory.setup({
 | `Components/Pages/Cataloghi/CatalogoGridBase.cs` | Base class C# per tutti i catalog |
 | `Models/GridStats.cs` | DTO stats griglia (Total/Filtered/Selected) |
 | `Models/GridUiSettings.cs` | Settings UI griglia + `GetDensityPadding()` |
+
+---
+
+## 🎨 Sistema Tema (v1.55.12+)
+
+### Architettura CSS vars
+
+Tutti i colori UI passano attraverso CSS custom properties `--mes-*` definite su `:root`. Nessun valore colore hardcodato nei componenti Razor (zero `style="background:@variable"`).
+
+```
+AppSettings (file JSON)
+    ↓
+ThemeCssService.BuildVars(settings, isDarkMode)
+    → Dictionary<string, string>  (es. "--mes-primary" → "#136724ff")
+    ↓
+ThemeCssService.ApplyAsync(IJSRuntime, settings, isDarkMode)
+    → window.mesTheme.apply(vars)  [theme-vars.js]
+    ↓
+document.documentElement.style.setProperty("--mes-primary", "#136724ff")
+    ↓
+CSS: .mud-appbar { background: var(--mes-appbar-bg) !important; }
+```
+
+### Regola: nessun colore hardcodato
+
+| ❌ Prima | ✅ Dopo |
+|---------|--------|
+| `style="background:@_settings.ThemePrimaryColor"` | `style="background:var(--mes-primary)"` |
+| `@(_isDarkMode ? "#1a1a2e" : "#f5f5f5")` | `var(--mes-readonly-cell-bg)` |
+| `@if (_bgActive) { <style>...</style> }` | Sempre applicato, `.mes-has-bg` per glass |
+
+### Servizi tema
+
+| Servizio | Lifetime | Responsabilità |
+|----------|----------|----------------|
+| `AppSettingsService` | Singleton | Lettura/scrittura JSON, evento `OnSettingsChanged` |
+| `UserThemeService` | Scoped | Preferenze per-utente (DB + localStorage) |
+| `IThemeModeService` | Scoped | Toggle dark/light, evento `OnThemeChanged` |
+| `ThemeCssService` | Scoped | **Unica fonte verità** AppSettings→CSS vars |
+
+### Flusso cambio tema
+
+```
+Utente modifica colore in ImpostazioniGenerali
+    ↓
+_draft (copia di lavoro) aggiornato
+    ↓
+ApplyPreviewAsync() → ThemeCssService.ApplyAsync(JS, _draft, isDarkMode)
+    ↓
+CSS vars aggiornate in real-time (senza re-render Blazor)
+    ↓
+Utente clicca "Salva" → AppSettingsService.SaveAsync(_draft)
+    ↓
+OnAppSettingsChanged → ThemeCssService.ApplyAsync (persist)
+```
+
+### ColorTokenPicker
+
+Componente riusabile `Components/Shared/ColorTokenPicker.razor`:
+
+```razor
+<ColorTokenPicker Label="Primario" LabelWidth="130px"
+                  Value="@_draft.ThemePrimaryColor"
+                  ValueChanged="@OnPrimaryColorChanged"
+                  Palette="@FullPalette"
+                  ShowAuto="false"
+                  ShowHexInput="true" />
+```
+
+Parametri principali: `Label`, `Value`/`ValueChanged` (string hex), `Palette` (List<string>), `ShowAuto`, `AutoLabel`, `ShowHexInput`, `FallbackColor`.
 
