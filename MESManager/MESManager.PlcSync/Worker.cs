@@ -128,6 +128,9 @@ public class PlcSyncWorker : BackgroundService
                         
                         if (snapshot == null)
                         {
+                            // Registra NON CONNESSA su PLCStorico (solo al momento della disconnessione)
+                            var stateForDisconnect = _connectionService.GetMachineState(machine.MacchinaId);
+                            await _syncService.SaveDisconnessaAsync(machine.MacchinaId, stateForDisconnect, stoppingToken);
                             // Tentativo riconnessione
                             await _connectionService.ReconnectAsync(machine, _settings.PlcDefaults.ReconnectDelayMs, stoppingToken);
                             continue;

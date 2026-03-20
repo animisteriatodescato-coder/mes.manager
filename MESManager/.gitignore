@@ -28,6 +28,9 @@ web-run.log
 wwwroot/app-settings.json
 MESManager.Web/wwwroot/app-settings.json
 
+# RAG - LanceDB locale (generato da rag/index_codebase.py)
+rag/lancedb/
+
 # Build outputs
 bin/
 obj/

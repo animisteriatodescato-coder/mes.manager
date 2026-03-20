@@ -33,6 +33,11 @@ public class PlcRealtimeDto
     
     public DateTime UltimoAggiornamento { get; set; }
     
+    /// <summary>
+    /// Codice articolo della prossima commessa programmata nel Gantt per questa macchina.
+    /// </summary>
+    public string? ProssimoArticoloCodice { get; set; }
+    
     // Percentuale completamento
     public decimal PercentualeCompletamento => 
         QuantitaDaProdurre > 0 ? (decimal)CicliFatti / QuantitaDaProdurre * 100 : 0;

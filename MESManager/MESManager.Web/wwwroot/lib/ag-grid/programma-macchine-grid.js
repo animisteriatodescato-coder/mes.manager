@@ -921,7 +921,7 @@ window.programmaMacchineGrid = (function() {
             }
             previousMachine = row.numeroMacchina;
             
-            const bgColor = colorToggle ? '#c8e6c9' : '#e8f5e9';
+            const bgColor = colorToggle ? '#f2f2f2' : '#ffffff';
             const borderTop = index > 0 && rowData[index-1] && rowData[index-1].numeroMacchina !== row.numeroMacchina 
                 ? 'border-top: 3px solid #000;' : '';
             
@@ -1010,17 +1010,17 @@ window.programmaMacchineGrid = (function() {
         .print-date { text-align: center; font-size: 12px; color: #666; margin-bottom: 15px; }
         table { width: 100%; border-collapse: collapse; font-size: 10px; background-color: #ffffff; }
         th { 
-            border: 1px solid #ddd; 
+            border: 1px solid #ccc; 
             padding: 4px; 
             font-weight: bold; 
-            background-color: #f0f0f0 !important; 
+            background-color: #eeeeee !important; 
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
         td { border: 1px solid #ddd; padding: 3px; }
         .footer { margin-top: 10px; font-size: 9px; color: #666; text-align: right; }
-        .machine-light { background-color: #e8f5e9 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        .machine-dark { background-color: #c8e6c9 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .machine-light { background-color: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .machine-dark { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         .machine-separator { border-top: 3px solid #000 !important; }
         .center { text-align: center; }
         .right { text-align: right; }
@@ -1046,7 +1046,7 @@ window.programmaMacchineGrid = (function() {
         </thead>
         <tbody>`;
 
-        // Body rows - alterna colori in base al cambio macchina
+        // Body rows - alterna sfondo chiaro/grigio in base al cambio macchina
         let previousMachine2 = null;
         let colorToggle2 = false;
         rowData.forEach(row => {
@@ -1108,8 +1108,10 @@ window.programmaMacchineGrid = (function() {
         }
     }
 
-    function printViaIframe(printColumnFields) {
+    function printViaIframe(printColumnFields, fontSize) {
         if (!gridApi) return;
+
+        const printFontSize = (fontSize && fontSize > 0) ? fontSize : 10;
 
         // Ottieni le colonne nell'ordine attuale della griglia (come visualizzato dall'utente)
         // getAllDisplayedColumns() rispetta l'ordine delle colonne dopo drag & drop
@@ -1165,19 +1167,19 @@ window.programmaMacchineGrid = (function() {
         }
         h2 { text-align: center; margin-bottom: 5px; color: #000; }
         .print-date { text-align: center; font-size: 12px; color: #666; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; font-size: 10px; background-color: #ffffff; }
+        table { width: 100%; border-collapse: collapse; font-size: ${printFontSize}px; background-color: #ffffff; }
         th { 
-            border: 1px solid #ddd; 
+            border: 1px solid #ccc; 
             padding: 4px; 
             font-weight: bold; 
-            background-color: #f0f0f0 !important; 
+            background-color: #eeeeee !important; 
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
         td { border: 1px solid #ddd; padding: 3px; }
         .footer { margin-top: 10px; font-size: 9px; color: #666; text-align: right; }
-        .machine-light { background-color: #e8f5e9 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        .machine-dark { background-color: #c8e6c9 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .machine-light { background-color: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .machine-dark { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         .machine-separator { border-top: 3px solid #000 !important; }
         .center { text-align: center; }
         .right { text-align: right; }
@@ -1203,7 +1205,7 @@ window.programmaMacchineGrid = (function() {
         </thead>
         <tbody>`;
 
-        // Body rows - alterna colori in base al cambio macchina
+        // Body rows - alterna sfondo chiaro/grigio in base al cambio macchina
         let previousMachine3 = null;
         let colorToggle3 = false;
         rowData.forEach(row => {

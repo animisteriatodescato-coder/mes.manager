@@ -428,15 +428,15 @@
         }
     }
 
-    private async Task<IEnumerable<ClienteDto>> SearchClienti(string? value, CancellationToken ct)
+    private Task<IEnumerable<ClienteDto>> SearchClienti(string? value, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(value))
-            return clienti.Take(20);
+            return Task.FromResult(clienti.Take(20));
 
-        return clienti.Where(c =>
+        return Task.FromResult(clienti.Where(c =>
             (c.RagioneSociale?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
             (c.Codice?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false))
-            .Take(20);
+            .Take(20));
     }
 
     private void AddManualRow()

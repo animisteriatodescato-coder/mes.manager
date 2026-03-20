@@ -459,6 +459,60 @@ Nel file `launchSettings.json`:
 
 ---
 
+## 🚨 Zero Duplicazione — 4 Domande Prima di Scrivere Codice
+
+**REGOLA INVIOLABILE**: Codice duplicato = technical debt = manutenzione impossibile = BUG garantiti
+
+### ✅ 4 Domande obbligatorie PRIMA di scrivere codice
+
+1. ✅ Esiste già un servizio/metodo che fa questa cosa?
+2. ✅ Posso riutilizzare codice esistente?
+3. ✅ Se modifico questo domani, dovrò cambiare anche altro? → **SE SÌ = REFACTORING OBBLIGATORIO**
+4. ✅ Questo è modificabile da UN SOLO punto?
+
+### 🎯 Workflow Implementazione Feature
+
+1. **Cerca prima** — grep/semantic search per logica simile
+2. **Riutilizza** — Usa servizi esistenti | **Estendi** parametri se serve
+3. **Centralizza** — Nuovo servizio solo se logica completamente nuova
+
+**Pattern concreto**: `ValidationService` centralizzato > duplicare validation in 2+ servizi
+
+---
+
+## 📋 Checklist Workflow Operativo
+
+**Prima di OGNI Operazione**: Leggi README.md e file docs/ pertinente
+
+**Prima di OGNI Deploy**: [09-CHANGELOG.md](09-CHANGELOG.md) + [storico/DEPLOY-LESSONS-LEARNED.md](storico/DEPLOY-LESSONS-LEARNED.md)
+
+**Prima di OGNI Commit**: Build + Test + Aggiorna docs/
+
+**Dopo OGNI Commit**: Push automatico su GitHub via hook post-commit (remote: `animisteriatodescato-coder/mes.manager`)
+
+**Prima di OGNI Modifica Database**: Migration EF + Test dev + Script SQL prod + Documenta
+
+---
+
+## ⚠️ Testing & Validazione — Regole Obbligatorie
+
+**MAI dichiarare "funziona" senza**:
+- ✅ **Build 0 errori**: `dotnet build --nologo`
+- ✅ **Test E2E automatici**: `./test-plc-realtime.ps1 -UseExistingServer` (per modifiche UI)
+- ✅ **Log visibile**: Console output senza errori rossi
+- ✅ **Test manuale**: URL comunicato, pagina testata visivamente
+
+**Test E2E Guideline**:
+- Modifica a `*.razor` componenti → Test OBBLIGATORIO
+- Modifica a JavaScript (`wwwroot/js`) → Test OBBLIGATORIO
+- **⚠️ Modifica JS/CSS statici → INCREMENTA cache busting** (`App.razor ?v=XXXX`)
+- Modifica backend services → Test opzionale (ma consigliato)
+- Test fallito → Leggi `TestResults/Playwright/*/errors.txt` + screenshot
+
+**Riferimenti**: [11-TESTING-FRAMEWORK.md](11-TESTING-FRAMEWORK.md) · [12-QA-UI-TESTING.md](12-QA-UI-TESTING.md) · [TEST-AUTO-GUIDA.md](../TEST-AUTO-GUIDA.md) ⭐
+
+---
+
 ## 🆘 Supporto
 
 Per configurazione database: [03-CONFIGURAZIONE.md](03-CONFIGURAZIONE.md)  

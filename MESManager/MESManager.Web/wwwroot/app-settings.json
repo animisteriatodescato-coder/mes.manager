@@ -10,21 +10,21 @@
     "#CA2BA2",
     "#CA532B"
   ],
-  "ThemePrimaryColor": "#136724ff",
+  "ThemePrimaryColor": "#1ab039ff",
   "ThemeSecondaryColor": "#CA2BA2",
-  "ThemeAccentColor": "#CA532B",
+  "ThemeAccentColor": "#f84903ff",
   "ThemeIsDarkMode": false,
   "ThemeTextOnPrimary": "#FFFFFF",
   "ThemePrimaryTextColor": "#1565C0",
   "ThemeNavTextColor": "",
   "ThemeBgOpacity": 0.4,
-  "ThemePanelOpacity": 0.83,
+  "ThemePanelOpacity": 0.61,
   "ThemeExtraColors": [
-    "#136724ff",
-    "#795548"
+    "#1ab039ff",
+    "#f84903ff"
   ],
-  "ThemeAppBarBgColor": "#0203020d",
-  "ThemeDrawerBgColor": "#02020200",
-  "ThemeButtonColor": "",
-  "ThemeButtonTextColor": ""
+  "ThemeAppBarBgColor": "#fcfefc6f",
+  "ThemeDrawerBgColor": "#fefcfc85",
+  "ThemeButtonColor": "#1ab039ff",
+  "ThemeButtonTextColor": "#FFFFFF"
 }

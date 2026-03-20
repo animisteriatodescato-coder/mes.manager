@@ -555,5 +555,38 @@ public override async Task DisposeAsync()
 
 ---
 
+## 🤖 Regole AI — Esecuzione Automatica Test
+
+Quando l'utente dice **"esegui test su [area]"**, l'AI **DEVE** eseguire **tutti** i test relativi all'area, senza chiedere chiarimenti.
+
+### Mapping obbligatorio area → Feature
+
+| Area utente | Filtro da eseguire |
+|---|---|
+| Programma / Gantt | `Feature=CommesseAperte`, `Feature=Gantt`, `Feature=ProgrammaMacchine` + `Category=Visual` |
+| Cataloghi | `Feature=Cataloghi` |
+| Produzione | `Feature=Produzione` |
+| Impostazioni | `Feature=Impostazioni` |
+
+### Variabili di esecuzione standard
+
+```powershell
+# Server già avviato (obbligatorio)
+$env:E2E_USE_EXISTING_SERVER = "1"
+$env:E2E_BASE_URL = "http://localhost:5156"
+
+# Seed dati automatico (se necessario)
+$env:E2E_SEED = "1"
+```
+
+### Regola di reporting
+
+Ogni run deve riportare:
+- Test eseguiti (filtri applicati)
+- Esito finale (pass/fail con conteggio)
+- In caso di failure: link a screenshot, trace, diff in `TestResults/Playwright/`
+
+---
+
 **Ultimo aggiornamento**: 2025-01-XX (v1.31)
 **Autore**: MESManager Development Team

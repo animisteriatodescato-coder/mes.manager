@@ -627,15 +627,12 @@
                 var dialog = await DialogService.ShowAsync<DialoSelezioneSceltaMacchina>("Seleziona Macchina", dialogParameters, dialogOptions);
                 var result = await dialog.Result;
                 
-                if (!result.Canceled && result.Data is int numeroMacchina)
-                {
-                    macchinaSelezionata = numeroMacchina;
-                }
-                else if (result.Canceled)
-                {
-                    // Utente ha annullato completamente, non caricare
+                // result può essere null se il dialog viene chiuso in modo anomalo
+                if (result is null || result.Canceled)
                     return;
-                }
+                
+                if (result.Data is int numeroMacchina)
+                    macchinaSelezionata = numeroMacchina;
                 // Se result.Data è null → auto-scheduler
             }
             
@@ -955,7 +952,7 @@
         
         try
         {
-            var allegati = await Http.GetFromJsonAsync<AllegatiArticoloResponse>($"/api/allegati-articoli/articolo/{Uri.EscapeDataString(codiceArticolo)}");
+            var allegati = await Http.GetFromJsonAsync<AllegatiArticoloResponse>($"/api/allegati-articoli/articolo/{string.Join('/', codiceArticolo.Split('/').Select(Uri.EscapeDataString))}");
             if (allegati?.Foto != null)
             {
                 // Cerca foto con priorità 2, altrimenti prende la prima foto
@@ -981,7 +978,7 @@
         try
         {
             // Carica l'AnimeDto dal codice articolo
-            var anime = await Http.GetFromJsonAsync<AnimeDto>($"/api/Anime/by-codice/{Uri.EscapeDataString(articoloCodice)}");
+            var anime = await Http.GetFromJsonAsync<AnimeDto>($"/api/Anime/by-codice/{string.Join("/", articoloCodice.Split('/').Select(Uri.EscapeDataString))}");
             
             if (anime == null)
             {

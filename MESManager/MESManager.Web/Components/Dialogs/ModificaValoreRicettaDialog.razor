@@ -19,7 +19,7 @@
                     <MudChip T="string" Size="Size.Small" Color="Color.Info">Ind. @(Parametro?.Indirizzo)</MudChip>
                     <MudChip T="string" Size="Size.Small" Color="Color.Secondary">@(Parametro?.Area)</MudChip>
                     <MudChip T="string" Size="Size.Small" Color="Color.Default">@(Parametro?.Tipo)</MudChip>
-                    @if (!string.IsNullOrEmpty(Parametro.UM))
+                    @if (!string.IsNullOrEmpty(Parametro?.UM))
                     {
                         <MudChip T="string" Size="Size.Small" Color="Color.Tertiary">@Parametro.UM</MudChip>
                     }

@@ -1,0 +1,8 @@
+  Individuazione dei progetti da ripristinare...
+  Tutti i progetti sono aggiornati per il ripristino.
+  MESManager.Domain -> C:\Dev\MESManager\MESManager.Domain\bin\Release\net8.0\MESManager.Domain.dll
+  MESManager.Application -> C:\Dev\MESManager\MESManager.Application\bin\Release\net8.0\MESManager.Application.dll
+  MESManager.Infrastructure -> C:\Dev\MESManager\MESManager.Infrastructure\bin\Release\net8.0\MESManager.Infrastructure.dll
+  MESManager.Sync -> C:\Dev\MESManager\MESManager.Sync\bin\Release\net8.0\MESManager.Sync.dll
+  MESManager.Web -> C:\Dev\MESManager\MESManager.Web\bin\Release\net8.0\MESManager.Web.dll
+  MESManager.Web -> C:\Dev\MESManager\publish\Web\

@@ -22,7 +22,7 @@ public class RicetteArticoliController : ControllerBase
     /// <summary>
     /// Ottiene la ricetta completa per un codice articolo
     /// </summary>
-    [HttpGet("{codiceArticolo}")]
+    [HttpGet("{**codiceArticolo}")]
     public async Task<ActionResult<RicettaArticoloDto>> GetByCodiceArticolo(string codiceArticolo)
     {
         try

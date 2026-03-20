@@ -702,6 +702,13 @@ window.commesseAperteGrid = (function() {
         );
     }
     
+    function reinit(jsonData) {
+        console.log('[commesse-aperte-grid] reinit: Reinitializing grid with fresh data...');
+        const data = JSON.parse(jsonData);
+        const savedState = getState();
+        init('commesseAperteGrid', data, savedState);
+    }
+
     function updateRowData(jsonData) {
         console.log('Updating grid row data...');
         const data = JSON.parse(jsonData);
@@ -712,6 +719,7 @@ window.commesseAperteGrid = (function() {
 
     return {
         init: init,
+        reinit: reinit,
         updateRowData: updateRowData,
         setDotNetHelper: setDotNetHelper,
         setCurrentUser: setCurrentUser,

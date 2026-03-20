@@ -120,4 +120,36 @@ public static class MesDesignTokens
     public const string CssVarDrawerBg        = "--mes-drawer-bg";
     public const string CssVarButtonColor     = "--mes-button-color";
     public const string CssVarButtonText      = "--mes-button-text";
+
+    // ── PLC Machine State Colors ──────────────────────────────────────────────────
+    // UNICA fonte di verità per i colori degli stati macchina PLC.
+    // Usati da PlcController (PlcStatoColore()) per popolare PlcGanttSegmentoDto.Colore.
+    // I CSS in DashboardProduzione.razor DEVONO corrispondere a questi valori.
+
+    public const string PlcStatoAutomatico  = "#4CAF50";  // Verde       — AUTOMATICO / CICLO
+    public const string PlcStatoAllarme     = "#FF9800";  // Arancione  — ALLARME
+    public const string PlcStatoEmergenza   = "#F44336";  // Rosso      — EMERGENZA
+    public const string PlcStatoManuale     = "#616161";  // Grigio sc. — MANUALE
+    public const string PlcStatoSetup       = "#2196F3";  // Blu        — SETUP / ATTREZZAGGIO
+    public const string PlcStatoNoConn      = "#9E9E9E";  // Grigio     — NON CONNESSA / default
+    public const string PlcStatoSconosciuto = "#607D8B";  // Grigio-blu — Sconosciuto
+
+    /// <summary>
+    /// Mappa uno stato macchina PLC al relativo colore esadecimale.
+    /// Usato da PlcController per arricchire PlcGanttSegmentoDto prima della serializzazione JSON.
+    /// </summary>
+    public static string PlcStatoColore(string? stato)
+    {
+        if (string.IsNullOrWhiteSpace(stato)) return PlcStatoNoConn;
+        if (stato.Contains("AUTOMATICO",   StringComparison.OrdinalIgnoreCase) ||
+            stato.Contains("CICLO",        StringComparison.OrdinalIgnoreCase)) return PlcStatoAutomatico;
+        if (stato.Contains("EMERGENZA",    StringComparison.OrdinalIgnoreCase)) return PlcStatoEmergenza;
+        if (stato.Contains("ALLARME",      StringComparison.OrdinalIgnoreCase)) return PlcStatoAllarme;
+        if (stato.Contains("MANUALE",      StringComparison.OrdinalIgnoreCase)) return PlcStatoManuale;
+        if (stato.Contains("SETUP",        StringComparison.OrdinalIgnoreCase) ||
+            stato.Contains("ATTREZZAGGIO", StringComparison.OrdinalIgnoreCase)) return PlcStatoSetup;
+        if (stato.Contains("NON CONNESSA", StringComparison.OrdinalIgnoreCase) ||
+            stato.Contains("OFFLINE",      StringComparison.OrdinalIgnoreCase)) return PlcStatoNoConn;
+        return PlcStatoSconosciuto;
+    }
 }

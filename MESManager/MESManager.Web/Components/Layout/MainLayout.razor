@@ -28,6 +28,7 @@
         --mes-bg-opacity: @(_s.ThemeBgOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
         --mes-panel-opacity: @(_s.ThemePanelOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
         --mes-appbar-bg: @_appBarBg;
+        --appbar-height: 48px; /* Dense=true MudBlazor */
         --mes-drawer-bg: @_drawerBg;
         --mes-button-color: @_buttonColor;
         --mes-button-text: @_buttonText;
@@ -247,7 +248,7 @@
                     background-size:cover;background-position:center;
                     opacity:var(--mes-bg-opacity);"></div>
     }
-    <MudAppBar Elevation="1" data-testid="main-appbar">
+    <MudAppBar Elevation="1" Dense="true" data-testid="main-appbar">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
         @if (IsHomePage())
         {
@@ -266,11 +267,6 @@
         @if (AppBarContentService.Content != null)
         {
             @AppBarContentService.Content
-        }
-        else if (IsPlcRealtimePage())
-        {
-            @* Controlli specifici per PLC Realtime *@
-            @RenderPlcRealtimeToolbar()
         }
         else
         {
@@ -310,8 +306,8 @@
     
     <MudDrawer @bind-Open="_drawerOpen" Elevation="2">
         <MudDrawerHeader Style="display: flex; justify-content: space-between; align-items: center;">
-            <MudText Typo="Typo.h6">Menu</MudText>
-            <MudText Typo="Typo.caption" Style="@($"font-family: monospace; color: {MesDesignTokens.VersionTextColor(_isDarkMode)}; font-size: 11px;")">
+            <MudText Typo="Typo.h6" Style="color: var(--mes-nav-text);">Menu</MudText>
+            <MudText Typo="Typo.caption" Style="font-family: monospace; color: var(--mes-nav-text); opacity: 0.7; font-size: 11px;">
                 @AppVersion.Display
             </MudText>
         </MudDrawerHeader>
@@ -364,6 +360,12 @@
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 13px;">📜</span>
                         <span>PLC Storico</span>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Href="/produzione/gantt-storico">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px;">📊</span>
+                        <span>Gantt Storico</span>
                     </div>
                 </MudNavLink>
                 <MudNavLink Href="/produzione/incollaggio">
@@ -518,7 +520,7 @@
     </MudDrawer>
     
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-0">
             <ErrorBoundary @ref="_errorBoundary">
                 <ChildContent>
                     @Body

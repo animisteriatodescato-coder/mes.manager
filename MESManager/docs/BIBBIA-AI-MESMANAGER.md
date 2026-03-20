@@ -65,57 +65,9 @@ Quando l'utente scrive qualsiasi variante di:
 
 **L'AI ESEGUE L'INTERO DEPLOY DA SOLA, SENZA CHIEDERE NULLA ALL'UTENTE.**
 
-### Sequenza deploy obbligatoria
+**Sequenza completa + script PS + regole critiche**: → [01-DEPLOY.md](docs/01-DEPLOY.md#-workflow-ai--deploy-autonomo)
 
-```powershell
-# 1. PUBLISH (se non già fatto nella stessa sessione)
-cd C:\Dev\MESManager
-dotnet publish MESManager.Web\MESManager.Web.csproj -c Release -o publish\Web --nologo
-
-# 2. STOP servizi (ordine CRITICO: PlcSync → Worker → Web)
-taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /IM MESManager.PlcSync.exe /F
-taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /IM MESManager.Worker.exe /F
-taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /IM MESManager.Web.exe /F
-Start-Sleep 3
-
-# 3. COPIA (escludi SEMPRE secrets e config produzione)
-robocopy "C:\Dev\MESManager\publish\Web" "\\192.168.1.230\c$\MESManager" `
-    /E /IS /IT `
-    /XF appsettings.Secrets.json appsettings.Database.json appsettings.Secrets.encrypted "*.log" "*.pdb" app-settings.json `
-    /XD logs SyncBackups Worker PlcSync `
-    /NFL /NDL /NJH
-# exit code 0-7 = OK, >7 = errore
-
-# 4. RIAVVIO
-schtasks /S 192.168.1.230 /U Administrator /P "A123456!" /Run /TN "StartMESWeb"
-Start-Sleep 8
-
-# 5. VERIFICA
-tasklist /S 192.168.1.230 /U Administrator /P "A123456!" | findstr MESManager
-# Atteso: MESManager.Web.exe + MESManager.Worker.exe + MESManager.PlcSync.exe
-```
-
-### Regole critiche
-
-| Regola | Dettaglio |
-|---|---|
-| ❌ MAI chiedere all'utente di eseguire comandi | L'AI usa `run_in_terminal` direttamente |
-| ❌ MAI lasciare istruzioni di copia-incolla | Esegui, non descrivere |
-| ❌ MAI sovrascrivere `appsettings.Secrets.json` / `appsettings.Database.json` | `/XF` obbligatorio nel robocopy |
-| ❌ MAI fermare Worker/PlcSync se non modificati | Per questa versione: solo Web |
-| ✅ SEMPRE verificare 3 processi attivi dopo riavvio | `tasklist` con `findstr MESManager` |
-| ✅ SEMPRE riportare esito: file copiati, exit code, servizi UP | Conferma concisa all'utente |
-
-### Credenziali produzione (fisse)
-
-```
-Server:    192.168.1.230
-User:      Administrator
-Password:  A123456!
-Percorso:  C:\MESManager\
-Porta app: 5156
-Task:      StartMESWeb
-```
+**Credenziali accesso rapido**: `192.168.1.230` | User: `Administrator` | Pass: `A123456!` | Task: `StartMESWeb`
 
 ---
 
@@ -238,36 +190,7 @@ cd C:\Dev; dotnet run --project MESManager/MESManager.Web/MESManager.Web.csproj 
 - ✅ RUN dalla directory `C:\Dev`
 - ⚠️ Test automatici OBBLIGATORI per modifiche a: PlcRealtime.razor, MainLayout.razor, componenti Blazor critici
 
-### Checklist Workflow
-
-**Prima di OGNI Operazione**: Leggi README.md e file docs/ pertinente
-
-**Prima di OGNI Deploy**: [09-CHANGELOG.md](docs/09-CHANGELOG.md) + [storico/DEPLOY-LESSONS-LEARNED.md](docs/storico/DEPLOY-LESSONS-LEARNED.md)
-
-**Prima di OGNI Commit**: Build + Test + Aggiorna docs/
-**Dopo OGNI Commit**: Push automatico su GitHub via hook post-commit (remote: `animisteriatodescato-coder/mes.manager`)
-
-**Prima di OGNI Modifica Database**: Migration EF + Test dev + Script SQL prod + Documenta
-
-### ⚠️ Testing & Validazione
-
-**MAI dichiarare "funziona" senza**:
-- ✅ **Test E2E automatici**: `./test-plc-realtime.ps1` (per modifiche UI)
-- ✅ **Build 0 errori**: `dotnet build --nologo`
-- ✅ **Log visibile**: Console output senza errori rossi
-- ✅ **Test manuale**: URL comunicato, pagina testata visivamente
-
-**Test E2E Guideline**:
-- Modifica a `*.razor` componenti → Test OBBLIGATORIO
-- Modifica a JavaScript (`wwwroot/js`) → Test OBBLIGATORIO  
-- **⚠️ Modifica JS/CSS statici → INCREMENTA cache busting** (App.razor ?v=XXXX)
-- Modifica backend services → Test opzionale (ma consigliato)
-- Test fallito → Leggi `TestResults/Playwright/*/errors.txt` + screenshot
-
-**Dettagli**: 
-- [11-TESTING-FRAMEWORK.md](docs/11-TESTING-FRAMEWORK.md)
-- [12-QA-UI-TESTING.md](docs/12-QA-UI-TESTING.md)
-- [TEST-AUTO-GUIDA.md](TEST-AUTO-GUIDA.md) ⭐ Guida rapida test automatici
+**Checklist completa, testing e validazione**: → [02-SVILUPPO.md](docs/02-SVILUPPO.md) · [11-TESTING-FRAMEWORK.md](docs/11-TESTING-FRAMEWORK.md) · [TEST-AUTO-GUIDA.md](TEST-AUTO-GUIDA.md)
 
 ---
 
@@ -334,56 +257,18 @@ Ogni run deve riportare:
 
 ## 🔌 PATTERN CENTRALIZZATI — USA QUESTI, NON DUPLICARE
 
-> ⚠️ Esistono già. Usarli è **OBBLIGATORIO**. Reimplementare = bug architetturale.
+> ⚠️ Prima di implementare: cerca con grep/semantic search. Reimplementare = bug architetturale.
 
-| Vuoi fare... | Estendi/Usa |
-|---|---|
-| Nuova griglia catalogo | `@inherits CatalogoGridBase` in `Components/Pages/Cataloghi/` |
-| Config JS griglia AG Grid | `wwwroot/js/ag-grid-factory.js` → `agGridFactory.setup({...})` |
-| Pannello impostazioni griglia | `<GridSettingsPanel @bind-Settings="settings" />` |
-| Servizio allegati per nuova entità | `: AllegatoFileServiceBase` in `Application/Services/` |
-| Path di rete / MIME type allegati | `ConvertNetworkPath()` / `GetMimeType()` dalla base |
-| Colori tema / dark-light mode | `_theme` / `_isDarkMode` in `MainLayout.razor` → 1 punto |
-| **Tema dinamico da immagine** | `ColorExtractionService` → `AppSettingsService.ThemePalette` → `MainLayout.BuildThemeFromSettings()` |
-| **Token colori / grafica** | `MesDesignTokens` in `Constants/` → UNICA fonte di verità per tutti i colori hardcoded. MAI scrivere hex direttamente nei file |
-| **Dark mode iniettabile** | `IThemeModeService` (Scoped) → inietta nei componenti che reagiscono a dark/light. `UpdateMode()` chiamato solo da MainLayout |
-| **Testo su sfondo Primary** | `AppSettings.ThemeTextOnPrimary` + `AppSettingsService.ComputeTextOnBackground()` → `AppbarText` in palette + `--mes-text-on-primary` CSS var |
-| **Testo brand su sfondo bianco** | `AppSettings.ThemePrimaryTextColor` + `AppSettingsService.ComputePrimaryTextColor()` → `--mes-primary-text` CSS var |
-| **Card con sfondo fisso bianco in dark mode** | Usare `color: #1a1a1a !important` + override `.mud-typography` figli — MAI `var(--mud-palette-text-primary)` su card con background hardcoded |
-| Preferenze utente persistenti | `IPreferenzeUtenteService` → mai localStorage diretto |
-| **Colonna Ricetta in AG Grid** | `ricetta-column-shared.js` → `window.ricettaColumnShared.createColumnDef(config)` — usato da tutte le 4 grid con ricetta. Chip verde `✓ N` = ha ricetta. Chip grigio `↓ importa` = senza ricetta cliccabile. Cache-bust in `App.razor` (`?v=NNNN`) |
-| **Visualizzare ricetta articolo** | `RicettaViewDialog.razor` — param `CodiceArticolo` + `ShowImportButton=true` per abilitare "Importa da Macchina" |
-| **Importare ricetta da macchina** | `ImportaRicettaMacchinaDialog.razor` — param `CodiceArticolo`. Usa `GET /api/Macchine` + `POST /api/plc/save-recipe-from-plc` (`Entries=null` → legge DB56 live). MAI duplicare questa logica. |
-| **Azione pericolosa PLC (invia a macchina)** | Sempre `await DialogService.ShowMessageBox(...)` confirm prima — vedi `DashboardProduzione.razor` e `PlcDbViewerPopup.razor` |
+**Tabella completa pattern** (griglie, servizi, tema, allegati, PLC, ricette): → [04-ARCHITETTURA.md](docs/04-ARCHITETTURA.md#-pattern-centralizzati--usa-questi-non-duplicare)
 
-**Regola**: cerca prima con grep/semantic search → estendi → **mai duplica**.
 ---
 
 ## 🚨 PRINCIPIO FONDAMENTALE: ZERO DUPLICAZIONE
 
-### ⚠️ QUESTO È IL PROBLEMA PIÙ RICORRENTE - LEGGILO ATTENTAMENTE
+- ❌ Copiare/incollare codice | Duplicare logica business | Creare metodi simili con nomi diversi
+- ✅ Cerca prima → Riutilizza → Centralizza (solo se logica completamente nuova)
 
-**REGOLA INVIOLABILE**: Codice duplicato = technical debt = manutenzione impossibile = BUG garantiti
-
-### ❌ VIETATO ASSOLUTAMENTE
-
-- ❌ Copiare/incollare codice | Duplicare logica business | Ripetere query SQL
-- ❌ Creare metodi simili con nomi diversi | Duplicare validazioni
-
-### ✅ OBBLIGATORIO SEMPRE — 4 Domande Prima di Scrivere Codice
-
-1. ✅ Esiste già un servizio/metodo che fa questa cosa?
-2. ✅ Posso riutilizzare codice esistente?
-3. ✅ Se modifico questo domani, dovrò cambiare anche altro? → **SE SÌ = REFACTORING OBBLIGATORIO**
-4. ✅ Questo è modificabile da UN SOLO punto?
-
-### 🎯 Workflow Implementazione Feature
-
-1. **Cerca prima** — grep/semantic search per logica simile
-2. **Riutilizza** — Usa servizi esistenti | **Estendi** parametri se serve
-3. **Centralizza** — Nuovo servizio solo se logica completamente nuova
-
-**Pattern concreto**: `ValidationService` centralizzato > duplicare validation in 2+ servizi
+**4 Domande + Workflow Implementazione Feature**: → [02-SVILUPPO.md](docs/02-SVILUPPO.md#-zero-duplicazione--4-domande-prima-di-scrivere-codice)
 
 ---
 

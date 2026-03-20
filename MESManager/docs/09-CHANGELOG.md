@@ -4,7 +4,27 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.55.12
+## 🔖 Versione Corrente: v1.55.13
+
+---
+
+## 🔖 v1.55.13 - Stampa Programma Macchine: font size configurabile + sfondo bianco (12 Mar 2026)
+
+**Data**: 12 Marzo 2026
+
+### ✨ Feature — Stampa con dimensione carattere regolabile e tabella su sfondo bianco
+
+Il pulsante **Stampa** nella pagina Programma Macchine ora rispetta il `FontSize` corrente impostato nelle Impostazioni della griglia (campo numerico 10-24px). La tabella stampata ha righe su sfondo bianco/grigio neutro invece dei precedenti colori verde.
+
+#### Dettagli tecnici
+- `printViaIframe(printColumnFields, fontSize)` — aggiunto secondo parametro `fontSize`; il CSS della tabella nell'iframe usa `font-size: ${printFontSize}px` (default 10 se omesso)
+- `printInNewWindow` e `generatePrintTable` — aggiornati da sfondo verde (`#e8f5e9`/`#c8e6c9`) a bianco/grigio (`#ffffff`/`#f2f2f2`) per leggibilità in stampa b/n
+- `ProgrammaMacchine.razor` — `PrintCommesse()` passa `settings.FontSize` come secondo argomento a `printViaIframe`
+
+#### File modificati
+- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js`
+- `MESManager.Web/Components/Pages/Programma/ProgrammaMacchine.razor`
+- `MESManager.Web/Constants/AppVersion.cs` — 1.55.12 → 1.55.13
 
 ---
 

@@ -84,9 +84,27 @@ public class AllegatoArticoloService : AllegatoFileServiceBase, IAllegatoArticol
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
         var isFoto = FileConstants.FotoExtensions.Contains(extension);
         
-        // Nome file = "{CodiceArticolo} {Priorita}{ext}" — convenzione naming MESManager
-        var safeFileName = $"{request.CodiceArticolo} {request.Priorita}{extension}";
+        // Sanitizza il codice articolo per il nome file: / e \ sono separatori di path
+        var safeCode = request.CodiceArticolo
+            .Replace("/", "-")
+            .Replace("\\", "-");
+        
+        // Auto-assegna priorità se non specificata (0 = non impostata)
+        var priorita = request.Priorita;
+        if (priorita <= 0)
+        {
+            var existing = await _repository.GetByCodiceArticoloAsync(request.CodiceArticolo);
+            priorita = existing.Any() ? existing.Max(x => x.Priorita) + 1 : 1;
+        }
+        
+        // Nome file = "{SafeCode} {Priorita}{ext}" — convenzione naming MESManager
+        var safeFileName = $"{safeCode} {priorita}{extension}";
         var fullPath = Path.Combine(AllegatiBasePath, safeFileName);
+        
+        // Assicura che la directory esista
+        var dir = Path.GetDirectoryName(fullPath);
+        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            Directory.CreateDirectory(dir);
         
         // Salva file su disco (FileMode.Create sovrascrive se già esiste stessa priorità)
         await using (var outputStream = new FileStream(fullPath, FileMode.Create))
@@ -105,7 +123,7 @@ public class AllegatoArticoloService : AllegatoFileServiceBase, IAllegatoArticol
             PathFile = fullPath,
             NomeFile = safeFileName,
             Descrizione = request.Descrizione,
-            Priorita = request.Priorita,
+            Priorita = priorita,
             TipoFile = isFoto ? "Foto" : "Documento",
             Estensione = extension,
             DimensioneBytes = fileSize,
@@ -163,7 +181,9 @@ public class AllegatoArticoloService : AllegatoFileServiceBase, IAllegatoArticol
         // Rinomina file su disco per riflettere la nuova priorità
         var ext = allegato.Estensione ?? Path.GetExtension(allegato.PathFile ?? "");
         var dir = Path.GetDirectoryName(allegato.PathFile ?? AllegatiBasePath) ?? AllegatiBasePath;
-        var newFileName = $"{allegato.CodiceArticolo} {priorita}{ext}";
+        // Sanitizza codice per nome file (/ e \ sono separatori di path)
+        var safeCodeRename = (allegato.CodiceArticolo ?? "").Replace("/", "-").Replace("\\", "-");
+        var newFileName = $"{safeCodeRename} {priorita}{ext}";
         var newPath = Path.Combine(dir, newFileName);
         if (!string.IsNullOrEmpty(allegato.PathFile) && allegato.PathFile != newPath && File.Exists(allegato.PathFile))
         {

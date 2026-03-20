@@ -140,6 +140,54 @@ public class PlcSyncService : IPlcSyncService
         }
     }
 
+    /// <summary>
+    /// Salva un record PLCStorico con StatoMacchina = "NON CONNESSA" quando la macchina diventa
+    /// irraggiungibile. Scrive il record una sola volta (non in loop): se l'ultimo stato salvato
+    /// era già "NON CONNESSA", non fa nulla.
+    /// Nota: il caso string.IsNullOrEmpty(LastStato) è intentenzionalmente incluso per gestire
+    /// il boot di PlcSync quando la macchina è già offline (LastStato non ancora popolato).
+    /// </summary>
+    public async Task SaveDisconnessaAsync(Guid macchinaId, MachineState? state, CancellationToken cancellationToken = default)
+    {
+        // Guard: non spammare — scrivi solo al momento della disconnessione (transizione → NON CONNESSA)
+        if (!_settings.EnableStorico)
+            return;
+        // Scrivi se: stato non nullo E stato attuale NON è già NON CONNESSA.
+        // Rimosso il blocco su string.IsNullOrEmpty: al boot di PlcSync LastStato="" 
+        // e la macchina può essere già offline → dobbiamo registrare la disconnessione.
+        if (state == null || state.LastStato == "NON CONNESSA")
+            return;
+
+        try
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+
+            var storico = new PLCStorico
+            {
+                Id             = Guid.NewGuid(),
+                MacchinaId     = macchinaId,
+                DataOra        = DateTime.UtcNow,
+                Dati           = "{}",
+                StatoMacchina  = "NON CONNESSA",
+                NumeroOperatore = 0,
+                OperatoreId    = null
+            };
+
+            context.PLCStorico.Add(storico);
+            await context.SaveChangesAsync(cancellationToken);
+
+            // Aggiorna stato in memoria per evitare doppi inserimenti
+            state.LastStato             = "NON CONNESSA";
+            state.LastNumeroOperatore   = 0;
+
+            _logger.LogInformation("Record NON CONNESSA salvato su PLCStorico per macchina {MacchinaId}", macchinaId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Errore salvataggio record NON CONNESSA per macchina {MacchinaId}", macchinaId);
+        }
+    }
+
     private async Task<Guid?> ResolveOperatoreIdAsync(MesManagerDbContext context, int numeroOperatore, CancellationToken cancellationToken)
     {
         if (numeroOperatore <= 0)

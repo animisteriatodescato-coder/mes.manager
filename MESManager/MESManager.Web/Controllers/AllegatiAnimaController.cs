@@ -41,7 +41,7 @@ namespace MESManager.Web.Controllers
         /// <summary>
         /// Recupera tutti gli allegati per un'anima per CodiceArticolo
         /// </summary>
-        [HttpGet("codice/{codiceArticolo}")]
+        [HttpGet("codice/{**codiceArticolo}")]
         public async Task<ActionResult<AllegatiAnimaResponse>> GetAllegatiByCodice(string codiceArticolo)
         {
             _logger.LogInformation("GET /api/AllegatiAnima/codice/{CodiceArticolo} - START", codiceArticolo);
@@ -130,7 +130,7 @@ namespace MESManager.Web.Controllers
         /// USA IAllegatoArticoloService - stessa pipeline del dialog di upload.
         /// n = priorità esatta da cercare. Restituisce 404 se non esiste foto con quella priorità.
         /// </summary>
-        [HttpGet("preview-foto/{codiceArticolo}")]
+        [HttpGet("preview-foto/{**codiceArticolo}")]
         public async Task<IActionResult> GetPreviewFoto(string codiceArticolo, [FromQuery] int n = 2)
         {
             _logger.LogDebug("GET /api/AllegatiAnima/preview-foto/{CodiceArticolo}?n={N} - START", codiceArticolo, n);

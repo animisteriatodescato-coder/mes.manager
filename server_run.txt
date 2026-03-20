@@ -1,0 +1,389 @@
+Compilazione...
+info: Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager[63]
+      User profile is available. Using 'C:\Users\produ\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+dbug: Microsoft.AspNetCore.SignalR.Internal.DefaultHubProtocolResolver[1]
+      Registered SignalR Protocol: json, implemented by Microsoft.AspNetCore.SignalR.Protocol.JsonHubProtocol.
+dbug: Microsoft.AspNetCore.SignalR.Internal.DefaultHubProtocolResolver[1]
+      Registered SignalR Protocol: blazorpack, implemented by Microsoft.AspNetCore.Components.Server.BlazorPack.BlazorPackHubProtocol.
+dbug: Microsoft.AspNetCore.Mvc.ModelBinding.ModelBinderFactory[12]
+      Registered model binder providers, in the following order: Microsoft.AspNetCore.Mvc.ModelBinding.Binders.BinderTypeModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ServicesModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.BodyModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.HeaderModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.FloatingPointTypeModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.EnumTypeModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.DateTimeModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.SimpleTypeModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.TryParseModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.CancellationTokenModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ByteArrayModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.FormFileModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.FormCollectionModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.KeyValuePairModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.DictionaryModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ArrayModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.CollectionModelBinderProvider, Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ComplexObjectModelBinderProvider
+info: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService avviato con intervallo 4s
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]
+      Hosting starting
+dbug: Microsoft.AspNetCore.DataProtection.Repositories.FileSystemXmlRepository[37]
+      Reading data from file 'C:\Users\produ\AppData\Local\ASP.NET\DataProtection-Keys\key-b25be389-ed8b-471a-9a20-403e1ca858a3.xml'.
+dbug: Microsoft.AspNetCore.DataProtection.Repositories.FileSystemXmlRepository[37]
+      Reading data from file 'C:\Users\produ\AppData\Local\ASP.NET\DataProtection-Keys\key-d0cf8574-4132-474f-a84f-1ae48d3f74e9.xml'.
+dbug: Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager[18]
+      Found key {b25be389-ed8b-471a-9a20-403e1ca858a3}.
+dbug: Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager[18]
+      Found key {d0cf8574-4132-474f-a84f-1ae48d3f74e9}.
+dbug: Microsoft.AspNetCore.DataProtection.KeyManagement.DefaultKeyResolver[13]
+      Considering key {d0cf8574-4132-474f-a84f-1ae48d3f74e9} with expiration date 2026-06-08 08:05:45Z as default key.
+dbug: Microsoft.AspNetCore.DataProtection.TypeForwardingActivator[0]
+      Forwarded activator type request from Microsoft.AspNetCore.DataProtection.XmlEncryption.DpapiXmlDecryptor, Microsoft.AspNetCore.DataProtection, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60 to Microsoft.AspNetCore.DataProtection.XmlEncryption.DpapiXmlDecryptor, Microsoft.AspNetCore.DataProtection, Culture=neutral, PublicKeyToken=adb9793829ddae60
+dbug: Microsoft.AspNetCore.DataProtection.XmlEncryption.DpapiXmlDecryptor[51]
+      Decrypting secret element using Windows DPAPI.
+dbug: Microsoft.AspNetCore.DataProtection.TypeForwardingActivator[0]
+      Forwarded activator type request from Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel.AuthenticatedEncryptorDescriptorDeserializer, Microsoft.AspNetCore.DataProtection, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60 to Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel.AuthenticatedEncryptorDescriptorDeserializer, Microsoft.AspNetCore.DataProtection, Culture=neutral, PublicKeyToken=adb9793829ddae60
+dbug: Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.CngCbcAuthenticatedEncryptorFactory[4]
+      Opening CNG algorithm 'AES' from provider '(null)' with chaining mode CBC.
+dbug: Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.CngCbcAuthenticatedEncryptorFactory[3]
+      Opening CNG algorithm 'SHA256' from provider '(null)' with HMAC.
+dbug: Microsoft.AspNetCore.DataProtection.KeyManagement.KeyRingProvider[2]
+      Using key {d0cf8574-4132-474f-a84f-1ae48d3f74e9} as the default key.
+dbug: Microsoft.AspNetCore.DataProtection.Internal.DataProtectionHostedService[65]
+      Key ring with default key {d0cf8574-4132-474f-a84f-1ae48d3f74e9} was loaded during application startup.
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5156
+dbug: Microsoft.AspNetCore.Hosting.Diagnostics[13]
+      Loaded hosting startup assembly MESManager.Web
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\Dev\MESManager\MESManager.Web
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]
+      Hosting started
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC
+dbug: MESManager.Web.Services.RealtimeStateService[0]
+      RealtimeStateService: caricati 8 record PLC

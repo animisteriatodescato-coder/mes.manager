@@ -110,7 +110,6 @@
     private ImpostazioniGanttDto? impostazioniGantt;
     private List<CommessaGanttDto> commesseGantt = new();
     private HubConnection? _hubConnection;
-    private bool _isConnected;
     private DotNetObjectReference<GanttMacchine>? _dotNetRef;
     private CommessaGanttDto? _selectedCommessa;
     private bool _priorityDialogOpen;
@@ -153,18 +152,15 @@
 
             _hubConnection.Reconnected += async (connectionId) =>
             {
-                _isConnected = true;
                 await InvokeAsync(StateHasChanged);
             };
 
             _hubConnection.Closed += async (error) =>
             {
-                _isConnected = false;
                 await InvokeAsync(StateHasChanged);
             };
 
             await _hubConnection.StartAsync();
-            _isConnected = true;
             
             // Iscriviti agli aggiornamenti
             await _hubConnection.InvokeAsync("SubscribeToGantt");
@@ -172,7 +168,6 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Errore connessione SignalR: {ex.Message}");
-            _isConnected = false;
         }
     }
     

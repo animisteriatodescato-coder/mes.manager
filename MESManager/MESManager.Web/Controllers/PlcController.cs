@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MESManager.Web.Constants;
 using Microsoft.EntityFrameworkCore;
 using MESManager.Application.Interfaces;
 using MESManager.Application.DTOs;
@@ -525,6 +526,42 @@ public class PlcController : ControllerBase
             result.ErrorMessage = $"Errore durante il salvataggio: {ex.Message}";
             return StatusCode(500, result);
         }
+    }
+
+    /// <summary>
+    /// Restituisce i segmenti temporali a stato costante di ogni macchina nel periodo indicato.
+    /// Il campo Colore di ogni segmento è calcolato via MesDesignTokens.PlcStatoColore().
+    /// </summary>
+    [HttpGet("gantt-storico")]
+    public async Task<ActionResult<List<PlcGanttSegmentoDto>>> GetGanttStorico(
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        [FromQuery] Guid? macchinaId)
+    {
+        var fromDate = from ?? DateTime.Today.AddDays(-1);
+        var toDate   = to   ?? DateTime.Now;
+        var segmenti = await _service.GetGanttStoricoAsync(fromDate, toDate, macchinaId);
+
+        // Arricchisce Colore nel layer Web (MesDesignTokens — fonte di verità colori stato PLC)
+        foreach (var s in segmenti)
+            s.Colore = MesDesignTokens.PlcStatoColore(s.StatoMacchina);
+
+        return Ok(segmenti);
+    }
+
+    /// <summary>
+    /// Restituisce i KPI aggregati (% AUTOMATICO, ALLARME, EMERGENZA, MANUALE, SETUP) per macchina.
+    /// </summary>
+    [HttpGet("kpi-storico")]
+    public async Task<ActionResult<List<PlcKpiStoricoDto>>> GetKpiStorico(
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        [FromQuery] Guid? macchinaId)
+    {
+        var fromDate = from ?? DateTime.Today.AddDays(-1);
+        var toDate   = to   ?? DateTime.Now;
+        var result = await _service.GetKpiStoricoAsync(fromDate, toDate, macchinaId);
+        return Ok(result);
     }
 }
 

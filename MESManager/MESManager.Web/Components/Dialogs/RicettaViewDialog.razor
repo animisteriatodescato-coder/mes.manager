@@ -124,7 +124,7 @@
             await JS.InvokeVoidAsync("console.log", $"[RicettaViewDialog] Caricamento ricetta per: {CodiceArticolo}");
             
             // Usa endpoint diretto invece di search
-            var response = await Http.GetAsync($"/api/RicetteArticoli/{Uri.EscapeDataString(CodiceArticolo)}");
+            var response = await Http.GetAsync($"/api/RicetteArticoli/{string.Join('/', CodiceArticolo.Split('/').Select(Uri.EscapeDataString))}");
             
             await JS.InvokeVoidAsync("console.log", $"[RicettaViewDialog] Response status: {response.StatusCode}");
             

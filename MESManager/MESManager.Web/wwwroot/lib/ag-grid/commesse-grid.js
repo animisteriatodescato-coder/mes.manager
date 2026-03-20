@@ -5,7 +5,32 @@
  * Per modificare comportamento comune a tutti i grid: modifica ag-grid-factory.js
  */
 (function () {
+    function hasDatiEtichettaCompleti(data) {
+        return data && data.codiceAnime && data.clienteDisplay;
+    }
+
     const columnDefs = [
+        {
+            field: 'stampaEtichetta',
+            headerName: '',
+            width: 50,
+            pinned: 'left',
+            sortable: false,
+            filter: false,
+            suppressMenu: true,
+            cellRenderer: params => {
+                const hasData = hasDatiEtichettaCompleti(params.data);
+                const icon = hasData ? '🖨️' : '⚠️';
+                const title = hasData ? 'Stampa Etichetta' : 'Dati incompleti - Clicca per dettagli';
+                const color = hasData ? '#1976d2' : '#ff9800';
+                return `<button class="print-label-btn" style="border:none;background:transparent;cursor:pointer;font-size:18px;color:${color}" title="${title}">${icon}</button>`;
+            },
+            onCellClicked: params => {
+                if (window.commesseGridDotNetRef) {
+                    window.commesseGridDotNetRef.invokeMethodAsync('OnPrintLabelClick', params.data);
+                }
+            }
+        },
         { field: 'codice', headerName: 'Codice', sortable: true, filter: true, width: 180, pinned: 'left' },
         { field: 'internalOrdNo', headerName: 'Num. Ordine', sortable: true, filter: true, width: 130 },
         { field: 'externalOrdNo', headerName: 'Ordine Esterno', sortable: true, filter: true, width: 150 },

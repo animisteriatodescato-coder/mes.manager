@@ -375,3 +375,141 @@ h1:focus {
 .mud-theme-dark .mud-table-root .mud-table-cell a {
     color: var(--mes-primary, #7ca7e0) !important;
 }
+
+/* ==========================================================================
+   GANTT STORICO MACCHINE — Contenitore Vis-Timeline e KPI cards
+   ========================================================================== */
+
+.gantt-storico-vis {
+    width: 100%;
+    height: calc(100vh - 380px);
+    min-height: 280px;
+}
+
+/* ── KPI Cards: riga orizzontale scorrevole (una sola riga) ── */
+.kpi-scroll-row {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 10px;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+    position: relative;
+    z-index: 2;
+}
+
+.kpi-compact-card {
+    flex: 0 0 175px;
+    background-color: var(--mes-row-odd, #F0F0F8) !important;
+    opacity: 1 !important;
+    position: relative;
+    z-index: 2;
+    border-radius: 8px;
+    padding: 10px 12px 10px 12px;
+    border: 1px solid rgba(0,0,0,0.15);
+    box-shadow: 0 2px 14px rgba(0,0,0,0.22);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.kpi-compact-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+}
+
+.kpi-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+}
+
+.kpi-machine-num {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--mes-primary-text, var(--mud-palette-primary));
+}
+
+.kpi-machine-total {
+    font-size: 0.68rem;
+    color: var(--mud-palette-text-secondary, #777);
+    white-space: nowrap;
+}
+
+/* Barra stacked proporzionale */
+.kpi-stacked-bar {
+    display: flex;
+    height: 7px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    background: rgba(0,0,0,0.08);
+}
+
+.kpi-stacked-bar div {
+    height: 100%;
+    transition: width 0.3s;
+}
+
+/* Badge stati con colore pieno — sfondo = colore stato */
+.kpi-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+
+.kpi-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #fff !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+}
+
+/* Dark mode */
+.mud-theme-dark .kpi-compact-card {
+    background-color: var(--mes-row-odd, #262636) !important;
+    opacity: 1 !important;
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 2px 14px rgba(0,0,0,0.50);
+}
+
+/* Dark mode: tooltip Vis-Timeline */
+.mud-theme-dark .vis-tooltip {
+    background: #1e2030 !important;
+    color: #e6e6f0 !important;
+    border-color: #4a4a6a !important;
+}
+
+/* Item Vis-Timeline — bordo leggermente più scuro del fill */
+.vis-item.vis-range {
+    border-width: 1px !important;
+    border-radius: 3px !important;
+    font-size: 0.75rem !important;
+}
+
+/* Stato NON CONNESSA: pattern a strisce diagonali per massima visibilità */
+.vis-item.vis-stato-non-connessa {
+    background: repeating-linear-gradient(
+        45deg,
+        #78909C,
+        #78909C 5px,
+        #B0BEC5 5px,
+        #B0BEC5 10px
+    ) !important;
+    border-color: #546E7A !important;
+    opacity: 0.85;
+}
+
+.vis-item.vis-range .vis-item-content {
+    padding: 1px 4px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #fff !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}

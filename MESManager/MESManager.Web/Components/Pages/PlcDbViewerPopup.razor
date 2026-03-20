@@ -354,7 +354,7 @@
         }
     }
     
-    private async Task EsportaJsonAsync()
+    private Task EsportaJsonAsync()
     {
         try
         {
@@ -384,6 +384,7 @@
             Logger.LogError(ex, "Errore export JSON");
             Snackbar.Add($"Errore export: {ex.Message}", Severity.Error);
         }
+        return Task.CompletedTask;
     }
     
     private void Chiudi() => MudDialog.Close();

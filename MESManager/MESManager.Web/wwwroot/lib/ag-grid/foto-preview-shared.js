@@ -97,7 +97,7 @@ window.fotoPreviewShared = (function () {
                 if (!codice) {
                     return '<span style="color:#ccc;font-size:11px;">—</span>';
                 }
-                var src = '/api/AllegatiAnima/preview-foto/' + encodeURIComponent(codice) + '?n=' + photoIndex + '&_t=' + Date.now();
+                var src = '/api/AllegatiAnima/preview-foto/' + codice.split('/').map(encodeURIComponent).join('/') + '?n=' + photoIndex + '&_t=' + Date.now();
 
                 var img = document.createElement('img');
                 img.src = src;

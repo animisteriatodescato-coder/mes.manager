@@ -15,9 +15,9 @@
 
 :root {
     /* ========== ALTEZZE BARRE ========== */
-    --appbar-height: 44px;           /* Altezza app bar principale (MESManager) */
-    --toolbar-padding-y: 0.2rem;     /* Padding verticale toolbar Commesse */
-    --grid-offset: 150px;             /* Offset per altezza griglia (appbar + toolbar + margini) */
+    --appbar-height: 39px;           /* Altezza app bar principale (MESManager) — 39px (+10% da 35px per non tagliare testo) */
+    --toolbar-padding-y: 0.10rem;    /* Padding verticale toolbar Commesse (ridotto ~5%) */
+    --grid-offset: 142px;            /* Offset per altezza griglia — appbar(48)+toolbar+footer+margin-top(4px) */
     
     /* ========== ALTEZZE AG-GRID ========== */
     --column-header-height: 28px;    /* Altezza intestazioni colonne griglia */
@@ -34,9 +34,16 @@
     --button-size: small;            /* Dimensione pulsanti: small, medium, large */
 }
 
-/* Applica altezza app bar */
+/* Applica altezza app bar — copre sia la barra principale (non-dense) che quella secondaria (dense) */
+.mud-appbar,
 .mud-appbar.mud-appbar-dense {
     min-height: var(--appbar-height) !important;
+    max-height: var(--appbar-height) !important;
+}
+
+/* Assicura che il padding-top del contenuto principale corrisponda all'altezza ridotta dell'appbar */
+.mud-main-content {
+    padding-top: var(--appbar-height) !important;
 }
 
 /* Sticky toolbar + padding */
@@ -44,7 +51,8 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    padding: var(--toolbar-padding-y) 0 !important;
+    padding: var(--toolbar-padding-y) 8px !important;
+    margin-top: 4px;
 }
 
 /* Altezza griglia calcolata dinamicamente */
@@ -52,19 +60,56 @@
     height: calc(100vh - var(--grid-offset)) !important;
 }
 
-/* Footer statistiche griglia */
+/* Footer statistiche griglia — compatto */
 .footer-info {
     position: sticky;
     bottom: 0;
     z-index: 10;
     background-color: var(--mud-palette-surface);
+    padding-top: 1px !important;
+    padding-bottom: 1px !important;
+    margin-top: 2px !important;   /* override mt-2 (8px) → 2px */
 }
+/* Chip "Pronto" nel footer: ridotto ~10% rispetto a Size.Small */
+.footer-info .mud-chip {
+    height: 22px !important;
+    min-height: 22px !important;
+    font-size: 0.68rem !important;
+    padding: 0 6px !important;
+}
+.footer-info .mud-chip .mud-icon-root {
+    font-size: 0.85rem !important;
+}
+/* Pulsanti toolbar outlined — effetto 3D con bordo, ombra e gradiente */
+.settings-panel .mud-button-root.mud-button-outlined,
+.toolbar-sticky .mud-button-root.mud-button-outlined {
+    border-color: var(--mes-button-color, var(--mud-palette-primary)) !important;
+    color: var(--mes-button-color, var(--mud-palette-primary)) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.28), 0 1px 2px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.10) !important;
+    background: linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(0,0,0,0.05) 100%) !important;
+    transition: box-shadow 0.15s ease, transform 0.1s ease !important;
+}
+.settings-panel .mud-button-root.mud-button-outlined .mud-icon-root,
+.toolbar-sticky .mud-button-root.mud-button-outlined .mud-icon-root {
+    color: var(--mes-button-color, var(--mud-palette-primary)) !important;
+}
+.settings-panel .mud-button-root.mud-button-outlined:hover,
+.toolbar-sticky .mud-button-root.mud-button-outlined:hover {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--mes-button-color, var(--mud-palette-primary)) 12%, transparent) 0%, color-mix(in srgb, var(--mes-button-color, var(--mud-palette-primary)) 6%, transparent) 100%) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.32), 0 2px 4px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.14) !important;
+}
+.settings-panel .mud-button-root.mud-button-outlined:active,
+.toolbar-sticky .mud-button-root.mud-button-outlined:active {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.20), inset 0 1px 3px rgba(0,0,0,0.15) !important;
+    transform: translateY(1px) !important;
+}
+
 /* Pulsanti più compatti: ridotti del ~20% rispetto a default MudBlazor */
 .settings-panel .mud-button-root,
 .toolbar-sticky .mud-button-root {
     font-size: 0.75rem !important;
     padding: 3px 10px !important;
-    min-height: 30px !important;
+    min-height: 27px !important; /* ridotto ~5% */
 }
 
 .settings-panel .mud-icon-button-root,

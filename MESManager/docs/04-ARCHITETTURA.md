@@ -750,3 +750,29 @@ Componente riusabile `Components/Shared/ColorTokenPicker.razor`:
 
 Parametri principali: `Label`, `Value`/`ValueChanged` (string hex), `Palette` (List<string>), `ShowAuto`, `AutoLabel`, `ShowHexInput`, `FallbackColor`.
 
+---
+
+## 🔌 Pattern Centralizzati — Usa Questi, Non Duplicare
+
+> ⚠️ Esistono già. Usarli è **OBBLIGATORIO**. Reimplementare = bug architetturale. Cerca prima con grep/semantic search → estendi → **mai duplica**.
+
+| Vuoi fare... | Estendi/Usa |
+|---|---|
+| Nuova griglia catalogo | `@inherits CatalogoGridBase` in `Components/Pages/Cataloghi/` |
+| Config JS griglia AG Grid | `wwwroot/js/ag-grid-factory.js` → `agGridFactory.setup({...})` |
+| Pannello impostazioni griglia | `<GridSettingsPanel @bind-Settings="settings" />` |
+| Servizio allegati per nuova entità | `: AllegatoFileServiceBase` in `Application/Services/` |
+| Path di rete / MIME type allegati | `ConvertNetworkPath()` / `GetMimeType()` dalla base |
+| Colori tema / dark-light mode | `_theme` / `_isDarkMode` in `MainLayout.razor` → 1 punto |
+| **Tema dinamico da immagine** | `ColorExtractionService` → `AppSettingsService.ThemePalette` → `MainLayout.BuildThemeFromSettings()` |
+| **Token colori / grafica** | `MesDesignTokens` in `Constants/` → UNICA fonte di verità per tutti i colori hardcoded. MAI scrivere hex direttamente |
+| **Dark mode iniettabile** | `IThemeModeService` (Scoped) → inietta nei componenti che reagiscono a dark/light. `UpdateMode()` solo da MainLayout |
+| **Testo su sfondo Primary** | `AppSettings.ThemeTextOnPrimary` + `AppSettingsService.ComputeTextOnBackground()` → `--mes-text-on-primary` CSS var |
+| **Testo brand su sfondo bianco** | `AppSettings.ThemePrimaryTextColor` + `AppSettingsService.ComputePrimaryTextColor()` → `--mes-primary-text` CSS var |
+| **Card sfondo bianco in dark mode** | `color: #1a1a1a !important` + override `.mud-typography` figli — MAI `var(--mud-palette-text-primary)` su card con background hardcoded |
+| Preferenze utente persistenti | `IPreferenzeUtenteService` → mai localStorage diretto |
+| **Colonna Ricetta in AG Grid** | `ricetta-column-shared.js` → `window.ricettaColumnShared.createColumnDef(config)`. Chip verde `✓ N` = ha ricetta, chip grigio `↓ importa` = cliccabile. Cache-bust in `App.razor` (`?v=NNNN`) |
+| **Visualizzare ricetta articolo** | `RicettaViewDialog.razor` — param `CodiceArticolo` + `ShowImportButton=true` per "Importa da Macchina" |
+| **Importare ricetta da macchina** | `ImportaRicettaMacchinaDialog.razor` — param `CodiceArticolo`. Usa `GET /api/Macchine` + `POST /api/plc/save-recipe-from-plc`. MAI duplicare. |
+| **Azione pericolosa PLC (invia a macchina)** | Sempre `await DialogService.ShowMessageBox(...)` confirm prima — vedi `DashboardProduzione.razor` |
+

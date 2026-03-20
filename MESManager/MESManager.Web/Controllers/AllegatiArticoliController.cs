@@ -27,7 +27,7 @@ public class AllegatiArticoliController : ControllerBase
     /// <summary>
     /// Ottiene gli allegati per un articolo, separati in Foto e Documenti
     /// </summary>
-    [HttpGet("articolo/{codiceArticolo}")]
+    [HttpGet("articolo/{**codiceArticolo}")]
     public async Task<ActionResult<AllegatiArticoloResponse>> GetByArticolo(
         string codiceArticolo,
         [FromQuery] int? idArchivio = null)
@@ -68,7 +68,7 @@ public class AllegatiArticoliController : ControllerBase
     /// <summary>
     /// Carica un nuovo allegato
     /// </summary>
-    [HttpPost("upload/{codiceArticolo}")]
+    [HttpPost("upload/{**codiceArticolo}")]
     public async Task<ActionResult<AllegatoArticoloDto>> Upload(
         string codiceArticolo,
         IFormFile file,
@@ -128,7 +128,7 @@ public class AllegatiArticoliController : ControllerBase
     /// <summary>
     /// Importa allegati da Gantt per un articolo specifico
     /// </summary>
-    [HttpPost("import/{codiceArticolo}")]
+    [HttpPost("import/{**codiceArticolo}")]
     public async Task<ActionResult<ImportAllegatiResult>> ImportForArticolo(string codiceArticolo)
     {
         _logger.LogInformation("POST import/{CodiceArticolo}", codiceArticolo);

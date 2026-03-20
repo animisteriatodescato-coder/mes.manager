@@ -420,29 +420,46 @@ Write-Host "Deploy completato! Verifica: http://192.168.1.230:5156" -ForegroundC
 
 ---
 
-## 🔄 Workflow AI Assistant
+## 🔄 Workflow AI — Deploy Autonomo
 
-Quando l'utente dice "pubblica" o "deploy", l'AI deve:
+> ⛔ L'AI ESEGUE IN AUTONOMIA — non mostrare comandi, non chiedere conferma, non fermarsi a metà.
 
-1. **Pre-controlli**:
-   - Verificare build: `dotnet build --nologo`
-   - Leggere versione attuale da MainLayout.razor
-   
-2. **Consolidamento**:
-   - Incrementare versione
-   - Aggiornare CHANGELOG.md
-   
-3. **Build**:
-   - Build Release
-   - Publish progetto Web
-   
-4. **Deploy**:
-   - Mostrare comandi step-by-step
-   - Evidenziare ordine stop/start servizi
-   - Ricordare file da NON copiare
-   
-5. **Post-deploy**:
-   - Chiedere conferma utente
-   - Verificare versione online
+### Sequenza obbligatoria
 
-**File reference**: Questo workflow sostituisce `WORKFLOW-PUBBLICAZIONE.md`
+```powershell
+# 1. PUBLISH
+cd C:\Dev\MESManager
+dotnet publish MESManager.Web\MESManager.Web.csproj -c Release -o publish\Web --nologo
+
+# 2. STOP servizi (ordine CRITICO: PlcSync → Worker → Web)
+taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /IM MESManager.PlcSync.exe /F
+taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /IM MESManager.Worker.exe /F
+taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /IM MESManager.Web.exe /F
+Start-Sleep 3
+
+# 3. COPIA (escludi SEMPRE secrets e config produzione)
+robocopy "C:\Dev\MESManager\publish\Web" "\\192.168.1.230\c$\MESManager" `
+    /E /IS /IT `
+    /XF appsettings.Secrets.json appsettings.Database.json appsettings.Secrets.encrypted "*.log" "*.pdb" app-settings.json `
+    /XD logs SyncBackups Worker PlcSync `
+    /NFL /NDL /NJH
+# exit code 0-7 = OK, >7 = errore
+
+# 4. RIAVVIO
+schtasks /S 192.168.1.230 /U Administrator /P "A123456!" /Run /TN "StartMESWeb"
+Start-Sleep 8
+
+# 5. VERIFICA
+tasklist /S 192.168.1.230 /U Administrator /P "A123456!" | findstr MESManager
+# Atteso: MESManager.Web.exe + MESManager.Worker.exe + MESManager.PlcSync.exe
+```
+
+### Regole critiche
+
+| Regola | Dettaglio |
+|---|---|
+| ❌ MAI chiedere all'utente di eseguire comandi | L'AI usa `run_in_terminal` direttamente |
+| ❌ MAI sovrascrivere `appsettings.Secrets.json` / `appsettings.Database.json` | `/XF` obbligatorio nel robocopy |
+| ❌ MAI fermare Worker/PlcSync se non modificati | Ordine CRITICO: PlcSync → Worker → Web |
+| ✅ SEMPRE verificare 3 processi attivi dopo riavvio | `tasklist \| findstr MESManager` |
+| ✅ SEMPRE riportare esito con exit code e servizi UP | Conferma concisa all'utente |

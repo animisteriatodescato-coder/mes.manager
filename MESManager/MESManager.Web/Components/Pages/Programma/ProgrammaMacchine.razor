@@ -18,7 +18,7 @@
 
 <div class="mes-grid-page" data-testid="page-programma-macchine">
     <MudPaper Class="settings-panel toolbar-sticky pa-2 mb-1" Elevation="1">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
             <MudTextField @bind-Value="searchText"
                          Placeholder="Cerca in tutte le colonne..."
                          Variant="Variant.Outlined"
@@ -682,7 +682,7 @@
         try
         {
             // Carica l'AnimeDto dal codice articolo
-            var anime = await Http.GetFromJsonAsync<AnimeDto>($"/api/Anime/by-codice/{Uri.EscapeDataString(articoloCodice)}");
+            var anime = await Http.GetFromJsonAsync<AnimeDto>($"/api/Anime/by-codice/{string.Join('/', articoloCodice.Split('/').Select(Uri.EscapeDataString))}");
             
             if (anime == null)
             {
@@ -893,7 +893,7 @@
             // Ottieni le colonne da stampare
             var printColumns = await PreferencesService.GetAsync<List<string>>("programma-macchine-print-columns");
             // Usa un iframe nascosto per stampare, così non interferisce con la pagina principale
-            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.printViaIframe", printColumns);
+            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.printViaIframe", printColumns, settings.FontSize);
         }
         catch
         {
@@ -1098,7 +1098,7 @@
         
         try
         {
-            var allegati = await Http.GetFromJsonAsync<AllegatiArticoloResponse>($"/api/allegati-articoli/articolo/{Uri.EscapeDataString(codiceArticolo)}");
+            var allegati = await Http.GetFromJsonAsync<AllegatiArticoloResponse>($"/api/allegati-articoli/articolo/{string.Join('/', codiceArticolo.Split('/').Select(Uri.EscapeDataString))}");
             if (allegati?.Foto != null)
             {
                 var foto = allegati.Foto.FirstOrDefault(f => f.Priorita == 2) ?? allegati.Foto.FirstOrDefault();

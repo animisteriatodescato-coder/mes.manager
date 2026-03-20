@@ -8,32 +8,41 @@
 
 <PageTitle>Dashboard Produzione</PageTitle>
 
-<div class="dashboard-container" data-testid="page-dashboard-produzione" style="display: flex; flex-direction: column; height: calc(100vh - 100px); overflow: hidden;">
-    <MudGrid Spacing="3" Style="flex: 1; overflow-y: auto; margin: 0; padding: 0 0.5rem;">
+<div class="dashboard-container" data-testid="page-dashboard-produzione" style="display: flex; flex-direction: column; height: calc(100vh - 52px); overflow: hidden;">
+    <MudGrid Spacing="2" Style="flex: 1; overflow: hidden; min-height: 0; margin: 0; padding: 0 0.25rem; align-content: flex-start;">
         @foreach (var machine in _data.OrderBy(m => m.MacchinaNumero))
         {
-            <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudItem xs="12" sm="6" md="4" lg="3" Style="display:flex;">
                 <MudCard Elevation="3" Class="@($"machine-card {GetMachineCardClass(machine.StatoMacchina)}")"
                          @ondblclick="@(() => ApriDbViewerAsync(machine.MacchinaId, machine.MacchinaNumero))"
                          Style="cursor: pointer;">
-                    <MudCardHeader Class="pb-2">
+                    <MudCardHeader Class="card-header-compact">
                         <CardHeaderContent>
                             <div class="d-flex justify-space-between align-center">
-                                <MudText Typo="Typo.h3" Class="machine-number">@machine.MacchinaNumero</MudText>
-                                <MudChip T="string" Size="Size.Medium" Color="@GetStatoColor(machine.StatoMacchina)" Class="status-chip">
+                                <div class="d-flex align-center gap-2">
+                                    <MudText Typo="Typo.h4" Class="machine-number">@machine.MacchinaNumero</MudText>
+                                    @if (!string.IsNullOrEmpty(machine.NomeOperatore))
+                                    {
+                                        <div class="d-flex align-center gap-1 operator-name">
+                                            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                                            <MudText Typo="Typo.body2">@machine.NomeOperatore</MudText>
+                                        </div>
+                                    }
+                                </div>
+                                <MudChip T="string" Size="Size.Small" Color="@GetStatoColor(machine.StatoMacchina)" Class="status-chip">
                                     @GetStatoText(machine.StatoMacchina)
                                 </MudChip>
                             </div>
                         </CardHeaderContent>
                     </MudCardHeader>
-                    <MudCardContent Class="pt-2 pb-2">
+                    <MudCardContent Class="card-content-compact">
                         <!-- Barra di Completamento -->
-                        <div class="mb-3">
+                        <div class="mb-1">
                             <div class="d-flex justify-space-between mb-1">
-                                <MudText Typo="Typo.body1" Class="section-title">Completamento</MudText>
-                                <MudText Typo="Typo.h6" Style="font-weight: bold">@machine.PercentualeCompletamento.ToString("F1")%</MudText>
+                                <MudText Typo="Typo.caption" Class="section-title">COMPLETAMENTO</MudText>
+                                <MudText Typo="Typo.body2" Style="font-weight: bold">@machine.PercentualeCompletamento.ToString("F1")%</MudText>
                             </div>
-                            <MudProgressLinear Color="@GetProgressColor(machine)" Value="@((double)machine.PercentualeCompletamento)" Size="Size.Large" Class="rounded-progress" />
+                            <MudProgressLinear Color="@GetProgressColor(machine)" Value="@((double)machine.PercentualeCompletamento)" Size="Size.Small" Class="rounded-progress" />
                         </div>
 
                         <!-- Metriche Produzione -->
@@ -41,28 +50,28 @@
                             <MudItem xs="12">
                                 <div class="metric-box-inline">
                                     <div class="metric-inline-item">
-                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Medium" Color="Color.Success" />
+                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success" />
                                         <div class="metric-content">
-                                            <MudText Typo="Typo.body2" Class="metric-label">Cicli Fatti</MudText>
-                                            <MudText Typo="Typo.h6" Class="metric-value">@machine.CicliFatti.ToString("N0")</MudText>
+                                            <MudText Typo="Typo.caption" Class="metric-label">Cicli Fatti</MudText>
+                                            <MudText Typo="Typo.body2" Class="metric-value">@machine.CicliFatti.ToString("N0")</MudText>
                                         </div>
                                     </div>
                                     <div class="metric-divider"></div>
                                     <div class="metric-inline-item">
-                                        <MudIcon Icon="@Icons.Material.Filled.Flag" Size="Size.Medium" Color="Color.Primary" />
+                                        <MudIcon Icon="@Icons.Material.Filled.Flag" Size="Size.Small" Color="Color.Primary" />
                                         <div class="metric-content">
-                                            <MudText Typo="Typo.body2" Class="metric-label">Obiettivo</MudText>
-                                            <MudText Typo="Typo.h6" Class="metric-value">@machine.QuantitaDaProdurre.ToString("N0")</MudText>
+                                            <MudText Typo="Typo.caption" Class="metric-label">Obiettivo</MudText>
+                                            <MudText Typo="Typo.body2" Class="metric-value">@machine.QuantitaDaProdurre.ToString("N0")</MudText>
                                         </div>
                                     </div>
                                 </div>
                             </MudItem>
                             <MudItem xs="6">
                                 <div class="metric-box">
-                                    <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Medium" Color="@GetScartiColor(machine)" />
+                                    <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Small" Color="@GetScartiColor(machine)" />
                                     <div class="metric-content">
-                                        <MudText Typo="Typo.body2" Class="metric-label">Scarti</MudText>
-                                        <MudText Typo="Typo.h6" Class="metric-value" Style="@($"color: {GetScartiColorHex(machine)}")">
+                                        <MudText Typo="Typo.caption" Class="metric-label">Scarti</MudText>
+                                        <MudText Typo="Typo.body2" Class="metric-value" Style="@($"color: {GetScartiColorHex(machine)}")">
                                             @machine.CicliScarti <span style="font-size: 0.8em">(@GetPercentualeScarti(machine)%)</span>
                                         </MudText>
                                     </div>
@@ -70,10 +79,10 @@
                             </MudItem>
                             <MudItem xs="6">
                                 <div class="metric-box">
-                                    <MudIcon Icon="@Icons.Material.Filled.Speed" Size="Size.Medium" Color="@GetTempoColor(machine)" />
+                                    <MudIcon Icon="@Icons.Material.Filled.Speed" Size="Size.Small" Color="@GetTempoColor(machine)" />
                                     <div class="metric-content">
-                                        <MudText Typo="Typo.body2" Class="metric-label">Tempo</MudText>
-                                        <MudText Typo="Typo.h6" Class="metric-value" Style="@($"color: {GetTempoColorHex(machine)}")">
+                                        <MudText Typo="Typo.caption" Class="metric-label">Tempo</MudText>
+                                        <MudText Typo="Typo.body2" Class="metric-value" Style="@($"color: {GetTempoColorHex(machine)}")">
                                             @((int)Math.Round((double)machine.TempoMedioRilevato)) / @((int)Math.Round((double)machine.TempoMedio))
                                         </MudText>
                                     </div>
@@ -81,29 +90,29 @@
                             </MudItem>
                         </MudGrid>
 
-                        <!-- Operatore e Barcode -->
-                        @if (!string.IsNullOrEmpty(machine.NomeOperatore) || machine.BarcodeLavorazione > 0)
+                        <!-- Barcode attuale (sinistra) e Prossimo articolo (destra) -->
+                        @if (machine.BarcodeLavorazione > 0 || !string.IsNullOrEmpty(machine.ProssimoArticoloCodice))
                         {
-                            <MudDivider Class="my-2" />
-                            <div class="d-flex align-center justify-space-between gap-2">
-                                @if (!string.IsNullOrEmpty(machine.NomeOperatore))
-                                {
-                                    <div class="d-flex align-center gap-1">
-                                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
-                                        <MudText Typo="Typo.body2">@machine.NomeOperatore</MudText>
-                                    </div>
-                                }
-                                @if (machine.BarcodeLavorazione > 0)
-                                {
-                                    <div class="d-flex align-center gap-1">
+                            <MudDivider Class="my-1" />
+                            <div class="d-flex align-center justify-space-between">
+                                <div class="d-flex align-center gap-1" title="Articolo in produzione">
+                                    @if (machine.BarcodeLavorazione > 0)
+                                    {
                                         <MudIcon Icon="@Icons.Material.Filled.QrCode" Size="Size.Small" />
                                         <MudText Typo="Typo.body2">@machine.BarcodeLavorazione</MudText>
-                                    </div>
-                                }
+                                    }
+                                </div>
+                                <div class="d-flex align-center gap-1" title="Prossimo articolo programmato">
+                                    @if (!string.IsNullOrEmpty(machine.ProssimoArticoloCodice))
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.SkipNext" Size="Size.Small" Color="Color.Info" />
+                                        <MudText Typo="Typo.body2" Style="color: var(--mud-palette-info);">@machine.ProssimoArticoloCodice</MudText>
+                                    }
+                                </div>
                             </div>
                         }
                     </MudCardContent>
-                    <MudCardActions Class="pt-0">
+                    <MudCardActions Class="card-actions-compact">
                         <MudButton Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" 
                                    OnClick="@(() => Nav.NavigateTo("/produzione/plc-realtime"))" data-testid="btn-dashboard-dettagli">
                             Dettagli
@@ -156,11 +165,29 @@
 
 <style>
     .dashboard-container {
-        padding: 0.5rem;
+        padding: 0.25rem;
         background: var(--mud-palette-background) !important;
     }
 
+    .card-header-compact {
+        padding: 4px 10px 2px 10px !important;
+    }
 
+    .card-content-compact {
+        padding: 3px 10px 3px 10px !important;
+    }
+
+    .card-actions-compact {
+        padding: 1px 6px 3px 6px !important;
+        min-height: unset !important;
+    }
+
+    .operator-name {
+        max-width: 140px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
 
     .machine-card {
         height: 100%;
@@ -247,11 +274,10 @@
 
     .machine-number {
         font-weight: 800;
-        font-size: 3rem;
-        /* --mes-primary-text = versione scurita del Primary garantita leggibile su sfondo bianco.
-           Calcolata da AppSettingsService.ComputePrimaryTextColor() e iniettata da MainLayout. */
+        font-size: 2rem;
         color: var(--mes-primary-text, var(--mud-palette-primary));
         letter-spacing: -1px;
+        line-height: 1;
     }
 
     .status-chip {
@@ -278,34 +304,34 @@
     .metric-box {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 10px;
+        gap: 8px;
+        padding: 5px 8px;
         background: rgba(0,0,0,0.04);
-        border-radius: 12px;
+        border-radius: 8px;
         border: 1px solid rgba(0,0,0,0.08);
         transition: all 0.2s ease;
     }
 
     .metric-box:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
     .metric-box-inline {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 10px;
+        padding: 5px 8px;
         background: rgba(0,0,0,0.04);
-        border-radius: 12px;
+        border-radius: 8px;
         border: 1px solid rgba(0,0,0,0.08);
         transition: all 0.2s ease;
         gap: 8px;
     }
 
     .metric-box-inline:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
     .metric-inline-item {
@@ -317,7 +343,7 @@
 
     .metric-divider {
         width: 1px;
-        height: 40px;
+        height: 28px;
         background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.1), transparent);
     }
 
@@ -337,7 +363,7 @@
     .metric-value {
         font-weight: 800;
         line-height: 1.2;
-        font-size: 1rem;
+        font-size: 0.9rem;
         color: #1a1a1a;
     }
 

@@ -44,7 +44,6 @@ public partial class MainLayout : IDisposable
     private bool _isDarkMode = false;
     private bool _drawerOpen = false;
     private string _currentCategory = string.Empty;
-    private string _toolbarSearchText = string.Empty;
     private ErrorBoundary? _errorBoundary;
 
     // Tema dinamico — costruito dai colori in AppSettings.
@@ -264,44 +263,10 @@ public partial class MainLayout : IDisposable
         InvokeAsync(StateHasChanged);
     }
     
-    private bool HasToolbar()
-    {
-        // Escludi pagine che hanno toolbar personalizzate
-        var currentPath = NavManager.ToBaseRelativePath(NavManager.Uri).ToLower();
-        if (currentPath.Contains("plc-realtime") || 
-            currentPath.Contains("plc-storico"))
-        {
-            return false;
-        }
-        
-        var pageKey = PageToolbarService.GetCurrentPageKey();
-        return !string.IsNullOrEmpty(pageKey);
-    }
-    
     private bool IsHomePage()
     {
         var currentPath = NavManager.ToBaseRelativePath(NavManager.Uri).ToLower();
         return string.IsNullOrEmpty(currentPath) || currentPath == "/";
-    }
-    
-    private bool IsPlcRealtimePage()
-    {
-        try
-        {
-            var currentPath = NavManager.ToBaseRelativePath(NavManager.Uri).ToLower();
-            if (!currentPath.Contains("plc-realtime"))
-            {
-                return false;
-            }
-            
-            var pageKey = PageToolbarService.GetCurrentPageKey();
-            var page = PageToolbarService.GetActivePage("plc-realtime");
-            return pageKey == "plc-realtime" && page != null;
-        }
-        catch
-        {
-            return false;
-        }
     }
 
     private string GetPageTitle()
@@ -423,74 +388,6 @@ public partial class MainLayout : IDisposable
             }
         }
     }
-    
-    // Metodi specifici per PLC Realtime - RIMOSSI: sync e autorefresh ora sono solo in /sync/macchine
-    
-    #pragma warning disable ASP0006
-    private RenderFragment RenderPlcRealtimeToolbar() => builder =>
-    {
-        try
-        {
-            var page = PageToolbarService.GetActivePage("plc-realtime") as dynamic;
-            if (page == null) return;
-            
-            int seq = 0;
-            
-            // Campo di ricerca
-            builder.OpenComponent<MudTextField<string>>(seq++);
-            builder.AddAttribute(seq++, "Value", (string)page.SearchText);
-            builder.AddAttribute(seq++, "ValueChanged", EventCallback.Factory.Create<string>(this, async (value) =>
-            {
-                _toolbarSearchText = value;
-                await OnToolbarSearch(value);
-            }));
-            builder.AddAttribute(seq++, "Placeholder", "Cerca...");
-            builder.AddAttribute(seq++, "Variant", Variant.Outlined);
-            builder.AddAttribute(seq++, "Margin", Margin.Dense);
-            builder.AddAttribute(seq++, "Style", "width: 200px; background-color: white; color: black;");
-            builder.AddAttribute(seq++, "Immediate", true);
-            builder.AddAttribute(seq++, "DebounceInterval", 280.0); // MudBlazor v8: DebounceInterval è double
-            builder.AddAttribute(seq++, "OnDebounceIntervalElapsed", EventCallback.Factory.Create<string>(this, OnToolbarSearch));
-            builder.CloseComponent();
-            
-            // Pulsante Colonne
-            builder.OpenComponent<MudButton>(seq++);
-            builder.AddAttribute(seq++, "Variant", Variant.Text);
-            builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.ViewColumn);
-            builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, async (_) => await OnToolbarToggleColumns()));
-            builder.AddAttribute(seq++, "Color", Color.Inherit);
-            builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 => b2.AddContent(0, "Colonne")));
-            builder.CloseComponent();
-            
-            // Pulsante Reset
-            builder.OpenComponent<MudButton>(seq++);
-            builder.AddAttribute(seq++, "Variant", Variant.Text);
-            builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.Refresh);
-            builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, async (_) => await OnToolbarReset()));
-            builder.AddAttribute(seq++, "Color", Color.Inherit);
-            builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 => b2.AddContent(0, "Reset")));
-            builder.CloseComponent();
-            
-            // Pulsante Impostazioni
-            builder.OpenComponent<MudButton>(seq++);
-            builder.AddAttribute(seq++, "Variant", Variant.Text);
-            builder.AddAttribute(seq++, "StartIcon", Icons.Material.Filled.Settings);
-            builder.AddAttribute(seq++, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, (_) => { OnToolbarToggleSettings(); }));
-            builder.AddAttribute(seq++, "Color", Color.Inherit);
-            builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(b2 => b2.AddContent(0, "Impostazioni")));
-            builder.CloseComponent();
-        }
-        catch (ObjectDisposedException)
-        {
-            // Pagina disposta durante il render, ignora silenziosamente
-            return;
-        }
-        catch
-        {
-            // Error rendering PlcRealtime toolbar - silently ignore
-        }
-    };
-    #pragma warning restore ASP0006
     
     private async Task ToggleTheme()
     {

@@ -16,23 +16,53 @@
 
 <PageTitle>PLC Realtime</PageTitle>
 
-@* Pagina SOLO visualizzazione dati PLC - nessun pulsante sync (sync è in /sync/macchine) *@
-<div class="plc-realtime-page" data-testid="page-plc-realtime">
-    <div id="plcRealtimeGrid" class="ag-theme-alpine" 
-         data-testid="grid-plc-realtime"
-         style="width: 100%; height: calc(100vh - 150px);">
+<div class="mes-grid-page" data-testid="page-plc-realtime">
+    <MudPaper Class="settings-panel toolbar-sticky pa-2 mb-1" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+            <MudTextField @bind-Value="searchText"
+                         Placeholder="Cerca..."
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         Style="width: 250px;"
+                         Immediate="true"
+                         DebounceInterval="280"
+                         OnDebounceIntervalElapsed="OnSearchDebounced" />
+            <MudSpacer />
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@ResetGrid">Reset</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => _showSettings = !_showSettings)">Impostazioni</MudButton>
+        </MudStack>
+        @if (_showSettings)
+        {
+            <MudPaper Class="pa-4 mt-2" Elevation="1">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Wrap="Wrap.Wrap">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText>Font Size:</MudText>
+                        <MudNumericField Value="@settings.FontSize" Min="10" Max="24" Step="1"
+                                        Variant="Variant.Outlined" Margin="Margin.Dense"
+                                        ValueChanged="@(async (int val) => { settings.FontSize = val; await ApplyUiSettings(); })"
+                                        Style="width: 80px;" />
+                    </MudStack>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText>Row Height:</MudText>
+                        <MudNumericField Value="@settings.RowHeight" Min="25" Max="80" Step="5"
+                                        Variant="Variant.Outlined" Margin="Margin.Dense"
+                                        ValueChanged="@(async (int val) => { settings.RowHeight = val; await ApplyUiSettings(); })"
+                                        Style="width: 80px;" />
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudPaper>
+    <div id="plcRealtimeGrid" class="ag-theme-alpine commesse-grid-container"
+         data-testid="grid-plc-realtime">
     </div>
 </div>
-
-<style>
-    .plc-realtime-page {
-        position: relative;
-    }
-</style>
 
 @code {
     private GridUiSettings settings = new();
     private string searchText = string.Empty;
+    private bool _showSettings = false;
     private bool _hasRendered = false;
     private bool _disposed = false;
     private List<PlcRealtimeDto> _data = new();
@@ -98,6 +128,10 @@
                 var userId = CurrentUserService.CurrentUserId?.ToString() ?? "";
                 await JSRuntime.InvokeVoidAsync("plcRealtimeGrid.setCurrentUser", userId);
                 
+                var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("plc-realtime-grid-settings");
+                if (savedSettings != null) settings = savedSettings;
+                
+                await JSRuntime.InvokeVoidAsync("plcRealtimeGrid.applySettings", new { fontSize = settings.FontSize, rowHeight = settings.RowHeight });
                 await JSRuntime.InvokeVoidAsync("plcRealtimeGrid.init", "plcRealtimeGrid", _data, savedColumnState);
             }
             catch
@@ -171,15 +205,13 @@
         catch { }
     }
     
-    // Metodi pubblici per essere chiamati dalla AppBar (toolbar semplificata)
-    public async Task OnSearchDebounced_Public(string value)
+    private async Task ApplyUiSettings()
     {
-        searchText = value;
-        await OnSearchDebounced(value);
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("plcRealtimeGrid.applySettings", new { fontSize = settings.FontSize, rowHeight = settings.RowHeight });
+            await PreferencesService.SetAsync("plc-realtime-grid-settings", settings);
+        }
+        catch { }
     }
-    
-    public async Task ToggleColumnPanel_Public() => await ToggleColumnPanel();
-    public async Task ResetGrid_Public() => await ResetGrid();
-    
-    public string SearchText => searchText;
 }
