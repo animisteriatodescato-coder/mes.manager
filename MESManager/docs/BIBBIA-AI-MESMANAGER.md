@@ -23,6 +23,7 @@
 ║  DOPO OGNI MODIFICA CODICE (features, fix, refactoring):                ║
 ║                                                                          ║
 ║  0. ✅ Incrementa AppVersion.cs (anche micro-modifiche UI)              ║
+║  0b.✅ git commit -A + commit PRIMA di modifiche E DOPO ogni fix        ║
 ║  1. ✅ dotnet build --nologo (0 errori OBBLIGATORIO)                    ║
 ║  2. ✅ TEST AUTO: Se modifica UI → .\test-plc-realtime.ps1 -UseExisting ║
 ║  3. ✅ AVVIA SERVER: dotnet run (background da C:\Dev)                  ║
@@ -31,6 +32,8 @@
 ║                                                                          ║
 ║  ❌ MAI saltare step 2-4: utente DEVE poter testare immediatamente      ║
 ║  ❌ MAI dire "ho finito" senza test auto + server avviato               ║
+║  ❌ MAI eseguire modifiche senza git commit PRIMA e DOPO                ║
+║  ❌ MAI chiedere all'utente di verificare o eseguire — FA TUTTO L'AI    ║
 ╠══════════════════════════════════════════════════════════════════════════╣
 ║  QUANDO L'UTENTE CHIEDE DEPLOY ("fai il deploy", "deploya"):            ║
 ║                                                                          ║
