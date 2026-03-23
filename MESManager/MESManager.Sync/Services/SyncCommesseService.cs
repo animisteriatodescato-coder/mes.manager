@@ -196,7 +196,31 @@ public class SyncCommesseService
                 }
             }
 
-            await _context.SaveChangesAsync(cancellationToken);
+            // Salva con retry in caso di conflitti di concorrenza (RowVersion cambiato da Gantt/PLC)
+            await SaveChangesWithConcurrencyRetryAsync(cancellationToken);
+
+            // Gestione orfani: commesse "Aperte" nel DB ma non più presenti in Mago
+            // (es: cancellate o chiuse direttamente nel gestionale senza passare da Delivered=1)
+            var codiciMago = new HashSet<string>(
+                commesseMago.Select(m => $"{m.InternalOrdNo}-{m.Item}"),
+                StringComparer.OrdinalIgnoreCase);
+
+            var orfane = await _context.Commesse
+                .Where(c => c.Stato == StatoCommessa.Aperta && !codiciMago.Contains(c.Codice))
+                .ToListAsync(cancellationToken);
+
+            if (orfane.Any())
+            {
+                _logger.LogInformation("Trovate {Count} commesse orfane (Aperte in DB ma assenti in Mago) → chiusura automatica", orfane.Count);
+                foreach (var orfana in orfane)
+                {
+                    orfana.Stato = StatoCommessa.Chiusa;
+                    orfana.TimestampSync = DateTime.Now;
+                    log.Aggiornati++;
+                    _logger.LogInformation("  Chiusa orfana: {Codice}", orfana.Codice);
+                }
+                await SaveChangesWithConcurrencyRetryAsync(cancellationToken);
+            }
 
             if (syncState == null)
             {
@@ -221,6 +245,51 @@ public class SyncCommesseService
         await _context.SaveChangesAsync(cancellationToken);
 
         return log;
+    }
+
+    /// <summary>
+    /// Salva le modifiche gestendo i conflitti di concorrenza ottimistica (RowVersion).
+    /// Se una commessa è stata modificata da Gantt/PLC nel frattempo, ricarica il RowVersion
+    /// aggiornato e ritenta (la sync da Mago vince sui campi di sua competenza).
+    /// </summary>
+    private async Task SaveChangesWithConcurrencyRetryAsync(CancellationToken cancellationToken, int maxRetries = 3)
+    {
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+                return;
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                if (attempt == maxRetries)
+                {
+                    _logger.LogError(ex, "Concurrency conflict dopo {MaxRetries} tentativi durante sync Commesse", maxRetries);
+                    throw;
+                }
+
+                _logger.LogWarning(
+                    "Concurrency conflict (tentativo {Attempt}/{Max}) - refresh RowVersion e retry...",
+                    attempt, maxRetries);
+
+                foreach (var entry in ex.Entries)
+                {
+                    var dbValues = await entry.GetDatabaseValuesAsync(cancellationToken);
+                    if (dbValues != null)
+                    {
+                        // Aggiorna il RowVersion originale con quello attuale del DB
+                        // così il prossimo UPDATE avrà il token corretto
+                        entry.OriginalValues.SetValues(dbValues);
+                    }
+                    else
+                    {
+                        // Record eliminato dal DB: scollega l'entità, non insistere
+                        entry.State = EntityState.Detached;
+                    }
+                }
+            }
+        }
     }
 
     private StatoCommessa MapStatoCommessaDaMago(string delivered, string invoiced)

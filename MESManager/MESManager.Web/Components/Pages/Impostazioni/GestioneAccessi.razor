@@ -1,0 +1,272 @@
+@page "/impostazioni/accessi"
+@attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<IdentityUser> UserManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Gestione Accessi</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+
+    @* ───── Crea nuovo utente ───── *@
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudText Typo="Typo.h6" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Class="mr-2" />Nuovo Utente
+        </MudText>
+        <MudGrid>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="_nuovoUsername"
+                              Label="Username"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Person" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="_nuovaPassword"
+                              Label="Password"
+                              InputType="InputType.Password"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Lock"
+                              HelperText="Min 8 caratteri, maiuscola e numero" />
+            </MudItem>
+            <MudItem xs="12" sm="4" Class="d-flex align-end">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.PersonAdd"
+                           OnClick="CreaUtente"
+                           Disabled="@(string.IsNullOrWhiteSpace(_nuovoUsername) || string.IsNullOrWhiteSpace(_nuovaPassword))">
+                    Crea Utente
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    @* ───── Tabella utenti / ruoli ───── *@
+    <MudPaper Class="pa-4" Elevation="2">
+        <MudText Typo="Typo.h6" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.ManageAccounts" Class="mr-2" />Utenti e Ruoli
+        </MudText>
+
+        @if (_loading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else
+        {
+            <MudTable Items="_utentiRuoli" Hover="true" Dense="true" Striped="true" Elevation="0">
+                <HeaderContent>
+                    <MudTh>Username</MudTh>
+                    @foreach (var ruolo in _ruoli)
+                    {
+                        <MudTh Style="text-align:center; min-width:110px;">@ruolo</MudTh>
+                    }
+                    <MudTh Style="min-width:110px;">Azioni</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Username">
+                        <div class="d-flex align-center gap-2">
+                            <MudText>@context.User.UserName</MudText>
+                            @if (context.Roles.Contains("Admin"))
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">Admin</MudChip>
+                            }
+                        </div>
+                    </MudTd>
+                    @foreach (var ruolo in _ruoli)
+                    {
+                        var r = ruolo;
+                        var item = context;
+                        <MudTd DataLabel="@r" Style="text-align:center;">
+                            <MudCheckBox T="bool"
+                                         Value="@item.Roles.Contains(r)"
+                                         ValueChanged="@((bool val) => ToggleRuolo(item, r, val))"
+                                         Color="Color.Primary" />
+                        </MudTd>
+                    }
+                    <MudTd DataLabel="Azioni">
+                        <MudIconButton Icon="@Icons.Material.Filled.LockReset"
+                                       Color="Color.Warning"
+                                       Size="Size.Small"
+                                       Title="Reset Password"
+                                       OnClick="@(() => ApriResetPassword(context))" />
+                        @if (context.User.UserName != "admin")
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.DeleteForever"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           Title="Elimina utente"
+                                           OnClick="@(() => EliminaUtente(context))" />
+                        }
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4" Color="Color.Secondary">Nessun utente trovato</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        }
+    </MudPaper>
+
+</MudContainer>
+
+@* ───── Dialog reset password ───── *@
+<MudDialog @bind-Visible="_resetDialogVisible"
+           Options="@(new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.LockReset" Class="mr-2" />Reset Password — @_resetUtenteNome
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_nuovaPasswordReset"
+                      Label="Nuova Password"
+                      InputType="InputType.Password"
+                      Variant="Variant.Outlined"
+                      FullWidth="true"
+                      HelperText="Min 8 caratteri, almeno una maiuscola e un numero" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _resetDialogVisible = false)">Annulla</MudButton>
+        <MudButton Color="Color.Warning"
+                   Variant="Variant.Filled"
+                   OnClick="ConfermaResetPassword"
+                   Disabled="@(string.IsNullOrWhiteSpace(_nuovaPasswordReset))">
+            Conferma Reset
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private bool _loading = true;
+    private List<UtenteRuolo> _utentiRuoli = new();
+
+    private static readonly string[] _ruoli = MESManager.Web.Services.RoleSeedService.Ruoli;
+
+    // Nuovo utente
+    private string _nuovoUsername = string.Empty;
+    private string _nuovaPassword = string.Empty;
+
+    // Reset password
+    private bool _resetDialogVisible;
+    private string _resetUserId = string.Empty;
+    private string _resetUtenteNome = string.Empty;
+    private string _nuovaPasswordReset = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CaricaUtenti();
+    }
+
+    private async Task CaricaUtenti()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        var utenti = UserManager.Users.ToList();
+        var lista = new List<UtenteRuolo>();
+        foreach (var u in utenti)
+        {
+            var ruoli = await UserManager.GetRolesAsync(u);
+            lista.Add(new UtenteRuolo { User = u, Roles = new HashSet<string>(ruoli) });
+        }
+
+        _utentiRuoli = lista.OrderBy(u => u.User.UserName).ToList();
+        _loading = false;
+    }
+
+    private async Task ToggleRuolo(UtenteRuolo item, string ruolo, bool aggiunto)
+    {
+        IdentityResult result;
+        if (aggiunto)
+        {
+            result = await UserManager.AddToRoleAsync(item.User, ruolo);
+            if (result.Succeeded) item.Roles.Add(ruolo);
+        }
+        else
+        {
+            result = await UserManager.RemoveFromRoleAsync(item.User, ruolo);
+            if (result.Succeeded) item.Roles.Remove(ruolo);
+        }
+
+        if (result.Succeeded)
+            Snackbar.Add($"Ruolo {ruolo} {(aggiunto ? "aggiunto a" : "rimosso da")} {item.User.UserName}", Severity.Success);
+        else
+            Snackbar.Add($"Errore modifica ruolo: {result.Errors.FirstOrDefault()?.Description}", Severity.Error);
+    }
+
+    private async Task CreaUtente()
+    {
+        if (string.IsNullOrWhiteSpace(_nuovoUsername) || string.IsNullOrWhiteSpace(_nuovaPassword))
+            return;
+
+        var username = _nuovoUsername.Trim();
+        var user = new IdentityUser
+        {
+            UserName       = username,
+            Email          = $"{username.ToLower()}@mesmanager.local",
+            EmailConfirmed = true
+        };
+
+        var result = await UserManager.CreateAsync(user, _nuovaPassword);
+        if (result.Succeeded)
+        {
+            _nuovoUsername = string.Empty;
+            _nuovaPassword = string.Empty;
+            await CaricaUtenti();
+            Snackbar.Add($"Utente '{username}' creato con successo", Severity.Success);
+        }
+        else
+        {
+            var errori = string.Join(" • ", result.Errors.Select(e => e.Description));
+            Snackbar.Add($"Errore: {errori}", Severity.Error);
+        }
+    }
+
+    private void ApriResetPassword(UtenteRuolo item)
+    {
+        _resetUserId       = item.User.Id;
+        _resetUtenteNome   = item.User.UserName ?? "";
+        _nuovaPasswordReset = string.Empty;
+        _resetDialogVisible = true;
+    }
+
+    private async Task ConfermaResetPassword()
+    {
+        var user = await UserManager.FindByIdAsync(_resetUserId);
+        if (user == null) return;
+
+        var token  = await UserManager.GeneratePasswordResetTokenAsync(user);
+        var result = await UserManager.ResetPasswordAsync(user, token, _nuovaPasswordReset);
+
+        if (result.Succeeded)
+        {
+            Snackbar.Add($"Password aggiornata per '{_resetUtenteNome}'", Severity.Success);
+            _resetDialogVisible = false;
+        }
+        else
+        {
+            var errori = string.Join(" • ", result.Errors.Select(e => e.Description));
+            Snackbar.Add($"Errore: {errori}", Severity.Error);
+        }
+    }
+
+    private async Task EliminaUtente(UtenteRuolo item)
+    {
+        var result = await UserManager.DeleteAsync(item.User);
+        if (result.Succeeded)
+        {
+            await CaricaUtenti();
+            Snackbar.Add($"Utente '{item.User.UserName}' eliminato", Severity.Info);
+        }
+        else
+        {
+            Snackbar.Add("Errore eliminazione utente", Severity.Error);
+        }
+    }
+
+    private sealed class UtenteRuolo
+    {
+        public IdentityUser User { get; set; } = new();
+        public HashSet<string> Roles { get; set; } = new();
+    }
+}

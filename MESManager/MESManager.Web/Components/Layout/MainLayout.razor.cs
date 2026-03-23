@@ -117,6 +117,11 @@ public partial class MainLayout : IDisposable
         AppBarContentService.OnChange -= OnAppBarContentChanged;
     }
 
+    private void Logout()
+    {
+        NavManager.NavigateTo("/Account/Logout", forceLoad: true);
+    }
+
     private void OnAppSettingsChanged()
     {
         var settings = UserThemeService.GetEffectiveSettings();

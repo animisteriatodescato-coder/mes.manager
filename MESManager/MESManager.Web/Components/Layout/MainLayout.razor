@@ -285,6 +285,20 @@
         <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" 
                        Color="Color.Inherit" 
                        OnClick="@ToggleTheme" />
+        <AuthorizeView>
+            <Authorized>
+                <MudTooltip Text="@context.User.Identity?.Name" Arrow="true">
+                    <MudIconButton Icon="@Icons.Material.Filled.AccountCircle"
+                                   Color="Color.Inherit"
+                                   Size="Size.Small"
+                                   Class="mr-0" />
+                </MudTooltip>
+                <MudIconButton Icon="@Icons.Material.Filled.Logout"
+                               Color="Color.Inherit"
+                               Title="@($"Esci ({context.User.Identity?.Name})")"
+                               OnClick="Logout" />
+            </Authorized>
+        </AuthorizeView>
     </MudAppBar>
     
     @* Indicatore colore utente corrente *@

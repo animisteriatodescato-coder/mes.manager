@@ -1,0 +1,48 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Accedi";
+}
+
+<div class="auth-card">
+    <div class="brand">
+        <span class="brand-icon">🏭</span>
+        <span class="brand-name">MESManager</span>
+        <span class="brand-tagline">Sistema di Gestione Produzione</span>
+    </div>
+
+    <div class="auth-title">Accedi al sistema</div>
+    <div class="auth-subtitle">Inserisci le tue credenziali per continuare</div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert-error">⚠️ @Model.ErrorMessage</div>
+    }
+
+    <form method="post">
+        <input asp-for="ReturnUrl" type="hidden" />
+        @Html.AntiForgeryToken()
+
+        <div class="form-group">
+            <label asp-for="Input.Username">Nome utente</label>
+            <input asp-for="Input.Username"
+                   class="form-control"
+                   autofocus
+                   autocomplete="username"
+                   placeholder="Inserisci il tuo username" />
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Input.Password">Password</label>
+            <input asp-for="Input.Password"
+                   type="password"
+                   class="form-control"
+                   autocomplete="current-password"
+                   placeholder="Inserisci la tua password" />
+        </div>
+
+        <button type="submit" class="btn-submit">Accedi</button>
+    </form>
+
+    <div class="version">v1.58.0 — Sistema MES Todescato</div>
+</div>
