@@ -334,6 +334,15 @@ Scrive in MESManagerDb (locale)
 
 **Modalità**: One-way (Mago → MES)
 
+**Gestione conflitti concurrency** (v1.58.0):
+- `Commessa` ha `RowVersion` (EF optimistic concurrency)
+- Al conflitto durante `SaveChanges`: `SaveChangesWithConcurrencyRetryAsync` tenta fino a 3 volte, aggiornando `OriginalValues` dal DB corrente
+
+**Gestione orfani** (v1.58.0):
+- Ogni sync verifica se ci sono commesse `Aperte` nel DB il cui `Codice` non esiste più in Mago
+- Le orfane vengono chiuse (`Stato = Chiusa`) automaticamente
+- Caso tipico: ordine eliminato/chiuso in Mago senza che il sync precedente lo abbia rilevato
+
 ---
 
 ### SignalR (Real-time)

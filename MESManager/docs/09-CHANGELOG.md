@@ -4,7 +4,55 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.55.13
+## 🔖 Versione Corrente: v1.58.0
+
+---
+
+## 🔖 v1.58.0 - Sync Commesse: concurrency retry + gestione orfani + Auth login/logout (23 Mar 2026)
+
+**Data**: 23 Marzo 2026
+
+### 🐛 Fix — DbUpdateConcurrencyException in Sync Commesse
+
+Il sync commesse falliva con `DbUpdateConcurrencyException` quando Gantt/PLC modificava una commessa durante la finestra di sync. L'entità `Commessa` ha un campo `RowVersion` (EF optimistic concurrency) — se aggiornata da PlcSync tra la lettura e il `SaveChangesAsync`, la versione risulta obsoleta.
+
+#### Soluzione: `SaveChangesWithConcurrencyRetryAsync`
+- Metodo privato con **3 tentativi** su `DbUpdateConcurrencyException`
+- Al conflitto: `entry.OriginalValues.SetValues(dbValues)` per aggiornare i valori originali con quelli correnti del DB
+- Se l'entità è stata eliminata: viene staccata dal context (`entry.State = Detached`)
+- Usato in tutti i punti `SaveChangesAsync` di `SyncCommesseService`
+
+### ✨ Feature — Gestione Orfani Commesse
+
+Analisi dei dati rivelava **22 commesse "Aperte" nel DB MES** assenti da Mago (ordini chiusi/eliminati lato ERP senza propagazione). Il sync non le chiudeva mai → si accumulavano come orfane.
+
+#### Logica aggiunta (fine di ogni sync)
+1. Costruisce `HashSet<string>` dei codici Mago (`InternalOrdNo-Item`)
+2. Query su `Commesse` con `Stato == Aperta` il cui `Codice` **non** è nel set Mago
+3. Chiude le orfane → `Stato = Chiusa`, `TimestampSync = DateTime.Now`, incrementa `log.Aggiornati`
+
+#### File modificati
+- `MESManager.Sync/Services/SyncCommesseService.cs` — `SaveChangesWithConcurrencyRetryAsync()` + blocco orfani
+
+### 🔐 Feature (parziale) — Sistema Login/Logout ASP.NET Identity
+
+Infrastruttura autenticazione base aggiunta. Non ancora attivata come requisito obbligatorio.
+
+#### File aggiunti
+- `MESManager.Web/Pages/Account/Login.cshtml` + `.cs` — form login con `SignInManager`
+- `MESManager.Web/Pages/Account/Logout.cshtml` + `.cs` — logout con `SignOutAsync`
+- `MESManager.Web/Pages/Shared/_Layout.cshtml` — layout Razor Pages per account
+- `MESManager.Web/Pages/_ViewImports.cshtml` + `_ViewStart.cshtml`
+- `MESManager.Web/Services/RoleSeedService.cs` — seed ruoli Admin/Operatore al primo avvio
+- `MESManager.Web/Components/Shared/RedirectToLogin.razor` — redirect a `/Account/Login`
+- `MESManager.Web/Components/Pages/Impostazioni/GestioneAccessi.razor` — pagina gestione utenti/ruoli
+
+#### File modificati
+- `MESManager.Web/Components/Routes.razor` — `AuthorizeRouteView` con `<NotAuthorized>` → `RedirectToLogin`
+- `MESManager.Web/Components/_Imports.razor` — aggiunto `@using Microsoft.AspNetCore.Authorization`
+- `MESManager.Web/Components/Layout/MainLayout.razor` — fix RZ9986 su `Title` attribute + aggiunto pulsante Logout in `<AuthorizeView>`
+- `MESManager.Web/Components/Layout/MainLayout.razor.cs` — aggiunto metodo `Logout()` → naviga a `/Account/Logout`
+- `MESManager.Web/Constants/AppVersion.cs` — 1.57.13 → 1.58.0
 
 ---
 

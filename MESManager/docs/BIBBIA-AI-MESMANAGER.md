@@ -90,6 +90,7 @@ Questa chat **NON è generica**: è vincolata al contesto reale del progetto e a
 - **Nome**: MESManager
 - **Path**: `C:\Dev\MESManager`
 - **Documentazione**: `C:\Dev\MESManager\docs` (fonte di verità)
+- **Versione Corrente**: `v1.58.0`
 
 ### Stack Tecnologico
 ```
