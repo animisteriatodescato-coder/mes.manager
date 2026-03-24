@@ -300,6 +300,43 @@ public class PlcSyncWorker : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Al boot, legge l'ultimo StatoMacchina da PLCStorico per ogni macchina e
+    /// inizializza MachineState.LastStato in memoria. In questo modo, se la macchina
+    /// era già NON CONNESSA prima del restart, SaveDisconnessaAsync non scrive un
+    /// record spurio al primo ciclo di polling.
+    /// </summary>
+    private async Task RestoreLastStatiFromDbAsync(List<PlcMachineConfig> machines, CancellationToken ct)
+    {
+        try
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync(ct);
+            var ids = machines.Select(m => m.MacchinaId).ToList();
+
+            // Una query che restituisce l'ultimo record PLCStorico per ogni macchina
+            var lastRecords = await context.PLCStorico
+                .Where(s => ids.Contains(s.MacchinaId))
+                .GroupBy(s => s.MacchinaId)
+                .Select(g => new { MacchinaId = g.Key, StatoMacchina = g.OrderByDescending(s => s.DataOra).First().StatoMacchina })
+                .ToListAsync(ct);
+
+            foreach (var record in lastRecords)
+            {
+                var state = _connectionService.GetMachineState(record.MacchinaId);
+                if (state != null && !string.IsNullOrEmpty(record.StatoMacchina))
+                {
+                    state.LastStato = record.StatoMacchina;
+                    _logger.LogInformation("Ripristinato LastStato={Stato} per macchina {MacchinaId} dal DB", 
+                        record.StatoMacchina, record.MacchinaId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Errore durante ripristino LastStati da DB — i record NON CONNESSA al boot potrebbero essere spurii");
+        }
+    }
+
     public override void Dispose()
     {
         _connectionService.Dispose();
