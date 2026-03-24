@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MESManager.Domain.Entities;
@@ -6,7 +8,7 @@ using System.Globalization;
 
 namespace MESManager.Infrastructure.Data;
 
-public class MesManagerDbContext : DbContext
+public class MesManagerDbContext : IdentityDbContext<IdentityUser>
 {
     private static readonly HashSet<string> StringDbTypes = new(StringComparer.OrdinalIgnoreCase)
     {

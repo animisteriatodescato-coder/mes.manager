@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
@@ -10,6 +11,9 @@ namespace MESManager.Web.Components.Layout;
 
 public partial class MainLayout : IDisposable
 {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
     [Inject]
     private PreferencesService PreferencesService { get; set; } = default!;
     
@@ -52,6 +56,20 @@ public partial class MainLayout : IDisposable
     
     protected override async Task OnInitializedAsync()
     {
+        // 🔒 Verifica autenticazione — redirect alla pagina di login se non autenticato
+        if (AuthStateTask != null)
+        {
+            var authState = await AuthStateTask;
+            if (authState.User.Identity?.IsAuthenticated != true)
+            {
+                var pathAndQuery = new Uri(NavManager.Uri).PathAndQuery;
+                NavManager.NavigateTo(
+                    $"/Account/Login?ReturnUrl={Uri.EscapeDataString(pathAndQuery)}",
+                    forceLoad: true);
+                return;
+            }
+        }
+
         // Costruisce il tema dai colori salvati in AppSettings
         var settings = AppSettingsService.GetSettings();
         _theme = BuildThemeFromSettings(settings);
@@ -323,6 +341,7 @@ public partial class MainLayout : IDisposable
             "impostazioni/utenti" => "Utenti",
             "impostazioni/operatori" => "Operatori",
             "impostazioni/generali" => "Impostazioni Generali",
+            "impostazioni/accessi" => "Gestione Accessi",
             
             _ => "MESManager"
         };
@@ -407,7 +426,7 @@ public partial class MainLayout : IDisposable
         // Aggiorna CSS vars live senza aspettare il re-render Blazor
         await ThemeCssService.ApplyAsync(JS, UserThemeService.GetEffectiveSettings(), _isDarkMode);
     }
-    
+
     private void ToggleDrawer()
     {
         _drawerOpen = !_drawerOpen;

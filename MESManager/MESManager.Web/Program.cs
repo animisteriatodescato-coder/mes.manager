@@ -97,6 +97,9 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 
+// Razor Pages (usato per le pagine Login/Logout di Identity)
+builder.Services.AddRazorPages();
+
 // Legge la connection string dal file condiviso
 var connectionString = builder.Configuration.GetConnectionString("MESManagerDb")
     ?? throw new InvalidOperationException("Connection string 'MESManagerDb' not found. Please create appsettings.Secrets.json from template.");
@@ -190,6 +193,19 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     .AddEntityFrameworkStores<MesManagerDbContext>()
     .AddDefaultTokenProviders();
 
+// Cookie di autenticazione: percorsi, scadenza e sicurezza
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath        = "/Account/Login";
+    options.LogoutPath       = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/Login";
+    options.ExpireTimeSpan   = TimeSpan.FromHours(8);
+    options.SlidingExpiration = true;
+    options.Cookie.HttpOnly  = true;
+    options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SameSite  = Microsoft.AspNetCore.Http.SameSiteMode.Strict;
+});
+
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
@@ -198,6 +214,11 @@ builder.Services.AddSignalR();
 
 var app = builder.Build();
 
+// Seed automatico ruoli e utente Admin
+using (var seedScope = app.Services.CreateScope())
+{
+    await MESManager.Web.Services.RoleSeedService.SeedAsync(seedScope.ServiceProvider);
+}
 var enableE2ESeed = (Environment.GetEnvironmentVariable("E2E_SEED") ?? "")
     .Equals("1", StringComparison.OrdinalIgnoreCase)
     || (Environment.GetEnvironmentVariable("E2E_SEED") ?? "")
@@ -225,6 +246,9 @@ app.UseAntiforgery();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Razor Pages (Login/Logout Identity)
+app.MapRazorPages();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

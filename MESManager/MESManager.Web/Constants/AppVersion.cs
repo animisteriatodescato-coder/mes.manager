@@ -1,4 +1,4 @@
-namespace MESManager.Web.Constants;
+﻿namespace MESManager.Web.Constants;
 
 /// <summary>
 /// Versione centralizzata dell'applicazione.
@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.58.0";
+    public const string Current = "1.59.1";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.58.0 — Sync: concurrency retry + gestione orfani commesse | Auth: login/logout ASP.NET Identity
+    public const string Display = "v" + Current; // v1.59.1  Fix: MesManagerDbContext → IdentityDbContext + migration AddIdentityTables
 }
