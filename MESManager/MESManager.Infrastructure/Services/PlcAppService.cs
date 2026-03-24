@@ -21,6 +21,13 @@ public class PlcAppService : IPlcAppService
     /// </summary>
     private const int CONNECTION_TIMEOUT_MINUTES = 2;
 
+    /// <summary>
+    /// Timeout in minuti usato nel Gantt per il trailing "NON CONNESSA" dopo l'ultimo record attivo.
+    /// Deve essere > massimo intervallo tra due record PLCStorico consecutivi:
+    /// 20 cicli × ciclo max (~60s) = ~20 min. Usiamo 30 min per sicurezza.
+    /// </summary>
+    private const int GANTT_INACTIVITY_TIMEOUT_MINUTES = 30;
+
     public async Task<List<PlcRealtimeDto>> GetRealtimeDataAsync()
     {
         // Filtra solo macchine con IP configurato (come da impostazioni Gantt)
@@ -192,49 +199,12 @@ public class PlcAppService : IPlcAppService
             .ThenBy(p => p.DataOra)
             .ToListAsync();
 
-        // Per ogni macchina presente nei risultati, cerca l'ultimo record PRIMA del range.
-        // Serve per gestire macchine già offline all'inizio del range selezionato:
-        // se l'ultimo record precedente è NON CONNESSA, aggiungiamo un segmento iniziale.
-        var machineIds = records.Select(r => r.MacchinaId).Distinct().ToList();
-        var leadingRecords = await _context.PLCStorico
-            .Include(p => p.Macchina)
-            .Include(p => p.Operatore)
-            .Where(p => machineIds.Contains(p.MacchinaId) && p.DataOra < from)
-            .GroupBy(p => p.MacchinaId)
-            .Select(g => g.OrderByDescending(p => p.DataOra).First())
-            .ToListAsync();
-        var leadingByMachine = leadingRecords.ToDictionary(r => r.MacchinaId);
-
         var segmenti = new List<PlcGanttSegmentoDto>();
         var fine_range = to < DateTime.Now ? to : DateTime.Now;
 
         foreach (var gruppo in records.GroupBy(p => p.MacchinaId))
         {
             var lista = gruppo.ToList();
-            var firstInRange = lista[0];
-
-            // Se l'ultimo record PRIMA del range è NON CONNESSA, aggiungi un segmento iniziale
-            // che copre dall'inizio del range fino al primo record nel range.
-            if (leadingByMachine.TryGetValue(firstInRange.MacchinaId, out var leading)
-                && leading.StatoMacchina == "NON CONNESSA")
-            {
-                var leadingFine = firstInRange.DataOra < fine_range ? firstInRange.DataOra : fine_range;
-                if (leadingFine > from)
-                {
-                    segmenti.Add(new PlcGanttSegmentoDto
-                    {
-                        MacchinaId         = leading.MacchinaId,
-                        MacchianaNome      = leading.Macchina.Codice,
-                        Inizio             = from,
-                        Fine               = leadingFine,
-                        StatoMacchina      = "NON CONNESSA",
-                        NomeOperatore      = null,
-                        NumeroOperatore    = null,
-                        CicliFatti         = 0,
-                        BarcodeLavorazione = 0
-                    });
-                }
-            }
             for (int i = 0; i < lista.Count; i++)
             {
                 var rec = lista[i];
@@ -255,9 +225,10 @@ public class PlcAppService : IPlcAppService
                 }
                 else
                 {
-                    // Ultimo record attivo: lo stato dura CONNECTION_TIMEOUT_MINUTES,
+                    // Ultimo record attivo: lo stato dura GANTT_INACTIVITY_TIMEOUT_MINUTES,
                     // poi trailing NON CONNESSA (macchina ha smesso di rispondere).
-                    fine = rec.DataOra.AddMinutes(CONNECTION_TIMEOUT_MINUTES);
+                    // Valore alto (30 min) perché PLCStorico scrive solo a cambio stato o ogni 20 cicli.
+                    fine = rec.DataOra.AddMinutes(GANTT_INACTIVITY_TIMEOUT_MINUTES);
                     if (fine > fine_range) fine = fine_range;
                 }
 
