@@ -23,11 +23,6 @@ public class PlcAppService : IPlcAppService
 
     /// <summary>
     /// Timeout in minuti usato nel Gantt per il trailing "NON CONNESSA" dopo l'ultimo record attivo.
-    /// Deve essere > massimo intervallo tra due record PLCStorico consecutivi:
-    /// 20 cicli × ciclo max (~60s) = ~20 min. Usiamo 30 min per sicurezza.
-    /// </summary>
-    private const int GANTT_INACTIVITY_TIMEOUT_MINUTES = 30;
-
     public async Task<List<PlcRealtimeDto>> GetRealtimeDataAsync()
     {
         // Filtra solo macchine con IP configurato (come da impostazioni Gantt)
@@ -176,12 +171,16 @@ public class PlcAppService : IPlcAppService
 
     /// <summary>
     /// Segmenta i record PLCStorico in intervalli a stato costante.
-    /// Logica (Soluzione B — data-driven):
-    /// - Record intermedi: il segmento copre esattamente [T_i, T_{i+1}]. Nessuna inferenza sui gap.
-    ///   Se PlcSync ha scritto un record "NON CONNESSA" nel DB, apparirà come barra nel Gantt.
-    /// - Ultimo record dello scope: se il suo stato è "NON CONNESSA" estende fino a fine_range;
-    ///   altrimenti dura CONNECTION_TIMEOUT_MINUTES, poi si aggiunge un trailing NON CONNESSA
-    ///   fino a fine_range (copre il silenzio nella coda del range interrogato).
+    ///
+    /// Logica bordo destro (Soluzione 1+3 — zero timeout arbitrari):
+    /// Per ogni macchina il cui ultimo record nel range NON è "NON CONNESSA":
+    ///   1. [Look-ahead] Cerca il primo record PLCStorico successivo a `to` (batch, indice DB).
+    ///      Se trovato → il segmento termina esattamente al suo timestamp (clippato a fine_range).
+    ///      Cattura la disconnessione reale anche per range storici.
+    ///   2. [PLCRealtime fallback] Se nessun record look-ahead esiste E il range include DateTime.Now,
+    ///      usa PLCRealtime.DataUltimoAggiornamento come bordo preciso per lo stato corrente.
+    ///   3. Se nessuna delle due sorgenti ha informazioni → estende a fine_range con lo stesso stato
+    ///      (la macchina non si è disconnessa durante il range osservato).
     /// </summary>
     public async Task<List<PlcGanttSegmentoDto>> GetGanttStoricoAsync(DateTime from, DateTime to, Guid? macchinaId = null)
     {
@@ -199,8 +198,35 @@ public class PlcAppService : IPlcAppService
             .ThenBy(p => p.DataOra)
             .ToListAsync();
 
-        var segmenti = new List<PlcGanttSegmentoDto>();
+        var machineIds = records.Select(r => r.MacchinaId).Distinct().ToList();
         var fine_range = to < DateTime.Now ? to : DateTime.Now;
+        var rangeIncludeNow = to >= DateTime.Now;
+
+        // ── Soluzione 1: Look-ahead batch ──────────────────────────────────────────
+        // Per ogni macchina, il primo record PLCStorico con DataOra > to.
+        // Query batch con indice (MacchinaId, DataOra) → < 5ms.
+        var lookAheadRecords = await _context.PLCStorico
+            .Where(p => machineIds.Contains(p.MacchinaId) && p.DataOra > to)
+            .GroupBy(p => p.MacchinaId)
+            .Select(g => new
+            {
+                MacchinaId    = g.Key,
+                DataOra       = g.Min(p => p.DataOra),
+                StatoMacchina = g.OrderBy(p => p.DataOra).First().StatoMacchina
+            })
+            .ToDictionaryAsync(x => x.MacchinaId);
+
+        // ── Soluzione 3: PLCRealtime fallback (solo se range include il presente) ──
+        // Tabella PLCRealtime = N righe totali (una per macchina) → < 1ms.
+        Dictionary<Guid, Domain.Entities.PLCRealtime> realtimeByMachine = new();
+        if (rangeIncludeNow && machineIds.Any())
+        {
+            realtimeByMachine = await _context.PLCRealtime
+                .Where(p => machineIds.Contains(p.MacchinaId))
+                .ToDictionaryAsync(p => p.MacchinaId);
+        }
+
+        var segmenti = new List<PlcGanttSegmentoDto>();
 
         foreach (var gruppo in records.GroupBy(p => p.MacchinaId))
         {
@@ -214,48 +240,105 @@ public class PlcAppService : IPlcAppService
                 DateTime fine;
                 if (!isLast)
                 {
-                    // Record intermedio: copre fino all'inizio del record successivo.
-                    // Il gap tra i record è già il dato reale (nessuna inferenza).
+                    // Record intermedio: bordo = inizio del record successivo (dato reale).
                     fine = lista[i + 1].DataOra;
                 }
                 else if (rec.StatoMacchina == "NON CONNESSA")
                 {
-                    // Ultimo record è NON CONNESSA: estende fino a fine_range.
+                    // Ultimo record è già NON CONNESSA → copre fino a fine_range.
                     fine = fine_range;
                 }
                 else
                 {
-                    // Ultimo record attivo: lo stato dura GANTT_INACTIVITY_TIMEOUT_MINUTES,
-                    // poi trailing NON CONNESSA (macchina ha smesso di rispondere).
-                    // Valore alto (30 min) perché PLCStorico scrive solo a cambio stato o ogni 20 cicli.
-                    fine = rec.DataOra.AddMinutes(GANTT_INACTIVITY_TIMEOUT_MINUTES);
-                    if (fine > fine_range) fine = fine_range;
+                    // Ultimo record attivo: usare look-ahead o PLCRealtime per il bordo.
+                    fine = ResolveTrailingBorder(
+                        rec, fine_range, rangeIncludeNow,
+                        lookAheadRecords.TryGetValue(rec.MacchinaId, out var la) ? la.DataOra : (DateTime?)null,
+                        lookAheadRecords.TryGetValue(rec.MacchinaId, out var la2) ? la2.StatoMacchina : null,
+                        realtimeByMachine.TryGetValue(rec.MacchinaId, out var rt) ? rt : null,
+                        out string? trailingStato,
+                        out DateTime? trailingInizio
+                    );
+
+                    if (fine <= inizio) continue;
+                    segmenti.Add(BuildSegmento(rec, inizio, fine));
+
+                    // Se il bordo è fornito da look-ahead/realtime con stato NON CONNESSA,
+                    // aggiungi il segmento trailing fino a fine_range.
+                    if (trailingStato != null && trailingInizio.HasValue && trailingInizio.Value < fine_range)
+                    {
+                        segmenti.Add(new PlcGanttSegmentoDto
+                        {
+                            MacchinaId         = rec.MacchinaId,
+                            MacchianaNome      = rec.Macchina.Codice,
+                            Inizio             = trailingInizio.Value,
+                            Fine               = fine_range,
+                            StatoMacchina      = trailingStato,
+                            NomeOperatore      = null,
+                            NumeroOperatore    = null,
+                            CicliFatti         = 0,
+                            BarcodeLavorazione = 0
+                        });
+                    }
+                    continue;
                 }
 
                 if (fine <= inizio) continue;
-
                 segmenti.Add(BuildSegmento(rec, inizio, fine));
-
-                // Trailing NON CONNESSA dopo l'ultimo record attivo
-                if (isLast && rec.StatoMacchina != "NON CONNESSA" && fine < fine_range)
-                {
-                    segmenti.Add(new PlcGanttSegmentoDto
-                    {
-                        MacchinaId         = rec.MacchinaId,
-                        MacchianaNome      = rec.Macchina.Codice,
-                        Inizio             = fine,
-                        Fine               = fine_range,
-                        StatoMacchina      = "NON CONNESSA",
-                        NomeOperatore      = null,
-                        NumeroOperatore    = null,
-                        CicliFatti         = 0,
-                        BarcodeLavorazione = 0
-                    });
-                }
             }
         }
 
         return segmenti.OrderBy(s => s.MacchianaNome).ThenBy(s => s.Inizio).ToList();
+    }
+
+    /// <summary>
+    /// Risolve il bordo destro dell'ultimo segmento attivo usando look-ahead (Soluzione 1)
+    /// e PLCRealtime (Soluzione 3) in cascata. Zero timeout arbitrari.
+    /// </summary>
+    private static DateTime ResolveTrailingBorder(
+        Domain.Entities.PLCStorico lastRec,
+        DateTime fine_range,
+        bool rangeIncludeNow,
+        DateTime? lookAheadDataOra,
+        string? lookAheadStato,
+        Domain.Entities.PLCRealtime? realtime,
+        out string? trailingStato,
+        out DateTime? trailingInizio)
+    {
+        trailingStato  = null;
+        trailingInizio = null;
+
+        // ── Soluzione 1: il prossimo record PLCStorico dopo `to` è la fonte più precisa ──
+        if (lookAheadDataOra.HasValue)
+        {
+            var border = lookAheadDataOra.Value < fine_range ? lookAheadDataOra.Value : fine_range;
+            // Se il record successivo ha stato diverso (es. NON CONNESSA), mostralo come trailing.
+            if (lookAheadStato != null && lookAheadStato != lastRec.StatoMacchina && border < fine_range)
+            {
+                trailingStato  = lookAheadStato;
+                trailingInizio = border;
+            }
+            return border;
+        }
+
+        // ── Soluzione 3: PLCRealtime come ground truth per il bordo presente ──────────
+        if (rangeIncludeNow && realtime != null)
+        {
+            var rtUpdate = realtime.DataUltimoAggiornamento;
+
+            if (realtime.StatoMacchina == "NON CONNESSA" && rtUpdate > lastRec.DataOra && rtUpdate < fine_range)
+            {
+                // Macchina ora offline: il segmento attivo termina all'ultimo aggiornamento,
+                // poi trailing NON CONNESSA fino a fine_range.
+                trailingStato  = "NON CONNESSA";
+                trailingInizio = rtUpdate;
+                return rtUpdate;
+            }
+        }
+
+        // ── Caso 3: nessuna informazione → macchina ancora attiva nel range ──────────
+        // Estende fino a fine_range senza trailing (nessuna disconnessione rilevata).
+        return fine_range;
     }
 
     /// <summary>Helper: costruisce un PlcGanttSegmentoDto da un record PLCStorico.</summary>
