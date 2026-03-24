@@ -162,11 +162,13 @@ public class PlcSyncService : IPlcSyncService
         {
             await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
 
+            var now = DateTime.Now;
+
             var storico = new PLCStorico
             {
                 Id             = Guid.NewGuid(),
                 MacchinaId     = macchinaId,
-                DataOra        = DateTime.UtcNow,
+                DataOra        = now,          // Local time (coerente con snapshot.Timestamp)
                 Dati           = "{}",
                 StatoMacchina  = "NON CONNESSA",
                 NumeroOperatore = 0,
@@ -174,6 +176,16 @@ public class PlcSyncService : IPlcSyncService
             };
 
             context.PLCStorico.Add(storico);
+
+            // Aggiorna PLCRealtime immediatamente per riflettere la disconnessione
+            var realtime = await context.PLCRealtime
+                .FirstOrDefaultAsync(r => r.MacchinaId == macchinaId, cancellationToken);
+            if (realtime != null)
+            {
+                realtime.StatoMacchina             = "NON CONNESSA";
+                realtime.DataUltimoAggiornamento   = now;
+            }
+
             await context.SaveChangesAsync(cancellationToken);
 
             // Aggiorna stato in memoria per evitare doppi inserimenti

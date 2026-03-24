@@ -106,6 +106,10 @@ public class PlcSyncWorker : BackgroundService
             }
         }
 
+        // Ripristina LastStato dal DB per ogni macchina: evita di scrivere record NON CONNESSA
+        // spurii ad ogni restart del servizio quando la macchina era già offline.
+        await RestoreLastStatiFromDbAsync(machines.Where(m => m.Enabled).ToList(), stoppingToken);
+
         int syncCycleCount = 0;
         int settingsReloadInterval = 10; // Ricarica impostazioni ogni 10 cicli
 

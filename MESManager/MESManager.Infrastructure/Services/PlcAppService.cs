@@ -111,78 +111,7 @@ public class PlcAppService : IPlcAppService
             .Take(1000)
             .ToListAsync();
 
-        return result.Select(p =>
-        {
-            int cicliFatti = 0,
-                qtaDaProd = 0,
-                cicliScarti = 0,
-                tempoMedioRil = 0,
-                tempoMedio = 0,
-                figure = 0,
-                barcode = 0;
-            string? nuovaProdTs = null,
-                inizioSetupTs = null,
-                fineSetupTs = null,
-                inProduzioneTs = null;
-
-            if (!string.IsNullOrWhiteSpace(p.Dati))
-            {
-                try
-                {
-                    using var doc = System.Text.Json.JsonDocument.Parse(p.Dati);
-                    var root = doc.RootElement;
-                    if (root.TryGetProperty("CicliFatti", out var cf)) cicliFatti = cf.GetInt32();
-                    if (root.TryGetProperty("QuantitaDaProdurre", out var qdp)) qtaDaProd = qdp.GetInt32();
-                    if (root.TryGetProperty("CicliScarti", out var cs)) cicliScarti = cs.GetInt32();
-                    if (root.TryGetProperty("TempoMedioRilevato", out var tmr)) tempoMedioRil = tmr.GetInt32();
-                    if (root.TryGetProperty("TempoMedio", out var tm)) tempoMedio = tm.GetInt32();
-                    if (root.TryGetProperty("Figure", out var fg)) figure = fg.GetInt32();
-                    if (root.TryGetProperty("BarcodeLavorazione", out var bc)) barcode = bc.GetInt32();
-
-                    if (root.TryGetProperty("NuovaProduzioneTs", out var npts) && npts.ValueKind == System.Text.Json.JsonValueKind.String)
-                        nuovaProdTs = npts.GetString();
-                    if (root.TryGetProperty("InizioSetupTs", out var ists) && ists.ValueKind == System.Text.Json.JsonValueKind.String)
-                        inizioSetupTs = ists.GetString();
-                    if (root.TryGetProperty("FineSetupTs", out var fsts) && fsts.ValueKind == System.Text.Json.JsonValueKind.String)
-                        fineSetupTs = fsts.GetString();
-                    if (root.TryGetProperty("InProduzioneTs", out var ipts) && ipts.ValueKind == System.Text.Json.JsonValueKind.String)
-                        inProduzioneTs = ipts.GetString();
-                }
-                catch
-                {
-                    // Ignora errori di parsing: manterremo i default
-                }
-            }
-
-            return new PlcStoricoDto
-            {
-                Id = p.Id,
-                MacchinaId = p.MacchinaId,
-                MacchinaNumero = int.TryParse(p.Macchina.Codice.Replace("M", ""), out int num) ? num.ToString("D2") : p.Macchina.Codice,
-                MacchianaNome = p.Macchina.Codice,
-
-                Timestamp = p.DataOra,
-                StatoMacchina = p.StatoMacchina ?? "Sconosciuto",
-
-                NumeroOperatore = p.NumeroOperatore > 0 ? p.NumeroOperatore : (int?)null,
-                NomeOperatore = p.Operatore != null ? $"{p.Operatore.Nome} {p.Operatore.Cognome}" : (p.NumeroOperatore > 0 ? p.NumeroOperatore.ToString() : null),
-
-                BarcodeLavorazione = barcode,
-                CicliFatti = cicliFatti,
-                QuantitaDaProdurre = qtaDaProd,
-                CicliScarti = cicliScarti,
-                TempoMedioRilevato = tempoMedioRil,
-                TempoMedio = tempoMedio,
-                Figure = figure,
-
-                NuovaProduzioneTs = nuovaProdTs,
-                InizioSetupTs = inizioSetupTs,
-                FineSetupTs = fineSetupTs,
-                InProduzioneTs = inProduzioneTs,
-
-                Dati = p.Dati
-            };
-        }).ToList();
+        return result.Select(p => MapToStoricoDto(p)).ToList();
     }
 
     public async Task<List<PlcStoricoDto>> GetAllStoricoAsync(DateTime? from, DateTime? to, int? limit = 5000)
@@ -205,78 +134,7 @@ public class PlcAppService : IPlcAppService
             ? await orderedQuery.Take(limit.Value).ToListAsync()
             : await orderedQuery.ToListAsync();
 
-        return result.Select(p =>
-        {
-            int cicliFatti = 0,
-                qtaDaProd = 0,
-                cicliScarti = 0,
-                tempoMedioRil = 0,
-                tempoMedio = 0,
-                figure = 0,
-                barcode = 0;
-            string? nuovaProdTs = null,
-                inizioSetupTs = null,
-                fineSetupTs = null,
-                inProduzioneTs = null;
-
-            if (!string.IsNullOrWhiteSpace(p.Dati))
-            {
-                try
-                {
-                    using var doc = System.Text.Json.JsonDocument.Parse(p.Dati);
-                    var root = doc.RootElement;
-                    if (root.TryGetProperty("CicliFatti", out var cf)) cicliFatti = cf.GetInt32();
-                    if (root.TryGetProperty("QuantitaDaProdurre", out var qdp)) qtaDaProd = qdp.GetInt32();
-                    if (root.TryGetProperty("CicliScarti", out var cs)) cicliScarti = cs.GetInt32();
-                    if (root.TryGetProperty("TempoMedioRilevato", out var tmr)) tempoMedioRil = tmr.GetInt32();
-                    if (root.TryGetProperty("TempoMedio", out var tm)) tempoMedio = tm.GetInt32();
-                    if (root.TryGetProperty("Figure", out var fg)) figure = fg.GetInt32();
-                    if (root.TryGetProperty("BarcodeLavorazione", out var bc)) barcode = bc.GetInt32();
-
-                    if (root.TryGetProperty("NuovaProduzioneTs", out var npts) && npts.ValueKind == System.Text.Json.JsonValueKind.String)
-                        nuovaProdTs = npts.GetString();
-                    if (root.TryGetProperty("InizioSetupTs", out var ists) && ists.ValueKind == System.Text.Json.JsonValueKind.String)
-                        inizioSetupTs = ists.GetString();
-                    if (root.TryGetProperty("FineSetupTs", out var fsts) && fsts.ValueKind == System.Text.Json.JsonValueKind.String)
-                        fineSetupTs = fsts.GetString();
-                    if (root.TryGetProperty("InProduzioneTs", out var ipts) && ipts.ValueKind == System.Text.Json.JsonValueKind.String)
-                        inProduzioneTs = ipts.GetString();
-                }
-                catch
-                {
-                    // Ignora errori di parsing
-                }
-            }
-
-            return new PlcStoricoDto
-            {
-                Id = p.Id,
-                MacchinaId = p.MacchinaId,
-                MacchinaNumero = int.TryParse(p.Macchina.Codice.Replace("M", ""), out int num) ? num.ToString("D2") : p.Macchina.Codice,
-                MacchianaNome = p.Macchina.Codice,
-
-                Timestamp = p.DataOra,
-                StatoMacchina = p.StatoMacchina ?? "Sconosciuto",
-
-                NumeroOperatore = p.NumeroOperatore > 0 ? p.NumeroOperatore : (int?)null,
-                NomeOperatore = p.Operatore != null ? $"{p.Operatore.Nome} {p.Operatore.Cognome}" : (p.NumeroOperatore > 0 ? p.NumeroOperatore.ToString() : null),
-
-                BarcodeLavorazione = barcode,
-                CicliFatti = cicliFatti,
-                QuantitaDaProdurre = qtaDaProd,
-                CicliScarti = cicliScarti,
-                TempoMedioRilevato = tempoMedioRil,
-                TempoMedio = tempoMedio,
-                Figure = figure,
-
-                NuovaProduzioneTs = nuovaProdTs,
-                InizioSetupTs = inizioSetupTs,
-                FineSetupTs = fineSetupTs,
-                InProduzioneTs = inProduzioneTs,
-
-                Dati = p.Dati
-            };
-        }).ToList();
+        return result.Select(p => MapToStoricoDto(p)).ToList();
     }
 
     public async Task<List<EventoPLCDto>> GetEventiAsync(Guid macchinaId, DateTime? from, DateTime? to)
@@ -334,12 +192,49 @@ public class PlcAppService : IPlcAppService
             .ThenBy(p => p.DataOra)
             .ToListAsync();
 
+        // Per ogni macchina presente nei risultati, cerca l'ultimo record PRIMA del range.
+        // Serve per gestire macchine già offline all'inizio del range selezionato:
+        // se l'ultimo record precedente è NON CONNESSA, aggiungiamo un segmento iniziale.
+        var machineIds = records.Select(r => r.MacchinaId).Distinct().ToList();
+        var leadingRecords = await _context.PLCStorico
+            .Include(p => p.Macchina)
+            .Include(p => p.Operatore)
+            .Where(p => machineIds.Contains(p.MacchinaId) && p.DataOra < from)
+            .GroupBy(p => p.MacchinaId)
+            .Select(g => g.OrderByDescending(p => p.DataOra).First())
+            .ToListAsync();
+        var leadingByMachine = leadingRecords.ToDictionary(r => r.MacchinaId);
+
         var segmenti = new List<PlcGanttSegmentoDto>();
         var fine_range = to < DateTime.Now ? to : DateTime.Now;
 
         foreach (var gruppo in records.GroupBy(p => p.MacchinaId))
         {
             var lista = gruppo.ToList();
+            var firstInRange = lista[0];
+
+            // Se l'ultimo record PRIMA del range è NON CONNESSA, aggiungi un segmento iniziale
+            // che copre dall'inizio del range fino al primo record nel range.
+            if (leadingByMachine.TryGetValue(firstInRange.MacchinaId, out var leading)
+                && leading.StatoMacchina == "NON CONNESSA")
+            {
+                var leadingFine = firstInRange.DataOra < fine_range ? firstInRange.DataOra : fine_range;
+                if (leadingFine > from)
+                {
+                    segmenti.Add(new PlcGanttSegmentoDto
+                    {
+                        MacchinaId         = leading.MacchinaId,
+                        MacchianaNome      = leading.Macchina.Codice,
+                        Inizio             = from,
+                        Fine               = leadingFine,
+                        StatoMacchina      = "NON CONNESSA",
+                        NomeOperatore      = null,
+                        NumeroOperatore    = null,
+                        CicliFatti         = 0,
+                        BarcodeLavorazione = 0
+                    });
+                }
+            }
             for (int i = 0; i < lista.Count; i++)
             {
                 var rec = lista[i];
@@ -409,6 +304,85 @@ public class PlcAppService : IPlcAppService
             BarcodeLavorazione = 0
             // Colore: popolato dal controller via MesDesignTokens.PlcStatoColore()
         };
+
+    /// <summary>Mappa un entity PLCStorico a PlcStoricoDto — unica fonte di verità, evita duplicazione.</summary>
+    private static PlcStoricoDto MapToStoricoDto(Domain.Entities.PLCStorico p)
+    {
+        ParseDatiStorico(p.Dati,
+            out int cicliFatti, out int qtaDaProd, out int cicliScarti,
+            out int tempoMedioRil, out int tempoMedio, out int figure, out int barcode,
+            out string? nuovaProdTs, out string? inizioSetupTs, out string? fineSetupTs, out string? inProduzioneTs);
+
+        return new PlcStoricoDto
+        {
+            Id             = p.Id,
+            MacchinaId     = p.MacchinaId,
+            MacchinaNumero = int.TryParse(p.Macchina.Codice.Replace("M", ""), out int num) ? num.ToString("D2") : p.Macchina.Codice,
+            MacchianaNome  = p.Macchina.Codice,
+
+            Timestamp     = p.DataOra,
+            StatoMacchina = p.StatoMacchina ?? "Sconosciuto",
+
+            NumeroOperatore = p.NumeroOperatore > 0 ? p.NumeroOperatore : (int?)null,
+            NomeOperatore = p.Operatore != null
+                ? $"{p.Operatore.Nome} {p.Operatore.Cognome}"
+                : (p.NumeroOperatore > 0 ? p.NumeroOperatore.ToString() : null),
+
+            BarcodeLavorazione = barcode,
+            CicliFatti         = cicliFatti,
+            QuantitaDaProdurre = qtaDaProd,
+            CicliScarti        = cicliScarti,
+            TempoMedioRilevato = tempoMedioRil,
+            TempoMedio         = tempoMedio,
+            Figure             = figure,
+
+            NuovaProduzioneTs = nuovaProdTs,
+            InizioSetupTs     = inizioSetupTs,
+            FineSetupTs       = fineSetupTs,
+            InProduzioneTs    = inProduzioneTs,
+
+            Dati = p.Dati
+        };
+    }
+
+    /// <summary>Parsing del blob JSON Dati da PLCStorico — unica implementazione.</summary>
+    private static void ParseDatiStorico(
+        string? dati,
+        out int cicliFatti, out int qtaDaProd, out int cicliScarti,
+        out int tempoMedioRil, out int tempoMedio, out int figure, out int barcode,
+        out string? nuovaProdTs, out string? inizioSetupTs, out string? fineSetupTs, out string? inProduzioneTs)
+    {
+        cicliFatti = qtaDaProd = cicliScarti = tempoMedioRil = tempoMedio = figure = barcode = 0;
+        nuovaProdTs = inizioSetupTs = fineSetupTs = inProduzioneTs = null;
+
+        if (string.IsNullOrWhiteSpace(dati)) return;
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(dati);
+            var root = doc.RootElement;
+            if (root.TryGetProperty("CicliFatti",         out var cf))  cicliFatti    = cf.GetInt32();
+            if (root.TryGetProperty("QuantitaDaProdurre", out var qdp)) qtaDaProd     = qdp.GetInt32();
+            if (root.TryGetProperty("CicliScarti",        out var cs))  cicliScarti   = cs.GetInt32();
+            if (root.TryGetProperty("TempoMedioRilevato", out var tmr)) tempoMedioRil = tmr.GetInt32();
+            if (root.TryGetProperty("TempoMedio",         out var tm))  tempoMedio    = tm.GetInt32();
+            if (root.TryGetProperty("Figure",             out var fg))  figure        = fg.GetInt32();
+            if (root.TryGetProperty("BarcodeLavorazione", out var bc))  barcode       = bc.GetInt32();
+
+            if (root.TryGetProperty("NuovaProduzioneTs", out var npts) && npts.ValueKind == System.Text.Json.JsonValueKind.String)
+                nuovaProdTs = npts.GetString();
+            if (root.TryGetProperty("InizioSetupTs", out var ists) && ists.ValueKind == System.Text.Json.JsonValueKind.String)
+                inizioSetupTs = ists.GetString();
+            if (root.TryGetProperty("FineSetupTs", out var fsts) && fsts.ValueKind == System.Text.Json.JsonValueKind.String)
+                fineSetupTs = fsts.GetString();
+            if (root.TryGetProperty("InProduzioneTs", out var ipts) && ipts.ValueKind == System.Text.Json.JsonValueKind.String)
+                inProduzioneTs = ipts.GetString();
+        }
+        catch
+        {
+            // Ignora errori di parsing: i valori default sono già stati impostati
+        }
+    }
 
     /// <summary>
     /// KPI aggregati per macchina: % tempo in ogni categoria di stato.
