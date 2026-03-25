@@ -26,5 +26,7 @@
   "ThemeAppBarBgColor": "#060606d3",
   "ThemeDrawerBgColor": "#010101d4",
   "ThemeButtonColor": "#1ab039ff",
-  "ThemeButtonTextColor": "#FFFFFF"
+  "ThemeButtonTextColor": "#FFFFFF",
+  "ThemeAppBarBgColorDark": "",
+  "ThemeDrawerBgColorDark": ""
 }

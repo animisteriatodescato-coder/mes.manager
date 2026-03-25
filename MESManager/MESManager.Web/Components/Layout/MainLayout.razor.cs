@@ -435,13 +435,26 @@ public partial class MainLayout : IDisposable
         _isDarkMode = !_isDarkMode;
         // Propaga ai componenti figli che usano IThemeModeService
         ThemeModeService.UpdateMode(_isDarkMode);
-        // Salva in entrambi i sistemi per retrocompatibilità
         await PreferencesService.SetAsync("isDarkMode", _isDarkMode);
-        var settings = AppSettingsService.GetSettings();
-        settings.ThemeIsDarkMode = _isDarkMode;
-        await AppSettingsService.SaveSettingsAsync(settings);
+
+        // Aggiorna ThemeIsDarkMode nelle impostazioni EFFETTIVE (utente o globali).
+        // CRITICO: se l'utente ha preferenze personali, bisogna aggiornare quelle —
+        // altrimenti OnAppSettingsChanged (triggerato da SaveSettingsAsync globale) leggerebbe
+        // le impostazioni utente ancora col vecchio ThemeIsDarkMode e revertivrebbe il toggle.
+        var effectiveSettings = UserThemeService.GetEffectiveSettings();
+        effectiveSettings.ThemeIsDarkMode = _isDarkMode;
+
+        if (UserThemeService.HasUserTheme)
+            await UserThemeService.SaveUserThemeAsync(effectiveSettings);
+        else
+        {
+            var globalSettings = AppSettingsService.GetSettings();
+            globalSettings.ThemeIsDarkMode = _isDarkMode;
+            await AppSettingsService.SaveSettingsAsync(globalSettings);
+        }
+
         // Aggiorna CSS vars live senza aspettare il re-render Blazor
-        await ThemeCssService.ApplyAsync(JS, UserThemeService.GetEffectiveSettings(), _isDarkMode);
+        await ThemeCssService.ApplyAsync(JS, effectiveSettings, _isDarkMode);
     }
 
     private void ToggleDrawer()

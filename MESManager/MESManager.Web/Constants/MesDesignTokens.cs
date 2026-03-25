@@ -27,34 +27,46 @@ public static class MesDesignTokens
     /// <summary>Colore testo celle per MudTable e AG Grid.</summary>
     public static string RowText(bool dark) => dark ? "#E6E6F0" : "#1E1E28";
 
+    // Soglia minima di saturazione perché derivare la hue abbia senso visivamente.
+    // Sotto questa soglia (nero, grigio, bianco) non esiste un colore dominante:
+    // si usa il fallback fisso invece di produrre una strana tinta rosso/neutra.
+    private const float RowTintSaturationThreshold = 0.12f;
+
     /// <summary>
     /// Colore riga dispari calcolato dal colore del menu laterale/AppBar.
-    /// Usa la tonalità (hue) del colore con lightness alta (light) o bassa (dark),
-    /// producendo righe zebrate coerenti con il tema scelto dall'utente.
-    /// Se hexColor non è un hex valido (es. var(--mes-primary)), usa il fallback fisso.
+    /// Estrae la hue e produce una tinta chiara (light) o scura (dark) vivida ma discreta.
+    /// Se hexColor non è un hex valido o il colore è quasi acromatico (grigio/nero/bianco),
+    /// usa il fallback fisso RowOdd(dark) per evitare tinte indesiderate.
     /// </summary>
     public static string RowOddFromColor(string hexColor, bool dark)
     {
         if (!TryParseHex(hexColor, out byte r, out byte g, out byte b))
             return RowOdd(dark);
         HexToHsl(r, g, b, out float h, out float s, out _);
-        float targetS = Math.Min(s * 0.6f + 0.04f, dark ? 0.35f : 0.20f);
-        float targetL = dark ? 0.18f : 0.95f;
+        if (s < RowTintSaturationThreshold)
+            return RowOdd(dark);
+        // Light: tinta visibile ma chiara (lightness alta, saturazione moderata)
+        // Dark:  tinta visibile ma scura (lightness bassa, saturazione medio-alta)
+        float targetS = Math.Min(s * 0.6f + 0.08f, dark ? 0.45f : 0.35f);
+        float targetL = dark ? 0.20f : 0.93f;
         return HslToHex(h, targetS, targetL);
     }
 
     /// <summary>
     /// Colore riga pari calcolato dal colore del menu laterale/AppBar.
-    /// Leggermente più neutro di RowOddFromColor per l'effetto zebra.
-    /// Se hexColor non è un hex valido, usa il fallback fisso.
+    /// Più neutro di RowOddFromColor per creare l'effetto zebra: lightness ancora più alta
+    /// (light) o più bassa (dark) con saturazione dimezzata rispetto alla riga odd.
+    /// Se hexColor non è un hex valido o il colore è quasi acromatico, usa il fallback fisso.
     /// </summary>
     public static string RowEvenFromColor(string hexColor, bool dark)
     {
         if (!TryParseHex(hexColor, out byte r, out byte g, out byte b))
             return RowEven(dark);
         HexToHsl(r, g, b, out float h, out float s, out _);
-        float targetS = Math.Min(s * 0.3f + 0.01f, dark ? 0.15f : 0.08f);
-        float targetL = dark ? 0.13f : 0.99f;
+        if (s < RowTintSaturationThreshold)
+            return RowEven(dark);
+        float targetS = Math.Min(s * 0.25f + 0.03f, dark ? 0.18f : 0.12f);
+        float targetL = dark ? 0.13f : 0.98f;
         return HslToHex(h, targetS, targetL);
     }
 

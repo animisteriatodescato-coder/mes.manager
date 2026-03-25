@@ -313,8 +313,10 @@
     }
 
     // ── Live preview via CSS vars ─────────────────────────────────────────────
+    // USA ThemeModeService.IsDarkMode (stato live) — NON _draft.ThemeIsDarkMode (valore salvato).
+    // Se l'utente ha già attivato dark mode con il toggle, il preview deve usare quel contesto.
     private Task ApplyPreviewAsync()
-        => ThemeCssService.ApplyAsync(JS, _draft, _draft.ThemeIsDarkMode);
+        => ThemeCssService.ApplyAsync(JS, _draft, ThemeModeService.IsDarkMode);
 
     private async Task OnColorChanged(string value, Action<string> setter)
     {
