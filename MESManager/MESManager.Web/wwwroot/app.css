@@ -485,6 +485,12 @@ h1:focus {
     border-color: #4a4a6a !important;
 }
 
+/* Label print dialog — sempre bianco indipendente dal tema (BIBBIA: .mud-theme-dark) */
+.mud-theme-dark .label-card {
+    background: white !important;
+    color-scheme: light;
+}
+
 /* Item Vis-Timeline — bordo leggermente più scuro del fill */
 .vis-item.vis-range {
     border-width: 1px !important;

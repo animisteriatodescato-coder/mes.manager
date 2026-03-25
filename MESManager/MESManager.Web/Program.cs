@@ -210,6 +210,23 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
+// Policy per accesso pagine Produzione (Soluzione 2: Claims per-utente)
+// Admin / Produzione / Manutenzione passano sempre.
+// Visualizzazione: solo se ha claim "pagina=<valore>".
+builder.Services.AddAuthorization(options =>
+{
+    foreach (var pagina in MESManager.Web.Constants.PaginaPolicy.PagineProduzione)
+    {
+        var claimValue = pagina.ClaimValue; // closure
+        options.AddPolicy(pagina.PolicyName, p =>
+            p.RequireAssertion(ctx =>
+                ctx.User.IsInRole("Admin") ||
+                ctx.User.IsInRole("Produzione") ||
+                ctx.User.IsInRole("Manutenzione") ||
+                ctx.User.HasClaim(MESManager.Web.Constants.PaginaPolicy.ClaimType, claimValue)));
+    }
+});
+
 // SignalR Hub
 builder.Services.AddSignalR();
 

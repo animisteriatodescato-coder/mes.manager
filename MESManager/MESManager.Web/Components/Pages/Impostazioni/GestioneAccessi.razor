@@ -2,6 +2,8 @@
 @attribute [Authorize(Roles = "Admin")]
 @using Microsoft.AspNetCore.Identity
 @using MESManager.Infrastructure.Entities
+@using MESManager.Web.Constants
+@using System.Security.Claims
 @inject UserManager<ApplicationUser> UserManager
 @inject ISnackbar Snackbar
 
@@ -117,6 +119,53 @@
         }
     </MudPaper>
 
+    @* ───── Pagine Produzione per utenti Visualizzazione ───── *@
+    @{
+        var _visUtenti = _utentiRuoli.Where(u => u.Roles.Contains("Visualizzazione")).ToList();
+    }
+    @if (_visUtenti.Any())
+    {
+        <MudPaper Class="pa-4 mt-4" Elevation="2">
+            <MudText Typo="Typo.h6" Class="mb-1">
+                <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="mr-2" />Pagine Produzione visibili (ruolo Visualizzazione)
+            </MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-3 d-block">
+                Seleziona quali pagine di Produzione ogni utente può visitare. Le modifiche diventano attive al prossimo login dell'utente.
+            </MudText>
+            <MudTable Items="_visUtenti" Hover="true" Dense="true" Striped="true" Elevation="0">
+                <HeaderContent>
+                    <MudTh>Utente</MudTh>
+                    @foreach (var pagina in PaginaPolicy.PagineProduzione)
+                    {
+                        <MudTh Style="text-align:center; min-width:110px;">@pagina.Label</MudTh>
+                    }
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Utente">
+                        <div class="d-flex align-center gap-2">
+                            @if (!string.IsNullOrEmpty(context.User.Colore))
+                            {
+                                <div style="width:10px;height:10px;border-radius:50%;background:@context.User.Colore;"></div>
+                            }
+                            <MudText>@(string.IsNullOrEmpty(context.User.Nome) ? context.User.UserName : context.User.Nome)</MudText>
+                        </div>
+                    </MudTd>
+                    @foreach (var pagina in PaginaPolicy.PagineProduzione)
+                    {
+                        var p = pagina;
+                        var item = context;
+                        <MudTd DataLabel="@p.Label" Style="text-align:center;">
+                            <MudCheckBox T="bool"
+                                         Value="@item.PageClaims.Contains(p.ClaimValue)"
+                                         ValueChanged="@((bool val) => TogglePagina(item, p.ClaimValue, val))"
+                                         Color="Color.Info" />
+                        </MudTd>
+                    }
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    }
+
 </MudContainer>
 
 @* ───── Dialog reset password ───── *@
@@ -177,8 +226,13 @@
         var lista = new List<UtenteRuolo>();
         foreach (var u in utenti)
         {
-            var ruoli = await UserManager.GetRolesAsync(u);
-            lista.Add(new UtenteRuolo { User = u, Roles = new HashSet<string>(ruoli) });
+            var ruoli  = await UserManager.GetRolesAsync(u);
+            var claims = await UserManager.GetClaimsAsync(u);
+            var pagineClaims = claims
+                .Where(c => c.Type == PaginaPolicy.ClaimType)
+                .Select(c => c.Value)
+                .ToHashSet();
+            lista.Add(new UtenteRuolo { User = u, Roles = new HashSet<string>(ruoli), PageClaims = pagineClaims });
         }
 
         _utentiRuoli = lista.OrderBy(u => u.User.UserName).ToList();
@@ -265,6 +319,30 @@
         }
     }
 
+    private async Task TogglePagina(UtenteRuolo item, string pagina, bool aggiunto)
+    {
+        IdentityResult result;
+        if (aggiunto)
+        {
+            result = await UserManager.AddClaimAsync(item.User, new Claim(PaginaPolicy.ClaimType, pagina));
+            if (result.Succeeded) item.PageClaims.Add(pagina);
+        }
+        else
+        {
+            var existing = (await UserManager.GetClaimsAsync(item.User))
+                .FirstOrDefault(c => c.Type == PaginaPolicy.ClaimType && c.Value == pagina);
+            result = existing is null
+                ? IdentityResult.Success
+                : await UserManager.RemoveClaimAsync(item.User, existing);
+            if (result.Succeeded) item.PageClaims.Remove(pagina);
+        }
+
+        if (result.Succeeded)
+            Snackbar.Add($"Pagina '{pagina}' {(aggiunto ? "abilitata per" : "rimossa da")} {item.User.UserName} — attivo al prossimo login", Severity.Info);
+        else
+            Snackbar.Add($"Errore: {result.Errors.FirstOrDefault()?.Description}", Severity.Error);
+    }
+
     private async Task EliminaUtente(UtenteRuolo item)
     {
         var result = await UserManager.DeleteAsync(item.User);
@@ -283,5 +361,6 @@
     {
         public ApplicationUser User { get; set; } = new();
         public HashSet<string> Roles { get; set; } = new();
+        public HashSet<string> PageClaims { get; set; } = new();
     }
 }

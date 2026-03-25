@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.59.6";
+    public const string Current = "1.60.0";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.59.6  Fix UserSelector OnUserChanged + Irene Nome/Colore
+    public const string Display = "v" + Current; // v1.60.0  Centralizzazione dialog StampaEtichetta (LabelPrintDialog) + fix dark mode + font scaling + DATA PRODUZIONE
 }

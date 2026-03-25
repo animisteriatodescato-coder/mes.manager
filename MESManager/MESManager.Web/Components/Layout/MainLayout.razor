@@ -2,6 +2,7 @@
 @using MESManager.Web.Services
 @using MESManager.Web.Components.Shared
 @using MESManager.Web.Constants
+@using System.Security.Claims
 @implements IDisposable
 
 <MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
@@ -354,25 +355,53 @@
                 </MudNavGroup>
             </AuthorizeView>
 
-            @* Produzione - Admin, Produzione, Manutenzione, Visualizzazione *@
+            @* Produzione - Admin/Produzione/Manutenzione sempre; Visualizzazione solo pagine abilitate via claims *@
             <AuthorizeView Roles="Admin,Produzione,Manutenzione,Visualizzazione">
-                <MudNavGroup Title="Produzione" Icon="@Icons.Material.Filled.Factory" IconColor="Color.Warning">
-                    <MudNavLink Href="/produzione/dashboard">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128200;</span><span>Dashboard</span></div>
-                    </MudNavLink>
-                    <MudNavLink Href="/produzione/plc-realtime">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9889;</span><span>PLC Realtime</span></div>
-                    </MudNavLink>
-                    <MudNavLink Href="/produzione/plc-storico">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128220;</span><span>PLC Storico</span></div>
-                    </MudNavLink>
-                    <MudNavLink Href="/produzione/gantt-storico">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128202;</span><span>Gantt Storico</span></div>
-                    </MudNavLink>
-                    <MudNavLink Href="/produzione/incollaggio">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128279;</span><span>Incollaggio</span></div>
-                    </MudNavLink>
-                </MudNavGroup>
+                <Authorized Context="prodCtx">
+                    @{
+                        bool _isProdAdmin = prodCtx.User.IsInRole("Admin") || prodCtx.User.IsInRole("Produzione") || prodCtx.User.IsInRole("Manutenzione");
+                        bool _canDash     = _isProdAdmin || prodCtx.User.HasClaim(PaginaPolicy.ClaimType, "dashboard");
+                        bool _canPlcRT    = _isProdAdmin || prodCtx.User.HasClaim(PaginaPolicy.ClaimType, "plc-realtime");
+                        bool _canPlcSt    = _isProdAdmin || prodCtx.User.HasClaim(PaginaPolicy.ClaimType, "plc-storico");
+                        bool _canGantt    = _isProdAdmin || prodCtx.User.HasClaim(PaginaPolicy.ClaimType, "gantt-storico");
+                        bool _canIncoll   = _isProdAdmin || prodCtx.User.HasClaim(PaginaPolicy.ClaimType, "incollaggio");
+                    }
+                    @if (_canDash || _canPlcRT || _canPlcSt || _canGantt || _canIncoll)
+                    {
+                        <MudNavGroup Title="Produzione" Icon="@Icons.Material.Filled.Factory" IconColor="Color.Warning">
+                            @if (_canDash)
+                            {
+                                <MudNavLink Href="/produzione/dashboard">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128200;</span><span>Dashboard</span></div>
+                                </MudNavLink>
+                            }
+                            @if (_canPlcRT)
+                            {
+                                <MudNavLink Href="/produzione/plc-realtime">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9889;</span><span>PLC Realtime</span></div>
+                                </MudNavLink>
+                            }
+                            @if (_canPlcSt)
+                            {
+                                <MudNavLink Href="/produzione/plc-storico">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128220;</span><span>PLC Storico</span></div>
+                                </MudNavLink>
+                            }
+                            @if (_canGantt)
+                            {
+                                <MudNavLink Href="/produzione/gantt-storico">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128202;</span><span>Gantt Storico</span></div>
+                                </MudNavLink>
+                            }
+                            @if (_canIncoll)
+                            {
+                                <MudNavLink Href="/produzione/incollaggio">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128279;</span><span>Incollaggio</span></div>
+                                </MudNavLink>
+                            }
+                        </MudNavGroup>
+                    }
+                </Authorized>
             </AuthorizeView>
 
             @* Cataloghi - Admin, Produzione, Ufficio, Visualizzazione *@

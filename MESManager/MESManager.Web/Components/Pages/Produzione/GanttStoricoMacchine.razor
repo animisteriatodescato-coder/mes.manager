@@ -1,4 +1,5 @@
 @page "/produzione/gantt-storico"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.GanttStorico)]
 @using MESManager.Application.DTOs
 @using MESManager.Application.Interfaces
 @using MESManager.Web.Constants
