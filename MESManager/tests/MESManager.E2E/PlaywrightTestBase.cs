@@ -103,6 +103,9 @@ public class PlaywrightTestBase : IAsyncLifetime
 
         Page = await Context.NewPageAsync();
 
+        // Login automatico con credenziali admin (necessario per le pagine protette)
+        await LoginAsync();
+
         // Cattura errori console
         Page.Console += (_, msg) =>
         {
@@ -124,6 +127,26 @@ public class PlaywrightTestBase : IAsyncLifetime
                 _pageErrors.Add($"Page Error: {exception}");
             }
         };
+    }
+
+    /// <summary>
+    /// Esegue il login con le credenziali admin di default (Identity: admin / Admin@123!).
+    /// Chiamato automaticamente da InitializeAsync per garantire accesso alle pagine protette.
+    /// </summary>
+    private async Task LoginAsync()
+    {
+        var loginUsername = Environment.GetEnvironmentVariable("E2E_USERNAME") ?? "admin";
+        var loginPassword = Environment.GetEnvironmentVariable("E2E_PASSWORD") ?? "Admin@123!";
+
+        await Page.GotoAsync($"{BaseUrl}/Account/Login");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Page.FillAsync("input[name='Input.Username']", loginUsername);
+        await Page.FillAsync("input[name='Input.Password']", loginPassword);
+        await Page.ClickAsync("button[type='submit']");
+
+        // Attende redirect post-login (max 10s)
+        await Page.WaitForURLAsync(url => !url.Contains("/Account/Login"), new PageWaitForURLOptions { Timeout = 10000 });
     }
 
     public virtual async Task DisposeAsync()
