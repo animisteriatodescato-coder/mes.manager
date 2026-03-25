@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using MESManager.Infrastructure.Entities;
 
 namespace MESManager.Web.Services;
 
@@ -19,7 +20,7 @@ public static class RoleSeedService
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-        var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var config = services.GetRequiredService<IConfiguration>();
 
         // Crea i ruoli se non esistono
@@ -39,11 +40,13 @@ public static class RoleSeedService
 
         if (await userManager.FindByNameAsync(adminUsername) == null)
         {
-            var admin = new IdentityUser
+            var admin = new ApplicationUser
             {
                 UserName       = adminUsername,
+                Nome           = "Admin",
                 Email          = adminEmail,
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                Attivo         = true
             };
 
             var result = await userManager.CreateAsync(admin, adminPassword);

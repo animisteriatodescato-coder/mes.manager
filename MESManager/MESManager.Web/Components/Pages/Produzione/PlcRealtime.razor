@@ -125,7 +125,7 @@
                 var savedColumnState = await PreferencesService.GetAsync<string>("plc-realtime-grid-columns");
                 
                 // Imposta l'utente corrente per la griglia (per salvare le preferenze per-utente)
-                var userId = CurrentUserService.CurrentUserId?.ToString() ?? "";
+                var userId = CurrentUserService.UserId ?? "";
                 await JSRuntime.InvokeVoidAsync("plcRealtimeGrid.setCurrentUser", userId);
                 
                 var savedSettings = await PreferencesService.GetAsync<GridUiSettings>("plc-realtime-grid-settings");

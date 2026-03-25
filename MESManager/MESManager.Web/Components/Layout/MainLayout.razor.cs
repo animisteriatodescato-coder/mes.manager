@@ -2,8 +2,11 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.JSInterop;
 using MudBlazor;
+using MESManager.Application.Services;
+using MESManager.Infrastructure.Entities;
 using MESManager.Web.Constants;
 using MESManager.Web.Services;
 
@@ -45,6 +48,12 @@ public partial class MainLayout : IDisposable
     [Inject]
     private ThemeCssService ThemeCssService { get; set; } = default!;
 
+    [Inject]
+    private UserManager<ApplicationUser> UserManager { get; set; } = default!;
+
+    [Inject]
+    private CurrentUserService CurrentUserService { get; set; } = default!;
+
     private bool _isDarkMode = false;
     private bool _drawerOpen = false;
     private string _currentCategory = string.Empty;
@@ -67,6 +76,14 @@ public partial class MainLayout : IDisposable
                     $"/Account/Login?ReturnUrl={Uri.EscapeDataString(pathAndQuery)}",
                     forceLoad: true);
                 return;
+            }
+
+            // Popola CurrentUserService con i dati dell'utente autenticato
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (userId != null)
+            {
+                var appUser = await UserManager.FindByIdAsync(userId);
+                CurrentUserService.SetUser(userId, appUser?.Nome ?? appUser?.UserName, appUser?.Colore);
             }
         }
 

@@ -2,21 +2,17 @@ namespace MESManager.Domain.Entities;
 
 /// <summary>
 /// Preferenza individuale di un utente (stato griglia, colonne stampa, tema, ecc.)
+/// FK → AspNetUsers.Id (stringa Identity) — non più dipende da UtenteApp.
 /// </summary>
 public class PreferenzaUtente
 {
     public Guid Id { get; set; }
-    
+
     /// <summary>
-    /// FK all'utente proprietario della preferenza
+    /// ID dell'utente autenticato (AspNetUsers.Id — stringa Identity)
     /// </summary>
-    public Guid UtenteAppId { get; set; }
-    
-    /// <summary>
-    /// Utente proprietario
-    /// </summary>
-    public UtenteApp UtenteApp { get; set; } = null!;
-    
+    public string UserId { get; set; } = string.Empty;
+
     /// <summary>
     /// Chiave della preferenza (es: "grid-state-commesse-aperte", "print-columns-programma", "fix-state-anime")
     /// </summary>

@@ -4,11 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MESManager.Domain.Entities;
 using MESManager.Domain.Enums;
+using MESManager.Infrastructure.Entities;
 using System.Globalization;
 
 namespace MESManager.Infrastructure.Data;
 
-public class MesManagerDbContext : IdentityDbContext<IdentityUser>
+public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
 {
     private static readonly HashSet<string> StringDbTypes = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -47,7 +48,6 @@ public class MesManagerDbContext : IdentityDbContext<IdentityUser>
     public DbSet<ImpostazioniGantt> ImpostazioniGantt => Set<ImpostazioniGantt>();
     public DbSet<AllegatoArticolo> AllegatiArticoli => Set<AllegatoArticolo>();
     public DbSet<StoricoProgrammazione> StoricoProgrammazione => Set<StoricoProgrammazione>();
-    public DbSet<UtenteApp> UtentiApp => Set<UtenteApp>();
     public DbSet<PreferenzaUtente> PreferenzeUtente => Set<PreferenzaUtente>();
     public DbSet<PlcServiceStatus> PlcServiceStatus => Set<PlcServiceStatus>();
     public DbSet<PlcSyncLog> PlcSyncLogs => Set<PlcSyncLog>();
@@ -278,21 +278,9 @@ public class MesManagerDbContext : IdentityDbContext<IdentityUser>
         modelBuilder.Entity<Commessa>()
             .HasIndex(c => c.StatoProgramma);
 
-        // Configurazione UtenteApp
-        modelBuilder.Entity<UtenteApp>()
-            .HasIndex(u => u.Nome)
-            .IsUnique();
-
-        // Relazione 1:N UtenteApp-PreferenzaUtente
+        // Indice composto per ricerca veloce preferenze (userId = AspNetUsers.Id stringa)
         modelBuilder.Entity<PreferenzaUtente>()
-            .HasOne(p => p.UtenteApp)
-            .WithMany(u => u.Preferenze)
-            .HasForeignKey(p => p.UtenteAppId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        // Indice composto per ricerca veloce preferenze
-        modelBuilder.Entity<PreferenzaUtente>()
-            .HasIndex(p => new { p.UtenteAppId, p.Chiave })
+            .HasIndex(p => new { p.UserId, p.Chiave })
             .IsUnique();
 
         // PlcServiceStatus - riga unica

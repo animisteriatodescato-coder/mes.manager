@@ -1,185 +1,126 @@
 @page "/impostazioni/utenti"
-@using MESManager.Application.Interfaces
-@using MESManager.Domain.Entities
-@inject IUtenteAppService UtenteService
+@attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Identity
+@using MESManager.Infrastructure.Entities
+@implements IDisposable
+@inject UserManager<ApplicationUser> UserManager
 @inject ISnackbar Snackbar
 
-<PageTitle>Gestione Utenti</PageTitle>
+<PageTitle>Profili Utente</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-gestione-utenti">
 
-<MudPaper Class="pa-4 mb-4">
-    <MudGrid>
-        <MudItem xs="12" sm="6" md="4">
-            <MudTextField @bind-Value="_nuovoNome" 
-                          data-testid="input-utente-nuovo"
-                          Label="Nome Nuovo Utente" 
-                          Variant="Variant.Outlined"
-                          Adornment="Adornment.End"
-                          AdornmentIcon="@Icons.Material.Filled.Person" />
-        </MudItem>
-        <MudItem xs="12" sm="6" md="2" Class="d-flex align-end">
-            <MudButton Variant="Variant.Filled" 
-                       Color="Color.Primary" 
-                       StartIcon="@Icons.Material.Filled.PersonAdd"
-                       OnClick="AggiungiUtente"
-                       Disabled="@(string.IsNullOrWhiteSpace(_nuovoNome))"
-                       data-testid="btn-utente-aggiungi">
-                Aggiungi
-            </MudButton>
-        </MudItem>
-    </MudGrid>
+<MudPaper Class="pa-4 mb-2" Elevation="0">
+    <MudText Typo="Typo.body2" Color="Color.Secondary">
+        Gestisci nome display e colore degli utenti. Per creare o eliminare utenti vai a
+        <MudLink Href="/impostazioni/accessi">Gestione Accessi</MudLink>.
+    </MudText>
 </MudPaper>
 
-<MudTable Items="@_utenti" Hover="true" Dense="true" Striped="true" Elevation="2" Style="overflow-x: hidden;" data-testid="table-utenti">
+<MudTable Items="@_utenti" Hover="true" Dense="true" Striped="true" Elevation="2" data-testid="table-utenti">
     <HeaderContent>
         <MudTh Style="width: 80px;">Ordine</MudTh>
-        <MudTh Style="width: 120px;">Nome</MudTh>
+        <MudTh Style="width: 130px;">Username</MudTh>
+        <MudTh Style="width: 150px;">Nome display</MudTh>
         <MudTh Style="width: 200px;">Colore</MudTh>
         <MudTh Style="width: 80px;">Attivo</MudTh>
-        <MudTh>Data Creazione</MudTh>
-        <MudTh>Ultima Modifica</MudTh>
         <MudTh Style="width: 80px;">Azioni</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Ordine">
-            <MudNumericField T="int" 
-                             Value="@context.Ordine" 
+            <MudNumericField T="int"
+                             Value="@context.Ordine"
                              ValueChanged="@((int o) => CambiaOrdine(context, o))"
-                             Min="1" 
-                             Variant="Variant.Text" 
+                             Min="1"
+                             Variant="Variant.Text"
                              Style="width: 60px;" />
         </MudTd>
-        <MudTd DataLabel="Nome">
+        <MudTd DataLabel="Username">@context.UserName</MudTd>
+        <MudTd DataLabel="Nome display">
             @if (_inModifica == context.Id)
             {
-                <MudTextField @bind-Value="_nomeModifica" 
-                              Variant="Variant.Text" 
-                              Style="width: 150px;" />
+                <MudTextField @bind-Value="_nomeModifica"
+                              Variant="Variant.Text"
+                              Style="width: 140px;" />
             }
             else
             {
-                @context.Nome
+                @(string.IsNullOrEmpty(context.Nome) ? "-" : context.Nome)
             }
         </MudTd>
         <MudTd DataLabel="Colore">
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 <div style="width: 40px; height: 30px; background-color: @(context.Colore ?? "#1976d2"); border-radius: 4px; border: 1px solid #888; cursor: pointer;"
                      @onclick="@(() => ApriColorPicker(context))"></div>
-                <MudButton Size="Size.Small" 
-                           Variant="Variant.Outlined" 
-                           OnClick="@(() => ApriColorPicker(context))">
-                    Cambia
-                </MudButton>
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => ApriColorPicker(context))">Cambia</MudButton>
             </MudStack>
         </MudTd>
         <MudTd DataLabel="Attivo">
-            <MudSwitch T="bool" 
+            <MudSwitch T="bool"
                        Value="@context.Attivo"
                        ValueChanged="@((bool a) => CambiaAttivo(context, a))"
                        Color="Color.Success" />
         </MudTd>
-        <MudTd DataLabel="Data Creazione">@context.DataCreazione.ToString("dd/MM/yyyy HH:mm")</MudTd>
-        <MudTd DataLabel="Ultima Modifica">@context.UltimaModifica.ToString("dd/MM/yyyy HH:mm")</MudTd>
         <MudTd DataLabel="Azioni">
             @if (_inModifica == context.Id)
             {
-                <MudIconButton Icon="@Icons.Material.Filled.Check" 
-                               Color="Color.Success" 
-                               Size="Size.Small" 
-                               OnClick="@(() => SalvaModifica(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Close" 
-                               Color="Color.Error" 
-                               Size="Size.Small" 
-                               OnClick="AnnullaModifica" />
+                <MudIconButton Icon="@Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small" OnClick="@(() => SalvaModifica(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" Size="Size.Small" OnClick="AnnullaModifica" />
             }
             else
             {
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" 
-                               Color="Color.Primary" 
-                               Size="Size.Small" 
-                               OnClick="@(() => IniziModifica(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => IniziaModifica(context))" />
             }
         </MudTd>
     </RowTemplate>
+    <NoRecordsContent>
+        <MudText Class="pa-4" Color="Color.Secondary">Nessun utente trovato</MudText>
+    </NoRecordsContent>
 </MudTable>
 
-@* Dialog per selezione colore *@
-<MudDialog @bind-Visible="_colorDialogVisible" Options="@(new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true })" data-testid="dlg-utente-colore">
+</MudContainer>
+
+@* Dialog color picker *@
+<MudDialog @bind-Visible="_colorDialogVisible"
+           Options="@(new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true })">
     <TitleContent>
-        <MudText Typo="Typo.h6">Seleziona Colore per @_utenteColoreCorrente?.Nome</MudText>
+        <MudText Typo="Typo.h6">Colore per @_utenteColoreCorrente?.UserName</MudText>
     </TitleContent>
     <DialogContent>
         <MudColorPicker @bind-Value="_coloreSelezionato"
-                        PickerVariant="PickerVariant.Static"
                         ColorPickerView="ColorPickerView.Spectrum"
-                        DisableToolbar="false"
                         DisableAlpha="true"
-                        DisableColorField="false"
-                        DisablePreview="false"
                         DisableSliders="false"
                         DisableInputs="false"
                         Style="width: 100%;" />
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="ChiudiColorPicker" data-testid="btn-utente-colore-annulla">Annulla</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="ConfermaColore" data-testid="btn-utente-colore-conferma">Conferma</MudButton>
+        <MudButton OnClick="ChiudiColorPicker">Annulla</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="ConfermaColore">Conferma</MudButton>
     </DialogActions>
 </MudDialog>
-</MudContainer>
 
 @code {
-    private List<UtenteApp> _utenti = new();
-    private string _nuovoNome = string.Empty;
-    private Guid? _inModifica;
+    private List<ApplicationUser> _utenti = new();
+    private string? _inModifica;
     private string _nomeModifica = string.Empty;
-    private System.Threading.SemaphoreSlim _coloreLock = new System.Threading.SemaphoreSlim(1,1);
-    private Dictionary<Guid, MudBlazor.Utilities.MudColor> _coloriUtenti = new();
-    
-    // Dialog colore
-    private bool _colorDialogVisible = false;
-    private UtenteApp? _utenteColoreCorrente;
-    private MudBlazor.Utilities.MudColor _coloreSelezionato = new MudBlazor.Utilities.MudColor("#1976d2");
+    private readonly System.Threading.SemaphoreSlim _coloreLock = new(1, 1);
 
-    protected override async Task OnInitializedAsync()
+    private bool _colorDialogVisible;
+    private ApplicationUser? _utenteColoreCorrente;
+    private MudBlazor.Utilities.MudColor _coloreSelezionato = new("#1976d2");
+
+    protected override void OnInitialized()
     {
-        await CaricaUtenti();
+        CaricaUtenti();
     }
 
-    private async Task CaricaUtenti()
+    private void CaricaUtenti()
     {
-        var utenti = await UtenteService.GetAllAsync();
-        _utenti = utenti.OrderBy(u => u.Ordine).ToList();
-        
-        // Inizializza il dizionario dei colori
-        _coloriUtenti.Clear();
-        foreach (var u in _utenti)
-        {
-            _coloriUtenti[u.Id] = new MudBlazor.Utilities.MudColor(u.Colore ?? "#1976d2");
-        }
+        _utenti = UserManager.Users.OrderBy(u => u.Ordine).ThenBy(u => u.UserName).ToList();
     }
 
-    private async Task AggiungiUtente()
-    {
-        if (string.IsNullOrWhiteSpace(_nuovoNome))
-            return;
-
-        var nomeUpperCase = _nuovoNome.Trim().ToUpperInvariant();
-        
-        // Verifica duplicato
-        if (_utenti.Any(u => u.Nome.Equals(nomeUpperCase, StringComparison.OrdinalIgnoreCase)))
-        {
-            Snackbar.Add($"Esiste già un utente con nome '{nomeUpperCase}'", Severity.Warning);
-            return;
-        }
-
-        await UtenteService.CreateAsync(nomeUpperCase);
-        _nuovoNome = string.Empty;
-        await CaricaUtenti();
-        Snackbar.Add($"Utente '{nomeUpperCase}' creato con successo", Severity.Success);
-    }
-
-    private void IniziModifica(UtenteApp utente)
+    private void IniziaModifica(ApplicationUser utente)
     {
         _inModifica = utente.Id;
         _nomeModifica = utente.Nome;
@@ -191,50 +132,40 @@
         _nomeModifica = string.Empty;
     }
 
-    private async Task SalvaModifica(UtenteApp utente)
+    private async Task SalvaModifica(ApplicationUser utente)
     {
         if (string.IsNullOrWhiteSpace(_nomeModifica))
         {
-            Snackbar.Add("Il nome non può essere vuoto", Severity.Warning);
+            Snackbar.Add("Il nome non puo essere vuoto", Severity.Warning);
             return;
         }
-
-        var nomeUpperCase = _nomeModifica.Trim().ToUpperInvariant();
-        
-        // Verifica duplicato (escludi l'utente corrente)
-        if (_utenti.Any(u => u.Id != utente.Id && u.Nome.Equals(nomeUpperCase, StringComparison.OrdinalIgnoreCase)))
-        {
-            Snackbar.Add($"Esiste già un utente con nome '{nomeUpperCase}'", Severity.Warning);
-            return;
-        }
-
-        utente.Nome = nomeUpperCase;
-        await UtenteService.UpdateAsync(utente);
-        
+        utente.Nome = _nomeModifica.Trim().ToUpperInvariant();
+        var result = await UserManager.UpdateAsync(utente);
         _inModifica = null;
         _nomeModifica = string.Empty;
-        await CaricaUtenti();
-        Snackbar.Add("Utente aggiornato con successo", Severity.Success);
+        CaricaUtenti();
+        if (result.Succeeded)
+            Snackbar.Add("Nome aggiornato", Severity.Success);
+        else
+            Snackbar.Add("Errore aggiornamento", Severity.Error);
     }
 
-    private async Task CambiaOrdine(UtenteApp utente, int nuovoOrdine)
+    private async Task CambiaOrdine(ApplicationUser utente, int nuovoOrdine)
     {
         utente.Ordine = nuovoOrdine;
-        await UtenteService.UpdateAsync(utente);
-        await CaricaUtenti();
+        await UserManager.UpdateAsync(utente);
+        CaricaUtenti();
     }
 
-    private async Task CambiaAttivo(UtenteApp utente, bool attivo)
+    private async Task CambiaAttivo(ApplicationUser utente, bool attivo)
     {
         utente.Attivo = attivo;
-        await UtenteService.UpdateAsync(utente);
-        await CaricaUtenti();
-        
-        var stato = attivo ? "attivato" : "disattivato";
-        Snackbar.Add($"Utente '{utente.Nome}' {stato}", Severity.Info);
+        await UserManager.UpdateAsync(utente);
+        CaricaUtenti();
+        Snackbar.Add($"Utente '{utente.UserName}' {(attivo ? "attivato" : "disattivato")}", Severity.Info);
     }
 
-    private void ApriColorPicker(UtenteApp utente)
+    private void ApriColorPicker(ApplicationUser utente)
     {
         _utenteColoreCorrente = utente;
         _coloreSelezionato = new MudBlazor.Utilities.MudColor(utente.Colore ?? "#1976d2");
@@ -250,26 +181,21 @@
     private async Task ConfermaColore()
     {
         if (_utenteColoreCorrente == null) return;
-        
         await _coloreLock.WaitAsync();
         try
         {
             _utenteColoreCorrente.Colore = _coloreSelezionato.ToString();
-            await UtenteService.UpdateAsync(_utenteColoreCorrente);
-            await CaricaUtenti();
-            Snackbar.Add($"Colore per '{_utenteColoreCorrente.Nome}' aggiornato", Severity.Success);
+            await UserManager.UpdateAsync(_utenteColoreCorrente);
+            CaricaUtenti();
+            Snackbar.Add($"Colore per '{_utenteColoreCorrente.UserName}' aggiornato", Severity.Success);
         }
         finally
         {
             _coloreLock.Release();
         }
-        
         _colorDialogVisible = false;
         _utenteColoreCorrente = null;
     }
 
-    public void Dispose()
-    {
-        _coloreLock?.Dispose();
-    }
+    public void Dispose() => _coloreLock.Dispose();
 }

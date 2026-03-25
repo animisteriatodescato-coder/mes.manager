@@ -1,5 +1,6 @@
 using MESManager.Web.Components;
 using MESManager.Infrastructure;
+using MESManager.Infrastructure.Entities;
 using MESManager.Infrastructure.Services;
 using MESManager.Infrastructure.Repositories;
 using MESManager.Sync;
@@ -175,7 +176,7 @@ builder.Services.AddDbContext<MesManagerDbContext>(options =>
             maxRetryDelay: TimeSpan.FromSeconds(30),
             errorNumbersToAdd: null)));
 
-builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     // Policy password più sicura
     options.Password.RequireDigit = true;

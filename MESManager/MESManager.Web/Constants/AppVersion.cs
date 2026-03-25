@@ -14,5 +14,5 @@ public static class AppVersion
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.59.3  Fix: Sol1+3 look-ahead+PLCRealtime trailing (zero timeout arbitrari)
+    public const string Display = "v" + Current; // v1.59.3  Sol2: ApplicationUser unifica IdentityUser+UtenteApp (eliminata UtenteApp)
 }

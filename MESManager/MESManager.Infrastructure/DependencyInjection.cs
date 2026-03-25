@@ -44,7 +44,6 @@ public static class DependencyInjection
         services.AddScoped<ICalendarioLavoroAppService, CalendarioLavoroAppService>();
         services.AddScoped<IImpostazioniGanttAppService, ImpostazioniGanttAppService>();
         services.AddScoped<IFestiviAppService, FestiviAppService>();
-        services.AddScoped<IUtenteAppService, UtenteAppService>();
         services.AddScoped<IPreferenzeUtenteService, PreferenzeUtenteService>();
         services.AddScoped<CurrentUserService>();
         services.AddScoped<ITechnicalIssueService, TechnicalIssueService>();

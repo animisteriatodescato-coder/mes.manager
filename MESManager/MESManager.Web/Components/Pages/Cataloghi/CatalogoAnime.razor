@@ -105,7 +105,7 @@
                 _isGridInitialized = true;
                 await Task.Delay(100);
 
-                var userId = CurrentUserService.CurrentUserId?.ToString() ?? "";
+                var userId = CurrentUserService.UserId ?? "";
                 await JSRuntime.InvokeVoidAsync("animeGrid.setCurrentUser", userId);
 
                 _dotNetRef = DotNetObjectReference.Create(this);

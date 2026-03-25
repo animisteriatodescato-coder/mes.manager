@@ -1,7 +1,8 @@
 @page "/impostazioni/accessi"
 @attribute [Authorize(Roles = "Admin")]
 @using Microsoft.AspNetCore.Identity
-@inject UserManager<IdentityUser> UserManager
+@using MESManager.Infrastructure.Entities
+@inject UserManager<ApplicationUser> UserManager
 @inject ISnackbar Snackbar
 
 <PageTitle>Gestione Accessi</PageTitle>
@@ -14,14 +15,21 @@
             <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Class="mr-2" />Nuovo Utente
         </MudText>
         <MudGrid>
-            <MudItem xs="12" sm="4">
+            <MudItem xs="12" sm="3">
                 <MudTextField @bind-Value="_nuovoUsername"
-                              Label="Username"
+                              Label="Username (login)"
                               Variant="Variant.Outlined"
                               Adornment="Adornment.Start"
                               AdornmentIcon="@Icons.Material.Filled.Person" />
             </MudItem>
-            <MudItem xs="12" sm="4">
+            <MudItem xs="12" sm="3">
+                <MudTextField @bind-Value="_nuovoNome"
+                              Label="Nome display (es. IRENE)"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Badge" />
+            </MudItem>
+            <MudItem xs="12" sm="3">
                 <MudTextField @bind-Value="_nuovaPassword"
                               Label="Password"
                               InputType="InputType.Password"
@@ -30,7 +38,7 @@
                               AdornmentIcon="@Icons.Material.Filled.Lock"
                               HelperText="Min 8 caratteri, maiuscola e numero" />
             </MudItem>
-            <MudItem xs="12" sm="4" Class="d-flex align-end">
+            <MudItem xs="12" sm="3" Class="d-flex align-end">
                 <MudButton Variant="Variant.Filled"
                            Color="Color.Primary"
                            StartIcon="@Icons.Material.Filled.PersonAdd"
@@ -57,6 +65,7 @@
             <MudTable Items="_utentiRuoli" Hover="true" Dense="true" Striped="true" Elevation="0">
                 <HeaderContent>
                     <MudTh>Username</MudTh>
+                    <MudTh>Nome</MudTh>
                     @foreach (var ruolo in _ruoli)
                     {
                         <MudTh Style="text-align:center; min-width:110px;">@ruolo</MudTh>
@@ -73,6 +82,7 @@
                             }
                         </div>
                     </MudTd>
+                    <MudTd DataLabel="Nome">@(string.IsNullOrEmpty(context.User.Nome) ? "-" : context.User.Nome)</MudTd>
                     @foreach (var ruolo in _ruoli)
                     {
                         var r = ruolo;
@@ -144,6 +154,7 @@
 
     // Nuovo utente
     private string _nuovoUsername = string.Empty;
+    private string _nuovoNome = string.Empty;
     private string _nuovaPassword = string.Empty;
 
     // Reset password
@@ -200,17 +211,21 @@
             return;
 
         var username = _nuovoUsername.Trim();
-        var user = new IdentityUser
+        var nome     = string.IsNullOrWhiteSpace(_nuovoNome) ? username : _nuovoNome.Trim().ToUpperInvariant();
+        var user = new ApplicationUser
         {
             UserName       = username,
+            Nome           = nome,
             Email          = $"{username.ToLower()}@mesmanager.local",
-            EmailConfirmed = true
+            EmailConfirmed = true,
+            Attivo         = true
         };
 
         var result = await UserManager.CreateAsync(user, _nuovaPassword);
         if (result.Succeeded)
         {
             _nuovoUsername = string.Empty;
+            _nuovoNome     = string.Empty;
             _nuovaPassword = string.Empty;
             await CaricaUtenti();
             Snackbar.Add($"Utente '{username}' creato con successo", Severity.Success);
@@ -266,7 +281,7 @@
 
     private sealed class UtenteRuolo
     {
-        public IdentityUser User { get; set; } = new();
+        public ApplicationUser User { get; set; } = new();
         public HashSet<string> Roles { get; set; } = new();
     }
 }

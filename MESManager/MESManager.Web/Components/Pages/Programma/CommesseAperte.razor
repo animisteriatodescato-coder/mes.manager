@@ -892,7 +892,7 @@
             var jsonData = JsonSerializer.Serialize(_commesse, jsonOptions);
 
             // Imposta l'utente corrente per la griglia (per salvare le preferenze per-utente)
-            var userId = CurrentUserService.CurrentUserId?.ToString() ?? "";
+            var userId = CurrentUserService.UserId ?? "";
             await JSRuntime.InvokeVoidAsync("commesseAperteGrid.setCurrentUser", userId);
 
             await JSRuntime.InvokeVoidAsync("eval", $"commesseAperteGrid.init('commesseAperteGrid', JSON.parse({System.Text.Json.JsonSerializer.Serialize(jsonData)}), {System.Text.Json.JsonSerializer.Serialize(settings.ColumnStateJson)})");

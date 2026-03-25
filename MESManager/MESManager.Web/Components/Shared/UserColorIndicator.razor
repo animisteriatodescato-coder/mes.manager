@@ -1,9 +1,9 @@
 @using MESManager.Application.Services
 @inject CurrentUserService CurrentUser
 
-@if (CurrentUser.HasUser && !string.IsNullOrEmpty(CurrentUser.CurrentUser?.Colore))
+@if (CurrentUser.HasUser && !string.IsNullOrEmpty(CurrentUser.UserColor))
 {
-    <div class="user-color-indicator" style="background-color: @CurrentUser.CurrentUser.Colore;"></div>
+    <div class="user-color-indicator" style="background-color: @CurrentUser.UserColor;"></div>
 }
 
 @code {

@@ -7,105 +7,43 @@ namespace MESManager.Web.Services;
 
 /// <summary>
 /// Servizio per la gestione delle preferenze utente.
-/// Se un utente è selezionato (CurrentUserService), salva/carica dal database.
+/// Se l'utente e' autenticato (CurrentUserService.HasUser), salva/carica dal database.
 /// Altrimenti usa localStorage come fallback.
 /// </summary>
 public class PreferencesService
 {
-    private readonly SemaphoreSlim _loadSemaphore = new(1, 1);
-    private bool _userLoadAttempted = false;
-    
     private readonly IJSRuntime _jsRuntime;
     private readonly CurrentUserService _currentUserService;
     private readonly IPreferenzeUtenteService _preferenzeUtenteService;
-    private readonly IUtenteAppService _utenteAppService;
 
     public PreferencesService(
-        IJSRuntime jsRuntime, 
+        IJSRuntime jsRuntime,
         CurrentUserService currentUserService,
-        IPreferenzeUtenteService preferenzeUtenteService,
-        IUtenteAppService utenteAppService)
+        IPreferenzeUtenteService preferenzeUtenteService)
     {
         _jsRuntime = jsRuntime;
         _currentUserService = currentUserService;
         _preferenzeUtenteService = preferenzeUtenteService;
-        _utenteAppService = utenteAppService;
     }
 
     /// <summary>
-    /// Assicura che l'utente sia caricato dal localStorage se non già presente
-    /// </summary>
-    private async Task EnsureUserLoadedAsync()
-    {
-        if (_currentUserService.HasUser || _userLoadAttempted)
-            return;
-
-        await _loadSemaphore.WaitAsync();
-        try
-        {
-            // Double-check dopo aver acquisito il lock
-            if (_currentUserService.HasUser || _userLoadAttempted)
-                return;
-                
-            _userLoadAttempted = true;
-            
-            // Verifica se JSRuntime è disponibile (non durante prerendering)
-            if (_jsRuntime is not IJSInProcessRuntime && 
-                _jsRuntime.GetType().Name.Contains("Remote", StringComparison.OrdinalIgnoreCase) == false)
-            {
-                // Durante prerendering, skip JS calls
-                return;
-            }
-            
-            var savedUserId = await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", "selectedUserId");
-            if (!string.IsNullOrEmpty(savedUserId) && Guid.TryParse(savedUserId, out var userId))
-            {
-                var utente = await _utenteAppService.GetByIdAsync(userId);
-                if (utente != null)
-                {
-                    _currentUserService.SetCurrentUser(utente);
-                }
-            }
-        }
-        catch (InvalidOperationException)
-        {
-            // JSInterop non disponibile durante prerendering - ignorare
-        }
-        catch
-        {
-            // Error loading user from localStorage - silently ignore
-        }
-        finally
-        {
-            _loadSemaphore.Release();
-        }
-    }
-
-    /// <summary>
-    /// Recupera una preferenza. Se utente selezionato, usa database, altrimenti localStorage.
+    /// Recupera una preferenza. Se utente autenticato, usa database, altrimenti localStorage.
     /// </summary>
     public async Task<T?> GetAsync<T>(string key)
     {
         try
         {
-            // Assicura che l'utente sia caricato
-            await EnsureUserLoadedAsync();
-            
-            // Se c'è un utente selezionato, usa il database
-            if (_currentUserService.HasUser && _currentUserService.CurrentUserId.HasValue)
+            if (_currentUserService.HasUser)
             {
-                var json = await _preferenzeUtenteService.GetAsync(_currentUserService.CurrentUserId.Value, key);
+                var json = await _preferenzeUtenteService.GetAsync(_currentUserService.UserId!, key);
                 if (string.IsNullOrEmpty(json))
                     return default;
-
                 return JsonSerializer.Deserialize<T>(json);
             }
 
-            // Altrimenti fallback a localStorage
             var localJson = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", key);
             if (string.IsNullOrEmpty(localJson))
                 return default;
-
             return JsonSerializer.Deserialize<T>(localJson);
         }
         catch
@@ -115,25 +53,19 @@ public class PreferencesService
     }
 
     /// <summary>
-    /// Salva una preferenza. Se utente selezionato, usa database, altrimenti localStorage.
+    /// Salva una preferenza. Se utente autenticato, usa database, altrimenti localStorage.
     /// </summary>
     public async Task SetAsync<T>(string key, T value)
     {
         try
         {
-            // Assicura che l'utente sia caricato
-            await EnsureUserLoadedAsync();
-            
             var json = JsonSerializer.Serialize(value);
-
-            // Se c'è un utente selezionato, salva nel database
-            if (_currentUserService.HasUser && _currentUserService.CurrentUserId.HasValue)
+            if (_currentUserService.HasUser)
             {
-                await _preferenzeUtenteService.SaveAsync(_currentUserService.CurrentUserId.Value, key, json);
+                await _preferenzeUtenteService.SaveAsync(_currentUserService.UserId!, key, json);
             }
             else
             {
-                // Altrimenti fallback a localStorage
                 await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
             }
         }
@@ -150,17 +82,12 @@ public class PreferencesService
     {
         try
         {
-            // Assicura che l'utente sia caricato
-            await EnsureUserLoadedAsync();
-            
-            // Se c'è un utente selezionato, rimuovi dal database
-            if (_currentUserService.HasUser && _currentUserService.CurrentUserId.HasValue)
+            if (_currentUserService.HasUser)
             {
-                await _preferenzeUtenteService.DeleteAsync(_currentUserService.CurrentUserId.Value, key);
+                await _preferenzeUtenteService.DeleteAsync(_currentUserService.UserId!, key);
             }
             else
             {
-                // Altrimenti rimuovi da localStorage
                 await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", key);
             }
         }

@@ -1,69 +1,42 @@
-using MESManager.Domain.Entities;
-
 namespace MESManager.Application.Services;
 
 /// <summary>
-/// Servizio per gestire l'utente corrente selezionato nella sessione.
-/// Questo servizio è registrato come Scoped, quindi ogni richiesta ha la sua istanza.
-/// L'utente selezionato viene persistito tramite JavaScript localStorage nel browser.
+/// Servizio scoped che espone i dati dell'utente autenticato corrente.
+/// Viene popolato da MainLayout dopo l'ottenimento dell'AuthenticationState.
+/// Unica fonte di verità — non usa più UtenteApp o localStorage.
 /// </summary>
 public class CurrentUserService
 {
-    private UtenteApp? _currentUser;
-    private Guid? _currentUserId;
+    private string? _userId;
+    private string? _userName;
+    private string? _userColor;
 
-    /// <summary>
-    /// Utente attualmente selezionato
-    /// </summary>
-    public UtenteApp? CurrentUser
-    {
-        get => _currentUser;
-        set
-        {
-            _currentUser = value;
-            _currentUserId = value?.Id;
-        }
-    }
+    /// <summary>ID Identity dell'utente autenticato (AspNetUsers.Id)</summary>
+    public string? UserId => _userId;
 
-    /// <summary>
-    /// ID dell'utente corrente
-    /// </summary>
-    public Guid? CurrentUserId
-    {
-        get => _currentUserId ?? _currentUser?.Id;
-        set => _currentUserId = value;
-    }
+    /// <summary>Display name o username dell'utente</summary>
+    public string UserName => _userName ?? "Utente";
 
-    /// <summary>
-    /// Verifica se un utente è selezionato
-    /// </summary>
-    public bool HasUser => _currentUser != null || _currentUserId.HasValue;
+    /// <summary>Colore hex personalizzato (es. #FF5733)</summary>
+    public string? UserColor => _userColor;
 
-    /// <summary>
-    /// Nome dell'utente corrente o "Seleziona utente" se nessuno selezionato
-    /// </summary>
-    public string CurrentUserName => _currentUser?.Nome ?? "Seleziona utente";
+    /// <summary>True se un utente autenticato è disponibile nella sessione corrente</summary>
+    public bool HasUser => !string.IsNullOrEmpty(_userId);
 
-    /// <summary>
-    /// Evento per notificare il cambio utente
-    /// </summary>
+    /// <summary>Evento sollevato quando i dati dell'utente cambiano</summary>
     public event Action? OnUserChanged;
 
     /// <summary>
-    /// Imposta l'utente corrente
+    /// Popola il servizio con i dati dell'utente autenticato.
+    /// Chiamare da MainLayout.OnInitializedAsync dopo aver ottenuto l'AuthenticationState.
     /// </summary>
-    public void SetCurrentUser(UtenteApp? utente)
+    public void SetUser(string? userId, string? userName, string? color = null)
     {
-        _currentUser = utente;
-        _currentUserId = utente?.Id;
+        _userId = userId;
+        _userName = userName;
+        _userColor = color;
         OnUserChanged?.Invoke();
     }
 
-    /// <summary>
-    /// Notifica il cambio utente
-    /// </summary>
-    public void NotifyUserChanged()
-    {
-        OnUserChanged?.Invoke();
-    }
+    public void NotifyUserChanged() => OnUserChanged?.Invoke();
 }
