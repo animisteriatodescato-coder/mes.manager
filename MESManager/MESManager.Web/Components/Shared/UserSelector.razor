@@ -1,7 +1,9 @@
 @using MESManager.Application.Services
+@implements IDisposable
 @inject CurrentUserService CurrentUser
 
-@* Mostra l utente autenticato corrente (nome + indicatore colore). *@
+@* Mostra l utente autenticato corrente (nome + indicatore colore).
+   Si aggiorna automaticamente tramite OnUserChanged quando SetUser viene chiamato da MainLayout. *@
 @if (CurrentUser.HasUser)
 {
     <div class="d-flex align-center gap-2 mr-2">
@@ -11,4 +13,16 @@
         }
         <MudText Typo="Typo.body2" Style="opacity:0.9;">@CurrentUser.UserName</MudText>
     </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        CurrentUser.OnUserChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        CurrentUser.OnUserChanged -= StateHasChanged;
+    }
 }

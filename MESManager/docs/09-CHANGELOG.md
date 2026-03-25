@@ -4,7 +4,28 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.59.5
+## 🔖 Versione Corrente: v1.59.6
+
+---
+
+## 🔖 v1.59.6 - Fix UserSelector username in AppBar + Irene Nome/Colore (25 Mar 2026)
+
+**Data**: 25 Marzo 2026
+
+### 🐛 Bug Fix — Username non visibile in AppBar
+
+`UserSelector.razor` non si aggiornava mai dopo il primo render: non era iscritto all'evento `OnUserChanged` di `CurrentUserService`, quindi quando `MainLayout.OnInitializedAsync` chiamava `SetUser()` il componente non riceveva la notifica.
+
+#### Root cause
+Blazor Server esegue il primo render **prima** che `OnInitializedAsync` di `MainLayout` completi; `HasUser` era `false` al primo render e senza subscription all'evento restava bloccato in quello stato.
+
+#### Fix applicato
+- `UserSelector.razor` → aggiunto `@implements IDisposable` + `OnInitialized` si iscrive a `CurrentUser.OnUserChanged += StateHasChanged` + `Dispose` sul detach
+- DB prod: `UPDATE AspNetUsers SET Nome='IRENE', Colore='#E91E63', Ordine=1 WHERE UserName='irene'` → irene aveva `Nome=''` e `Colore=''`
+
+#### File modificati
+- `MESManager.Web/Components/Shared/UserSelector.razor`
+- DB prod `AspNetUsers` — irene Nome/Colore settati
 
 ---
 
