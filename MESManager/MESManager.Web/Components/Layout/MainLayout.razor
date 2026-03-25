@@ -24,8 +24,10 @@
         : (!string.IsNullOrEmpty(_s.ThemeDrawerBgColor) ? _s.ThemeDrawerBgColor : _appBarBg);
     var _buttonColor = !string.IsNullOrEmpty(_s.ThemeButtonColor) ? _s.ThemeButtonColor : _s.ThemePrimaryColor;
     var _buttonText  = !string.IsNullOrEmpty(_s.ThemeButtonTextColor) ? _s.ThemeButtonTextColor : AppSettingsService.ComputeTextOnBackground(_buttonColor);
-    // Sorgente tinting righe: drawer se hex valido, altrimenti primary (sempre vivido, funziona in tutti i setup)
-    var _rowTintColor = MesDesignTokens.IsValidHexColor(_drawerBg) ? _drawerBg : _s.ThemePrimaryColor;
+    // Sorgente tinting righe: cascade drawer → appbar → primary (stesso algoritmo di ThemeCssService)
+    var _rowTintColor = MesDesignTokens.IsSufficientlyChromatic(_drawerBg)  ? _drawerBg
+                      : MesDesignTokens.IsSufficientlyChromatic(_appBarBg)  ? _appBarBg
+                      : _s.ThemePrimaryColor;
 }
 <style>
     :root {

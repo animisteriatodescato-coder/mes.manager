@@ -45,6 +45,14 @@ public class ThemeCssService
         string drawerBg = (isDarkMode && !string.IsNullOrEmpty(s.ThemeDrawerBgColorDark))
             ? s.ThemeDrawerBgColorDark
             : (!string.IsNullOrEmpty(s.ThemeDrawerBgColor) ? s.ThemeDrawerBgColor : appBarBg);
+
+        // Sorgente tinting righe: cascade drawer → appbar → primary.
+        // Scegliamo il primo con saturazione sufficiente per produrre una tinta visibile.
+        // Esempio: dark default #0E101C ha sat≈0.07 (< soglia 0.12) → si arriva al primary #1976D2.
+        string rowTintColor = MesDesignTokens.IsSufficientlyChromatic(drawerBg)  ? drawerBg
+                            : MesDesignTokens.IsSufficientlyChromatic(appBarBg)  ? appBarBg
+                            : s.ThemePrimaryColor;
+
         string buttonColor = !string.IsNullOrEmpty(s.ThemeButtonColor)
             ? s.ThemeButtonColor
             : s.ThemePrimaryColor;
@@ -70,9 +78,8 @@ public class ThemeCssService
             [MesDesignTokens.CssVarButtonText]      = buttonText,
 
             // ── Tabelle / Griglie — colori calcolati dalla tinta del drawer per coerenza tema ─────
-            // Fallback al primary quando drawerBg non è un hex parsabile (es. "var(--mes-primary)" in light mode default)
-            [MesDesignTokens.CssVarRowOdd]          = MesDesignTokens.RowOddFromColor(MesDesignTokens.IsValidHexColor(drawerBg) ? drawerBg : s.ThemePrimaryColor, isDarkMode),
-            [MesDesignTokens.CssVarRowEven]         = MesDesignTokens.RowEvenFromColor(MesDesignTokens.IsValidHexColor(drawerBg) ? drawerBg : s.ThemePrimaryColor, isDarkMode),
+            [MesDesignTokens.CssVarRowOdd]          = MesDesignTokens.RowOddFromColor(rowTintColor, isDarkMode),
+            [MesDesignTokens.CssVarRowEven]         = MesDesignTokens.RowEvenFromColor(rowTintColor, isDarkMode),
             [MesDesignTokens.CssVarRowText]         = MesDesignTokens.RowText(isDarkMode),
             [MesDesignTokens.CssVarGridHeaderBg]    = drawerBg,
             [MesDesignTokens.CssVarGlassGrid]       = MesDesignTokens.GlassGrid(isDarkMode, panelOp),

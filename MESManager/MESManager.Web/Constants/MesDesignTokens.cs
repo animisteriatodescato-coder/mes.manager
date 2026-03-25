@@ -82,6 +82,18 @@ public static class MesDesignTokens
     }
 
     /// <summary>
+    /// Ritorna true se il colore ha abbastanza saturazione per essere usato come sorgente di tinting.
+    /// Colori acromatici (nero #0E101C, bianco, grigio, navy scurissimo) ritornano false.
+    /// Usato per selezionare la sorgente del tinting in cascata: drawer → appbar → primary.
+    /// </summary>
+    public static bool IsSufficientlyChromatic(string hexColor)
+    {
+        if (!TryParseHex(hexColor, out byte r, out byte g, out byte b)) return false;
+        HexToHsl(r, g, b, out _, out float s, out _);
+        return s >= RowTintSaturationThreshold;
+    }
+
+    /// <summary>
     /// Tenta il parsing di una stringa colore hex (#RGB, #RRGGBB o #RRGGBBAA) in componenti RGB.
     /// Ritorna false se la stringa non è un hex valido (es. "var(--mes-primary)", rgba, ecc.).
     /// Supporta hex a 8 caratteri (#RRGGBBAA): la componente alpha viene ignorata.
