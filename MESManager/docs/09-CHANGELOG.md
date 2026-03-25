@@ -4,7 +4,29 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.59.4
+## 🔖 Versione Corrente: v1.59.5
+
+---
+
+## 🔖 v1.59.5 - Deploy prod: Bibbia docs rule + ApplicationUser (25 Mar 2026)
+
+**Data**: 25 Marzo 2026
+
+### 🚀 Deploy Produzione
+
+Deploy completo su `192.168.1.230` degli aggiornamenti v1.59.1→v1.59.4.
+
+#### Modifiche incluse in questo deploy
+- Identity ASP.NET + ApplicationUser (v1.59.1/1.59.2/1.59.3)
+- Username con pallino colorato in AppBar (v1.59.3)
+- E2E login fix (v1.59.4)
+
+### 🔧 Chore — Aggiornamento regola Bibbia per docs
+
+Aggiunta alla Bibbia la regola esplicita di aggiornare `docs/09-CHANGELOG.md` e i doc tematici dopo ogni modifica (step 0c e 0d nel workflow post-commit).
+
+#### File modificati
+- `docs/BIBBIA-AI-MESMANAGER.md` — step 0c/0d aggiunti nel blocco workflow
 
 ---
 
