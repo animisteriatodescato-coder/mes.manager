@@ -15,8 +15,13 @@
 @{
     var _s          = UserThemeService.GetEffectiveSettings();
     var _panelOp    = _s.ThemePanelOpacity;
-    var _appBarBg   = !string.IsNullOrEmpty(_s.ThemeAppBarBgColor) ? _s.ThemeAppBarBgColor : MesDesignTokens.AppBarBg(_isDarkMode);
-    var _drawerBg   = !string.IsNullOrEmpty(_s.ThemeDrawerBgColor) ? _s.ThemeDrawerBgColor : _appBarBg;
+    // Risolve AppBar/Drawer con variante dark mode (stessa logica di ThemeCssService, ZERO duplicazione)
+    var _appBarBg   = (_isDarkMode && !string.IsNullOrEmpty(_s.ThemeAppBarBgColorDark))
+        ? _s.ThemeAppBarBgColorDark
+        : (!string.IsNullOrEmpty(_s.ThemeAppBarBgColor) ? _s.ThemeAppBarBgColor : MesDesignTokens.AppBarBg(_isDarkMode));
+    var _drawerBg   = (_isDarkMode && !string.IsNullOrEmpty(_s.ThemeDrawerBgColorDark))
+        ? _s.ThemeDrawerBgColorDark
+        : (!string.IsNullOrEmpty(_s.ThemeDrawerBgColor) ? _s.ThemeDrawerBgColor : _appBarBg);
     var _buttonColor = !string.IsNullOrEmpty(_s.ThemeButtonColor) ? _s.ThemeButtonColor : _s.ThemePrimaryColor;
     var _buttonText  = !string.IsNullOrEmpty(_s.ThemeButtonTextColor) ? _s.ThemeButtonTextColor : AppSettingsService.ComputeTextOnBackground(_buttonColor);
 }
@@ -33,9 +38,9 @@
         --mes-drawer-bg: @_drawerBg;
         --mes-button-color: @_buttonColor;
         --mes-button-text: @_buttonText;
-        /* Colori tabelle — token centralizzati via MesDesignTokens (zero hardcoding) */
-        --mes-row-odd:  @MesDesignTokens.RowOdd(_isDarkMode);
-        --mes-row-even: @MesDesignTokens.RowEven(_isDarkMode);
+        /* Colori tabelle — tinta dinamica dal colore drawer, fallback ai token fissi */
+        --mes-row-odd:  @MesDesignTokens.RowOddFromColor(_drawerBg, _isDarkMode);
+        --mes-row-even: @MesDesignTokens.RowEvenFromColor(_drawerBg, _isDarkMode);
         --mes-row-text: @MesDesignTokens.RowText(_isDarkMode);
         --mes-grid-header-bg: var(--mes-drawer-bg);
         --mes-glass-grid: @MesDesignTokens.GlassGrid(_isDarkMode, _panelOp);

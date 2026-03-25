@@ -33,13 +33,18 @@ public class ThemeCssService
     /// </summary>
     public Dictionary<string, string> BuildVars(AppSettings s, bool isDarkMode)
     {
-        double panelOp     = s.ThemePanelOpacity;
-        string appBarBg    = !string.IsNullOrEmpty(s.ThemeAppBarBgColor)
-            ? s.ThemeAppBarBgColor
-            : MesDesignTokens.AppBarBg(isDarkMode);
-        string drawerBg    = !string.IsNullOrEmpty(s.ThemeDrawerBgColor)
-            ? s.ThemeDrawerBgColor
-            : appBarBg;
+        double panelOp = s.ThemePanelOpacity;
+
+        // Risolve colore effettivo AppBar: in dark mode prevale la variante dark (se impostata),
+        // poi il colore light, poi il default del token. Zero duplicazione: stessa logica in MainLayout.razor.
+        string appBarBg = (isDarkMode && !string.IsNullOrEmpty(s.ThemeAppBarBgColorDark))
+            ? s.ThemeAppBarBgColorDark
+            : (!string.IsNullOrEmpty(s.ThemeAppBarBgColor) ? s.ThemeAppBarBgColor : MesDesignTokens.AppBarBg(isDarkMode));
+
+        // Risolve colore effettivo Drawer: stessa priorità, fallback su AppBar effettivo.
+        string drawerBg = (isDarkMode && !string.IsNullOrEmpty(s.ThemeDrawerBgColorDark))
+            ? s.ThemeDrawerBgColorDark
+            : (!string.IsNullOrEmpty(s.ThemeDrawerBgColor) ? s.ThemeDrawerBgColor : appBarBg);
         string buttonColor = !string.IsNullOrEmpty(s.ThemeButtonColor)
             ? s.ThemeButtonColor
             : s.ThemePrimaryColor;
@@ -64,9 +69,9 @@ public class ThemeCssService
             [MesDesignTokens.CssVarButtonColor]     = buttonColor,
             [MesDesignTokens.CssVarButtonText]      = buttonText,
 
-            // ── Tabelle / Griglie ─────────────────────────────────────────────
-            [MesDesignTokens.CssVarRowOdd]          = MesDesignTokens.RowOdd(isDarkMode),
-            [MesDesignTokens.CssVarRowEven]         = MesDesignTokens.RowEven(isDarkMode),
+            // ── Tabelle / Griglie — colori calcolati dalla tinta del drawer per coerenza tema ─────
+            [MesDesignTokens.CssVarRowOdd]          = MesDesignTokens.RowOddFromColor(drawerBg, isDarkMode),
+            [MesDesignTokens.CssVarRowEven]         = MesDesignTokens.RowEvenFromColor(drawerBg, isDarkMode),
             [MesDesignTokens.CssVarRowText]         = MesDesignTokens.RowText(isDarkMode),
             [MesDesignTokens.CssVarGridHeaderBg]    = drawerBg,
             [MesDesignTokens.CssVarGlassGrid]       = MesDesignTokens.GlassGrid(isDarkMode, panelOp),

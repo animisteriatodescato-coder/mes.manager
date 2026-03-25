@@ -206,7 +206,11 @@
         <MudText Typo="Typo.h6" Class="mb-1">Colori Barra Superiore, Menu Laterale e Pulsanti</MudText>
         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
             Personalizza i colori di sfondo in modo indipendente. Lascia vuoto per usare automaticamente il colore Primary del tema.
+            Le righe delle tabelle si colorano automaticamente in base alla tinta del menu laterale.
         </MudText>
+
+        @* ── ☀️ Colori Light mode ──── *@
+        <MudText Typo="Typo.overline" Color="Color.Secondary" Class="mb-1">☀️ Light mode</MudText>
 
         <ColorTokenPicker Label="Barra superiore" LabelWidth="160px"
                           Value="@_draft.ThemeAppBarBgColor"
@@ -223,6 +227,28 @@
                           ShowAuto="true" AutoLabel="Auto (come AppBar)"
                           ShowHexInput="true"
                           FallbackColor="@(!string.IsNullOrEmpty(_draft.ThemeAppBarBgColor) ? _draft.ThemeAppBarBgColor : _draft.ThemePrimaryColor)" />
+
+        @* ── 🌙 Colori Dark mode (override opzionale) ──── *@
+        <MudDivider Class="my-3" />
+        <MudText Typo="Typo.overline" Color="Color.Secondary" Class="mb-1">🌙 Dark mode (lascia vuoto per riutilizzare i colori Light)</MudText>
+
+        <ColorTokenPicker Label="Barra superiore" LabelWidth="160px"
+                          Value="@_draft.ThemeAppBarBgColorDark"
+                          ValueChanged="@(c => OnColorChanged(c, v => _draft.ThemeAppBarBgColorDark = v))"
+                          Palette="@FullPalette"
+                          ShowAuto="true" AutoLabel="Uguale Light"
+                          ShowHexInput="true"
+                          FallbackColor="@(!string.IsNullOrEmpty(_draft.ThemeAppBarBgColor) ? _draft.ThemeAppBarBgColor : _draft.ThemePrimaryColor)" />
+
+        <ColorTokenPicker Label="Menu laterale" LabelWidth="160px"
+                          Value="@_draft.ThemeDrawerBgColorDark"
+                          ValueChanged="@(c => OnColorChanged(c, v => _draft.ThemeDrawerBgColorDark = v))"
+                          Palette="@FullPalette"
+                          ShowAuto="true" AutoLabel="Uguale Light"
+                          ShowHexInput="true"
+                          FallbackColor="@(!string.IsNullOrEmpty(_draft.ThemeDrawerBgColorDark) ? _draft.ThemeDrawerBgColorDark : (!string.IsNullOrEmpty(_draft.ThemeAppBarBgColorDark) ? _draft.ThemeAppBarBgColorDark : _draft.ThemePrimaryColor))" />
+
+        <MudDivider Class="my-3" />
 
         <ColorTokenPicker Label="Pulsanti principali" LabelWidth="160px"
                           Value="@_draft.ThemeButtonColor"

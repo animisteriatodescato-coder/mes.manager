@@ -18,14 +18,106 @@ public static class MesDesignTokens
 {
     // ── Righe tabelle / griglie ───────────────────────────────────────────────
 
-    /// <summary>Colore riga dispari (odd) per MudTable e AG Grid.</summary>
+    /// <summary>Colore riga dispari (odd) fisso — fallback quando non è disponibile un colore tema.</summary>
     public static string RowOdd(bool dark)  => dark ? "#262636" : "#F0F0F8";
 
-    /// <summary>Colore riga pari (even) per MudTable e AG Grid.</summary>
+    /// <summary>Colore riga pari (even) fisso — fallback quando non è disponibile un colore tema.</summary>
     public static string RowEven(bool dark) => dark ? "#303042" : "#FAFAFD";
 
     /// <summary>Colore testo celle per MudTable e AG Grid.</summary>
     public static string RowText(bool dark) => dark ? "#E6E6F0" : "#1E1E28";
+
+    /// <summary>
+    /// Colore riga dispari calcolato dal colore del menu laterale/AppBar.
+    /// Usa la tonalità (hue) del colore con lightness alta (light) o bassa (dark),
+    /// producendo righe zebrate coerenti con il tema scelto dall'utente.
+    /// Se hexColor non è un hex valido (es. var(--mes-primary)), usa il fallback fisso.
+    /// </summary>
+    public static string RowOddFromColor(string hexColor, bool dark)
+    {
+        if (!TryParseHex(hexColor, out byte r, out byte g, out byte b))
+            return RowOdd(dark);
+        HexToHsl(r, g, b, out float h, out float s, out _);
+        float targetS = Math.Min(s * 0.6f + 0.04f, dark ? 0.35f : 0.20f);
+        float targetL = dark ? 0.18f : 0.95f;
+        return HslToHex(h, targetS, targetL);
+    }
+
+    /// <summary>
+    /// Colore riga pari calcolato dal colore del menu laterale/AppBar.
+    /// Leggermente più neutro di RowOddFromColor per l'effetto zebra.
+    /// Se hexColor non è un hex valido, usa il fallback fisso.
+    /// </summary>
+    public static string RowEvenFromColor(string hexColor, bool dark)
+    {
+        if (!TryParseHex(hexColor, out byte r, out byte g, out byte b))
+            return RowEven(dark);
+        HexToHsl(r, g, b, out float h, out float s, out _);
+        float targetS = Math.Min(s * 0.3f + 0.01f, dark ? 0.15f : 0.08f);
+        float targetL = dark ? 0.13f : 0.99f;
+        return HslToHex(h, targetS, targetL);
+    }
+
+    /// <summary>
+    /// Tenta il parsing di una stringa colore hex (#RRGGBB o #RGB) in componenti RGB.
+    /// Ritorna false se la stringa non è un hex valido (es. "var(--mes-primary)", rgba, ecc.).
+    /// CENTRALIZZATO: unico punto di parsing hex colore in MesDesignTokens.
+    /// </summary>
+    private static bool TryParseHex(string hex, out byte r, out byte g, out byte b)
+    {
+        r = g = b = 0;
+        if (string.IsNullOrEmpty(hex)) return false;
+        if (hex.StartsWith("var(") || hex.StartsWith("rgba") || hex.StartsWith("rgb(")) return false;
+        hex = hex.TrimStart('#');
+        if (hex.Length == 3) hex = $"{hex[0]}{hex[0]}{hex[1]}{hex[1]}{hex[2]}{hex[2]}";
+        if (hex.Length != 6) return false;
+        try
+        {
+            r = Convert.ToByte(hex[..2], 16);
+            g = Convert.ToByte(hex[2..4], 16);
+            b = Convert.ToByte(hex[4..6], 16);
+            return true;
+        }
+        catch { return false; }
+    }
+
+    /// <summary>Converte RGB (0-255) in HSL (H:0-360, S e L:0-1).</summary>
+    private static void HexToHsl(byte r, byte g, byte b, out float h, out float s, out float l)
+    {
+        float rf = r / 255f, gf = g / 255f, bf = b / 255f;
+        float max = MathF.Max(rf, MathF.Max(gf, bf));
+        float min = MathF.Min(rf, MathF.Min(gf, bf));
+        float delta = max - min;
+        l = (max + min) / 2f;
+        s = delta < 0.001f ? 0f : delta / (1f - MathF.Abs(2f * l - 1f));
+        h = 0f;
+        if (delta > 0.001f)
+        {
+            if      (max == rf) h = 60f * (((gf - bf) / delta) % 6f);
+            else if (max == gf) h = 60f * (((bf - rf) / delta) + 2f);
+            else                h = 60f * (((rf - gf) / delta) + 4f);
+            if (h < 0) h += 360f;
+        }
+    }
+
+    /// <summary>Converte HSL (H:0-360, S e L:0-1) in stringa hex #RRGGBB.</summary>
+    private static string HslToHex(float h, float s, float l)
+    {
+        float c = (1f - MathF.Abs(2f * l - 1f)) * s;
+        float x = c * (1f - MathF.Abs((h / 60f) % 2f - 1f));
+        float m = l - c / 2f;
+        float rf, gf, bf;
+        if      (h < 60f)  { rf = c; gf = x; bf = 0; }
+        else if (h < 120f) { rf = x; gf = c; bf = 0; }
+        else if (h < 180f) { rf = 0; gf = c; bf = x; }
+        else if (h < 240f) { rf = 0; gf = x; bf = c; }
+        else if (h < 300f) { rf = x; gf = 0; bf = c; }
+        else               { rf = c; gf = 0; bf = x; }
+        byte rb = (byte)Math.Round((rf + m) * 255f);
+        byte gb = (byte)Math.Round((gf + m) * 255f);
+        byte bb = (byte)Math.Round((bf + m) * 255f);
+        return $"#{rb:X2}{gb:X2}{bb:X2}";
+    }
 
     // ── Header griglia ─────────────────────────────────────────────────────────
 

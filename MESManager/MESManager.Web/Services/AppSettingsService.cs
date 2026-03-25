@@ -293,6 +293,20 @@ public class AppSettings
     /// </summary>
     public string ThemeButtonTextColor { get; set; } = "";
 
+    // ── Varianti dark mode per AppBar e Drawer ─────────────────────────────────
+
+    /// <summary>
+    /// Colore sfondo AppBar in dark mode. Vuoto = usa ThemeAppBarBgColor anche in dark (stesso colore light).
+    /// Consente di avere AppBar diversa tra light e dark mode.
+    /// </summary>
+    public string ThemeAppBarBgColorDark { get; set; } = "";
+
+    /// <summary>
+    /// Colore sfondo Drawer (menu laterale) in dark mode. Vuoto = usa ThemeDrawerBgColor anche in dark.
+    /// Consente di avere menu laterale diverso tra light e dark mode.
+    /// </summary>
+    public string ThemeDrawerBgColorDark { get; set; } = "";
+
     /// <summary>
     /// Crea una copia profonda delle impostazioni.
     /// Usato da ImpostazioniGenerali per il draft pattern: si lavora sul clone
@@ -315,9 +329,11 @@ public class AppSettings
         ThemeBgOpacity       = source.ThemeBgOpacity,
         ThemePanelOpacity    = source.ThemePanelOpacity,
         ThemeExtraColors     = new List<string>(source.ThemeExtraColors),
-        ThemeAppBarBgColor   = source.ThemeAppBarBgColor,
-        ThemeDrawerBgColor   = source.ThemeDrawerBgColor,
-        ThemeButtonColor     = source.ThemeButtonColor,
-        ThemeButtonTextColor = source.ThemeButtonTextColor,
+        ThemeAppBarBgColor      = source.ThemeAppBarBgColor,
+        ThemeDrawerBgColor      = source.ThemeDrawerBgColor,
+        ThemeButtonColor        = source.ThemeButtonColor,
+        ThemeButtonTextColor    = source.ThemeButtonTextColor,
+        ThemeAppBarBgColorDark  = source.ThemeAppBarBgColorDark,
+        ThemeDrawerBgColorDark  = source.ThemeDrawerBgColorDark,
     };
 }

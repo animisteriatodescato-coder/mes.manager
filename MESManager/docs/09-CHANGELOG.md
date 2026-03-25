@@ -4,7 +4,48 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.59.6
+## 🔖 Versione Corrente: v1.60.1
+
+---
+
+## 🔖 v1.60.1 - Righe tabelle tema-aware + split dark/light AppBar/Drawer (25 Mar 2026)
+
+**Data**: 25 Marzo 2026
+
+### ✨ Feature — Righe tabelle colorate dalla tinta del menu laterale
+
+Le righe dispari e pari di MudTable e AG Grid non usano più colori fissi hardcoded, ma vengono calcolate dinamicamente dalla tinta del colore drawer/AppBar scelto dall'utente.
+
+**Algoritmo**: conversione HSL — mantiene la hue del colore tema, abbassa la saturation e porta la lightness a \~95% (light) o \~18% (dark). Effetto zebra coerente con il tema.
+
+**Fallback automatico**: se il colore drawer è una `var()` CSS (es. default light mode), usa i token fissi `RowOdd`/`RowEven` precedenti.
+
+#### File modificati
+- `MESManager.Web/Constants/MesDesignTokens.cs` — aggiunti `RowOddFromColor`, `RowEvenFromColor`, helper privati `TryParseHex`, `HexToHsl`, `HslToHex`
+- `MESManager.Web/Services/ThemeCssService.cs` — `BuildVars()` usa i nuovi metodi per `--mes-row-odd` e `--mes-row-even`
+- `MESManager.Web/Components/Layout/MainLayout.razor` — `:root` aggiornato con stessa logica (SSR iniziale)
+
+### ✨ Feature — Colori separati AppBar e Drawer per Light / Dark mode
+
+Nella pagina Impostazioni Generali è ora possibile impostare colori differenti per barra superiore e menu laterale in base alla modalità (light o dark).
+
+**Logica di priorità** (centralizzata in `ThemeCssService.BuildVars()` e replicata in `MainLayout.razor` `:root`):
+1. Dark mode + variante dark impostata → usa variante dark
+2. Altrimenti → usa colore light (comportamento esistente retrocompatibile)
+
+#### File modificati
+- `MESManager.Web/Services/AppSettingsService.cs` — `AppSettings` + due campi `ThemeAppBarBgColorDark`, `ThemeDrawerBgColorDark` + `Clone()` aggiornato
+- `MESManager.Web/Services/ThemeCssService.cs` — logica dark-variant in `BuildVars()`
+- `MESManager.Web/Components/Layout/MainLayout.razor` — stessa logica nel blocco SSR `:root` (ZERO duplicazione)
+- `MESManager.Web/Components/Pages/Impostazioni/ImpostazioniGenerali.razor` — sezione "Barra Superiore" rinominata con sottosezioni ☀️ Light / 🌙 Dark e nuovi picker
+
+### Architettura: ZERO duplicazione
+- `MesDesignTokens` = unica fonte di verità per colori e algoritmi HSL
+- `ThemeCssService.BuildVars()` = unico punto di risoluzione colori effettivi (sia JS runtime che SSR si basano sulla stessa logica)
+
+---
+
+## 🔖 v1.59.6 - Fix UserSelector username in AppBar + Irene Nome/Colore (25 Mar 2026)
 
 ---
 
