@@ -4,7 +4,118 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.58.0
+## 🔖 Versione Corrente: v1.59.4
+
+---
+
+## 🔖 v1.59.4 - Fix workflow Bibbia: AppVersion + docs aggiornati (25 Mar 2026)
+
+**Data**: 25 Marzo 2026
+
+### 🔧 Chore — Allineamento workflow Bibbia
+
+Versione bumped e documentazione aggiornata per allinearsi al workflow obbligatorio della Bibbia (AppVersion + docs ad ogni modifica).
+
+#### File modificati
+- `MESManager.Web/Constants/AppVersion.cs` — 1.59.3 → 1.59.4
+- `docs/09-CHANGELOG.md` — aggiunte voci v1.59.1/1.59.2/1.59.3
+
+---
+
+## 🔖 v1.59.3 - Username in AppBar + E2E login fix (25 Mar 2026)
+
+**Data**: 25 Marzo 2026
+
+### ✨ Feature — Nome utente autenticato nella AppBar
+
+Il nome utente loggato (con pallino colorato) appare ora nella barra superiore, tra il titolo pagina e le icone destra. Visibile in tutte le pagine dell'app.
+
+#### Dettagli tecnici
+- `UserSelector.razor` riscritto: mostra `CurrentUserService.UserName` + `UserColor` dot
+- `MainLayout.razor` — aggiunto `<UserSelector />` dopo `<MudSpacer />` nella AppBar  
+- `Home.razor` — rimosso `UserSelector` duplicato (ora nella AppBar globale)
+
+### 🐛 Fix — Test E2E falliti dopo introduzione autenticazione obbligatoria
+
+Tutti i test E2E `Feature=Produzione` fallivano con `TimeoutException` perché venivano reindirizzati alla pagina login senza potersi autenticare.
+
+#### Soluzione
+- `PlaywrightTestBase.cs` — aggiunto `LoginAsync()` chiamato in `InitializeAsync()` prima dei test
+- Credenziali configurabili via env: `E2E_USERNAME` / `E2E_PASSWORD` (default: `admin` / `Admin@123!`)
+- Risultato: **4/6** test superati (da 0/6) — 2 falliti per problemi pre-esistenti non correlati
+
+#### File modificati
+- `MESManager.Web/Components/Shared/UserSelector.razor`
+- `MESManager.Web/Components/Layout/MainLayout.razor`
+- `MESManager.Web/Components/Pages/Home.razor`
+- `tests/MESManager.E2E/PlaywrightTestBase.cs`
+
+---
+
+## 🔖 v1.59.2 - Soluzione 2: ApplicationUser unifica IdentityUser+UtenteApp (25 Mar 2026)
+
+**Data**: 25 Marzo 2026
+
+### 🏗️ Refactoring — Unificazione sistema utenti: `ApplicationUser : IdentityUser`
+
+Eliminato il doppio sistema utenti (`UtentiApp` + `AspNetUsers`). Un unico `ApplicationUser` porta sia l'autenticazione Identity sia i campi profilo (Nome, Colore, Ordine, Attivo).
+
+#### Motivazione
+Dopo l'introduzione del login (v1.58.0) esistevano due tabelle separate: `UtentiApp` (vecchio sistema dropdown senza password) e `AspNetUsers` (Identity). Questa duplicazione rendeva impossibile collegare il profilo al login.
+
+#### Architettura
+- `ApplicationUser : IdentityUser` in `MESManager.Infrastructure/Entities/` (Identity è infrastruttura)
+- `PreferenzaUtente.UtenteAppId (Guid)` → `UserId (string)` per FK verso `AspNetUsers.Id`
+- `CurrentUserService` popolato da `MainLayout` dopo autenticazione: `SetUser(userId, nome, colore)`
+
+#### File aggiunti
+- `MESManager.Infrastructure/Entities/ApplicationUser.cs`
+- `MESManager.Infrastructure/Migrations/20260325092431_UnificazioneUtentiApplicationUser.cs`
+
+#### File eliminati
+- `MESManager.Domain/Entities/UtenteApp.cs`
+- `MESManager.Application/Interfaces/IUtenteAppService.cs`
+- `MESManager.Infrastructure/Services/UtenteAppService.cs`
+
+#### File modificati (13 file)
+- `MESManager.Domain/Entities/PreferenzaUtente.cs` — `UtenteAppId Guid` → `UserId string`
+- `MESManager.Application/Services/CurrentUserService.cs` — `SetUser(userId, userName, color)`
+- `MESManager.Application/Interfaces/IPreferenzeUtenteService.cs` — `Guid utenteId` → `string userId`
+- `MESManager.Infrastructure/Services/PreferenzeUtenteService.cs` — query aggiornate
+- `MESManager.Infrastructure/Data/MesManagerDbContext.cs` — `IdentityDbContext<ApplicationUser>`
+- `MESManager.Infrastructure/DependencyInjection.cs` — rimossa registrazione `IUtenteAppService`
+- `MESManager.Web/Services/PreferencesService.cs` — semplificato, no più `IUtenteAppService`
+- `MESManager.Web/Program.cs` — `AddIdentity<ApplicationUser, IdentityRole>`
+- `MESManager.Web/Pages/Account/Login.cshtml.cs` — `SignInManager<ApplicationUser>`
+- `MESManager.Web/Pages/Account/Logout.cshtml.cs` — `SignInManager<ApplicationUser>`
+- `MESManager.Web/Services/RoleSeedService.cs` — crea `new ApplicationUser { Nome, Colore, ... }`
+- `MESManager.Web/Components/Pages/Impostazioni/GestioneAccessi.razor` — usa `ApplicationUser`
+- `MESManager.Web/Components/Pages/Impostazioni/GestioneUtenti.razor` — riscritta con `UserManager<ApplicationUser>`
+- `MESManager.Web/Components/Layout/MainLayout.razor.cs` — aggiunto `SetUser()` post-login
+
+#### Migration note
+La migration `UnificazioneUtentiApplicationUser` include `DELETE FROM PreferenzeUtente WHERE UserId = ''` prima della creazione dell'indice univoco, per rimuovere righe orfane del vecchio sistema.
+
+---
+
+## 🔖 v1.59.1 - Sistema autenticazione obbligatoria attivata (23 Mar 2026)
+
+**Data**: 23 Marzo 2026
+
+### 🔐 Feature — Login obbligatorio con ASP.NET Identity + ruoli
+
+L'autenticazione è ora obbligatoria per accedere all'app. Sistema ruoli `Admin` / `Operatore`.
+
+#### File aggiunti
+- `MESManager.Infrastructure/Migrations/AddIdentityTables.cs`
+- `MESManager.Web/Services/RoleSeedService.cs`
+- `MESManager.Web/Components/Pages/Impostazioni/GestioneAccessi.razor`
+
+#### File modificati
+- `MESManager.Infrastructure/Data/MesManagerDbContext.cs` — eredita `IdentityDbContext<IdentityUser>`
+- `MESManager.Web/Program.cs` — `AddIdentity`, `AddAuthorization`, `RoleSeedService`
+- `MESManager.Web/Components/Layout/MainLayout.razor` — redirect login se non autenticato
+- `MESManager.Web/Constants/AppVersion.cs` — 1.58.0 → 1.59.1
 
 ---
 

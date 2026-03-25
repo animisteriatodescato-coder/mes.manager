@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.59.3";
+    public const string Current = "1.59.4";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.59.3  Sol2: ApplicationUser unifica IdentityUser+UtenteApp (eliminata UtenteApp)
+    public const string Display = "v" + Current; // v1.59.4  Username in AppBar + docs aggiornati
 }
