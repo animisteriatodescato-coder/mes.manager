@@ -4,7 +4,39 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.1
+## 🔖 Versione Corrente: v1.60.2
+
+---
+
+## 🔖 v1.60.2 - Fix dark mode toggle revert + preview dark mode + row tinting (25 Mar 2026)
+
+**Data**: 25 Marzo 2026
+
+### 🐛 Bug Fix — Dark mode toggle revertiva immediatamente
+
+**Causa**: `ToggleTheme` in `MainLayout.razor.cs` salvava `ThemeIsDarkMode` solo nelle impostazioni **globali** (`AppSettingsService.SaveSettingsAsync`). Questo triggerava immediatamente `OnAppSettingsChanged`, che rileggeva le impostazioni **utente** (non ancora aggiornate) e rimetteva `_isDarkMode` al valore precedente. Il toggle si auto-annullava nel giro di millisecondi.
+
+**Fix**: Il toggle ora aggiorna le impostazioni dove sono realmente salvate: se l'utente ha preferenze personali → `UserThemeService.SaveUserThemeAsync(effectiveSettings)`, altrimenti → `AppSettingsService.SaveSettingsAsync`.
+
+**Regola aggiornata (BIBBIA)**: Qualsiasi operazione di salvataggio tema deve usare `UserThemeService.GetEffectiveSettings()` come source, aggiornare quella, e salvarla attraverso il servizio corretto in base a `HasUserTheme`.
+
+### 🐛 Bug Fix — Live preview impostazioni usava dark mode sbagliato
+
+**Causa**: `ApplyPreviewAsync` in `ImpostazioniGenerali` usava `_draft.ThemeIsDarkMode` (valore salvato al caricamento pagina) invece dello stato live. Se l'utente aveva attivato il dark mode tramite il toggle, la preview rimaneva in light mode.
+
+**Fix**: `ApplyPreviewAsync` ora usa `ThemeModeService.IsDarkMode` — la sorgente live centralizzata del toggle.
+
+### 🐛 Bug Fix — Algoritmo tinting righe produceva colori indesiderati
+
+**Causa**: Con un drawer quasi-nero (es. `#010101d4`), la formula HSL derivava una hue arbitraria (la hue del nero puro è 0° = rosso) producendo una tinta rosata invece del fallback fisso. Risultato visivamente indistinguibile dalla versione precedente o peggiore.
+
+**Fix**: Aggiunta soglia `RowTintSaturationThreshold = 0.12f` in `MesDesignTokens`. Se il colore drawer ha saturazione < 12% (grigio, nero, bianco), si usa il fallback fisso. Formula potenziata per colori saturi: `s*0.6+0.08 cap 0.35/0.45` per contrasto zebra più visibile.
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor.cs` — `ToggleTheme()` refactored
+- `MESManager.Web/Components/Pages/Impostazioni/ImpostazioniGenerali.razor` — `ApplyPreviewAsync` usa `ThemeModeService.IsDarkMode`
+- `MESManager.Web/Constants/MesDesignTokens.cs` — soglia saturazione + formula tinting migliorata
+- `docs/04-ARCHITETTURA.md` — sezione Sistema Tema aggiornata con nuovi pattern
 
 ---
 

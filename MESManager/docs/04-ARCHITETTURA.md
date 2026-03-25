@@ -691,17 +691,17 @@ agGridFactory.setup({
 
 ---
 
-## 🎨 Sistema Tema (v1.55.12+)
+## 🎨 Sistema Tema (v1.60.2+)
 
 ### Architettura CSS vars
 
 Tutti i colori UI passano attraverso CSS custom properties `--mes-*` definite su `:root`. Nessun valore colore hardcodato nei componenti Razor (zero `style="background:@variable"`).
 
 ```
-AppSettings (file JSON)
+AppSettings (file JSON o DB per-utente)
     ↓
 ThemeCssService.BuildVars(settings, isDarkMode)
-    → Dictionary<string, string>  (es. "--mes-primary" → "#136724ff")
+    → Dictionary<string,string>  (es. "--mes-primary" → "#136724ff")
     ↓
 ThemeCssService.ApplyAsync(IJSRuntime, settings, isDarkMode)
     → window.mesTheme.apply(vars)  [theme-vars.js]
@@ -728,21 +728,67 @@ CSS: .mud-appbar { background: var(--mes-appbar-bg) !important; }
 | `IThemeModeService` | Scoped | Toggle dark/light, evento `OnThemeChanged` |
 | `ThemeCssService` | Scoped | **Unica fonte verità** AppSettings→CSS vars |
 
-### Flusso cambio tema
+### Flusso cambio tema (impostazioni)
 
 ```
 Utente modifica colore in ImpostazioniGenerali
     ↓
 _draft (copia di lavoro) aggiornato
     ↓
-ApplyPreviewAsync() → ThemeCssService.ApplyAsync(JS, _draft, isDarkMode)
+ApplyPreviewAsync() → ThemeCssService.ApplyAsync(JS, _draft, ThemeModeService.IsDarkMode)
+                                                             ↑
+                                              USA IL LIVE STATE, non _draft.ThemeIsDarkMode
     ↓
 CSS vars aggiornate in real-time (senza re-render Blazor)
     ↓
-Utente clicca "Salva" → AppSettingsService.SaveAsync(_draft)
+Utente clicca "Salva" → UserThemeService.SaveUserThemeAsync(_draft)
     ↓
-OnAppSettingsChanged → ThemeCssService.ApplyAsync (persist)
+OnUserThemeChanged → ThemeCssService.ApplyAsync (persist)
 ```
+
+### Flusso toggle dark/light (MainLayout)
+
+```
+Utente preme ☀️/🌙 in AppBar
+    ↓
+ToggleTheme():
+  1. _isDarkMode = !_isDarkMode
+  2. ThemeModeService.UpdateMode(_isDarkMode)     ← notifica tutti i subscriber
+  3. effectiveSettings = UserThemeService.GetEffectiveSettings()
+     effectiveSettings.ThemeIsDarkMode = _isDarkMode
+  4. SE HasUserTheme → UserThemeService.SaveUserThemeAsync(effectiveSettings)
+     ALTRIMENTI      → AppSettingsService.SaveSettingsAsync(globalSettings)
+  5. ThemeCssService.ApplyAsync(JS, effectiveSettings, _isDarkMode)
+
+⚠️ REGOLA CRITICA: il salvataggio DEVE avvenire sulle impostazioni effettive
+   (utente se HasUserTheme, globali altrimenti).
+   NON salvare sempre su AppSettingsService quando l'utente ha un tema personale:
+   OnAppSettingsChanged rileggerebbe le impostazioni utente invariate e revertivrebbe
+   il toggle immediatamente.
+```
+
+### Righe tabelle tema-aware (v1.60.1+)
+
+Le righe zebrate delle tabelle (MudTable + AG Grid) seguono la tinta del colore drawer:
+
+```
+MesDesignTokens.RowOddFromColor(drawerBg, isDarkMode)  → --mes-row-odd
+MesDesignTokens.RowEvenFromColor(drawerBg, isDarkMode) → --mes-row-even
+```
+
+**Algoritmo HSL**: estrae hue dal drawer, applica lightness ~93% (light) o ~20% (dark).
+**Soglia saturazione** `RowTintSaturationThreshold = 0.12f`: se il drawer è grigio/nero/bianco
+(saturazione < 12%), usa i token fissi `RowOdd(dark)` / `RowEven(dark)` invece di derivare
+la hue (il nero ha hue=0°=rosso, produrrebbe tinte Rosa indesiderate).
+
+### Split Light/Dark per AppBar e Drawer (v1.60.1+)
+
+AppSettings ha 4 campi colore separati:
+- `ThemeAppBarBgColor` / `ThemeDrawerBgColor` — light mode
+- `ThemeAppBarBgColorDark` / `ThemeDrawerBgColorDark` — dark mode override (vuoto = riusa light)
+
+Logica centralizzata una sola volta in `ThemeCssService.BuildVars()` e riprodotta identicamente
+nel blocco SSR `:root{}` di `MainLayout.razor`. **NON duplicare questa logica altrove.**
 
 ### ColorTokenPicker
 
