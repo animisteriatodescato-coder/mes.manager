@@ -71,17 +71,30 @@ public static class MesDesignTokens
     }
 
     /// <summary>
-    /// Tenta il parsing di una stringa colore hex (#RRGGBB o #RGB) in componenti RGB.
+    /// Controlla se la stringa è un colore hex valido (#RGB, #RRGGBB o #RRGGBBAA).
+    /// Usare per decidere la sorgente del tinting senza out parameters.
+    /// </summary>
+    public static bool IsValidHexColor(string hex)
+    {
+        if (string.IsNullOrEmpty(hex)) return false;
+        if (hex.StartsWith("var(") || hex.StartsWith("rgba") || hex.StartsWith("rgb(")) return false;
+        return hex.StartsWith('#') && (hex.Length == 4 || hex.Length == 7 || hex.Length == 9);
+    }
+
+    /// <summary>
+    /// Tenta il parsing di una stringa colore hex (#RGB, #RRGGBB o #RRGGBBAA) in componenti RGB.
     /// Ritorna false se la stringa non è un hex valido (es. "var(--mes-primary)", rgba, ecc.).
+    /// Supporta hex a 8 caratteri (#RRGGBBAA): la componente alpha viene ignorata.
     /// CENTRALIZZATO: unico punto di parsing hex colore in MesDesignTokens.
     /// </summary>
-    private static bool TryParseHex(string hex, out byte r, out byte g, out byte b)
+    public static bool TryParseHex(string hex, out byte r, out byte g, out byte b)
     {
         r = g = b = 0;
         if (string.IsNullOrEmpty(hex)) return false;
         if (hex.StartsWith("var(") || hex.StartsWith("rgba") || hex.StartsWith("rgb(")) return false;
         hex = hex.TrimStart('#');
         if (hex.Length == 3) hex = $"{hex[0]}{hex[0]}{hex[1]}{hex[1]}{hex[2]}{hex[2]}";
+        if (hex.Length == 8) hex = hex[..6]; // strip alpha (#RRGGBBAA → #RRGGBB)
         if (hex.Length != 6) return false;
         try
         {

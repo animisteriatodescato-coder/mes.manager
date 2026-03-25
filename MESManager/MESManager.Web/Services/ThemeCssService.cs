@@ -70,8 +70,9 @@ public class ThemeCssService
             [MesDesignTokens.CssVarButtonText]      = buttonText,
 
             // ── Tabelle / Griglie — colori calcolati dalla tinta del drawer per coerenza tema ─────
-            [MesDesignTokens.CssVarRowOdd]          = MesDesignTokens.RowOddFromColor(drawerBg, isDarkMode),
-            [MesDesignTokens.CssVarRowEven]         = MesDesignTokens.RowEvenFromColor(drawerBg, isDarkMode),
+            // Fallback al primary quando drawerBg non è un hex parsabile (es. "var(--mes-primary)" in light mode default)
+            [MesDesignTokens.CssVarRowOdd]          = MesDesignTokens.RowOddFromColor(MesDesignTokens.IsValidHexColor(drawerBg) ? drawerBg : s.ThemePrimaryColor, isDarkMode),
+            [MesDesignTokens.CssVarRowEven]         = MesDesignTokens.RowEvenFromColor(MesDesignTokens.IsValidHexColor(drawerBg) ? drawerBg : s.ThemePrimaryColor, isDarkMode),
             [MesDesignTokens.CssVarRowText]         = MesDesignTokens.RowText(isDarkMode),
             [MesDesignTokens.CssVarGridHeaderBg]    = drawerBg,
             [MesDesignTokens.CssVarGlassGrid]       = MesDesignTokens.GlassGrid(isDarkMode, panelOp),
