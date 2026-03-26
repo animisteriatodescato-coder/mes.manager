@@ -19,10 +19,10 @@ public static class MesDesignTokens
     // ── Righe tabelle / griglie ───────────────────────────────────────────────
 
     /// <summary>Colore riga dispari (odd) fisso — fallback quando non è disponibile un colore tema.</summary>
-    public static string RowOdd(bool dark)  => dark ? "#262636" : "#F0F0F8";
+    public static string RowOdd(bool dark)  => dark ? "#2A2A2A" : "#F5F5F5";
 
     /// <summary>Colore riga pari (even) fisso — fallback quando non è disponibile un colore tema.</summary>
-    public static string RowEven(bool dark) => dark ? "#303042" : "#FAFAFD";
+    public static string RowEven(bool dark) => dark ? "#333333" : "#FAFAFA";
 
     /// <summary>Colore testo celle per MudTable e AG Grid.</summary>
     public static string RowText(bool dark) => dark ? "#E6E6F0" : "#1E1E28";

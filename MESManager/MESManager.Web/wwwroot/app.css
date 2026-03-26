@@ -194,7 +194,7 @@ h1:focus {
 .mud-table,
 .mud-table-container,
 .mud-table-root {
-    background-color: var(--mes-row-odd, #F0F0F8) !important;
+    background-color: var(--mes-row-odd, #F5F5F5) !important;
 }
 
 /* Header: sfondo = drawer, testo = nav-text (stesso adattamento del menu laterale) */
@@ -208,27 +208,27 @@ h1:focus {
 
 /* Righe corpo — MudBlazor usa .mud-table-row sulla <tr> */
 .mud-table-root .mud-table-row {
-    background-color: var(--mes-row-odd, #F0F0F8) !important;
+    background-color: var(--mes-row-odd, #F5F5F5) !important;
 }
 .mud-table-root .mud-table-row:nth-child(even) {
-    background-color: var(--mes-row-even, #FAFAFD) !important;
+    background-color: var(--mes-row-even, #FAFAFA) !important;
 }
 
 /* Celle — forziamo singola cella per evitare transparent ereditato */
 .mud-table-root td,
 .mud-table-root .mud-table-cell {
-    background-color: var(--mes-row-odd, #F0F0F8) !important;
+    background-color: var(--mes-row-odd, #F5F5F5) !important;
     color: var(--mes-row-text, #1E1E28) !important;
 }
 .mud-table-root .mud-table-row:nth-child(even) td,
 .mud-table-root .mud-table-row:nth-child(even) .mud-table-cell {
-    background-color: var(--mes-row-even, #FAFAFD) !important;
+    background-color: var(--mes-row-even, #FAFAFA) !important;
     color: var(--mes-row-text, #1E1E28) !important;
 }
 
 /* MudTable toolbar (area sopra la tabella con titolo/ricerca) */
 .mud-table-toolbar {
-    background-color: var(--mes-row-odd, #F0F0F8) !important;
+    background-color: var(--mes-row-odd, #F5F5F5) !important;
 }
 
 /* ==========================================================================
@@ -400,7 +400,7 @@ h1:focus {
 
 .kpi-compact-card {
     flex: 0 0 175px;
-    background-color: var(--mes-row-odd, #F0F0F8) !important;
+    background-color: var(--mes-row-odd, #F5F5F5) !important;
     opacity: 1 !important;
     position: relative;
     z-index: 2;
@@ -472,7 +472,7 @@ h1:focus {
 
 /* Dark mode */
 .mud-theme-dark .kpi-compact-card {
-    background-color: var(--mes-row-odd, #262636) !important;
+    background-color: var(--mes-row-odd, #2A2A2A) !important;
     opacity: 1 !important;
     border: 1px solid rgba(255,255,255,0.14);
     box-shadow: 0 2px 14px rgba(0,0,0,0.50);

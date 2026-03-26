@@ -25,7 +25,7 @@
 ║  0. ✅ Incrementa AppVersion.cs (anche micro-modifiche UI)              ║
 ║  0b.✅ git commit -A + commit PRIMA di modifiche E DOPO ogni fix        ║
 ║  0c.✅ Aggiorna docs/09-CHANGELOG.md con voce nella versione corrente   ║
-║  0d.✅ Se feature nuova o fix importante → aggiorna il doc tematico     ║
+║  0d.✅ Se feature nuova o fix → aggiorna il doc tematico     ║
 ║        (04-ARCHITETTURA.md, 05-SCHEDULING-ENGINE.md, ecc.)              ║
 ║  1. ✅ dotnet build --nologo (0 errori OBBLIGATORIO)                    ║
 ║  2. ✅ TEST AUTO: Se modifica UI → .\test-plc-realtime.ps1 -UseExisting ║
