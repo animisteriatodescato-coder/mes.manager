@@ -4,11 +4,60 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.14
+## 🔖 Versione Corrente: v1.60.18
 
 ---
 
-## 🔖 v1.60.14 - Accesso pagine Produzione per-utente (Claims Identity) (26 Mar 2026)
+## 🔖 v1.60.18 - Menu PROGRAMMAZIONE + drawer -10% + watermark tuned (26 Mar 2026)
+
+**Data**: 26 Marzo 2026
+
+### 🎨 UI — Rinomina sezione nav + riduzione larghezza drawer + icone watermark più visibili
+
+- Sezione "Programma Irene" rinominata **PROGRAMMAZIONE**
+- Larghezza drawer ridotta del 10%: `--mud-drawer-width-left: 216px` (da 240px default MudBlazor)
+  - Impostata via CSS var `:root` in `app.css` — si propaga automaticamente a AppBar e `UserColorIndicator.razor`
+- Watermark icone sezione: `font-size: 120px`, `opacity: 0.22`, layout `inset:0` per riempire tutta l'area
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor` — rinomina testo sezione
+- `MESManager.Web/wwwroot/app.css` — `--mud-drawer-width-left: 216px` + watermark tuned
+- `MESManager.Web/Constants/AppVersion.cs` — 1.60.17 → 1.60.18
+
+---
+
+## 🔖 v1.60.17 - Watermark icona sezione nav: più grande e riempie area (26 Mar 2026)
+
+**Data**: 26 Marzo 2026
+
+### 🎨 UI — Watermark emoji più visibile
+
+- `font-size: 70px → 120px`
+- `opacity: 0.12 → 0.22`
+- `inset: 0` al posto di `right/bottom` fissi — riempie tutta l'area del gruppo expand
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — regole `::after` watermark aggiornate
+
+---
+
+## 🔖 v1.60.16 - Watermark icona emoji in ogni sezione nav (26 Mar 2026)
+
+**Data**: 26 Marzo 2026
+
+### 🎨 UI — Icona di sfondo per ogni gruppo del menu laterale
+
+Ogni gruppo di navigazione (Programmazione, Produzione, Cataloghi, ecc.) mostra l'emoji della propria sezione in trasparenza nell'area espansa, come watermark non cliccabile.
+
+Tecnica: `::after` su `.mud-collapse-container` (position:relative come containing-block).
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor` — Class `nav-sec-X` su ogni `MudNavGroup`
+- `MESManager.Web/wwwroot/app.css` — CSS watermark + `position:relative` su `.mud-collapse-container`
+
+---
+
+## 🔖 v1.60.15 - Fix selettore CSS nav MudBlazor v8 (26 Mar 2026)
 
 **Data**: 26 Marzo 2026
 

@@ -2,6 +2,16 @@ html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
+/* ==========================================================================
+   Larghezza menu laterale — 216px (-10% rispetto al default MudBlazor 240px)
+   Sovrascrive --mud-drawer-width-left usato da MudBlazor per AppBar margin e
+   drawer width. UserColorIndicator.razor usa var(--mud-drawer-width-left,240px)
+   e si aggiorna automaticamente.
+   ========================================================================== */
+:root {
+    --mud-drawer-width-left: 216px;
+}
+
 a, .btn-link {
     color: #006bb7;
 }

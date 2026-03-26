@@ -481,4 +481,4 @@ proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve t
 **Data**: 26 Marzo 2026  
 **Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: v1.60.15 — Lesson learned MudBlazor v8: `.mud-nav-group-header` NON ESISTE, usare `.mud-nav-group > .mud-nav-link`
+**Ultimo aggiornamento**: v1.60.18 — Menu PROGRAMMAZIONE + drawer 216px + lesson learned MudBlazor v8 selettori
