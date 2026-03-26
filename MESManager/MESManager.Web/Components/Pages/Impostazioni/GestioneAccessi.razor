@@ -119,7 +119,7 @@
         }
     </MudPaper>
 
-    @* ───── Pagine visibili per utenti Visualizzazione (tutti i gruppi) ───── *@
+    @* ───── Pagine visibili per utenti Visualizzazione ───── *@
     @{
         var _visUtenti = _utentiRuoli.Where(u => u.Roles.Contains("Visualizzazione")).ToList();
     }
@@ -127,48 +127,66 @@
     {
         <MudPaper Class="pa-4 mt-4" Elevation="2">
             <MudText Typo="Typo.h6" Class="mb-1">
-                <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="mr-2" />Pagine visibili per utenti (ruolo Visualizzazione)
+                <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="mr-2" />Accesso pagine per utenti Visualizzazione
             </MudText>
             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-3 d-block">
-                Seleziona quali pagine ogni utente può visitare. Le modifiche diventano attive al prossimo login dell'utente.
+                Le modifiche sono attive al prossimo login dell'utente.
             </MudText>
 
-            @foreach (var gruppo in PaginaPolicy.Gruppi)
-            {
-                <MudDivider Class="my-3" />
-                <MudText Typo="Typo.subtitle1" Class="mb-2"><strong>@gruppo.Nome</strong></MudText>
-                <MudTable Items="_visUtenti" Hover="true" Dense="true" Striped="true" Elevation="0" Class="mb-2">
-                    <HeaderContent>
-                        <MudTh>Utente</MudTh>
-                        @foreach (var pagina in gruppo.Pagine)
+            @* Tabella unica trasposta: righe=pagine, colonne=utenti *@
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    @* Header: utenti *@
+                    <thead>
+                        <tr>
+                            <th style="text-align:left; padding:6px 12px; width:160px; border-bottom:1px solid var(--mes-grid-border);">Pagina</th>
+                            @foreach (var u in _visUtenti)
+                            {
+                                <th style="text-align:center; padding:6px 8px; min-width:90px; border-bottom:1px solid var(--mes-grid-border);">
+                                    <div class="d-flex flex-column align-center gap-1">
+                                        @if (!string.IsNullOrEmpty(u.User.Colore))
+                                        {
+                                            <div style="width:10px;height:10px;border-radius:50%;background:@u.User.Colore; margin:0 auto;"></div>
+                                        }
+                                        <span>@(string.IsNullOrEmpty(u.User.Nome) ? u.User.UserName : u.User.Nome)</span>
+                                    </div>
+                                </th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var gruppo in PaginaPolicy.Gruppi)
                         {
-                            <MudTh Style="text-align:center; min-width:100px;">@pagina.Label</MudTh>
+                            @* Riga separatore gruppo *@
+                            <tr style="background:var(--mes-grid-header-bg);">
+                                <td colspan="@(_visUtenti.Count + 1)" style="padding:4px 12px; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; opacity:0.75; color:var(--mes-nav-text);">
+                                    @gruppo.Nome
+                                </td>
+                            </tr>
+                            @* Righe pagine *@
+                            @foreach (var pagina in gruppo.Pagine)
+                            {
+                                var p = pagina;
+                                <tr style="border-bottom:1px solid var(--mes-grid-border);">
+                                    <td style="padding:2px 12px; color:var(--mes-row-text);">@p.Label</td>
+                                    @foreach (var u in _visUtenti)
+                                    {
+                                        var item = u;
+                                        <td style="text-align:center; padding:0;">
+                                            <MudCheckBox T="bool"
+                                                         Value="@item.PageClaims.Contains(p.ClaimValue)"
+                                                         ValueChanged="@((bool val) => TogglePagina(item, p.ClaimValue, val))"
+                                                         Color="Color.Info"
+                                                         Dense="true"
+                                                         Class="ma-0" />
+                                        </td>
+                                    }
+                                </tr>
+                            }
                         }
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Utente">
-                            <div class="d-flex align-center gap-2">
-                                @if (!string.IsNullOrEmpty(context.User.Colore))
-                                {
-                                    <div style="width:10px;height:10px;border-radius:50%;background:@context.User.Colore;"></div>
-                                }
-                                <MudText>@(string.IsNullOrEmpty(context.User.Nome) ? context.User.UserName : context.User.Nome)</MudText>
-                            </div>
-                        </MudTd>
-                        @foreach (var pagina in gruppo.Pagine)
-                        {
-                            var p = pagina;
-                            var item = context;
-                            <MudTd DataLabel="@p.Label" Style="text-align:center;">
-                                <MudCheckBox T="bool"
-                                             Value="@item.PageClaims.Contains(p.ClaimValue)"
-                                             ValueChanged="@((bool val) => TogglePagina(item, p.ClaimValue, val))"
-                                             Color="Color.Info" />
-                            </MudTd>
-                        }
-                    </RowTemplate>
-                </MudTable>
-            }
+                    </tbody>
+                </table>
+            </div>
         </MudPaper>
     }
 
