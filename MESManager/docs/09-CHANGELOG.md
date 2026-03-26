@@ -4,7 +4,54 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.13
+## 🔖 Versione Corrente: v1.60.14
+
+---
+
+## 🔖 v1.60.14 - Accesso pagine Produzione per-utente (Claims Identity) (26 Mar 2026)
+
+**Data**: 26 Marzo 2026
+
+### ✨ Feature — Controllo accesso pagine Produzione fine-grained per ruolo Visualizzazione
+
+Ogni utente con ruolo **Visualizzazione** può ora essere configurato individualmente per accedere solo a specifiche pagine della sezione Produzione, con layout/preferenze personali già funzionanti per-utente. Admin, Produzione e Manutenzione hanno sempre accesso completo.
+
+#### Architettura (Soluzione 2 — Claims Identity nativo, zero nuove tabelle)
+
+**`PaginaPolicy.cs`** (costanti centrali)
+- `ClaimType = "pagina"` usato in `AspNetUserClaims`
+- 5 pagine registrate: `dashboard`, `plc-realtime`, `plc-storico`, `gantt-storico`, `incollaggio`
+- `CanSee(user, claimValue)` helper per NavMenu
+
+**`Program.cs`**
+- `AddAuthorization()` con 5 policy (una per pagina): passa se Admin/Produzione/Manutenzione OR ha claim `pagina=<valore>`
+
+**`MainLayout.razor` (NavMenu)**
+- Sezione Produzione ora usa `<AuthorizeView Roles="...">` con `<Authorized Context>` che legge i claim dell'utente
+- Ogni voce del menu appare solo se l'utente può vederla (`CanSee`)
+
+**Pagine Produzione**
+- Dashboard, PlcRealtime, PlcStorico, GanttStorico, Incollaggio: `@attribute [Authorize(Policy = "pagina-...")]`
+- Accesso diretto alla URL bloccato — redirect al login per utenti senza claim
+
+**`GestioneAccessi.razor`** (UI admin)
+- Nuova sezione "Pagine Produzione visibili" appare solo se ci sono utenti Visualizzazione
+- Tabella checkbox utenti × pagine — modifiche immediate via `UserManager.AddClaimAsync/RemoveClaimAsync`
+- Snackbar avvisa che le modifiche diventano attive al prossimo login dell'utente
+
+**`DashboardProduzione.razor`**
+- Bottoni "Prossima" e "DB" (scrittura) nascosti tramite `<AuthorizeView Roles="Admin,Produzione">` per utenti view-only
+
+#### File modificati
+- `MESManager.Web/Constants/PaginaPolicy.cs` — NUOVO
+- `MESManager.Web/Program.cs` — `AddAuthorization` con 5 policy
+- `MESManager.Web/Components/Layout/MainLayout.razor` — NavMenu Produzione claims-aware
+- `MESManager.Web/Components/Pages/Impostazioni/GestioneAccessi.razor` — sezione Pagine + TogglePagina + PageClaims in UtenteRuolo
+- `MESManager.Web/Components/Pages/Produzione/DashboardProduzione.razor` — wrap bottoni write
+- `MESManager.Web/Components/Pages/Produzione/PlcRealtime.razor` — `[Authorize(Policy)]`
+- `MESManager.Web/Components/Pages/Produzione/PlcStorico.razor` — `[Authorize(Policy)]`
+- `MESManager.Web/Components/Pages/Produzione/GanttStoricoMacchine.razor` — `[Authorize(Policy)]`
+- `MESManager.Web/Components/Pages/Produzione/Incollaggio.razor` — `[Authorize(Policy)]`
 
 ---
 

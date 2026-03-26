@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.60.13";
+    public const string Current = "1.60.14";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.60.10  Fix colonne blu AG Grid: mes-readonly-cell transparent + ag-row-odd neutro (#F9F9F9 sovrascrive Alpine default #fcfcff bluino)
+    public const string Display = "v" + Current; // v1.60.14  Accesso pagine Produzione per-utente (Claims Identity): PaginaPolicy + GestioneAccessi + NavMenu + policy Authorize
 }
