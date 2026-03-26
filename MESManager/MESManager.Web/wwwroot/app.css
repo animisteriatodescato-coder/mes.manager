@@ -268,11 +268,13 @@ h1:focus {
    ========================================================================== */
 
 /* Colonne read-only (Codice, Descrizione, Cliente) */
+/* Nessun background distinto: le celle ereditano il colore della riga (neutro),
+   evitando che appaiano "blu" rispetto alle celle bianche editabili. */
 .ag-theme-alpine .mes-readonly-cell {
-    background-color: #f5f5f5 !important;
+    background-color: transparent !important;
 }
 .mud-theme-dark .ag-theme-alpine .mes-readonly-cell {
-    background-color: #232535 !important;
+    background-color: transparent !important;
 }
 
 /* Stato commessa */

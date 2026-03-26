@@ -1,8 +1,18 @@
 /* Personalizzazioni ag-Grid */
 
-/* Stili zebra per le righe in dark mode */
-@media (prefers-color-scheme: dark) {
-    .ag-theme-alpine .ag-row-odd {
-        background-color: rgba(255, 255, 255, 0.05);
-    }
+/* Righe dispari: override del default Alpine (#fcfcff = leggermente bluino) con grigio neutro.
+   ⚠️ BIBBIA: usa .mud-theme-dark (non @media prefers-color-scheme: dark) */
+.ag-theme-alpine .ag-row-odd {
+    background-color: #F9F9F9 !important;
+}
+.mud-theme-dark .ag-theme-alpine .ag-row-odd {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Righe pari: bianco puro (default Alpine, esplicitato per chiarezza) */
+.ag-theme-alpine .ag-row-even {
+    background-color: #FFFFFF !important;
+}
+.mud-theme-dark .ag-theme-alpine .ag-row-even {
+    background-color: transparent !important;
 }

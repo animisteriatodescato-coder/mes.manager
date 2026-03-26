@@ -4,7 +4,27 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.9
+## 🔖 Versione Corrente: v1.60.10
+
+---
+
+## 🔖 v1.60.10 - Fix colonne blu AG Grid (26 Mar 2026)
+
+**Data**: 26 Marzo 2026
+
+### 🐛 Bug Fix — 3 colonne (Codice, Descrizione, Cliente) appaiono blu/grigie in Catalogo Anime
+
+**Causa 1**: `.mes-readonly-cell` aveva `background-color: #f5f5f5 !important`. In light mode questo grigio neutro contrasta visivamente con le celle bianche di AG Grid, apparendo "colorato" (l’utente percepisce la differenza come blu). In dark mode `#232535` era genuinamente blu (B=53 > R=35, G=37).
+
+**Causa 2**: AG Grid Alpine theme usa di default `--ag-odd-row-background-color: #fcfcff` (R=G=252, B=255 = leggermente bluino) per le righe dispari. Nessuna griglia Anime sovrascriveva questo valore (a differenza di Commesse Aperte che impostava `#f9f9f9`).
+
+**Fix**:
+- `mes-readonly-cell` → `background-color: transparent` in light e dark mode. Le celle readonly ereditano il colore della riga (nessuna distinzione cromatica visibile).
+- `ag-grid-custom.css`: aggiunto `.ag-theme-alpine .ag-row-odd { background-color: #F9F9F9 }` (grigio neutro, sovrascrive Alpine default `#fcfcff` bluino) + `.ag-row-even { background-color: #FFFFFF }`. Dark mode via `.mud-theme-dark` (non più `@media prefers-color-scheme`).
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — `mes-readonly-cell` da `#f5f5f5`/`#232535` → `transparent`
+- `MESManager.Web/wwwroot/css/ag-grid-custom.css` — regole `.ag-row-odd/.ag-row-even` light+dark senza media query
 
 ---
 
