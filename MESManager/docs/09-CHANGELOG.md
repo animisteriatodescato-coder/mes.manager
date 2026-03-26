@@ -4,7 +4,36 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.10
+## 🔖 Versione Corrente: v1.60.11
+
+---
+
+## 🔖 v1.60.11 - Fix definitivo colonne readonly trasparenti (26 Mar 2026)
+
+**Data**: 26 Marzo 2026
+
+### 🐛 Bug Fix — 3 colonne (Codice, Descrizione, Cliente) ancora con sfondo diverso dalle altre
+
+**10 cause analizzate**:
+1. `--mes-readonly-cell-bg: "#f5f5f5"` in `MainLayout.razor :root{}` — sorgente SSR reale (non app.css)
+2. `ThemeCssService.cs` hardcodava `"#f5f5f5"` (light) / `"#1a1a2e"` (dark) — sovrascriveva dopo client render
+3. CSS specificity: MainLayout usa `.ag-cell.mes-readonly-cell` (più specifica), la modifica in app.css era inerte
+4. `ag-grid-custom.css` non linkato in App.razor — codice morto, nessun effetto
+5. Dark mode `#1a1a2e` = R=26,G=26,B=46 — genuinamente blu
+6. `--mes-row-even: #FAFAFA` vs `readonly: #f5f5f5` — su righe pari, 3 colonne appaiono più scure
+7. CDN AG Grid CSS caricato dopo app.css — può sovrascrivere regole senza !important
+8. `app.css?v=1577` hardcoded non burstata — vecchia cache in browser
+9. Tre sorgenti in conflitto: app.css + MainLayout + ThemeCssService con valori diversi
+10. Nessun token centralizzato — valore duplicato in 2 file C#/Razor
+
+**Fix**: `--mes-readonly-cell-bg = "transparent"` in **MainLayout.razor** (SSR) E **ThemeCssService.cs** (client). Le celle readonly ora ereditano esattamente il colore della riga padre, eliminando qualsiasi contrasto su righe pari o in dark mode.
+
+**Fix secondari**: `app.css?v=1577 → v=1578` (cache bust), `ag-grid-custom.css` rimane file di utilità non linkato (rimosso da scope attivo).
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor` — `--mes-readonly-cell-bg: transparent`
+- `MESManager.Web/Services/ThemeCssService.cs` — `--mes-readonly-cell-bg = "transparent"`
+- `MESManager.Web/Components/App.razor` — `app.css?v=1578` cache bust
 
 ---
 
