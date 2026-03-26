@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.60.14";
+    public const string Current = "1.60.16";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.60.14  Accesso pagine Produzione per-utente (Claims Identity): PaginaPolicy + GestioneAccessi + NavMenu + policy Authorize
+    public const string Display = "v" + Current; // v1.60.16  UI: watermark icona emoji in ogni sezione nav
 }

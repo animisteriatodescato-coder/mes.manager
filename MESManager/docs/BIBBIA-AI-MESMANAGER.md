@@ -40,6 +40,18 @@
 ╠══════════════════════════════════════════════════════════════════════════╣
 ║  QUANDO L'UTENTE CHIEDE DEPLOY ("fai il deploy", "deploya"):            ║
 ║                                                                          ║
+║  ⛔ REGOLA ASSOLUTA: IL DEPLOY VA ESEGUITO SOLO SU COMANDO               ║
+║  ⛔ ESPLICITO DELL'UTENTE. "fai il deploy" / "deploya" /                 ║
+║  ⛔ "metti in produzione". NON FARE MAI DEPLOY IN AUTONOMIA             ║
+║  ⛔ DOPO UNO SVILUPPO. SVILUPPO ≠ DEPLOY. SEMPRE ASPETTARE.             ║
+║                                                                          ║
+║  FLUSSO DI LAVORO OBBLIGATORIO:                                          ║
+║  1. AI sviluppa e testa SOLO in locale (localhost:5156)                 ║
+║  2. Utente verifica in locale e conferma                                 ║
+║  3. Utente DEVE scrivere esplicitamente "fai il deploy" o simile        ║
+║  4. SOLO ALLORA l'AI esegue il deploy su 192.168.1.230                  ║
+║                                                                          ║
+║  SE L'UTENTE DICE "fai il deploy", ALLORA:                              ║
 ║  🚀 L'AI ESEGUE TUTTO IN AUTONOMIA — non chiedere mai all'utente        ║
 ║     1. dotnet publish -c Release -o publish\Web                         ║
 ║     2. taskkill PlcSync → Worker → Web (ordine CRITICO)                 ║
@@ -50,8 +62,8 @@
 ║     6. Riporta esito con dettaglio file copiati e servizi UP            ║
 ║                                                                          ║
 ║  ❌ MAI lasciare comandi al copia-incolla per l'utente                  ║
-║  ❌ MAI chiedere "vuoi che esegua?" — ESEGUI E BASTA                    ║
-║  ❌ MAI fermarsi a metà deploy: o si completa o si indica blocco        ║
+║  ❌ MAI fare deploy dopo ogni modifica senza comando utente             ║
+║  ❌ MAI fare deploy perché "ho già il publish" o "è pronto"             ║
 ║  ✅ Credenziali fisse: 192.168.1.230 / Administrator / A123456!         ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 ```
@@ -397,7 +409,47 @@ MesDesignTokens.RowOdd(isDark) → MainLayout :root { --mes-row-odd } → app.cs
 
 ---
 
-## ✅ CHECKLIST PRE-RISPOSTA
+### CSS selettori MudBlazor v8: `.mud-nav-group-header` NON ESISTE (⚠️ LESSON LEARNED v1.60.15)
+
+**Problema ricorrente**: Usare `.mud-nav-group-header` nei CSS — questa classe non esiste in MudBlazor v8.
+
+In v8, `MudNavGroup` usa questa struttura HTML reale:
+```html
+<nav class="mud-nav-group nav-sec-X">
+  <button class="mud-nav-link">     <!-- titolo gruppo (figlio DIRETTO) -->
+    ...
+  </button>
+  <div class="mud-collapse-container">   <!-- area collassabile con i NavLink -->
+    <div class="mud-collapse-wrapper">
+      <div class="mud-collapse-wrapper-inner">
+        <!-- MudNavLink figli qui -->
+      </div>
+    </div>
+  </div>
+</nav>
+```
+
+**Regola fissa**:
+- Titolo gruppo → `.mud-nav-group > .mud-nav-link` (figlio DIRETTO con `>`)
+- Testo titolo → `.mud-nav-group > .mud-nav-link > .mud-nav-link-text`
+- Area contenuto (NavLink figli) → `.mud-nav-group .mud-collapse-container`
+
+**Anti-pattern** (non esiste in v8 → regola ignorata silenziosamente):
+```css
+.mud-nav-group-header { ... }          /* ❌ INESISTENTE */
+.mud-nav-group-header .mud-typography { ... }  /* ❌ INESISTENTE */
+```
+
+**Pattern corretto**:
+```css
+.mud-drawer .mud-nav-group > .mud-nav-link { ... }           /* ✅ titolo */
+.mud-drawer .mud-nav-group > .mud-nav-link > .mud-nav-link-text { ... } /* ✅ testo */
+.mud-nav-group .mud-collapse-container { position: relative; } /* ✅ contenuto */
+```
+
+**PRIMA di applicare CSS a classi MudBlazor**: verifica SEMPRE l'HTML renderizzato con DevTools (F12 → Inspector) o controlla MudBlazor.min.css nel NuGet package.
+
+---
 
 - [ ] Letto file docs/ pertinente?
 - [ ] Soluzione coerente con architettura?
@@ -425,8 +477,8 @@ proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve t
 
 ## 📞 Supporto Documentazione
 
-**Versione**: 4.3  
+**Versione**: 4.4  
 **Data**: 26 Marzo 2026  
 **Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: v1.60.9 — Fix righe tabelle: token fissi #F0F0F8/#FAFAFD erano H=240° blu → sostituiti con grigi puri #F5F5F5/#FAFAFA
+**Ultimo aggiornamento**: v1.60.15 — Lesson learned MudBlazor v8: `.mud-nav-group-header` NON ESISTE, usare `.mud-nav-group > .mud-nav-link`

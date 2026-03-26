@@ -523,11 +523,15 @@ h1:focus {
 }
 
 /* ==========================================================================
-   Menu laterale — Titoli gruppi nav (v1.60.13)
+   Menu laterale — Titoli gruppi nav (v1.60.15)
    Stampatello, bold, effetto riquadro 3D
    BIBBIA: regole globali MudBlazor qui, non in <style> di MainLayout.razor
+   NOTA MudBlazor v8: il gruppo usa <nav class="mud-nav-group">,
+   il titolo è <button class="mud-nav-link"> (figlio DIRETTO).
+   Il selettore ".mud-nav-group-header" NON ESISTE in v8!
+   Usare SEMPRE ".mud-nav-group > .mud-nav-link" (> = solo figlio diretto).
    ========================================================================== */
-.mud-drawer .mud-nav-group-header {
+.mud-drawer .mud-nav-group > .mud-nav-link {
     font-weight: 700 !important;
     margin: 4px 6px 2px 6px !important;
     border-radius: 6px !important;
@@ -544,10 +548,46 @@ h1:focus {
         inset 0 -1px 0 rgba(0,0,0,0.18) !important;
     border: 1px solid rgba(0,0,0,0.20) !important;
 }
-.mud-drawer .mud-nav-group-header span,
-.mud-drawer .mud-nav-group-header .mud-typography {
+.mud-drawer .mud-nav-group > .mud-nav-link > .mud-nav-link-text {
     font-size: 13.5px !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.07em !important;
 }
+
+/* ==========================================================================
+   Menu laterale — Watermark icona sezione (v1.60.16)
+   Ogni gruppo nav mostra l'emoji del suo titolo in trasparenza nel corpo.
+   BIBBIA: position:relative sul container è CRITICO per:
+     1) fare da containing-block per ::after position:absolute
+     2) far funzionare overflow:hidden di MudBlazor per clipping sull'icona
+   ========================================================================== */
+.mud-nav-group .mud-collapse-container {
+    position: relative; /* enabling block per ::after + clipping watermark */
+}
+/* Stile comune watermark */
+.mud-nav-group.nav-sec-prog         .mud-collapse-container::after,
+.mud-nav-group.nav-sec-produzione   .mud-collapse-container::after,
+.mud-nav-group.nav-sec-cataloghi    .mud-collapse-container::after,
+.mud-nav-group.nav-sec-manutenzioni .mud-collapse-container::after,
+.mud-nav-group.nav-sec-sync         .mud-collapse-container::after,
+.mud-nav-group.nav-sec-statistiche  .mud-collapse-container::after,
+.mud-nav-group.nav-sec-impostazioni .mud-collapse-container::after {
+    position: absolute;
+    right: 6px;
+    bottom: 2px;
+    font-size: 70px;
+    line-height: 1;
+    opacity: 0.12;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+}
+/* Icona per ogni sezione */
+.mud-nav-group.nav-sec-prog         .mud-collapse-container::after { content: "📅"; }
+.mud-nav-group.nav-sec-produzione   .mud-collapse-container::after { content: "🏭"; }
+.mud-nav-group.nav-sec-cataloghi    .mud-collapse-container::after { content: "📚"; }
+.mud-nav-group.nav-sec-manutenzioni .mud-collapse-container::after { content: "🔧"; }
+.mud-nav-group.nav-sec-sync         .mud-collapse-container::after { content: "🔄"; }
+.mud-nav-group.nav-sec-statistiche  .mud-collapse-container::after { content: "📊"; }
+.mud-nav-group.nav-sec-impostazioni .mud-collapse-container::after { content: "⚙️"; }
