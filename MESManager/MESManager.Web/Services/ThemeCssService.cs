@@ -93,7 +93,7 @@ public class ThemeCssService
             [MesDesignTokens.CssVarAgInputBorder]   = isDarkMode ? MesDesignTokens.AgInputBorderDark : "#e0e0e0",
 
             // ── AG Grid celle condizionali (cellClassRules) ───────────────────
-            ["--mes-readonly-cell-bg"]   = "transparent",
+            ["--mes-readonly-cell-bg"]   = isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
             ["--mes-stato-aperta-bg"]    = isDarkMode ? "#1b3a22" : "#e8f5e9",
             ["--mes-stato-aperta-color"] = isDarkMode ? "#80c783" : "#2e7d32",
             ["--mes-stato-chiusa-bg"]    = isDarkMode ? "#3a1828" : "#fce4ec",

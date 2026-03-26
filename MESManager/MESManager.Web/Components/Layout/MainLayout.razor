@@ -63,7 +63,7 @@
         --mes-machine-card-text-muted: @MesDesignTokens.MachineCardTextMuted(_isDarkMode);
         --mes-machine-card-number:     @MesDesignTokens.MachineCardNumber(_isDarkMode);
         /* AG Grid celle condizionali — aggiornate da ThemeCssService su dark mode toggle */
-        --mes-readonly-cell-bg:   transparent;
+        --mes-readonly-cell-bg:   @(_isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)");
         --mes-stato-aperta-bg:    @(_isDarkMode ? "#1b3a22" : "#e8f5e9");
         --mes-stato-aperta-color: @(_isDarkMode ? "#80c783" : "#2e7d32");
         --mes-stato-chiusa-bg:    @(_isDarkMode ? "#3a1828" : "#fce4ec");

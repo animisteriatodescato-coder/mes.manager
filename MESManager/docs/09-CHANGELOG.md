@@ -4,7 +4,26 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.11
+## 🔖 Versione Corrente: v1.60.12
+
+---
+
+## 🔖 v1.60.12 - Readonly cell: contrasto sottile (26 Mar 2026)
+
+**Data**: 26 Marzo 2026
+
+### 🎨 UI Tweak — Colonne readonly (Codice, Descrizione, Cliente) leggermente più scure della riga
+
+Dopo v1.60.11 (transparent), le celle readonly erano indistinguibili dalle celle editabili.
+Aggiunto overlay semi-trasparente che si adatta automaticamente al colore della riga (odd/even):
+- Light mode: `rgba(0,0,0,0.04)` — ~10 livelli RGB più scuro (su `#FAFAFA` → ~`#F4F4F4`)
+- Dark mode: `rgba(255,255,255,0.06)` — leggermente più chiaro del dark row
+
+Nessun colore assoluto hardcoded: funziona su qualsiasi tinta riga (odd/even/tinted).
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor` — `--mes-readonly-cell-bg`
+- `MESManager.Web/Services/ThemeCssService.cs` — `--mes-readonly-cell-bg`
 
 ---
 
