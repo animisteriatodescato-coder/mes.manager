@@ -28,15 +28,16 @@ public static class MesDesignTokens
     public static string RowText(bool dark) => dark ? "#E6E6F0" : "#1E1E28";
 
     // Soglia minima di saturazione perché derivare la hue abbia senso visivamente.
-    // Sotto questa soglia (nero, grigio, bianco) non esiste un colore dominante:
-    // si usa il fallback fisso invece di produrre una strana tinta rosso/neutra.
-    private const float RowTintSaturationThreshold = 0.12f;
+    // Alzata a 0.22 per escludere grigi con leggero hue-bias (es. blu-grigio #3D4451 S≈0.14)
+    // che altrimenti producono tinte blu indesiderate su sfondo neutro.
+    private const float RowTintSaturationThreshold = 0.22f;
 
     /// <summary>
     /// Colore riga dispari calcolato dal colore del menu laterale/AppBar.
-    /// Estrae la hue e produce una tinta chiara (light) o scura (dark) vivida ma discreta.
-    /// Se hexColor non è un hex valido o il colore è quasi acromatico (grigio/nero/bianco),
-    /// usa il fallback fisso RowOdd(dark) per evitare tinte indesiderate.
+    /// Mantiene la hue originale del colore sorgente (fedeltà visiva), riducendo la saturazione
+    /// alla percentuale targetS e portando la lightness a un valore leggibile.
+    /// Algoritmo: S = 85% della sorgente (cap 0.55) — riproduce chiaramente il colore scelto.
+    /// Lightness fissa: dark=0.23, light=0.87 → abbastanza scuro/chiaro da essere leggibile.
     /// </summary>
     public static string RowOddFromColor(string hexColor, bool dark)
     {
@@ -45,18 +46,15 @@ public static class MesDesignTokens
         HexToHsl(r, g, b, out float h, out float s, out _);
         if (s < RowTintSaturationThreshold)
             return RowOdd(dark);
-        // Light: tinta visibile ma chiara (lightness alta, saturazione moderata)
-        // Dark:  tinta visibile ma scura (lightness bassa, saturazione medio-alta)
-        float targetS = Math.Min(s * 0.6f + 0.08f, dark ? 0.45f : 0.35f);
-        float targetL = dark ? 0.20f : 0.93f;
+        float targetS = Math.Min(s * 0.85f, 0.55f);
+        float targetL = dark ? 0.23f : 0.87f;
         return HslToHex(h, targetS, targetL);
     }
 
     /// <summary>
-    /// Colore riga pari calcolato dal colore del menu laterale/AppBar.
-    /// Più neutro di RowOddFromColor per creare l'effetto zebra: lightness ancora più alta
-    /// (light) o più bassa (dark) con saturazione dimezzata rispetto alla riga odd.
-    /// Se hexColor non è un hex valido o il colore è quasi acromatico, usa il fallback fisso.
+    /// Colore riga pari — più neutro di RowOddFromColor per l'effetto zebra.
+    /// Usa il 35% della saturazione originale (cap 0.25) e lightness più estrema
+    /// per distinguersi dalla riga odd pur rimanendo della stessa famiglia cromatica.
     /// </summary>
     public static string RowEvenFromColor(string hexColor, bool dark)
     {
@@ -65,8 +63,8 @@ public static class MesDesignTokens
         HexToHsl(r, g, b, out float h, out float s, out _);
         if (s < RowTintSaturationThreshold)
             return RowEven(dark);
-        float targetS = Math.Min(s * 0.25f + 0.03f, dark ? 0.18f : 0.12f);
-        float targetL = dark ? 0.13f : 0.98f;
+        float targetS = Math.Min(s * 0.35f, 0.25f);
+        float targetL = dark ? 0.16f : 0.94f;
         return HslToHex(h, targetS, targetL);
     }
 

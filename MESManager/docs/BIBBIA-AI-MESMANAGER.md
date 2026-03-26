@@ -93,7 +93,7 @@ Questa chat **NON è generica**: è vincolata al contesto reale del progetto e a
 - **Nome**: MESManager
 - **Path**: `C:\Dev\MESManager`
 - **Documentazione**: `C:\Dev\MESManager\docs` (fonte di verità)
-- **Versione Corrente**: `v1.58.0`
+- **Versione Corrente**: vedi `AppVersion.cs` (fonte di verità)
 
 ### Stack Tecnologico
 ```
@@ -387,35 +387,13 @@ MesDesignTokens.RowOdd(isDark) → MainLayout :root { --mes-row-odd } → app.cs
 
 ### Toggle Dark/Light Mode: salva sulle impostazioni EFFETTIVE (⚠️ LESSON LEARNED v1.60.2)
 
-**Problema ricorrente**: `ToggleTheme` salva `ThemeIsDarkMode` su `AppSettingsService` (globale).
-Se l'utente ha un tema personale (`UserThemeService.HasUserTheme`), questo triggera `OnAppSettingsChanged`
-che rilegge le impostazioni utente (non ancora aggiornate) e **reverte immediatamente il toggle**.
+**Problema ricorrente**: `ToggleTheme` salva su `AppSettingsService` (globale), ma se l'utente ha un tema personale (`UserThemeService.HasUserTheme`), `OnAppSettingsChanged` rilegge le impostazioni *non aggiornate* e reverte il toggle.
 
-**Regola fissa**: Il salvataggio del toggle DEVE avvenire sulle impostazioni dove il tema è realmente memorizzato.
+**Regola fissa**: Salva SEMPRE su `UserThemeService.SaveUserThemeAsync` se `HasUserTheme`, altrimenti su `AppSettingsService`.
 
-```csharp
-// ✅ CORRETTO
-var effectiveSettings = UserThemeService.GetEffectiveSettings();
-effectiveSettings.ThemeIsDarkMode = _isDarkMode;
-if (UserThemeService.HasUserTheme)
-    await UserThemeService.SaveUserThemeAsync(effectiveSettings);
-else
-    await AppSettingsService.SaveSettingsAsync(globalSettings);
+**Pattern preview**: `ApplyPreviewAsync` DEVE usare `ThemeModeService.IsDarkMode` (live), NON `_draft.ThemeIsDarkMode`.
 
-// ❌ SBAGLIATO (causa revert)
-var settings = AppSettingsService.GetSettings();
-settings.ThemeIsDarkMode = _isDarkMode;
-await AppSettingsService.SaveSettingsAsync(settings); // triggera OnAppSettingsChanged che reverte
-```
-
-**Pattern preview impostazioni**: `ApplyPreviewAsync` DEVE usare `ThemeModeService.IsDarkMode` (live),
-NON `_draft.ThemeIsDarkMode` (valore salvato al caricamento pagina).
-
-```csharp
-// ✅ CORRETTO
-private Task ApplyPreviewAsync()
-    => ThemeCssService.ApplyAsync(JS, _draft, ThemeModeService.IsDarkMode);
-```
+**Dettagli completi + codice**: [04-ARCHITETTURA.md — Sistema Tema](docs/04-ARCHITETTURA.md)
 
 ---
 
@@ -447,8 +425,8 @@ proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve t
 
 ## 📞 Supporto Documentazione
 
-**Versione**: 4.0  
-**Data**: 25 Marzo 2026  
+**Versione**: 4.1  
+**Data**: 26 Marzo 2026  
 **Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: v1.60.2 — Fix dark mode toggle revert (ToggleTheme salva su impostazioni effettive), fix ApplyPreviewAsync usa ThemeModeService.IsDarkMode, righe tabelle tema-aware con soglia saturazione HSL
+**Ultimo aggiornamento**: v1.60.7 — Rimossa cascade tinting su Primary (righe tabelle solo da drawer/appbar), ColorTokenPicker Hint, label ImpostazioniGenerali, slim BIBBIA

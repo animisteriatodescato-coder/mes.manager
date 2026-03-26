@@ -98,15 +98,18 @@
         <ColorTokenPicker Label="Primario"
                           Value="@_draft.ThemePrimaryColor"
                           ValueChanged="@OnPrimaryColorChanged"
-                          Palette="@FullPalette" />
+                          Palette="@FullPalette"
+                          Hint="Bottoni, badge attivi, evidenziazioni, barra superiore (se non personalizzata)" />
         <ColorTokenPicker Label="Secondario"
                           Value="@_draft.ThemeSecondaryColor"
                           ValueChanged="@(c => OnColorChanged(c, v => _draft.ThemeSecondaryColor = v))"
-                          Palette="@FullPalette" />
+                          Palette="@FullPalette"
+                          Hint="Elementi secondari, chip, slider" />
         <ColorTokenPicker Label="Accento"
                           Value="@_draft.ThemeAccentColor"
                           ValueChanged="@(c => OnColorChanged(c, v => _draft.ThemeAccentColor = v))"
-                          Palette="@FullPalette" />
+                          Palette="@FullPalette"
+                          Hint="Evidenziazioni terziarie, focus ring" />
 
         <MudDivider Class="mb-3" />
 
@@ -142,11 +145,12 @@
             (AppBar, numeri macchina nel Dashboard, bottoni).
         </MudText>
 
-        @* ── Riga 1: testo su sfondo Primary (AppBar) *@
+        @* ── Riga 1: testo su sfondo AppBar (usa colore appbar effettivo, non primary) *@
         <div class="d-flex align-center gap-4 mb-4 flex-wrap">
-            <MudText Style="min-width:160px; font-weight:500;">Testo su AppBar</MudText>
+            <MudText Style="min-width:160px; font-weight:500;">Testo su barra superiore</MudText>
 
-            <div style="@($"width:140px; height:52px; border-radius:8px; background:{_draft.ThemePrimaryColor}; display:flex; align-items:center; justify-content:center; color:{_draft.ThemeTextOnPrimary}; font-weight:700; font-size:1.05rem; box-shadow:0 2px 8px rgba(0,0,0,0.25);")">
+            @{ var _appBarPreviewBg = !string.IsNullOrEmpty(_draft.ThemeAppBarBgColor) ? _draft.ThemeAppBarBgColor : _draft.ThemePrimaryColor; }
+            <div style="@($"width:140px; height:52px; border-radius:8px; background:{_appBarPreviewBg}; display:flex; align-items:center; justify-content:center; color:{_draft.ThemeTextOnPrimary}; font-weight:700; font-size:1.05rem; box-shadow:0 2px 8px rgba(0,0,0,0.25);")">
                 Aa 12:34
             </div>
 
@@ -198,6 +202,7 @@
                           Palette="@NavTextPresets"
                           ShowAuto="true" AutoLabel="Auto"
                           ShowHexInput="true"
+                          Hint="Testo delle voci nel menu laterale e nella barra superiore (Auto = bianco in dark, quasi-nero in light)"
                           FallbackColor="@(_draft.ThemeIsDarkMode ? "#FFFFFF" : "#1A1A1A")" />
     </MudPaper>
 
@@ -218,6 +223,7 @@
                           Palette="@FullPalette"
                           ShowAuto="true" AutoLabel="Auto (Primary)"
                           ShowHexInput="true"
+                          Hint="Sfondo della barra del titolo in alto — vuoto = usa il colore Primary"
                           FallbackColor="@_draft.ThemePrimaryColor" />
 
         <ColorTokenPicker Label="Menu laterale" LabelWidth="160px"
@@ -226,6 +232,7 @@
                           Palette="@FullPalette"
                           ShowAuto="true" AutoLabel="Auto (come AppBar)"
                           ShowHexInput="true"
+                          Hint="Sfondo del pannello di navigazione a sinistra — determina anche il colore delle righe delle tabelle"
                           FallbackColor="@(!string.IsNullOrEmpty(_draft.ThemeAppBarBgColor) ? _draft.ThemeAppBarBgColor : _draft.ThemePrimaryColor)" />
 
         @* ── 🌙 Colori Dark mode (override opzionale) ──── *@
@@ -238,6 +245,7 @@
                           Palette="@FullPalette"
                           ShowAuto="true" AutoLabel="Uguale Light"
                           ShowHexInput="true"
+                          Hint="Override dark mode per la barra superiore — vuoto = usa il colore Light"
                           FallbackColor="@(!string.IsNullOrEmpty(_draft.ThemeAppBarBgColor) ? _draft.ThemeAppBarBgColor : _draft.ThemePrimaryColor)" />
 
         <ColorTokenPicker Label="Menu laterale" LabelWidth="160px"
@@ -246,6 +254,7 @@
                           Palette="@FullPalette"
                           ShowAuto="true" AutoLabel="Uguale Light"
                           ShowHexInput="true"
+                          Hint="Override dark mode per il menu — determina le righe tabelle in dark mode (vuoto = usa colore Light)"
                           FallbackColor="@(!string.IsNullOrEmpty(_draft.ThemeDrawerBgColorDark) ? _draft.ThemeDrawerBgColorDark : (!string.IsNullOrEmpty(_draft.ThemeAppBarBgColorDark) ? _draft.ThemeAppBarBgColorDark : _draft.ThemePrimaryColor))" />
 
         <MudDivider Class="my-3" />
@@ -256,6 +265,7 @@
                           Palette="@FullPalette"
                           ShowAuto="true" AutoLabel="Auto (Primary)"
                           ShowHexInput="true"
+                          Hint="Sfondo dei bottoni principali — vuoto = segue il colore Primary"
                           FallbackColor="@_draft.ThemePrimaryColor" />
     </MudPaper>
 

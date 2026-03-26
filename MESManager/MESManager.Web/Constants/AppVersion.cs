@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.60.5";
+    public const string Current = "1.60.7";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.60.5  Fix tinting righe: cascade drawer→appbar→primary via IsSufficientlyChromatic (dark default #0E101C sat=0.07 < 0.12 → primary)
+    public const string Display = "v" + Current; // v1.60.7  Cascade tinting solo su drawer/appbar (no primary), ColorTokenPicker Hint param, label ImpostazioniGenerali, BIBBIA v4.1
 }

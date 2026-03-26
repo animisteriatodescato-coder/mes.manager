@@ -24,10 +24,10 @@
         : (!string.IsNullOrEmpty(_s.ThemeDrawerBgColor) ? _s.ThemeDrawerBgColor : _appBarBg);
     var _buttonColor = !string.IsNullOrEmpty(_s.ThemeButtonColor) ? _s.ThemeButtonColor : _s.ThemePrimaryColor;
     var _buttonText  = !string.IsNullOrEmpty(_s.ThemeButtonTextColor) ? _s.ThemeButtonTextColor : AppSettingsService.ComputeTextOnBackground(_buttonColor);
-    // Sorgente tinting righe: cascade drawer → appbar → primary (stesso algoritmo di ThemeCssService)
+    // Sorgente tinting righe: cascade drawer → appbar. Se entrambi acromatici → token fisso (stessa logica ThemeCssService)
     var _rowTintColor = MesDesignTokens.IsSufficientlyChromatic(_drawerBg)  ? _drawerBg
                       : MesDesignTokens.IsSufficientlyChromatic(_appBarBg)  ? _appBarBg
-                      : _s.ThemePrimaryColor;
+                      : null;
 }
 <style>
     :root {
@@ -42,9 +42,9 @@
         --mes-drawer-bg: @_drawerBg;
         --mes-button-color: @_buttonColor;
         --mes-button-text: @_buttonText;
-        /* Colori tabelle — tinta dinamica dal colore drawer (se hex), altrimenti primary */
-        --mes-row-odd:  @MesDesignTokens.RowOddFromColor(_rowTintColor, _isDarkMode);
-        --mes-row-even: @MesDesignTokens.RowEvenFromColor(_rowTintColor, _isDarkMode);
+        /* Colori tabelle — tinting dal menu laterale/appbar se saturo, altrimenti token fisso */
+        --mes-row-odd:  @(_rowTintColor is null ? MesDesignTokens.RowOdd(_isDarkMode)  : MesDesignTokens.RowOddFromColor(_rowTintColor, _isDarkMode));
+        --mes-row-even: @(_rowTintColor is null ? MesDesignTokens.RowEven(_isDarkMode) : MesDesignTokens.RowEvenFromColor(_rowTintColor, _isDarkMode));
         --mes-row-text: @MesDesignTokens.RowText(_isDarkMode);
         --mes-grid-header-bg: var(--mes-drawer-bg);
         --mes-glass-grid: @MesDesignTokens.GlassGrid(_isDarkMode, _panelOp);

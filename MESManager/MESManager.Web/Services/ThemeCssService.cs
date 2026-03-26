@@ -46,12 +46,13 @@ public class ThemeCssService
             ? s.ThemeDrawerBgColorDark
             : (!string.IsNullOrEmpty(s.ThemeDrawerBgColor) ? s.ThemeDrawerBgColor : appBarBg);
 
-        // Sorgente tinting righe: cascade drawer → appbar → primary.
-        // Scegliamo il primo con saturazione sufficiente per produrre una tinta visibile.
-        // Esempio: dark default #0E101C ha sat≈0.07 (< soglia 0.12) → si arriva al primary #1976D2.
-        string rowTintColor = MesDesignTokens.IsSufficientlyChromatic(drawerBg)  ? drawerBg
-                            : MesDesignTokens.IsSufficientlyChromatic(appBarBg)  ? appBarBg
-                            : s.ThemePrimaryColor;
+        // Sorgente tinting righe: cascade drawer → appbar.
+        // Se entrambi sono acromatici (grigio, negro, default), righe neutrali (token fisso).
+        // Il tinting si attiva SOLO quando un colore menu/appbar saturo è esplicitamente impostato.
+        // Non viene mai usato ThemePrimaryColor: cambiare il Primary non deve cambiare le righe.
+        string? rowTintColor = MesDesignTokens.IsSufficientlyChromatic(drawerBg) ? drawerBg
+                             : MesDesignTokens.IsSufficientlyChromatic(appBarBg)  ? appBarBg
+                             : null;
 
         string buttonColor = !string.IsNullOrEmpty(s.ThemeButtonColor)
             ? s.ThemeButtonColor
@@ -77,9 +78,9 @@ public class ThemeCssService
             [MesDesignTokens.CssVarButtonColor]     = buttonColor,
             [MesDesignTokens.CssVarButtonText]      = buttonText,
 
-            // ── Tabelle / Griglie — colori calcolati dalla tinta del drawer per coerenza tema ─────
-            [MesDesignTokens.CssVarRowOdd]          = MesDesignTokens.RowOddFromColor(rowTintColor, isDarkMode),
-            [MesDesignTokens.CssVarRowEven]         = MesDesignTokens.RowEvenFromColor(rowTintColor, isDarkMode),
+            // ── Tabelle / Griglie — tinting da drawer/appbar saturo; se acromatici usa token fisso ─────
+            [MesDesignTokens.CssVarRowOdd]          = rowTintColor is null ? MesDesignTokens.RowOdd(isDarkMode)  : MesDesignTokens.RowOddFromColor(rowTintColor, isDarkMode),
+            [MesDesignTokens.CssVarRowEven]         = rowTintColor is null ? MesDesignTokens.RowEven(isDarkMode) : MesDesignTokens.RowEvenFromColor(rowTintColor, isDarkMode),
             [MesDesignTokens.CssVarRowText]         = MesDesignTokens.RowText(isDarkMode),
             [MesDesignTokens.CssVarGridHeaderBg]    = drawerBg,
             [MesDesignTokens.CssVarGlassGrid]       = MesDesignTokens.GlassGrid(isDarkMode, panelOp),
