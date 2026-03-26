@@ -32,6 +32,11 @@ public static class MesDesignTokens
     // che altrimenti producono tinte blu indesiderate su sfondo neutro.
     private const float RowTintSaturationThreshold = 0.22f;
 
+    // Soglia minima di luminanza: colori quasi-neri come il default dark drawer #0E101C (L≈0.08)
+    // hanno S≈0.33 e passerebbero il check saturazione, generando tinte blu indesiderate.
+    // Richiediamo L >= 0.15 per assicurare che solo colori visibilmente colorati tintino le righe.
+    private const float RowTintMinLuminance = 0.15f;
+
     /// <summary>
     /// Colore riga dispari calcolato dal colore del menu laterale/AppBar.
     /// Mantiene la hue originale del colore sorgente (fedeltà visiva), riducendo la saturazione
@@ -43,8 +48,8 @@ public static class MesDesignTokens
     {
         if (!TryParseHex(hexColor, out byte r, out byte g, out byte b))
             return RowOdd(dark);
-        HexToHsl(r, g, b, out float h, out float s, out _);
-        if (s < RowTintSaturationThreshold)
+        HexToHsl(r, g, b, out float h, out float s, out float l);
+        if (s < RowTintSaturationThreshold || l < RowTintMinLuminance)
             return RowOdd(dark);
         float targetS = Math.Min(s * 0.85f, 0.55f);
         float targetL = dark ? 0.23f : 0.87f;
@@ -60,8 +65,8 @@ public static class MesDesignTokens
     {
         if (!TryParseHex(hexColor, out byte r, out byte g, out byte b))
             return RowEven(dark);
-        HexToHsl(r, g, b, out float h, out float s, out _);
-        if (s < RowTintSaturationThreshold)
+        HexToHsl(r, g, b, out float h, out float s, out float l);
+        if (s < RowTintSaturationThreshold || l < RowTintMinLuminance)
             return RowEven(dark);
         float targetS = Math.Min(s * 0.35f, 0.25f);
         float targetL = dark ? 0.16f : 0.94f;
@@ -80,15 +85,15 @@ public static class MesDesignTokens
     }
 
     /// <summary>
-    /// Ritorna true se il colore ha abbastanza saturazione per essere usato come sorgente di tinting.
-    /// Colori acromatici (nero #0E101C, bianco, grigio, navy scurissimo) ritornano false.
-    /// Usato per selezionare la sorgente del tinting in cascata: drawer → appbar → primary.
+    /// Ritorna true se il colore ha abbastanza saturazione E luminanza per essere usato come sorgente di tinting.
+    /// Colori acromatici (grigio) O quasi-neri (navy default #0E101C L≈0.08) ritornano false.
+    /// S >= 0.22 esclude grigi; L >= 0.15 esclude colori scurissimi con leggero hue-bias.
     /// </summary>
     public static bool IsSufficientlyChromatic(string hexColor)
     {
         if (!TryParseHex(hexColor, out byte r, out byte g, out byte b)) return false;
-        HexToHsl(r, g, b, out _, out float s, out _);
-        return s >= RowTintSaturationThreshold;
+        HexToHsl(r, g, b, out _, out float s, out float l);
+        return s >= RowTintSaturationThreshold && l >= RowTintMinLuminance;
     }
 
     /// <summary>
