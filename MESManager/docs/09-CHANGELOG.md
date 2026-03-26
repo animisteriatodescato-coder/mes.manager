@@ -4,7 +4,27 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.8
+## 🔖 Versione Corrente: v1.60.9
+
+---
+
+## 🔖 v1.60.9 - Fix righe tabelle grigio puro neutro (26 Mar 2026)
+
+**Data**: 26 Marzo 2026
+
+### 🐛 Bug Fix — Righe tabelle ancora azzurrate anche con drawer/appbar acromatici
+
+**Causa**: I token fissi di fallback `RowOdd(false)` e `RowEven(false)` erano definiti come `#F0F0F8` (R=240, G=240, B=248 → HSL H=240° S=37%) e `#FAFAFD`. Entrambi **visivamente azzurri**, non grigi. Utenti con `ThemeDrawerBgColor = "#010101d4"` e `ThemeAppBarBgColor = "#060606d3"` (near-black) avevano `IsSufficientlyChromatic() = false` su entrambi → `rowTintColor = null` → fallback fissi → righe sempre azzurrate.
+
+I token dark `#262636` e `#303042` avevano lo stesso problema (B > R/G).
+
+**Fix**: Tutti i token fissi cambiati in grigio puro (R=G=B):
+- Light: `RowOdd = "#F5F5F5"` (era `#F0F0F8`), `RowEven = "#FAFAFA"` (era `#FAFAFD`)
+- Dark: `RowOdd = "#2A2A2A"` (era `#262636`), `RowEven = "#333333"` (era `#303042`)
+
+#### File modificati
+- `MESManager.Web/Constants/MesDesignTokens.cs` — RowOdd/RowEven light e dark → grigi puri
+- `MESManager.Web/wwwroot/app.css` — tutti i fallback `var(--mes-row-odd/even, ...)` aggiornati
 
 ---
 

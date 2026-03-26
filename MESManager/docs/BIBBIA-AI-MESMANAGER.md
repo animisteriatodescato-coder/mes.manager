@@ -425,8 +425,8 @@ proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve t
 
 ## 📞 Supporto Documentazione
 
-**Versione**: 4.2  
+**Versione**: 4.3  
 **Data**: 26 Marzo 2026  
 **Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: v1.60.8 — Fix righe blu (soglia luminanza L>=0.15), slim QA section
+**Ultimo aggiornamento**: v1.60.9 — Fix righe tabelle: token fissi #F0F0F8/#FAFAFD erano H=240° blu → sostituiti con grigi puri #F5F5F5/#FAFAFA
