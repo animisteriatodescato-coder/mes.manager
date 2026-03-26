@@ -144,6 +144,7 @@
     [JSInvokable]
     public async Task OnRowDoubleClicked(AnimeDto anime)
     {
+        if (IsReadOnly) return;
         try
         {
             var parameters = new DialogParameters<AnimeEditDialog>
@@ -210,6 +211,7 @@
     [JSInvokable]
     public async Task ImportaRicetta(string codiceArticolo)
     {
+        if (IsReadOnly) return;
         try
         {
             var parameters = new DialogParameters<ImportaRicettaMacchinaDialog>

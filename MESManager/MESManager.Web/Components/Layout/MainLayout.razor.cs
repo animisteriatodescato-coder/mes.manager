@@ -56,6 +56,8 @@ public partial class MainLayout : IDisposable
 
     private bool _isDarkMode = false;
     private bool _drawerOpen = false;
+    /// <summary>True se l'utente ha SOLO ruolo Visualizzazione (nessun ruolo write). Propagato come CascadingValue alle pagine figlie.</summary>
+    private bool _isReadOnly = false;
     private string _currentCategory = string.Empty;
     private ErrorBoundary? _errorBoundary;
 
@@ -84,6 +86,12 @@ public partial class MainLayout : IDisposable
             {
                 var appUser = await UserManager.FindByIdAsync(userId);
                 CurrentUserService.SetUser(userId, appUser?.Nome ?? appUser?.UserName, appUser?.Colore);
+                if (appUser != null)
+                {
+                    var roles = await UserManager.GetRolesAsync(appUser);
+                    _isReadOnly = roles.Contains("Visualizzazione") &&
+                                  !roles.Any(r => r is "Admin" or "Produzione" or "Manutenzione" or "Ufficio");
+                }
             }
         }
 

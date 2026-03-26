@@ -4,8 +4,10 @@
 @using MESManager.Infrastructure.Entities
 @using MESManager.Web.Constants
 @using System.Security.Claims
+@using MESManager.Application.Interfaces
 @inject UserManager<ApplicationUser> UserManager
 @inject ISnackbar Snackbar
+@inject IPreferenzeUtenteService PreferenzeUtenteService
 
 <PageTitle>Gestione Accessi</PageTitle>
 
@@ -119,6 +121,36 @@
         }
     </MudPaper>
 
+    @* ───── Copia Impostazioni ───── *@
+    <MudPaper Class="pa-4 mt-4" Elevation="2">
+        <MudText Typo="Typo.h6" Class="mb-2">
+            <MudIcon Icon="@Icons.Material.Filled.ContentCopy" Class="mr-2" />Copia Impostazioni
+        </MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-3 d-block">
+            Copia tutte le preferenze (colonne, layout, tema, colori) da un utente a un altro.
+        </MudText>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Wrap="Wrap.Wrap">
+            <MudSelect T="string" @bind-Value="_copiaSourceId" Label="Da utente" Variant="Variant.Outlined" Margin="Margin.Dense" Style="width:200px">
+                @foreach (var u in _utentiRuoli)
+                {
+                    <MudSelectItem Value="@u.User.Id">@(string.IsNullOrEmpty(u.User.Nome) ? u.User.UserName : u.User.Nome)</MudSelectItem>
+                }
+            </MudSelect>
+            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" />
+            <MudSelect T="string" @bind-Value="_copiaTargetId" Label="A utente" Variant="Variant.Outlined" Margin="Margin.Dense" Style="width:200px">
+                @foreach (var u in _utentiRuoli.Where(u => u.User.Id != _copiaSourceId))
+                {
+                    <MudSelectItem Value="@u.User.Id">@(string.IsNullOrEmpty(u.User.Nome) ? u.User.UserName : u.User.Nome)</MudSelectItem>
+                }
+            </MudSelect>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ContentCopy"
+                       OnClick="CopiaImpostazioni"
+                       Disabled="@(string.IsNullOrEmpty(_copiaSourceId) || string.IsNullOrEmpty(_copiaTargetId))">
+                Copia
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+
     @* ───── Pagine visibili per utenti Visualizzazione ───── *@
     @{
         var _visUtenti = _utentiRuoli.Where(u => u.Roles.Contains("Visualizzazione")).ToList();
@@ -224,6 +256,23 @@
     private List<UtenteRuolo> _utentiRuoli = new();
 
     private static readonly string[] _ruoli = MESManager.Web.Services.RoleSeedService.Ruoli;
+
+    // Copia impostazioni
+    private string _copiaSourceId = string.Empty;
+    private string _copiaTargetId = string.Empty;
+
+    private async Task CopiaImpostazioni()
+    {
+        if (string.IsNullOrEmpty(_copiaSourceId) || string.IsNullOrEmpty(_copiaTargetId)) return;
+        var prefs = await PreferenzeUtenteService.GetAllAsync(_copiaSourceId);
+        foreach (var (chiave, valore) in prefs)
+            await PreferenzeUtenteService.SaveAsync(_copiaTargetId, chiave, valore);
+        var srcNome = _utentiRuoli.FirstOrDefault(u => u.User.Id == _copiaSourceId)?.User.Nome
+                      ?? _utentiRuoli.FirstOrDefault(u => u.User.Id == _copiaSourceId)?.User.UserName ?? "?";
+        var dstNome = _utentiRuoli.FirstOrDefault(u => u.User.Id == _copiaTargetId)?.User.Nome
+                      ?? _utentiRuoli.FirstOrDefault(u => u.User.Id == _copiaTargetId)?.User.UserName ?? "?";
+        Snackbar.Add($"{prefs.Count} preferenze copiate da {srcNome} a {dstNome}", Severity.Success);
+    }
 
     // Nuovo utente
     private string _nuovoUsername = string.Empty;

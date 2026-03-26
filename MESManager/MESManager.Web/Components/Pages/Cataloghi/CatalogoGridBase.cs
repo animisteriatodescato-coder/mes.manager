@@ -28,6 +28,9 @@ public abstract class CatalogoGridBase : ComponentBase, IAsyncDisposable
     [Inject] protected PreferencesService PreferencesService { get; set; } = default!;
     [Inject] protected IPageToolbarService PageToolbarService { get; set; } = default!;
 
+    /// <summary>True se l'utente ha ruolo Visualizzazione senza ruoli write. Propagato dal MainLayout come CascadingValue.</summary>
+    [CascadingParameter(Name = "IsReadOnly")] public bool IsReadOnly { get; set; }
+
     // ── Identificatori per questa griglia ────────────────────────────────────
     /// <summary>Nome oggetto JS, es: "articoliGrid"</summary>
     protected abstract string GridNamespace { get; }

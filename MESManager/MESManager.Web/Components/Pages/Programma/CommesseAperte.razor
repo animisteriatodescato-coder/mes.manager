@@ -153,6 +153,8 @@
 </style>
 
 @code {
+    [CascadingParameter(Name = "IsReadOnly")] private bool IsReadOnly { get; set; }
+
     private List<CommessaDto> _commesse = new();
     private GridUiSettings settings = new();
     private bool showSettings = false;
@@ -486,6 +488,7 @@
     [JSInvokable]
     public async Task ImportaRicetta(string codiceArticolo)
     {
+        if (IsReadOnly) return;
         try
         {
             var parameters = new DialogParameters<ImportaRicettaMacchinaDialog>

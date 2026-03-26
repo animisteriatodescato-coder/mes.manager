@@ -133,6 +133,7 @@
     [JSInvokable]
     public async Task ImportaRicetta(string codiceArticolo)
     {
+        if (IsReadOnly) return;
         try
         {
             var parameters = new DialogParameters<ImportaRicettaMacchinaDialog>
@@ -157,6 +158,7 @@
     [JSInvokable]
     public async Task OnRowDoubleClick(string articoloCodice)
     {
+        if (IsReadOnly) return;
         try
         {
             var anime = await Http.GetFromJsonAsync<AnimeDto>($"/api/Anime/by-codice/{string.Join('/', articoloCodice.Split('/').Select(Uri.EscapeDataString))}");

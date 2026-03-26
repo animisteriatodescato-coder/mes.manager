@@ -600,6 +600,7 @@
         </MudNavMenu>
     </MudDrawer>
     
+    <CascadingValue Value="@_isReadOnly" Name="IsReadOnly">
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-0">
             <ErrorBoundary @ref="_errorBoundary">
@@ -618,4 +619,5 @@
             </ErrorBoundary>
         </MudContainer>
     </MudMainContent>
+    </CascadingValue>
 </MudLayout>
