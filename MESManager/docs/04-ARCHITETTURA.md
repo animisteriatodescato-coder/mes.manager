@@ -767,19 +767,28 @@ ToggleTheme():
    il toggle immediatamente.
 ```
 
-### Righe tabelle tema-aware (v1.60.1+)
+### Righe tabelle tema-aware (v1.60.8+)
 
-Le righe zebrate delle tabelle (MudTable + AG Grid) seguono la tinta del colore drawer:
+Le righe zebrate delle tabelle (MudTable + AG Grid) seguono la tinta del colore drawer/appbar:
 
 ```
-MesDesignTokens.RowOddFromColor(drawerBg, isDarkMode)  → --mes-row-odd
-MesDesignTokens.RowEvenFromColor(drawerBg, isDarkMode) → --mes-row-even
+MesDesignTokens.IsSufficientlyChromatic(drawerBg)  → true/false
+MesDesignTokens.RowOddFromColor(colorSorgente, isDarkMode)  → --mes-row-odd
+MesDesignTokens.RowEvenFromColor(colorSorgente, isDarkMode) → --mes-row-even
 ```
 
-**Algoritmo HSL**: estrae hue dal drawer, applica lightness ~93% (light) o ~20% (dark).
-**Soglia saturazione** `RowTintSaturationThreshold = 0.12f`: se il drawer è grigio/nero/bianco
-(saturazione < 12%), usa i token fissi `RowOdd(dark)` / `RowEven(dark)` invece di derivare
-la hue (il nero ha hue=0°=rosso, produrrebbe tinte Rosa indesiderate).
+**Cascade sorgente tinting**: drawer → appbar → `null` (token fisso neutro se entrambi acromatici)
+**Il Primary non entra MAI nel tinting delle righe.**
+
+**Algoritmo HSL**: estrae hue dal colore sorgente, applica targetS e targetL fissi.
+- Riga odd:  `S = min(s*0.85, 0.55)`, `L = 0.87` (light) o `0.23` (dark)
+- Riga even: `S = min(s*0.35, 0.25)`, `L = 0.94` (light) o `0.16` (dark)
+
+**Soglie di attivazione** (entrambe richieste):
+- `RowTintSaturationThreshold = 0.22f` — esclude grigi con leggero hue-bias
+- `RowTintMinLuminance = 0.15f` — esclude colori quasi-neri come `#0E101C` (L≈0.08, S≈0.33)
+
+**Fallback**: se `IsSufficientlyChromatic` ritorna false, usa token fissi `RowOdd(dark)`/`RowEven(dark)`.
 
 ### Split Light/Dark per AppBar e Drawer (v1.60.1+)
 

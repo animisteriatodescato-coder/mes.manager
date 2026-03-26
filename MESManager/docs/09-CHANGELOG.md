@@ -4,7 +4,55 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.2
+## 🔖 Versione Corrente: v1.60.8
+
+---
+
+## 🔖 v1.60.8 - Fix righe tabelle blu (soglia luminanza) (26 Mar 2026)
+
+**Data**: 26 Marzo 2026
+
+### 🐛 Bug Fix — Righe tabelle sempre blu/tintate anche con tema neutro
+
+**Causa**: `IsSufficientlyChromatic()` controllava solo la saturazione HSL. Il colore default dark AppBar `#0E101C` ha S≈0.33 (supera soglia 0.22) ma L≈0.08 (quasi nero). Passava il check e generava una tinta bluastra su tutte le righe in light mode, indipendentemente dal tema scelto.
+
+**Fix**: Aggiunta soglia `RowTintMinLuminance = 0.15f`. `IsSufficientlyChromatic` ora richiede `S >= 0.22 AND L >= 0.15`. `#0E101C` (L=0.08) viene escluso → righe neutrali.
+Stessa soglia applicata a `RowOddFromColor` e `RowEvenFromColor` come doppio controllo.
+
+#### File modificati
+- `MESManager.Web/Constants/MesDesignTokens.cs` — `RowTintMinLuminance = 0.15f`, aggiornati `IsSufficientlyChromatic`, `RowOddFromColor`, `RowEvenFromColor`
+
+---
+
+## 🔖 v1.60.7 - ColorTokenPicker Hint + label ImpostazioniGenerali + BIBBIA v4.1 (26 Mar 2026)
+
+**Data**: 26 Marzo 2026
+
+### ✨ Feature — ColorTokenPicker: parametro `Hint`
+
+Aggiunto `[Parameter] public string Hint { get; set; }` al componente. Quando compilato, mostra un testo caption sotto il picker che spiega cosa controlla quel colore.
+
+### ✨ Feature — ImpostazioniGenerali: descrizioni per ogni selettore colore
+
+Ogni `ColorTokenPicker` in ImpostazioniGenerali ora ha un `Hint` descrittivo:
+- Primario: "Bottoni, badge, evidenziazioni, barra superiore (se non personalizzata)"
+- Menu laterale: "Sfondo pannello nav a sinistra — determina il colore delle righe tabelle"
+- Barra superiore / Menu dark: override dark mode con spiegazione
+- Pulsanti principali, testo menu: rispettive spiegazioni
+
+Preview "Testo su barra superiore" usa `ThemeAppBarBgColor` effettivo (non solo primary).
+
+### 🐛 Bug Fix — Cascade tinting non usa più Primary
+
+Precedentemente, se drawer e appbar erano entrambi acromatici, il tinting cadeva su `ThemePrimaryColor`. Modificando il Primary si cambiavano le righe inconsapevolmente.
+**Fix**: `rowTintColor = null` (token fissi neutri) se entrambi acromatici.
+
+#### File modificati
+- `MESManager.Web/Components/Shared/ColorTokenPicker.razor` — param `Hint` + rendering
+- `MESManager.Web/Components/Pages/Impostazioni/ImpostazioniGenerali.razor` — tutti i Hint
+- `MESManager.Web/Services/ThemeCssService.cs` — cascade senza Primary fallback
+- `MESManager.Web/Components/Layout/MainLayout.razor` — idem SSR
+- `docs/BIBBIA-AI-MESMANAGER.md` — v4.1: versione corrente da AppVersion.cs, slim lessons
 
 ---
 
