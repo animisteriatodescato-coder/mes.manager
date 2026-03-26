@@ -1,4 +1,5 @@
 @page "/statistiche/produzione"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.StatProduzione)]
 
 <PageTitle>Statistiche Produzione</PageTitle>
 

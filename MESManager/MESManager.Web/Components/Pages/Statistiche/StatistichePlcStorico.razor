@@ -1,4 +1,5 @@
 @page "/statistiche/plc-storico"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.StatPlcStorico)]
 @using MESManager.Application.DTOs
 @using MESManager.Web.Services
 @using System.Globalization

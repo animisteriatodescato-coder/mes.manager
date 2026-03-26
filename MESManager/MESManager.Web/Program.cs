@@ -210,20 +210,22 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
-// Policy per accesso pagine Produzione (Soluzione 2: Claims per-utente)
-// Admin / Produzione / Manutenzione passano sempre.
+// Policy per accesso pagine (claim-based per ruolo Visualizzazione).
+// Ogni gruppo definisce i ruoli con accesso completo (BaseRoles).
 // Visualizzazione: solo se ha claim "pagina=<valore>".
 builder.Services.AddAuthorization(options =>
 {
-    foreach (var pagina in MESManager.Web.Constants.PaginaPolicy.PagineProduzione)
+    foreach (var gruppo in MESManager.Web.Constants.PaginaPolicy.Gruppi)
     {
-        var claimValue = pagina.ClaimValue; // closure
-        options.AddPolicy(pagina.PolicyName, p =>
-            p.RequireAssertion(ctx =>
-                ctx.User.IsInRole("Admin") ||
-                ctx.User.IsInRole("Produzione") ||
-                ctx.User.IsInRole("Manutenzione") ||
-                ctx.User.HasClaim(MESManager.Web.Constants.PaginaPolicy.ClaimType, claimValue)));
+        var baseRoles = gruppo.BaseRoles;
+        foreach (var pagina in gruppo.Pagine)
+        {
+            var claimValue = pagina.ClaimValue; // closure
+            options.AddPolicy(pagina.PolicyName, p =>
+                p.RequireAssertion(ctx =>
+                    baseRoles.Any(r => ctx.User.IsInRole(r)) ||
+                    ctx.User.HasClaim(MESManager.Web.Constants.PaginaPolicy.ClaimType, claimValue)));
+        }
     }
 });
 

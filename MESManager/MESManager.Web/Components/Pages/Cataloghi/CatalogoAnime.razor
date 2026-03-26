@@ -1,4 +1,5 @@
 ﻿@page "/cataloghi/anime"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.CatAnime)]
 @inherits CatalogoGridBase
 @using MESManager.Web.Models
 @using MESManager.Web.Services

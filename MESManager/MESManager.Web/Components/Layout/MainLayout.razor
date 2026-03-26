@@ -340,27 +340,47 @@
         <MudNavMenu data-testid="nav-menu">
             <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary">Home</MudNavLink>
 
-            @* Programma - tutti i ruoli *@
-            <AuthorizeView>
-                <MudNavGroup Expanded="true" Class="nav-sec-prog">
-                    <TitleContent>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="font-size: 16px; display: inline-flex; align-items: center;">&#128197;</span>
-                            <span style="line-height: normal;">Programma Irene</span>
-                        </div>
-                    </TitleContent>
-                    <ChildContent>
-                        <MudNavLink Href="/programma/programma-macchine">
-                            <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128295;</span><span>Programma</span></div>
-                        </MudNavLink>
-                        <MudNavLink Href="/programma/commesse-aperte">
-                            <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128203;</span><span>Commesse</span></div>
-                        </MudNavLink>
-                        <MudNavLink Href="/programma/gantt-macchine">
-                            <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128202;</span><span>Gantt</span></div>
-                        </MudNavLink>
-                    </ChildContent>
-                </MudNavGroup>
+            @* Programma - claim-aware per Visualizzazione *@
+            <AuthorizeView Roles="Admin,Produzione,Ufficio,Manutenzione,Visualizzazione">
+                <Authorized Context="progCtx">
+                    @{
+                        bool _isProgBase = progCtx.User.IsInRole("Admin") || progCtx.User.IsInRole("Produzione") || progCtx.User.IsInRole("Ufficio") || progCtx.User.IsInRole("Manutenzione");
+                        bool _canProg    = _isProgBase || progCtx.User.HasClaim(PaginaPolicy.ClaimType, "programma-macchine");
+                        bool _canComm    = _isProgBase || progCtx.User.HasClaim(PaginaPolicy.ClaimType, "commesse-aperte");
+                        bool _canGanttP  = _isProgBase || progCtx.User.HasClaim(PaginaPolicy.ClaimType, "gantt-macchine");
+                    }
+                    @if (_canProg || _canComm || _canGanttP)
+                    {
+                        <MudNavGroup Expanded="true" Class="nav-sec-prog">
+                            <TitleContent>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 16px; display: inline-flex; align-items: center;">&#128197;</span>
+                                    <span style="line-height: normal;">Programma Irene</span>
+                                </div>
+                            </TitleContent>
+                            <ChildContent>
+                                @if (_canProg)
+                                {
+                                    <MudNavLink Href="/programma/programma-macchine">
+                                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128295;</span><span>Programma</span></div>
+                                    </MudNavLink>
+                                }
+                                @if (_canComm)
+                                {
+                                    <MudNavLink Href="/programma/commesse-aperte">
+                                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128203;</span><span>Commesse</span></div>
+                                    </MudNavLink>
+                                }
+                                @if (_canGanttP)
+                                {
+                                    <MudNavLink Href="/programma/gantt-macchine">
+                                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128202;</span><span>Gantt</span></div>
+                                    </MudNavLink>
+                                }
+                            </ChildContent>
+                        </MudNavGroup>
+                    }
+                </Authorized>
             </AuthorizeView>
 
             @* Produzione - Admin/Produzione/Manutenzione sempre; Visualizzazione solo pagine abilitate via claims *@
@@ -412,42 +432,86 @@
                 </Authorized>
             </AuthorizeView>
 
-            @* Cataloghi - Admin, Produzione, Ufficio, Visualizzazione *@
-            <AuthorizeView Roles="Admin,Produzione,Ufficio,Visualizzazione">
-                <MudNavGroup Title="Cataloghi" Icon="@Icons.Material.Filled.LibraryBooks" IconColor="Color.Info" Class="nav-sec-cataloghi">
-                    <MudNavLink Href="/cataloghi/commesse">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128230;</span><span>Commesse</span></div>
-                    </MudNavLink>
-                    <MudNavLink Href="/cataloghi/anime">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#127919;</span><span>Anime</span></div>
-                    </MudNavLink>
-                    <MudNavLink Href="/cataloghi/articoli">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128193;</span><span>Articoli</span></div>
-                    </MudNavLink>
-                    <MudNavLink Href="/cataloghi/clienti">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128101;</span><span>Clienti</span></div>
-                    </MudNavLink>
-                    <MudNavLink Href="/cataloghi/ricette">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128221;</span><span>Ricette</span></div>
-                    </MudNavLink>
-                    <AuthorizeView Roles="Admin,Ufficio" Context="_">
-                        <MudNavLink Href="/cataloghi/preventivi-anime/nuovo">
-                            <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128176;</span><span>Preventivi Lavorazioni</span></div>
-                        </MudNavLink>
-                    </AuthorizeView>
-                </MudNavGroup>
+            @* Cataloghi - claim-aware per Visualizzazione *@
+            <AuthorizeView Roles="Admin,Produzione,Ufficio,Manutenzione,Visualizzazione">
+                <Authorized Context="catCtx">
+                    @{
+                        bool _isCatBase  = catCtx.User.IsInRole("Admin") || catCtx.User.IsInRole("Produzione") || catCtx.User.IsInRole("Ufficio") || catCtx.User.IsInRole("Manutenzione");
+                        bool _canCatComm = _isCatBase || catCtx.User.HasClaim(PaginaPolicy.ClaimType, "cat-commesse");
+                        bool _canCatAnim = _isCatBase || catCtx.User.HasClaim(PaginaPolicy.ClaimType, "cat-anime");
+                        bool _canCatArt  = _isCatBase || catCtx.User.HasClaim(PaginaPolicy.ClaimType, "cat-articoli");
+                        bool _canCatCli  = _isCatBase || catCtx.User.HasClaim(PaginaPolicy.ClaimType, "cat-clienti");
+                        bool _canCatRic  = _isCatBase || catCtx.User.HasClaim(PaginaPolicy.ClaimType, "cat-ricette");
+                    }
+                    @if (_canCatComm || _canCatAnim || _canCatArt || _canCatCli || _canCatRic)
+                    {
+                        <MudNavGroup Title="Cataloghi" Icon="@Icons.Material.Filled.LibraryBooks" IconColor="Color.Info" Class="nav-sec-cataloghi">
+                            @if (_canCatComm)
+                            {
+                                <MudNavLink Href="/cataloghi/commesse">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128230;</span><span>Commesse</span></div>
+                                </MudNavLink>
+                            }
+                            @if (_canCatAnim)
+                            {
+                                <MudNavLink Href="/cataloghi/anime">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#127919;</span><span>Anime</span></div>
+                                </MudNavLink>
+                            }
+                            @if (_canCatArt)
+                            {
+                                <MudNavLink Href="/cataloghi/articoli">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128193;</span><span>Articoli</span></div>
+                                </MudNavLink>
+                            }
+                            @if (_canCatCli)
+                            {
+                                <MudNavLink Href="/cataloghi/clienti">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128101;</span><span>Clienti</span></div>
+                                </MudNavLink>
+                            }
+                            @if (_canCatRic)
+                            {
+                                <MudNavLink Href="/cataloghi/ricette">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128221;</span><span>Ricette</span></div>
+                                </MudNavLink>
+                            }
+                            <AuthorizeView Roles="Admin,Ufficio" Context="_">
+                                <MudNavLink Href="/cataloghi/preventivi-anime/nuovo">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128176;</span><span>Preventivi Lavorazioni</span></div>
+                                </MudNavLink>
+                            </AuthorizeView>
+                        </MudNavGroup>
+                    }
+                </Authorized>
             </AuthorizeView>
 
-            @* Manutenzioni - Admin, Manutenzione, Visualizzazione *@
+            @* Manutenzioni - claim-aware per Visualizzazione *@
             <AuthorizeView Roles="Admin,Manutenzione,Visualizzazione">
-                <MudNavGroup Title="Manutenzioni" Icon="@Icons.Material.Filled.Build" IconColor="Color.Secondary" Class="nav-sec-manutenzioni">
-                    <MudNavLink Href="/manutenzioni/alert">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9888;&#65039;</span><span>Alert</span></div>
-                    </MudNavLink>
-                    <MudNavLink Href="/manutenzioni/catalogo">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128297;</span><span>Catalogo</span></div>
-                    </MudNavLink>
-                </MudNavGroup>
+                <Authorized Context="manCtx">
+                    @{
+                        bool _isManBase   = manCtx.User.IsInRole("Admin") || manCtx.User.IsInRole("Manutenzione");
+                        bool _canManAlert = _isManBase || manCtx.User.HasClaim(PaginaPolicy.ClaimType, "manutenzioni-alert");
+                        bool _canManCat   = _isManBase || manCtx.User.HasClaim(PaginaPolicy.ClaimType, "manutenzioni-catalogo");
+                    }
+                    @if (_canManAlert || _canManCat)
+                    {
+                        <MudNavGroup Title="Manutenzioni" Icon="@Icons.Material.Filled.Build" IconColor="Color.Secondary" Class="nav-sec-manutenzioni">
+                            @if (_canManAlert)
+                            {
+                                <MudNavLink Href="/manutenzioni/alert">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9888;&#65039;</span><span>Alert</span></div>
+                                </MudNavLink>
+                            }
+                            @if (_canManCat)
+                            {
+                                <MudNavLink Href="/manutenzioni/catalogo">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128297;</span><span>Catalogo</span></div>
+                                </MudNavLink>
+                            }
+                        </MudNavGroup>
+                    }
+                </Authorized>
             </AuthorizeView>
 
             @* Sync - solo Admin *@
@@ -465,22 +529,46 @@
                 </MudNavGroup>
             </AuthorizeView>
 
-            @* Statistiche - tutti i ruoli *@
-            <AuthorizeView>
-                <MudNavGroup Title="Statistiche" Icon="@Icons.Material.Filled.BarChart" IconColor="Color.Tertiary" Class="nav-sec-statistiche">
-                    <MudNavLink Href="/statistiche/produzione">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128201;</span><span>Produzione</span></div>
-                    </MudNavLink>
-                    <MudNavLink Href="/statistiche/ordini">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128202;</span><span>Ordini</span></div>
-                    </MudNavLink>
-                    <MudNavLink Href="/statistiche/plc-storico">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128225;</span><span>PLC Storico</span></div>
-                    </MudNavLink>
-                    <MudNavLink Href="/statistiche/operatori">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#127942;</span><span>Operatori</span></div>
-                    </MudNavLink>
-                </MudNavGroup>
+            @* Statistiche - claim-aware per Visualizzazione *@
+            <AuthorizeView Roles="Admin,Produzione,Ufficio,Manutenzione,Visualizzazione">
+                <Authorized Context="statCtx">
+                    @{
+                        bool _isStatBase  = statCtx.User.IsInRole("Admin") || statCtx.User.IsInRole("Produzione") || statCtx.User.IsInRole("Ufficio") || statCtx.User.IsInRole("Manutenzione");
+                        bool _canStatProd = _isStatBase || statCtx.User.HasClaim(PaginaPolicy.ClaimType, "stat-produzione");
+                        bool _canStatOrd  = _isStatBase || statCtx.User.HasClaim(PaginaPolicy.ClaimType, "stat-ordini");
+                        bool _canStatPLC  = _isStatBase || statCtx.User.HasClaim(PaginaPolicy.ClaimType, "stat-plc-storico");
+                        bool _canStatOp   = _isStatBase || statCtx.User.HasClaim(PaginaPolicy.ClaimType, "stat-operatori");
+                    }
+                    @if (_canStatProd || _canStatOrd || _canStatPLC || _canStatOp)
+                    {
+                        <MudNavGroup Title="Statistiche" Icon="@Icons.Material.Filled.BarChart" IconColor="Color.Tertiary" Class="nav-sec-statistiche">
+                            @if (_canStatProd)
+                            {
+                                <MudNavLink Href="/statistiche/produzione">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128201;</span><span>Produzione</span></div>
+                                </MudNavLink>
+                            }
+                            @if (_canStatOrd)
+                            {
+                                <MudNavLink Href="/statistiche/ordini">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128202;</span><span>Ordini</span></div>
+                                </MudNavLink>
+                            }
+                            @if (_canStatPLC)
+                            {
+                                <MudNavLink Href="/statistiche/plc-storico">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128225;</span><span>PLC Storico</span></div>
+                                </MudNavLink>
+                            }
+                            @if (_canStatOp)
+                            {
+                                <MudNavLink Href="/statistiche/operatori">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#127942;</span><span>Operatori</span></div>
+                                </MudNavLink>
+                            }
+                        </MudNavGroup>
+                    }
+                </Authorized>
             </AuthorizeView>
 
             @* Impostazioni - solo Admin *@
