@@ -4,7 +4,31 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.12
+## 🔖 Versione Corrente: v1.60.13
+
+---
+
+## 🔖 v1.60.13 - Menu laterale: titoli gruppi stampatello + effetto 3D (26 Mar 2026)
+
+**Data**: 26 Marzo 2026
+
+### 🎨 UI — Titoli gruppi nav in stampatello, bold, 2pt più grandi, riquadro 3D
+
+Aumentata distinzione visiva tra titoli di sezione (Produzione, Cataloghi, ecc.) e voci interne.
+
+**Modifiche CSS su `.mud-nav-group-header`**:
+- `text-transform: uppercase` + `letter-spacing: 0.07em` — stampatello spaziato
+- `font-size: 13.5px` + `font-weight: 700` — più grandi e bold delle voci (15px normal)
+- `background: linear-gradient(180deg, rgba bianco→trasparente→nero)` — effetto lucido
+- `box-shadow: drop + inner top highlight + inner bottom shadow` — rilievo 3D
+- `border: 1px solid rgba(0,0,0,0.20)` — bordo definito
+- `border-radius: 6px`, `margin: 4px 6px` — arrotondato con spaziatura
+- Gruppo "Programma Irene" (TitleContent custom): regola aggiunta anche su `span[font-size:16px]`
+
+Colore testo rimane `var(--mes-nav-text)` → si adatta automaticamente a qualsiasi tema.
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor` — regole `.mud-nav-group-header`
 
 ---
 
