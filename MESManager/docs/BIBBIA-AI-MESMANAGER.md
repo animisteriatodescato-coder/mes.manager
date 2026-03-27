@@ -393,7 +393,9 @@ MesDesignTokens.RowOdd(isDark) → MainLayout :root { --mes-row-odd } → app.cs
 
 **Tabella**: `AllegatiArticoli` (non `Allegati`) in `MESManager_Prod`
 
-**Dettagli completi**: [03-CONFIGURAZIONE.md - Archivio Dati Allegati](docs/03-CONFIGURAZIONE.md#-archivio-dati-allegati)
+**Dettagli completi**: [03-CONFIGURAZIONE.md - Archivio Dati Allegati](docs/03-CONFIGURAZION
+
+E.md#-archivio-dati-allegati)
 
 ---
 
@@ -481,4 +483,4 @@ proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve t
 **Data**: 26 Marzo 2026  
 **Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: v1.60.18 — Menu PROGRAMMAZIONE + drawer 216px + lesson learned MudBlazor v8 selettori
+**Ultimo aggiornamento**: v1.60.20 — Ruolo Visualizzazione readonly (CascadingValue) + Copia Impostazioni in GestioneAccessi + backup preferenze script

@@ -4,6 +4,68 @@
 
 ---
 
+## 🔖 Versione Corrente: v1.60.20
+
+---
+
+## 🔖 v1.60.20 - Visualizzazione readonly + Copia Impostazioni + Backup Preferenze (27 Mar 2026)
+
+**Data**: 27 Marzo 2026
+
+### 🔒 Feature — Ruolo Visualizzazione: sola lettura reale
+
+Gli utenti con **solo** il ruolo `Visualizzazione` (senza Admin/Produzione/Manutenzione/Ufficio) non possono più aprire dialog di modifica.
+
+**Architettura CascadingValue**:
+- `MainLayout.razor.cs`: campo `_isReadOnly` — calcolato dopo auth su `UserManager.GetRolesAsync`
+- `MainLayout.razor`: `<CascadingValue Value="@_isReadOnly" Name="IsReadOnly">` avvolge tutto il `<MudMainContent>`
+- `CatalogoGridBase.cs`: `[CascadingParameter(Name = "IsReadOnly")] public bool IsReadOnly { get; set; }` — basta qui, si propaga a tutti i cataloghi figli
+- `CommesseAperte.razor`: proprio `[CascadingParameter]` (non eredita da CatalogoGridBase)
+
+**Guard applicati** (prime istruzione delle JSInvokable write):
+- `CatalogoAnime.razor`: `OnRowDoubleClicked` + `ImportaRicetta` → `if (IsReadOnly) return;`
+- `CatalogoCommesse.razor`: `OnRowDoubleClick` + `ImportaRicetta` → `if (IsReadOnly) return;`
+- `CommesseAperte.razor`: `ImportaRicetta` → `if (IsReadOnly) return;`
+
+**Metodi READ non bloccati** (nessun guard): `ViewRicetta`, `UpdateStats`, `SaveGridStateFromJs`, `OnPrintLabelClick`
+
+### 📋 Feature — Copia Impostazioni in GestioneAccessi
+
+Nuova sezione in `/impostazioni/accessi` che permette di copiare tutte le preferenze (colonne, layout, tema, colori) da un utente sorgente a uno destinatario.
+
+- Due `MudSelect` (da/a utente) + bottone Copia
+- `IPreferenzeUtenteService.GetAllAsync(sourceId)` → `SaveAsync(targetId, chiave, valore)` per ogni chi
+- Snackbar con conteggio preferenze copiate
+
+### 💾 Infrastruttura — Script backup/restore PreferenzeUtente
+
+**Backup base salvato**: `backups/backup_base.json` — 51 righe, 3 utenti (admin/irene/naion), scattato 27 Mar 2026
+
+**Script PowerShell**:
+- `scripts/backup-preferenze.ps1 [-Nome "nome"]` — esporta PreferenzeUtente → JSON (con UserName, NomeUtente, chiave, valore, date)
+- `scripts/restore-preferenze.ps1 -File <path> [-SoloUtente] [-DryRun]` — reimporta via MERGE SQL (upsert sicuro)
+
+**Per ripristino rapido**:
+```powershell
+cd C:\Dev\MESManager\scripts
+.\restore-preferenze.ps1 -File "..\backups\backup_base.json"
+```
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor.cs` — `_isReadOnly` field + computation
+- `MESManager.Web/Components/Layout/MainLayout.razor` — `CascadingValue<bool> IsReadOnly`
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoGridBase.cs` — `[CascadingParameter] IsReadOnly`
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoAnime.razor` — guard WriteOps
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoCommesse.razor` — guard WriteOps
+- `MESManager.Web/Components/Pages/Programma/CommesseAperte.razor` — `[CascadingParameter]` + guard
+- `MESManager.Web/Components/Pages/Impostazioni/GestioneAccessi.razor` — sezione Copia Impostazioni
+- `MESManager.Web/Constants/AppVersion.cs` — 1.60.19 → 1.60.20
+- `backups/backup_base.json` — snapshot PreferenzeUtente (nuovo)
+- `scripts/backup-preferenze.ps1` — nuovo
+- `scripts/restore-preferenze.ps1` — nuovo
+
+---
+
 ## 🔖 Versione Corrente: v1.60.19
 
 ---
