@@ -98,15 +98,8 @@ window.commesseAperteGrid = (function() {
             filter: true, 
             width: 300 
         },
-        { 
-            field: 'articoloPrezzo', 
-            headerName: 'Prezzo €', 
-            sortable: true, 
-            filter: 'agNumberColumnFilter', 
-            width: 120,
-            type: 'numericColumn',
-            valueFormatter: params => params.value != null ? '€ ' + params.value.toFixed(2) : ''
-        },
+        // Prezzo articolo - definizione centralizzata in anime-columns-shared.js
+        window.animeColumnsShared.getPrezzoArticoloColumn(),
         { 
             field: 'clienteDisplay', 
             headerName: 'Cliente', 

@@ -17,10 +17,12 @@ namespace MESManager.Application.Interfaces
         Task<Dictionary<string, RicettaInfo>> GetRicetteInfoByCodiceArticoloAsync(List<string> codiciArticolo);
     }
     
-    // DTO per info ricetta
+    // DTO per info ricetta + prezzo articolo (condivisi per evitare doppia query su Articoli)
     public class RicettaInfo
     {
+        public bool HasRicetta { get; set; }      // true se l'articolo ha una ricetta configurata
         public int NumeroParametri { get; set; }
         public DateTime? UltimaModifica { get; set; }
+        public decimal? Prezzo { get; set; }       // prezzo articolo (da Articoli.Prezzo)
     }
 }

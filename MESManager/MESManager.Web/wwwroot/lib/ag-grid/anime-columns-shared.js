@@ -153,9 +153,28 @@ window.animeColumnsShared = (function() {
         return columns;
     }
 
+    /**
+     * FONTE UNICA DI VERITÀ per la colonna "Prezzo €" nelle griglie basate su CommessaDto
+     * (ProgrammaMacchine, CommesseAperte, CatalogoCommesse)
+     * Il campo articoloPrezzo viene da CommessaDto.ArticoloPrezzo (join Articoli.Prezzo)
+     * @returns {Object} Definizione colonna AG Grid
+     */
+    function getPrezzoArticoloColumn() {
+        return {
+            field: 'articoloPrezzo',
+            headerName: 'Prezzo €',
+            sortable: true,
+            filter: 'agNumberColumnFilter',
+            width: 120,
+            type: 'numericColumn',
+            valueFormatter: params => params.value != null ? '€ ' + params.value.toFixed(2) : ''
+        };
+    }
+
     return {
         getAnimeColumns,
         getAnimeColumnsWithOptions,
+        getPrezzoArticoloColumn,
         animeColumns // Esposto per reference
     };
 })();

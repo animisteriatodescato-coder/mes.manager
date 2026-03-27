@@ -4,7 +4,46 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.18
+## 🔖 Versione Corrente: v1.60.19
+
+---
+
+## 🔖 v1.60.19 - Colonna Prezzo su tutte le pagine articoli + double-click anima CommesseAperte (27 Mar 2026)
+
+**Data**: 27 Marzo 2026
+
+### ✨ Feature — Colonna Prezzo visibile/selezionabile in tutti i cataloghi e griglie commesse
+
+**Punti implementati**:
+1. **Colonna Prezzo in tutte le pagine con articoli**: disponibile su CatalogoAnime, CatalogoCommesse, ProgrammaMacchine, CommesseAperte
+2. **Double-click su CommesseAperte**: apre la scheda di modifica anima come già avviene su Commesse e Programma Macchine
+
+**Architettura (ZERO DUPLICAZIONE — Soluzione Completa)**:
+- `anime-columns-shared.js`: aggiunta funzione `getPrezzoArticoloColumn()` — **fonte unica di verità** per la definizione della colonna prezzo nelle griglie CommessaDto
+- `programma-macchine-grid.js` + `commesse-aperte-grid.js`: sostituita definizione inline con chiamata a `window.animeColumnsShared.getPrezzoArticoloColumn()`
+- `commesse-grid.js` (CatalogoCommesse): aggiunta colonna prezzo via shared
+- `anime-grid.js` (CatalogoAnime): aggiunta colonna `prezzo` (da `AnimeDto.Prezzo`)
+- `CommesseAperte.razor`: aggiunto `[JSInvokable] OnRowDoubleClick` (pattern identico a CatalogoCommesse)
+
+**Backend**:
+- `AnimeDto`: aggiunto `Prezzo decimal?`
+- `RicettaInfo` (IAnimeRepository): esteso con `HasRicetta bool` + `Prezzo decimal?`
+- `AnimeRepository.GetRicetteInfoByCodiceArticoloAsync`: ora restituisce TUTTI gli articoli trovati (non solo quelli con ricetta) con `Prezzo`; `HasRicetta` esplicito nel DTO
+- `AnimeService.MapToDto`: usa `ricetta?.HasRicetta ?? false` + popola `Prezzo`
+- Zero migration DB (join su `Articoli.Prezzo` già esistente)
+
+#### File modificati
+- `MESManager.Application/DTOs/AnimeDto.cs` — aggiunto `Prezzo decimal?`
+- `MESManager.Application/Interfaces/IAnimeRepository.cs` — `RicettaInfo` + `HasRicetta` + `Prezzo`
+- `MESManager.Infrastructure/Repositories/AnimeRepository.cs` — query aggiornata
+- `MESManager.Application/Services/AnimeService.cs` — MapToDto aggiornato
+- `wwwroot/lib/ag-grid/anime-columns-shared.js` — `getPrezzoArticoloColumn()`
+- `wwwroot/lib/ag-grid/programma-macchine-grid.js` — usa shared
+- `wwwroot/lib/ag-grid/commesse-aperte-grid.js` — usa shared
+- `wwwroot/lib/ag-grid/commesse-grid.js` — aggiunta colonna prezzo
+- `wwwroot/js/anime-grid.js` — aggiunta colonna prezzo
+- `MESManager.Web/Components/Pages/Programma/CommesseAperte.razor` — `OnRowDoubleClick`
+- `MESManager.Web/Constants/AppVersion.cs` — 1.60.18 → 1.60.19
 
 ---
 

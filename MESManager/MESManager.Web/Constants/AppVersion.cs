@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.60.18";
+    public const string Current = "1.60.19";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.60.18  UI: menu PROGRAMMAZIONE + drawer -10% (216px)
+    public const string Display = "v" + Current; // v1.60.19  feat: colonna Prezzo su tutte le pagine articoli + double-click anima su CommesseAperte
 }

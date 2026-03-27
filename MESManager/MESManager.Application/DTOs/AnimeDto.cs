@@ -53,5 +53,8 @@ namespace MESManager.Application.DTOs
         public bool HasRicetta { get; set; }
         public int NumeroParametri { get; set; }
         public DateTime? RicettaUltimaModifica { get; set; }
+        
+        // Prezzo articolo (da Articoli.Prezzo via join, non su tabella Anime)
+        public decimal? Prezzo { get; set; }
     }
 }

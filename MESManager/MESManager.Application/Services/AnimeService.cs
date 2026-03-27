@@ -192,10 +192,11 @@ namespace MESManager.Application.Services
                 DataUltimaModificaLocale = entity.DataUltimaModificaLocale,
                 UtenteUltimaModificaLocale = entity.UtenteUltimaModificaLocale,
                 
-                // Info ricetta (computed)
-                HasRicetta = ricetta != null,
+                // Info ricetta + prezzo (computed)
+                HasRicetta = ricetta?.HasRicetta ?? false,
                 NumeroParametri = ricetta?.NumeroParametri ?? 0,
-                RicettaUltimaModifica = ricetta?.UltimaModifica
+                RicettaUltimaModifica = ricetta?.UltimaModifica,
+                Prezzo = ricetta?.Prezzo
             };
         }
         

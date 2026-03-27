@@ -60,6 +60,8 @@
             filter: true, 
             width: 300 
         },
+        // Prezzo articolo - definizione centralizzata in anime-columns-shared.js
+        window.animeColumnsShared.getPrezzoArticoloColumn(),
         { 
             field: 'clienteDisplay', 
             headerName: 'Cliente', 

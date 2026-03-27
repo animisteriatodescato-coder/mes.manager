@@ -9,6 +9,8 @@
         // READONLY - da sync commesse
         { field: 'id', headerName: 'ID', sortable: true, filter: true, width: 80, editable: false },
         { field: 'codiceArticolo', headerName: 'Codice', sortable: true, filter: true, width: 150, editable: false, cellClass: 'mes-readonly-cell' },
+        // Prezzo articolo (da Articoli.Prezzo via join nel backend)
+        { field: 'prezzo', headerName: 'Prezzo €', sortable: true, filter: 'agNumberColumnFilter', width: 120, type: 'numericColumn', editable: false, cellClass: 'mes-readonly-cell', valueFormatter: params => params.value != null ? '€ ' + params.value.toFixed(2) : '' },
         
         // FOTO - Anteprima PRIMA immagine anima (n=1: prima per priorità)
         window.fotoPreviewShared.createColumnDef({

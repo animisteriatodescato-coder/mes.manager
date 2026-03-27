@@ -78,6 +78,7 @@ namespace MESManager.Infrastructure.Repositories
                 .Select(a => new
                 {
                     a.Codice,
+                    a.Prezzo,
                     HasRicetta = a.Ricetta != null,
                     NumeroParametri = a.Ricetta != null ? a.Ricetta.Parametri.Count : 0,
                     UltimaModifica = a.Ricetta != null ? a.UltimaModifica : (DateTime?)null
@@ -85,14 +86,17 @@ namespace MESManager.Infrastructure.Repositories
                 .AsNoTracking()
                 .ToListAsync();
             
+            // Restituisce tutti gli articoli trovati (non solo quelli con ricetta)
+            // così il chiamante può ottenere Prezzo anche per articoli senza ricetta
             return result
-                .Where(x => x.HasRicetta)
                 .ToDictionary(
                     x => x.Codice,
                     x => new RicettaInfo
                     {
+                        HasRicetta = x.HasRicetta,
                         NumeroParametri = x.NumeroParametri,
-                        UltimaModifica = x.UltimaModifica
+                        UltimaModifica = x.UltimaModifica,
+                        Prezzo = x.Prezzo
                     });
         }
     }
