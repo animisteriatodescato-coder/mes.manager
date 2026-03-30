@@ -198,6 +198,8 @@
 </div>
 
 @code {
+    [CascadingParameter(Name = "IsReadOnly")] private bool IsReadOnly { get; set; }
+
     private List<CommessaDto> _commesse = new();
     private List<CommessaDto> _allCommesse = new();
     private List<MacchinaDto> _macchine = new();
@@ -428,7 +430,8 @@
             {
                 { x => x.CodiceArticolo, codiceArticolo },
                 { x => x.ShowImportButton, true },
-                { x => x.ShowTransmitButton, true }
+                { x => x.ShowTransmitButton, true },
+                { x => x.IsReadOnly, IsReadOnly }
             };
             var options = new DialogOptions
             {
@@ -448,6 +451,7 @@
     [JSInvokable]
     public async Task ImportaRicetta(string codiceArticolo)
     {
+        if (IsReadOnly) return;
         try
         {
             var parameters = new DialogParameters<ImportaRicettaMacchinaDialog>
@@ -479,6 +483,7 @@
     [JSInvokable]
     public async Task OnRowDoubleClick(string articoloCodice)
     {
+        if (IsReadOnly) return;
         try
         {
             // Carica l'AnimeDto dal codice articolo
@@ -492,7 +497,8 @@
             
             var parameters = new DialogParameters<AnimeEditDialog>
             {
-                { x => x.Anime, anime }
+                { x => x.Anime, anime },
+                { x => x.IsReadOnly, IsReadOnly }
             };
             
             var options = new DialogOptions
