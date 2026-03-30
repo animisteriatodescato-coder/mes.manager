@@ -68,6 +68,20 @@
     <div id="plcStoricoGrid" class="ag-theme-alpine mes-ag-grid" 
          data-testid="grid-plc-storico">
     </div>
+
+    <MudPaper Class="footer-info pa-1 mt-2" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Righe caricate: <strong>@_data.Count</strong></MudText>
+            <MudDivider Vertical="true" FlexItem="true" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Ultimo aggiornamento: <strong>@lastUpdate.ToString("HH:mm:ss")</strong></MudText>
+            <MudSpacer />
+            <MudChip T="string" Size="Size.Small" Color="@(isLoading ? Color.Warning : Color.Success)"
+                     Icon="@(isLoading ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.CheckCircle)"
+                     data-testid="status-plc-storico">
+                @gridStatus
+            </MudChip>
+        </MudStack>
+    </MudPaper>
 </div>
 
 <style>
@@ -78,6 +92,9 @@
     private List<PlcStoricoDto> _data = new();
     private GridUiSettings settings = new();
     private string searchText = string.Empty;
+    private DateTime lastUpdate = DateTime.Now;
+    private bool isLoading = false;
+    private string gridStatus = "Pronto";
     private string selectedFilterColumn = string.Empty;
     private string filterValue = string.Empty;
     private DateTime? dataInizio = DateTime.Today;
@@ -117,15 +134,25 @@
 
     private async Task LoadData()
     {
+        isLoading = true;
+        gridStatus = "Caricamento...";
+        StateHasChanged();
         try
         {
             _allData = await PlcService.LoadStoricoDataAsync(dataInizio, dataFine);
             _data = ApplyFilter(_allData);
+            lastUpdate = DateTime.Now;
+            gridStatus = "Pronto";
             await RefreshGrid();
         }
         catch
         {
-            // Error loading data
+            gridStatus = "Errore";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
         }
     }
 

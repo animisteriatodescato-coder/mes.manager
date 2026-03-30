@@ -80,6 +80,12 @@
 .footer-info .mud-chip .mud-icon-root {
     font-size: 0.85rem !important;
 }
+/* Override footer per CatalogoClienti (senza margin/shadow extra) — centralizzato */
+.clienti-page .footer-info {
+    box-shadow: none;
+    border-top: none;
+    margin-top: 0;
+}
 /* Pulsanti toolbar outlined — vetro bianco + bevel + sottile tint colore utente */
 .settings-panel .mud-button-root.mud-button-outlined,
 .toolbar-sticky .mud-button-root.mud-button-outlined {

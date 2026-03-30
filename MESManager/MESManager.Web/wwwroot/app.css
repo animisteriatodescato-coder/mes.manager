@@ -173,13 +173,23 @@ h1:focus {
     color: #e6e6e6 !important;
 }
 
-/* AG Grid — Barra paginazione dark mode (testo pagine invisibile su sfondo scuro) */
+/* AG Grid — Barra paginazione dark mode (testo pagine invisibile su sfondo scuro)
+   Usa var(--mes-row-text) per seguire il tema colore assegnato dall'utente.
+   Selettori estesi per coprire page-size picker, paging numbers e span interni. */
 .mud-theme-dark .ag-theme-alpine .ag-paging-panel,
 .mud-theme-dark .ag-theme-alpine .ag-paging-row-summary-panel,
+.mud-theme-dark .ag-theme-alpine .ag-paging-row-summary-panel span,
 .mud-theme-dark .ag-theme-alpine .ag-paging-page-summary-panel,
 .mud-theme-dark .ag-theme-alpine .ag-paging-button,
-.mud-theme-dark .ag-theme-alpine .ag-paging-description {
-    color: #e6e6e6 !important;
+.mud-theme-dark .ag-theme-alpine .ag-paging-description,
+.mud-theme-dark .ag-theme-alpine .ag-paging-description span,
+.mud-theme-dark .ag-theme-alpine .ag-paging-page-size,
+.mud-theme-dark .ag-theme-alpine .ag-paging-page-size span,
+.mud-theme-dark .ag-theme-alpine .ag-paging-page-size .ag-wrapper,
+.mud-theme-dark .ag-theme-alpine .ag-paging-page-size .ag-picker-field-display,
+.mud-theme-dark .ag-theme-alpine .ag-paging-number,
+.mud-theme-dark .ag-theme-alpine .ag-paging-panel span {
+    color: var(--mes-row-text, #E6E6F0) !important;
 }
 .mud-theme-dark .ag-theme-alpine .ag-paging-panel {
     background-color: var(--mes-ag-panel-bg, #1e2030) !important;
@@ -187,8 +197,13 @@ h1:focus {
 }
 .mud-theme-dark .ag-theme-alpine .ag-paging-button svg,
 .mud-theme-dark .ag-theme-alpine .ag-paging-button .ag-icon {
-    color: #b0b0c8 !important;
-    fill: #b0b0c8 !important;
+    color: var(--mes-row-text, #E6E6F0) !important;
+    fill: var(--mes-row-text, #E6E6F0) !important;
+}
+/* Page size select wrapper in pagination */
+.mud-theme-dark .ag-theme-alpine .ag-paging-page-size .ag-select .ag-picker-field-wrapper {
+    background-color: var(--mes-ag-input-bg, #262636) !important;
+    border-color: var(--mes-ag-input-border, #4a4a6a) !important;
 }
 
 /* ========================================================================
