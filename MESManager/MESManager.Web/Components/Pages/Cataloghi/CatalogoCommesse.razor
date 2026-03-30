@@ -159,7 +159,6 @@
     [JSInvokable]
     public async Task OnRowDoubleClick(string articoloCodice)
     {
-        if (IsReadOnly) return;
         try
         {
             var anime = await Http.GetFromJsonAsync<AnimeDto>($"/api/Anime/by-codice/{string.Join('/', articoloCodice.Split('/').Select(Uri.EscapeDataString))}");
@@ -172,7 +171,8 @@
 
             var parameters = new DialogParameters<AnimeEditDialog>
             {
-                { x => x.Anime, anime }
+                { x => x.Anime, anime },
+                { x => x.IsReadOnly, IsReadOnly }
             };
             var options = new DialogOptions
             {

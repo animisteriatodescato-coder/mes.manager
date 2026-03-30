@@ -144,12 +144,12 @@
     [JSInvokable]
     public async Task OnRowDoubleClicked(AnimeDto anime)
     {
-        if (IsReadOnly) return;
         try
         {
             var parameters = new DialogParameters<AnimeEditDialog>
             {
-                { x => x.Anime, anime }
+                { x => x.Anime, anime },
+                { x => x.IsReadOnly, IsReadOnly }
             };
             var options = new DialogOptions
             {
