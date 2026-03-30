@@ -10,4 +10,10 @@ public interface IPreferenzeUtenteService
     Task SaveAsync(string userId, string chiave, string valoreJson);
     Task<bool> DeleteAsync(string userId, string chiave);
     Task DeleteAllAsync(string userId);
+
+    /// <summary>Legge il default globale (fallback per tutti gli utenti).</summary>
+    Task<string?> GetGlobalAsync(string chiave);
+
+    /// <summary>Salva/aggiorna il default globale (solo Admin).</summary>
+    Task SaveGlobalAsync(string chiave, string valoreJson);
 }

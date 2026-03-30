@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.60.27";
+    public const string Current = "1.60.28";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.60.27  TrasmmettiRicettaMacchinaDialog + IsReadOnly Soluzione2 completa + UI vetro bianco
+    public const string Display = "v" + Current; // v1.60.28  Default globale colonne griglia PlcStorico (IsGlobal PreferenzeUtente)
 }

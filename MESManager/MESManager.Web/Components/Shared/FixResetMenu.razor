@@ -16,6 +16,14 @@
         <MudMenuItem Icon="@Icons.Material.Filled.Restore" OnClick="@OnResetClicked">
             Reset - Ripristina stato salvato
         </MudMenuItem>
+        @if (ShowGlobalSave)
+        {
+            <MudDivider />
+            <MudMenuItem Icon="@Icons.Material.Filled.PublishedWithChanges" OnClick="@OnSaveGlobalClicked"
+                         Style="color: var(--mud-palette-warning-text);">
+                Imposta come Default per tutti
+            </MudMenuItem>
+        }
     </ChildContent>
 </MudMenu>
 
@@ -25,6 +33,14 @@
 
     [Parameter]
     public EventCallback OnReset { get; set; }
+
+    /// <summary>Mostra la voce "Imposta come Default per tutti" (solo Admin).</summary>
+    [Parameter]
+    public bool ShowGlobalSave { get; set; } = false;
+
+    /// <summary>Callback per salvare il default globale (solo Admin).</summary>
+    [Parameter]
+    public EventCallback OnSaveGlobal { get; set; }
 
     private async Task OnFixClicked()
     {
@@ -55,6 +71,22 @@
         if (result != null && !result.Canceled)
         {
             await OnReset.InvokeAsync();
+        }
+    }
+
+    private async Task OnSaveGlobalClicked()
+    {
+        var parameters = new DialogParameters<ConfirmDialog>();
+        parameters.Add(x => x.ContentText, "Vuoi impostare lo stato attuale come DEFAULT per TUTTI gli utenti? Il loro stato personalizzato non verrà cancellato, ma i nuovi utenti partiranno da questa configurazione.");
+        parameters.Add(x => x.ButtonText, "Imposta Default");
+        parameters.Add(x => x.Color, Color.Warning);
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Conferma Default Globale", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await OnSaveGlobal.InvokeAsync();
         }
     }
 }

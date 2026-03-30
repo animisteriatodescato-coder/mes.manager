@@ -18,12 +18,22 @@ public class PreferenzeUtenteService : IPreferenzeUtenteService
         _contextFactory = contextFactory;
     }
 
+    private const string GlobalUserId = "GLOBAL";
+
     public async Task<string?> GetAsync(string userId, string chiave)
     {
         await using var context = await _contextFactory.CreateDbContextAsync();
+
+        // Preferenza specifica dell'utente
         var preferenza = await context.PreferenzeUtente
-            .FirstOrDefaultAsync(p => p.UserId == userId && p.Chiave == chiave);
-        return preferenza?.ValoreJson;
+            .FirstOrDefaultAsync(p => p.UserId == userId && !p.IsGlobal && p.Chiave == chiave);
+        if (preferenza != null)
+            return preferenza.ValoreJson;
+
+        // Fallback: default globale impostato da Admin
+        var globale = await context.PreferenzeUtente
+            .FirstOrDefaultAsync(p => p.IsGlobal && p.Chiave == chiave);
+        return globale?.ValoreJson;
     }
 
     public async Task<Dictionary<string, string>> GetAllAsync(string userId)
@@ -78,9 +88,46 @@ public class PreferenzeUtenteService : IPreferenzeUtenteService
     {
         await using var context = await _contextFactory.CreateDbContextAsync();
         var preferenze = await context.PreferenzeUtente
-            .Where(p => p.UserId == userId)
+            .Where(p => p.UserId == userId && !p.IsGlobal)
             .ToListAsync();
         context.PreferenzeUtente.RemoveRange(preferenze);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<string?> GetGlobalAsync(string chiave)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var globale = await context.PreferenzeUtente
+            .FirstOrDefaultAsync(p => p.IsGlobal && p.Chiave == chiave);
+        return globale?.ValoreJson;
+    }
+
+    public async Task SaveGlobalAsync(string chiave, string valoreJson)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var globale = await context.PreferenzeUtente
+            .FirstOrDefaultAsync(p => p.IsGlobal && p.Chiave == chiave);
+
+        if (globale == null)
+        {
+            globale = new PreferenzaUtente
+            {
+                Id             = Guid.NewGuid(),
+                UserId         = GlobalUserId,
+                Chiave         = chiave,
+                ValoreJson     = valoreJson,
+                IsGlobal       = true,
+                DataCreazione  = DateTime.Now,
+                UltimaModifica = DateTime.Now
+            };
+            context.PreferenzeUtente.Add(globale);
+        }
+        else
+        {
+            globale.ValoreJson     = valoreJson;
+            globale.UltimaModifica = DateTime.Now;
+        }
+
         await context.SaveChangesAsync();
     }
 }

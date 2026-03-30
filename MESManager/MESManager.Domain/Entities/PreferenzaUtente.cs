@@ -32,4 +32,10 @@ public class PreferenzaUtente
     /// Ultima modifica
     /// </summary>
     public DateTime UltimaModifica { get; set; } = DateTime.Now;
+
+    /// <summary>
+    /// Se true, è il default globale per tutti gli utenti.
+    /// UserId sarà "GLOBAL" — non è una FK verso AspNetUsers.
+    /// </summary>
+    public bool IsGlobal { get; set; } = false;
 }

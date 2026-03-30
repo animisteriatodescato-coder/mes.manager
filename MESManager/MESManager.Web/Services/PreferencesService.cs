@@ -76,6 +76,22 @@ public class PreferencesService
     }
 
     /// <summary>
+    /// Salva il default globale per una preferenza (solo Admin).
+    /// </summary>
+    public async Task SetGlobalAsync<T>(string key, T value)
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(value);
+            await _preferenzeUtenteService.SaveGlobalAsync(key, json);
+        }
+        catch
+        {
+            // Ignore errors
+        }
+    }
+
+    /// <summary>
     /// Rimuove una preferenza.
     /// </summary>
     public async Task RemoveAsync(string key)
