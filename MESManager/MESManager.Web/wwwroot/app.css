@@ -173,6 +173,24 @@ h1:focus {
     color: #e6e6e6 !important;
 }
 
+/* AG Grid — Barra paginazione dark mode (testo pagine invisibile su sfondo scuro) */
+.mud-theme-dark .ag-theme-alpine .ag-paging-panel,
+.mud-theme-dark .ag-theme-alpine .ag-paging-row-summary-panel,
+.mud-theme-dark .ag-theme-alpine .ag-paging-page-summary-panel,
+.mud-theme-dark .ag-theme-alpine .ag-paging-button,
+.mud-theme-dark .ag-theme-alpine .ag-paging-description {
+    color: #e6e6e6 !important;
+}
+.mud-theme-dark .ag-theme-alpine .ag-paging-panel {
+    background-color: var(--mes-ag-panel-bg, #1e2030) !important;
+    border-top-color: rgba(255,255,255,0.1) !important;
+}
+.mud-theme-dark .ag-theme-alpine .ag-paging-button svg,
+.mud-theme-dark .ag-theme-alpine .ag-paging-button .ag-icon {
+    color: #b0b0c8 !important;
+    fill: #b0b0c8 !important;
+}
+
 /* ========================================================================
    Glass panels — z-index e struttura per effetto vetro con sfondo attivo.
    Le regole background-color vengono iniettate inline da MainLayout.razor
@@ -305,6 +323,35 @@ h1:focus {
 .mud-theme-dark .ag-theme-alpine .mes-stato-chiusa {
     background-color: #3a1828 !important;
     color: #f48fb1 !important;
+}
+
+/* % Scarti — colori cella (usati da cellClassRules in plc-storico-grid.js) */
+.ag-theme-alpine .mes-scarti-ok {
+    background-color: #e3f2fd !important;
+    color: #1565c0 !important;
+    font-weight: bold;
+}
+.ag-theme-alpine .mes-scarti-warn {
+    background-color: #fff3e0 !important;
+    color: #e65100 !important;
+    font-weight: bold;
+}
+.ag-theme-alpine .mes-scarti-error {
+    background-color: #fce4ec !important;
+    color: #b71c1c !important;
+    font-weight: bold;
+}
+.mud-theme-dark .ag-theme-alpine .mes-scarti-ok {
+    background-color: #0d2744 !important;
+    color: #90caf9 !important;
+}
+.mud-theme-dark .ag-theme-alpine .mes-scarti-warn {
+    background-color: #3a2200 !important;
+    color: #ffcc80 !important;
+}
+.mud-theme-dark .ag-theme-alpine .mes-scarti-error {
+    background-color: #3a0d1a !important;
+    color: #ef9a9a !important;
 }
 
 /* Contatori allegati (N.Foto verde, N.Doc blu) */

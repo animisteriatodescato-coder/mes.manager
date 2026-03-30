@@ -62,10 +62,36 @@ window.plcStoricoGrid = (function () {
             { 
                 field: 'cicliScarti', 
                 headerName: 'Scarti', 
-                width: 120,
+                width: 140,
                 sortable: true, 
                 filter: 'agNumberColumnFilter', 
-                resizable: true 
+                resizable: true,
+                valueFormatter: params => {
+                    if (!params.data || params.value == null) return String(params.value ?? '');
+                    const extra = params.data.quantitaDaProdurre > 0
+                        ? Math.max(0, params.data.cicliFatti - params.data.quantitaDaProdurre) : 0;
+                    return extra > 0 ? `${params.value} (+${extra} est.)` : String(params.value);
+                }
+            },
+            {
+                headerName: '% Scarti',
+                width: 110,
+                sortable: true,
+                filter: 'agNumberColumnFilter',
+                resizable: true,
+                valueGetter: params => {
+                    const d = params.data;
+                    if (!d || d.cicliFatti <= 0) return 0;
+                    const extra = d.quantitaDaProdurre > 0 ? Math.max(0, d.cicliFatti - d.quantitaDaProdurre) : 0;
+                    const tot = (d.cicliScarti || 0) + extra;
+                    return Math.round(tot / d.cicliFatti * 1000) / 10;
+                },
+                valueFormatter: params => params.value != null ? params.value.toFixed(1) + '%' : '0.0%',
+                cellClassRules: {
+                    'mes-scarti-ok':    params => params.value <= 1,
+                    'mes-scarti-warn':  params => params.value > 1 && params.value <= 5,
+                    'mes-scarti-error': params => params.value > 5
+                }
             },
             { 
                 field: 'tempoMedioRilevato', 
@@ -276,9 +302,11 @@ window.plcStoricoGrid = (function () {
             justify-content: center;
         `;
 
+        const isDark = document.body.classList.contains('mud-theme-dark');
         const panel = document.createElement('div');
         panel.style.cssText = `
-            background: white;
+            background: ${isDark ? '#1e2030' : 'white'};
+            color: ${isDark ? '#e6e6e6' : '#1a1a1a'};
             border-radius: 8px;
             padding: 20px;
             max-width: 400px;
@@ -309,6 +337,7 @@ window.plcStoricoGrid = (function () {
             const label = document.createElement('label');
             label.textContent = colDef.headerName || colDef.field;
             label.style.cursor = 'pointer';
+            label.style.color = 'inherit';
             label.prepend(checkbox);
 
             div.appendChild(label);

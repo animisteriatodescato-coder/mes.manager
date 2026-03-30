@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.60.20";
+    public const string Current = "1.60.23";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.60.20  feat: ruolo Visualizzazione readonly + copia impostazioni + backup preferenze
+    public const string Display = "v" + Current; // v1.60.23  UI: menu bold, pulsanti 3D tint, rimozione legenda verde
 }

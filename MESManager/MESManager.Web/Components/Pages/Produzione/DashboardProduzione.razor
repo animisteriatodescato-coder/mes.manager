@@ -68,15 +68,17 @@
                                 </div>
                             </MudItem>
                             <MudItem xs="6">
+                                <MudTooltip Text="@GetScartiTooltip(machine)" Placement="Placement.Top" Arrow="true">
                                 <div class="metric-box">
                                     <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Small" Color="@GetScartiColor(machine)" />
                                     <div class="metric-content">
                                         <MudText Typo="Typo.caption" Class="metric-label">Scarti</MudText>
                                         <MudText Typo="Typo.body2" Class="metric-value" Style="@($"color: {GetScartiColorHex(machine)}")">
-                                            @machine.CicliScarti <span style="font-size: 0.8em">(@GetPercentualeScarti(machine)%)</span>
+                                            @machine.ScartiEffettivi <span style="font-size: 0.8em">(@machine.PercentualeScartiEffettiva.ToString("F1")%)</span>
                                         </MudText>
                                     </div>
                                 </div>
+                                </MudTooltip>
                             </MudItem>
                             <MudItem xs="6">
                                 <div class="metric-box">
@@ -497,35 +499,32 @@
         return Color.Error;                        // rosso - in ritardo del 5%+
     }
 
-    private string GetPercentualeScarti(PlcRealtimeDto machine)
-    {
-        if (machine.CicliFatti == 0) return "0.0";
-        var percentuale = (machine.CicliScarti / (double)machine.CicliFatti) * 100;
-        return percentuale.ToString("F1");
-    }
-
     private Color GetScartiColor(PlcRealtimeDto machine)
     {
-        if (machine.CicliFatti == 0) return Color.Default;
-        var percentuale = (machine.CicliScarti / (double)machine.CicliFatti) * 100;
-        
-        if (percentuale <= 1) return Color.Info;
-        if (percentuale <= 3) return Color.Success;
-        if (percentuale <= 5) return Color.Warning;
+        var p = (double)machine.PercentualeScartiEffettiva;
+        if (p <= 1) return Color.Info;
+        if (p <= 3) return Color.Success;
+        if (p <= 5) return Color.Warning;
         return Color.Error;
     }
 
     private string GetScartiColorHex(PlcRealtimeDto machine)
     {
-        if (machine.CicliFatti == 0) return "#757575";
-        var percentuale = (machine.CicliScarti / (double)machine.CicliFatti) * 100;
-        
-        if (percentuale <= 1) return "#2196f3";
-        if (percentuale <= 2) return "#4caf50";
-        if (percentuale <= 3) return "#8bc34a";
-        if (percentuale <= 5) return "#ff9800";
-        if (percentuale <= 8) return "#f44336";
+        var p = (double)machine.PercentualeScartiEffettiva;
+        if (p <= 0) return "#757575";
+        if (p <= 1) return "#2196f3";
+        if (p <= 2) return "#4caf50";
+        if (p <= 3) return "#8bc34a";
+        if (p <= 5) return "#ff9800";
+        if (p <= 8) return "#f44336";
         return "#b71c1c";
+    }
+
+    private string GetScartiTooltip(PlcRealtimeDto machine)
+    {
+        if (machine.ScartiExtra > 0)
+            return $"Scarti dichiarati: {machine.CicliScarti} | Cicli extra stimati: {machine.ScartiExtra}";
+        return $"Scarti: {machine.CicliScarti}";
     }
 
     private Color GetTempoColor(PlcRealtimeDto machine)

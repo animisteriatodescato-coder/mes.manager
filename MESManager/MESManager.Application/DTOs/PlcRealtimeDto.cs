@@ -41,4 +41,9 @@ public class PlcRealtimeDto
     // Percentuale completamento
     public decimal PercentualeCompletamento => 
         QuantitaDaProdurre > 0 ? (decimal)CicliFatti / QuantitaDaProdurre * 100 : 0;
+
+    // Scarti effettivi: include cicli extra oltre l'obiettivo (operatore che recupera scarti dimenticati)
+    public int ScartiExtra => QuantitaDaProdurre > 0 ? Math.Max(0, CicliFatti - QuantitaDaProdurre) : 0;
+    public int ScartiEffettivi => CicliScarti + ScartiExtra;
+    public decimal PercentualeScartiEffettiva => CicliFatti > 0 ? Math.Round((decimal)ScartiEffettivi / CicliFatti * 100, 1) : 0;
 }

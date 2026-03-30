@@ -17,6 +17,12 @@ public class PlcStoricoDto
     public int CicliFatti { get; set; }
     public int QuantitaDaProdurre { get; set; }
     public int CicliScarti { get; set; }
+
+    // Scarti effettivi: include cicli extra oltre l'obiettivo (operatore che recupera scarti dimenticati)
+    public int ScartiExtra => QuantitaDaProdurre > 0 ? Math.Max(0, CicliFatti - QuantitaDaProdurre) : 0;
+    public int ScartiEffettivi => CicliScarti + ScartiExtra;
+    public decimal PercentualeScartiEffettiva => CicliFatti > 0 ? Math.Round((decimal)ScartiEffettivi / CicliFatti * 100, 1) : 0;
+
     public int TempoMedioRilevato { get; set; }
     public int TempoMedio { get; set; }
     public int Figure { get; set; }

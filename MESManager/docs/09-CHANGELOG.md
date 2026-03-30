@@ -4,7 +4,25 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.20
+## 🔖 Versione Corrente: v1.60.23
+
+---
+
+## 🔖 v1.60.23 - UI: menu bold + pulsanti 3D tint + rimozione legenda verde (30 Mar 2026)
+
+**Data**: 30 Marzo 2026
+
+### 🎨 UI — Tre miglioramenti visivi
+
+1. **Menu laterale tutto in grassetto**: rimosso `font-weight: normal` dai sub-item nav in MainLayout.razor, ora tutte le voci sono `font-weight: 700` coerentemente con i titoli di sezione
+2. **Pulsanti toolbar 3D con tint colorato**: `layout-config.css` — background ora usa `color-mix` per un leggero tint del colore primario (18% mix con white in cima, 8% in fondo) + shadow più pronunciata con bevel inset
+3. **Rimossa legenda verde** dal footer di ProgrammaMacchine: eliminati i chip "Verde Chiaro" / "Verde Scuro" e il testo "(alternati per cambio macchina)"
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor` — `font-weight: normal → 700` sub-item nav
+- `MESManager.Web/wwwroot/css/layout-config.css` — pulsanti 3D tint colorato
+- `MESManager.Web/Components/Pages/Programma/ProgrammaMacchine.razor` — rimossa legenda colori footer
+- `MESManager.Web/Constants/AppVersion.cs` — 1.60.22 → 1.60.23
 
 ---
 

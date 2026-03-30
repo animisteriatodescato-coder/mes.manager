@@ -4,6 +4,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject IJSRuntime JS
+@inject ILogger<RicettaViewDialog> Logger
 
 <MudDialog Style="max-width: 1000px;" data-testid="dlg-ricetta-view">
     <TitleContent>
@@ -75,6 +76,54 @@
                     </MudTd>
                 </RowTemplate>
             </MudTable>
+
+            @if (_showTransmettiPanel)
+            {
+                <MudDivider Class="mt-3 mb-2" />
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Send" Size="Size.Small" Class="mr-1" />
+                    Seleziona la macchina a cui trasmettere la ricetta:
+                </MudText>
+                @if (_isLoadingMacchine)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_macchineTrasmetti.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Warning" Dense="true">Nessuna macchina con PLC configurato.</MudAlert>
+                }
+                else
+                {
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-2">
+                        @foreach (var m in _macchineTrasmetti)
+                        {
+                            bool sel = _macchinaTrasmessiId == m.Id;
+                            <MudChip T="string"
+                                     Color="@(sel ? Color.Primary : Color.Default)"
+                                     Variant="@(sel ? Variant.Filled : Variant.Outlined)"
+                                     OnClick="@(() => _macchinaTrasmessiId = m.Id)"
+                                     Style="cursor:pointer;">
+                                @m.Codice — @m.Nome
+                            </MudChip>
+                        }
+                    </MudStack>
+                    <MudStack Row="true" Spacing="2">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Success"
+                                   StartIcon="@Icons.Material.Filled.Send"
+                                   Disabled="@(_macchinaTrasmessiId == Guid.Empty || _isTrasmettendo)"
+                                   OnClick="TrasmmettiRicettaAsync"
+                                   data-testid="btn-trasmetti-ricetta">
+                            @if (_isTrasmettendo)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-1" />
+                            }
+                            Invia al PLC
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" OnClick="@(() => _showTransmettiPanel = false)">Annulla</MudButton>
+                    </MudStack>
+                }
+            }
         }
     </DialogContent>
     <DialogActions>
@@ -86,6 +135,16 @@
                        StartIcon="@Icons.Material.Filled.Download"
                        data-testid="btn-importa-ricetta-da-macchina">
                 Importa da Macchina
+            </MudButton>
+        }
+        @if (ShowTransmitButton && !string.IsNullOrEmpty(CodiceArticolo) && ricetta != null)
+        {
+            <MudButton OnClick="@(async () => await ToggleTransmettiPanelAsync())"
+                       Variant="Variant.Outlined"
+                       Color="Color.Success"
+                       StartIcon="@Icons.Material.Filled.Send"
+                       data-testid="btn-trasmetti-toggle">
+                Trasmetti alla Macchina
             </MudButton>
         }
         <MudSpacer />
@@ -101,8 +160,18 @@
     /// <summary>Se true, mostra il pulsante "Importa da Macchina" nel footer del dialog.</summary>
     [Parameter] public bool ShowImportButton { get; set; } = false;
 
+    /// <summary>Se true, mostra il pulsante "Trasmetti alla Macchina" (invia ricetta al PLC).</summary>
+    [Parameter] public bool ShowTransmitButton { get; set; } = false;
+
     private RicettaArticoloDto? ricetta;
     private bool isLoading = true;
+
+    // Stato pannello trasmissione
+    private bool _showTransmettiPanel = false;
+    private bool _isLoadingMacchine = false;
+    private bool _isTrasmettendo = false;
+    private List<MacchinaDto> _macchineTrasmetti = new();
+    private Guid _macchinaTrasmessiId = Guid.Empty;
     
     protected override async Task OnInitializedAsync()
     {
@@ -173,6 +242,68 @@
     }
 
     private void Close() => MudDialog.Close();
+
+    private async Task ToggleTransmettiPanelAsync()
+    {
+        _showTransmettiPanel = !_showTransmettiPanel;
+        if (_showTransmettiPanel && _macchineTrasmetti.Count == 0)
+        {
+            _isLoadingMacchine = true;
+            try
+            {
+                var all = await Http.GetFromJsonAsync<List<MacchinaDto>>("api/Macchine") ?? new();
+                // mostra solo macchine con PLC configurato
+                _macchineTrasmetti = all.Where(m => !string.IsNullOrEmpty(m.IndirizzoPLC)).ToList();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Errore caricamento macchine per trasmissione ricetta");
+                Snackbar.Add("Errore caricamento macchine", Severity.Error);
+            }
+            finally
+            {
+                _isLoadingMacchine = false;
+            }
+        }
+    }
+
+    private async Task TrasmmettiRicettaAsync()
+    {
+        if (_macchinaTrasmessiId == Guid.Empty) return;
+
+        _isTrasmettendo = true;
+        try
+        {
+            var request = new LoadRecipeRequest
+            {
+                MacchinaId = _macchinaTrasmessiId,
+                CodiceArticolo = CodiceArticolo,
+                ForceReload = true
+            };
+            var response = await Http.PostAsJsonAsync("/api/plc/load-recipe-by-article", request);
+            if (response.IsSuccessStatusCode)
+            {
+                var nomeMacchina = _macchineTrasmetti.FirstOrDefault(m => m.Id == _macchinaTrasmessiId)?.Codice ?? "";
+                Snackbar.Add($"✅ Ricetta trasmessa alla macchina {nomeMacchina}", Severity.Success);
+                _showTransmettiPanel = false;
+                _macchinaTrasmessiId = Guid.Empty;
+            }
+            else
+            {
+                var err = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"❌ Errore trasmissione: {err}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Errore trasmissione ricetta al PLC");
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isTrasmettendo = false;
+        }
+    }
 
     private async Task OpenModificaAsync(ParametroRicettaArticoloDto parametro)
     {

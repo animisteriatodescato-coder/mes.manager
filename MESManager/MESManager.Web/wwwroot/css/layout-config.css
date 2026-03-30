@@ -80,13 +80,17 @@
 .footer-info .mud-chip .mud-icon-root {
     font-size: 0.85rem !important;
 }
-/* Pulsanti toolbar outlined — effetto 3D con bordo, ombra e gradiente */
+/* Pulsanti toolbar outlined — effetto 3D con tint colorato, bevel e ombra */
 .settings-panel .mud-button-root.mud-button-outlined,
 .toolbar-sticky .mud-button-root.mud-button-outlined {
     border-color: var(--mes-button-color, var(--mud-palette-primary)) !important;
     color: var(--mes-button-color, var(--mud-palette-primary)) !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.28), 0 1px 2px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.10) !important;
-    background: linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(0,0,0,0.05) 100%) !important;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.30), 0 1px 2px rgba(0,0,0,0.18),
+                inset 0 1px 0 rgba(255,255,255,0.35),
+                inset 0 -1px 0 rgba(0,0,0,0.10) !important;
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--mes-button-color, var(--mud-palette-primary)) 18%, white) 0%,
+        color-mix(in srgb, var(--mes-button-color, var(--mud-palette-primary)) 8%, transparent) 100%) !important;
     transition: box-shadow 0.15s ease, transform 0.1s ease !important;
 }
 .settings-panel .mud-button-root.mud-button-outlined .mud-icon-root,

@@ -139,11 +139,6 @@
             <MudDivider Vertical="true" FlexItem="true" />
             <MudText Typo="Typo.caption" Color="Color.Secondary">Ultimo aggiornamento: <strong>@lastUpdate.ToString("HH:mm:ss")</strong></MudText>
             <MudSpacer />
-            <MudStack Row="true" Spacing="1">
-                <MudChip T="string" Size="Size.Small" Style="background-color: #e8f5e9;">Verde Chiaro</MudChip>
-                <MudChip T="string" Size="Size.Small" Style="background-color: #c8e6c9;">Verde Scuro</MudChip>
-                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-2">(alternati per cambio macchina)</MudText>
-            </MudStack>
             <MudChip T="string" Size="Size.Small" Color="@(isLoading ? Color.Warning : Color.Success)" 
                      Icon="@(isLoading ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.CheckCircle)"
                      data-testid="status-info">
@@ -432,7 +427,8 @@
             var parameters = new DialogParameters<RicettaViewDialog>
             {
                 { x => x.CodiceArticolo, codiceArticolo },
-                { x => x.ShowImportButton, true }
+                { x => x.ShowImportButton, true },
+                { x => x.ShowTransmitButton, true }
             };
             var options = new DialogOptions
             {

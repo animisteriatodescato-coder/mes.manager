@@ -100,6 +100,8 @@
         {
             try
             {
+                // Carica dati di oggi prima di inizializzare la grid (così la grid parte già con i dati)
+                await LoadData();
                 var savedColumnState = await PreferencesService.GetAsync<string>("plc-storico-grid-columns");
                 await JSRuntime.InvokeVoidAsync("plcStoricoGrid.init", "plcStoricoGrid", _data, savedColumnState);
             }
