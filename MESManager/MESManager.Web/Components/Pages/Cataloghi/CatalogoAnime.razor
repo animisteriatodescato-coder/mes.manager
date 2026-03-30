@@ -191,7 +191,8 @@
             var parameters = new DialogParameters<RicettaViewDialog>
             {
                 { x => x.CodiceArticolo, codiceArticolo },
-                { x => x.ShowImportButton, true }
+                { x => x.ShowImportButton, true },
+                { x => x.IsReadOnly, IsReadOnly }
             };
             var options = new DialogOptions
             {

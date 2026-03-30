@@ -23,20 +23,20 @@
         <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="@RefreshGantt">
             <MudIcon Icon="@Icons.Material.Filled.Refresh" Class="mr-1" /> Aggiorna
         </MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@EsportaSuProgramma" data-testid="btn-salva-impostazioni">
+        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@EsportaSuProgramma" Disabled="@IsReadOnly" data-testid="btn-salva-impostazioni">
             <MudIcon Icon="@Icons.Material.Filled.Upload" Class="mr-1" /> Esporta su Programma
         </MudButton>
-        <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="@OpenPriorityDialog" Disabled="@(_selectedCommessa == null)">
+        <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="@OpenPriorityDialog" Disabled="@(IsReadOnly || _selectedCommessa == null)">
             <MudIcon Icon="@Icons.Material.Filled.Flag" Class="mr-1" /> Priorità
         </MudButton>
-        <MudButton Variant="Variant.Outlined" Color="@(_selectedCommessa?.Bloccata == true ? Color.Error : Color.Default)" OnClick="@ToggleLock" Disabled="@(_selectedCommessa == null)">
+        <MudButton Variant="Variant.Outlined" Color="@(_selectedCommessa?.Bloccata == true ? Color.Error : Color.Default)" OnClick="@ToggleLock" Disabled="@(IsReadOnly || _selectedCommessa == null)">
             <MudIcon Icon="@(_selectedCommessa?.Bloccata == true ? Icons.Material.Filled.Lock : Icons.Material.Filled.LockOpen)" Class="mr-1" />
             @(_selectedCommessa?.Bloccata == true ? "Sblocca" : "Blocca")
         </MudButton>
-        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="@ArchiviaSelezionata" Disabled="@(_selectedCommessa == null)">
+        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="@ArchiviaSelezionata" Disabled="@(IsReadOnly || _selectedCommessa == null)">
             <MudIcon Icon="@Icons.Material.Filled.Archive" Class="mr-1" /> Archivia
         </MudButton>
-        <MudButton Variant="Variant.Outlined" OnClick="@OpenVincoliDialog" Disabled="@(_selectedCommessa == null)">
+        <MudButton Variant="Variant.Outlined" OnClick="@OpenVincoliDialog" Disabled="@(IsReadOnly || _selectedCommessa == null)">
             <MudIcon Icon="@Icons.Material.Filled.Event" Class="mr-1" /> Vincoli
         </MudButton>
     </MudStack>
@@ -106,6 +106,8 @@
 </div>
 
 @code {
+    [CascadingParameter(Name = "IsReadOnly")] private bool IsReadOnly { get; set; }
+
     private List<MacchinaDto> macchine = new();
     private CalendarioLavoroDto? calendario;
     private ImpostazioniGanttDto? impostazioniGantt;
@@ -244,6 +246,7 @@
     [JSInvokable]
     public async Task OnCommessaMoved(SpostaCommessaResponse result)
     {
+        if (IsReadOnly) return;
         // Aggiorna lo stato locale
         await LoadCommesseGantt();
         Snackbar.Add("Commessa spostata con successo", Severity.Success);
@@ -321,6 +324,7 @@
     
     private void OpenPriorityDialog()
     {
+        if (IsReadOnly) return;
         if (_selectedCommessa == null)
         {
             Snackbar.Add("Seleziona prima una commessa cliccando su una barra nel Gantt", Severity.Warning);
@@ -353,6 +357,7 @@
     
     private async Task ToggleLock()
     {
+        if (IsReadOnly) return;
         if (_selectedCommessa == null) return;
         
         try
@@ -374,6 +379,7 @@
     
     private void OpenVincoliDialog()
     {
+        if (IsReadOnly) return;
         if (_selectedCommessa == null)
         {
             Snackbar.Add("Seleziona prima una commessa cliccando su una barra nel Gantt", Severity.Warning);
@@ -413,6 +419,7 @@
     
     private async Task EsportaSuProgramma()
     {
+        if (IsReadOnly) return;
         try
         {
             var response = await Http.PostAsync("api/pianificazione/esporta-su-programma", null);
@@ -445,6 +452,7 @@
 
     private async Task ArchiviaSelezionata()
     {
+        if (IsReadOnly) return;
         if (_selectedCommessa == null)
         {
             Snackbar.Add("Seleziona una commessa prima di archiviare", Severity.Warning);

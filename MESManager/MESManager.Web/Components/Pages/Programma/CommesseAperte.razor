@@ -37,7 +37,7 @@
                        ValueChanged="@OnShowArchivedChanged" />
             <MudSpacer />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshGridData" data-testid="btn-refresh">Aggiorna</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Timeline" OnClick="@CaricaSuGantt" data-testid="btn-carica-su-gantt">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Timeline" OnClick="@CaricaSuGantt" Disabled="@IsReadOnly" data-testid="btn-carica-su-gantt">
                 🚀 Carica su Gantt
             </MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
@@ -195,6 +195,7 @@
     /// </summary>
     private async Task CaricaSuGantt()
     {
+        if (IsReadOnly) return;
         try
         {
             // Ottieni righe selezionate da AG-Grid
@@ -468,7 +469,8 @@
             var parameters = new DialogParameters<RicettaViewDialog>
             {
                 { x => x.CodiceArticolo, codiceArticolo },
-                { x => x.ShowImportButton, true }
+                { x => x.ShowImportButton, true },
+                { x => x.IsReadOnly, IsReadOnly }
             };
             var options = new DialogOptions
             {

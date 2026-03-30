@@ -397,6 +397,72 @@ h1:focus {
 }
 
 /* ==========================================================================
+   PULSANTI GLOBALI — Stile 3D unificato + testo BOLD (v1.60.24)
+   Fonte di verità unica per la grafica di tutti i MudButton dell'app.
+   • Label bold universale su Filled / Outlined / Text
+   • Outlined: tint automatico dal currentColor (colore del bordo/testo) + bevel
+   • Filled: shadow bevel — preserva la palette MudBlazor senza toccare il bg
+   • Text: solo bold (pulsanti Annulla/Chiudi — no 3D)
+   • I selettori in layout-config.css (.toolbar-sticky, .settings-panel) sono
+     più specifici e sovrascrivono con --mes-button-color per i colori custom.
+   • Dark-mode: gradient usa transparent invece di white per compatibilità.
+   ========================================================================== */
+
+/* ===== Bold universale su ogni etichetta MudButton ===== */
+.mud-button-root .mud-button-label {
+    font-weight: 700 !important;
+}
+
+/* ===== Outlined: tint colorato (currentColor) + 3D bevel ===== */
+.mud-button-root.mud-button-outlined {
+    box-shadow: 0 3px 6px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15),
+                inset 0 1px 0 rgba(255,255,255,0.35),
+                inset 0 -1px 0 rgba(0,0,0,0.10) !important;
+    background: linear-gradient(180deg,
+        color-mix(in srgb, currentColor 15%, white) 0%,
+        color-mix(in srgb, currentColor 6%, transparent) 100%) !important;
+    transition: box-shadow 0.15s ease, transform 0.1s ease !important;
+}
+.mud-button-root.mud-button-outlined:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.28), 0 2px 4px rgba(0,0,0,0.18),
+                inset 0 1px 0 rgba(255,255,255,0.14) !important;
+    background: linear-gradient(180deg,
+        color-mix(in srgb, currentColor 10%, transparent) 0%,
+        color-mix(in srgb, currentColor 5%, transparent) 100%) !important;
+}
+.mud-button-root.mud-button-outlined:active {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.18), inset 0 1px 3px rgba(0,0,0,0.12) !important;
+    transform: translateY(1px) !important;
+}
+/* Dark mode: usa transparent invece di white per il tint ===== */
+.mud-theme-dark .mud-button-root.mud-button-outlined {
+    background: linear-gradient(180deg,
+        color-mix(in srgb, currentColor 20%, transparent) 0%,
+        color-mix(in srgb, currentColor 8%, transparent) 100%) !important;
+}
+.mud-theme-dark .mud-button-root.mud-button-outlined:hover {
+    background: linear-gradient(180deg,
+        color-mix(in srgb, currentColor 12%, transparent) 0%,
+        color-mix(in srgb, currentColor 5%, transparent) 100%) !important;
+}
+
+/* ===== Filled: shadow bevel — preserva colore palette MudBlazor ===== */
+.mud-button-root.mud-button-filled {
+    box-shadow: 0 3px 7px rgba(0,0,0,0.28), 0 1px 3px rgba(0,0,0,0.16),
+                inset 0 1px 0 rgba(255,255,255,0.22),
+                inset 0 -1px 0 rgba(0,0,0,0.14) !important;
+    transition: box-shadow 0.15s ease, transform 0.1s ease !important;
+}
+.mud-button-root.mud-button-filled:hover {
+    box-shadow: 0 5px 12px rgba(0,0,0,0.30), 0 2px 4px rgba(0,0,0,0.18),
+                inset 0 1px 0 rgba(255,255,255,0.12) !important;
+}
+.mud-button-root.mud-button-filled:active {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.20), inset 0 1px 3px rgba(0,0,0,0.16) !important;
+    transform: translateY(1px) !important;
+}
+
+/* ==========================================================================
    MACHINE CARD — Dark mode standalone
    Garantisce contrasto corretto nella Dashboard anche SENZA sfondo globale attivo.
    Prima era condizionale a _bgActive (senza sfondo, il dark mode non applicava).

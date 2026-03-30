@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.60.23";
+    public const string Current = "1.60.24";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.60.23  UI: menu bold, pulsanti 3D tint, rimozione legenda verde
+    public const string Display = "v" + Current; // v1.60.24  IsReadOnly Soluzione2: ProgrammaMacchine/Gantt/CommesseAperte/AnimeEditDialog/RicettaViewDialog/ImportaRicettaMacchinaDialog
 }

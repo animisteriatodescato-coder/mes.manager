@@ -110,7 +110,7 @@
                        Variant="Variant.Filled"
                        Color="Color.Primary"
                        StartIcon="@Icons.Material.Filled.Download"
-                       Disabled="@(_macchinaSelezionata == null || _loading)">
+                       Disabled="@(_macchinaSelezionata == null || _loading || IsReadOnly)">
                 Importa Ricetta
             </MudButton>
         }
@@ -122,6 +122,9 @@
 
     /// <summary>Codice articolo per cui importare la ricetta.</summary>
     [Parameter] public string CodiceArticolo { get; set; } = string.Empty;
+
+    /// <summary>Se true, disabilita l'importazione (modalità sola lettura).</summary>
+    [Parameter] public bool IsReadOnly { get; set; } = false;
 
     private List<MacchinaDto> _macchine = new();
     private MacchinaDto? _macchinaSelezionata;

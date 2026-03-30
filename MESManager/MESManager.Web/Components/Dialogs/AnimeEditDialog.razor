@@ -15,6 +15,10 @@
         </MudStack>
     </TitleContent>
     <DialogContent>
+        @if (IsReadOnly)
+        {
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">Modalità sola lettura — le modifiche non sono consentite</MudAlert>
+        }
         <MudGrid Spacing="2">
             <!-- COLONNA SINISTRA: DATI -->
             <MudItem xs="8">
@@ -178,8 +182,8 @@
                 <MudIcon Icon="@Icons.Material.Filled.PrecisionManufacturing" Size="Size.Small" Color="Color.Primary" />
                 <MudText Typo="Typo.caption" Color="Color.Primary"><b>MACCHINE</b></MudText>
                 <MudSpacer />
-                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="SelezionaTutteLeMacchine" data-testid="btn-anime-macchine-tutte">Tutte</MudButton>
-                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="DeselezionaTutteLeMacchine" data-testid="btn-anime-macchine-nessuna">Nessuna</MudButton>
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="SelezionaTutteLeMacchine" Disabled="@IsReadOnly" data-testid="btn-anime-macchine-tutte">Tutte</MudButton>
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="DeselezionaTutteLeMacchine" Disabled="@IsReadOnly" data-testid="btn-anime-macchine-nessuna">Nessuna</MudButton>
             </MudStack>
             <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="0">
                 @foreach (var macchina in macchineDisponibili)
@@ -211,11 +215,14 @@
                 <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Color="Color.Warning" />
                 <MudText Typo="Typo.caption" Color="Color.Warning"><b>DOCUMENTI (@allegatiResponse.Documenti.Count)</b></MudText>
                 <MudSpacer />
+                @if (!IsReadOnly)
+                {
                 <MudFileUpload T="IBrowserFile" Accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" OnFilesChanged="OnDocumentoUpload" Style="margin: 0;">
                     <ActivatorContent>
                         <MudButton Variant="Variant.Text" Color="Color.Warning" Size="Size.Small" StartIcon="@Icons.Material.Filled.NoteAdd">Aggiungi</MudButton>
                     </ActivatorContent>
                 </MudFileUpload>
+                }
             </MudStack>
             @if (allegatiResponse.Documenti.Any())
             {
@@ -227,7 +234,7 @@
                                 <MudText Typo="Typo.caption">@(doc.Descrizione ?? doc.NomeFile)</MudText>
                                 <MudStack Row="true" Spacing="0">
                                     <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small" Href="@doc.FileUrl" Target="_blank" />
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteAllegato(doc)" />
+                                    @if (!IsReadOnly) { <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteAllegato(doc)" /> }
                                 </MudStack>
                             </MudStack>
                         </MudListItem>
@@ -252,6 +259,8 @@
                             <MudProgressCircular Size="Size.Small" Indeterminate="true" />
                         }
                         <MudSpacer />
+                        @if (!IsReadOnly)
+                        {
                         <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.CloudDownload" OnClick="ImportaDaGantt" Disabled="@isImportingFromGantt">
                             @if (isImportingFromGantt) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-1" /> } Gantt
                         </MudButton>
@@ -260,6 +269,7 @@
                                 <MudButton Variant="Variant.Text" Color="Color.Info" Size="Size.Small" StartIcon="@Icons.Material.Filled.AddAPhoto">Aggiungi</MudButton>
                             </ActivatorContent>
                         </MudFileUpload>
+                        }
                     </MudStack>
                     
                     @if (isUploadingAllegato)
@@ -278,7 +288,7 @@
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                             <MudSelect T="int" Value="@foto.Priorita" ValueChanged="@((int p) => UpdatePriorita(foto, p))" 
                                                        Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" 
-                                                       Style="max-width: 90px;" Label="Prior.">
+                                                       Style="max-width: 90px;" Label="Prior." Disabled="@IsReadOnly">
                                                 <MudSelectItem Value="1">1</MudSelectItem>
                                                 <MudSelectItem Value="2">2</MudSelectItem>
                                                 <MudSelectItem Value="3">3</MudSelectItem>
@@ -324,7 +334,7 @@
             </MudChip>
         </MudStack>
         <MudButton OnClick="Cancel" data-testid="btn-anime-cancel">Annulla</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" OnClick="Save" data-testid="btn-anime-save">Salva</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" OnClick="Save" Disabled="@IsReadOnly" data-testid="btn-anime-save">Salva</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -334,6 +344,7 @@
     
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
     [Parameter] public AnimeDto Anime { get; set; } = new();
+    [Parameter] public bool IsReadOnly { get; set; }
     
     private List<TabellaItem> collaOptions = new();
     private List<TabellaItem> verniceOptions = new();
