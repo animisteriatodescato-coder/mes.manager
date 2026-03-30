@@ -413,37 +413,41 @@ h1:focus {
     font-weight: 700 !important;
 }
 
-/* ===== Outlined: tint colorato (currentColor) + 3D bevel ===== */
+/* ===== Outlined: vetro bianco + 3D bevel — sfondo neutro per massimo contrasto ===== */
+/* Il colore arriva da bordo+testo (non dal background), quindi contrasto sempre ottimale. */
 .mud-button-root.mud-button-outlined {
-    box-shadow: 0 3px 6px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15),
-                inset 0 1px 0 rgba(255,255,255,0.35),
-                inset 0 -1px 0 rgba(0,0,0,0.10) !important;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.28), 0 1px 2px rgba(0,0,0,0.16),
+                inset 0 1px 0 rgba(255,255,255,0.60),
+                inset 0 -1px 0 rgba(0,0,0,0.12) !important;
     background: linear-gradient(180deg,
-        color-mix(in srgb, currentColor 15%, white) 0%,
-        color-mix(in srgb, currentColor 6%, transparent) 100%) !important;
+        rgba(255,255,255,0.88) 0%,
+        rgba(255,255,255,0.62) 100%) !important;
     transition: box-shadow 0.15s ease, transform 0.1s ease !important;
 }
 .mud-button-root.mud-button-outlined:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.28), 0 2px 4px rgba(0,0,0,0.18),
-                inset 0 1px 0 rgba(255,255,255,0.14) !important;
+    box-shadow: 0 4px 9px rgba(0,0,0,0.30), 0 2px 4px rgba(0,0,0,0.18),
+                inset 0 1px 0 rgba(255,255,255,0.45) !important;
     background: linear-gradient(180deg,
-        color-mix(in srgb, currentColor 10%, transparent) 0%,
-        color-mix(in srgb, currentColor 5%, transparent) 100%) !important;
+        rgba(255,255,255,0.78) 0%,
+        rgba(255,255,255,0.50) 100%) !important;
 }
 .mud-button-root.mud-button-outlined:active {
-    box-shadow: 0 1px 2px rgba(0,0,0,0.18), inset 0 1px 3px rgba(0,0,0,0.12) !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.18), inset 0 1px 3px rgba(0,0,0,0.14) !important;
     transform: translateY(1px) !important;
 }
-/* Dark mode: usa transparent invece di white per il tint ===== */
+/* Dark mode: vetro scuro semi-trasparente */
 .mud-theme-dark .mud-button-root.mud-button-outlined {
     background: linear-gradient(180deg,
-        color-mix(in srgb, currentColor 20%, transparent) 0%,
-        color-mix(in srgb, currentColor 8%, transparent) 100%) !important;
+        rgba(255,255,255,0.14) 0%,
+        rgba(255,255,255,0.06) 100%) !important;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.40), 0 1px 2px rgba(0,0,0,0.25),
+                inset 0 1px 0 rgba(255,255,255,0.20),
+                inset 0 -1px 0 rgba(0,0,0,0.18) !important;
 }
 .mud-theme-dark .mud-button-root.mud-button-outlined:hover {
     background: linear-gradient(180deg,
-        color-mix(in srgb, currentColor 12%, transparent) 0%,
-        color-mix(in srgb, currentColor 5%, transparent) 100%) !important;
+        rgba(255,255,255,0.20) 0%,
+        rgba(255,255,255,0.10) 100%) !important;
 }
 
 /* ===== Filled: shadow bevel — preserva colore palette MudBlazor ===== */
