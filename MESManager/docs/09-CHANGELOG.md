@@ -92,8 +92,13 @@
 Estensione del sistema `IsReadOnly` (introdotto in v1.60.20) a tutte le componenti mancanti.
 
 **ProgrammaMacchine**:
-- `[CascadingParameter] bool IsReadOnly` — guard su `ImportaRicetta` e `OnRowDoubleClick`
+- `[CascadingParameter] bool IsReadOnly` — guard su `ImportaRicetta`
+- `OnRowDoubleClick` — rimosso return immediato: l'utente Visualizzazione vede la scheda anima in sola lettura (passa `IsReadOnly` al dialog → Salva/upload/delete disabilitati + banner)
 - Passa `IsReadOnly` a `AnimeEditDialog` e `RicettaViewDialog`
+
+**CatalogoAnime / CatalogoCommesse**:
+- `OnRowDoubleClicked` / `OnRowDoubleClick` — stesso pattern: rimosso return immediato, passa `IsReadOnly` a `AnimeEditDialog`
+- `ViewRicetta` — passa `IsReadOnly` a `RicettaViewDialog`
 
 **GanttMacchine**:
 - `[CascadingParameter] bool IsReadOnly` — `Disabled` su 5 bottoni toolbar
@@ -111,16 +116,20 @@ Estensione del sistema `IsReadOnly` (introdotto in v1.60.20) a tutte le componen
 **ImportaRicettaMacchinaDialog**:
 - `[Parameter] bool IsReadOnly` — `Disabled` su btn-importa
 
+**MainLayout**:
+- Testo footer sidebar: "powered by Marra" → "powered by Fabio"
+
 #### File modificati
 - `MESManager.Web/Components/Dialogs/AnimeEditDialog.razor`
 - `MESManager.Web/Components/Dialogs/ImportaRicettaMacchinaDialog.razor`
 - `MESManager.Web/Components/Dialogs/RicettaViewDialog.razor`
 - `MESManager.Web/Components/Dialogs/TrasmmettiRicettaMacchinaDialog.razor` (creato)
+- `MESManager.Web/Components/Layout/MainLayout.razor` — powered by Fabio
 - `MESManager.Web/Components/Pages/Cataloghi/CatalogoAnime.razor`
 - `MESManager.Web/Components/Pages/Cataloghi/CatalogoCommesse.razor`
 - `MESManager.Web/Components/Pages/Programma/CommesseAperte.razor`
 - `MESManager.Web/Components/Pages/Programma/GanttMacchine.razor`
-- `MESManager.Web/wwwroot/app.css` — pulsanti globali 3D+bold (v1.60.24)
+- `MESManager.Web/Components/Pages/Programma/ProgrammaMacchine.razor`
 - `MESManager.Web/Constants/AppVersion.cs` — 1.60.23 → 1.60.24
 
 ---

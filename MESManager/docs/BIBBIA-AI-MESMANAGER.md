@@ -483,4 +483,4 @@ proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve t
 **Data**: 26 Marzo 2026  
 **Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: v1.60.20 — Ruolo Visualizzazione readonly (CascadingValue) + Copia Impostazioni in GestioneAccessi + backup preferenze script
+**Ultimo aggiornamento**: v1.60.27 — IsReadOnly Soluzione2 completa (ProgrammaMacchine/Gantt/Dialogs/Cataloghi) + doppio-click scheda anima readonly + powered by Fabio + UI pulsanti vetro + TrasmmettiRicettaMacchinaDialog

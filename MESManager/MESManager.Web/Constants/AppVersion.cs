@@ -14,5 +14,5 @@ public static class AppVersion
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.60.24  IsReadOnly Soluzione2: ProgrammaMacchine/Gantt/CommesseAperte/AnimeEditDialog/RicettaViewDialog/ImportaRicettaMacchinaDialog
+    public const string Display = "v" + Current; // v1.60.27  TrasmmettiRicettaMacchinaDialog + IsReadOnly Soluzione2 completa + UI vetro bianco
 }
