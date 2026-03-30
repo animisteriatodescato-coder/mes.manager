@@ -76,54 +76,6 @@
                     </MudTd>
                 </RowTemplate>
             </MudTable>
-
-            @if (_showTransmettiPanel)
-            {
-                <MudDivider Class="mt-3 mb-2" />
-                <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-2">
-                    <MudIcon Icon="@Icons.Material.Filled.Send" Size="Size.Small" Class="mr-1" />
-                    Seleziona la macchina a cui trasmettere la ricetta:
-                </MudText>
-                @if (_isLoadingMacchine)
-                {
-                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-                }
-                else if (_macchineTrasmetti.Count == 0)
-                {
-                    <MudAlert Severity="Severity.Warning" Dense="true">Nessuna macchina con PLC configurato.</MudAlert>
-                }
-                else
-                {
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap" Class="mb-2">
-                        @foreach (var m in _macchineTrasmetti)
-                        {
-                            bool sel = _macchinaTrasmessiId == m.Id;
-                            <MudChip T="string"
-                                     Color="@(sel ? Color.Primary : Color.Default)"
-                                     Variant="@(sel ? Variant.Filled : Variant.Outlined)"
-                                     OnClick="@(() => _macchinaTrasmessiId = m.Id)"
-                                     Style="cursor:pointer;">
-                                @m.Codice — @m.Nome
-                            </MudChip>
-                        }
-                    </MudStack>
-                    <MudStack Row="true" Spacing="2">
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Success"
-                                   StartIcon="@Icons.Material.Filled.Send"
-                                   Disabled="@(_macchinaTrasmessiId == Guid.Empty || _isTrasmettendo)"
-                                   OnClick="TrasmmettiRicettaAsync"
-                                   data-testid="btn-trasmetti-ricetta">
-                            @if (_isTrasmettendo)
-                            {
-                                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-1" />
-                            }
-                            Invia al PLC
-                        </MudButton>
-                        <MudButton Variant="Variant.Text" OnClick="@(() => _showTransmettiPanel = false)">Annulla</MudButton>
-                    </MudStack>
-                }
-            }
         }
     </DialogContent>
     <DialogActions>
@@ -168,13 +120,6 @@
 
     private RicettaArticoloDto? ricetta;
     private bool isLoading = true;
-
-    // Stato pannello trasmissione
-    private bool _showTransmettiPanel = false;
-    private bool _isLoadingMacchine = false;
-    private bool _isTrasmettendo = false;
-    private List<MacchinaDto> _macchineTrasmetti = new();
-    private Guid _macchinaTrasmessiId = Guid.Empty;
     
     protected override async Task OnInitializedAsync()
     {

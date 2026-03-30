@@ -4,7 +4,32 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.23
+## 🔖 Versione Corrente: v1.60.25
+
+---
+
+## 🔖 v1.60.25 - Pulsanti globali 3D + bold — unificazione grafica completa (30 Mar 2026)
+
+**Data**: 30 Marzo 2026
+
+### 🎨 UI — Centralizzazione stile pulsanti (BIBBIA: una fonte di verità)
+
+**Obiettivo**: tutti i `MudButton` e `MudFab` dell'app condividono ora lo stesso stile 3D avanzato, con testo in grassetto.
+
+**Regole globali aggiunte in `app.css` (sezione PULSANTI GLOBALI)**:
+1. **Bold universale** — `.mud-button-root .mud-button-label { font-weight: 700 }` copre Filled, Outlined e Text
+2. **Outlined — tint 3D** — background `color-mix(currentColor 15%, white)` + bevel shadow + active press-down; dark-mode usa `transparent` invece di white
+3. **Filled — shadow bevel** — `box-shadow` con highlight bianco inset + ombra scura, preserva intatto il colore palette MudBlazor
+4. **Hover/Active** — tutti i tipi hanno transizione `box-shadow 0.15s ease` + `translateY(1px)` al click
+
+**Gerarchia CSS**:
+- `app.css` (globale) ← base per tutti i pulsanti
+- `layout-config.css` (.toolbar-sticky, .settings-panel) ← override più specifici con `--mes-button-color` per colori custom dell'utente: sovrascrivono la base senza conflitti
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — aggiunto blocco PULSANTI GLOBALI (v1.60.24/25)
+- `MESManager.Web/Constants/AppVersion.cs` — 1.60.24 → 1.60.25
+- `MESManager.Web/Components/App.razor` — cache buster app.css v=1586 → v=1587
 
 ---
 
