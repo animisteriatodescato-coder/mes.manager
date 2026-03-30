@@ -482,6 +482,46 @@ private Dictionary<Guid, S7Client> _plcPool = new();
 
 ---
 
+## 🚀 Trasmissione Ricette da UI (v1.60.22+)
+
+### Flusso operativo
+
+Dalla schermata **Programma Macchine** è possibile trasmettere una ricetta direttamente al PLC:
+
+1. Cliccare il badge verde ricetta → si apre `RicettaViewDialog`
+2. Cliccare **"Trasmetti alla Macchina"** (pulsante verde nel footer)
+3. Si apre `TrasmmettiRicettaMacchinaDialog` con la lista macchine con PLC configurato
+4. Selezionare la macchina target → **"Trasmetti al PLC"**
+5. Il sistema chiama `POST /api/plc/load-recipe-by-article`
+
+### Endpoint API
+
+```
+POST /api/plc/load-recipe-by-article
+Body: { macchinaId, codiceArticolo, forceReload: true }
+```
+
+Scrive i parametri ricetta su **DB55 offset 100+** del PLC selezionato.
+
+### Dialog coinvolti
+
+| Dialog | Scopo |
+|--------|-------|
+| `RicettaViewDialog` | Visualizza parametri + pulsanti Importa/Trasmetti |
+| `ImportaRicettaMacchinaDialog` | Legge DB56 PLC → salva come ricetta in DB |
+| `TrasmmettiRicettaMacchinaDialog` | Legge ricetta da DB → scrive su DB55 PLC |
+
+### Differenza Importa vs Trasmetti
+
+| | Importa | Trasmetti |
+|--|---------|-----------|
+| **Direzione** | PLC → Database | Database → PLC |
+| **Sorgente** | DB56 (valori runtime) | Ricetta salvata in DB |
+| **Destinazione** | Tabella `RicetteArticoli` | DB55 offset 100+ |
+| **Quando usare** | Dopo lavorazione manuale per salvare nuova ricetta | Prima di produzione per caricare ricetta corretta |
+
+---
+
 ## 📡 Sistema Trasmissione Ricette PLC (v1.34.0)
 
 > **Aggiunto**: 11 Febbraio 2026  

@@ -4,7 +4,32 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.25
+## 🔖 Versione Corrente: v1.60.27
+
+---
+
+## 🔖 v1.60.27 - Trasmetti Ricetta: popup dedicato invece di pannello inline (30 Mar 2026)
+
+**Data**: 30 Marzo 2026
+
+### 🔧 UX — Trasmetti Ricetta alla Macchina come dialog separato
+
+**Problema**: il pannello "Trasmetti alla Macchina" dentro `RicettaViewDialog` tagliava le chip delle macchine quando erano molte.
+
+**Soluzione**: creato `TrasmmettiRicettaMacchinaDialog.razor` dedicato (stesso pattern di `ImportaRicettaMacchinaDialog`).
+
+**File creati**:
+- `MESManager.Web/Components/Dialogs/TrasmmettiRicettaMacchinaDialog.razor` — dialog con lista macchine PLC, conferma trasmissione, stato success
+
+**File modificati**:
+- `MESManager.Web/Components/Dialogs/RicettaViewDialog.razor` — rimosso pannello inline, pulsante "Trasmetti alla Macchina" apre ora il nuovo dialog; rimossi campi di stato inutilizzati
+- `MESManager.Web/Constants/AppVersion.cs` — 1.60.26 → 1.60.27
+
+**Funzionalità**:
+1. Pulsante "Trasmetti alla Macchina" (verde) nel footer di `RicettaViewDialog` (visibile solo da ProgrammaMacchine)
+2. Apre dialog con lista macchine con PLC configurato (`IndirizzoPLC` non vuoto)
+3. Selezione macchina → conferma → `POST /api/plc/load-recipe-by-article`
+4. Schermata di successo al termine
 
 ---
 
