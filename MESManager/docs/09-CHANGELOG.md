@@ -33,7 +33,32 @@
 
 ---
 
-## 🔖 v1.60.25 - Pulsanti globali 3D + bold — unificazione grafica completa (30 Mar 2026)
+## 🔖 v1.60.26 - UI: pulsanti vetro bianco, massimo contrasto testo (30 Mar 2026)
+
+**Data**: 30 Marzo 2026
+
+### 🎨 UI — Pulsanti toolbar: stile vetro bianco ad alto contrasto
+
+**Obiettivo**: eliminare leggibilità ridotta del testo su sfondo scuro/tinted — ora tutti i pulsanti toolbar hanno sfondo bianco/semitrasparente con testo al massimo contrasto.
+
+**Modifiche `app.css`** (sezione PULSANTI GLOBALI):
+- Outlined: sfondo `rgba(255,255,255,0.95)` con `color` primario, testo leggibile su qualsiasi sfondo
+- Dark mode: sfondo `rgba(40,40,60,0.92)`, testo bianco `.mud-button-root { color: white }`
+- Rimozione `color-mix` che causava tint su sfondo con scarso contrasto
+
+**Modifiche `layout-config.css`**:
+- `.toolbar-sticky .mud-button-root`: background white + border colore toolbar + testo `--mes-button-color`
+- Hover: `rgba(255,255,255,0.85)` per effetto press
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — riscrittura sezione pulsanti vetro bianco
+- `MESManager.Web/wwwroot/css/layout-config.css` — override toolbar pulsanti
+- `MESManager.Web/Components/App.razor` — cache buster aggiornato
+- `MESManager.Web/Constants/AppVersion.cs` — 1.60.25 → 1.60.26
+
+---
+
+## 🔖 v1.60.25 - UI: centralizzazione stile pulsanti globali 3D+bold (30 Mar 2026)
 
 **Data**: 30 Marzo 2026
 
@@ -52,9 +77,51 @@
 - `layout-config.css` (.toolbar-sticky, .settings-panel) ← override più specifici con `--mes-button-color` per colori custom dell'utente: sovrascrivono la base senza conflitti
 
 #### File modificati
-- `MESManager.Web/wwwroot/app.css` — aggiunto blocco PULSANTI GLOBALI (v1.60.24/25)
+- `MESManager.Web/wwwroot/app.css` — aggiunto blocco PULSANTI GLOBALI
 - `MESManager.Web/Constants/AppVersion.cs` — 1.60.24 → 1.60.25
-- `MESManager.Web/Components/App.razor` — cache buster app.css v=1586 → v=1587
+- `MESManager.Web/Components/App.razor` — cache buster app.css aggiornato
+
+---
+
+## 🔖 v1.60.24 - IsReadOnly esteso a ProgrammaMacchine, Gantt, dialog (30 Mar 2026)
+
+**Data**: 30 Marzo 2026
+
+### 🔒 Feature — IsReadOnly Soluzione2: guard completo su tutte le pagine write
+
+Estensione del sistema `IsReadOnly` (introdotto in v1.60.20) a tutte le componenti mancanti.
+
+**ProgrammaMacchine**:
+- `[CascadingParameter] bool IsReadOnly` — guard su `ImportaRicetta` e `OnRowDoubleClick`
+- Passa `IsReadOnly` a `AnimeEditDialog` e `RicettaViewDialog`
+
+**GanttMacchine**:
+- `[CascadingParameter] bool IsReadOnly` — `Disabled` su 5 bottoni toolbar
+- Guard su: `EsportaSuProgramma`, `OpenPriorityDialog`, `ToggleLock`, `ArchiviaSelezionata`, `OpenVincoliDialog`, `OnCommessaMoved`
+
+**CommesseAperte**:
+- `Disabled` su btn-carica-su-gantt + guard `CaricaSuGantt()` + passa `IsReadOnly` a `RicettaViewDialog`
+
+**AnimeEditDialog**:
+- `[Parameter] bool IsReadOnly` — banner "sola lettura" + `Disabled` su Save + nasconde upload/delete foto/doc
+
+**RicettaViewDialog**:
+- `[Parameter] bool IsReadOnly` — `!IsReadOnly` in `ShowImportButton`/`ShowTransmitButton` + guard `ondblclick` su `OpenModificaAsync`
+
+**ImportaRicettaMacchinaDialog**:
+- `[Parameter] bool IsReadOnly` — `Disabled` su btn-importa
+
+#### File modificati
+- `MESManager.Web/Components/Dialogs/AnimeEditDialog.razor`
+- `MESManager.Web/Components/Dialogs/ImportaRicettaMacchinaDialog.razor`
+- `MESManager.Web/Components/Dialogs/RicettaViewDialog.razor`
+- `MESManager.Web/Components/Dialogs/TrasmmettiRicettaMacchinaDialog.razor` (creato)
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoAnime.razor`
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoCommesse.razor`
+- `MESManager.Web/Components/Pages/Programma/CommesseAperte.razor`
+- `MESManager.Web/Components/Pages/Programma/GanttMacchine.razor`
+- `MESManager.Web/wwwroot/app.css` — pulsanti globali 3D+bold (v1.60.24)
+- `MESManager.Web/Constants/AppVersion.cs` — 1.60.23 → 1.60.24
 
 ---
 
@@ -73,6 +140,37 @@
 - `MESManager.Web/wwwroot/css/layout-config.css` — pulsanti 3D tint colorato
 - `MESManager.Web/Components/Pages/Programma/ProgrammaMacchine.razor` — rimossa legenda colori footer
 - `MESManager.Web/Constants/AppVersion.cs` — 1.60.22 → 1.60.23
+
+---
+
+## 🔖 v1.60.22 - Fix colonna Ricetta duplicata + Trasmetti alla Macchina (30 Mar 2026)
+
+**Data**: 30 Marzo 2026
+
+### 🐛 Fix — Colonna Ricetta duplicata in ProgrammaMacchine
+
+**Problema**: nella griglia Programma Macchine comparivano due colonne "Ricetta": una con badge verde (corretta) e una con valori `true/false` (sbagliata).
+
+**Causa**: `anime-columns-shared.js` conteneva una propria colonna `hasRicetta` aggiunta a tutte le griglie, mentre ogni griglia usa già `ricettaColumnShared.createColumnDef()`.
+
+**Fix**: rimossa la colonna `hasRicetta` duplicata da `anime-columns-shared.js` — fonte unica di verità rispettata.
+
+#### File modificati
+- `MESManager.Web/wwwroot/lib/ag-grid/anime-columns-shared.js` — rimossa colonna hasRicetta (duplicata)
+
+### ✨ Feature — Pulsante "Trasmetti alla Macchina" in RicettaViewDialog
+
+Aggiunto pulsante verde "Trasmetti alla Macchina" nel popup ricetta di ProgrammaMacchine.
+
+- `ShowTransmitButton = true` passato da `ProgrammaMacchine.razor` a `RicettaViewDialog`
+- Chiama `POST /api/plc/load-recipe-by-article` con `ForceReload = true`
+- ⚠️ In questa versione era implementato come pannello inline (poi spostato a popup in v1.60.27)
+
+#### File modificati
+- `MESManager.Web/wwwroot/lib/ag-grid/anime-columns-shared.js` — rimossa colonna hasRicetta
+- `MESManager.Web/Components/Dialogs/RicettaViewDialog.razor` — aggiunto ShowTransmitButton + pannello inline
+- `MESManager.Web/Components/Pages/Programma/ProgrammaMacchine.razor` — ShowTransmitButton = true
+- `MESManager.Web/Constants/AppVersion.cs` — 1.60.21 → 1.60.22
 
 ---
 
