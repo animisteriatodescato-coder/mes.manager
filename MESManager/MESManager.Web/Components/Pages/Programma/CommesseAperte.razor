@@ -41,7 +41,8 @@
                 🚀 Carica su Gantt
             </MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
-            <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
+            <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState"
+                         ShowGlobalSave="@IsAdmin" OnSaveGlobal="@SaveAsGlobalDefault" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)">Impostazioni</MudButton>
         </MudStack>
@@ -154,6 +155,7 @@
 
 @code {
     [CascadingParameter(Name = "IsReadOnly")] private bool IsReadOnly { get; set; }
+    [CascadingParameter(Name = "IsAdmin")]    private bool IsAdmin    { get; set; }
 
     private List<CommessaDto> _commesse = new();
     private GridUiSettings settings = new();
@@ -658,6 +660,17 @@
             
             await ApplyUiSettings();
             StateHasChanged();
+        }
+        catch { }
+    }
+
+    private async Task SaveAsGlobalDefault()
+    {
+        try
+        {
+            var gridState = await JSRuntime.InvokeAsync<string>("commesseAperteGrid.getState");
+            settings.ColumnStateJson = gridState;
+            await PreferencesService.SetGlobalAsync("commesse-aperte-grid-settings", settings);
         }
         catch { }
     }

@@ -30,7 +30,8 @@ public abstract class CatalogoGridBase : ComponentBase, IAsyncDisposable
 
     /// <summary>True se l'utente ha ruolo Visualizzazione senza ruoli write. Propagato dal MainLayout come CascadingValue.</summary>
     [CascadingParameter(Name = "IsReadOnly")] public bool IsReadOnly { get; set; }
-
+    /// <summary>True se l'utente ha ruolo Admin. Propagato dal MainLayout come CascadingValue.</summary>
+    [CascadingParameter(Name = "IsAdmin")] public bool IsAdmin { get; set; }
     // ── Identificatori per questa griglia ────────────────────────────────────
     /// <summary>Nome oggetto JS, es: "articoliGrid"</summary>
     protected abstract string GridNamespace { get; }
@@ -124,6 +125,18 @@ public abstract class CatalogoGridBase : ComponentBase, IAsyncDisposable
     protected async Task ExportCsv()
     {
         try { await JSRuntime.InvokeVoidAsync($"{GridNamespace}.exportCsv"); }
+        catch { }
+    }
+
+    /// <summary>Salva lo stato corrente come default globale per tutti gli utenti (solo Admin).</summary>
+    protected async Task SaveAsGlobalDefault()
+    {
+        try
+        {
+            var state = await JSRuntime.InvokeAsync<string>($"{GridNamespace}.getState");
+            settings.ColumnStateJson = state;
+            await PreferencesService.SetGlobalAsync($"{SettingsKey}-settings", settings);
+        }
         catch { }
     }
 

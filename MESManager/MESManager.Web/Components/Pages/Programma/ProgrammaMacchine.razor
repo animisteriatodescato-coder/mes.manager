@@ -31,7 +31,8 @@
             <MudSpacer />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshData" data-testid="btn-refresh">Aggiorna</MudButton>
-            <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
+            <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState"
+                         ShowGlobalSave="@IsAdmin" OnSaveGlobal="@SaveAsGlobalDefault" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Print" OnClick="@PrintCommesse">Stampa</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)">Impostazioni</MudButton>
@@ -199,6 +200,7 @@
 
 @code {
     [CascadingParameter(Name = "IsReadOnly")] private bool IsReadOnly { get; set; }
+    [CascadingParameter(Name = "IsAdmin")]    private bool IsAdmin    { get; set; }
 
     private List<CommessaDto> _commesse = new();
     private List<CommessaDto> _allCommesse = new();
@@ -680,6 +682,17 @@
         {
             // Error resetting to fixed state
         }
+    }
+
+    private async Task SaveAsGlobalDefault()
+    {
+        try
+        {
+            var gridState = await JSRuntime.InvokeAsync<string>("programmaMacchineGrid.getState");
+            settings.ColumnStateJson = gridState;
+            await PreferencesService.SetGlobalAsync("programma-macchine-grid-settings", settings);
+        }
+        catch { }
     }
 
     private async Task ExportCsv()

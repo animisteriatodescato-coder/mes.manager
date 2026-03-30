@@ -26,7 +26,8 @@
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
             <MudSpacer />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel" data-testid="btn-commesse-columns">Colonne</MudButton>
-            <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState" />
+            <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState"
+                         ShowGlobalSave="@IsAdmin" OnSaveGlobal="@SaveAsGlobalDefault" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv" data-testid="btn-commesse-export">Export CSV</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)" data-testid="btn-commesse-settings">Impostazioni</MudButton>
         </MudStack>

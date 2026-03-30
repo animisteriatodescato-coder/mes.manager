@@ -4,12 +4,10 @@
 @using MESManager.Web.Models
 @using MESManager.Web.Services
 @using Microsoft.JSInterop
-@using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Nav
 @inject PreferencesService PreferencesService
 @inject IJSRuntime JSRuntime
 @inject PlcDataService PlcService
-@inject AuthenticationStateProvider AuthStateProvider
 @implements IAsyncDisposable
 
 <PageTitle>PLC Storico</PageTitle>
@@ -63,7 +61,7 @@
             
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel" data-testid="btn-plc-storico-colonne">Colonne</MudButton>
             <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState"
-                         ShowGlobalSave="@_isAdmin" OnSaveGlobal="@SaveAsGlobalDefault" />
+                         ShowGlobalSave="@IsAdmin" OnSaveGlobal="@SaveAsGlobalDefault" />
         </MudStack>
     </MudPaper>
 
@@ -84,13 +82,8 @@
     private string filterValue = string.Empty;
     private DateTime? dataInizio = DateTime.Today;
     private DateTime? dataFine = DateTime.Today.AddDays(1);
-    private bool _isAdmin;
 
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        _isAdmin = authState.User.IsInRole("Admin");
-    }
+    [CascadingParameter(Name = "IsAdmin")] private bool IsAdmin { get; set; }
 
     private async Task OnSearchDebounced(string value)
     {
