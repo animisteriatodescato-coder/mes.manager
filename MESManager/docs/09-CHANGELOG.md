@@ -4,7 +4,43 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.35
+## 🔖 Versione Corrente: v1.60.37
+
+---
+
+## 🔖 v1.60.37 — AnimeEditDialog: Ubicazione in riga 2, Codice/Descrizione allargati (31 Mar 2026)
+
+**Data**: 31 Marzo 2026
+
+### 🐛 Fix — Layout IDENTIFICAZIONE AnimeEditDialog
+
+- **Ubicazione** spostata dalla riga 1 alla riga 2 (prima di Codice Cassa)
+- **Codice** allargato xs=2→xs=3, **Descrizione** allargata xs=3→xs=4 (spazio recuperato da Ubicazione rimossa da riga 1)
+- **U.M.** stretta xs=3→xs=2, label accorciata da "Unità Misura" a "U.M." per risparmiare spazio
+- **CodiceCassa** xs=4→xs=3 per fare spazio a Ubicazione in riga 2
+
+**Nuovo layout:**
+- Row 1: ID(1) + Codice(3) + Descrizione(4) + Cliente(4) = 12
+- Row 2: Ubicazione(2) + CodiceCassa(3) + CodiceAnime(5) + U.M.(2) = 12
+
+**File modificati**:
+- `MESManager.Web/Components/Dialogs/AnimeEditDialog.razor`
+- `MESManager.Web/Constants/AppVersion.cs`: 1.60.36→1.60.37
+
+---
+
+## 🔖 v1.60.36 — Toggle "Chiuse ON/OFF" in Programma Macchine (31 Mar 2026)
+
+**Data**: 31 Marzo 2026
+
+### ✨ Feature — ProgrammaMacchine: filtro commesse chiuse
+
+- Aggiunto toggle per mostrare/nascondere le commesse chiuse nella griglia
+- `ApplyFilter()` centralizzato per evitar duplicazione logica di filtro
+
+**File modificati**:
+- `MESManager.Web/Components/Pages/Programma/ProgrammaMacchine.razor`
+- `MESManager.Web/Constants/AppVersion.cs`: 1.60.35→1.60.36
 
 ---
 
