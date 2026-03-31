@@ -4,7 +4,26 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.38
+## 🔖 Versione Corrente: v1.60.40
+
+---
+
+## 🔖 v1.60.40 — PDF Scheda Anima: redesign professionale + multi-foto (31 Mar 2026)
+
+**Data**: 31 Marzo 2026
+
+### 🎨 Miglioramento — PDF più professionale, tutte le foto in ordine di priorità
+
+**Motivazione**: il PDF precedente mostrava solo la prima foto con testo "+ altre N foto"
+e usava un blu troppo vivace. Richiesta UI più moderata e foto complete in ordine.
+
+**Modifiche `AnimePdfService.cs`**:
+- **Palette rinnovata**: navy corporate `#1C3F6E`, sfondo sezione `#F0F4F9`, bordo `#D0D8E4` — meno aggressivo
+- **Sezioni**: bordo sinistro colorato + sfondo tenue, testo navy (non più bianco su blu pieno)
+- **Colonna foto**: da 35% → 44% del layout (più spazio)
+- **Multi-foto**: carica e mostra TUTTE le foto ordinate per priorità (1, 2, 3...) con didascalia `[N] nome`
+- **Margini**: da 1.2cm → 1.5cm per respirabilità
+- Rimosso testo "+altre N foto" residuo
 
 ---
 
