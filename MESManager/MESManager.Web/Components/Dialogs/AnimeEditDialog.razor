@@ -7,7 +7,7 @@
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 
-<MudDialog Style="max-width: 1200px;" data-testid="dlg-anime-edit">
+<MudDialog Class="anime-edit-dialog" Style="max-width: 1380px;" data-testid="dlg-anime-edit">
     <TitleContent>
         <MudStack Row="true" AlignItems="AlignItems.Center">
             <MudIcon Icon="@Icons.Material.Filled.Edit" />
@@ -21,7 +21,7 @@
         }
         <MudGrid Spacing="2">
             <!-- COLONNA SINISTRA: DATI -->
-            <MudItem xs="8">
+            <MudItem xs="7">
                 <MudStack Spacing="1">
             <!-- IDENTIFICAZIONE -->
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
@@ -38,10 +38,10 @@
                 <MudItem xs="4">
                     <MudTextField Value="@Anime.DescrizioneArticolo" Label="Descrizione" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
                 </MudItem>
-                <MudItem xs="2">
+                <MudItem xs="3">
                     <MudTextField Value="@Anime.Cliente" Label="Cliente" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
                 </MudItem>
-                <MudItem xs="3">
+                <MudItem xs="2">
                     <MudTextField @bind-Value="Anime.Ubicazione" Label="Ubicazione" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
             </MudGrid>
@@ -49,10 +49,10 @@
                 <MudItem xs="4">
                     <MudTextField @bind-Value="Anime.CodiceCassa" Label="Codice Cassa" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
-                <MudItem xs="4">
+                <MudItem xs="5">
                     <MudTextField @bind-Value="Anime.CodiceAnime" Label="Codice Anime" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
-                <MudItem xs="4">
+                <MudItem xs="3">
                     <MudTextField @bind-Value="Anime.UnitaMisura" Label="Unità Misura" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
             </MudGrid>
@@ -65,7 +65,7 @@
                 <MudText Typo="Typo.caption" Color="Color.Primary"><b>IMBALLO</b></MudText>
             </MudStack>
             <MudGrid Spacing="1">
-                <MudItem xs="3">
+                <MudItem xs="4">
                     <MudSelect @bind-Value="ImballoSelezionato" Label="Imballo" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
                         <MudSelectItem Value="@((int?)null)">-</MudSelectItem>
                         @foreach (var item in imballoOptions)
@@ -77,7 +77,7 @@
                 <MudItem xs="2">
                     <MudNumericField @bind-Value="Anime.QuantitaPiano" Label="Qta/Piano" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
-                <MudItem xs="2">
+                <MudItem xs="1">
                     <MudNumericField @bind-Value="Anime.NumeroPiani" Label="N.Piani" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
                 <MudItem xs="2">
@@ -111,7 +111,7 @@
                         }
                     </MudSelect>
                 </MudItem>
-                <MudItem xs="3">
+                <MudItem xs="4">
                     <MudSelect @bind-Value="Anime.Vernice" Label="Vernice" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
                         <MudSelectItem Value="@((string?)null)">-</MudSelectItem>
                         @foreach (var item in verniceOptions)
@@ -130,34 +130,31 @@
                 <MudText Typo="Typo.caption" Color="Color.Primary"><b>PRODUZIONE</b></MudText>
             </MudStack>
             <MudGrid Spacing="1">
-                <MudItem xs="2">
+                <MudItem xs="1">
                     <MudTextField @bind-Value="Anime.Ciclo" Label="Ciclo" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
-                <MudItem xs="1">
+                <MudItem xs="2">
                     <MudTextField @bind-Value="Anime.Peso" Label="Peso" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
-                <MudItem xs="1">
+                <MudItem xs="2">
                     <MudTextField @bind-Value="Anime.Figure" Label="Figure" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
-                <MudItem xs="2">
+                <MudItem xs="1">
                     <MudTextField @bind-Value="Anime.Maschere" Label="Maschere" Variant="Variant.Outlined" Margin="Margin.Dense" />
                 </MudItem>
-                <MudItem xs="2">
+                <MudItem xs="3">
                     <MudSelect @bind-Value="Anime.TogliereSparo" Label="Tog.Sparo" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
                         <MudSelectItem Value="@((string?)null)">-</MudSelectItem>
                         <MudSelectItem Value="@("0")">No</MudSelectItem>
                         <MudSelectItem Value="@("1")">Sì</MudSelectItem>
                     </MudSelect>
                 </MudItem>
-                <MudItem xs="2">
+                <MudItem xs="3">
                     <MudTextField @bind-Value="Anime.ArmataL" Label="Armata L" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                </MudItem>
-                <MudItem xs="2">
-                    <MudSwitch @bind-Value="Anime.TrasmettiTutto" Label="Trasm." Color="Color.Primary" />
                 </MudItem>
             </MudGrid>
             <MudGrid Spacing="1">
-                <MudItem xs="2">
+                <MudItem xs="1">
                     <MudSelect @bind-Value="Anime.Assemblata" Label="Assemblata" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
                         <MudSelectItem Value="@((string?)null)">-</MudSelectItem>
                         <MudSelectItem Value="@("Sì")">Sì</MudSelectItem>
@@ -249,7 +246,7 @@
             </MudItem>
 
             <!-- COLONNA DESTRA: FOTO -->
-            <MudItem xs="4">
+            <MudItem xs="5">
                 <MudPaper Elevation="1" Class="pa-3" Style="height: 100%;">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-2">
                         <MudIcon Icon="@Icons.Material.Filled.PhotoLibrary" Size="Size.Small" Color="Color.Info" />
@@ -283,12 +280,12 @@
                             @foreach (var foto in allegatiResponse.Foto)
                             {
                                 <MudCard Elevation="2">
-                                    <MudCardMedia Image="@foto.FileUrl" Height="180" Style="cursor: pointer;" @onclick="() => OpenFotoInNewTab(foto)" />
-                                    <MudCardContent Class="pa-2">
+                                    <MudCardMedia Image="@foto.FileUrl" Height="200" Style="cursor: pointer;" @onclick="() => OpenFotoInNewTab(foto)" />
+                                    <MudCardContent Class="pa-1">
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                             <MudSelect T="int" Value="@foto.Priorita" ValueChanged="@((int p) => UpdatePriorita(foto, p))" 
                                                        Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" 
-                                                       Style="max-width: 90px;" Label="Prior." Disabled="@IsReadOnly">
+                                                       Style="max-width: 72px;" Label="Prior." Disabled="@IsReadOnly">
                                                 <MudSelectItem Value="1">1</MudSelectItem>
                                                 <MudSelectItem Value="2">2</MudSelectItem>
                                                 <MudSelectItem Value="3">3</MudSelectItem>
@@ -296,7 +293,7 @@
                                                 <MudSelectItem Value="5">5</MudSelectItem>
                                             </MudSelect>
                                             <MudTooltip Text="@foto.NomeFile">
-                                                <MudText Typo="Typo.caption" Style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;">
+                                                <MudText Typo="Typo.caption" Style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;">
                                                     @(foto.Descrizione ?? foto.NomeFile)
                                                 </MudText>
                                             </MudTooltip>

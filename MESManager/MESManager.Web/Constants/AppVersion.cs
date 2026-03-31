@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.60.32";
+    public const string Current = "1.60.33";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.60.32  Fix dark mode: cache bust CSS + footer testo + paging "100" visibili
+    public const string Display = "v" + Current; // v1.60.33  Fix dark mode DEFINITIVO: CSS vars AG Grid + cascade order (app.css dopo ag-grid CDN)
 }

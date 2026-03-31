@@ -23,7 +23,6 @@ namespace MESManager.Application.DTOs
         public int? IdArticolo { get; set; }
         public string? MacchineSuDisponibili { get; set; }
         public string? MacchineSuDisponibiliDescrizione { get; set; }  // Descrizione lookup
-        public bool TrasmettiTutto { get; set; }
         public string? Colla { get; set; }
         public string? CollaDescrizione { get; set; }  // Descrizione lookup
         public string? Sabbia { get; set; }

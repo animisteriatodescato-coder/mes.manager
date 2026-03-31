@@ -174,55 +174,39 @@ h1:focus {
 }
 
 /* AG Grid — Barra paginazione dark mode (testo pagine invisibile su sfondo scuro)
-   Usa var(--mes-row-text) per seguire il tema colore assegnato dall'utente.
-   Selettori estesi per coprire page-size picker, paging numbers e span interni. */
-.mud-theme-dark .ag-theme-alpine .ag-paging-panel,
-.mud-theme-dark .ag-theme-alpine .ag-paging-row-summary-panel,
-.mud-theme-dark .ag-theme-alpine .ag-paging-row-summary-panel span,
-.mud-theme-dark .ag-theme-alpine .ag-paging-page-summary-panel,
-.mud-theme-dark .ag-theme-alpine .ag-paging-button,
-.mud-theme-dark .ag-theme-alpine .ag-paging-description,
-.mud-theme-dark .ag-theme-alpine .ag-paging-description span,
-.mud-theme-dark .ag-theme-alpine .ag-paging-page-size,
-.mud-theme-dark .ag-theme-alpine .ag-paging-page-size span,
-.mud-theme-dark .ag-theme-alpine .ag-paging-page-size .ag-wrapper,
-.mud-theme-dark .ag-theme-alpine .ag-paging-page-size .ag-picker-field-display,
-.mud-theme-dark .ag-theme-alpine .ag-paging-number,
-.mud-theme-dark .ag-theme-alpine .ag-paging-panel span {
-    color: var(--mes-row-text, #E6E6F0) !important;
+   SOLUZIONE ROOT CAUSE: override CSS variables --ag-foreground-color e
+   --ag-secondary-foreground-color su .ag-theme-alpine in dark mode.
+   Questo fissa TUTTA la testo AG Grid incluso paging, celle senza cellStyle, ecc.
+   app.css carica DOPO ag-theme-alpine.css (ordine in App.razor) quindi vince cascade. */
+.mud-theme-dark .ag-theme-alpine {
+    --ag-foreground-color: var(--mes-row-text, #E6E6F0);
+    --ag-secondary-foreground-color: var(--mes-row-text, #E6E6F0);
+    --ag-disabled-foreground-color: rgba(230, 230, 240, 0.4);
+    --ag-header-foreground-color: var(--mes-row-text, #E6E6F0);
+    --ag-icon-font-color: var(--mes-row-text, #E6E6F0);
 }
 .mud-theme-dark .ag-theme-alpine .ag-paging-panel {
     background-color: var(--mes-ag-panel-bg, #1e2030) !important;
     border-top-color: rgba(255,255,255,0.1) !important;
 }
-.mud-theme-dark .ag-theme-alpine .ag-paging-button svg,
-.mud-theme-dark .ag-theme-alpine .ag-paging-button .ag-icon {
-    color: var(--mes-row-text, #E6E6F0) !important;
-    fill: var(--mes-row-text, #E6E6F0) !important;
-}
-/* Page size select wrapper in pagination */
+/* Page size select wrapper */
 .mud-theme-dark .ag-theme-alpine .ag-paging-page-size .ag-select .ag-picker-field-wrapper {
     background-color: var(--mes-ag-input-bg, #262636) !important;
     border-color: var(--mes-ag-input-border, #4a4a6a) !important;
 }
-/* Valore "100" dentro il picker della page-size */
-.mud-theme-dark .ag-theme-alpine .ag-picker-field-display,
-.mud-theme-dark .ag-theme-alpine .ag-picker-field-input {
-    color: var(--mes-row-text, #E6E6F0) !important;
-}
 
-/* ── Footer info griglia: testo visibile in dark mode ─────────────────────
-   REGOLA: sta in app.css (caricato DOPO mudblazor.min.css) con selettori
-   ad alta specificita' (html body = 2 elementi) per superare .mud-secondary-text.
-   NON duplicare in layout-config.css. ────────────────────────────────── */
-html body .mud-theme-dark .footer-info .mud-secondary-text,
-html body .mud-theme-dark .footer-info .mud-primary-text,
-html body .mud-theme-dark .footer-info .mud-default-text,
-html body .mud-theme-dark .footer-info .mud-typography {
+/* Footer info bar griglia (Righe caricate, Ultimo aggiornamento, chip Pronto)
+   app.css carica DOPO MudBlazor.min.css quindi questi selettori sovra-specificano
+   .mud-secondary-text (che imposta color: rgba(0,0,0,0.6) in light mode).
+   In dark mode MudBlazor usa color: rgba(255,255,255,0.7) ma non su elementi
+   annidati in classi custom — quindi forzare qui. */
+.mud-theme-dark .footer-info,
+.mud-theme-dark .footer-info .mud-typography,
+.mud-theme-dark .footer-info .mud-secondary-text,
+.mud-theme-dark .footer-info .mud-primary-text,
+.mud-theme-dark .footer-info span,
+.mud-theme-dark .footer-info strong {
     color: var(--mes-row-text, #E6E6F0) !important;
-}
-html body .mud-theme-dark .footer-info strong {
-    color: inherit !important;
 }
 
 /* ========================================================================

@@ -75,6 +75,7 @@
             sortable: true, 
             filter: true, 
             width: 130,
+            hide: true,
             valueFormatter: params => params.value ? 'Sì' : 'No',
             editable: false
         },

@@ -7,13 +7,15 @@
     <base href="/" />
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
-    <link href="app.css?v=1590" rel="stylesheet" />
-    <link href="css/layout-config.css?v=2" rel="stylesheet" />
     
-    <!-- AG Grid Community CSS -->
+    <!-- AG Grid Community CSS (prima di app.css sì che le nostre regole vincono la cascade) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/styles/ag-grid.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/styles/ag-theme-alpine.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/styles/ag-theme-alpine-dark.css" />
+
+    <!-- App CSS: caricato DOPO AG Grid e MudBlazor così vince la cascade (stessa specificità = ultimo vince) -->
+    <link href="app.css?v=1592" rel="stylesheet" />
+    <link href="css/layout-config.css?v=3" rel="stylesheet" />
     
     <!-- Vis-Timeline CSS -->
     <link rel="stylesheet" href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" />

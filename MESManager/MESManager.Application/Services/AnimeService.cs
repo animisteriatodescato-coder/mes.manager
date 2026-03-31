@@ -115,7 +115,6 @@ namespace MESManager.Application.Services
             entity.CodiceAnime = dto.CodiceAnime;
             entity.IdArticolo = dto.IdArticolo;
             entity.MacchineSuDisponibili = dto.MacchineSuDisponibili;
-            entity.TrasmettiTutto = dto.TrasmettiTutto;
             entity.Colla = dto.Colla;
             entity.Sabbia = dto.Sabbia;
             entity.Vernice = dto.Vernice;
@@ -172,7 +171,6 @@ namespace MESManager.Application.Services
                 IdArticolo = entity.IdArticolo,
                 MacchineSuDisponibili = entity.MacchineSuDisponibili,
                 MacchineSuDisponibiliDescrizione = GetMacchineDescrizione(entity.MacchineSuDisponibili),
-                TrasmettiTutto = entity.TrasmettiTutto,
                 Colla = entity.Colla,
                 CollaDescrizione = !string.IsNullOrEmpty(entity.Colla) && LookupTables.Colla.TryGetValue(entity.Colla, out var collaDesc) ? collaDesc : entity.Colla,
                 Sabbia = entity.Sabbia,
@@ -234,7 +232,6 @@ namespace MESManager.Application.Services
                 CodiceAnime = dto.CodiceAnime,
                 IdArticolo = dto.IdArticolo,
                 MacchineSuDisponibili = dto.MacchineSuDisponibili,
-                TrasmettiTutto = dto.TrasmettiTutto,
                 Colla = dto.Colla,
                 Sabbia = dto.Sabbia,
                 Vernice = dto.Vernice,
