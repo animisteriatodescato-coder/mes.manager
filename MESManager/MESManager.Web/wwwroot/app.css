@@ -742,9 +742,9 @@ h1:focus {
 .mud-nav-group.nav-sec-statistiche  .mud-collapse-container::after { content: "📊"; }
 .mud-nav-group.nav-sec-impostazioni .mud-collapse-container::after { content: "⚙️"; }
 
-/* === AnimeEditDialog layout ottimizzato (v1.60.33) === */
-/* Dialog piu largo + header/footer compatti + content scrollabile */
-.anime-edit-dialog { max-height: 95vh !important; display: flex; flex-direction: column; }
-.anime-edit-dialog .mud-dialog-content { flex: 1; overflow-y: auto; min-height: 0; }
+/* === AnimeEditDialog layout ottimizzato (v1.60.34) === */
+.anime-edit-dialog .mud-dialog-content { overflow-y: auto !important; max-height: calc(86vh - 110px) !important; }
 .anime-edit-dialog .mud-dialog-title { padding-top: 6px !important; padding-bottom: 6px !important; }
 .anime-edit-dialog .mud-dialog-actions { padding-top: 4px !important; padding-bottom: 4px !important; }
+/* Foto senza crop: mostra l'immagine intera senza tagliarla */
+.anime-edit-dialog .mud-card-media { background-size: contain !important; background-repeat: no-repeat !important; background-color: rgba(0,0,0,0.18) !important; }

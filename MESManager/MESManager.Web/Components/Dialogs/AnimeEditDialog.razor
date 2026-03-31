@@ -280,7 +280,7 @@
                             @foreach (var foto in allegatiResponse.Foto)
                             {
                                 <MudCard Elevation="2">
-                                    <MudCardMedia Image="@foto.FileUrl" Height="200" Style="cursor: pointer;" @onclick="() => OpenFotoInNewTab(foto)" />
+                                    <MudCardMedia Image="@foto.FileUrl" Height="170" Style="cursor: pointer;" @onclick="() => OpenFotoInNewTab(foto)" />
                                     <MudCardContent Class="pa-1">
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                             <MudSelect T="int" Value="@foto.Priorita" ValueChanged="@((int p) => UpdatePriorita(foto, p))" 
