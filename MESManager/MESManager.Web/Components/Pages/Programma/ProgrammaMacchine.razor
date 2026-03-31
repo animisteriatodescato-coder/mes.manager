@@ -271,9 +271,9 @@
             _hubConnection.On<PianificazioneNotification>("PianificazioneUpdated", async (notification) =>
             {
                 // Ricarica i dati quando vengono spostare commesse nel Gantt
-                await LoadData(force: true);
                 await InvokeAsync(async () =>
                 {
+                    await LoadData(force: true);
                     StateHasChanged();
                     if (_isGridInitialized)
                     {
@@ -297,14 +297,8 @@
     {
         try
         {
-            // Get current programmed commesse for the grid
-            var programmate = _commesse.Where(c => 
-                c.NumeroMacchina.HasValue &&
-                c.StatoProgramma != "Archiviata" &&
-                c.StatoProgramma != "Completata"
-            ).ToList();
-            
-            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.setRowData", programmate);
+            // _commesse è già filtrato da LoadData - passa direttamente alla griglia
+            await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.updateData", _commesse);
         }
         catch { }
     }
@@ -333,15 +327,14 @@
             Console.WriteLine($"[PROGRAMMA] StatoProgramma values: {string.Join(", ", _allCommesse.Select(c => c.StatoProgramma).Distinct())}");
             Console.WriteLine($"[PROGRAMMA] Stato values: {string.Join(", ", _allCommesse.Select(c => c.Stato).Distinct())}");
             
-            // 🔄 FILTRO v1.30.7: Mostra solo commesse pianificate NON completate/archiviate
+            // 🔄 FILTRO v1.30.7 (fix v1.30.8): Allineato al Gantt - mostra tutte le commesse assegnate a macchina
+            // non Completate/Archiviate, indipendentemente da Stato ERP o DataInizio
             // IMPORTANTE: StatoProgramma è STRINGA nel DTO, non enum!
             // Programma = Vista Read-Only del Gantt (master source)
             _commesse = _allCommesse.Where(c => 
                 c.NumeroMacchina.HasValue &&
-                c.DataInizioPrevisione.HasValue &&
                 c.StatoProgramma != "Completata" &&
-                c.StatoProgramma != "Archiviata" &&
-                c.Stato == "Aperta"
+                c.StatoProgramma != "Archiviata"
             ).ToList();
             
             // 🔍 DEBUG: Log AFTER filtro

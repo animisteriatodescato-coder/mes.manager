@@ -14,5 +14,5 @@ public static class AppVersion
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.60.33  Fix dark mode DEFINITIVO: CSS vars AG Grid + cascade order (app.css dopo ag-grid CDN)
+    public const string Display = "v" + Current; // v1.60.35  Fix Gantt↔Programma sync: setRowData→updateData, filtro Stato==Aperta rimosso, LoadData in InvokeAsync
 }

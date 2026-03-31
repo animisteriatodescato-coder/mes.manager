@@ -358,37 +358,10 @@ h1:focus {
     color: #f48fb1 !important;
 }
 
-/* % Scarti — colori cella (usati da cellClassRules in plc-storico-grid.js) */
-.ag-theme-alpine .mes-scarti-ok {
-    background-color: #e3f2fd !important;
-    color: #1565c0 !important;
-    font-weight: bold;
-}
-.ag-theme-alpine .mes-scarti-warn {
-    background-color: #fff3e0 !important;
-    color: #e65100 !important;
-    font-weight: bold;
-}
-.ag-theme-alpine .mes-scarti-error {
-    background-color: #fce4ec !important;
-    color: #b71c1c !important;
-    font-weight: bold;
-}
-.mud-theme-dark .ag-theme-alpine .mes-scarti-ok {
-    background-color: #1a3a5c !important;
-    color: #64b5f6 !important;
-    font-weight: bold;
-}
-.mud-theme-dark .ag-theme-alpine .mes-scarti-warn {
-    background-color: #4a2e00 !important;
-    color: #ffa726 !important;
-    font-weight: bold;
-}
-.mud-theme-dark .ag-theme-alpine .mes-scarti-error {
-    background-color: #5c1022 !important;
-    color: #e57373 !important;
-    font-weight: bold;
-}
+/* % Scarti — regole spostate in MainLayout.razor (stesso pattern di mes-stato-*/
+/* Le regole qui erano inutili: MainLayout .ag-cell{color:var(--mes-row-text)!important}
+   sovrascriveva i colori in dark mode (stesso !important, ordine cascade MainLayout > app.css).
+   FONTE DI VERITA': MainLayout.razor :root vars + <style> ag-cell.mes-scarti-* */
 
 /* Contatori allegati (N.Foto verde, N.Doc blu) */
 .ag-theme-alpine .mes-count-foto {

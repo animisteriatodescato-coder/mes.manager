@@ -72,6 +72,13 @@
         --mes-count-foto-color:   @(_isDarkMode ? "#80c783" : "#2e7d32");
         --mes-count-doc-bg:       @(_isDarkMode ? "#0d2740" : "#e3f2fd");
         --mes-count-doc-color:    @(_isDarkMode ? "#90caf9" : "#1565c0");
+        /* % Scarti (PLC Storico) — stesso pattern di mes-stato-*/
+        --mes-scarti-ok-bg:       @(_isDarkMode ? "#1a3a5c" : "#e3f2fd");
+        --mes-scarti-ok-color:    @(_isDarkMode ? "#64b5f6" : "#1565c0");
+        --mes-scarti-warn-bg:     @(_isDarkMode ? "#4a2e00" : "#fff3e0");
+        --mes-scarti-warn-color:  @(_isDarkMode ? "#ffa726" : "#e65100");
+        --mes-scarti-error-bg:    @(_isDarkMode ? "#5c1022" : "#fce4ec");
+        --mes-scarti-error-color: @(_isDarkMode ? "#e57373" : "#b71c1c");
     }
     /* Drawer nav: icone +15% (13→15, 16→18), testo BOLD */
     .mud-drawer [data-testid="nav-menu"] span[style*="font-size: 13px"] { font-size: 15px !important; }
@@ -160,6 +167,22 @@
     .ag-theme-alpine .ag-cell.mes-count-doc {
         background-color: var(--mes-count-doc-bg) !important;
         color: var(--mes-count-doc-color) !important;
+        font-weight: bold;
+    }
+    /* % Scarti (PlcStorico) — usa CSS vars dark/light come mes-stato-* */
+    .ag-theme-alpine .ag-cell.mes-scarti-ok {
+        background-color: var(--mes-scarti-ok-bg) !important;
+        color: var(--mes-scarti-ok-color) !important;
+        font-weight: bold;
+    }
+    .ag-theme-alpine .ag-cell.mes-scarti-warn {
+        background-color: var(--mes-scarti-warn-bg) !important;
+        color: var(--mes-scarti-warn-color) !important;
+        font-weight: bold;
+    }
+    .ag-theme-alpine .ag-cell.mes-scarti-error {
+        background-color: var(--mes-scarti-error-bg) !important;
+        color: var(--mes-scarti-error-color) !important;
         font-weight: bold;
     }
 </style>
