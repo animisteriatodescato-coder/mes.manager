@@ -173,26 +173,41 @@ h1:focus {
     color: #e6e6e6 !important;
 }
 
-/* AG Grid — Barra paginazione dark mode (testo pagine invisibile su sfondo scuro)
-   SOLUZIONE ROOT CAUSE: override CSS variables --ag-foreground-color e
-   --ag-secondary-foreground-color su .ag-theme-alpine in dark mode.
-   Questo fissa TUTTA la testo AG Grid incluso paging, celle senza cellStyle, ecc.
-   app.css carica DOPO ag-theme-alpine.css (ordine in App.razor) quindi vince cascade. */
+/* AG Grid — Dark mode completo: background + foreground + paginazione
+   PROBLEMA: ag-theme-alpine ha sfondo BIANCO di default. In dark mode, il testo
+   viene impostato a #E6E6F0 (chiaro) su sfondo bianco = INVISIBILE.
+   SOLUZIONE: sovrascrivere tutte le variabili di background AG Grid in dark mode.
+   app.css carica DOPO ag-theme-alpine.css (ordine App.razor) quindi vince cascade. */
 .mud-theme-dark .ag-theme-alpine {
+    /* Colori testo */
     --ag-foreground-color: var(--mes-row-text, #E6E6F0);
-    --ag-secondary-foreground-color: var(--mes-row-text, #E6E6F0);
+    --ag-secondary-foreground-color: rgba(230, 230, 240, 0.7);
     --ag-disabled-foreground-color: rgba(230, 230, 240, 0.4);
-    --ag-header-foreground-color: var(--mes-row-text, #E6E6F0);
-    --ag-icon-font-color: var(--mes-row-text, #E6E6F0);
+    --ag-header-foreground-color: #ffffff;
+    --ag-icon-font-color: rgba(230, 230, 240, 0.8);
+    /* Background griglia */
+    --ag-background-color: #1e2030;
+    --ag-odd-row-background-color: #252740;
+    --ag-header-background-color: #16213e;
+    --ag-row-hover-color: rgba(255, 255, 255, 0.06);
+    --ag-selected-row-background-color: rgba(99, 179, 237, 0.15);
+    --ag-range-selection-background-color: rgba(99, 179, 237, 0.2);
+    /* Bordi */
+    --ag-border-color: rgba(255, 255, 255, 0.12);
+    --ag-header-column-separator-color: rgba(255, 255, 255, 0.12);
+    /* Input / select */
+    --ag-input-border-color: rgba(255, 255, 255, 0.2);
+    --ag-input-focus-border-color: rgba(99, 179, 237, 0.5);
+    --ag-control-panel-background-color: #1a1c2e;
 }
 .mud-theme-dark .ag-theme-alpine .ag-paging-panel {
-    background-color: var(--mes-ag-panel-bg, #1e2030) !important;
+    background-color: #16213e !important;
     border-top-color: rgba(255,255,255,0.1) !important;
 }
 /* Page size select wrapper */
 .mud-theme-dark .ag-theme-alpine .ag-paging-page-size .ag-select .ag-picker-field-wrapper {
-    background-color: var(--mes-ag-input-bg, #262636) !important;
-    border-color: var(--mes-ag-input-border, #4a4a6a) !important;
+    background-color: rgba(255,255,255,0.05) !important;
+    border-color: rgba(255,255,255,0.2) !important;
 }
 
 /* Footer info bar griglia (Righe caricate, Ultimo aggiornamento, chip Pronto)

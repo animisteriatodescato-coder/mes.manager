@@ -2,7 +2,7 @@
 
 > **System Prompt Essenziale per AI Assistant**
 > 
-> Questo file definisce regole, contesto e workflow vincolanti per ogni interazione AI sul progetto MESManager.
+> Questo file definisce regole, contesto e workflow vincolanti per ogni interazione AI sul progetto MESManager leggerlo tutto fino all ultima riga sempre ed applicarlo alla lettera.
 > 
 > **Nota**: Questo è il prompt base. Dettagli specifici sono nei file `docs/` dedicati.
 
