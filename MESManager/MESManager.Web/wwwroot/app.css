@@ -396,6 +396,15 @@ h1:focus {
     color: var(--mes-text-on-primary, #FFFFFF) !important;
 }
 
+/* Filled Success/Warning/Error/Info: testo bianco — il dark-mode override
+   forza #e6e6e6 su .mud-button-label, ma questi selettori sono più specifici */
+.mud-button-filled.mud-button-color-success .mud-button-label,
+.mud-button-filled.mud-button-color-warning .mud-button-label,
+.mud-button-filled.mud-button-color-error .mud-button-label,
+.mud-button-filled.mud-button-color-info .mud-button-label {
+    color: #FFFFFF !important;
+}
+
 .mud-chip-color-primary .mud-chip-content {
     color: var(--mes-text-on-primary, #FFFFFF) !important;
 }

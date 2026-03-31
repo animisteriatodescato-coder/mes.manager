@@ -35,11 +35,11 @@
                        OnClick="@ToggleMostraChiuse">
                 Chiuse @(_mostraChiuse ? "ON" : "OFF")
             </MudButton>
-            <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
-            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshData" data-testid="btn-refresh">Aggiorna</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshData" data-testid="btn-refresh">Aggiorna</MudButton>
             <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState"
                          ShowGlobalSave="@IsAdmin" OnSaveGlobal="@SaveAsGlobalDefault" />
-            <MudButton Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
             <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.Print" OnClick="@PrintCommesse">Stampa</MudButton>
             <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)">Impostazioni</MudButton>
         </MudStack>

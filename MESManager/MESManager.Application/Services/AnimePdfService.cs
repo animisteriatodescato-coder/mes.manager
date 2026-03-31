@@ -80,7 +80,7 @@ public class AnimePdfService : IAnimePdfService
             {
                 page.Size(PageSizes.A4);
                 page.Margin(1.5f, Unit.Centimetre);
-                page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
+                page.DefaultTextStyle(x => x.FontSize(11).FontFamily("Arial"));
 
                 page.Header().Element(c => ComposeHeader(c, a));
                 page.Content().Element(c => ComposeContent(c, a, foto));
@@ -98,22 +98,22 @@ public class AnimePdfService : IAnimePdfService
                 row.RelativeItem().Column(inner =>
                 {
                     inner.Item().Text("SCHEDA ANIMA")
-                        .Bold().FontSize(15).FontColor(PrimaryColor).LetterSpacing(0.05f);
+                        .Bold().FontSize(17).FontColor(PrimaryColor).LetterSpacing(0.05f);
                     inner.Item().PaddingTop(2)
                         .Text($"{a.CodiceArticolo}  ·  {a.DescrizioneArticolo}")
-                        .FontSize(10).Bold().FontColor(Colors.Grey.Darken3);
+                        .FontSize(12).Bold().FontColor(Colors.Grey.Darken3);
                     if (!string.IsNullOrEmpty(a.Cliente))
                         inner.Item().PaddingTop(1)
                             .Text($"Cliente: {a.Cliente}")
-                            .FontSize(8.5f).FontColor(Colors.Grey.Darken1);
+                            .FontSize(10.5f).FontColor(Colors.Grey.Darken1);
                 });
                 row.ConstantItem(5);
                 row.ConstantItem(80).AlignRight().Column(inner =>
                 {
                     inner.Item().Text(DateTime.Now.ToString("dd/MM/yyyy"))
-                        .FontSize(8).FontColor(Colors.Grey.Darken1);
+                        .FontSize(10).FontColor(Colors.Grey.Darken1);
                     inner.Item().Text($"ID: {a.Id}")
-                        .FontSize(8).FontColor(Colors.Grey.Darken1);
+                        .FontSize(10).FontColor(Colors.Grey.Darken1);
                 });
             });
             col.Item().PaddingTop(5).LineHorizontal(2).LineColor(PrimaryColor);
@@ -178,7 +178,7 @@ public class AnimePdfService : IAnimePdfService
                     dati.Item().PaddingTop(7);
                     dati.Item().Element(c => SectionTitle(c, "MACCHINE"));
                     dati.Item().PaddingHorizontal(3).PaddingVertical(4)
-                        .Text(a.MacchineSuDisponibiliDescrizione).FontSize(8.5f);
+                        .Text(a.MacchineSuDisponibiliDescrizione).FontSize(10.5f);
                 }
 
                 if (!string.IsNullOrEmpty(a.Note))
@@ -186,7 +186,7 @@ public class AnimePdfService : IAnimePdfService
                     dati.Item().PaddingTop(7);
                     dati.Item().Element(c => SectionTitle(c, "NOTE"));
                     dati.Item().Background(RowAlt).Border(0.5f).BorderColor(BorderColor)
-                        .Padding(5).Text(a.Note).FontSize(8.5f);
+                        .Padding(5).Text(a.Note).FontSize(10.5f);
                 }
             });
 
@@ -202,7 +202,7 @@ public class AnimePdfService : IAnimePdfService
                 {
                     fotoCol.Item().Background(RowAlt).Border(0.5f).BorderColor(BorderColor)
                         .Height(90).AlignCenter().AlignMiddle()
-                        .Text("Nessuna foto disponibile").FontSize(8).FontColor(Colors.Grey.Darken1).Italic();
+                        .Text("Nessuna foto disponibile").FontSize(10).FontColor(Colors.Grey.Darken1).Italic();
                 }
                 else
                 {
@@ -220,7 +220,7 @@ public class AnimePdfService : IAnimePdfService
                             : dto.Descrizione;
                         fotoCol.Item().PaddingTop(2).PaddingHorizontal(1)
                             .Text($"[{i + 1}] {caption}")
-                            .FontSize(7).FontColor(Colors.Grey.Darken2).Italic();
+                            .FontSize(9).FontColor(Colors.Grey.Darken2).Italic();
                     }
                 }
             });
@@ -233,7 +233,7 @@ public class AnimePdfService : IAnimePdfService
             .BorderLeft(3).BorderColor(AccentLine)
             .Background(HeaderBg)
             .PaddingLeft(6).PaddingVertical(3)
-            .Text(title).Bold().FontSize(8).FontColor(PrimaryColor);
+            .Text(title).Bold().FontSize(10).FontColor(PrimaryColor);
     }
 
     private static void InfoGrid(IContainer container, (string Label, string? Value)[] items)
@@ -254,9 +254,9 @@ public class AnimePdfService : IAnimePdfService
                 alt = !alt;
 
                 table.Cell().Background(bg).PaddingVertical(2.5f).PaddingHorizontal(4)
-                    .Text(label + ":").FontSize(8).FontColor(Colors.Grey.Darken2).Bold();
+                    .Text(label + ":").FontSize(10).FontColor(Colors.Grey.Darken2).Bold();
                 table.Cell().Background(bg).PaddingVertical(2.5f).PaddingHorizontal(4)
-                    .Text(value).FontSize(8).FontColor(Colors.Grey.Darken3);
+                    .Text(value).FontSize(10).FontColor(Colors.Grey.Darken3);
             }
         });
     }
@@ -270,14 +270,14 @@ public class AnimePdfService : IAnimePdfService
             {
                 row.RelativeItem()
                     .Text("MESManager — Scheda Anima")
-                    .FontSize(7).FontColor(Colors.Grey.Medium);
+                    .FontSize(9).FontColor(Colors.Grey.Medium);
                 row.RelativeItem().AlignRight()
                     .Text(ctx =>
                     {
-                        ctx.Span("Pag. ").FontSize(7).FontColor(Colors.Grey.Medium);
-                        ctx.CurrentPageNumber().FontSize(7).FontColor(Colors.Grey.Medium);
-                        ctx.Span(" / ").FontSize(7).FontColor(Colors.Grey.Medium);
-                        ctx.TotalPages().FontSize(7).FontColor(Colors.Grey.Medium);
+                        ctx.Span("Pag. ").FontSize(9).FontColor(Colors.Grey.Medium);
+                        ctx.CurrentPageNumber().FontSize(9).FontColor(Colors.Grey.Medium);
+                        ctx.Span(" / ").FontSize(9).FontColor(Colors.Grey.Medium);
+                        ctx.TotalPages().FontSize(9).FontColor(Colors.Grey.Medium);
                     });
             });
         });

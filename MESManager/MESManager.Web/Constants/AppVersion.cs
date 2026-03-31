@@ -14,5 +14,5 @@ public static class AppVersion
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.60.41  Colori semantici toolbar: Primary=Aggiorna, Success=Export/Carica, Info=Colonne/Vincoli, Default=neutri + fix Gantt/Programma sync
+    public const string Display = "v" + Current; // v1.60.42  Fix colori toolbar: Filled+Primary/Success per azioni principali, Outlined+Default per utility
 }
