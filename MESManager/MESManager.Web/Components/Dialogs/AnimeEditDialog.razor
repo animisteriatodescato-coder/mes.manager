@@ -12,6 +12,17 @@
         <MudStack Row="true" AlignItems="AlignItems.Center">
             <MudIcon Icon="@Icons.Material.Filled.Edit" />
             <MudText Typo="Typo.h6">Modifica Anima: @Anime?.CodiceArticolo</MudText>
+            <MudSpacer />
+            @if (Anime?.Id > 0)
+            {
+                <MudTooltip Text="Scarica PDF Scheda Anima">
+                    <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf"
+                                   Color="Color.Error"
+                                   Size="Size.Small"
+                                   OnClick="@(() => JS.InvokeVoidAsync("open", $"/api/anime/{Anime.Id}/pdf", "_blank"))"
+                                   data-testid="btn-anime-pdf" />
+                </MudTooltip>
+            }
         </MudStack>
     </TitleContent>
     <DialogContent>

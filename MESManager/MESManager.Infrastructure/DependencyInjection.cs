@@ -57,6 +57,9 @@ public static class DependencyInjection
         services.AddScoped<IQuoteAttachmentService, QuoteAttachmentService>();
         services.AddScoped<IQuotePdfGenerator, QuotePdfGenerator>();
         
+        // Anime PDF (v1.60.38 — Scheda Anima PDF)
+        services.AddScoped<IAnimePdfService, AnimePdfService>();
+        
         // Lavorazioni Anime Services (v1.40.0 - Preventivi lavorazioni)
         services.AddScoped<IWorkProcessingService, WorkProcessingService>();
         
