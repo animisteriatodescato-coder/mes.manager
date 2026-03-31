@@ -4,7 +4,53 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.40
+## 🔖 Versione Corrente: v1.60.41
+
+---
+
+## 🔖 v1.60.41 — Colori semantici toolbar + fix Gantt/Programma sync (31 Mar 2026)
+
+**Data**: 31 Marzo 2026
+
+### 🎨 Miglioramento — Colori semantici sui pulsanti toolbar (Programma, Gantt, Commesse Aperte)
+
+**Motivazione**: tutti i pulsanti toolbar risultavano verdi (colore primario del tema). Assegnati colori per categoria semantica.
+
+**Palette applicata** (coerente nelle 3 pagine Programma):
+| Azione | Colore | Motivo |
+|--------|--------|--------|
+| Aggiorna | `Color.Primary` (blu) | Azione principale di caricamento dati |
+| Export CSV | `Color.Success` (verde) | Output/esportazione dati |
+| Carica su Gantt | `Color.Success` Filled | Output/azione positiva principale |
+| Colonne | `Color.Info` (azzurro) | Gestione visualizzazione informazioni |
+| Vincoli | `Color.Info` | Gestione/visualizzazione |
+| Stampa | `Color.Default` (grigio) | Neutro/secondario |
+| Impostazioni | `Color.Default` | Neutro/secondario |
+| Chiuse OFF/ON | `Color.Warning` / `Color.Default` | Toggle stato (già implementato v1.60.36) |
+| Archivia | `Color.Error` | Già corretto — azione distruttiva |
+| Blocca/Sblocca | dinamico `Error`/`Default` | Già corretto |
+
+**File modificati**: `ProgrammaMacchine.razor`, `CommesseAperte.razor`, `GanttMacchine.razor`
+
+### 🐛 Fix — Gantt ↔ Programma Macchine: commesse spostate non si aggiornano (v1.60.35–36)
+
+**Problema**: spostando una commessa nel Gantt, la griglia Programma non si aggiornava; le commesse "Chiuse" non venivano mostrate pur essendo pianificate.
+
+**Cause trovate**:
+1. `RefreshGrid()` chiamava `programmaMacchineGrid.setRowData` (inesistente) invece di `updateData`
+2. Filtro `LoadData`: `c.Stato == "Aperta"` escludeva commesse con stato ERP diverso (es. Chiusa)
+3. `_hubConnection.On` richiamava `LoadData` fuori da `InvokeAsync` → threading issue
+
+**Fix applicati** in `ProgrammaMacchine.razor`:
+- `setRowData` → `updateData`
+- Filtro allineato al Gantt: rimosso `Stato == "Aperta"`, mantenuto solo `StatoProgramma != Completata/Archiviata`
+- `LoadData(force: true)` spostato dentro `InvokeAsync`
+- `ApplyFilter()` estratto come metodo centralizzato (usato da `LoadData` e `ToggleMostraChiuse`)
+
+### ✨ Feature — Toggle "Chiuse OFF/ON" in Programma Macchine (v1.60.36)
+
+Pulsante toolbar per includere/escludere le commesse con `Stato = Chiusa` (ERP);
+default OFF = non mostrate. Stato riflesso nel footer "(incl. Chiuse)".
 
 ---
 

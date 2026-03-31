@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.60.40";
+    public const string Current = "1.60.41";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.60.39  Consolida: PDF Scheda Anima (1.60.38) + fix paginazione AG Grid (1.60.37)
+    public const string Display = "v" + Current; // v1.60.41  Colori semantici toolbar: Primary=Aggiorna, Success=Export/Carica, Info=Colonne/Vincoli, Default=neutri + fix Gantt/Programma sync
 }

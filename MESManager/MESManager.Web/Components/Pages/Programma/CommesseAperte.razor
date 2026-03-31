@@ -36,15 +36,15 @@
                        T="bool"
                        ValueChanged="@OnShowArchivedChanged" />
             <MudSpacer />
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshGridData" data-testid="btn-refresh">Aggiorna</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Timeline" OnClick="@CaricaSuGantt" Disabled="@IsReadOnly" data-testid="btn-carica-su-gantt">
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshGridData" data-testid="btn-refresh">Aggiorna</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Timeline" OnClick="@CaricaSuGantt" Disabled="@IsReadOnly" data-testid="btn-carica-su-gantt">
                 🚀 Carica su Gantt
             </MudButton>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
             <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState"
                          ShowGlobalSave="@IsAdmin" OnSaveGlobal="@SaveAsGlobalDefault" />
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)">Impostazioni</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportCsv">Export CSV</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => showSettings = !showSettings)">Impostazioni</MudButton>
         </MudStack>
         
         @if (showSettings)

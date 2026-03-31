@@ -36,7 +36,7 @@
         <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="@ArchiviaSelezionata" Disabled="@(IsReadOnly || _selectedCommessa == null)">
             <MudIcon Icon="@Icons.Material.Filled.Archive" Class="mr-1" /> Archivia
         </MudButton>
-        <MudButton Variant="Variant.Outlined" OnClick="@OpenVincoliDialog" Disabled="@(IsReadOnly || _selectedCommessa == null)">
+        <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="@OpenVincoliDialog" Disabled="@(IsReadOnly || _selectedCommessa == null)">
             <MudIcon Icon="@Icons.Material.Filled.Event" Class="mr-1" /> Vincoli
         </MudButton>
     </MudStack>
