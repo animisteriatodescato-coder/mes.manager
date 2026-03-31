@@ -185,6 +185,22 @@
         color: var(--mes-scarti-error-color) !important;
         font-weight: bold;
     }
+    /* ── Barra paginazione — colore testo uguale agli header colonne ────────
+       Questo stile carica DOPO app.css (inline) quindi vince su qualsiasi
+       override AG Grid. Copre: "1 to 100 of 663", "Page 1 of 7", "100 ▼". */
+    .ag-theme-alpine .ag-paging-panel,
+    .ag-theme-alpine .ag-paging-panel span,
+    .ag-theme-alpine .ag-paging-row-summary-panel,
+    .ag-theme-alpine .ag-paging-page-summary-panel,
+    .ag-theme-alpine .ag-paging-page-size,
+    .ag-theme-alpine .ag-paging-page-size span,
+    .ag-theme-alpine .ag-paging-button,
+    .ag-theme-alpine .ag-picker-field-display {
+        color: var(--mes-row-text) !important;
+    }
+    .ag-theme-alpine .ag-paging-button .ag-icon {
+        color: var(--mes-row-text) !important;
+    }
 </style>
 
 <style>

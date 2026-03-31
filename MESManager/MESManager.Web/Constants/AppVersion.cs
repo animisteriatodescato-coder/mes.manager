@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.60.38";
+    public const string Current = "1.60.37";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.60.38  PDF Scheda Anima: IAnimePdfService + AnimePdfService + AnimePdfController + pulsante PDF in dialog
+    public const string Display = "v" + Current; // v1.60.37  Fix paginazione AG Grid: testo bianco in MainLayout <style> (stesso pattern ag-cell/header) // v1.60.38  PDF Scheda Anima: IAnimePdfService + AnimePdfService + AnimePdfController + pulsante PDF in dialog
 }

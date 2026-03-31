@@ -4,6 +4,44 @@
 
 ---
 
+## 🔖 Versione Corrente: v1.60.38
+
+---
+
+## 🔖 v1.60.38 — PDF Scheda Anima (31 Mar 2026)
+
+**Data**: 31 Marzo 2026
+
+### ✨ Feature — Generazione PDF Scheda Anima (QuestPDF, Soluzione 2)
+
+Implementa la **Soluzione 2** — QuestPDF + controller REST — per generare la scheda anima in PDF.
+
+**Pattern seguito**: `QuotePdfGenerator` esistente (zero duplicazione)
+
+**Architettura**:
+- `IAnimePdfService` → `Application/Interfaces/IAnimePdfService.cs`
+- `AnimePdfService` → `Application/Services/AnimePdfService.cs` (QuestPDF fluent API)
+- `AnimePdfController` → `Web/Controllers/AnimePdfController.cs` (`GET /api/anime/{id}/pdf`)
+- Pulsante 📄 PDF in `AnimeEditDialog.razor` TitleContent → `window.open('/api/anime/{id}/pdf', '_blank')`
+
+**Contenuto PDF**:
+- Header: titolo, codice, descrizione, cliente, data, ID
+- Sezioni: IDENTIFICAZIONE, IMBALLO, MATERIALI, PRODUZIONE, MACCHINE, NOTE
+- Foto: prima foto (per priorità) a destra, con indicazione "+N altre foto"
+- Footer: nome app + numerazione pagine
+
+**Registro DI**: `IAnimePdfService` → `AnimePdfService` aggiunto in `DependencyInjection.cs`
+
+**File modificati**:
+- `MESManager.Application/Interfaces/IAnimePdfService.cs` (nuovo)
+- `MESManager.Application/Services/AnimePdfService.cs` (nuovo)
+- `MESManager.Web/Controllers/AnimePdfController.cs` (nuovo)
+- `MESManager.Web/Components/Dialogs/AnimeEditDialog.razor`: pulsante PDF nel TitleContent
+- `MESManager.Infrastructure/DependencyInjection.cs`: registrazione DI
+- `MESManager.Web/Constants/AppVersion.cs`: 1.60.37→1.60.38
+
+---
+
 ## 🔖 Versione Corrente: v1.60.37
 
 ---
