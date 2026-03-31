@@ -4,7 +4,45 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.33
+## 🔖 Versione Corrente: v1.60.35
+
+---
+
+## 🔖 v1.60.35 — AnimeEditDialog: scroll fix, foto senza spazio nero, layout ottimizzato (31 Mar 2026)
+
+**Data**: 31 Marzo 2026
+
+### 🐛 Fix — Dialog AnimeEditDialog: scroll eccessivo + foto con bande nere + campi tagliati
+
+**Problemi risolti**:
+- Dialog troppo larga (1380→1240px)
+- Scroll verticale eccessivo: ridotto padding `mud-grid-item` da 8px a 3px (~120px risparmiati), marini divider a 0, Note Lines=1
+- Foto con bande nere: `MudCardMedia` (background-size: cover/contain) sostituito con tag `<img>` e `object-fit: contain`
+- Campi tagliati: Cliente xs=4, N.Piani xs=2, Maschere xs=2, ArmataL xs=2, Descrizione xs=3
+
+**File modificati**:
+- `MESManager.Web/Components/Dialogs/AnimeEditDialog.razor`: ridistribuzione xs grid, img tag per foto, Note Lines=1, MudPaper pa-2, MudStack Spacing=1
+- `MESManager.Web/wwwroot/app.css`: `.anime-edit-dialog` aggiornato con `mud-grid-item padding:3px`, `mud-divider margin:0`, `max-height: calc(92vh - 120px)`
+
+---
+
+## 🔖 v1.60.34 — AnimeEditDialog: foto no-crop + scroll dialog ridotto (31 Mar 2026)
+
+**Data**: 31 Marzo 2026
+
+### 🐛 Fix — AnimeEditDialog foto ancora tagliate + scroll ancora ampio
+
+**Root cause**: `MudCardMedia` usa `background-size: cover` → con colonna xs=5 più larga, ritagliava in orizzontale. Approccio `flex` su dialog non affidabile con struttura MudBlazor.
+
+**Soluzione**:
+- CSS `background-size: contain` su `MudCardMedia`
+- `max-height: calc(86vh - 110px)` su `mud-dialog-content`
+- Foto Height ridotta 200→170
+
+**File modificati**:
+- `MESManager.Web/Components/Dialogs/AnimeEditDialog.razor`
+- `MESManager.Web/wwwroot/app.css`
+- `MESManager.Web/Constants/AppVersion.cs`: 1.60.33→1.60.34
 
 ---
 
