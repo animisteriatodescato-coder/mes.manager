@@ -29,6 +29,12 @@
                          DebounceInterval="280"
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
             <MudSpacer />
+            <MudButton Variant="@(_mostraChiuse ? Variant.Filled : Variant.Outlined)"
+                       Color="@(_mostraChiuse ? Color.Warning : Color.Default)"
+                       StartIcon="@(_mostraChiuse ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                       OnClick="@ToggleMostraChiuse">
+                Chiuse @(_mostraChiuse ? "ON" : "OFF")
+            </MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@RefreshData" data-testid="btn-refresh">Aggiorna</MudButton>
             <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState"
@@ -209,6 +215,7 @@
     private bool showSettings = false;
     private string searchText = string.Empty;
     private bool showColumnDialog = false;
+    private bool _mostraChiuse = false;
     private List<ColumnInfo> columnList = new();
     
     private int totalRows = 0;
@@ -293,11 +300,33 @@
         }
     }
     
+    private void ApplyFilter()
+    {
+        _commesse = _allCommesse.Where(c =>
+            c.NumeroMacchina.HasValue &&
+            c.StatoProgramma != "Completata" &&
+            c.StatoProgramma != "Archiviata" &&
+            (_mostraChiuse || c.Stato != "Chiusa")
+        ).ToList();
+    }
+
+    private async Task ToggleMostraChiuse()
+    {
+        _mostraChiuse = !_mostraChiuse;
+        ApplyFilter();
+        totalRows = _commesse.Count;
+        filteredRows = _commesse.Count;
+        gridStatus = $"{_commesse.Count} commesse programmate{(_mostraChiuse ? " (incl. Chiuse)" : "")}";
+        if (_isGridInitialized)
+            await RefreshGrid();
+        StateHasChanged();
+    }
+
     private async Task RefreshGrid()
     {
         try
         {
-            // _commesse è già filtrato da LoadData - passa direttamente alla griglia
+            // _commesse è già filtrato - passa direttamente alla griglia
             await JSRuntime.InvokeVoidAsync("programmaMacchineGrid.updateData", _commesse);
         }
         catch { }
@@ -327,15 +356,8 @@
             Console.WriteLine($"[PROGRAMMA] StatoProgramma values: {string.Join(", ", _allCommesse.Select(c => c.StatoProgramma).Distinct())}");
             Console.WriteLine($"[PROGRAMMA] Stato values: {string.Join(", ", _allCommesse.Select(c => c.Stato).Distinct())}");
             
-            // 🔄 FILTRO v1.30.7 (fix v1.30.8): Allineato al Gantt - mostra tutte le commesse assegnate a macchina
-            // non Completate/Archiviate, indipendentemente da Stato ERP o DataInizio
-            // IMPORTANTE: StatoProgramma è STRINGA nel DTO, non enum!
-            // Programma = Vista Read-Only del Gantt (master source)
-            _commesse = _allCommesse.Where(c => 
-                c.NumeroMacchina.HasValue &&
-                c.StatoProgramma != "Completata" &&
-                c.StatoProgramma != "Archiviata"
-            ).ToList();
+            // Applica filtro centralizzato (rispetta _mostraChiuse)
+            ApplyFilter();
             
             // 🔍 DEBUG: Log AFTER filtro
             Console.WriteLine($"[PROGRAMMA] AFTER filtro: {_commesse.Count} commesse visualizzabili");
@@ -358,7 +380,7 @@
             isLoading = false;
             
             // ⚠️ IMPORTANTE: Mostra count reale, non "Pronto"
-            gridStatus = $"{programmate.Count} commesse programmate";
+            gridStatus = $"{programmate.Count} commesse programmate{(_mostraChiuse ? " (incl. Chiuse)" : "")}";
             
             Console.WriteLine($"[PROGRAMMA] gridStatus = '{gridStatus}', totalRows = {totalRows}");
         }
