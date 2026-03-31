@@ -866,4 +866,5 @@ Parametri principali: `Label`, `Value`/`ValueChanged` (string hex), `Palette` (L
 | **Visualizzare ricetta articolo** | `RicettaViewDialog.razor` — param `CodiceArticolo` + `ShowImportButton=true` per "Importa da Macchina" |
 | **Importare ricetta da macchina** | `ImportaRicettaMacchinaDialog.razor` — param `CodiceArticolo`. Usa `GET /api/Macchine` + `POST /api/plc/save-recipe-from-plc`. MAI duplicare. |
 | **Azione pericolosa PLC (invia a macchina)** | Sempre `await DialogService.ShowMessageBox(...)` confirm prima — vedi `DashboardProduzione.razor` |
+| **Generare PDF per un'entità (Scheda Anima)** | `IAnimePdfService` → `AnimePdfService` in `Application/Services/`. Segue pattern `QuotePdfGenerator`. Controller REST: `GET /api/anime/{id}/pdf`. Pulsante nel TitleContent del dialog → `JS.InvokeVoidAsync("open", $"/api/anime/{id}/pdf", "_blank")`. MAI duplicare la logica di rendering QuestPDF — estendi `AnimePdfService` o crea un nuovo `IXxxPdfService` separato. |
 

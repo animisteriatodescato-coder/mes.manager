@@ -453,6 +453,48 @@ In v8, `MudNavGroup` usa questa struttura HTML reale:
 
 ---
 
+### AG Grid: `cellClassRules` e paginazione DEVONO stare in `MainLayout.razor` (⚠️ LESSON LEARNED v1.60.33-37)
+
+**Problema ricorrente**: Colori `cellClassRules` (es. `mes-scarti-*`) e testo barra paginazione invisibili in dark mode nonostante regole CSS corrette in `app.css`.
+
+**Causa**: Il tag `<style>` inline di `MainLayout.razor` viene renderizzato nel DOM **DOPO** i `<link>` CSS esterni (app.css, ag-theme-alpine.css). In Blazor Server, gli stili inline sono sempre ultimi nel flusso HTML. Con `!important` a parità di specificità, **l'ultimo nel sorgente vince** → MainLayout batte SEMPRE app.css.
+
+Inoltre `MainLayout.razor` contiene già `.ag-theme-alpine .ag-cell { color: var(--mes-row-text) !important }` che sovrascriveva qualsiasi colore testo impostato da app.css sulle celle.
+
+**Regola fissa**:
+- Colori `cellClassRules` condizionali (stati, scarti, contatori) → `<style>` block AG Grid di **`MainLayout.razor`**
+- Variabili dark/light → `:root` di MainLayout con switch C# `@(_isDarkMode ? "#dark" : "#light")`
+- Regole paginazione (`.ag-paging-panel`, `.ag-picker-field-display`) → stessa `<style>` di MainLayout
+
+**Pattern corretto** (testato e funzionante):
+```razor
+@* MainLayout.razor — :root block *@
+--mes-scarti-ok-bg:    @(_isDarkMode ? "#1a3a5c" : "#e3f2fd");
+--mes-scarti-ok-color: @(_isDarkMode ? "#64b5f6" : "#1565c0");
+
+@* MainLayout.razor — <style> AG Grid block *@
+.ag-theme-alpine .ag-cell.mes-scarti-ok {
+    background-color: var(--mes-scarti-ok-bg) !important;
+    color: var(--mes-scarti-ok-color) !important;
+}
+.ag-theme-alpine .ag-paging-panel,
+.ag-theme-alpine .ag-paging-panel span,
+.ag-theme-alpine .ag-picker-field-display {
+    color: var(--mes-row-text) !important;
+}
+```
+
+**Anti-pattern** (non funziona → app.css viene sovrascritta da MainLayout inline):
+```css
+/* app.css ❌ — perde contro MainLayout <style> per cascade order */
+.mud-theme-dark .ag-theme-alpine .mes-scarti-ok { color: #64b5f6 !important; }
+.mud-theme-dark .ag-theme-alpine .ag-paging-panel span { color: #E6E6F0 !important; }
+```
+
+**File di riferimento completo**: [storico/FIX-DARK-MODE-AG-GRID-CSS-20260331.md](storico/FIX-DARK-MODE-AG-GRID-CSS-20260331.md)
+
+---
+
 - [ ] Letto file docs/ pertinente?
 - [ ] Soluzione coerente con architettura?
 - [ ] Tutti file da modificare identificati?

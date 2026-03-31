@@ -40,6 +40,20 @@ Implementa la **Soluzione 2** — QuestPDF + controller REST — per generare la
 - `MESManager.Infrastructure/DependencyInjection.cs`: registrazione DI
 - `MESManager.Web/Constants/AppVersion.cs`: 1.60.37→1.60.38
 
+### 🐛 Fix — Dark mode AG Grid: completamento fix CSS cascade (co-rilasciato in v1.60.33→v1.60.37)
+
+> **Nota**: questo fix è distribuito su più versioni. Vedi [storico/FIX-DARK-MODE-AG-GRID-CSS-20260331.md](storico/FIX-DARK-MODE-AG-GRID-CSS-20260331.md) per l'analisi completa.
+
+**Problema risolto definitivamente**: testo barra paginazione AG Grid (`1 to 100 of 663`, `Page 1 of 7`, `100 ▼`) e colori `% Scarti` invisibili in dark mode.
+
+**Soluzione finale** (v1.60.37):
+- `mes-scarti-ok/warn/error` e regole paginazione spostate nel `<style>` block AG Grid di `MainLayout.razor`
+- Stesso pattern di `mes-stato-aperta/chiusa` e `mes-count-foto/doc` (già funzionanti lì)
+- Aggiunte CSS vars `--mes-scarti-ok-bg/color` etc. nel `:root` di MainLayout con switch dark/light C#
+- **Perché funziona**: lo `<style>` inline di Blazor Server carica nel DOM DOPO i `<link>` CSS esterni → a parità di `!important`, l'ultimo vince → MainLayout batte sempre app.css
+
+**Lesson Learned critica**: → [BIBBIA-AI-MESMANAGER.md sezione AG Grid cellClassRules]
+
 ---
 
 ## 🔖 Versione Corrente: v1.60.37
@@ -125,6 +139,8 @@ Implementa la **Soluzione 2** — QuestPDF + controller REST — per generare la
 **Data**: 31 Marzo 2026
 
 ### 🐛 Fix — Paginazione AG Grid, % Scarti e footer text ancora invisibili in dark mode
+
+> ⚠️ Questo fix è stato completato in più iterazioni (v1.60.33 → v1.60.37). Fix finale in v1.60.37. Analisi completa: [storico/FIX-DARK-MODE-AG-GRID-CSS-20260331.md](storico/FIX-DARK-MODE-AG-GRID-CSS-20260331.md)
 
 **Root cause definitiva trovata**:
 AG Grid CDN CSS (`ag-grid.css` + `ag-theme-alpine.css`) imposta `--ag-foreground-color: #181d1f` (testo quasi-nero) su tutto il testo in `.ag-theme-alpine`. La barra paginazione usa `color: var(--ag-secondary-foreground-color)` impostato DIRETTAMENTE (non solo ereditato). In `App.razor`, `app.css` veniva caricato **PRIMA** di AG Grid CDN CSS → a parità di specificità, l'ultimo CSS vince (cascade order) → AG Grid sovrascriveva le nostre regole.
