@@ -741,3 +741,10 @@ h1:focus {
 .mud-nav-group.nav-sec-sync         .mud-collapse-container::after { content: "🔄"; }
 .mud-nav-group.nav-sec-statistiche  .mud-collapse-container::after { content: "📊"; }
 .mud-nav-group.nav-sec-impostazioni .mud-collapse-container::after { content: "⚙️"; }
+
+/* === AnimeEditDialog layout ottimizzato (v1.60.33) === */
+/* Dialog piu largo + header/footer compatti + content scrollabile */
+.anime-edit-dialog { max-height: 95vh !important; display: flex; flex-direction: column; }
+.anime-edit-dialog .mud-dialog-content { flex: 1; overflow-y: auto; min-height: 0; }
+.anime-edit-dialog .mud-dialog-title { padding-top: 6px !important; padding-bottom: 6px !important; }
+.anime-edit-dialog .mud-dialog-actions { padding-top: 4px !important; padding-bottom: 4px !important; }
