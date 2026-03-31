@@ -4,7 +4,26 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.41
+## 🔖 Versione Corrente: v1.60.42
+
+---
+
+## 🔖 v1.60.42 — PDF Scheda Anima: font +2pt (31 Mar 2026)
+
+**Data**: 31 Marzo 2026
+
+### 🎨 Miglioramento — Tutti i font del PDF Scheda Anima aumentati di +2pt
+
+**Motivazione**: richiesta utente — testi più leggibili sul PDF stampato.
+
+**Modifiche `AnimePdfService.cs`**:
+- Default body: 9pt → 11pt
+- Titolo "SCHEDA ANIMA": 15pt → 17pt
+- Codice · Descrizione header: 10pt → 12pt
+- Cliente / Note / Macchine / Sezioni: 8.5pt → 10.5pt
+- Data / ID / Intestazioni sezione: 8pt → 10pt
+- Didascalia foto: 7pt → 9pt
+- Footer: 7pt → 9pt
 
 ---
 
