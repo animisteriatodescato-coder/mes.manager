@@ -1,0 +1,39 @@
+{
+  "Colla": {
+    "-1": "BIANCA",
+    "-2": "A CALDO",
+    "-3": "ROSSA S.G"
+  },
+  "Vernice": {
+    "-1": "",
+    "-2": "YELLOW COVER",
+    "-3": "CASTING COVER ZR",
+    "-4": "CASTING COVER RK",
+    "-5": "CASTINGCOVER 2001",
+    "-6": "ARCOPAL 9030",
+    "-7": "HYDRO COVER 22 Z",
+    "-8": "FGR 55"
+  },
+  "Sabbia": {
+    "": "(nessuna)",
+    "310/60": "310/60",
+    "33BD600X": "33BD600X",
+    "360/10": "360/10",
+    "44/10": "SCARANELLO",
+    "C1/30D": "C1/30D",
+    "CP35B": "CP35B",
+    "NB30B": "NB30B",
+    "OLIVINA": "OLIVINA",
+    "UP30B": "UP30B"
+  },
+  "Imballo": {
+    "-1": "CASSA GRANDE",
+    "-2": "CASSA PICCOLA",
+    "-3": "CASSA LUNGA",
+    "-4": "PIANALE EURO",
+    "-5": "PIANALE QUADRATO",
+    "-6": "CARRELLI A PIANI",
+    "-7": "CARRELLI GRANDI",
+    "-8": "SCATOLE"
+  }
+}

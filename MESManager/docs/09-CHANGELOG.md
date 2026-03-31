@@ -4,7 +4,54 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.27
+## 🔖 Versione Corrente: v1.60.30
+
+---
+
+## 🔖 v1.60.30 - Tabelle lookup: persistenza JSON + salvataggio reale + solo descrizione dropdown (31 Mar 2026)
+
+**Data**: 31 Marzo 2026
+
+### 🔧 FEATURE — Gestione Tabelle con persistenza reale
+
+**Problema**: In `/impostazioni/tabelle`, Aggiungi/Modifica/Salva non persisteva nulla — i metodi `SalvaXxxAsync()` mostravano solo uno snackbar fake. Alla riapertura, tutti i dati erano quelli hardcoded in `LookupTables.cs`.
+
+**Problema 2**: Nei dropdown di `AnimeEditDialog` (Colla, Vernice, Sabbia, Imballo) veniva mostrato `"-1 - BIANCA"` invece di sola `"BIANCA"`.
+
+**Soluzione** (Soluzione Stabile — JSON file persistence):
+- `ITabelleService` + `TabelleService` (singleton): carica da `tabelle-config.json` alla partenza; se il file non esiste usa i default di `LookupTables`; al salvataggio scrive su disco e chiama `LookupTables.Aggiorna()` per sincronizzare i dizionari statici usati da `AnimeService` e `CommessaAppService` (zero breaking changes)
+- `LookupTables.cs`: rimosso `readonly` dai 5 dizionari + nuovo metodo statico `Aggiorna()` per aggiornamento a runtime
+- `TabelleController`: inietta `ITabelleService`; nuovi `POST /api/Tabelle/{colla|vernice|sabbia|imballo}` per il salvataggio; GET serviti dal service
+- `Program.cs`: `AddSingleton<ITabelleService, TabelleService>()`
+- `ImpostazioniTabelle.razor`: `CaricaDatiAsync()` legge da API; `SalvaXxxAsync()` chiama POST reali
+- `AnimeEditDialog.razor`: tutti i `MudSelectItem` mostrano solo `@item.Descrizione`
+
+**File modificati**:
+- `MESManager.Web/Services/ITabelleService.cs` ← nuovo
+- `MESManager.Web/Services/TabelleService.cs` ← nuovo
+- `MESManager.Domain/Constants/LookupTables.cs`
+- `MESManager.Web/Controllers/TabelleController.cs`
+- `MESManager.Web/Program.cs`
+- `MESManager.Web/Components/Pages/Impostazioni/ImpostazioniTabelle.razor`
+- `MESManager.Web/Components/Dialogs/AnimeEditDialog.razor`
+
+**Persistenza**: `{ContentRootPath}/tabelle-config.json` — sopravvive ai riavvii server.
+
+---
+
+## 🔖 v1.60.29 - Footer dark mode unificato griglia PlcStorico (30 Mar 2026)
+
+**Data**: 30 Marzo 2026
+
+**Modifiche**:
+- `app.css`: barra paginazione AG Grid usa `var(--mes-row-text)` al posto di colori hardcoded
+- `PlcStorico.razor`: footer-info con Righe caricate / Ultimo aggiorn. / status uniforme con altre griglie
+- `layout-config.css`: centralizzata regola `.clienti-page .footer-info`
+- `CatalogoClienti.razor`: rimosso blocco `<style>` duplicato
+
+---
+
+## 🔖 v1.60.28 - (patch intermedia build)
 
 ---
 

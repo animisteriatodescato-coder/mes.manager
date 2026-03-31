@@ -80,6 +80,13 @@
 .footer-info .mud-chip .mud-icon-root {
     font-size: 0.85rem !important;
 }
+/* Footer dark mode — testo visibile su sfondo scuro */
+.mud-theme-dark .footer-info {
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+.mud-theme-dark .footer-info .mud-typography {
+    color: var(--mes-row-text, #E6E6F0) !important;
+}
 /* Override footer per CatalogoClienti (senza margin/shadow extra) — centralizzato */
 .clienti-page .footer-info {
     box-shadow: none;

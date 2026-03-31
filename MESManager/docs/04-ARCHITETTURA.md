@@ -567,6 +567,9 @@ builder.Services.AddScoped<UserThemeService>();           // preferenze per-uten
 builder.Services.AddScoped<IThemeModeService, ThemeModeService>(); // dark/light
 builder.Services.AddScoped<ThemeCssService>();           // AppSettings → CSS vars
 
+// Tabelle Lookup (v1.60.30)
+builder.Services.AddSingleton<ITabelleService, TabelleService>(); // persistenza JSON
+
 // Blazor
 builder.Services.AddServerSideBlazor();
 builder.Services.AddMudServices();
@@ -632,6 +635,30 @@ Per PLC: [07-PLC-SYNC.md](07-PLC-SYNC.md)
 ---
 
 ## 🧩 Pattern di Centralizzazione (v1.50.0+)
+
+### TabelleService — Lookup Tables con persistenza (v1.60.30)
+
+**Problema risolto**: `LookupTables.cs` era statico e hardcoded — nessuna modifica sopravviveva al riavvio.
+
+**Pattern**:
+```
+ITabelleService (singleton)
+  └── TabelleService
+        ├── Carica da: {ContentRootPath}/tabelle-config.json  [se esiste]
+        ├── Fallback:  LookupTables default hardcoded
+        ├── Al salvataggio: scrive JSON + chiama LookupTables.Aggiorna()
+        └── LookupTables static resta fonte di verità per AnimeService/CommessaAppService
+```
+
+**Regola**: MAI leggere `LookupTables.Colla` direttamente nei Controller/Razor. Usare `ITabelleService.GetCollaList()` via DI o via `GET /api/Tabelle/colla`.
+
+**API endpoints**:
+- `GET  /api/Tabelle/{colla|vernice|sabbia|imballo}` → lista lookup
+- `POST /api/Tabelle/{colla|vernice|sabbia|imballo}` → salva (persiste su JSON + aggiorna static)
+
+**File persistenza**: `tabelle-config.json` in `ContentRootPath` (escluso dal deploy con `/XF *.json` nella configurazione robocopy).
+
+---
 
 ### Catalog Grid Pattern
 

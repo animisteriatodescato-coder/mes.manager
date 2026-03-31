@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.60.30";
+    public const string Current = "1.60.31";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.60.30  Tabelle lookup: persistenza JSON + salvataggio reale + solo descrizione nei dropdown
+    public const string Display = "v" + Current; // v1.60.31  Fix dark mode: footer text + % Scarti colori più intensi
 }

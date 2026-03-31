@@ -357,16 +357,19 @@ h1:focus {
     font-weight: bold;
 }
 .mud-theme-dark .ag-theme-alpine .mes-scarti-ok {
-    background-color: #0d2744 !important;
-    color: #90caf9 !important;
+    background-color: #1a3a5c !important;
+    color: #64b5f6 !important;
+    font-weight: bold;
 }
 .mud-theme-dark .ag-theme-alpine .mes-scarti-warn {
-    background-color: #3a2200 !important;
-    color: #ffcc80 !important;
+    background-color: #4a2e00 !important;
+    color: #ffa726 !important;
+    font-weight: bold;
 }
 .mud-theme-dark .ag-theme-alpine .mes-scarti-error {
-    background-color: #3a0d1a !important;
-    color: #ef9a9a !important;
+    background-color: #5c1022 !important;
+    color: #e57373 !important;
+    font-weight: bold;
 }
 
 /* Contatori allegati (N.Foto verde, N.Doc blu) */
