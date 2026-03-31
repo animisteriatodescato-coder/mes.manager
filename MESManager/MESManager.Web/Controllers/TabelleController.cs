@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MESManager.Domain.Constants;
+using MESManager.Web.Services;
 
 namespace MESManager.Web.Controllers
 {
@@ -9,40 +10,63 @@ namespace MESManager.Web.Controllers
     // [Authorize] // Temporaneamente disabilitato per sviluppo - riabilitare in produzione
     public class TabelleController : ControllerBase
     {
-        /// <summary>
-        /// Restituisce la lista delle opzioni Colla
-        /// </summary>
+        private readonly ITabelleService _tabelleService;
+
+        public TabelleController(ITabelleService tabelleService)
+        {
+            _tabelleService = tabelleService;
+        }
+
+        // ─── GET ────────────────────────────────────────────────────────────
+
         [HttpGet("colla")]
-        public ActionResult<List<LookupItem>> GetColla()
-        {
-            return Ok(LookupTables.ToList(LookupTables.Colla));
-        }
+        public ActionResult<List<LookupItem>> GetColla() =>
+            Ok(_tabelleService.GetCollaList());
 
-        /// <summary>
-        /// Restituisce la lista delle opzioni Vernice
-        /// </summary>
         [HttpGet("vernice")]
-        public ActionResult<List<LookupItem>> GetVernice()
-        {
-            return Ok(LookupTables.ToList(LookupTables.Vernice));
-        }
+        public ActionResult<List<LookupItem>> GetVernice() =>
+            Ok(_tabelleService.GetVerniceList());
 
-        /// <summary>
-        /// Restituisce la lista delle opzioni Sabbia
-        /// </summary>
         [HttpGet("sabbia")]
-        public ActionResult<List<LookupItem>> GetSabbia()
+        public ActionResult<List<LookupItem>> GetSabbia() =>
+            Ok(_tabelleService.GetSabbiaList());
+
+        [HttpGet("imballo")]
+        public ActionResult<List<LookupItem>> GetImballo() =>
+            Ok(_tabelleService.GetImballoList());
+
+        // ─── POST (salvataggio) ─────────────────────────────────────────────
+
+        [HttpPost("colla")]
+        public async Task<IActionResult> SalvaColla([FromBody] List<LookupItem> items)
         {
-            return Ok(LookupTables.ToList(LookupTables.Sabbia));
+            if (items == null) return BadRequest("Payload vuoto");
+            await _tabelleService.SalvaCollaAsync(items);
+            return Ok();
         }
 
-        /// <summary>
-        /// Restituisce la lista delle opzioni Imballo
-        /// </summary>
-        [HttpGet("imballo")]
-        public ActionResult<List<LookupItem>> GetImballo()
+        [HttpPost("vernice")]
+        public async Task<IActionResult> SalvaVernice([FromBody] List<LookupItem> items)
         {
-            return Ok(LookupTables.ToList(LookupTables.Imballo));
+            if (items == null) return BadRequest("Payload vuoto");
+            await _tabelleService.SalvaVerniceAsync(items);
+            return Ok();
+        }
+
+        [HttpPost("sabbia")]
+        public async Task<IActionResult> SalvaSabbia([FromBody] List<LookupItem> items)
+        {
+            if (items == null) return BadRequest("Payload vuoto");
+            await _tabelleService.SalvaSabbiaAsync(items);
+            return Ok();
+        }
+
+        [HttpPost("imballo")]
+        public async Task<IActionResult> SalvaImballo([FromBody] List<LookupItem> items)
+        {
+            if (items == null) return BadRequest("Payload vuoto");
+            await _tabelleService.SalvaImballoAsync(items);
+            return Ok();
         }
     }
 }

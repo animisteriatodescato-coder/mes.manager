@@ -70,7 +70,7 @@
                         <MudSelectItem Value="@((int?)null)">-</MudSelectItem>
                         @foreach (var item in imballoOptions)
                         {
-                            <MudSelectItem Value="@(int.TryParse(item.Codice, out var v) ? (int?)v : null)">@item.Codice - @item.Descrizione</MudSelectItem>
+                            <MudSelectItem Value="@(int.TryParse(item.Codice, out var v) ? (int?)v : null)">@item.Descrizione</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
@@ -98,7 +98,7 @@
                         <MudSelectItem Value="@((string?)null)">-</MudSelectItem>
                         @foreach (var item in collaOptions)
                         {
-                            <MudSelectItem Value="@item.Codice">@item.Codice - @item.Descrizione</MudSelectItem>
+                            <MudSelectItem Value="@item.Codice">@item.Descrizione</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
@@ -107,7 +107,7 @@
                         <MudSelectItem Value="@((string?)null)">-</MudSelectItem>
                         @foreach (var item in sabbiaOptions)
                         {
-                            <MudSelectItem Value="@item.Codice">@(string.IsNullOrEmpty(item.Codice) ? "-" : $"{item.Codice} - {item.Descrizione}")</MudSelectItem>
+                            <MudSelectItem Value="@item.Codice">@(string.IsNullOrEmpty(item.Descrizione) ? "-" : item.Descrizione)</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
@@ -116,7 +116,7 @@
                         <MudSelectItem Value="@((string?)null)">-</MudSelectItem>
                         @foreach (var item in verniceOptions)
                         {
-                            <MudSelectItem Value="@item.Codice">@item.Codice - @item.Descrizione</MudSelectItem>
+                            <MudSelectItem Value="@item.Codice">@item.Descrizione</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>

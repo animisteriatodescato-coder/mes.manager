@@ -3,13 +3,46 @@ namespace MESManager.Domain.Constants;
 /// <summary>
 /// Tabelle di lookup centralizzate per valori predefiniti dell'applicazione.
 /// Queste tabelle sono usate per dropdown, mappatura codici e visualizzazione.
+/// I valori vengono inizializzati con i default hardcoded e possono essere
+/// aggiornati a runtime da TabelleService (persistenza su tabelle-config.json).
 /// </summary>
 public static class LookupTables
 {
     /// <summary>
+    /// Aggiorna i dizionari in-memory con i valori caricati da TabelleService.
+    /// Chiamato all'avvio e ad ogni salvataggio dall'utente.
+    /// </summary>
+    public static void Aggiorna(
+        Dictionary<string, string> colla,
+        Dictionary<string, string> vernice,
+        Dictionary<string, string> sabbia,
+        Dictionary<string, string> imballo)
+    {
+        Colla.Clear();
+        foreach (var kv in colla)   Colla[kv.Key]   = kv.Value;
+
+        Vernice.Clear();
+        foreach (var kv in vernice)  Vernice[kv.Key]  = kv.Value;
+
+        Sabbia.Clear();
+        foreach (var kv in sabbia)   Sabbia[kv.Key]   = kv.Value;
+
+        Imballo.Clear();
+        foreach (var kv in imballo)  Imballo[kv.Key]  = kv.Value;
+
+        // Aggiorna anche ImballoInt (compatibilità legacy con AnimeService)
+        ImballoInt.Clear();
+        foreach (var kv in imballo)
+        {
+            if (int.TryParse(kv.Key, out var k))
+                ImballoInt[k] = kv.Value;
+        }
+    }
+
+    /// <summary>
     /// Tipi di colla disponibili
     /// </summary>
-    public static readonly Dictionary<string, string> Colla = new()
+    public static Dictionary<string, string> Colla = new()
     {
         { "-1", "BIANCA" },
         { "-2", "A CALDO" },
@@ -19,7 +52,7 @@ public static class LookupTables
     /// <summary>
     /// Tipi di vernice disponibili
     /// </summary>
-    public static readonly Dictionary<string, string> Vernice = new()
+    public static Dictionary<string, string> Vernice = new()
     {
         { "-1", "" },
         { "-2", "YELLOW COVER" },
@@ -34,7 +67,7 @@ public static class LookupTables
     /// <summary>
     /// Tipi di sabbia disponibili
     /// </summary>
-    public static readonly Dictionary<string, string> Sabbia = new()
+    public static Dictionary<string, string> Sabbia = new()
     {
         { "", "(nessuna)" },
         { "310/60", "310/60" },
@@ -51,7 +84,7 @@ public static class LookupTables
     /// <summary>
     /// Tipi di imballo disponibili (chiave string per uniformità API)
     /// </summary>
-    public static readonly Dictionary<string, string> Imballo = new()
+    public static Dictionary<string, string> Imballo = new()
     {
         { "-1", "CASSA GRANDE" },
         { "-2", "CASSA PICCOLA" },
@@ -66,7 +99,7 @@ public static class LookupTables
     /// <summary>
     /// Tipi di imballo con chiave intera (per compatibilità legacy)
     /// </summary>
-    public static readonly Dictionary<int, string> ImballoInt = new()
+    public static Dictionary<int, string> ImballoInt = new()
     {
         { -1, "CASSA GRANDE" },
         { -2, "CASSA PICCOLA" },

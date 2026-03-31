@@ -150,6 +150,9 @@ builder.Services.AddScoped<AppBarContentService>();
 builder.Services.AddSingleton<ColorExtractionService>();
 builder.Services.AddSingleton<AppSettingsService>();
 
+// Tabelle di lookup con persistenza su file JSON (tabelle-config.json)
+builder.Services.AddSingleton<ITabelleService, TabelleService>();
+
 // Tema dark/light — Scoped (una istanza per circuito Blazor Server = per sessione utente)
 // I componenti che dipendono da IsDarkMode iniettano IThemeModeService anziché accedere a MainLayout
 builder.Services.AddScoped<IThemeModeService, ThemeModeService>();
