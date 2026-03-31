@@ -4,7 +4,45 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.30
+## 🔖 Versione Corrente: v1.60.32
+
+---
+
+## 🔖 v1.60.32 - Fix dark mode: cache CSS + footer testo + paging "100" visibili (31 Mar 2026)
+
+**Data**: 31 Marzo 2026
+
+### 🐛 Fix — Testo invisibile in dark mode (footer + paginazione AG Grid)
+
+**Problema 1 (root cause)**: `app.css?v=1588` — versione hardcoded in `App.razor`. Le modifiche CSS di v1.60.29/1.60.31 non raggiungevano il browser che serviva la versione in cache.
+
+**Problema 2**: Footer `MudText Color="Color.Secondary"` → classe `.mud-secondary-text` con `!important` batteva i fix in `layout-config.css` (sbagliato: va in `app.css` caricato DOPO MudBlazor).
+
+**Problema 3**: AG Grid "100 ▼" (paging page-size) — `.ag-picker-field-display` non coperto dai selettori precedenti.
+
+**Soluzione**:
+- `App.razor`: `app.css?v=1588` → `v=1590`, `layout-config.css` → `layout-config.css?v=2` (cache bust forzato)
+- `app.css`: regole footer con selettori `html body .mud-theme-dark .footer-info .mud-secondary-text` (specificità 0,3,2 supera 0,1,0 di MudBlazor) + copertura `.ag-picker-field-display` per "100" nel picker
+- `layout-config.css`: rimossa regola duplicata `.mud-theme-dark .footer-info .mud-typography` (ora solo in app.css, unica fonte di verità)
+
+**Lesson Learned** (da aggiungere alla Bibbia): modifiche a `app.css` richiedono bump della versione query string in `App.razor`, altrimenti il browser usa la cache.
+
+**File modificati**:
+- `MESManager.Web/Components/App.razor`
+- `MESManager.Web/wwwroot/app.css`
+- `MESManager.Web/wwwroot/css/layout-config.css`
+- `MESManager.Web/Constants/AppVersion.cs`
+
+---
+
+## 🔖 v1.60.31 - Fix dark mode footer testo + % Scarti colori più intensi (31 Mar 2026)
+
+**Data**: 31 Marzo 2026
+
+### 🐛 Fix (parziale — problema cache invalidation non risolto)
+
+- `layout-config.css`: tentativo fix footer testo dark mode (non funzionò per cache)
+- `app.css`: % Scarti intensificati (ok: `#1a3a5c`/`#64b5f6`, warn: `#4a2e00`/`#ffa726`, error: `#5c1022`/`#e57373`) + `font-weight: bold` varianti dark
 
 ---
 
