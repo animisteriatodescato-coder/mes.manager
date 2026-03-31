@@ -730,9 +730,11 @@ h1:focus {
 .mud-nav-group.nav-sec-statistiche  .mud-collapse-container::after { content: "📊"; }
 .mud-nav-group.nav-sec-impostazioni .mud-collapse-container::after { content: "⚙️"; }
 
-/* === AnimeEditDialog layout ottimizzato (v1.60.34) === */
-.anime-edit-dialog .mud-dialog-content { overflow-y: auto !important; max-height: calc(86vh - 110px) !important; }
+/* === AnimeEditDialog layout ottimizzato (v1.60.35) === */
+.anime-edit-dialog .mud-dialog-content { overflow-y: auto !important; max-height: calc(92vh - 120px) !important; }
 .anime-edit-dialog .mud-dialog-title { padding-top: 6px !important; padding-bottom: 6px !important; }
 .anime-edit-dialog .mud-dialog-actions { padding-top: 4px !important; padding-bottom: 4px !important; }
-/* Foto senza crop: mostra l'immagine intera senza tagliarla */
-.anime-edit-dialog .mud-card-media { background-size: contain !important; background-repeat: no-repeat !important; background-color: rgba(0,0,0,0.18) !important; }
+/* Compatta griglia: riduce padding MudItem da 8px a 3px (~120px verticale risparmiati) */
+.anime-edit-dialog .mud-grid-item { padding: 3px !important; }
+/* Rimuovi margini divider */
+.anime-edit-dialog .mud-divider { margin-top: 0 !important; margin-bottom: 0 !important; }
