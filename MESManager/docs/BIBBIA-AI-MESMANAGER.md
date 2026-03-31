@@ -468,9 +468,9 @@ In v8, `MudNavGroup` usa questa struttura HTML reale:
 analizza la richiesta dell utente proponi **4 diverse strade prioritizzate** per l implementazione piu semplice e robusta possibile:
 
 1. **Soluzione Minimalista** - Cambiamenti minimi, massima velocità
-2. **Soluzione Stabile** - Bilanciamento semplicità/robustezza (⭐ CONSIGLIATA)
+2. **Soluzione Stabile** - Bilanciamento semplicità/robustezza 
 3. **Soluzione Completa** - Massima robustezza e flessibilità
-4. **Soluzione Alternativa** - Approccio diverso (se applicabile)
+4. **Soluzione Alternativa** - creata pensando al meglio la richiesta di integrazione dell utente seguendo alla lettere le leggi della bibbia
 
 proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve terminare con dotnet build e run per farla testare all utente
 
