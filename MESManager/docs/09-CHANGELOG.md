@@ -4,7 +4,42 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.32
+## 🔖 Versione Corrente: v1.60.33
+
+---
+
+## 🔖 v1.60.33 — Fix dark mode DEFINITIVO: CSS cascade AG Grid (31 Mar 2026)
+
+**Data**: 31 Marzo 2026
+
+### 🐛 Fix — Paginazione AG Grid, % Scarti e footer text ancora invisibili in dark mode
+
+**Root cause definitiva trovata**:
+AG Grid CDN CSS (`ag-grid.css` + `ag-theme-alpine.css`) imposta `--ag-foreground-color: #181d1f` (testo quasi-nero) su tutto il testo in `.ag-theme-alpine`. La barra paginazione usa `color: var(--ag-secondary-foreground-color)` impostato DIRETTAMENTE (non solo ereditato). In `App.razor`, `app.css` veniva caricato **PRIMA** di AG Grid CDN CSS → a parità di specificità, l'ultimo CSS vince (cascade order) → AG Grid sovrascriveva le nostre regole.
+
+**Soluzione 1 — Riordino CSS in `App.razor`**:
+AG Grid CDN CSS (`ag-grid.css`, `ag-theme-alpine.css`, `ag-theme-alpine-dark.css`) ora carica **PRIMA** di `app.css` e `layout-config.css`. Così le nostre regole vincono.
+
+**Soluzione 2 — Override CSS variables AG Grid in `app.css`**:
+```css
+.mud-theme-dark .ag-theme-alpine {
+    --ag-foreground-color: var(--mes-row-text, #E6E6F0);
+    --ag-secondary-foreground-color: var(--mes-row-text, #E6E6F0);
+    --ag-disabled-foreground-color: rgba(230, 230, 240, 0.4);
+    --ag-header-foreground-color: var(--mes-row-text, #E6E6F0);
+    --ag-icon-font-color: var(--mes-row-text, #E6E6F0);
+}
+```
+Questo fix è **più robusto**: sovrascrive le variabili radice di AG Grid, qualunque elemento erediti colore tramite queste variabili viene fixato automaticamente (paging, header, celle senza `cellStyle` esplicito, icone).
+
+**Soluzione 3 — Ripristino footer-info dark mode text color**:
+Il blocco `.mud-theme-dark .footer-info` era stato rimosso accidentalmente dal replace → reinserito in `app.css`.
+
+**File modificati**:
+- `MESManager.Web/Components/App.razor`: riordino CSS links (`?v=1592`, `layout-config.css?v=3`)
+- `MESManager.Web/wwwroot/app.css`: override CSS vars AG Grid + footer-info testo dark mode
+
+**Lesson Learned**: CSS custom properties (CSS variables) non supportano `!important` come modificatore. La specificità `.mud-theme-dark .ag-theme-alpine` (0,2,0) basta a sovrascrivere `.ag-theme-alpine` (0,1,0) purché il nostro CSS carichi DOPO. L'ordine di caricamento CSS in `App.razor` è critico quanto la specificità.
 
 ---
 
