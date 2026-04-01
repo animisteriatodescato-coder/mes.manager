@@ -112,6 +112,7 @@ window.programmaMacchineGrid = (function() {
         },
         { field: 'codice', headerName: 'Codice', sortable: true, filter: true, width: 180, pinned: 'left' },
         { field: 'internalOrdNo', headerName: 'Num. Ordine', sortable: true, filter: true, width: 130 },
+        { field: 'saleOrdId', headerName: 'ID Mago', sortable: true, filter: true, width: 100, hide: true },
         { field: 'externalOrdNo', headerName: 'Ordine Esterno', sortable: true, filter: true, width: 150 },
         { field: 'line', headerName: 'Linea', sortable: true, filter: true, width: 80 },
         { 
