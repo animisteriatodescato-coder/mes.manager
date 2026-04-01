@@ -372,9 +372,10 @@ public class PlcController : ControllerBase
 
             if (result.Success && codicePdf > 0)
             {
-                // Invia scheda produttiva via FTP (fire-and-forget)
-                _ = _ftpService.SendSchedaToMacchinaAsync(
-                    request.CodiceArticolo, request.MacchinaId, codicePdf, HttpContext.RequestAborted);
+                // Invia scheda produttiva via FTP — await con CancellationToken.None
+                // (HttpContext.RequestAborted verrebbe cancellato dopo Ok(result), blocando l'upload)
+                await _ftpService.SendSchedaToMacchinaAsync(
+                    request.CodiceArticolo, request.MacchinaId, codicePdf, CancellationToken.None);
             }
 
             return result.Success ? Ok(result) : BadRequest(result);

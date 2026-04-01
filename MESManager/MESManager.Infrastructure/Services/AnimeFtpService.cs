@@ -12,10 +12,13 @@ namespace MESManager.Infrastructure.Services;
 /// Flusso:
 ///   1. Genera PDF anima tramite IAnimePdfService
 ///   2. Carica su ftp://[MacchinaIP]/{codicePdf}.pdf  (codicePdf = SaleOrdId commessa)
+///   3. Ripulisce la cartella FTP: mantiene al massimo 3 PDF, elimina il più vecchio
 /// Credenziali configurabili in appsettings: FtpSettings.Username / Password
 /// </summary>
 public class AnimeFtpService : IAnimeFtpService
 {
+    private const int MaxPdfInCartella = 3;
+
     private readonly MesManagerDbContext _context;
     private readonly IAnimePdfService _pdfService;
     private readonly ILogger<AnimeFtpService> _logger;
@@ -88,6 +91,9 @@ public class AnimeFtpService : IAnimeFtpService
             _logger.LogInformation(
                 "✅ [FTP-SCHEDA] Scheda {NomeFile} inviata a ftp://{Ip}/",
                 nomeFile, macchina.IndirizzoPLC);
+
+            // 5. Pulizia cartella FTP: mantieni al massimo MaxPdfInCartella file
+            await CleanupOldPdfsAsync(macchina.IndirizzoPLC, ct);
         }
         catch (Exception ex)
         {
@@ -97,6 +103,10 @@ public class AnimeFtpService : IAnimeFtpService
 
         return result;
     }
+
+    // =====================================================================
+    // Privati
+    // =====================================================================
 
     private async Task UploadFtpAsync(string ip, string nomeFile, Stream content, CancellationToken ct)
     {
@@ -115,4 +125,126 @@ public class AnimeFtpService : IAnimeFtpService
         using var response = (FtpWebResponse)await request.GetResponseAsync();
         _logger.LogDebug("[FTP-SCHEDA] Upload completato: {Status}", response.StatusDescription?.TrimEnd());
     }
+
+    /// <summary>
+    /// Elenca i file .pdf nella root FTP e, se più di MaxPdfInCartella, elimina il più vecchio.
+    /// Usa MLSD (machine listing) con fallback su LIST se il server non supporta MLSD.
+    /// </summary>
+    private async Task CleanupOldPdfsAsync(string ip, CancellationToken ct)
+    {
+        try
+        {
+            // Elenca file con data (MLSD è supportato dalla maggioranza dei server FTP embedded)
+            var files = await ListPdfFilesAsync(ip, ct);
+
+            if (files.Count <= MaxPdfInCartella)
+                return;
+
+            // Ordina per data ascending, elimina i più vecchi finché non se ne hanno <= Max
+            var daEliminare = files
+                .OrderBy(f => f.LastModified)
+                .Take(files.Count - MaxPdfInCartella)
+                .ToList();
+
+            foreach (var f in daEliminare)
+            {
+                await DeleteFtpFileAsync(ip, f.Name, ct);
+                _logger.LogInformation("🗑️ [FTP-CLEANUP] Eliminato PDF vecchio: {Name} ({Date})",
+                    f.Name, f.LastModified);
+            }
+        }
+        catch (Exception ex)
+        {
+            // La pulizia è best-effort: non blocca il flusso principale
+            _logger.LogWarning(ex, "⚠️ [FTP-CLEANUP] Errore durante pulizia cartella {Ip}", ip);
+        }
+    }
+
+    private async Task<List<FtpFileInfo>> ListPdfFilesAsync(string ip, CancellationToken ct)
+    {
+        var result = new List<FtpFileInfo>();
+
+        // Prova MLSD per ottenere timestamp precisi
+        try
+        {
+            var uri = new Uri($"ftp://{ip}/");
+            var req = (FtpWebRequest)WebRequest.Create(uri);
+            req.Method = "MLSD";
+            req.Credentials = new NetworkCredential(_ftpUser, _ftpPassword);
+            req.Timeout = 10_000;
+
+            using var response = (FtpWebResponse)await req.GetResponseAsync();
+            using var reader = new System.IO.StreamReader(response.GetResponseStream());
+            string? line;
+            while ((line = await reader.ReadLineAsync(ct)) != null)
+            {
+                // Formato MLSD: "modify=20260401123015;type=file;size=12345; 7687.pdf"
+                var spaceIdx = line.IndexOf(' ');
+                if (spaceIdx < 0) continue;
+                var name = line[(spaceIdx + 1)..].Trim();
+                if (!name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)) continue;
+
+                DateTime lastMod = DateTime.MinValue;
+                var modifyTag = "modify=";
+                var modIdx = line.IndexOf(modifyTag, StringComparison.OrdinalIgnoreCase);
+                if (modIdx >= 0)
+                {
+                    var modVal = line[(modIdx + modifyTag.Length)..].Split(';')[0];
+                    DateTime.TryParseExact(modVal, "yyyyMMddHHmmss",
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.None, out lastMod);
+                }
+                result.Add(new FtpFileInfo(name, lastMod));
+            }
+            return result;
+        }
+        catch
+        {
+            // Fallback: LIST (data meno precisa ma universale)
+        }
+
+        try
+        {
+            var uri = new Uri($"ftp://{ip}/");
+            var req = (FtpWebRequest)WebRequest.Create(uri);
+            req.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
+            req.Credentials = new NetworkCredential(_ftpUser, _ftpPassword);
+            req.Timeout = 10_000;
+
+            using var response = (FtpWebResponse)await req.GetResponseAsync();
+            using var reader = new System.IO.StreamReader(response.GetResponseStream());
+            string? line;
+            while ((line = await reader.ReadLineAsync(ct)) != null)
+            {
+                // Formato Unix: "-rw-r--r-- 1 user group 12345 Apr  1 12:30 7687.pdf"
+                if (!line.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)) continue;
+                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length < 9) continue;
+                var name = parts[^1];
+                // Data approssimativa (solo per ordinamento relativo)
+                DateTime.TryParse($"{parts[^3]} {parts[^4]} {parts[^2]}",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None, out var lastMod);
+                result.Add(new FtpFileInfo(name, lastMod));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[FTP-CLEANUP] Impossibile listare file su {Ip}", ip);
+        }
+
+        return result;
+    }
+
+    private async Task DeleteFtpFileAsync(string ip, string nomeFile, CancellationToken ct)
+    {
+        var uri = new Uri($"ftp://{ip}/{nomeFile}");
+        var req = (FtpWebRequest)WebRequest.Create(uri);
+        req.Method = WebRequestMethods.Ftp.DeleteFile;
+        req.Credentials = new NetworkCredential(_ftpUser, _ftpPassword);
+        req.Timeout = 10_000;
+        using var response = (FtpWebResponse)await req.GetResponseAsync();
+    }
+
+    private record FtpFileInfo(string Name, DateTime LastModified);
 }
