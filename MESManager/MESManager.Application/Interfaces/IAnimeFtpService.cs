@@ -2,16 +2,15 @@ namespace MESManager.Application.Interfaces;
 
 /// <summary>
 /// Invia la scheda produttiva (PDF) via FTP alla macchina.
-/// Legge/assegna il CodicePDF (offset 160 ricetta) e carica il file sul server FTP della macchina.
+/// Il nome del file PDF = codicePdf (ID Mago / SaleOrdId), scritto anche a offset 160 della ricetta.
 /// </summary>
 public interface IAnimeFtpService
 {
     /// <summary>
-    /// Genera il PDF della scheda produttiva per l'articolo e lo invia via FTP
-    /// all'IP della macchina specificata.
-    /// Se CodicePDF (offset 160) mancante o 0, genera un codice univoco e lo salva in DB.
+    /// Genera il PDF e lo carica su ftp://[MacchinaIP]/{codicePdf}.pdf
+    /// codicePdf = SaleOrdId (ID Mago) della commessa corrente, da scrivere anche a offset 160.
     /// </summary>
-    Task<AnimeFtpResult> SendSchedaToMacchinaAsync(string codiceArticolo, Guid macchinaId, CancellationToken ct = default);
+    Task<AnimeFtpResult> SendSchedaToMacchinaAsync(string codiceArticolo, Guid macchinaId, int codicePdf, CancellationToken ct = default);
 }
 
 public class AnimeFtpResult

@@ -337,16 +337,44 @@ public class PlcController : ControllerBase
                 });
             }
             
+            // Ottieni SaleOrdId (ID Mago) dalla prossima commessa programmata per la macchina
+            int codicePdf = 0;
+            var macchina = await _context.Macchine.FindAsync(request.MacchinaId);
+            if (macchina != null)
+            {
+                var prossima = await _context.Commesse
+                    .Where(c => c.NumeroMacchina == macchina.OrdineVisualizazione
+                             && c.StatoProgramma == Domain.Enums.StatoProgramma.Programmata)
+                    .OrderBy(c => c.OrdineSequenza)
+                    .ThenBy(c => c.DataInizioPrevisione)
+                    .FirstOrDefaultAsync(HttpContext.RequestAborted);
+
+                if (prossima != null && int.TryParse(prossima.SaleOrdId, out var sid) && sid > 0)
+                {
+                    codicePdf = sid;
+                    ricetta.Parametri.RemoveAll(p => p.Indirizzo == 160);
+                    ricetta.Parametri.Add(new Application.DTOs.ParametroRicettaArticoloDto
+                    {
+                        CodiceArticolo = request.CodiceArticolo,
+                        DescrizioneParametro = "CodicePDF",
+                        Indirizzo = 160,
+                        Valore = codicePdf,
+                        Tipo = "INT",
+                        Area = "Ricetta"
+                    });
+                }
+            }
+
             var result = await _recipeWriter.WriteRecipeToDb56Async(
-                request.MacchinaId, 
-                ricetta, 
+                request.MacchinaId,
+                ricetta,
                 HttpContext.RequestAborted);
 
-            if (result.Success)
+            if (result.Success && codicePdf > 0)
             {
-                // Invia scheda produttiva via FTP alla macchina (fire-and-forget: non blocca la risposta)
+                // Invia scheda produttiva via FTP (fire-and-forget)
                 _ = _ftpService.SendSchedaToMacchinaAsync(
-                    request.CodiceArticolo, request.MacchinaId, HttpContext.RequestAborted);
+                    request.CodiceArticolo, request.MacchinaId, codicePdf, HttpContext.RequestAborted);
             }
 
             return result.Success ? Ok(result) : BadRequest(result);

@@ -99,8 +99,30 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
             
             _logger.LogInformation("📖 [AUTO-LOAD] Ricetta caricata: {Articolo} ({Parametri} parametri)", 
                 ricetta.CodiceArticolo, ricetta.TotaleParametri);
-            
-            // 3. SCRIVE DB55(offset 100+) automaticamente
+
+            // 3. Inietta CodicePDF (offset 160) = SaleOrdId commessa
+            int codicePdf = 0;
+            if (int.TryParse(prossimaCommessa.SaleOrdId, out var saleOrdId) && saleOrdId > 0)
+            {
+                codicePdf = saleOrdId;
+                ricetta.Parametri.RemoveAll(p => p.Indirizzo == 160);
+                ricetta.Parametri.Add(new ParametroRicettaArticoloDto
+                {
+                    CodiceArticolo = codiceArticolo,
+                    DescrizioneParametro = "CodicePDF",
+                    Indirizzo = 160,
+                    Valore = codicePdf,
+                    Tipo = "INT",
+                    Area = "Ricetta"
+                });
+                _logger.LogInformation("🏷️ [AUTO-LOAD] CodicePDF={Codice} (SaleOrdId) iniettato a offset 160", codicePdf);
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ [AUTO-LOAD] SaleOrdId non valido per commessa {Cod}: scheda non inviata via FTP", prossimaCommessa.Codice);
+            }
+
+            // 4. SCRIVE DB55(offset 100+) — include ora offset 160 con CodicePDF
             var result = await _recipeWriter.WriteRecipeToDb56Async(macchinaId, ricetta, ct);
             
             if (result.Success)
@@ -108,13 +130,16 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
                 _logger.LogInformation("✅ [AUTO-LOAD] Ricetta {Articolo} caricata in DB55(offset 100+) - Prossima lavorazione pronta", 
                     codiceArticolo);
                 
-                // 4. Aggiorna stato commessa (opzionale - per tracking)
+                // 5. Aggiorna stato commessa
                 await AggiornaStatoCommessaAsync(prossimaCommessa.Id, "RicettaPrecaricata", ct);
 
-                // 5. Invia scheda produttiva via FTP alla macchina
-                var ftpResult = await _ftpService.SendSchedaToMacchinaAsync(codiceArticolo, macchinaId, ct);
-                if (!ftpResult.Success)
-                    _logger.LogWarning("⚠️ [AUTO-LOAD] Invio scheda FTP non riuscito: {Error}", ftpResult.ErrorMessage);
+                // 6. Invia scheda produttiva via FTP
+                if (codicePdf > 0)
+                {
+                    var ftpResult = await _ftpService.SendSchedaToMacchinaAsync(codiceArticolo, macchinaId, codicePdf, ct);
+                    if (!ftpResult.Success)
+                        _logger.LogWarning("⚠️ [AUTO-LOAD] Invio scheda FTP non riuscito: {Error}", ftpResult.ErrorMessage);
+                }
             }
             else
             {
@@ -169,6 +194,23 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
                     ErrorMessage = $"Ricetta non trovata per articolo {codiceArticolo}" 
                 };
             }
+
+            // Inietta CodicePDF (offset 160) = SaleOrdId commessa
+            int codicePdf = 0;
+            if (int.TryParse(prossimaCommessa.SaleOrdId, out var saleOrdId) && saleOrdId > 0)
+            {
+                codicePdf = saleOrdId;
+                ricetta.Parametri.RemoveAll(p => p.Indirizzo == 160);
+                ricetta.Parametri.Add(new ParametroRicettaArticoloDto
+                {
+                    CodiceArticolo = codiceArticolo,
+                    DescrizioneParametro = "CodicePDF",
+                    Indirizzo = 160,
+                    Valore = codicePdf,
+                    Tipo = "INT",
+                    Area = "Ricetta"
+                });
+            }
             
             var result = await _recipeWriter.WriteRecipeToDb56Async(macchinaId, ricetta, ct);
             
@@ -179,10 +221,13 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
                 
                 await AggiornaStatoCommessaAsync(prossimaCommessa.Id, "RicettaPrecaricata", ct);
 
-                // Invia scheda produttiva via FTP alla macchina
-                var ftpResult = await _ftpService.SendSchedaToMacchinaAsync(codiceArticolo, macchinaId, ct);
-                if (!ftpResult.Success)
-                    _logger.LogWarning("⚠️ [MANUAL-LOAD] Invio scheda FTP non riuscito: {Error}", ftpResult.ErrorMessage);
+                // Invia scheda produttiva via FTP
+                if (codicePdf > 0)
+                {
+                    var ftpResult = await _ftpService.SendSchedaToMacchinaAsync(codiceArticolo, macchinaId, codicePdf, ct);
+                    if (!ftpResult.Success)
+                        _logger.LogWarning("⚠️ [MANUAL-LOAD] Invio scheda FTP non riuscito: {Error}", ftpResult.ErrorMessage);
+                }
             }
             
             return result;
