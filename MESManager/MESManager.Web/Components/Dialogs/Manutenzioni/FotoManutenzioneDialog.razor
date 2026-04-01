@@ -21,10 +21,13 @@
         }
 
         <MudStack AlignItems="AlignItems.Center" Spacing="2">
-            <InputFile id="foto-input-@RigaId" OnChange="@OnFileSelected"
+            @{
+                var inputId = $"foto-input-{RigaId}";
+            }
+            <InputFile id="@inputId" OnChange="@OnFileSelected"
                       accept="image/jpeg,image/png,image/webp"
                       style="display:none" />
-            <MudButton HtmlTag="label" for="foto-input-@RigaId"
+            <MudButton HtmlTag="label" for="@inputId"
                        Variant="Variant.Outlined" Color="Color.Primary"
                        StartIcon="@Icons.Material.Filled.Upload"
                        data-testid="btn-upload-foto">

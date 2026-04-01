@@ -747,3 +747,67 @@ h1:focus {
 .anime-edit-dialog .mud-grid-item { padding: 3px !important; }
 /* Rimuovi margini divider */
 .anime-edit-dialog .mud-divider { margin-top: 0 !important; margin-bottom: 0 !important; }
+
+/* ==========================================================================
+   MOBILE UX — v1.60.44
+   Ottimizzazioni per smartphone/tablet:
+   1. Auto-hide AppBar su scroll (via .mes-appbar-hidden + JS mobile-appbar.js)
+   2. Nasconde titolo pagina e UserSelector su schermi piccoli (più spazio contenuto)
+   3. Supporto safe-area iPhone notch (viewport-fit=cover in App.razor)
+   4. Font più compatti nel drawer su mobile
+   ========================================================================== */
+
+/* ── 1. Auto-hide AppBar su scroll ─────────────────────────────────────── */
+/* Transizione fluida sempre attiva su mobile */
+@media (max-width: 991.98px) {
+    .mud-appbar {
+        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        will-change: transform;
+    }
+    /* Quando body.mes-appbar-hidden → AppBar slide-up fuori dallo schermo */
+    body.mes-appbar-hidden .mud-appbar {
+        transform: translateY(-100%) !important;
+    }
+    /* Il main content NON si restringe: la AppBar è fixed in MudBlazor,
+       quindi basta nasconderla senza impattare il layout sottostante */
+}
+
+/* ── 2. Compact AppBar su mobile: nasconde titolo testuale ──────────────── */
+@media (max-width: 767.98px) {
+    /* Nasconde il testo "Todescato MES" e titolo pagina — rimangono solo le icone */
+    .mud-appbar [data-testid="main-appbar"] .mud-typography,
+    .mud-appbar .mud-typography.mud-typography-h5 {
+        display: none !important;
+    }
+    /* UserSelector compatto: nasconde solo il testo nome utente, mantiene icona */
+    .mud-appbar .mud-chip-label {
+        display: none !important;
+    }
+    /* Drawer auto: occupa tutta la larghezza disponibile su mobile small */
+    .mud-drawer {
+        max-width: 82vw !important;
+    }
+    /* Nav link più alti per touch facile */
+    .mud-drawer .mud-nav-link {
+        min-height: 44px !important;
+    }
+    /* Riduci padding main-content su mobile */
+    .mud-main-content {
+        padding-top: 6px !important;
+        padding-left: 6px !important;
+        padding-right: 6px !important;
+    }
+}
+
+/* ── 3. Safe-area per iPhone con notch/Dynamic Island ──────────────────── */
+/* Aggiunge padding in modo che la AppBar non venga coperta dalla status bar */
+@supports (padding-top: env(safe-area-inset-top)) {
+    @media (max-width: 991.98px) {
+        .mud-appbar .mud-toolbar {
+            padding-top: env(safe-area-inset-top) !important;
+        }
+        .mud-appbar {
+            height: calc(48px + env(safe-area-inset-top)) !important;
+        }
+    }
+}

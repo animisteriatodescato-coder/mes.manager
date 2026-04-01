@@ -1,0 +1,309 @@
+@page "/manutenzioni/scheda/{SchedaId:guid}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.ManutenzioniCatalogo)]
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@using MESManager.Domain.Enums
+@using MESManager.Web.Components.Dialogs.Manutenzioni
+@inject IManutenzioneService ManutenzioneService
+@inject IDialogService DialogService
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>Scheda Manutenzione</PageTitle>
+
+@if (_loading)
+{
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    </MudContainer>
+}
+else if (_scheda == null)
+{
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+        <MudAlert Severity="Severity.Error">Scheda non trovata.</MudAlert>
+        <MudButton OnClick="@(() => Nav.NavigateTo("/manutenzioni/catalogo"))" Class="mt-2">← Torna al Catalogo</MudButton>
+    </MudContainer>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4" data-testid="page-scheda-manutenzione">
+
+        @* HEADER *@
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2" Wrap="Wrap.Wrap">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Variant="Variant.Outlined"
+                           OnClick="@(() => Nav.NavigateTo("/manutenzioni/catalogo"))"
+                           data-testid="btn-torna-catalogo" />
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.h5">
+                    <b>@_scheda.CodiceMacchina</b> — @_scheda.NomeMacchina
+                </MudText>
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                    @if (_scheda.TipoFrequenza == TipoFrequenzaManutenzione.Settimanale)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Icon="@Icons.Material.Filled.ViewWeek">Settimanale</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Icon="@Icons.Material.Filled.CalendarMonth">Mensile</MudChip>
+                    }
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        @_scheda.DataEsecuzione.ToString("dddd dd MMMM yyyy")
+                    </MudText>
+                    @if (!string.IsNullOrEmpty(_scheda.NomeOperatore))
+                    {
+                        <MudText Typo="Typo.body2">· Operatore: <b>@_scheda.NomeOperatore</b></MudText>
+                    }
+                </MudStack>
+            </MudStack>
+            <MudSpacer />
+            @* BADGE STATO *@
+            @switch (_scheda.Stato)
+            {
+                case StatoSchedaManutenzione.InCompilazione:
+                    <MudChip T="string" Color="Color.Warning" Icon="@Icons.Material.Filled.Edit">In Compilazione</MudChip>
+                    break;
+                case StatoSchedaManutenzione.Completata:
+                    <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">Completata il @_scheda.DataChiusura?.ToString("dd/MM/yyyy")</MudChip>
+                    break;
+                case StatoSchedaManutenzione.ConAnomalie:
+                    <MudChip T="string" Color="Color.Error" Icon="@Icons.Material.Filled.Warning">Con Anomalie — @_scheda.DataChiusura?.ToString("dd/MM/yyyy")</MudChip>
+                    break;
+            }
+            @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Success"
+                           StartIcon="@Icons.Material.Filled.CheckCircle"
+                           OnClick="@ChiudiScheda" Disabled="@_saving"
+                           data-testid="btn-chiudi-scheda">
+                    @if (_saving) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+                    Chiudi Scheda
+                </MudButton>
+            }
+        </MudStack>
+
+        @* NOTE SCHEDA *@
+        @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
+        {
+            <MudTextField @bind-Value="_scheda.Note" Label="Note generali scheda (opzionale)"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2" Class="mb-4"
+                          data-testid="tf-note-scheda" />
+        }
+        else if (!string.IsNullOrEmpty(_scheda.Note))
+        {
+            <MudAlert Severity="Severity.Normal" Dense="true" Class="mb-4">Note: @_scheda.Note</MudAlert>
+        }
+
+        @* TABELLA ATTIVITÀ *@
+        <MudPaper Elevation="2" Class="pa-0">
+            <MudTable Items="@_scheda.Righe" Dense="true" Hover="true" Striped="true"
+                      data-testid="tbl-righe-scheda">
+                <HeaderContent>
+                    <MudTh Style="width:40px">#</MudTh>
+                    <MudTh>Attività</MudTh>
+                    <MudTh Style="width:160px">Esito</MudTh>
+                    <MudTh>Commento / Anomalia</MudTh>
+                    <MudTh Style="width:60px">Foto</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd><MudText Typo="Typo.caption">@context.OrdineAttivita</MudText></MudTd>
+                    <MudTd>
+                        <MudText>@context.NomeAttivita</MudText>
+                    </MudTd>
+                    <MudTd>
+                        @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
+                        {
+                            <MudSelect Value="@context.Esito"
+                                       ValueChanged="@((EsitoAttivitaManutenzione v) => OnEsitoChanged(context, v))"
+                                       Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true"
+                                       data-testid="@($"sel-esito-{context.Id}")">
+                                <MudSelectItem Value="EsitoAttivitaManutenzione.NonEseguita">
+                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                        <MudIcon Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Default" />
+                                        <span>Non Eseguita</span>
+                                    </MudStack>
+                                </MudSelectItem>
+                                <MudSelectItem Value="EsitoAttivitaManutenzione.OK">
+                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success" />
+                                        <span>OK</span>
+                                    </MudStack>
+                                </MudSelectItem>
+                                <MudSelectItem Value="EsitoAttivitaManutenzione.Anomalia">
+                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                        <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Color="Color.Error" />
+                                        <span>Anomalia</span>
+                                    </MudStack>
+                                </MudSelectItem>
+                            </MudSelect>
+                        }
+                        else
+                        {
+                            @switch (context.Esito)
+                            {
+                                case EsitoAttivitaManutenzione.OK:
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">OK</MudChip>
+                                    break;
+                                case EsitoAttivitaManutenzione.Anomalia:
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.Warning">Anomalia</MudChip>
+                                    break;
+                                default:
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Icon="@Icons.Material.Filled.Remove">—</MudChip>
+                                    break;
+                            }
+                        }
+                    </MudTd>
+                    <MudTd>
+                        @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
+                        {
+                            <MudTextField Value="@context.Commento"
+                                          ValueChanged="@((string? v) => OnCommentoChanged(context, v))"
+                                          Placeholder="Descrivi il problema..."
+                                          Variant="Variant.Outlined" Margin="Margin.Dense"
+                                          data-testid="@($"tf-commento-{context.Id}")" />
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2">@(context.Commento ?? "—")</MudText>
+                        }
+                    </MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@(string.IsNullOrEmpty(context.FotoPath) ? Icons.Material.Filled.PhotoCamera : Icons.Material.Filled.Image)"
+                                       Color="@(string.IsNullOrEmpty(context.FotoPath) ? Color.Default : Color.Success)"
+                                       Size="Size.Small"
+                                       Title="@(string.IsNullOrEmpty(context.FotoPath) ? "Aggiungi foto" : "Visualizza/cambia foto")"
+                                       OnClick="@(() => AprireFotoDialog(context))"
+                                       data-testid="@($"btn-foto-{context.Id}")" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+
+        @* RIEPILOGO *@
+        <MudStack Row="true" Spacing="4" Class="mt-4">
+            @{
+                var totOk = _scheda.Righe.Count(r => r.Esito == EsitoAttivitaManutenzione.OK);
+                var totAnomalie = _scheda.Righe.Count(r => r.Esito == EsitoAttivitaManutenzione.Anomalia);
+                var totNonEseguite = _scheda.Righe.Count(r => r.Esito == EsitoAttivitaManutenzione.NonEseguita);
+                var totale = _scheda.Righe.Count;
+            }
+            <MudPaper Class="pa-3" Elevation="1" Style="min-width:100px; text-align:center">
+                <MudText Typo="Typo.h5" Color="Color.Success">@totOk</MudText>
+                <MudText Typo="Typo.caption">OK</MudText>
+            </MudPaper>
+            <MudPaper Class="pa-3" Elevation="1" Style="min-width:100px; text-align:center">
+                <MudText Typo="Typo.h5" Color="Color.Error">@totAnomalie</MudText>
+                <MudText Typo="Typo.caption">Anomalie</MudText>
+            </MudPaper>
+            <MudPaper Class="pa-3" Elevation="1" Style="min-width:100px; text-align:center">
+                <MudText Typo="Typo.h5" Color="Color.Default">@totNonEseguite</MudText>
+                <MudText Typo="Typo.caption">Non Eseguite</MudText>
+            </MudPaper>
+            <MudPaper Class="pa-3" Elevation="1" Style="min-width:100px; text-align:center">
+                <MudText Typo="Typo.h5">@totale</MudText>
+                <MudText Typo="Typo.caption">Totale</MudText>
+            </MudPaper>
+        </MudStack>
+
+    </MudContainer>
+}
+
+@code {
+    [Parameter] public Guid SchedaId { get; set; }
+
+    private ManutenzioneSchedaDto? _scheda;
+    private bool _loading = true;
+    private bool _saving;
+    private System.Timers.Timer? _saveTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CaricaScheda();
+    }
+
+    private async Task CaricaScheda()
+    {
+        _loading = true;
+        try
+        {
+            _scheda = await ManutenzioneService.GetSchedaByIdAsync(SchedaId);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OnEsitoChanged(ManutenzioneRigaDto riga, EsitoAttivitaManutenzione nuovoEsito)
+    {
+        riga.Esito = nuovoEsito;
+        await SalvaRiga(riga);
+    }
+
+    private void OnCommentoChanged(ManutenzioneRigaDto riga, string? valore)
+    {
+        riga.Commento = valore;
+        // Debounce: salva dopo 1 secondo di inattività
+        _saveTimer?.Stop();
+        _saveTimer?.Dispose();
+        _saveTimer = new System.Timers.Timer(1000);
+        _saveTimer.Elapsed += async (_, _) =>
+        {
+            _saveTimer?.Dispose();
+            _saveTimer = null;
+            await InvokeAsync(() => SalvaRiga(riga));
+        };
+        _saveTimer.AutoReset = false;
+        _saveTimer.Start();
+    }
+
+    private async Task SalvaRiga(ManutenzioneRigaDto riga)
+    {
+        await ManutenzioneService.UpdateRigaAsync(SchedaId, riga);
+    }
+
+    private async Task ChiudiScheda()
+    {
+        _saving = true;
+        try
+        {
+            _scheda = await ManutenzioneService.ChiudiSchedaAsync(SchedaId);
+            var msg = _scheda?.Stato == StatoSchedaManutenzione.ConAnomalie
+                ? "Scheda chiusa con anomalie segnalate"
+                : "Scheda completata con successo";
+            Snackbar.Add(msg, _scheda?.Stato == StatoSchedaManutenzione.ConAnomalie ? Severity.Warning : Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task AprireFotoDialog(ManutenzioneRigaDto riga)
+    {
+        var parameters = new DialogParameters<FotoManutenzioneDialog>
+        {
+            { x => x.RigaId, riga.Id },
+            { x => x.NomeAttivita, riga.NomeAttivita },
+            { x => x.FotoPathCorrente, riga.FotoPath }
+        };
+        var opts = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<FotoManutenzioneDialog>("Foto Attività", parameters, opts);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            // Aggiorna il path foto nella riga locale
+            riga.FotoPath = result.Data as string;
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        _saveTimer?.Dispose();
+    }
+}

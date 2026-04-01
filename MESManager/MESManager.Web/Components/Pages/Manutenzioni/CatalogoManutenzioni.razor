@@ -1,38 +1,195 @@
 @page "/manutenzioni/catalogo"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.ManutenzioniCatalogo)]
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@using MESManager.Domain.Enums
+@using MESManager.Web.Components.Dialogs.Manutenzioni
+@inject IManutenzioneService ManutenzioneService
+@inject IMacchinaAppService MacchinaService
+@inject IDialogService DialogService
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
 
 <PageTitle>Catalogo Manutenzioni</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-catalogo-manutenzioni">
-<MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mb-4" StartIcon="@Icons.Material.Filled.Add">
-    Nuova Manutenzione
-</MudButton>
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4" data-testid="page-catalogo-manutenzioni">
 
-<MudTable Items="@_manutenzioni" Hover="true">
-    <HeaderContent>
-        <MudTh>Macchina</MudTh>
-        <MudTh>Descrizione</MudTh>
-        <MudTh>Data Prevista</MudTh>
-        <MudTh>Stato</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd>@context.Macchina</MudTd>
-        <MudTd>@context.Descrizione</MudTd>
-        <MudTd>@context.DataPrevista.ToString("dd/MM/yyyy")</MudTd>
-        <MudTd><MudChip T="string" Size="Size.Small">@context.Stato</MudChip></MudTd>
-    </RowTemplate>
-</MudTable>
+    @* TOOLBAR *@
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Spacing="2" Wrap="Wrap.Wrap">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.AddTask"
+                   OnClick="@AprireNuovaScheda"
+                   data-testid="btn-nuova-scheda">
+            + Nuova Scheda
+        </MudButton>
+        <MudSpacer />
+        <MudSelect @bind-Value="_filtroMacchinaId" Label="Macchina" Clearable="true"
+                   Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:180px"
+                   @bind-Value:after="@(() => CaricaSchede())"
+                   data-testid="sel-filtro-macchina">
+            <MudSelectItem Value="@((Guid?)null)">Tutte</MudSelectItem>
+            @foreach (var m in _macchine)
+            {
+                <MudSelectItem Value="@((Guid?)m.Id)">@m.Codice — @m.Nome</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect @bind-Value="_filtroTipo" Label="Frequenza" Clearable="true"
+                   Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:160px"
+                   @bind-Value:after="@(() => CaricaSchede())"
+                   data-testid="sel-filtro-tipo">
+            <MudSelectItem Value="@((TipoFrequenzaManutenzione?)null)">Tutte</MudSelectItem>
+            <MudSelectItem Value="@((TipoFrequenzaManutenzione?)TipoFrequenzaManutenzione.Settimanale)">Settimanale</MudSelectItem>
+            <MudSelectItem Value="@((TipoFrequenzaManutenzione?)TipoFrequenzaManutenzione.Mensile)">Mensile</MudSelectItem>
+        </MudSelect>
+        <MudDateRangePicker @bind-DateRange="_filtroRange" Label="Periodo"
+                            DateFormat="dd/MM/yyyy" Editable="true"
+                            Variant="Variant.Outlined" Margin="Margin.Dense"
+                            PickerVariant="PickerVariant.Dialog"
+                            Style="min-width:220px"
+                            data-testid="drp-filtro-range" />
+        <MudIconButton Icon="@Icons.Material.Filled.Search" Color="Color.Primary"
+                       Variant="Variant.Filled" OnClick="@CaricaSchede"
+                       data-testid="btn-applica-filtro" />
+    </MudStack>
+
+    @* LEGENDA STATI *@
+    <MudStack Row="true" Spacing="3" Class="mb-3">
+        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.Edit">In Compilazione</MudChip>
+        <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">Completata</MudChip>
+        <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.Warning">Con Anomalie</MudChip>
+    </MudStack>
+
+    @* TABELLA *@
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+    }
+
+    <MudTable Items="@_schede" Hover="true" Dense="true" Striped="true"
+              Loading="@_loading" SortLabel="Ordina per"
+              data-testid="tbl-schede">
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<ManutenzioneSchedaDto, object>(x => x.CodiceMacchina)">Macchina</MudTableSortLabel></MudTh>
+            <MudTh>Tipo</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<ManutenzioneSchedaDto, object>(x => x.DataEsecuzione)">Data</MudTableSortLabel></MudTh>
+            <MudTh>Operatore</MudTh>
+            <MudTh>Attività</MudTh>
+            <MudTh>Stato</MudTh>
+            <MudTh>Azioni</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Macchina">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Filled.PrecisionManufacturing" Size="Size.Small" Color="Color.Default" />
+                    <span><b>@context.CodiceMacchina</b> — @context.NomeMacchina</span>
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Tipo">
+                @if (context.TipoFrequenza == TipoFrequenzaManutenzione.Settimanale)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Icon="@Icons.Material.Filled.ViewWeek">Settimanale</MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Icon="@Icons.Material.Filled.CalendarMonth">Mensile</MudChip>
+                }
+            </MudTd>
+            <MudTd DataLabel="Data">@context.DataEsecuzione.ToString("dd/MM/yyyy")</MudTd>
+            <MudTd DataLabel="Operatore">@(context.NomeOperatore ?? "—")</MudTd>
+            <MudTd DataLabel="Attività">
+                @{
+                    var ok = context.Righe.Count(r => r.Esito == EsitoAttivitaManutenzione.OK);
+                    var tot = context.Righe.Count;
+                }
+                <MudProgressLinear Value="@(tot > 0 ? (double)ok / tot * 100 : 0)"
+                                   Color="@(ok == tot && tot > 0 ? Color.Success : Color.Warning)"
+                                   Rounded="true" Size="Size.Small" Style="width:80px;display:inline-block;" />
+                <MudText Typo="Typo.caption" Class="ml-1">@ok/@tot</MudText>
+            </MudTd>
+            <MudTd DataLabel="Stato">
+                @switch (context.Stato)
+                {
+                    case StatoSchedaManutenzione.InCompilazione:
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.Edit">In Compilazione</MudChip>
+                        break;
+                    case StatoSchedaManutenzione.Completata:
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">Completata</MudChip>
+                        break;
+                    case StatoSchedaManutenzione.ConAnomalie:
+                        <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.Warning">Con Anomalie</MudChip>
+                        break;
+                }
+            </MudTd>
+            <MudTd DataLabel="Azioni">
+                <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" Size="Size.Small"
+                               Color="Color.Primary" Title="Apri scheda"
+                               OnClick="@(() => Nav.NavigateTo($"/manutenzioni/scheda/{context.Id}"))"
+                               data-testid="btn-apri-scheda" />
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Class="pa-4">Nessuna scheda trovata. Crea la prima con il pulsante + Nuova Scheda.</MudText>
+        </NoRecordsContent>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[]{10, 25, 50}" />
+        </PagerContent>
+    </MudTable>
 </MudContainer>
 
 @code {
-    private List<ManutenzioneDto> _manutenzioni = new();
+    private List<ManutenzioneSchedaDto> _schede = new();
+    private List<MacchinaListItem> _macchine = new();
+    private bool _loading = true;
+    private Guid? _filtroMacchinaId;
+    private TipoFrequenzaManutenzione? _filtroTipo;
+    private DateRange _filtroRange = new(DateTime.Today.AddMonths(-1), DateTime.Today);
 
-    private class ManutenzioneDto
+    private record MacchinaListItem(Guid Id, string Codice, string Nome);
+
+    protected override async Task OnInitializedAsync()
     {
-        public string Macchina { get; set; } = string.Empty;
-        public string Descrizione { get; set; } = string.Empty;
-        public DateTime DataPrevista { get; set; }
-        public string Stato { get; set; } = string.Empty;
+        var macchineRaw = await MacchinaService.GetListaAsync();
+        _macchine = macchineRaw.OrderBy(m => m.Codice)
+            .Select(m => new MacchinaListItem(m.Id, m.Codice, m.Nome)).ToList();
+        await CaricaSchede();
+    }
+
+    private async Task CaricaSchede()
+    {
+        _loading = true;
+        try
+        {
+            _schede = await ManutenzioneService.GetSchedeAsync(
+                _filtroMacchinaId,
+                _filtroTipo,
+                _filtroRange.Start,
+                _filtroRange.End?.AddDays(1));
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task AprireNuovaScheda()
+    {
+        var macchineParam = _macchine
+            .Select(m => new NuovaSchedaDialog.MacchinaItem(m.Id, m.Codice, m.Nome))
+            .ToList();
+
+        var parameters = new DialogParameters<NuovaSchedaDialog>
+        {
+            { x => x.Macchine, macchineParam }
+        };
+
+        var opts = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<NuovaSchedaDialog>("Nuova Scheda", parameters, opts);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is ManutenzioneSchedaDto scheda)
+        {
+            Nav.NavigateTo($"/manutenzioni/scheda/{scheda.Id}");
+        }
     }
 }
 

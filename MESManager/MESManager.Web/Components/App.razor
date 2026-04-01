@@ -3,8 +3,15 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <base href="/" />
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <!-- iOS / iPadOS: modo standalone senza browser chrome -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="MESManager" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
     
@@ -33,6 +40,8 @@
     <script src="/js/error-interceptor.js?v=2"></script>
     <!-- Theme CSS Variables: aggiorna --mes-* senza Blazor re-render -->
     <script src="/js/theme-vars.js?v=1"></script>
+    <!-- Mobile: auto-hide AppBar su scroll + chiusura drawer su navigazione -->
+    <script src="/js/mobile-appbar.js?v=1"></script>
     
     <!-- MudBlazor JS -->
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>

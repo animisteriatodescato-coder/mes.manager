@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.60.43";
+    public const string Current = "1.61.1";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.60.43  Dashboard: operatore su riga dedicata, sezione cicli/obiettivo/barra unificata
+    public const string Display = "v" + Current; // v1.61.1  Mobile UX: PWA manifest (Add to Home Screen), auto-hide AppBar su scroll, drawer auto-close su navigazione, safe-area iPhone notch
 }
