@@ -21,4 +21,5 @@ public class Macchina
     public ICollection<EventoPLC> EventiPLC { get; set; } = new List<EventoPLC>();
     public ICollection<Manutenzione> Manutenzioni { get; set; } = new List<Manutenzione>();
     public ICollection<ConfigurazionePLC> ConfigurazioniPLC { get; set; } = new List<ConfigurazionePLC>();
+    public ICollection<ManutenzioneScheda> SchedeManutenzione { get; set; } = new List<ManutenzioneScheda>();
 }

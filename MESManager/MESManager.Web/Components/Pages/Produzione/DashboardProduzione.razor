@@ -19,54 +19,42 @@
                          Style="cursor: pointer;">
                     <MudCardHeader Class="card-header-compact">
                         <CardHeaderContent>
-                            <div class="d-flex justify-space-between align-center">
-                                <div class="d-flex align-center gap-2">
+                            <div class="d-flex flex-column">
+                                <div class="d-flex justify-space-between align-center">
                                     <MudText Typo="Typo.h4" Class="machine-number">@machine.MacchinaNumero</MudText>
-                                    @if (!string.IsNullOrEmpty(machine.NomeOperatore))
-                                    {
-                                        <div class="d-flex align-center gap-1 operator-name">
-                                            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
-                                            <MudText Typo="Typo.body2">@machine.NomeOperatore</MudText>
-                                        </div>
-                                    }
+                                    <MudChip T="string" Size="Size.Small" Color="@GetStatoColor(machine.StatoMacchina)" Class="status-chip">
+                                        @GetStatoText(machine.StatoMacchina)
+                                    </MudChip>
                                 </div>
-                                <MudChip T="string" Size="Size.Small" Color="@GetStatoColor(machine.StatoMacchina)" Class="status-chip">
-                                    @GetStatoText(machine.StatoMacchina)
-                                </MudChip>
+                                @if (!string.IsNullOrEmpty(machine.NomeOperatore))
+                                {
+                                    <div class="d-flex align-center gap-1 operator-row">
+                                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                                        <MudText Typo="Typo.body2" Class="operator-name-full">@machine.NomeOperatore</MudText>
+                                    </div>
+                                }
                             </div>
                         </CardHeaderContent>
                     </MudCardHeader>
                     <MudCardContent Class="card-content-compact">
-                        <!-- Barra di Completamento -->
-                        <div class="mb-1">
-                            <div class="d-flex justify-space-between mb-1">
-                                <MudText Typo="Typo.caption" Class="section-title">COMPLETAMENTO</MudText>
+                        <!-- Cicli Fatti / Obiettivo + Barra di Completamento -->
+                        <div class="completion-block mb-1">
+                            <div class="d-flex justify-space-between align-center">
+                                <MudText Typo="Typo.caption" Class="section-title">CICLI FATTI / OBIETTIVO</MudText>
                                 <MudText Typo="Typo.body2" Style="font-weight: bold">@machine.PercentualeCompletamento.ToString("F1")%</MudText>
+                            </div>
+                            <div class="d-flex align-center gap-1 mb-1">
+                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success" />
+                                <MudText Typo="Typo.body1" Class="cicli-value">@machine.CicliFatti.ToString("N0")</MudText>
+                                <MudText Typo="Typo.body2" Class="cicli-separator">/</MudText>
+                                <MudIcon Icon="@Icons.Material.Filled.Flag" Size="Size.Small" Color="Color.Primary" />
+                                <MudText Typo="Typo.body1" Class="cicli-value">@machine.QuantitaDaProdurre.ToString("N0")</MudText>
                             </div>
                             <MudProgressLinear Color="@GetProgressColor(machine)" Value="@((double)machine.PercentualeCompletamento)" Size="Size.Small" Class="rounded-progress" />
                         </div>
 
                         <!-- Metriche Produzione -->
                         <MudGrid Spacing="1" Class="metrics-grid">
-                            <MudItem xs="12">
-                                <div class="metric-box-inline">
-                                    <div class="metric-inline-item">
-                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success" />
-                                        <div class="metric-content">
-                                            <MudText Typo="Typo.caption" Class="metric-label">Cicli Fatti</MudText>
-                                            <MudText Typo="Typo.body2" Class="metric-value">@machine.CicliFatti.ToString("N0")</MudText>
-                                        </div>
-                                    </div>
-                                    <div class="metric-divider"></div>
-                                    <div class="metric-inline-item">
-                                        <MudIcon Icon="@Icons.Material.Filled.Flag" Size="Size.Small" Color="Color.Primary" />
-                                        <div class="metric-content">
-                                            <MudText Typo="Typo.caption" Class="metric-label">Obiettivo</MudText>
-                                            <MudText Typo="Typo.body2" Class="metric-value">@machine.QuantitaDaProdurre.ToString("N0")</MudText>
-                                        </div>
-                                    </div>
-                                </div>
-                            </MudItem>
                             <MudItem xs="6">
                                 <MudTooltip Text="@GetScartiTooltip(machine)" Placement="Placement.Top" Arrow="true">
                                 <div class="metric-box">
@@ -187,11 +175,18 @@
         min-height: unset !important;
     }
 
-    .operator-name {
-        max-width: 140px;
+    .operator-row {
+        margin-top: 2px;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
+    }
+
+    .operator-name-full {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 0.85rem;
     }
 
     .machine-card {
@@ -370,6 +365,23 @@
         line-height: 1.2;
         font-size: 0.9rem;
         color: #1a1a1a;
+    }
+
+    .completion-block {
+        padding: 4px 0 2px 0;
+    }
+
+    .cicli-value {
+        font-weight: 800;
+        font-size: 1rem;
+        line-height: 1.2;
+        color: #1a1a1a;
+    }
+
+    .cicli-separator {
+        font-weight: 600;
+        opacity: 0.5;
+        margin: 0 2px;
     }
 
     .metrics-grid {

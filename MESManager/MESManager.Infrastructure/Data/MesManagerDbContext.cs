@@ -66,6 +66,11 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<WorkProcessingParameter> WorkProcessingParameters => Set<WorkProcessingParameter>();
     public DbSet<WorkProcessingTechnicalData> WorkProcessingTechnicalData => Set<WorkProcessingTechnicalData>();
 
+    // Modulo Manutenzioni (Schede)
+    public DbSet<ManutenzioneAttivita> ManutenzioneAttivita => Set<ManutenzioneAttivita>();
+    public DbSet<ManutenzioneScheda> ManutenzioneSchede => Set<ManutenzioneScheda>();
+    public DbSet<ManutenzioneRiga> ManutenzioneRighe => Set<ManutenzioneRiga>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -562,6 +567,41 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
         
         modelBuilder.Entity<QuoteRow>()
             .HasIndex(r => r.WorkProcessingTypeId);
+
+        // =====================================
+        // MODULO MANUTENZIONI (SCHEDE)
+        // =====================================
+
+        // Relazione 1:N Macchina-ManutenzioneScheda
+        modelBuilder.Entity<ManutenzioneScheda>()
+            .HasOne(s => s.Macchina)
+            .WithMany(m => m.SchedeManutenzione)
+            .HasForeignKey(s => s.MacchinaId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Relazione 1:N ManutenzioneScheda-ManutenzioneRiga
+        modelBuilder.Entity<ManutenzioneRiga>()
+            .HasOne(r => r.Scheda)
+            .WithMany(s => s.Righe)
+            .HasForeignKey(r => r.SchedaId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Relazione 1:N ManutenzioneAttivita-ManutenzioneRiga
+        modelBuilder.Entity<ManutenzioneRiga>()
+            .HasOne(r => r.Attivita)
+            .WithMany(a => a.Righe)
+            .HasForeignKey(r => r.AttivitaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Indici per query veloci
+        modelBuilder.Entity<ManutenzioneScheda>()
+            .HasIndex(s => s.MacchinaId);
+        modelBuilder.Entity<ManutenzioneScheda>()
+            .HasIndex(s => s.DataEsecuzione);
+        modelBuilder.Entity<ManutenzioneRiga>()
+            .HasIndex(r => r.SchedaId);
+        modelBuilder.Entity<ManutenzioneAttivita>()
+            .HasIndex(a => a.TipoFrequenza);
     }
 
     private static StatoCommessa ParseStatoCommessa(string? value)
