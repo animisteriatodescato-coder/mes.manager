@@ -4,7 +4,82 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.60.42
+## 🔖 Versione Corrente: v1.61.1
+
+---
+
+## 🔖 v1.61.1 — Mobile UX (1 Apr 2026)
+
+**Data**: 1 Aprile 2026
+
+### ✨ Feature — Ottimizzazioni visualizzazione su smartphone/tablet (Soluzione 3)
+
+**Motivazione**: su mobile il browser chrome + AppBar alta sottraevano troppo spazio verticale al contenuto.
+
+**Funzionalità implementate**:
+- **PWA Manifest** (`/manifest.json`): "Aggiungi alla schermata Home" sul browser → l'app si apre senza barra del browser (display: standalone), come un'app nativa iOS/Android
+- **Auto-hide AppBar su scroll** (`/js/mobile-appbar.js`): scorrendo verso il basso l'AppBar si nasconde con animazione fluida; riappare scorrendo verso l'alto o a inizio pagina. Solo su viewport < 992px
+- **Compact AppBar su mobile** (< 768px): nasconde il titolo testuale per guadagnare spazio orizzontale per le icone azione
+- **Drawer auto-close su navigazione**: toccando un link nel menu laterale, il drawer si chiude automaticamente senza click extra
+- **Reset stato AppBar** dopo ogni navigazione: l'AppBar è sempre visibile all'arrivo su una nuova pagina
+- **Safe-area iPhone notch** (`viewport-fit=cover` + `env(safe-area-inset-top)`): la AppBar non si sovrappone a notch/Dynamic Island su iPhone X+
+- **Meta tags Apple**: `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style` per esperienza fullscreen iOS
+
+**File modificati**:
+```
+wwwroot/manifest.json                      (nuovo) — PWA manifest
+wwwroot/js/mobile-appbar.js                (nuovo) — scroll auto-hide JS
+wwwroot/app.css                            (+60 righe) — CSS mobile responsive
+Components/App.razor                       — viewport-fit=cover, manifest link, script mobile
+Components/Layout/MainLayout.razor.cs      — OnLocationChanged: drawer close + JS showAppBar
+Constants/AppVersion.cs                    — 1.61.0 → 1.61.1
+```
+
+---
+
+## 🔖 v1.61.0 — Modulo Manutenzioni Schede (1 Apr 2026)
+
+**Data**: 1 Aprile 2026
+
+### ✨ Feature — Catalogo Manutenzioni completamente riscritto (Soluzione 2)
+
+**Motivazione**: pagina `/manutenzioni/catalogo` era vuota (placeholder). Implementato sistema completo di registro manutenzioni ispirato ai moduli Excel aziendali (Settimanale / Mensile).
+
+**Architettura (Clean Architecture)**:
+- **Domain**: `ManutenzioneAttivita`, `ManutenzioneScheda`, `ManutenzioneRiga` + 3 enum
+- **Application**: `ManutenzioneDto.cs`, `IManutenzioneService`, `ManutenzioneService`
+- **Infrastructure**: 3 nuovi `DbSet`, relazioni EF, indici, migration `AddManutenzioneSchede`
+- **Web**: `CatalogoManutenzioni.razor` (lista + filtri), `SchedaManutenzione.razor` (dettaglio), `NuovaSchedaDialog.razor`, `FotoManutenzioneDialog.razor`
+
+**Funzionalità**:
+- Lista schede con filtri (macchina, frequenza, periodo), progress bar attività completate
+- Creazione scheda con selezione macchina + tipo (Settimanale/Mensile) → genera automaticamente righe dal catalogo attività
+- Compilazione scheda: dropdown esito (OK / Anomalia / Non Eseguita), campo commento con auto-save (debounce 1s), upload foto per ogni attività
+- Chiusura scheda: calcola stato (Completata / ConAnomalie), blocca in readonly
+- Badge colorati per stato: 🟡 In Compilazione, 🟢 Completata, 🔴 Con Anomalie
+- Seed automatico all'avvio da attività Excel originali (9 attività: 5 settimanali, 4 mensili)
+- Campo `CicliSogliaPLC` / `CicloMacchinaAlEsecuzione` pre-disposti per futura integrazione contatore cicli PLC
+
+**File creati/modificati**:
+```
+Domain/Entities/        ManutenzioneAttivita.cs (nuovo)
+                        ManutenzioneScheda.cs (nuovo)
+                        ManutenzioneRiga.cs (nuovo)
+                        Macchina.cs (+navigation SchedeManutenzione)
+Domain/Enums/           TipoFrequenzaManutenzione.cs (nuovo)
+                        EsitoAttivitaManutenzione.cs (nuovo)
+                        StatoSchedaManutenzione.cs (nuovo)
+Application/DTOs/       ManutenzioneDto.cs (nuovo)
+Application/Interfaces/ IManutenzioneService.cs (nuovo)
+Application/Services/   ManutenzioneService.cs (nuovo)
+Infrastructure/Data/    MesManagerDbContext.cs (+3 DbSet + relazioni)
+Infrastructure/Migrations/ AddManutenzioneSchede
+Web/Program.cs          +IManutenzioneService DI + seed
+Web/Pages/Manutenzioni/ CatalogoManutenzioni.razor (riscritto)
+                        SchedaManutenzione.razor (nuovo)
+Web/Dialogs/Manutenzioni/ NuovaSchedaDialog.razor (nuovo)
+                          FotoManutenzioneDialog.razor (nuovo)
+```
 
 ---
 
