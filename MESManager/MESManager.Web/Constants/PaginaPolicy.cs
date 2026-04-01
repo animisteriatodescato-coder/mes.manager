@@ -32,6 +32,7 @@ public static class PaginaPolicy
     // ── Manutenzioni ──
     public const string ManutenzioniAlert    = "pagina-manutenzioni-alert";
     public const string ManutenzioniCatalogo = "pagina-manutenzioni-catalogo";
+    public const string ManutenzioniGriglia  = "pagina-manutenzioni-griglia";
 
     // ── Statistiche ──
     public const string StatProduzione  = "pagina-stat-produzione";
@@ -69,8 +70,9 @@ public static class PaginaPolicy
         ]),
         new("Manutenzioni", ["Admin", "Manutenzione"],
         [
-            new("manutenzioni-alert",    "Alert",    "/manutenzioni/alert",    ManutenzioniAlert),
-            new("manutenzioni-catalogo", "Catalogo", "/manutenzioni/catalogo", ManutenzioniCatalogo),
+            new("manutenzioni-alert",    "Alert",                  "/manutenzioni/alert",    ManutenzioniAlert),
+            new("manutenzioni-catalogo", "Catalogo",               "/manutenzioni/catalogo", ManutenzioniCatalogo),
+            new("manutenzioni-griglia",  "Manutenzione Giornaliera", "/manutenzioni/griglia", ManutenzioniGriglia),
         ]),
         new("Statistiche", ["Admin", "Produzione", "Ufficio", "Manutenzione"],
         [

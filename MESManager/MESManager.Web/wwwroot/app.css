@@ -811,3 +811,167 @@ h1:focus {
         }
     }
 }
+
+/* ════════════════════════════════════════════════════════
+   GRIGLIA GIORNALIERA MANUTENZIONI  (GrigliaGiornaliera.razor)
+   ════════════════════════════════════════════════════════ */
+
+.mes-mant-grid {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13px;
+}
+
+/* Intestazione macchina */
+.mes-mant-th-mac {
+    padding: 8px 12px;
+    min-width: 140px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid rgba(0,0,0,.15);
+    white-space: nowrap;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: inherit;
+}
+
+/* Intestazione attività (colonne) */
+.mes-mant-th-att {
+    padding: 6px 8px;
+    min-width: 100px;
+    max-width: 130px;
+    text-align: center;
+    border-bottom: 2px solid rgba(0,0,0,.15);
+    vertical-align: bottom;
+}
+
+.mes-mant-att-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    max-height: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: default;
+}
+
+/* Intestazione avanzamento */
+.mes-mant-th-prog {
+    padding: 6px 8px;
+    text-align: center;
+    border-bottom: 2px solid rgba(0,0,0,.15);
+    min-width: 70px;
+}
+
+/* Cella macchina */
+.mes-mant-td-mac {
+    padding: 6px 12px;
+    min-width: 140px;
+    border-bottom: 1px solid rgba(0,0,0,.08);
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: inherit;
+    white-space: nowrap;
+}
+
+/* Cella attività */
+.mes-mant-td-cell {
+    padding: 4px 6px;
+    text-align: center;
+    border-bottom: 1px solid rgba(0,0,0,.08);
+    vertical-align: top;
+    min-width: 80px;
+}
+
+/* Cella avanzamento */
+.mes-mant-td-prog {
+    padding: 6px;
+    text-align: center;
+    border-bottom: 1px solid rgba(0,0,0,.08);
+    min-width: 70px;
+}
+
+/* Contenuto interno cella */
+.mes-mant-cell-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+/* Bottone cella (trasparente, occupa tutta la cella) */
+.mes-mant-cell-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background .15s, transform .1s;
+    line-height: 1;
+}
+.mes-mant-cell-btn:hover {
+    background: rgba(0,0,0,.07);
+    transform: scale(1.15);
+}
+.mes-mant-cell-btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+/* Dash per non eseguita */
+.mes-mant-empty {
+    color: rgba(128,128,128,.5);
+    font-size: 16px;
+}
+
+/* Colori celle */
+.mes-mant-cell-ok   { background-color: rgba(76, 175, 80, .12); }
+.mes-mant-cell-anom { background-color: rgba(255, 152, 0, .15); }
+.mes-mant-cell-ne   { background-color: transparent; }
+
+/* Riga scheda chiusa */
+.mes-mant-row-closed { opacity: .75; }
+.mes-mant-row-closed .mes-mant-td-mac { opacity: 1; }
+
+/* Badge commento */
+.mes-mant-comment-badge {
+    cursor: pointer;
+    padding: 1px 4px;
+    border-radius: 4px;
+}
+.mes-mant-comment-badge:hover { background: rgba(0,0,0,.07); }
+
+/* Popup commento inline */
+.mes-mant-comment-box {
+    min-width: 160px;
+    max-width: 220px;
+    background: var(--mud-palette-surface);
+    border: 1px solid rgba(128,128,128,.3);
+    border-radius: 8px;
+    padding: 6px;
+    box-shadow: 0 3px 8px rgba(0,0,0,.15);
+    z-index: 10;
+    position: relative;
+}
+
+/* Bottone ciclo attivo mentre si salva */
+.mes-mant-cell-btn[disabled] { animation: pulse .6s infinite alternate; }
+@keyframes pulse { from { opacity:.5; } to { opacity:1; } }
+
+/* Legenda */
+.mes-mant-leg-ok   { font-size:12px; }
+.mes-mant-leg-anom { font-size:12px; }
+.mes-mant-leg-ne   { font-size:12px; color: rgba(128,128,128,.7); }
+
+/* Dark mode: adatta colori cella */
+.mud-theme-dark .mes-mant-cell-ok   { background-color: rgba(76, 175, 80, .18); }
+.mud-theme-dark .mes-mant-cell-anom { background-color: rgba(255, 152, 0, .20); }
+.mud-theme-dark .mes-mant-comment-box { border-color: rgba(255,255,255,.15); }
+.mud-theme-dark .mes-mant-th-mac,
+.mud-theme-dark .mes-mant-td-mac    { background-color: var(--mud-palette-background); }

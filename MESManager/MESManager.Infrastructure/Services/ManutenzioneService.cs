@@ -222,6 +222,37 @@ public class ManutenzioneService : IManutenzioneService
     }
 
     // ──────────────────────────────────────────────────────────
+    // GRIGLIA GIORNALIERA
+    // ──────────────────────────────────────────────────────────
+
+    public async Task<ManutenzioneSchedaDto> GetOrCreateSchedaAsync(
+        Guid macchinaId,
+        TipoFrequenzaManutenzione tipo,
+        DateTime data,
+        string? operatoreId,
+        string? nomeOperatore)
+    {
+        var existing = await _db.ManutenzioneSchede
+            .Include(s => s.Macchina)
+            .Include(s => s.Righe).ThenInclude(r => r.Attivita)
+            .FirstOrDefaultAsync(s => s.MacchinaId == macchinaId
+                && s.TipoFrequenza == tipo
+                && s.DataEsecuzione.Date == data.Date);
+
+        if (existing != null)
+            return MapScheda(existing);
+
+        return await CreateSchedaAsync(new NuovaSchedaRequest
+        {
+            MacchinaId = macchinaId,
+            TipoFrequenza = tipo,
+            DataEsecuzione = data.Date,
+            OperatoreId = operatoreId,
+            NomeOperatore = nomeOperatore
+        });
+    }
+
+    // ──────────────────────────────────────────────────────────
     // SEED DATI INIZIALI
     // ──────────────────────────────────────────────────────────
 

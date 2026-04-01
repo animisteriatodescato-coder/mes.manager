@@ -24,4 +24,7 @@ public interface IManutenzioneService
 
     // Seed dati iniziali
     Task SeedAttivitaDefaultAsync();
+
+    // Griglia giornaliera: restituisce la scheda esistente per macchina/tipo/data, oppure la crea al volo
+    Task<ManutenzioneSchedaDto> GetOrCreateSchedaAsync(Guid macchinaId, TipoFrequenzaManutenzione tipo, DateTime data, string? operatoreId, string? nomeOperatore);
 }
