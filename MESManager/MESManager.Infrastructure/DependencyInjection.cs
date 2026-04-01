@@ -59,6 +59,9 @@ public static class DependencyInjection
         
         // Anime PDF (v1.60.38 — Scheda Anima PDF)
         services.AddScoped<IAnimePdfService, AnimePdfService>();
+
+        // Anime FTP — Invio scheda produttiva a macchine (v1.62.1)
+        services.AddScoped<IAnimeFtpService, AnimeFtpService>();
         
         // Lavorazioni Anime Services (v1.40.0 - Preventivi lavorazioni)
         services.AddScoped<IWorkProcessingService, WorkProcessingService>();

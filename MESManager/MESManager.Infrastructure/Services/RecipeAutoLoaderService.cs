@@ -18,6 +18,7 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
     private readonly MesManagerDbContext _context;
     private readonly IRicettaGanttService _ricettaService;
     private readonly IPlcRecipeWriterService _recipeWriter;
+    private readonly IAnimeFtpService _ftpService;
     
     // Cache stato interno
     private readonly ConcurrentDictionary<Guid, string> _ultimoBarcodeMacchina = new();
@@ -28,12 +29,14 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
         ILogger<RecipeAutoLoaderService> logger,
         MesManagerDbContext context,
         IRicettaGanttService ricettaService,
-        IPlcRecipeWriterService recipeWriter)
+        IPlcRecipeWriterService recipeWriter,
+        IAnimeFtpService ftpService)
     {
         _logger = logger;
         _context = context;
         _ricettaService = ricettaService;
         _recipeWriter = recipeWriter;
+        _ftpService = ftpService;
     }
     
     public async Task OnCommessaCambiataAsync(Guid macchinaId, string nuovoBarcode, CancellationToken ct = default)
@@ -107,6 +110,11 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
                 
                 // 4. Aggiorna stato commessa (opzionale - per tracking)
                 await AggiornaStatoCommessaAsync(prossimaCommessa.Id, "RicettaPrecaricata", ct);
+
+                // 5. Invia scheda produttiva via FTP alla macchina
+                var ftpResult = await _ftpService.SendSchedaToMacchinaAsync(codiceArticolo, macchinaId, ct);
+                if (!ftpResult.Success)
+                    _logger.LogWarning("⚠️ [AUTO-LOAD] Invio scheda FTP non riuscito: {Error}", ftpResult.ErrorMessage);
             }
             else
             {
@@ -170,6 +178,11 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
                     codiceArticolo);
                 
                 await AggiornaStatoCommessaAsync(prossimaCommessa.Id, "RicettaPrecaricata", ct);
+
+                // Invia scheda produttiva via FTP alla macchina
+                var ftpResult = await _ftpService.SendSchedaToMacchinaAsync(codiceArticolo, macchinaId, ct);
+                if (!ftpResult.Success)
+                    _logger.LogWarning("⚠️ [MANUAL-LOAD] Invio scheda FTP non riuscito: {Error}", ftpResult.ErrorMessage);
             }
             
             return result;

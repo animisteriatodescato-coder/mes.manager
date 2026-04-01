@@ -23,6 +23,7 @@ public class PlcController : ControllerBase
     private readonly IPlcRecipeWriterService _recipeWriter;
     private readonly IRecipeAutoLoaderService _autoLoader;
     private readonly IRicettaGanttService _ricettaService;
+    private readonly IAnimeFtpService _ftpService;
     private readonly MesManagerDbContext _context;
 
     public PlcController(
@@ -31,6 +32,7 @@ public class PlcController : ControllerBase
         IPlcRecipeWriterService recipeWriter,
         IRecipeAutoLoaderService autoLoader,
         IRicettaGanttService ricettaService,
+        IAnimeFtpService ftpService,
         MesManagerDbContext context)
     {
         _service = service;
@@ -38,6 +40,7 @@ public class PlcController : ControllerBase
         _recipeWriter = recipeWriter;
         _autoLoader = autoLoader;
         _ricettaService = ricettaService;
+        _ftpService = ftpService;
         _context = context;
     }
 
@@ -338,7 +341,14 @@ public class PlcController : ControllerBase
                 request.MacchinaId, 
                 ricetta, 
                 HttpContext.RequestAborted);
-            
+
+            if (result.Success)
+            {
+                // Invia scheda produttiva via FTP alla macchina (fire-and-forget: non blocca la risposta)
+                _ = _ftpService.SendSchedaToMacchinaAsync(
+                    request.CodiceArticolo, request.MacchinaId, HttpContext.RequestAborted);
+            }
+
             return result.Success ? Ok(result) : BadRequest(result);
         }
         catch (Exception ex)
