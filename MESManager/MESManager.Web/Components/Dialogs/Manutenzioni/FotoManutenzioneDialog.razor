@@ -1,0 +1,131 @@
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
+@inject IManutenzioneService ManutenzioneService
+@inject ISnackbar Snackbar
+
+<MudDialog data-testid="dlg-foto-manutenzione">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.PhotoCamera" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Foto — @NomeAttivita</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        @if (!string.IsNullOrEmpty(_fotoUrl))
+        {
+            <MudStack AlignItems="AlignItems.Center" Class="mb-3">
+                <img src="@_fotoUrl" alt="Foto manutenzione"
+                     style="max-width:100%; max-height:300px; border-radius:8px; object-fit:contain;" />
+            </MudStack>
+        }
+
+        <MudStack AlignItems="AlignItems.Center" Spacing="2">
+            <InputFile id="foto-input-@RigaId" OnChange="@OnFileSelected"
+                      accept="image/jpeg,image/png,image/webp"
+                      style="display:none" />
+            <MudButton HtmlTag="label" for="foto-input-@RigaId"
+                       Variant="Variant.Outlined" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Upload"
+                       data-testid="btn-upload-foto">
+                @(string.IsNullOrEmpty(_fotoUrl) ? "Carica Foto" : "Sostituisci Foto")
+            </MudButton>
+            @if (!string.IsNullOrEmpty(_fotoUrl))
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.Delete"
+                           OnClick="@EliminaFoto"
+                           data-testid="btn-elimina-foto">
+                    Rimuovi Foto
+                </MudButton>
+            }
+        </MudStack>
+        @if (_selectedFile != null)
+        {
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
+                File selezionato: @_selectedFile.Name (@((_selectedFile.Size / 1024)) KB)
+            </MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel" Variant="Variant.Outlined" data-testid="btn-cancel-foto">Chiudi</MudButton>
+        @if (_selectedFile != null)
+        {
+            <MudButton OnClick="@SalvaFoto" Variant="Variant.Filled" Color="Color.Primary"
+                       Disabled="@_uploading" data-testid="btn-salva-foto">
+                @if (_uploading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Salva Foto
+            </MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid RigaId { get; set; }
+    [Parameter] public string NomeAttivita { get; set; } = string.Empty;
+    [Parameter] public string? FotoPathCorrente { get; set; }
+
+    private string? _fotoUrl;
+    private IBrowserFile? _selectedFile;
+    private bool _uploading;
+
+    protected override void OnParametersSet()
+    {
+        _fotoUrl = string.IsNullOrEmpty(FotoPathCorrente)
+            ? null
+            : $"/uploads/manutenzioni/{FotoPathCorrente}";
+    }
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+    }
+
+    private async Task SalvaFoto()
+    {
+        if (_selectedFile == null) return;
+        _uploading = true;
+        try
+        {
+            const long maxSize = 10 * 1024 * 1024; // 10 MB
+            await using var stream = _selectedFile.OpenReadStream(maxSize);
+            var newPath = await ManutenzioneService.UploadFotoRigaAsync(RigaId, stream, _selectedFile.Name);
+            if (newPath != null)
+            {
+                _fotoUrl = newPath;
+                _selectedFile = null;
+                Snackbar.Add("Foto salvata", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(newPath));
+            }
+            else
+            {
+                Snackbar.Add("Formato non supportato. Usa JPG, PNG o WEBP.", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore upload: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _uploading = false;
+        }
+    }
+
+    private async Task EliminaFoto()
+    {
+        var ok = await ManutenzioneService.DeleteFotoRigaAsync(RigaId);
+        if (ok)
+        {
+            _fotoUrl = null;
+            Snackbar.Add("Foto rimossa", Severity.Success);
+            MudDialog.Close(DialogResult.Ok<string?>(null));
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

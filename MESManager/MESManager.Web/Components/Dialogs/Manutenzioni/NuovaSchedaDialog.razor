@@ -1,0 +1,137 @@
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@using MESManager.Domain.Enums
+@inject IManutenzioneService ManutenzioneService
+@inject ISnackbar Snackbar
+
+<MudDialog data-testid="dlg-nuova-scheda">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.AddTask" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Nuova Scheda Manutenzione</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12">
+                <MudSelect @bind-Value="_request.MacchinaId" Label="Macchina" Required="true"
+                           Variant="Variant.Outlined" Margin="Margin.Dense"
+                           data-testid="sel-macchina-scheda">
+                    @foreach (var m in Macchine)
+                    {
+                        <MudSelectItem Value="@m.Id">@m.Codice — @m.Nome</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12">
+                <MudText Typo="Typo.caption" Color="Color.Primary"><b>TIPO FREQUENZA</b></MudText>
+                <MudRadioGroup @bind-Value="_request.TipoFrequenza" data-testid="rg-tipo-frequenza">
+                    <MudRadio Value="TipoFrequenzaManutenzione.Settimanale" Color="Color.Primary">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.ViewWeek" Size="Size.Small" />
+                            <span>Settimanale</span>
+                        </MudStack>
+                    </MudRadio>
+                    <MudRadio Value="TipoFrequenzaManutenzione.Mensile" Color="Color.Secondary">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Small" />
+                            <span>Mensile</span>
+                        </MudStack>
+                    </MudRadio>
+                </MudRadioGroup>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudDatePicker @bind-Date="_dataEsecuzione" Label="Data Esecuzione"
+                               DateFormat="dd/MM/yyyy" Editable="true"
+                               Variant="Variant.Outlined" Margin="Margin.Dense"
+                               data-testid="dp-data-scheda" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="_request.NomeOperatore" Label="Operatore"
+                              Variant="Variant.Outlined" Margin="Margin.Dense"
+                              data-testid="tf-operatore-scheda" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_request.Note" Label="Note generali (opzionale)"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2"
+                              data-testid="tf-note-scheda" />
+            </MudItem>
+        </MudGrid>
+        @if (_attivitaPreview.Any())
+        {
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
+                Verranno generate <b>@_attivitaPreview.Count</b> attività:
+                @string.Join(", ", _attivitaPreview.Select(a => a.Nome))
+            </MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel" Variant="Variant.Outlined" data-testid="btn-cancel-scheda">Annulla</MudButton>
+        <MudButton OnClick="@Submit" Variant="Variant.Filled" Color="Color.Primary"
+                   Disabled="@_saving" data-testid="btn-crea-scheda">
+            @if (_saving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Crea Scheda
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public List<MacchinaItem> Macchine { get; set; } = new();
+
+    private NuovaSchedaRequest _request = new()
+    {
+        TipoFrequenza = TipoFrequenzaManutenzione.Settimanale,
+        DataEsecuzione = DateTime.Today
+    };
+    private DateTime? _dataEsecuzione = DateTime.Today;
+    private List<ManutenzioneAttivitaDto> _attivitaPreview = new();
+    private bool _saving;
+
+    public record MacchinaItem(Guid Id, string Codice, string Nome);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await AggiornaPreviw();
+    }
+
+    private async Task AggiornaPreviw()
+    {
+        _attivitaPreview = await ManutenzioneService.GetAttivitaAsync(_request.TipoFrequenza);
+    }
+
+    private async Task OnTipoChanged()
+    {
+        await AggiornaPreviw();
+    }
+
+    private async Task Submit()
+    {
+        if (_request.MacchinaId == Guid.Empty)
+        {
+            Snackbar.Add("Seleziona una macchina", Severity.Warning);
+            return;
+        }
+        _saving = true;
+        _request.DataEsecuzione = _dataEsecuzione ?? DateTime.Today;
+        try
+        {
+            var scheda = await ManutenzioneService.CreateSchedaAsync(_request);
+            Snackbar.Add("Scheda creata", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(scheda));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

@@ -139,6 +139,8 @@ builder.Services.AddScoped<IAllegatoArticoloRepository, AllegatoArticoloReposito
 builder.Services.AddScoped<IAllegatoArticoloService, AllegatoArticoloService>();
 builder.Services.AddScoped<IPianificazioneService, PianificazioneService>();
 builder.Services.AddScoped<PianificazioneNotificationService>();
+// Modulo Manutenzioni
+builder.Services.AddScoped<IManutenzioneService, ManutenzioneService>();
 builder.Services.AddHttpClient<PlcDataService>(client =>
 {
     client.BaseAddress = new Uri("http://localhost:5156/");
@@ -241,6 +243,9 @@ var app = builder.Build();
 using (var seedScope = app.Services.CreateScope())
 {
     await MESManager.Web.Services.RoleSeedService.SeedAsync(seedScope.ServiceProvider);
+    // Seed attività manutenzione di default (idempotente)
+    var manService = seedScope.ServiceProvider.GetRequiredService<IManutenzioneService>();
+    await manService.SeedAttivitaDefaultAsync();
 }
 var enableE2ESeed = (Environment.GetEnvironmentVariable("E2E_SEED") ?? "")
     .Equals("1", StringComparison.OrdinalIgnoreCase)
