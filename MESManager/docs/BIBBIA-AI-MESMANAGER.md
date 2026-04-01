@@ -390,6 +390,29 @@ MesDesignTokens.RowOdd(isDark) → MainLayout :root { --mes-row-odd } → app.cs
 
 ---
 
+### EF Core DbContext: MAI `Task.WhenAll` su query parallele (⚠️ LESSON LEARNED v1.62.1)
+
+**Problema ricorrente**: Usare `Task.WhenAll` per parallelizzare query EF Core da servizi diversi che condividono la stessa istanza `DbContext` (scoped in Blazor Server).
+
+**Causa**: In Blazor Server il `DbContext` è **Scoped** per circuito SignalR. Due servizi (`MacchinaService` + `ManutenzioneService`) iniettati nello stesso componente condividono la **stessa istanza** del context. `Task.WhenAll` avvia entrambe le query in parallelo → EF Core lancia `InvalidOperationException: A second operation was started on this context instance before a previous operation completed`.
+
+**Regola fissa**: In componenti Blazor, le query su servizi EF devono essere **sequenziali**:
+
+```csharp
+// ❌ SBAGLIATO — DbContext concorrente (crash runtime)
+var t1 = MacchinaService.GetListaAsync();
+var t2 = ManutenzioneService.GetAttivitaAsync();
+await Task.WhenAll(t1, t2);
+
+// ✅ CORRETTO — sequenziale
+_macchine = await MacchinaService.GetListaAsync();
+_attivita = await ManutenzioneService.GetAttivitaAsync();
+```
+
+**Eccezione**: `Task.WhenAll` è sicuro **solo** se i servizi usano `DbContext` **diversi** (es. due database separati o `AddDbContextFactory`).
+
+---
+
 ### Dashboard e PLCRealtime
 
 **Problema comune**: Dashboard vuote o macchine non visibili
