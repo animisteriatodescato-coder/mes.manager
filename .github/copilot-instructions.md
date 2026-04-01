@@ -4,7 +4,10 @@
 > DEVE rispettare tutte le leggi definite nella BIBBIA:
 > `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`
 >
-> **Leggila PRIMA di rispondere** su qualsiasi aspetto del progetto.
+> **⛔ LETTURA INTEGRALE OBBLIGATORIA — PRIMA di qualsiasi risposta:**
+> Usa `read_file` con `startLine: 1` e `endLine: 600` sulla BIBBIA.
+> **MAI** leggere solo parzialmente (es. fino a riga 80). Il file ha 500+ righe.
+> Ogni risposta basata su lettura parziale è INVALIDA.
 
 ---
 

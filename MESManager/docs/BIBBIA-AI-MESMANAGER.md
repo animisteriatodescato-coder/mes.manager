@@ -8,6 +8,19 @@
 
 ---
 
+> ## ⛔ STOP — LETTURA OBBLIGATORIA INTEGRALE
+>
+> **Questo file ha OLTRE 500 RIGHE. Devi leggerlo TUTTO prima di rispondere.**
+>
+> Se stai leggendo questo messaggio, usa IMMEDIATAMENTE `read_file` con:
+> - `startLine: 1`
+> - `endLine: 600`
+>
+> **NON procedere** con nessuna risposta o azione finché non hai letto fino alla riga 600.
+> Ogni risposta basata su lettura parziale (< riga 200) è **INVALIDA**.
+
+---
+
 ```
 ╔══════════════════════════════════════════════════════════════════════════╗
 ║  ⚠️  WORKFLOW VINCOLANTE - LEGGI PRIMA DI OGNI MODIFICA CODICE ⚠️        ║
@@ -514,6 +527,21 @@ analizza la richiesta dell utente proponi **4 diverse strade prioritizzate** per
 3. **Soluzione Completa** - Massima robustezza e flessibilità
 4. **Soluzione Alternativa** - creata pensando al meglio la richiesta di integrazione dell utente seguendo alla lettere le leggi della bibbia
 
+Dopo aver descritto le 4 soluzioni, **DEVI SEMPRE** includere una **Tabella Comparativa** con le seguenti colonne:
+
+| Criterio | S1 Minimalista | S2 Stabile | S3 Completa | S4 Alternativa |
+|----------|---------------|-----------|-------------|----------------|
+| Tempo stima implementazione | | | | |
+| Tabelle DB nuove | | | | |
+| Complessità UI | | | | |
+| Scalabilità futura | | | | |
+| Riuso pattern esistenti | | | | |
+| Rischio regressioni | | | | |
+| Consigliata per questo caso | | | | |
+
+⚠️ La tabella comparativa è OBBLIGATORIA e NON opzionale. Aiuta l'utente a scegliere velocemente.
+Termina sempre con: **"Raccomandazione: Soluzione X perché..."** e aspetta conferma prima di implementare.
+
 proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve terminare con dotnet build e run per farla testare all utente
 
 
@@ -521,8 +549,8 @@ proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve t
 
 ## 📞 Supporto Documentazione
 
-**Versione**: 4.4  
-**Data**: 26 Marzo 2026  
+**Versione**: 4.5  
+**Data**: 1 Aprile 2026  
 **Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: v1.60.27 — IsReadOnly Soluzione2 completa (ProgrammaMacchine/Gantt/Dialogs/Cataloghi) + doppio-click scheda anima readonly + powered by Fabio + UI pulsanti vetro + TrasmmettiRicettaMacchinaDialog
+**Ultimo aggiornamento**: v4.5 — Aggiunta regola OBBLIGATORIA tabella comparativa nelle proposte 4 soluzioni
