@@ -25,6 +25,7 @@ public class PlcController : ControllerBase
     private readonly IRicettaGanttService _ricettaService;
     private readonly IAnimeFtpService _ftpService;
     private readonly MesManagerDbContext _context;
+    private readonly ILogger<PlcController> _logger;
 
     public PlcController(
         IPlcAppService service, 
@@ -33,7 +34,8 @@ public class PlcController : ControllerBase
         IRecipeAutoLoaderService autoLoader,
         IRicettaGanttService ricettaService,
         IAnimeFtpService ftpService,
-        MesManagerDbContext context)
+        MesManagerDbContext context,
+        ILogger<PlcController> logger)
     {
         _service = service;
         _syncCoordinator = syncCoordinator;
@@ -42,6 +44,7 @@ public class PlcController : ControllerBase
         _ricettaService = ricettaService;
         _ftpService = ftpService;
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("realtime")]
@@ -337,21 +340,32 @@ public class PlcController : ControllerBase
                 });
             }
             
-            // Ottieni SaleOrdId (ID Mago) dalla prossima commessa programmata per la macchina
+            // Ottieni SaleOrdId (ID Mago) dalla commessa attiva per la macchina e l'articolo
             int codicePdf = 0;
             var macchina = await _context.Macchine.FindAsync(request.MacchinaId);
             if (macchina != null)
             {
                 var prossima = await _context.Commesse
+                    .Include(c => c.Articolo)
                     .Where(c => c.NumeroMacchina == macchina.OrdineVisualizazione
-                             && c.StatoProgramma == Domain.Enums.StatoProgramma.Programmata)
-                    .OrderBy(c => c.OrdineSequenza)
+                             && c.Articolo != null && c.Articolo.Codice == request.CodiceArticolo
+                             && c.StatoProgramma != Domain.Enums.StatoProgramma.Completata
+                             && c.StatoProgramma != Domain.Enums.StatoProgramma.Archiviata)
+                    .OrderByDescending(c => c.StatoProgramma == Domain.Enums.StatoProgramma.InProduzione)
+                    .ThenBy(c => c.OrdineSequenza)
                     .ThenBy(c => c.DataInizioPrevisione)
-                    .FirstOrDefaultAsync(HttpContext.RequestAborted);
+                    .FirstOrDefaultAsync(CancellationToken.None);
 
-                if (prossima != null && int.TryParse(prossima.SaleOrdId, out var sid) && sid > 0)
+                if (prossima == null)
+                {
+                    _logger.LogWarning("⚠️ [FTP] Nessuna commessa trovata per macchina={NumMacchina} articolo={Art}", 
+                        macchina.OrdineVisualizazione, request.CodiceArticolo);
+                }
+                else if (int.TryParse(prossima.SaleOrdId, out var sid) && sid > 0)
                 {
                     codicePdf = sid;
+                    _logger.LogInformation("📄 [FTP] Commessa trovata: {Codice} SaleOrdId={SaleOrdId} Stato={Stato}", 
+                        prossima.Codice, prossima.SaleOrdId, prossima.StatoProgramma);
                     ricetta.Parametri.RemoveAll(p => p.Indirizzo == 160);
                     ricetta.Parametri.Add(new Application.DTOs.ParametroRicettaArticoloDto
                     {
@@ -362,6 +376,11 @@ public class PlcController : ControllerBase
                         Tipo = "INT",
                         Area = "Ricetta"
                     });
+                }
+                else
+                {
+                    _logger.LogWarning("⚠️ [FTP] SaleOrdId non valido: '{SaleOrdId}' per commessa {Codice}",
+                        prossima.SaleOrdId, prossima.Codice);
                 }
             }
 
