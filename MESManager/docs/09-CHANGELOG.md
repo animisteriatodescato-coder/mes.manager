@@ -4,7 +4,35 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.61.1
+## 🔖 Versione Corrente: v1.62.0
+
+---
+
+## 🔖 v1.62.0 — Griglia Giornaliera Manutenzioni (1 Apr 2026)
+
+**Data**: 1 Aprile 2026
+
+### ✨ Feature — Pagina Manutenzione Giornaliera (Griglia Matriciale)
+
+**Motivazione**: Nuova vista "Excel-like" per compilare le manutenzioni in modo rapido. Matrice `macchine × attività` con click-to-cycle per ogni cella.
+
+**UX**:
+- Toggle Settimanale / Mensile + date picker (default = oggi)
+- Operatore preso automaticamente dal login (`CurrentUserService.UserName`)
+- Click cella: cicla **NonEseguita → ✅ OK → ⚠️ Anomalia → NonEseguita**
+- Anomalia: compare campo commento inline (senza modale)
+- Progress circle per riga + pulsante Chiudi quando tutte compilate
+- Scheda chiusa: display read-only con icona lucchetto
+- Barra sommario globale (x/y celle completate) nella toolbar
+
+**Architettura**:
+- `GetOrCreateSchedaAsync` — nuovo metodo: restituisce scheda esistente o la crea al volo (lazy)
+- `PaginaPolicy.ManutenzioniGriglia` — registrata automaticamente dal loop `Gruppi`
+- CSS in `wwwroot/app.css` (`mes-mant-*`) — dark mode via `.mud-theme-dark`
+- Link nel `MudNavGroup Manutenzioni` → "✅ Manutenzione Giornaliera"
+
+**File**:
+`GrigliaGiornaliera.razor` (nuovo) · `PaginaPolicy.cs` · `AppVersion.cs` · `MainLayout.razor` · `IManutenzioneService.cs` · `ManutenzioneService.cs` (Infrastructure) · `app.css`
 
 ---
 

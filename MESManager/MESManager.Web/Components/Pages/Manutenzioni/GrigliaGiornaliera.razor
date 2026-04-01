@@ -280,13 +280,10 @@
         _loading = true;
         StateHasChanged();
 
-        var macchineTask  = MacchinaService.GetListaAsync();
-        var attivitaTask  = ManutenzioneService.GetAttivitaAsync(_tipo);
-
-        await Task.WhenAll(macchineTask, attivitaTask);
-
-        _macchine  = (await macchineTask).OrderBy(m => m.OrdineVisualizazione).ThenBy(m => m.Codice).ToList();
-        _attivita  = await attivitaTask;
+        // ⚠️ EF Core Scoped DbContext: NON parallelizzare query sullo stesso context
+        _macchine = (await MacchinaService.GetListaAsync())
+            .OrderBy(m => m.OrdineVisualizazione).ThenBy(m => m.Codice).ToList();
+        _attivita = await ManutenzioneService.GetAttivitaAsync(_tipo);
 
         await CaricaSchedeGiorno();
         _loading = false;
