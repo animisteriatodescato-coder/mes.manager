@@ -24,6 +24,7 @@ public class PlcController : ControllerBase
     private readonly IRecipeAutoLoaderService _autoLoader;
     private readonly IRicettaGanttService _ricettaService;
     private readonly IAnimeFtpService _ftpService;
+    private readonly IAnimePdfService _pdfService;
     private readonly MesManagerDbContext _context;
     private readonly ILogger<PlcController> _logger;
 
@@ -34,6 +35,7 @@ public class PlcController : ControllerBase
         IRecipeAutoLoaderService autoLoader,
         IRicettaGanttService ricettaService,
         IAnimeFtpService ftpService,
+        IAnimePdfService pdfService,
         MesManagerDbContext context,
         ILogger<PlcController> logger)
     {
@@ -43,6 +45,7 @@ public class PlcController : ControllerBase
         _autoLoader = autoLoader;
         _ricettaService = ricettaService;
         _ftpService = ftpService;
+        _pdfService = pdfService;
         _context = context;
         _logger = logger;
     }
@@ -294,6 +297,45 @@ public class PlcController : ControllerBase
         return Ok(result);
     }
     
+    // ===== FTP DIAGNOSTICS (v1.62.9) =====
+
+    /// <summary>
+    /// Genera il PDF scheda produttiva per l'articolo indicato e lo restituisce come file.
+    /// Utile per verificare che la generazione PDF funzioni indipendentemente dall'FTP.
+    /// GET /api/plc/test-pdf/{codiceArticolo}
+    /// </summary>
+    [HttpGet("test-pdf/{codiceArticolo}")]
+    public async Task<IActionResult> TestPdfGeneration(string codiceArticolo)
+    {
+        var anime = await _context.Anime
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.CodiceArticolo == codiceArticolo);
+        if (anime == null)
+            return NotFound(new { Error = $"Anima non trovata per articolo '{codiceArticolo}'" });
+
+        var stream = await _pdfService.GenerateSchedaAsync(anime.Id);
+        if (stream == null)
+            return StatusCode(500, new { Error = $"Generazione PDF fallita per anima ID {anime.Id}" });
+
+        return File(stream, "application/pdf", $"{codiceArticolo}.pdf");
+    }
+
+    /// <summary>
+    /// Testa l'invio FTP di un PDF scheda produttiva alla macchina indicata.
+    /// NON trasmette la ricetta al PLC; serve solo a diagnosticare l'FTP.
+    /// POST /api/plc/test-ftp-upload
+    /// Body: { macchinaId, codiceArticolo, saleOrdId }
+    /// </summary>
+    [HttpPost("test-ftp-upload")]
+    public async Task<ActionResult<AnimeFtpResult>> TestFtpUpload([FromBody] TestFtpRequest request)
+    {
+        _logger.LogInformation("🧪 [FTP-TEST] Test invio FTP: articolo={Art} macchina={M} saleOrdId={Id}",
+            request.CodiceArticolo, request.MacchinaId, request.SaleOrdId);
+        var result = await _ftpService.SendSchedaToMacchinaAsync(
+            request.CodiceArticolo, request.MacchinaId, request.SaleOrdId, CancellationToken.None);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
     // ===== RECIPE TRANSMISSION ENDPOINTS (v1.33.0) =====
     
     /// <summary>
@@ -699,4 +741,11 @@ public class ServiceControlResult
     public string Message { get; set; } = "";
     public bool IsRunning { get; set; }
     public int? ProcessId { get; set; }
+}
+
+public class TestFtpRequest
+{
+    public Guid MacchinaId { get; set; }
+    public string CodiceArticolo { get; set; } = string.Empty;
+    public int SaleOrdId { get; set; }
 }
