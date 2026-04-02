@@ -444,10 +444,16 @@ public class PlcController : ControllerBase
 
             if (result.Success && saleOrdId > 0)
             {
-                // Invia scheda produttiva via FTP — await con CancellationToken.None
-                // (HttpContext.RequestAborted verrebbe cancellato dopo Ok(result), blocando l'upload)
-                await _ftpService.SendSchedaToMacchinaAsync(
+                // Invia scheda produttiva via FTP e registra l'esito nel result
+                result.PdfSaleOrdId = saleOrdId;
+                var ftpResult = await _ftpService.SendSchedaToMacchinaAsync(
                     request.CodiceArticolo, request.MacchinaId, saleOrdId, CancellationToken.None);
+                result.PdfInviato = ftpResult.Success;
+                result.PdfNomeFile = ftpResult.Success ? ftpResult.NomeFile : null;
+                result.PdfErrorMessage = ftpResult.Success ? null : ftpResult.ErrorMessage;
+                if (!ftpResult.Success)
+                    _logger.LogWarning("⚠️ [FTP] Invio PDF fallito per articolo={Art}: {Err}",
+                        request.CodiceArticolo, ftpResult.ErrorMessage);
             }
 
             return result.Success ? Ok(result) : BadRequest(result);

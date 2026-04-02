@@ -33,6 +33,33 @@
                     <strong>@(_macchinaSelezionata?.Codice) — @(_macchinaSelezionata?.Nome)</strong>.
                 </MudText>
             </MudAlert>
+
+            @* Stato invio PDF *@
+            @if (_risultato?.PdfSaleOrdId > 0)
+            {
+                @if (_risultato.PdfInviato)
+                {
+                    <MudAlert Severity="Severity.Success" Icon="@Icons.Material.Filled.PictureAsPdf" Class="mt-1">
+                        <MudText Typo="Typo.body2">
+                            📄 Scheda PDF <strong>@_risultato.PdfNomeFile</strong> inviata via FTP alla macchina.
+                        </MudText>
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Warning" Icon="@Icons.Material.Filled.PictureAsPdf" Class="mt-1">
+                        <MudText Typo="Typo.body2">
+                            ⚠️ Scheda PDF <strong>@($"{_risultato.PdfSaleOrdId}.pdf")</strong> NON inviata via FTP.
+                        </MudText>
+                        @if (!string.IsNullOrEmpty(_risultato.PdfErrorMessage))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Warning" Class="mt-1">
+                                Errore: @_risultato.PdfErrorMessage
+                            </MudText>
+                        }
+                    </MudAlert>
+                }
+            }
         }
         else
         {
@@ -118,6 +145,7 @@
     private MacchinaDto? _macchinaSelezionata;
     private bool _loading = true;
     private bool _trasmissioneSuccess;
+    private RecipeWriteResult? _risultato;
     private string _loadingMessage = "Caricamento macchine...";
 
     protected override async Task OnInitializedAsync()
@@ -174,9 +202,10 @@
 
             if (response.IsSuccessStatusCode)
             {
+                _risultato = await response.Content.ReadFromJsonAsync<RecipeWriteResult>();
                 _trasmissioneSuccess = true;
-                Logger.LogInformation("[TrasmmettiRicetta] Ricetta trasmessa: {Codice} -> {Macchina}",
-                    CodiceArticolo, _macchinaSelezionata.Codice);
+                Logger.LogInformation("[TrasmmettiRicetta] Ricetta trasmessa: {Codice} -> {Macchina} | PDF={Pdf}",
+                    CodiceArticolo, _macchinaSelezionata.Codice, _risultato?.PdfInviato);
             }
             else
             {
