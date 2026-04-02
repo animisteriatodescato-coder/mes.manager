@@ -62,7 +62,7 @@ public class PlcOffsetsConfig
     public int RitardoChiusuraMaschio { get; set; } = 154;
     public int RitardoAperturaMaschio { get; set; } = 156;
     public int RitardoRestartCiclo { get; set; } = 158;
-    public int CodicePDF { get; set; } = 160;
+    public int SaleOrdId { get; set; } = 160;
     public int QuantitaDaProd { get; set; } = PlcConstants.Offsets.Fields.QuantitaDaProdurre;
     public int TempoMedio { get; set; } = PlcConstants.Offsets.Fields.TempoMedio;
     public int TempoRallentamentoChiusuraPannello { get; set; } = 166;

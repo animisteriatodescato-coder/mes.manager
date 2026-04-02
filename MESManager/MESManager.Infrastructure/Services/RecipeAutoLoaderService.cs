@@ -100,29 +100,38 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
             _logger.LogInformation("📖 [AUTO-LOAD] Ricetta caricata: {Articolo} ({Parametri} parametri)", 
                 ricetta.CodiceArticolo, ricetta.TotaleParametri);
 
-            // 3. Inietta CodicePDF (offset 160) = SaleOrdId commessa
-            int codicePdf = 0;
-            if (int.TryParse(prossimaCommessa.SaleOrdId, out var saleOrdId) && saleOrdId > 0)
+            // 3. Inietta SaleOrdId (numero ordine Mago) a offset 160 e offset 46 (BarcodeLavorazione)
+            int saleOrdId = 0;
+            if (int.TryParse(prossimaCommessa.SaleOrdId, out var parsedSaleOrdId) && parsedSaleOrdId > 0)
             {
-                codicePdf = saleOrdId;
-                ricetta.Parametri.RemoveAll(p => p.Indirizzo == 160);
+                saleOrdId = parsedSaleOrdId;
+                ricetta.Parametri.RemoveAll(p => p.Indirizzo == 160 || p.Indirizzo == 46);
                 ricetta.Parametri.Add(new ParametroRicettaArticoloDto
                 {
                     CodiceArticolo = codiceArticolo,
-                    DescrizioneParametro = "CodicePDF",
+                    DescrizioneParametro = "SaleOrdId",
                     Indirizzo = 160,
-                    Valore = codicePdf,
+                    Valore = saleOrdId,
                     Tipo = "INT",
                     Area = "Ricetta"
                 });
-                _logger.LogInformation("🏷️ [AUTO-LOAD] CodicePDF={Codice} (SaleOrdId) iniettato a offset 160", codicePdf);
+                ricetta.Parametri.Add(new ParametroRicettaArticoloDto
+                {
+                    CodiceArticolo = codiceArticolo,
+                    DescrizioneParametro = "SaleOrdId",
+                    Indirizzo = 46,
+                    Valore = saleOrdId,
+                    Tipo = "INT",
+                    Area = "DB"
+                });
+                _logger.LogInformation("🏷️ [AUTO-LOAD] SaleOrdId={Codice} iniettato a offset 46 e 160", saleOrdId);
             }
             else
             {
                 _logger.LogWarning("⚠️ [AUTO-LOAD] SaleOrdId non valido per commessa {Cod}: scheda non inviata via FTP", prossimaCommessa.Codice);
             }
 
-            // 4. SCRIVE DB55(offset 100+) — include ora offset 160 con CodicePDF
+            // 4. SCRIVE DB55(offset 100+) e offset 46 con SaleOrdId
             var result = await _recipeWriter.WriteRecipeToDb56Async(macchinaId, ricetta, ct);
             
             if (result.Success)
@@ -134,9 +143,9 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
                 await AggiornaStatoCommessaAsync(prossimaCommessa.Id, "RicettaPrecaricata", ct);
 
                 // 6. Invia scheda produttiva via FTP
-                if (codicePdf > 0)
+                if (saleOrdId > 0)
                 {
-                    var ftpResult = await _ftpService.SendSchedaToMacchinaAsync(codiceArticolo, macchinaId, codicePdf, ct);
+                    var ftpResult = await _ftpService.SendSchedaToMacchinaAsync(codiceArticolo, macchinaId, saleOrdId, ct);
                     if (!ftpResult.Success)
                         _logger.LogWarning("⚠️ [AUTO-LOAD] Invio scheda FTP non riuscito: {Error}", ftpResult.ErrorMessage);
                 }
@@ -195,20 +204,29 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
                 };
             }
 
-            // Inietta CodicePDF (offset 160) = SaleOrdId commessa
-            int codicePdf = 0;
-            if (int.TryParse(prossimaCommessa.SaleOrdId, out var saleOrdId) && saleOrdId > 0)
+            // Inietta SaleOrdId (numero ordine Mago) a offset 160 e offset 46 (BarcodeLavorazione)
+            int saleOrdId = 0;
+            if (int.TryParse(prossimaCommessa.SaleOrdId, out var parsedSaleOrdId) && parsedSaleOrdId > 0)
             {
-                codicePdf = saleOrdId;
-                ricetta.Parametri.RemoveAll(p => p.Indirizzo == 160);
+                saleOrdId = parsedSaleOrdId;
+                ricetta.Parametri.RemoveAll(p => p.Indirizzo == 160 || p.Indirizzo == 46);
                 ricetta.Parametri.Add(new ParametroRicettaArticoloDto
                 {
                     CodiceArticolo = codiceArticolo,
-                    DescrizioneParametro = "CodicePDF",
+                    DescrizioneParametro = "SaleOrdId",
                     Indirizzo = 160,
-                    Valore = codicePdf,
+                    Valore = saleOrdId,
                     Tipo = "INT",
                     Area = "Ricetta"
+                });
+                ricetta.Parametri.Add(new ParametroRicettaArticoloDto
+                {
+                    CodiceArticolo = codiceArticolo,
+                    DescrizioneParametro = "SaleOrdId",
+                    Indirizzo = 46,
+                    Valore = saleOrdId,
+                    Tipo = "INT",
+                    Area = "DB"
                 });
             }
             
@@ -222,9 +240,9 @@ public class RecipeAutoLoaderService : IRecipeAutoLoaderService
                 await AggiornaStatoCommessaAsync(prossimaCommessa.Id, "RicettaPrecaricata", ct);
 
                 // Invia scheda produttiva via FTP
-                if (codicePdf > 0)
+                if (saleOrdId > 0)
                 {
-                    var ftpResult = await _ftpService.SendSchedaToMacchinaAsync(codiceArticolo, macchinaId, codicePdf, ct);
+                    var ftpResult = await _ftpService.SendSchedaToMacchinaAsync(codiceArticolo, macchinaId, saleOrdId, ct);
                     if (!ftpResult.Success)
                         _logger.LogWarning("⚠️ [MANUAL-LOAD] Invio scheda FTP non riuscito: {Error}", ftpResult.ErrorMessage);
                 }

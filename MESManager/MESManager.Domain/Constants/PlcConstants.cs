@@ -142,6 +142,8 @@ public static class PlcConstants
             public const int StatoPezziRaggiunti = 42;
             public const int StatoAllarme = 44;
             public const int BarcodeLavorazione = 46;
+            /// <summary>Offset 160: SaleOrdId (numero ordine Mago) — scritto da MES ad ogni trasmissione ricetta</summary>
+            public const int SaleOrdId = 160;
 
             public const int InizioSetup = 8;
             public const int FineSetup = 10;

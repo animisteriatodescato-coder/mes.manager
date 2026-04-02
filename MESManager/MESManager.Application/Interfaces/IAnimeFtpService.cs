@@ -2,7 +2,7 @@ namespace MESManager.Application.Interfaces;
 
 /// <summary>
 /// Invia la scheda produttiva (PDF) via FTP alla macchina.
-/// Il nome del file PDF = codicePdf (ID Mago / SaleOrdId), scritto anche a offset 160 della ricetta.
+/// Il nome del file PDF = SaleOrdId (ID Mago / numero ordine), scritto anche a offset 160 e 46 della ricetta.
 /// </summary>
 public interface IAnimeFtpService
 {

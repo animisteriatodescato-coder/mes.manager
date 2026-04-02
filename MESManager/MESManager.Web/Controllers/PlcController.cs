@@ -343,7 +343,7 @@ public class PlcController : ControllerBase
             // Ottieni SaleOrdId (ID Mago) dalla commessa per l'articolo trasmesso
             // Cerca per articolo senza filtro macchina: le commesse potrebbero non avere NumeroMacchina
             // assegnato (NULL) anche se visibili in ProgrammaMacchine
-            int codicePdf = 0;
+            int saleOrdId = 0;
             var macchina = await _context.Macchine.FindAsync(request.MacchinaId);
             {
                 var prossima = await _context.Commesse
@@ -355,30 +355,38 @@ public class PlcController : ControllerBase
 
                 if (prossima == null)
                 {
-                    _logger.LogWarning("⚠️ [FTP] Nessuna commessa in DB per articolo={Art} — codice PDF non impostato", 
+                    _logger.LogWarning("⚠️ [FTP] Nessuna commessa in DB per articolo={Art} — SaleOrdId non impostato", 
                         request.CodiceArticolo);
                 }
                 else if (int.TryParse(prossima.SaleOrdId, out var sid) && sid > 0)
                 {
-                    codicePdf = sid;
+                    saleOrdId = sid;
                     _logger.LogInformation("📄 [FTP] Commessa trovata: {Codice} SaleOrdId={SaleOrdId} Stato={Stato}", 
                         prossima.Codice, prossima.SaleOrdId, prossima.StatoProgramma);
 
-                    // 1. Aggiorna in-memory la ricetta per scriverselo al PLC
-                    ricetta.Parametri.RemoveAll(p => p.Indirizzo == 160);
+                    // 1. Aggiorna in-memory la ricetta: SaleOrdId scritto a offset 160 e a offset 46 (BarcodeLavorazione)
+                    ricetta.Parametri.RemoveAll(p => p.Indirizzo == 160 || p.Indirizzo == 46);
                     ricetta.Parametri.Add(new Application.DTOs.ParametroRicettaArticoloDto
                     {
                         CodiceArticolo = request.CodiceArticolo,
-                        DescrizioneParametro = "CodicePDF",
+                        DescrizioneParametro = "SaleOrdId",
                         Indirizzo = 160,
-                        Valore = codicePdf,
+                        Valore = saleOrdId,
                         Tipo = "INT",
                         Area = "Ricetta"
                     });
+                    ricetta.Parametri.Add(new Application.DTOs.ParametroRicettaArticoloDto
+                    {
+                        CodiceArticolo = request.CodiceArticolo,
+                        DescrizioneParametro = "SaleOrdId",
+                        Indirizzo = 46,
+                        Valore = saleOrdId,
+                        Tipo = "INT",
+                        Area = "DB"
+                    });
 
-                    // 2. Persiste il nuovo valore nel DB (upsert su ParametriRicetta offset 160)
-                    //    così la ricetta è aggiornata anche per future visualizzazioni
-                    await UpsertCodicePdfNelDbAsync(request.CodiceArticolo, codicePdf, HttpContext.RequestAborted);
+                    // 2. Persiste il nuovo valore nel DB (upsert su ParametriRicetta offset 160 e 46)
+                    await UpsertSaleOrdIdNelDbAsync(request.CodiceArticolo, saleOrdId, HttpContext.RequestAborted);
                 }
                 else
                 {
@@ -392,12 +400,12 @@ public class PlcController : ControllerBase
                 ricetta,
                 HttpContext.RequestAborted);
 
-            if (result.Success && codicePdf > 0)
+            if (result.Success && saleOrdId > 0)
             {
                 // Invia scheda produttiva via FTP — await con CancellationToken.None
                 // (HttpContext.RequestAborted verrebbe cancellato dopo Ok(result), blocando l'upload)
                 await _ftpService.SendSchedaToMacchinaAsync(
-                    request.CodiceArticolo, request.MacchinaId, codicePdf, CancellationToken.None);
+                    request.CodiceArticolo, request.MacchinaId, saleOrdId, CancellationToken.None);
             }
 
             return result.Success ? Ok(result) : BadRequest(result);
@@ -413,14 +421,15 @@ public class PlcController : ControllerBase
     }
     
     /// <summary>
-    /// Aggiorna (o crea) il parametro CodicePDF (offset 160) nella tabella ParametriRicetta.
+    /// Aggiorna (o crea) il parametro SaleOrdId nella tabella ParametriRicetta per entrambi gli offset:
+    /// - Offset 160 (SaleOrdId / area ricetta — scritto via recipe write)
+    /// - Offset 46  (BarcodeLavorazione — scritto via write speciale)
     /// Garantisce che il valore visualizzato nella ricetta corrisponda all'ultimo SaleOrdId trasmesso.
     /// </summary>
-    private async Task UpsertCodicePdfNelDbAsync(string codiceArticolo, int codicePdf, CancellationToken ct)
+    private async Task UpsertSaleOrdIdNelDbAsync(string codiceArticolo, int saleOrdId, CancellationToken ct)
     {
         try
         {
-            // Trova la Ricetta dell'articolo con il suo ParametroRicetta a offset 160
             var ricettaDb = await _context.Set<Domain.Entities.Ricetta>()
                 .Include(r => r.Articolo)
                 .Include(r => r.Parametri)
@@ -433,37 +442,40 @@ public class PlcController : ControllerBase
                 return;
             }
 
-            var param = ricettaDb.Parametri.FirstOrDefault(p => p.Indirizzo == 160);
-            if (param != null)
+            // Upsert per offset 160 (area ricetta) e offset 46 (BarcodeLavorazione)
+            var offsetsToUpsert = new[] { (Indirizzo: 160, Area: "Ricetta"), (Indirizzo: 46, Area: "DB") };
+            foreach (var item in offsetsToUpsert)
             {
-                // Aggiorna il valore esistente
-                param.Valore = codicePdf.ToString();
-                _context.Set<Domain.Entities.ParametroRicetta>().Update(param);
-            }
-            else
-            {
-                // Crea il parametro se non esiste
-                var nuovoParam = new Domain.Entities.ParametroRicetta
+                var param = ricettaDb.Parametri.FirstOrDefault(p => p.Indirizzo == item.Indirizzo);
+                if (param != null)
                 {
-                    Id = Guid.NewGuid(),
-                    RicettaId = ricettaDb.Id,
-                    NomeParametro = "CodicePDF",
-                    Valore = codicePdf.ToString(),
-                    Indirizzo = 160,
-                    Tipo = "INT",
-                    Area = "Ricetta",
-                    UnitaMisura = string.Empty
-                };
-                await _context.Set<Domain.Entities.ParametroRicetta>().AddAsync(nuovoParam, ct);
+                    param.Valore = saleOrdId.ToString();
+                    _context.Set<Domain.Entities.ParametroRicetta>().Update(param);
+                }
+                else
+                {
+                    var nuovoParam = new Domain.Entities.ParametroRicetta
+                    {
+                        Id = Guid.NewGuid(),
+                        RicettaId = ricettaDb.Id,
+                        NomeParametro = "SaleOrdId",
+                        Valore = saleOrdId.ToString(),
+                        Indirizzo = item.Indirizzo,
+                        Tipo = "INT",
+                        Area = item.Area,
+                        UnitaMisura = string.Empty
+                    };
+                    await _context.Set<Domain.Entities.ParametroRicetta>().AddAsync(nuovoParam, ct);
+                }
             }
 
             await _context.SaveChangesAsync(ct);
-            _logger.LogInformation("💾 [DB-UPSERT] CodicePDF={Valore} salvato nel DB per articolo={Art}", codicePdf, codiceArticolo);
+            _logger.LogInformation("💾 [DB-UPSERT] SaleOrdId={Valore} salvato nel DB (offset 46 + 160) per articolo={Art}", saleOrdId, codiceArticolo);
         }
         catch (Exception ex)
         {
             // Non-blocking: l'upsert DB è best-effort, non ferma la trasmissione
-            _logger.LogError(ex, "❌ [DB-UPSERT] Errore salvataggio CodicePDF per articolo={Art}", codiceArticolo);
+            _logger.LogError(ex, "❌ [DB-UPSERT] Errore salvataggio SaleOrdId per articolo={Art}", codiceArticolo);
         }
     }
 

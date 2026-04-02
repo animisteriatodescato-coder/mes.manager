@@ -131,6 +131,28 @@ public class PlcRecipeWriterService : IPlcRecipeWriterService
                 plc.Disconnect();
                 return result;
             }
+
+            // 6. Scrive campi speciali (es. SaleOrdId a offset 46 BarcodeLavorazione) con write individuali.
+            //    Questi offset stanno nella zona read-only della ricetta ma vengono scritti esplicitamente
+            //    quando iniettati in ricetta.Parametri dal chiamante (es. PlcController/RecipeAutoLoaderService).
+            var specialParams = ricetta.Parametri
+                .Where(p => p.Indirizzo < RECIPE_START_OFFSET && p.Indirizzo + 1 < DB_SIZE)
+                .ToList();
+            foreach (var sp in specialParams)
+            {
+                byte[] spBuffer = new byte[2];
+                S7.SetIntAt(spBuffer, 0, (short)sp.Valore);
+                int spResult = plc.DBWrite(DB55_NUMBER, sp.Indirizzo, 2, spBuffer);
+                if (spResult == 0)
+                {
+                    parametriScritti++;
+                    _logger.LogInformation("🔑 [RECIPE-WRITE] Campo speciale scritto: offset={Offset} valore={Valore}", sp.Indirizzo, sp.Valore);
+                }
+                else
+                {
+                    _logger.LogWarning("⚠️ [RECIPE-WRITE] Campo speciale offset={Offset} fallito: {Err}", sp.Indirizzo, plc.ErrorText(spResult));
+                }
+            }
             
             // 10. Successo
             plc.Disconnect();
