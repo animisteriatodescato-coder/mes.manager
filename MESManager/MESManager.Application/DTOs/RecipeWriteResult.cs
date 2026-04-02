@@ -40,15 +40,3 @@ public class RecipeWriteResult
     /// <summary>Messaggio errore FTP (null se successo o PDF non tentato)</summary>
     public string? PdfErrorMessage { get; set; }
 }
-    public string? CodiceArticolo { get; set; }
-    
-    /// <summary>
-    /// ID macchina target
-    /// </summary>
-    public Guid? MacchinaId { get; set; }
-    
-    /// <summary>
-    /// Messaggio errore dettagliato (se Success = false)
-    /// </summary>
-    public string? ErrorMessage { get; set; }
-}

@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.62.9";
+    public const string Current = "1.62.10";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.61.1  Mobile UX: PWA manifest (Add to Home Screen), auto-hide AppBar su scroll, drawer auto-close su navigazione, safe-area iPhone notch
+    public const string Display = "v" + Current; // v1.62.10 FTP/PDF: status propagato al dialog (PdfInviato/PdfErrorMessage), fix Razor syntax bug, TrasmmettiAsync deserializza RecipeWriteResult completo
 }
