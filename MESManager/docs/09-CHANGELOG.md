@@ -4,7 +4,30 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.62.0
+## 🔖 Versione Corrente: v1.62.10
+
+---
+
+## 🔖 v1.62.10 — PDF FTP Status propagato al Dialog (Mai 2026)
+
+**Data**: Maggio 2026
+
+### 🐛 Fix — Dialog "Trasmetti Ricetta" non mostrava stato PDF
+
+**Problema**: Il dialog mostrava sempre "Ricetta trasmessa con successo!" anche quando l'invio PDF via FTP falliva silenziosamente.
+
+**Causa**: `TrasmmettiAsync()` controllava solo `response.IsSuccessStatusCode` senza deserializzare il body; il campo FTP result in `PlcController` veniva ignorato; bug Razor `@_risultato.PdfSaleOrdId.pdf` (property access invalido).
+
+**Fix**:
+- `RecipeWriteResult.cs`: aggiunti `PdfInviato`, `PdfNomeFile`, `PdfSaleOrdId`, `PdfErrorMessage` (rimosso contenuto duplicato per errore precedente)
+- `PlcController.LoadRecipeByArticle`: FTP result ora catturato e popolato in `result.Pdf*`
+- `TrasmmettiRicettaMacchinaDialog.razor`: `TrasmmettiAsync()` ora deserializza il `RecipeWriteResult` completo; blocco UI ⚠️ visibile se `PdfInviato = false`; fix bug Razor sintassi `@($"{_risultato.PdfSaleOrdId}.pdf")`
+
+**Risultato API verificato su macchina 02** (192.168.17.26):
+```json
+{ "success": true, "pdfInviato": false, "pdfErrorMessage": "Unable to connect to the remote server" }
+```
+Il dialog ora mostra esplicitamente che la ricetta è OK ma il PDF **non è stato inviato via FTP** (infrastruttura FTP non abilitata sulle macchine).
 
 ---
 
