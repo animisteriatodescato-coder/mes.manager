@@ -363,6 +363,8 @@ public class PlcController : ControllerBase
                     codicePdf = sid;
                     _logger.LogInformation("📄 [FTP] Commessa trovata: {Codice} SaleOrdId={SaleOrdId} Stato={Stato}", 
                         prossima.Codice, prossima.SaleOrdId, prossima.StatoProgramma);
+
+                    // 1. Aggiorna in-memory la ricetta per scriverselo al PLC
                     ricetta.Parametri.RemoveAll(p => p.Indirizzo == 160);
                     ricetta.Parametri.Add(new Application.DTOs.ParametroRicettaArticoloDto
                     {
@@ -373,6 +375,10 @@ public class PlcController : ControllerBase
                         Tipo = "INT",
                         Area = "Ricetta"
                     });
+
+                    // 2. Persiste il nuovo valore nel DB (upsert su ParametriRicetta offset 160)
+                    //    così la ricetta è aggiornata anche per future visualizzazioni
+                    await UpsertCodicePdfNelDbAsync(request.CodiceArticolo, codicePdf, HttpContext.RequestAborted);
                 }
                 else
                 {
@@ -406,6 +412,61 @@ public class PlcController : ControllerBase
         }
     }
     
+    /// <summary>
+    /// Aggiorna (o crea) il parametro CodicePDF (offset 160) nella tabella ParametriRicetta.
+    /// Garantisce che il valore visualizzato nella ricetta corrisponda all'ultimo SaleOrdId trasmesso.
+    /// </summary>
+    private async Task UpsertCodicePdfNelDbAsync(string codiceArticolo, int codicePdf, CancellationToken ct)
+    {
+        try
+        {
+            // Trova la Ricetta dell'articolo con il suo ParametroRicetta a offset 160
+            var ricettaDb = await _context.Set<Domain.Entities.Ricetta>()
+                .Include(r => r.Articolo)
+                .Include(r => r.Parametri)
+                .Where(r => r.Articolo.Codice == codiceArticolo)
+                .FirstOrDefaultAsync(ct);
+
+            if (ricettaDb == null)
+            {
+                _logger.LogWarning("⚠️ [DB-UPSERT] Ricetta non trovata per articolo={Art}", codiceArticolo);
+                return;
+            }
+
+            var param = ricettaDb.Parametri.FirstOrDefault(p => p.Indirizzo == 160);
+            if (param != null)
+            {
+                // Aggiorna il valore esistente
+                param.Valore = codicePdf.ToString();
+                _context.Set<Domain.Entities.ParametroRicetta>().Update(param);
+            }
+            else
+            {
+                // Crea il parametro se non esiste
+                var nuovoParam = new Domain.Entities.ParametroRicetta
+                {
+                    Id = Guid.NewGuid(),
+                    RicettaId = ricettaDb.Id,
+                    NomeParametro = "CodicePDF",
+                    Valore = codicePdf.ToString(),
+                    Indirizzo = 160,
+                    Tipo = "INT",
+                    Area = "Ricetta",
+                    UnitaMisura = string.Empty
+                };
+                await _context.Set<Domain.Entities.ParametroRicetta>().AddAsync(nuovoParam, ct);
+            }
+
+            await _context.SaveChangesAsync(ct);
+            _logger.LogInformation("💾 [DB-UPSERT] CodicePDF={Valore} salvato nel DB per articolo={Art}", codicePdf, codiceArticolo);
+        }
+        catch (Exception ex)
+        {
+            // Non-blocking: l'upsert DB è best-effort, non ferma la trasmissione
+            _logger.LogError(ex, "❌ [DB-UPSERT] Errore salvataggio CodicePDF per articolo={Art}", codiceArticolo);
+        }
+    }
+
     /// <summary>
     /// Legge contenuto DB55 (stato/lettura PLC)
     /// </summary>
