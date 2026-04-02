@@ -348,17 +348,14 @@ public class PlcController : ControllerBase
                 var prossima = await _context.Commesse
                     .Include(c => c.Articolo)
                     .Where(c => c.NumeroMacchina == macchina.OrdineVisualizazione
-                             && c.Articolo != null && c.Articolo.Codice == request.CodiceArticolo
-                             && c.StatoProgramma != Domain.Enums.StatoProgramma.Completata
-                             && c.StatoProgramma != Domain.Enums.StatoProgramma.Archiviata)
-                    .OrderByDescending(c => c.StatoProgramma == Domain.Enums.StatoProgramma.InProduzione)
+                             && c.Articolo != null && c.Articolo.Codice == request.CodiceArticolo)
+                    .OrderByDescending(c => c.DataInizioPrevisione)
                     .ThenBy(c => c.OrdineSequenza)
-                    .ThenBy(c => c.DataInizioPrevisione)
                     .FirstOrDefaultAsync(CancellationToken.None);
 
                 if (prossima == null)
                 {
-                    _logger.LogWarning("⚠️ [FTP] Nessuna commessa trovata per macchina={NumMacchina} articolo={Art}", 
+                    _logger.LogWarning("⚠️ [FTP] Nessuna commessa in DB per macchina#{NumMacchina} articolo={Art} — codice PDF non impostato", 
                         macchina.OrdineVisualizazione, request.CodiceArticolo);
                 }
                 else if (int.TryParse(prossima.SaleOrdId, out var sid) && sid > 0)
