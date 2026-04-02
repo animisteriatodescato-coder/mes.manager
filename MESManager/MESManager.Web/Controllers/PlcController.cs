@@ -340,23 +340,23 @@ public class PlcController : ControllerBase
                 });
             }
             
-            // Ottieni SaleOrdId (ID Mago) dalla commessa attiva per la macchina e l'articolo
+            // Ottieni SaleOrdId (ID Mago) dalla commessa per l'articolo trasmesso
+            // Cerca per articolo senza filtro macchina: le commesse potrebbero non avere NumeroMacchina
+            // assegnato (NULL) anche se visibili in ProgrammaMacchine
             int codicePdf = 0;
             var macchina = await _context.Macchine.FindAsync(request.MacchinaId);
-            if (macchina != null)
             {
                 var prossima = await _context.Commesse
                     .Include(c => c.Articolo)
-                    .Where(c => c.NumeroMacchina == macchina.OrdineVisualizazione
-                             && c.Articolo != null && c.Articolo.Codice == request.CodiceArticolo)
-                    .OrderByDescending(c => c.DataInizioPrevisione)
-                    .ThenBy(c => c.OrdineSequenza)
+                    .Where(c => c.Articolo != null && c.Articolo.Codice == request.CodiceArticolo)
+                    .OrderByDescending(c => c.OrdineSequenza)
+                    .ThenByDescending(c => c.DataInizioPrevisione)
                     .FirstOrDefaultAsync(CancellationToken.None);
 
                 if (prossima == null)
                 {
-                    _logger.LogWarning("⚠️ [FTP] Nessuna commessa in DB per macchina#{NumMacchina} articolo={Art} — codice PDF non impostato", 
-                        macchina.OrdineVisualizazione, request.CodiceArticolo);
+                    _logger.LogWarning("⚠️ [FTP] Nessuna commessa in DB per articolo={Art} — codice PDF non impostato", 
+                        request.CodiceArticolo);
                 }
                 else if (int.TryParse(prossima.SaleOrdId, out var sid) && sid > 0)
                 {

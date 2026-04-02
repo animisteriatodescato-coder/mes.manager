@@ -115,8 +115,9 @@ public class AnimeFtpService : IAnimeFtpService
         request.Method = WebRequestMethods.Ftp.UploadFile;
         request.Credentials = new NetworkCredential(_ftpUser, _ftpPassword);
         request.UseBinary = true;
+        request.UsePassive = true;  // Passive mode: richiesto dai server FTP industriali embedded
         request.KeepAlive = false;
-        request.Timeout = 15_000;
+        request.Timeout = 30_000;  // 30s per macchine industriali (link lento)
 
         using var requestStream = await request.GetRequestStreamAsync();
         await content.CopyToAsync(requestStream, ct);
@@ -171,6 +172,7 @@ public class AnimeFtpService : IAnimeFtpService
             var req = (FtpWebRequest)WebRequest.Create(uri);
             req.Method = "MLSD";
             req.Credentials = new NetworkCredential(_ftpUser, _ftpPassword);
+            req.UsePassive = true;
             req.Timeout = 10_000;
 
             using var response = (FtpWebResponse)await req.GetResponseAsync();
@@ -209,6 +211,7 @@ public class AnimeFtpService : IAnimeFtpService
             var req = (FtpWebRequest)WebRequest.Create(uri);
             req.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
             req.Credentials = new NetworkCredential(_ftpUser, _ftpPassword);
+            req.UsePassive = true;
             req.Timeout = 10_000;
 
             using var response = (FtpWebResponse)await req.GetResponseAsync();
@@ -242,6 +245,7 @@ public class AnimeFtpService : IAnimeFtpService
         var req = (FtpWebRequest)WebRequest.Create(uri);
         req.Method = WebRequestMethods.Ftp.DeleteFile;
         req.Credentials = new NetworkCredential(_ftpUser, _ftpPassword);
+        req.UsePassive = true;
         req.Timeout = 10_000;
         using var response = (FtpWebResponse)await req.GetResponseAsync();
     }
