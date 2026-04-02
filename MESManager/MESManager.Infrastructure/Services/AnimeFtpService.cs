@@ -45,6 +45,7 @@ public class AnimeFtpService : IAnimeFtpService
         CancellationToken ct = default)
     {
         var result = new AnimeFtpResult { CodicePDF = codicePdf };
+        string? ftpIp = null;
 
         try
         {
@@ -54,13 +55,25 @@ public class AnimeFtpService : IAnimeFtpService
 
             // 1. Legge IP macchina
             var macchina = await _context.Macchine.FindAsync(new object[] { macchinaId }, ct);
-            if (macchina == null || string.IsNullOrEmpty(macchina.IndirizzoPLC))
+            if (macchina == null)
             {
-                result.ErrorMessage = $"Macchina {macchinaId} non trovata o IP non configurato";
+                result.ErrorMessage = $"Macchina {macchinaId} non trovata";
                 _logger.LogWarning("⚠️ [FTP-SCHEDA] {Error}", result.ErrorMessage);
                 return result;
             }
             result.MacchinaIp = macchina.IndirizzoPLC;
+
+            // Usa IndirizzoFtp se configurato (es. 192.168.17.126), altrimenti fallback su IndirizzoPLC
+            ftpIp = !string.IsNullOrEmpty(macchina.IndirizzoFtp)
+                ? macchina.IndirizzoFtp
+                : macchina.IndirizzoPLC;
+
+            if (string.IsNullOrEmpty(ftpIp))
+            {
+                result.ErrorMessage = $"Macchina {macchinaId}: né IndirizzoFtp né IndirizzoPLC configurati";
+                _logger.LogWarning("⚠️ [FTP-SCHEDA] {Error}", result.ErrorMessage);
+                return result;
+            }
 
             // 2. Ottieni AnimeId dal CodiceArticolo
             var anime = await _context.Anime
@@ -85,20 +98,37 @@ public class AnimeFtpService : IAnimeFtpService
             // 4. Carica su FTP come {codicePdf}.pdf
             var nomeFile = $"{codicePdf}.pdf";
             result.NomeFile = nomeFile;
-            await UploadFtpAsync(macchina.IndirizzoPLC, nomeFile, pdfStream, ct);
+            await UploadFtpAsync(ftpIp, nomeFile, pdfStream, ct);
 
             result.Success = true;
             _logger.LogInformation(
                 "✅ [FTP-SCHEDA] Scheda {NomeFile} inviata a ftp://{Ip}/",
-                nomeFile, macchina.IndirizzoPLC);
+                nomeFile, ftpIp);
 
             // 5. Pulizia cartella FTP: mantieni al massimo MaxPdfInCartella file
-            await CleanupOldPdfsAsync(macchina.IndirizzoPLC, ct);
+            await CleanupOldPdfsAsync(ftpIp, ct);
         }
         catch (Exception ex)
         {
-            result.ErrorMessage = ex.Message;
-            _logger.LogError(ex, "❌ [FTP-SCHEDA] Eccezione invio scheda articolo {Codice}", codiceArticolo);
+            // Gestione 226 anche a livello outer per robustezza
+            var msg = ex.Message ?? "";
+            if (ex is WebException && (msg.Contains("226") || msg.Contains("250")))
+            {
+                // Upload riuscito — server ha inviato 2xx come WebException (comportamento server FTP embedded)
+                result.Success = true;
+                _logger.LogInformation(
+                    "✅ [FTP-SCHEDA] Scheda {NomeFile} inviata a ftp://{Ip}/ (2xx via WebException)",
+                    result.NomeFile, ftpIp);
+
+                // Pulizia best-effort se FTP IP disponibile
+                if (ftpIp != null)
+                    try { await CleanupOldPdfsAsync(ftpIp, CancellationToken.None); } catch { /* ignora */ }
+            }
+            else
+            {
+                result.ErrorMessage = ex.Message;
+                _logger.LogError(ex, "❌ [FTP-SCHEDA] Eccezione invio scheda articolo {Codice}", codiceArticolo);
+            }
         }
 
         return result;
@@ -115,16 +145,33 @@ public class AnimeFtpService : IAnimeFtpService
         request.Method = WebRequestMethods.Ftp.UploadFile;
         request.Credentials = new NetworkCredential(_ftpUser, _ftpPassword);
         request.UseBinary = true;
-        request.UsePassive = true;  // Passive mode: richiesto dai server FTP industriali embedded
+        request.UsePassive = true;
         request.KeepAlive = false;
-        request.Timeout = 30_000;  // 30s per macchine industriali (link lento)
+        request.Timeout = 30_000;
 
-        using var requestStream = await request.GetRequestStreamAsync();
-        await content.CopyToAsync(requestStream, ct);
-        requestStream.Close();
+        try
+        {
+            using var requestStream = await request.GetRequestStreamAsync();
+            await content.CopyToAsync(requestStream, ct);
+            requestStream.Close();
 
-        using var response = (FtpWebResponse)await request.GetResponseAsync();
-        _logger.LogDebug("[FTP-SCHEDA] Upload completato: {Status}", response.StatusDescription?.TrimEnd());
+            using var response = (FtpWebResponse)await request.GetResponseAsync();
+            _logger.LogDebug("[FTP-SCHEDA] Upload OK: {Status}", response.StatusDescription?.TrimEnd());
+        }
+        catch (WebException ex)
+        {
+            // Alcuni server FTP embedded (es. Siemens HMI) inviano "226 Transfer complete"
+            // come WebException invece di risposta normale. 226/250 = successo.
+            var msg = ex.Message ?? "";
+            if (msg.Contains("226") || msg.Contains("250") ||
+                (ex.Response is FtpWebResponse fr &&
+                 (fr.StatusCode == FtpStatusCode.ClosingData || fr.StatusCode == FtpStatusCode.FileActionOK)))
+            {
+                _logger.LogDebug("[FTP-SCHEDA] Upload OK (FTP 2xx ricevuto come WebException: {Msg})", msg.Trim());
+                return; // Upload riuscito
+            }
+            throw; // Errore reale
+        }
     }
 
     /// <summary>

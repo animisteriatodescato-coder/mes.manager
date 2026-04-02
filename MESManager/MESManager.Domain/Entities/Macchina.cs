@@ -16,6 +16,13 @@ public class Macchina
     /// Se null o vuoto, la macchina non è connessa al PLC.
     /// </summary>
     public string? IndirizzoPLC { get; set; }
+
+    /// <summary>
+    /// Indirizzo IP dell'interfaccia HMI/Windows per FTP (diverso da IndirizzoPLC).
+    /// Tipicamente IndirizzoPLC = 192.168.17.xx, IndirizzoFtp = 192.168.17.1xx (+100 ultimo ottetto).
+    /// Se null, FTP non disponibile su questa macchina.
+    /// </summary>
+    public string? IndirizzoFtp { get; set; }
     
     // Navigazioni
     public ICollection<EventoPLC> EventiPLC { get; set; } = new List<EventoPLC>();

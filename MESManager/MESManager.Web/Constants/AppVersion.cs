@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.62.10";
+    public const string Current = "1.62.11";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.62.10 FTP/PDF: status propagato al dialog (PdfInviato/PdfErrorMessage), fix Razor syntax bug, TrasmmettiAsync deserializza RecipeWriteResult completo
+    public const string Display = "v" + Current; // v1.62.11 FTP fix: IndirizzoFtp su Macchina (migration auto-populate +100 last octet), AnimeFtpService usa IndirizzoFtp invece di IndirizzoPLC
 }
