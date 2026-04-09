@@ -263,12 +263,18 @@
     private AnomaliaStandardDto _anomDraft = new();
 
     // ── Init ─────────────────────────────────────────────────
-    protected override async Task OnInitializedAsync()
+    private bool _initialized = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!firstRender || _initialized) return;
+        _initialized = true;
+
         _attivita = await ManutenzioneService.GetAttivitaAsync();
         _loadingAtt = false;
         _anomalie = await ManutenzioneService.GetAnomalieStandardAsync();
         _loadingAnom = false;
+        StateHasChanged();
     }
 
     // ── CRUD Attività ─────────────────────────────────────────

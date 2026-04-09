@@ -55,14 +55,15 @@ public class AiAssistantService : IAiAssistantService
         var messages = BuildMessages(history, userMessage);
         var tools    = BuildTools();
 
-        using var http = new HttpClient();
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
         http.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
 
+        try
+        {
         // Prima chiamata — il modello può richiedere un tool call
         var req1 = new OaiRequest { Model = model, Messages = messages, Tools = tools, ToolChoice = "auto" };
         var res1 = await CallApiAsync(http, req1, ct);
-        if (res1 == null) return "❌ Errore di comunicazione con OpenAI.";
 
         var choice1 = res1.Choices?.FirstOrDefault();
         if (choice1 == null) return "❌ Risposta vuota da OpenAI.";
@@ -93,10 +94,16 @@ public class AiAssistantService : IAiAssistantService
             // Seconda chiamata — risposta finale in linguaggio naturale
             var req2 = new OaiRequest { Model = model, Messages = messages };
             var res2 = await CallApiAsync(http, req2, ct);
-            return res2?.Choices?.FirstOrDefault()?.Message?.Content ?? "❌ Nessuna risposta.";
+            return res2.Choices?.FirstOrDefault()?.Message?.Content ?? "❌ Nessuna risposta.";
         }
 
         return choice1.Message?.Content ?? "❌ Nessuna risposta.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AskAsync: errore comunicazione OpenAI");
+            return $"❌ Errore OpenAI: {ex.Message}";
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -356,21 +363,22 @@ public class AiAssistantService : IAiAssistantService
         return fallback;
     }
 
-    private async Task<OaiResponse?> CallApiAsync(HttpClient http, OaiRequest request, CancellationToken ct)
+    private async Task<OaiResponse> CallApiAsync(HttpClient http, OaiRequest request, CancellationToken ct)
     {
-        try
+        var body = JsonSerializer.Serialize(request, JsonOpts);
+        using var content = new StringContent(body, Encoding.UTF8, "application/json");
+        using var resp = await http.PostAsync(ApiEndpoint, content, ct);
+
+        if (!resp.IsSuccessStatusCode)
         {
-            var body    = JsonSerializer.Serialize(request, JsonOpts);
-            using var content = new StringContent(body, Encoding.UTF8, "application/json");
-            using var resp    = await http.PostAsync(ApiEndpoint, content, ct);
-            resp.EnsureSuccessStatusCode();
-            return await resp.Content.ReadFromJsonAsync<OaiResponse>(JsonOpts, ct);
+            var errorBody = await resp.Content.ReadAsStringAsync(ct);
+            _logger.LogError("OpenAI HTTP {Status}: {Body}", (int)resp.StatusCode, errorBody);
+            throw new HttpRequestException(
+                $"OpenAI HTTP {(int)resp.StatusCode}: {errorBody[..Math.Min(300, errorBody.Length)]}");
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Errore chiamata OpenAI");
-            return null;
-        }
+
+        return await resp.Content.ReadFromJsonAsync<OaiResponse>(JsonOpts, ct)
+               ?? throw new InvalidOperationException("OpenAI ha restituito una risposta vuota.");
     }
 
     // ─────────────────────────────────────────────────────────────────────────

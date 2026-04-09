@@ -4,7 +4,24 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.62.5
+## 🔖 Versione Corrente: v1.62.6
+
+---
+
+## 🔖 v1.62.6 — Reintegrazione freccette ▲▼ riordino commesse in ProgrammaMacchine (9 Apr 2026)
+
+**Data**: 9 Aprile 2026
+
+### ✨ Feature — Frecce ▲▼ per riordinare commesse in Programma Macchine
+
+**Problema**: Le frecce ▲▼ per spostare le commesse in sequenza all'interno di una macchina erano state rimosse dalla griglia `ProgrammaMacchine`. Il Gantt alternativo non è in uso per questa funzione.
+
+**Fix**:
+- Aggiunta colonna `ordine` (pinned left, 70px) con bottoni ▲▼ in `programma-macchine-grid.js`
+- Reintegrata funzione `moveRow(commessaId, numeroMacchina, direction)` che chiama `POST /api/Commesse/riordina`
+- Corretti metodi `AnomalieStandard` duplicati in `ManutenzioneService.cs` (causavano build break pre-esistente)
+
+**Backend già esistente**: `CommesseController.Riordina` + `CommessaAppService.RiordinaCommessaAsync` invariati.
 
 ---
 
