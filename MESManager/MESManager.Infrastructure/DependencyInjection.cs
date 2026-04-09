@@ -48,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<CurrentUserService>();
         services.AddScoped<ITechnicalIssueService, TechnicalIssueService>();
         services.AddScoped<IPianificazioneEngineService, PianificazioneEngineService>();
+        services.AddScoped<IAiAssistantService, AiAssistantService>();
         
         // Preventivi Services
         services.AddScoped<IQuotePricingEngine, QuotePricingEngine>();

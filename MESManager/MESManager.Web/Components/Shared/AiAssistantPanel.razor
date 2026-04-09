@@ -1,0 +1,182 @@
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@inject IAiAssistantService AiService
+@inject IJSRuntime JS
+@implements IDisposable
+
+<div class="ai-panel-root">
+
+    @* ── Header ── *@
+    <div class="ai-panel-header">
+        <div style="display:flex;align-items:center;gap:8px">
+            <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Style="color:var(--mud-palette-primary)" />
+            <MudText Typo="Typo.h6" Style="font-weight:600">Assistente AI</MudText>
+        </div>
+        <MudIconButton Icon="@Icons.Material.Filled.Close"
+                       Size="Size.Small"
+                       OnClick="OnClose"
+                       title="Chiudi" />
+    </div>
+
+    @* ── Messages ── *@
+    <div id="ai-messages" class="ai-messages-list">
+
+        @if (!_messages.Any())
+        {
+            @* Stato iniziale: suggerimenti *@
+            <div class="ai-welcome">
+                <MudIcon Icon="@Icons.Material.Filled.SmartToy" Style="font-size:3rem;color:var(--mud-palette-primary);opacity:.7" />
+                <MudText Typo="Typo.body1" Class="mt-2" Style="text-align:center">
+                    Ciao! Chiedimi qualcosa sui dati del gestionale.
+                </MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1" Style="text-align:center">
+                    Esempi di domande:
+                </MudText>
+                <div class="ai-suggestions">
+                    @foreach (var s in _suggestions)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined"
+                                 OnClick="@(() => SendSuggestion(s))">@s</MudChip>
+                    }
+                </div>
+            </div>
+        }
+
+        @foreach (var msg in _messages)
+        {
+            <div class="ai-msg-row @(msg.Role == "user" ? "ai-row-user" : "ai-row-assistant")">
+                <div class="ai-bubble @(msg.Role == "user" ? "ai-bubble-user" : msg.IsError ? "ai-bubble-error" : "ai-bubble-assistant")">
+                    <pre class="ai-bubble-text">@msg.Content</pre>
+                    <div class="ai-bubble-time">@msg.Timestamp.ToString("HH:mm")</div>
+                </div>
+            </div>
+        }
+
+        @if (_loading)
+        {
+            <div class="ai-msg-row ai-row-assistant">
+                <div class="ai-bubble ai-bubble-assistant ai-bubble-loading">
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Color="Color.Primary" />
+                    <MudText Typo="Typo.caption" Class="ml-2">Elaborazione...</MudText>
+                </div>
+            </div>
+        }
+
+    </div>
+
+    @* ── Input ── *@
+    <div class="ai-panel-input">
+        <MudTextField @bind-Value="_input"
+                      Placeholder="Scrivi una domanda..."
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Lines="1"
+                      Disabled="@_loading"
+                      @onkeydown="OnKeyDown"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Send"
+                      OnAdornmentClick="Send"
+                      AdornmentColor="Color.Primary"
+                      data-testid="ai-input" />
+    </div>
+
+</div>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private readonly List<AiChatMessage> _messages = [];
+    private string _input   = string.Empty;
+    private bool   _loading;
+    private bool   _shouldScroll;
+    private CancellationTokenSource? _cts;
+
+    private static readonly string[] _suggestions =
+    [
+        "A che ora hanno iniziato oggi gli operatori?",
+        "Qual è lo stato attuale delle macchine?",
+        "Quali commesse sono in lavorazione?",
+        "Ci sono stati allarmi oggi?",
+        "Dammi i KPI di produzione di oggi"
+    ];
+
+    private async Task SendSuggestion(string text)
+    {
+        _input = text;
+        await Send();
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey && !_loading)
+            await Send();
+    }
+
+    private async Task Send()
+    {
+        var trimmed = _input.Trim();
+        if (string.IsNullOrEmpty(trimmed) || _loading) return;
+
+        _messages.Add(new AiChatMessage
+        {
+            Role      = "user",
+            Content   = trimmed,
+            Timestamp = DateTime.Now
+        });
+        _input        = string.Empty;
+        _loading      = true;
+        _shouldScroll = true;
+        StateHasChanged();
+
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+        string reply;
+        bool   isError = false;
+        try
+        {
+            // Passa la history (tutti i messaggi già presenti meno l'ultimo user appena aggiunto)
+            var history = _messages.Take(_messages.Count - 1).ToList();
+            reply = await AiService.AskAsync(history, trimmed, _cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            reply   = "⏱️ Richiesta scaduta (timeout 30s). Riprova.";
+            isError = true;
+        }
+        catch (Exception ex)
+        {
+            reply   = $"❌ Errore: {ex.Message}";
+            isError = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+
+        _messages.Add(new AiChatMessage
+        {
+            Role      = "assistant",
+            Content   = reply,
+            IsError   = isError,
+            Timestamp = DateTime.Now
+        });
+        _shouldScroll = true;
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_shouldScroll)
+        {
+            _shouldScroll = false;
+            try
+            {
+                await JS.InvokeVoidAsync("AiAssistant.scrollToBottom", "ai-messages");
+            }
+            catch { /* ignora errori JS durante dispose */ }
+        }
+    }
+
+    public void Dispose() => _cts?.Cancel();
+}

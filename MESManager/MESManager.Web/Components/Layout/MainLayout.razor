@@ -333,6 +333,15 @@
             </MudMenu>
         }
         
+        @if (_isAdmin)
+        {
+            <MudTooltip Text="Assistente AI" Arrow="true" Placement="Placement.Bottom">
+                <MudIconButton Icon="@Icons.Material.Filled.AutoAwesome"
+                               Color="Color.Inherit"
+                               OnClick="@ToggleAiPanel"
+                               data-testid="ai-assistant-btn" />
+            </MudTooltip>
+        }
         <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" 
                        Color="Color.Inherit" 
                        OnClick="@ToggleTheme" />
@@ -645,7 +654,20 @@
             </AuthorizeView>
         </MudNavMenu>
     </MudDrawer>
-    
+
+    @* ── AI Assistant Drawer (solo Admin) ────────────────────────────────── *@
+    @if (_isAdmin)
+    {
+        <MudDrawer @bind-Open="_aiPanelOpen"
+                   Anchor="Anchor.End"
+                   Variant="DrawerVariant.Temporary"
+                   Width="430px"
+                   Elevation="4"
+                   data-testid="ai-assistant-drawer">
+            <AiAssistantPanel OnClose="@(() => _aiPanelOpen = false)" />
+        </MudDrawer>
+    }
+
     <CascadingValue Value="@_isReadOnly" Name="IsReadOnly">
     <CascadingValue Value="@_isAdmin" Name="IsAdmin">
     <MudMainContent>

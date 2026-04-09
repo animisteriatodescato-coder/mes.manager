@@ -56,11 +56,14 @@ public partial class MainLayout : IDisposable
 
     private bool _isDarkMode = false;
     private bool _drawerOpen = false;
+    private bool _aiPanelOpen = false;
     /// <summary>True se l'utente ha SOLO ruolo Visualizzazione (nessun ruolo write). Propagato come CascadingValue alle pagine figlie.</summary>
     private bool _isReadOnly = false;
     /// <summary>True se l'utente ha ruolo Admin. Propagato come CascadingValue alle pagine figlie per funzioni riservate (es. Imposta Default Globale).</summary>
     private bool _isAdmin = false;
     private string _currentCategory = string.Empty;
+
+    private void ToggleAiPanel() => _aiPanelOpen = !_aiPanelOpen;
     private ErrorBoundary? _errorBoundary;
 
     // Tema dinamico — costruito dai colori in AppSettings.
