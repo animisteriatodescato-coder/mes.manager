@@ -1,0 +1,431 @@
+@page "/manutenzioni/impostazioni"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.ManutenzioniImpostazioni)]
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@using MESManager.Domain.Enums
+@inject IManutenzioneService ManutenzioneService
+@inject ISnackbar Snackbar
+
+<PageTitle>Impostazioni Manutenzioni</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4" data-testid="page-impostazioni-manutenzioni">
+<MudPaper Elevation="1" Class="pa-4">
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudIcon Icon="@Icons.Material.Filled.Settings" Color="Color.Secondary" />
+        <MudText Typo="Typo.h6">Impostazioni Manutenzioni</MudText>
+    </MudStack>
+
+    <MudTabs Elevation="0" Rounded="true" PanelClass="pt-4" @bind-ActivePanelIndex="_tabIndex">
+
+        @* ══ TAB 1 — ATTIVITÀ ══════════════════════════════════════════ *@
+        <MudTabPanel Text="Attività" Icon="@Icons.Material.Filled.CheckBox">
+
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">
+                    <MudButton Color="@(_filtroTipoAtt == null ? Color.Primary : Color.Default)"
+                               Variant="@(_filtroTipoAtt == null ? Variant.Filled : Variant.Outlined)"
+                               OnClick="@(() => { _filtroTipoAtt = null; })">Tutte</MudButton>
+                    <MudButton Color="@(_filtroTipoAtt == TipoFrequenzaManutenzione.Settimanale ? Color.Primary : Color.Default)"
+                               Variant="@(_filtroTipoAtt == TipoFrequenzaManutenzione.Settimanale ? Variant.Filled : Variant.Outlined)"
+                               OnClick="@(() => { _filtroTipoAtt = TipoFrequenzaManutenzione.Settimanale; })">Settimanali</MudButton>
+                    <MudButton Color="@(_filtroTipoAtt == TipoFrequenzaManutenzione.Mensile ? Color.Secondary : Color.Default)"
+                               Variant="@(_filtroTipoAtt == TipoFrequenzaManutenzione.Mensile ? Variant.Filled : Variant.Outlined)"
+                               OnClick="@(() => { _filtroTipoAtt = TipoFrequenzaManutenzione.Mensile; })">Mensili</MudButton>
+                </MudButtonGroup>
+                <MudSpacer />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="@NuovaAttivita"
+                           data-testid="btn-nuova-attivita">
+                    Nuova Attività
+                </MudButton>
+            </MudStack>
+
+            @if (_loadingAtt)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+            }
+
+            <MudTable Items="@AttivitaFiltrate" Hover="true" Dense="true" Striped="true"
+                      Loading="@_loadingAtt" data-testid="tbl-attivita">
+                <HeaderContent>
+                    <MudTh Style="width:60px">Ordine</MudTh>
+                    <MudTh>Nome</MudTh>
+                    <MudTh Style="width:130px">Frequenza</MudTh>
+                    <MudTh Style="width:100px">Font (px)</MudTh>
+                    <MudTh Style="width:80px">Attiva</MudTh>
+                    <MudTh Style="width:100px">Azioni</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    @if (_editingAttivitaId == context.Id)
+                    {
+                        @* Riga in modalità edit inline *@
+                        <MudTd>
+                            <MudNumericField @bind-Value="_attDraft.Ordine" Min="1" Max="99"
+                                             Variant="Variant.Outlined" Margin="Margin.Dense" Style="width:60px" />
+                        </MudTd>
+                        <MudTd>
+                            <MudTextField @bind-Value="_attDraft.Nome" Variant="Variant.Outlined"
+                                          Margin="Margin.Dense" AutoFocus="true"
+                                          data-testid="inp-att-nome" />
+                        </MudTd>
+                        <MudTd>
+                            <MudSelect @bind-Value="_attDraft.TipoFrequenza" Variant="Variant.Outlined"
+                                       Margin="Margin.Dense">
+                                <MudSelectItem Value="@TipoFrequenzaManutenzione.Settimanale">Settimanale</MudSelectItem>
+                                <MudSelectItem Value="@TipoFrequenzaManutenzione.Mensile">Mensile</MudSelectItem>
+                            </MudSelect>
+                        </MudTd>
+                        <MudTd>
+                            <MudNumericField @bind-Value="_attDraft.FontSize" Min="8" Max="24"
+                                             Variant="Variant.Outlined" Margin="Margin.Dense"
+                                             Adornment="Adornment.End" AdornmentText="px"
+                                             Style="width:90px"
+                                             data-testid="inp-att-fontsize" />
+                        </MudTd>
+                        <MudTd>
+                            <MudCheckBox @bind-Value="_attDraft.Attiva" Color="Color.Primary" />
+                        </MudTd>
+                        <MudTd>
+                            <MudStack Row="true" Spacing="0">
+                                <MudIconButton Icon="@Icons.Material.Filled.Check" Color="Color.Success"
+                                               Size="Size.Small" Title="Salva"
+                                               OnClick="@SalvaAttivita"
+                                               data-testid="btn-salva-att" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Default"
+                                               Size="Size.Small" Title="Annulla"
+                                               OnClick="@AnnullaEditAttivita" />
+                            </MudStack>
+                        </MudTd>
+                    }
+                    else
+                    {
+                        @* Riga visualizzazione *@
+                        <MudTd DataLabel="Ordine">@context.Ordine</MudTd>
+                        <MudTd DataLabel="Nome">
+                            <MudText Style="@($"font-size:{context.FontSize}px")">@context.Nome</MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Frequenza">
+                            @if (context.TipoFrequenza == TipoFrequenzaManutenzione.Settimanale)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">Settimanale</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Mensile</MudChip>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Font">
+                            <MudText Typo="Typo.body2">@context.FontSize px</MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Attiva">
+                            <MudIcon Icon="@(context.Attiva ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                     Color="@(context.Attiva ? Color.Success : Color.Default)"
+                                     Size="Size.Small" />
+                        </MudTd>
+                        <MudTd DataLabel="Azioni">
+                            <MudStack Row="true" Spacing="0">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary"
+                                               Size="Size.Small" Title="Modifica"
+                                               OnClick="@(() => IniziaEditAttivita(context))"
+                                               data-testid="@($"btn-edit-att-{context.Id}")" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                               Size="Size.Small" Title="Elimina (disattiva)"
+                                               OnClick="@(() => EliminaAttivita(context.Id))"
+                                               data-testid="@($"btn-del-att-{context.Id}")" />
+                            </MudStack>
+                        </MudTd>
+                    }
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4">Nessuna attività configurata. Aggiungine una con il pulsante "Nuova Attività".</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+        @* ══ TAB 2 — ANOMALIE STANDARD ═════════════════════════════════ *@
+        <MudTabPanel Text="Anomalie Standard" Icon="@Icons.Material.Filled.Warning">
+
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                <MudText Typo="Typo.body2" Color="Color.Tertiary">
+                    Le anomalie qui configurate compariranno come selezione rapida nel dropdown durante la compilazione della griglia.
+                </MudText>
+                <MudSpacer />
+                <MudButton Variant="Variant.Filled" Color="Color.Warning"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="@NuovaAnomalia"
+                           data-testid="btn-nuova-anomalia">
+                    Nuova Anomalia
+                </MudButton>
+            </MudStack>
+
+            @if (_loadingAnom)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Warning" Class="mb-2" />
+            }
+
+            <MudTable Items="@_anomalie" Hover="true" Dense="true" Striped="true"
+                      Loading="@_loadingAnom" data-testid="tbl-anomalie">
+                <HeaderContent>
+                    <MudTh Style="width:60px">Ordine</MudTh>
+                    <MudTh>Testo anomalia</MudTh>
+                    <MudTh Style="width:80px">Attiva</MudTh>
+                    <MudTh Style="width:100px">Azioni</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    @if (_editingAnomaliaId == context.Id)
+                    {
+                        <MudTd>
+                            <MudNumericField @bind-Value="_anomDraft.Ordine" Min="1" Max="99"
+                                             Variant="Variant.Outlined" Margin="Margin.Dense" Style="width:60px" />
+                        </MudTd>
+                        <MudTd>
+                            <MudTextField @bind-Value="_anomDraft.Testo" Variant="Variant.Outlined"
+                                          Margin="Margin.Dense" AutoFocus="true"
+                                          Placeholder="Descrizione anomalia standard..."
+                                          data-testid="inp-anom-testo" />
+                        </MudTd>
+                        <MudTd>
+                            <MudCheckBox @bind-Value="_anomDraft.Attiva" Color="Color.Warning" />
+                        </MudTd>
+                        <MudTd>
+                            <MudStack Row="true" Spacing="0">
+                                <MudIconButton Icon="@Icons.Material.Filled.Check" Color="Color.Success"
+                                               Size="Size.Small" Title="Salva"
+                                               OnClick="@SalvaAnomalia"
+                                               data-testid="btn-salva-anom" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Default"
+                                               Size="Size.Small" Title="Annulla"
+                                               OnClick="@AnnullaEditAnomalia" />
+                            </MudStack>
+                        </MudTd>
+                    }
+                    else
+                    {
+                        <MudTd DataLabel="Ordine">@context.Ordine</MudTd>
+                        <MudTd DataLabel="Testo">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Size="Size.Small" />
+                                <MudText>@context.Testo</MudText>
+                            </MudStack>
+                        </MudTd>
+                        <MudTd DataLabel="Attiva">
+                            <MudIcon Icon="@(context.Attiva ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                     Color="@(context.Attiva ? Color.Success : Color.Default)"
+                                     Size="Size.Small" />
+                        </MudTd>
+                        <MudTd DataLabel="Azioni">
+                            <MudStack Row="true" Spacing="0">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary"
+                                               Size="Size.Small" Title="Modifica"
+                                               OnClick="@(() => IniziaEditAnomalia(context))"
+                                               data-testid="@($"btn-edit-anom-{context.Id}")" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                               Size="Size.Small" Title="Elimina"
+                                               OnClick="@(() => EliminaAnomalia(context.Id))"
+                                               data-testid="@($"btn-del-anom-{context.Id}")" />
+                            </MudStack>
+                        </MudTd>
+                    }
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4">Nessuna anomalia standard configurata.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+    </MudTabs>
+
+</MudPaper>
+</MudContainer>
+
+@code {
+    private int _tabIndex = 0;
+
+    // ── Attività ─────────────────────────────────────────────
+    private List<ManutenzioneAttivitaDto> _attivita = new();
+    private bool _loadingAtt = true;
+    private TipoFrequenzaManutenzione? _filtroTipoAtt;
+
+    private Guid? _editingAttivitaId;
+    private ManutenzioneAttivitaDto _attDraft = new();
+
+    private IEnumerable<ManutenzioneAttivitaDto> AttivitaFiltrate =>
+        _filtroTipoAtt == null
+            ? _attivita
+            : _attivita.Where(a => a.TipoFrequenza == _filtroTipoAtt);
+
+    // ── Anomalie ─────────────────────────────────────────────
+    private List<AnomaliaStandardDto> _anomalie = new();
+    private bool _loadingAnom = true;
+
+    private Guid? _editingAnomaliaId;
+    private AnomaliaStandardDto _anomDraft = new();
+
+    // ── Init ─────────────────────────────────────────────────
+    protected override async Task OnInitializedAsync()
+    {
+        _attivita = await ManutenzioneService.GetAttivitaAsync();
+        _loadingAtt = false;
+        _anomalie = await ManutenzioneService.GetAnomalieStandardAsync();
+        _loadingAnom = false;
+    }
+
+    // ── CRUD Attività ─────────────────────────────────────────
+
+    private void NuovaAttivita()
+    {
+        _editingAttivitaId = Guid.Empty; // sentinella "nuovo"
+        _attDraft = new ManutenzioneAttivitaDto
+        {
+            Id = Guid.Empty,
+            Attiva = true,
+            FontSize = 11,
+            Ordine = (_attivita.Count > 0 ? _attivita.Max(a => a.Ordine) : 0) + 1,
+            TipoFrequenza = _filtroTipoAtt ?? TipoFrequenzaManutenzione.Settimanale
+        };
+        // Aggiunge una riga fittizia in cima per mostrare l'edit inline
+        _attivita.Insert(0, _attDraft);
+    }
+
+    private void IniziaEditAttivita(ManutenzioneAttivitaDto att)
+    {
+        _editingAttivitaId = att.Id;
+        _attDraft = new ManutenzioneAttivitaDto
+        {
+            Id = att.Id,
+            Nome = att.Nome,
+            TipoFrequenza = att.TipoFrequenza,
+            Ordine = att.Ordine,
+            Attiva = att.Attiva,
+            FontSize = att.FontSize,
+            CicliSogliaPLC = att.CicliSogliaPLC
+        };
+    }
+
+    private void AnnullaEditAttivita()
+    {
+        if (_editingAttivitaId == Guid.Empty)
+            _attivita.RemoveAt(0); // rimuove la riga fittizia
+        _editingAttivitaId = null;
+        _attDraft = new();
+    }
+
+    private async Task SalvaAttivita()
+    {
+        if (string.IsNullOrWhiteSpace(_attDraft.Nome))
+        {
+            Snackbar.Add("Il nome dell'attività è obbligatorio.", Severity.Warning);
+            return;
+        }
+
+        if (_attDraft.Id == Guid.Empty)
+        {
+            // Nuova
+            var created = await ManutenzioneService.CreateAttivitaAsync(_attDraft);
+            _attivita.RemoveAt(0); // rimuove riga fittizia
+            _attivita.Add(created);
+            _attivita = _attivita.OrderBy(a => a.TipoFrequenza).ThenBy(a => a.Ordine).ToList();
+            Snackbar.Add("Attività creata.", Severity.Success);
+        }
+        else
+        {
+            // Aggiorna
+            var updated = await ManutenzioneService.UpdateAttivitaAsync(_attDraft);
+            if (updated != null)
+            {
+                var idx = _attivita.FindIndex(a => a.Id == updated.Id);
+                if (idx >= 0) _attivita[idx] = updated;
+            }
+            Snackbar.Add("Attività aggiornata.", Severity.Success);
+        }
+
+        _editingAttivitaId = null;
+        _attDraft = new();
+    }
+
+    private async Task EliminaAttivita(Guid id)
+    {
+        var ok = await ManutenzioneService.DeleteAttivitaAsync(id);
+        if (ok)
+        {
+            _attivita.RemoveAll(a => a.Id == id);
+            Snackbar.Add("Attività disattivata.", Severity.Info);
+        }
+    }
+
+    // ── CRUD Anomalie ─────────────────────────────────────────
+
+    private void NuovaAnomalia()
+    {
+        _editingAnomaliaId = Guid.Empty;
+        _anomDraft = new AnomaliaStandardDto
+        {
+            Id = Guid.Empty,
+            Attiva = true,
+            Ordine = (_anomalie.Count > 0 ? _anomalie.Max(a => a.Ordine) : 0) + 1
+        };
+        _anomalie.Insert(0, _anomDraft);
+    }
+
+    private void IniziaEditAnomalia(AnomaliaStandardDto anom)
+    {
+        _editingAnomaliaId = anom.Id;
+        _anomDraft = new AnomaliaStandardDto
+        {
+            Id = anom.Id,
+            Testo = anom.Testo,
+            Ordine = anom.Ordine,
+            Attiva = anom.Attiva
+        };
+    }
+
+    private void AnnullaEditAnomalia()
+    {
+        if (_editingAnomaliaId == Guid.Empty)
+            _anomalie.RemoveAt(0);
+        _editingAnomaliaId = null;
+        _anomDraft = new();
+    }
+
+    private async Task SalvaAnomalia()
+    {
+        if (string.IsNullOrWhiteSpace(_anomDraft.Testo))
+        {
+            Snackbar.Add("Il testo dell'anomalia è obbligatorio.", Severity.Warning);
+            return;
+        }
+
+        if (_anomDraft.Id == Guid.Empty)
+        {
+            var created = await ManutenzioneService.CreateAnomaliaStandardAsync(_anomDraft);
+            _anomalie.RemoveAt(0);
+            _anomalie.Add(created);
+            _anomalie = _anomalie.OrderBy(a => a.Ordine).ToList();
+            Snackbar.Add("Anomalia standard creata.", Severity.Success);
+        }
+        else
+        {
+            var updated = await ManutenzioneService.UpdateAnomaliaStandardAsync(_anomDraft);
+            if (updated != null)
+            {
+                var idx = _anomalie.FindIndex(a => a.Id == updated.Id);
+                if (idx >= 0) _anomalie[idx] = updated;
+            }
+            Snackbar.Add("Anomalia standard aggiornata.", Severity.Success);
+        }
+
+        _editingAnomaliaId = null;
+        _anomDraft = new();
+    }
+
+    private async Task EliminaAnomalia(Guid id)
+    {
+        var ok = await ManutenzioneService.DeleteAnomaliaStandardAsync(id);
+        if (ok)
+        {
+            _anomalie.RemoveAll(a => a.Id == id);
+            Snackbar.Add("Anomalia eliminata.", Severity.Info);
+        }
+    }
+}

@@ -533,12 +533,13 @@
             <AuthorizeView Roles="Admin,Manutenzione,Visualizzazione">
                 <Authorized Context="manCtx">
                     @{
-                        bool _isManBase    = manCtx.User.IsInRole("Admin") || manCtx.User.IsInRole("Manutenzione");
-                        bool _canManAlert  = _isManBase || manCtx.User.HasClaim(PaginaPolicy.ClaimType, "manutenzioni-alert");
-                        bool _canManCat    = _isManBase || manCtx.User.HasClaim(PaginaPolicy.ClaimType, "manutenzioni-catalogo");
-                        bool _canManGriglia = _isManBase || manCtx.User.HasClaim(PaginaPolicy.ClaimType, "manutenzioni-griglia");
+                        bool _isManBase          = manCtx.User.IsInRole("Admin") || manCtx.User.IsInRole("Manutenzione");
+                        bool _canManAlert         = _isManBase || manCtx.User.HasClaim(PaginaPolicy.ClaimType, "manutenzioni-alert");
+                        bool _canManCat           = _isManBase || manCtx.User.HasClaim(PaginaPolicy.ClaimType, "manutenzioni-catalogo");
+                        bool _canManGriglia       = _isManBase || manCtx.User.HasClaim(PaginaPolicy.ClaimType, "manutenzioni-griglia");
+                        bool _canManImpostazioni  = _isManBase || manCtx.User.HasClaim(PaginaPolicy.ClaimType, "manutenzioni-impostazioni");
                     }
-                    @if (_canManAlert || _canManCat || _canManGriglia)
+                    @if (_canManAlert || _canManCat || _canManGriglia || _canManImpostazioni)
                     {
                         <MudNavGroup Title="Manutenzioni" Icon="@Icons.Material.Filled.Build" IconColor="Color.Secondary" Class="nav-sec-manutenzioni">
                             @if (_canManGriglia)
@@ -557,6 +558,12 @@
                             {
                                 <MudNavLink Href="/manutenzioni/catalogo">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128297;</span><span>Catalogo</span></div>
+                                </MudNavLink>
+                            }
+                            @if (_canManImpostazioni)
+                            {
+                                <MudNavLink Href="/manutenzioni/impostazioni">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9881;&#65039;</span><span>Impostazioni</span></div>
                                 </MudNavLink>
                             }
                         </MudNavGroup>

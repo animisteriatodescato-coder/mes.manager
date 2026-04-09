@@ -91,7 +91,7 @@
                         @foreach (var att in _attivita)
                         {
                             <th class="mes-mant-th-att" title="@att.Nome">
-                                <span class="mes-mant-att-label">@att.Nome</span>
+                                <span class="mes-mant-att-label" style="font-size:@(att.FontSize)px">@att.Nome</span>
                             </th>
                         }
                         <th class="mes-mant-th-prog">Avanzamento</th>
@@ -131,39 +131,52 @@
                                     @if (!chiusa)
                                     {
                                         <div class="mes-mant-cell-inner">
-                                            @* Bottone ciclo esito *@
-                                            <button class="mes-mant-cell-btn"
-                                                    title="@GetEsitoLabel(esito) — click per cambiare"
-                                                    @onclick="@(() => CiclaCella(mac.Id, att))"
-                                                    disabled="@_saving">
-                                                @if (esito == EsitoAttivitaManutenzione.OK)
-                                                {
-                                                    <span>✅</span>
-                                                }
-                                                else if (esito == EsitoAttivitaManutenzione.Anomalia)
-                                                {
-                                                    <span>⚠️</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="mes-mant-empty">—</span>
-                                                }
-                                            </button>
+                                            @* Due pulsanti grandi sempre visibili *@
+                                            <div class="mes-mant-btn-row">
+                                                <button class="mes-mant-btn-ok @(esito == EsitoAttivitaManutenzione.OK ? "mes-mant-btn-active-ok" : "")"
+                                                        title="OK"
+                                                        @onclick="@(() => ImpostaEsito(mac.Id, att, EsitoAttivitaManutenzione.OK))"
+                                                        disabled="@_saving">
+                                                    ✅
+                                                </button>
+                                                <button class="mes-mant-btn-anom @(esito == EsitoAttivitaManutenzione.Anomalia ? "mes-mant-btn-active-anom" : "")"
+                                                        title="Anomalia"
+                                                        @onclick="@(() => ImpostaEsito(mac.Id, att, EsitoAttivitaManutenzione.Anomalia))"
+                                                        disabled="@_saving">
+                                                    ⚠️
+                                                </button>
+                                            </div>
 
-                                            @* Campo commento inline (visibile solo when Anomalia) *@
+                                            @* Commento anomalia — sempre visibile se presente, editabile *@
                                             @if (esito == EsitoAttivitaManutenzione.Anomalia)
                                             {
                                                 @if (isEditingComment)
                                                 {
                                                     <div class="mes-mant-comment-box" @onclick:stopPropagation>
+                                                        @* Dropdown anomalie standard *@
+                                                        @if (_anomalieStandard.Any())
+                                                        {
+                                                            <MudSelect T="string" Value="@_commentDraft"
+                                                                       ValueChanged="@((v) => { _commentDraft = v; })"
+                                                                       Placeholder="Scegli anomalia..."
+                                                                       Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                                       Dense="true"
+                                                                       Class="mb-1"
+                                                                       Style="font-size:11px">
+                                                                <MudSelectItem T="string" Value="@("")">— libero —</MudSelectItem>
+                                                                @foreach (var anom in _anomalieStandard)
+                                                                {
+                                                                    <MudSelectItem T="string" Value="@anom.Testo">@anom.Testo</MudSelectItem>
+                                                                }
+                                                            </MudSelect>
+                                                        }
                                                         @{ var txtCommentoId = $"txt-commento-{riga!.Id}"; }
                                                         <MudTextField @bind-Value="_commentDraft"
                                                                       Placeholder="Descrivi l'anomalia..."
                                                                       Variant="Variant.Outlined"
                                                                       Margin="Margin.Dense"
                                                                       Lines="2"
-                                                                      AutoFocus="true"
-                                                                      Style="font-size:12px"
+                                                                      Style="font-size:11px"
                                                                       data-testid="@txtCommentoId" />
                                                         <MudStack Row="true" Spacing="1" Class="mt-1" Justify="Justify.FlexEnd">
                                                             <MudButton Size="Size.Small" Variant="Variant.Text"
@@ -177,19 +190,21 @@
                                                 }
                                                 else
                                                 {
-                                                    @* Badge commento salvato (click per editare) *@
-                                                    <div class="mes-mant-comment-badge"
+                                                    @* Commento salvato sempre visibile — click per editare *@
+                                                    <div class="mes-mant-comment-saved"
                                                          @onclick="@(() => ApriCommento(riga))"
-                                                         title="@(string.IsNullOrEmpty(riga?.Commento) ? "Aggiungi commento" : riga.Commento)">
+                                                         title="Click per modificare il commento">
                                                         @if (!string.IsNullOrEmpty(riga?.Commento))
                                                         {
                                                             <MudIcon Icon="@Icons.Material.Filled.Comment"
-                                                                     Size="Size.Small" Color="Color.Warning" />
+                                                                     Size="Size.Small" Color="Color.Warning" Class="me-1" />
+                                                            <span class="mes-mant-comment-text">@riga.Commento</span>
                                                         }
                                                         else
                                                         {
                                                             <MudIcon Icon="@Icons.Material.Outlined.AddComment"
                                                                      Size="Size.Small" Color="Color.Default" Style="opacity:.5" />
+                                                            <span class="mes-mant-comment-empty">aggiungi nota...</span>
                                                         }
                                                     </div>
                                                 }
@@ -200,8 +215,17 @@
                                     {
                                         @* Readonly quando scheda chiusa *@
                                         <div class="mes-mant-cell-inner" style="cursor:default">
-                                            @if (esito == EsitoAttivitaManutenzione.OK)        { <span>✅</span> }
-                                            else if (esito == EsitoAttivitaManutenzione.Anomalia) { <span>⚠️</span> }
+                                            @if (esito == EsitoAttivitaManutenzione.OK)        { <span class="mes-mant-icon-lg">✅</span> }
+                                            else if (esito == EsitoAttivitaManutenzione.Anomalia)
+                                            {
+                                                <span class="mes-mant-icon-lg">⚠️</span>
+                                                @if (!string.IsNullOrEmpty(riga?.Commento))
+                                                {
+                                                    <div class="mes-mant-comment-saved mes-mant-comment-readonly">
+                                                        <span class="mes-mant-comment-text">@riga.Commento</span>
+                                                    </div>
+                                                }
+                                            }
                                             else { <span class="mes-mant-empty">—</span> }
                                         </div>
                                     }
@@ -261,6 +285,7 @@
 
     private List<MacchinaDto>              _macchine  = new();
     private List<ManutenzioneAttivitaDto>  _attivita  = new();
+    private List<AnomaliaStandardDto>      _anomalieStandard = new();
     // macchinaId → scheda (null = non ancora creata per questa macchina in questo giorno)
     private Dictionary<Guid, ManutenzioneSchedaDto?> _schedeMap = new();
 
@@ -286,6 +311,7 @@
         _macchine = (await MacchinaService.GetListaAsync())
             .OrderBy(m => m.OrdineVisualizazione).ThenBy(m => m.Codice).ToList();
         _attivita = await ManutenzioneService.GetAttivitaAsync(_tipo);
+        _anomalieStandard = await ManutenzioneService.GetAnomalieStandardAsync();
 
         await CaricaSchedeGiorno();
         _loading = false;
@@ -330,23 +356,21 @@
         _loading = false;
     }
 
-    // ── Logica celle ─────────────────────────────────────────
-    /// <summary>Click su cella: cicla NonEseguita → OK → Anomalia → NonEseguita</summary>
-    private async Task CiclaCella(Guid macchinaId, ManutenzioneAttivitaDto att)
+    // ── Imposta esito diretto (nuovo: 2 pulsanti separati) ────
+    /// <summary>Click su pulsante OK o Anomalia: imposta direttamente l'esito desiderato.
+    /// Se si clicca sul pulsante già attivo, torna a NonEseguita (toggle off).</summary>
+    private async Task ImpostaEsito(Guid macchinaId, ManutenzioneAttivitaDto att, EsitoAttivitaManutenzione nuovoEsito)
     {
         if (_saving) return;
         _saving = true;
 
         try
         {
-            // Garantisce scheda esistente (crea al volo se necessario)
             if (_schedeMap[macchinaId] == null)
             {
                 var data = _dataGiornata ?? DateTime.Today;
                 _schedeMap[macchinaId] = await ManutenzioneService.GetOrCreateSchedaAsync(
-                    macchinaId,
-                    _tipo,
-                    data,
+                    macchinaId, _tipo, data,
                     CurrentUserService.UserId,
                     CurrentUserService.UserName);
             }
@@ -355,16 +379,12 @@
             var riga   = scheda.Righe.FirstOrDefault(r => r.AttivitaId == att.Id);
             if (riga == null) return;
 
-            // Cicla esito
-            riga.Esito = riga.Esito switch
-            {
-                EsitoAttivitaManutenzione.NonEseguita => EsitoAttivitaManutenzione.OK,
-                EsitoAttivitaManutenzione.OK          => EsitoAttivitaManutenzione.Anomalia,
-                EsitoAttivitaManutenzione.Anomalia    => EsitoAttivitaManutenzione.NonEseguita,
-                _                                     => EsitoAttivitaManutenzione.OK
-            };
+            // Toggle: se clicco lo stesso esito attivo → torna a NonEseguita
+            riga.Esito = (riga.Esito == nuovoEsito)
+                ? EsitoAttivitaManutenzione.NonEseguita
+                : nuovoEsito;
 
-            // Se va ad Anomalia: apri subito il campo commento
+            // Se diventa Anomalia → apri campo commento
             if (riga.Esito == EsitoAttivitaManutenzione.Anomalia)
             {
                 _commentEditingRigaId = riga.Id;
@@ -372,16 +392,12 @@
             }
             else
             {
-                // Se era in modifica commento e ora esco da Anomalia: chiudo
                 if (_commentEditingRigaId == riga.Id)
                     AnnullaCommento();
-
-                // Reset commento se esce da Anomalia
                 if (riga.Esito != EsitoAttivitaManutenzione.Anomalia)
                     riga.Commento = null;
             }
 
-            // Salva in DB
             var updated = await ManutenzioneService.UpdateRigaAsync(scheda.Id, riga);
             if (updated != null)
                 _schedeMap[macchinaId] = updated;
@@ -412,7 +428,6 @@
         riga.Commento = _commentDraft.Trim();
         var updated = await ManutenzioneService.UpdateRigaAsync(schedaId, riga);
 
-        // Aggiorna lokale la scheda
         var macchinaId = _schedeMap.FirstOrDefault(kv => kv.Value?.Id == schedaId).Key;
         if (macchinaId != Guid.Empty && updated != null)
             _schedeMap[macchinaId] = updated;

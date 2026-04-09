@@ -47,6 +47,7 @@ public class ManutenzioneService : IManutenzioneService
             TipoFrequenza = dto.TipoFrequenza,
             Ordine = dto.Ordine,
             Attiva = dto.Attiva,
+            FontSize = dto.FontSize,
             CicliSogliaPLC = dto.CicliSogliaPLC
         };
         _db.ManutenzioneAttivita.Add(entity);
@@ -63,6 +64,7 @@ public class ManutenzioneService : IManutenzioneService
         entity.TipoFrequenza = dto.TipoFrequenza;
         entity.Ordine = dto.Ordine;
         entity.Attiva = dto.Attiva;
+        entity.FontSize = dto.FontSize;
         entity.CicliSogliaPLC = dto.CicliSogliaPLC;
         await _db.SaveChangesAsync();
         return MapAttivita(entity);
@@ -73,6 +75,52 @@ public class ManutenzioneService : IManutenzioneService
         var entity = await _db.ManutenzioneAttivita.FindAsync(id);
         if (entity == null) return false;
         entity.Attiva = false; // soft-delete
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // ANOMALIE STANDARD
+    // ──────────────────────────────────────────────────────────
+
+    public async Task<List<AnomaliaStandardDto>> GetAnomalieStandardAsync()
+        => await _db.AnomalieStandardManutenzione
+            .Where(a => a.Attiva)
+            .OrderBy(a => a.Ordine)
+            .Select(a => new AnomaliaStandardDto { Id = a.Id, Testo = a.Testo, Ordine = a.Ordine, Attiva = a.Attiva })
+            .ToListAsync();
+
+    public async Task<AnomaliaStandardDto> CreateAnomaliaStandardAsync(AnomaliaStandardDto dto)
+    {
+        var entity = new AnomaliaStandardManutenzione
+        {
+            Id = Guid.NewGuid(),
+            Testo = dto.Testo,
+            Ordine = dto.Ordine,
+            Attiva = true
+        };
+        _db.AnomalieStandardManutenzione.Add(entity);
+        await _db.SaveChangesAsync();
+        dto.Id = entity.Id;
+        return dto;
+    }
+
+    public async Task<AnomaliaStandardDto?> UpdateAnomaliaStandardAsync(AnomaliaStandardDto dto)
+    {
+        var entity = await _db.AnomalieStandardManutenzione.FindAsync(dto.Id);
+        if (entity == null) return null;
+        entity.Testo = dto.Testo;
+        entity.Ordine = dto.Ordine;
+        entity.Attiva = dto.Attiva;
+        await _db.SaveChangesAsync();
+        return dto;
+    }
+
+    public async Task<bool> DeleteAnomaliaStandardAsync(Guid id)
+    {
+        var entity = await _db.AnomalieStandardManutenzione.FindAsync(id);
+        if (entity == null) return false;
+        entity.Attiva = false;
         await _db.SaveChangesAsync();
         return true;
     }
@@ -292,6 +340,7 @@ public class ManutenzioneService : IManutenzioneService
         TipoFrequenza = a.TipoFrequenza,
         Ordine = a.Ordine,
         Attiva = a.Attiva,
+        FontSize = a.FontSize,
         CicliSogliaPLC = a.CicliSogliaPLC
     };
 
@@ -323,17 +372,4 @@ public class ManutenzioneService : IManutenzioneService
                 CicloMacchinaAlEsecuzione = r.CicloMacchinaAlEsecuzione
             }).ToList()
     };
-
-    // Anomalie standard — stub da implementare
-    public Task<List<AnomaliaStandardDto>> GetAnomalieStandardAsync()
-        => Task.FromResult(new List<AnomaliaStandardDto>());
-
-    public Task<AnomaliaStandardDto> CreateAnomaliaStandardAsync(AnomaliaStandardDto dto)
-        => Task.FromResult(dto);
-
-    public Task<AnomaliaStandardDto?> UpdateAnomaliaStandardAsync(AnomaliaStandardDto dto)
-        => Task.FromResult<AnomaliaStandardDto?>(dto);
-
-    public Task<bool> DeleteAnomaliaStandardAsync(Guid id)
-        => Task.FromResult(false);
 }

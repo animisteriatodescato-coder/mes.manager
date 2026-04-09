@@ -839,8 +839,8 @@ h1:focus {
 /* Intestazione attività (colonne) */
 .mes-mant-th-att {
     padding: 6px 8px;
-    min-width: 100px;
-    max-width: 130px;
+    min-width: 110px;
+    max-width: 160px;
     text-align: center;
     border-bottom: 2px solid rgba(0,0,0,.15);
     vertical-align: bottom;
@@ -848,14 +848,11 @@ h1:focus {
 
 .mes-mant-att-label {
     display: block;
-    font-size: 11px;
     font-weight: 600;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    max-height: 110px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.3;
+    padding: 2px 0;
     cursor: default;
 }
 
@@ -901,10 +898,77 @@ h1:focus {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
+    padding: 4px 2px;
 }
 
-/* Bottone cella (trasparente, occupa tutta la cella) */
+/* Riga con i due pulsanti OK + Anomalia */
+.mes-mant-btn-row {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Bottone base (OK e Anomalia) — 3x rispetto al vecchio */
+.mes-mant-btn-ok,
+.mes-mant-btn-anom {
+    background: none;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-size: 26px;
+    padding: 4px 6px;
+    border-radius: 8px;
+    transition: background .15s, transform .1s, border-color .15s;
+    line-height: 1;
+    opacity: 0.45;
+}
+.mes-mant-btn-ok:hover   { background: rgba(76,175,80,.15);  transform: scale(1.12); opacity: 0.8; }
+.mes-mant-btn-anom:hover { background: rgba(255,152,0,.15);  transform: scale(1.12); opacity: 0.8; }
+
+/* Stato attivo (esito corrente) */
+.mes-mant-btn-active-ok   { opacity: 1 !important; border-color: rgba(76,175,80,.6) !important;  background: rgba(76,175,80,.15) !important; }
+.mes-mant-btn-active-anom { opacity: 1 !important; border-color: rgba(255,152,0,.6) !important;  background: rgba(255,152,0,.15) !important; }
+
+.mes-mant-btn-ok:disabled,
+.mes-mant-btn-anom:disabled { opacity: .3; cursor: not-allowed; }
+
+/* Icona grande per le celle read-only (scheda chiusa) */
+.mes-mant-icon-lg { font-size: 26px; line-height: 1; }
+
+/* Commento anomalia — sempre visibile sotto i bottoni */
+.mes-mant-comment-saved {
+    display: flex;
+    align-items: flex-start;
+    gap: 3px;
+    cursor: pointer;
+    padding: 3px 5px;
+    border-radius: 5px;
+    min-width: 80px;
+    max-width: 150px;
+    background: rgba(255,152,0,.08);
+    border: 1px dashed rgba(255,152,0,.35);
+    transition: background .15s;
+}
+.mes-mant-comment-saved:hover { background: rgba(255,152,0,.18); }
+.mes-mant-comment-readonly    { cursor: default; }
+.mes-mant-comment-readonly:hover { background: rgba(255,152,0,.08); }
+
+.mes-mant-comment-text {
+    font-size: 10px;
+    line-height: 1.3;
+    word-break: break-word;
+    color: inherit;
+    opacity: .85;
+}
+.mes-mant-comment-empty {
+    font-size: 10px;
+    opacity: .45;
+    font-style: italic;
+}
+
+/* Vecchio bottone cella (mantenuto per compatibilità se usato altrove) */
 .mes-mant-cell-btn {
     background: none;
     border: none;
@@ -975,6 +1039,10 @@ h1:focus {
 .mud-theme-dark .mes-mant-comment-box { border-color: rgba(255,255,255,.15); }
 .mud-theme-dark .mes-mant-th-mac,
 .mud-theme-dark .mes-mant-td-mac    { background-color: var(--mud-palette-background); }
+.mud-theme-dark .mes-mant-comment-saved {
+    background: rgba(255,152,0,.12);
+    border-color: rgba(255,152,0,.3);
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    AI ASSISTANT PANEL
