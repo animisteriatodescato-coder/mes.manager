@@ -11,6 +11,12 @@ public interface IManutenzioneService
     Task<ManutenzioneAttivitaDto?> UpdateAttivitaAsync(ManutenzioneAttivitaDto dto);
     Task<bool> DeleteAttivitaAsync(Guid id);
 
+    // Anomalie standard
+    Task<List<AnomaliaStandardDto>> GetAnomalieStandardAsync();
+    Task<AnomaliaStandardDto> CreateAnomaliaStandardAsync(AnomaliaStandardDto dto);
+    Task<AnomaliaStandardDto?> UpdateAnomaliaStandardAsync(AnomaliaStandardDto dto);
+    Task<bool> DeleteAnomaliaStandardAsync(Guid id);
+
     // Schede
     Task<List<ManutenzioneSchedaDto>> GetSchedeAsync(Guid? macchinaId = null, TipoFrequenzaManutenzione? tipo = null, DateTime? dal = null, DateTime? al = null);
     Task<ManutenzioneSchedaDto?> GetSchedaByIdAsync(Guid id);

@@ -9,7 +9,16 @@ public class ManutenzioneAttivitaDto
     public TipoFrequenzaManutenzione TipoFrequenza { get; set; }
     public int Ordine { get; set; }
     public bool Attiva { get; set; } = true;
+    public int FontSize { get; set; } = 11;
     public int? CicliSogliaPLC { get; set; }
+}
+
+public class AnomaliaStandardDto
+{
+    public Guid Id { get; set; }
+    public string Testo { get; set; } = string.Empty;
+    public int Ordine { get; set; }
+    public bool Attiva { get; set; } = true;
 }
 
 public class ManutenzioneRigaDto

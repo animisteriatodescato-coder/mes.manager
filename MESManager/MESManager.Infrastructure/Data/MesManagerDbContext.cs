@@ -58,6 +58,7 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ManutenzioneAttivita> ManutenzioneAttivita => Set<ManutenzioneAttivita>();
     public DbSet<ManutenzioneScheda> ManutenzioneSchede => Set<ManutenzioneScheda>();
     public DbSet<ManutenzioneRiga> ManutenzioneRighe => Set<ManutenzioneRiga>();
+    public DbSet<AnomaliaStandardManutenzione> AnomalieStandardManutenzione => Set<AnomaliaStandardManutenzione>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
