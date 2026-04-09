@@ -31,6 +31,33 @@ window.programmaMacchineGrid = (function() {
 
     const columnDefs = [
         {
+            field: 'ordine',
+            headerName: '↕',
+            width: 70,
+            pinned: 'left',
+            sortable: false,
+            filter: false,
+            suppressMenu: true,
+            cellRenderer: params => {
+                if (params.data.isPlaceholder) {
+                    return '<span style="color:#bbb;font-style:italic;font-size:11px;">(vuoto)</span>';
+                }
+                return `<div style="display:flex;gap:2px;justify-content:center;align-items:center;height:100%;">
+                    <button class="move-up-btn" style="border:none;background:#e3f2fd;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:3px;" title="Sposta su">▲</button>
+                    <button class="move-down-btn" style="border:none;background:#e3f2fd;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:3px;" title="Sposta giù">▼</button>
+                </div>`;
+            },
+            onCellClicked: async (params) => {
+                if (params.data.isPlaceholder) return;
+                const target = params.event.target;
+                if (target.classList.contains('move-up-btn')) {
+                    await moveRow(params.data.id, params.data.numeroMacchina, 'up');
+                } else if (target.classList.contains('move-down-btn')) {
+                    await moveRow(params.data.id, params.data.numeroMacchina, 'down');
+                }
+            }
+        },
+        {
             field: 'storico',
             headerName: '',
             width: 50,
@@ -324,6 +351,69 @@ window.programmaMacchineGrid = (function() {
             
             // Ricarica comunque per annullare la modifica locale
             await refreshGridData();
+        }
+    }
+
+    // Sposta una commessa su/giù nella sequenza della stessa macchina
+    async function moveRow(commessaId, numeroMacchina, direction) {
+        try {
+            // Trova tutte le commesse della stessa macchina (esclusi placeholder)
+            const machineRows = [];
+            gridApi.forEachNodeAfterFilterAndSort(node => {
+                if (node.data && node.data.numeroMacchina === numeroMacchina && !node.data.isPlaceholder) {
+                    machineRows.push(node.data);
+                }
+            });
+
+            // Trova la posizione corrente
+            const currentIndex = machineRows.findIndex(r => r.id === commessaId);
+            if (currentIndex === -1) {
+                console.log('Commessa non trovata nella macchina');
+                return;
+            }
+
+            // Calcola nuova posizione
+            let newIndex;
+            if (direction === 'up') {
+                if (currentIndex === 0) {
+                    console.log('Già in prima posizione');
+                    return;
+                }
+                newIndex = currentIndex - 1;
+            } else {
+                if (currentIndex === machineRows.length - 1) {
+                    console.log('Già in ultima posizione');
+                    return;
+                }
+                newIndex = currentIndex + 1;
+            }
+
+            console.log(`Spostamento ${direction}: ${currentIndex} -> ${newIndex}`);
+
+            // Chiama l'API per salvare
+            const response = await fetch('/api/Commesse/riordina', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    commessaId: commessaId,
+                    nuovoNumeroMacchina: getMachineNumber(numeroMacchina),
+                    nuovaPosizioneIndex: newIndex
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || `HTTP ${response.status}`);
+            }
+
+            console.log('✓ Spostamento salvato con successo');
+
+            // Ricarica i dati
+            await refreshGridData();
+
+        } catch (err) {
+            console.error('Errore durante lo spostamento:', err);
+            alert(`Errore: ${err.message}`);
         }
     }
 

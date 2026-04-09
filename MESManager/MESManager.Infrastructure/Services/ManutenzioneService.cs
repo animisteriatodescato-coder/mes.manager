@@ -323,4 +323,17 @@ public class ManutenzioneService : IManutenzioneService
                 CicloMacchinaAlEsecuzione = r.CicloMacchinaAlEsecuzione
             }).ToList()
     };
+
+    // Anomalie standard — stub da implementare
+    public Task<List<AnomaliaStandardDto>> GetAnomalieStandardAsync()
+        => Task.FromResult(new List<AnomaliaStandardDto>());
+
+    public Task<AnomaliaStandardDto> CreateAnomaliaStandardAsync(AnomaliaStandardDto dto)
+        => Task.FromResult(dto);
+
+    public Task<AnomaliaStandardDto?> UpdateAnomaliaStandardAsync(AnomaliaStandardDto dto)
+        => Task.FromResult<AnomaliaStandardDto?>(dto);
+
+    public Task<bool> DeleteAnomaliaStandardAsync(Guid id)
+        => Task.FromResult(false);
 }

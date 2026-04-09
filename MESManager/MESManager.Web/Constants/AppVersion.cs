@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.62.5";
+    public const string Current = "1.63.0";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.62.11 FTP fix: IndirizzoFtp su Macchina (migration auto-populate +100 last octet), AnimeFtpService usa IndirizzoFtp invece di IndirizzoPLC
+    public const string Display = "v" + Current; // v1.63.0 Rimosso modulo preventivatore esistente (Quote/PriceList/WorkProcessing) in attesa del nuovo
 }
