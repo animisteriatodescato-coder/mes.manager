@@ -4,7 +4,28 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.62.11
+## 🔖 Versione Corrente: v1.62.5
+
+---
+
+## 🔖 v1.62.5 — Fix entità orfane preventivatore + trasparenza pagine manutenzioni (2 Apr 2026)
+
+**Data**: 2 Aprile 2026
+
+### 🐛 Fix — Build break: entità orfane modulo preventivatore
+
+**Problema**: Il modulo preventivatore era stato parzialmente eliminato in una sessione precedente: le classi `PriceList`, `PriceListItem`, `QuoteAttachment`, `WorkProcessingType`, `WorkProcessingTechnicalData` e l'enum `QuoteRowType` erano state cancellate, ma `Quote.cs`, `QuoteRow.cs` e `E2ETestDataSeeder.cs` contenevano ancora navigation properties e riferimenti a queste classi, causando 5 errori di compilazione CS0246.
+
+**Fix**:
+- `Quote.cs`: rimossi `PriceList? PriceList` e `ICollection<QuoteAttachment> Attachments`
+- `QuoteRow.cs`: rimossi `PriceListItem? PriceListItem`, `WorkProcessingType? WorkProcessingType`, `WorkProcessingTechnicalData? TechnicalData`
+- `E2ETestDataSeeder.cs`: rimosso intero blocco seed `PriceLists`/`PriceListItems`/`Quotes`/`QuoteRows`
+
+### 🐛 Fix — Trasparenza pagine manutenzioni (background immagine visibile)
+
+**Problema**: Le pagine `CatalogoManutenzioni`, `AlertManutenzioni` e `GrigliaGiornaliera` usavano `MudContainer` senza background, rendendo visibile l'immagine di sfondo impostata nel tema.
+
+**Fix**: Aggiunto wrapper `<MudPaper Elevation="1">` all'interno del `MudContainer` in tutte e 3 le pagine, allineando il pattern alle altre pagine dell'applicazione (PlcRealtime, CatalogoAnime, ecc.).
 
 ---
 
