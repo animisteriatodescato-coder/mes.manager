@@ -55,12 +55,15 @@ if (File.Exists(encryptedSecretsPath))
     builder.Configuration.AddEncryptedSecrets(encryptedSecretsPath);
 #pragma warning restore CA1416
 }
-else if (File.Exists(secretsPath))
+
+// Carica sempre anche il JSON in chiaro (opzionale) — sovrascrive/integra l'encrypted.
+// Permette di aggiungere chiavi (es. OpenAI) senza ricreare il file criptato.
+if (File.Exists(secretsPath))
 {
-    // Fallback a file in chiaro (sviluppo iniziale)
-    builder.Configuration.AddJsonFile(secretsPath, optional: false, reloadOnChange: true);
+    builder.Configuration.AddJsonFile(secretsPath, optional: true, reloadOnChange: true);
 }
-else if (File.Exists(dbConfigPath))
+
+if (!File.Exists(encryptedSecretsPath) && !File.Exists(secretsPath) && File.Exists(dbConfigPath))
 {
     // Legacy fallback
     builder.Configuration.AddJsonFile(dbConfigPath, optional: false, reloadOnChange: true);
