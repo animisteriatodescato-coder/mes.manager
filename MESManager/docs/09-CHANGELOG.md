@@ -4,7 +4,37 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.62.10
+## 🔖 Versione Corrente: v1.62.11
+
+---
+
+## 🔖 v1.62.11 — FTP IP corretto + gestione 226 (2 Apr 2026)
+
+**Data**: 2 Aprile 2026
+
+### 🐛 Fix — PDF FTP non inviato: IP PLC ≠ IP FTP macchina
+
+**Problema**: `AnimeFtpService` usava `macchina.IndirizzoPLC` (es. `192.168.17.26`) come host FTP, ma il server FTP è su un'interfaccia diversa (`192.168.17.126` — +100 sull'ultimo ottetto).
+
+**Causa root**: Le macchine Siemens HMI hanno due interfacce di rete:
+- `192.168.17.2x` → interfaccia PLC/S7 (porta 102)
+- `192.168.17.12x` → interfaccia Windows/HMI (porta 21 FTP)
+
+**Fix**:
+1. `Macchina.cs`: aggiunto campo `IndirizzoFtp` (nullable)
+2. `Migration 20260402`: aggiunge colonna + auto-popola da `IndirizzoPLC` (last octet +100)
+3. `AnimeFtpService`: usa `macchina.IndirizzoFtp ?? macchina.IndirizzoPLC` come host FTP
+4. FTP su server Siemens HMI lancia WebException per risposta 226 (Transfer complete) che è in realtà un successo. Fix: catch WebException con message "226"/"250" → trattato come successo sia in `UploadFtpAsync` che nel catch outer di `SendSchedaToMacchinaAsync`.
+
+**Risultato verificato su macchina 02** (FTP: 192.168.17.126, PLC: 192.168.17.26):
+```json
+{ "success": true, "pdfInviato": true, "pdfNomeFile": "7687.pdf", "pdfErrorMessage": null }
+```
+
+**Note infrastruttura FTP macchine**:
+- Anonymous FTP (user: `anonymous`, pwd: `anonymous`) su porta 21
+- Upload OK (STOR), delete NOT supportato per anonymous (550 - no delete permission)  
+- Il cleanup auto `CleanupOldPdfsAsync` è best-effort: fallisce silenziosamente su questi server
 
 ---
 
