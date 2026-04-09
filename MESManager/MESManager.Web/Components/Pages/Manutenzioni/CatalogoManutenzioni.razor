@@ -13,6 +13,7 @@
 <PageTitle>Catalogo Manutenzioni</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4" data-testid="page-catalogo-manutenzioni">
+<MudPaper Elevation="1" Class="pa-3">
 
     @* TOOLBAR *@
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Spacing="2" Wrap="Wrap.Wrap">
@@ -134,6 +135,7 @@
             <MudTablePager PageSizeOptions="new int[]{10, 25, 50}" />
         </PagerContent>
     </MudTable>
+</MudPaper>
 </MudContainer>
 
 @code {

@@ -50,22 +50,11 @@ public static class DependencyInjection
         services.AddScoped<IPianificazioneEngineService, PianificazioneEngineService>();
         services.AddScoped<IAiAssistantService, AiAssistantService>();
         
-        // Preventivi Services
-        services.AddScoped<IQuotePricingEngine, QuotePricingEngine>();
-        services.AddScoped<IPriceListService, PriceListService>();
-        services.AddScoped<IExcelImportService, ExcelImportService>();
-        services.AddScoped<IQuoteService, QuoteService>();
-        services.AddScoped<IQuoteAttachmentService, QuoteAttachmentService>();
-        services.AddScoped<IQuotePdfGenerator, QuotePdfGenerator>();
-        
         // Anime PDF (v1.60.38 — Scheda Anima PDF)
         services.AddScoped<IAnimePdfService, AnimePdfService>();
 
         // Anime FTP — Invio scheda produttiva a macchine (v1.62.1)
         services.AddScoped<IAnimeFtpService, AnimeFtpService>();
-        
-        // Lavorazioni Anime Services (v1.40.0 - Preventivi lavorazioni)
-        services.AddScoped<IWorkProcessingService, WorkProcessingService>();
         
         // PLC Recipe Services (v1.33.0 - Trasmissione ricette a PLC)
         services.AddScoped<IRicettaGanttService, RicettaGanttService>();
