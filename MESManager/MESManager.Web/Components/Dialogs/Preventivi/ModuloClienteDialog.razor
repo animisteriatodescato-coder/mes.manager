@@ -1,0 +1,141 @@
+@using MESManager.Application.DTOs
+@inject IJSRuntime JS
+
+<MudDialog Class="modulo-cliente-dialog" data-testid="dlg-modulo-cliente">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center">
+            <MudIcon Icon="@Icons.Material.Filled.Description" />
+            <MudText Typo="Typo.h6">Modulo Cliente - @Dto?.Cliente</MudText>
+            <MudSpacer />
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        @if (Dto == null)
+        {
+            <MudText>Dati non disponibili.</MudText>
+        }
+        else
+        {
+            <div id="modulo-cliente-print-area" class="modulo-cliente-print">
+                <!-- Intestazione -->
+                <MudStack Row="true" AlignItems="AlignItems.Start" Class="mb-4">
+                    <div style="flex:1">
+                        <MudText Typo="Typo.h5">PREVENTIVO ANIME IN SABBIA</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Data: @Dto.DataCreazione.ToString("dd/MM/yyyy")</MudText>
+                    </div>
+                </MudStack>
+
+                <MudDivider Class="mb-4" />
+
+                <!-- Dati cliente -->
+                <MudText Typo="Typo.subtitle1" Class="mb-2"><b>DATI CLIENTE</b></MudText>
+                <MudGrid Spacing="2" Class="mb-4">
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Cliente</MudText>
+                        <MudText Typo="Typo.body1">@Dto.Cliente</MudText>
+                    </MudItem>
+                    @if (!string.IsNullOrWhiteSpace(Dto.CodiceArticolo))
+                    {
+                        <MudItem xs="3">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Codice articolo</MudText>
+                            <MudText Typo="Typo.body1">@Dto.CodiceArticolo</MudText>
+                        </MudItem>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Dto.Descrizione))
+                    {
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Descrizione</MudText>
+                            <MudText Typo="Typo.body1">@Dto.Descrizione</MudText>
+                        </MudItem>
+                    }
+                </MudGrid>
+
+                <!-- Dati produzione visibili al cliente -->
+                <MudText Typo="Typo.subtitle1" Class="mb-2"><b>PARAMETRI</b></MudText>
+                <MudGrid Spacing="2" Class="mb-4">
+                    <MudItem xs="4" sm="2">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Figure</MudText>
+                        <MudText Typo="Typo.body1">@Dto.Figure</MudText>
+                    </MudItem>
+                    <MudItem xs="4" sm="2">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Peso anima</MudText>
+                        <MudText Typo="Typo.body1">@Dto.PesoAnima.ToString("N3") kg</MudText>
+                    </MudItem>
+                    <MudItem xs="4" sm="2">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Lotto</MudText>
+                        <MudText Typo="Typo.body1">@Dto.Lotto pz</MudText>
+                    </MudItem>
+                    @if (!string.IsNullOrWhiteSpace(Dto.SabbiaSnapshot))
+                    {
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Tipo sabbia</MudText>
+                            <MudText Typo="Typo.body1">@Dto.SabbiaSnapshot</MudText>
+                        </MudItem>
+                    }
+                    @if (Dto.VerniciaturaRichiesta && !string.IsNullOrWhiteSpace(Dto.VerniceSnapshot))
+                    {
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Verniciatura</MudText>
+                            <MudText Typo="Typo.body1">@Dto.VerniceSnapshot</MudText>
+                        </MudItem>
+                    }
+                    @if (Dto.IncollaggioRichiesto)
+                    {
+                        <MudItem xs="6" sm="3">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Servizi</MudText>
+                            <MudText Typo="Typo.body1">
+                                @(Dto.IncollaggioRichiesto ? "Incollaggio" : "")
+                                @(Dto.IncollaggioRichiesto && Dto.ImballaggioRichiesto ? " + " : "")
+                                @(Dto.ImballaggioRichiesto ? "Imballaggio" : "")
+                            </MudText>
+                        </MudItem>
+                    }
+                </MudGrid>
+
+                @if (!string.IsNullOrWhiteSpace(Dto.NoteCliente))
+                {
+                    <MudText Typo="Typo.subtitle1" Class="mb-2"><b>NOTE</b></MudText>
+                    <MudPaper Class="pa-3 mb-4" Elevation="0" Style="background:var(--mud-palette-background-grey)">
+                        <MudText Typo="Typo.body2">@Dto.NoteCliente</MudText>
+                    </MudPaper>
+                }
+
+                <MudDivider Class="mb-3" />
+
+                <!-- Prezzo finale (PUBLIC) -->
+                <MudPaper Class="pa-4 prezzo-cliente-box" Elevation="2">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">PREZZO UNITARIO</MudText>
+                    <MudText Typo="Typo.h4" Color="Color.Primary">
+                        €@Dto.CalcPrezzoVendita.ToString("N4")
+                    </MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">per pezzo · lotto @Dto.Lotto pz</MudText>
+                </MudPaper>
+            </div>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Print"
+                   OnClick="StampaAsync"
+                   data-testid="btn-stampa-modulo">
+            Stampa / PDF
+        </MudButton>
+        <MudButton OnClick="Chiudi" data-testid="btn-chiudi-modulo">Chiudi</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public PreventivoDto? Dto { get; set; }
+
+    private async Task StampaAsync()
+    {
+        await JS.InvokeVoidAsync("window.print");
+    }
+
+    private void Chiudi() => MudDialog.Close(DialogResult.Ok(true));
+}

@@ -50,9 +50,9 @@ window.programmaMacchineGrid = (function() {
             onCellClicked: async (params) => {
                 if (params.data.isPlaceholder) return;
                 const target = params.event.target;
-                if (target.classList.contains('move-up-btn')) {
+                if (target.closest('.move-up-btn')) {
                     await moveRow(params.data.id, params.data.numeroMacchina, 'up');
-                } else if (target.classList.contains('move-down-btn')) {
+                } else if (target.closest('.move-down-btn')) {
                     await moveRow(params.data.id, params.data.numeroMacchina, 'down');
                 }
             }
@@ -865,33 +865,14 @@ window.programmaMacchineGrid = (function() {
     }
 
     // Funzione per ricaricare i dati della griglia
+    // Delega al dotNetHelper (C# Blazor) per applicare i filtri corretti
+    // (mostraChiuse, esclusione Completate, ecc.)
     async function refreshGridData() {
         try {
-            const response = await fetch('/api/Commesse');
-            if (!response.ok) throw new Error('Failed to fetch');
-            const allData = await response.json();
-            
-            // Filtra solo commesse:
-            // 1. Con macchina assegnata
-            // 2. Stato Mago = "Aperta" (esclude le chiuse da Mago)
-            // 3. StatoProgramma != "Archiviata"
-            const filteredData = allData.filter(c => 
-                c.numeroMacchina != null && 
-                c.numeroMacchina !== '' && 
-                c.stato === 'Aperta' &&
-                c.statoProgramma !== 'Archiviata'
-            );
-            
-            if (gridApi) {
-                // Prepara i dati con placeholder per macchine vuote
-                const preparedData = prepareDataWithPlaceholders(filteredData);
-                gridApi.setGridOption('rowData', preparedData);
-                console.log(`Grid refreshed with ${preparedData.length} rows (${filteredData.length} commesse + placeholder)`);
-                
-                // Forza il re-render per aggiornare i colori alternati
-                gridApi.redrawRows();
-                
-                setTimeout(() => attachStatoProgrammaHandlers(), 100);
+            if (dotNetHelper) {
+                await dotNetHelper.invokeMethodAsync('OnGridNeedRefresh');
+            } else {
+                console.warn('[JS-PROGRAMMA] dotNetHelper non disponibile, skip refresh');
             }
         } catch (err) {
             console.error('Error refreshing grid data:', err);

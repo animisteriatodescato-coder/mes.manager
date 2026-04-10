@@ -498,6 +498,14 @@
     }
 
     [JSInvokable]
+    public async Task OnGridNeedRefresh()
+    {
+        // Chiamato dal JS dopo riordino frecce o cambio statoProgramma
+        // Usa il percorso C# per applicare i filtri corretti (mostraChiuse, esclusione Completate, ecc.)
+        await RefreshData();
+    }
+
+    [JSInvokable]
     public async Task OnRowDoubleClick(string articoloCodice)
     {
         try

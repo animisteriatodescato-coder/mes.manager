@@ -1166,3 +1166,85 @@ h1:focus {
 .mud-theme-dark .ai-bubble-user {
     background-color: var(--mud-palette-primary);
 }
+
+
+/* ── Preventivi ─────────────────────────────────────────────────────── */
+.preventivo-card {
+    padding: 10px 14px;
+    cursor: pointer;
+    min-width: 130px;
+    transition: box-shadow 0.15s, border-color 0.15s;
+    border: 2px solid transparent;
+}
+.preventivo-card:hover {
+    box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+}
+.preventivo-card.selected {
+    border-color: var(--mud-palette-primary);
+    background-color: var(--mud-palette-primary-lighten);
+}
+.mud-theme-dark .preventivo-card.selected {
+    border-color: var(--mud-palette-primary);
+    background-color: rgba(var(--mud-palette-primary-rgb), 0.15);
+}
+.sticky-calc {
+    position: sticky;
+    top: 80px;
+}
+.prezzo-vendita-box {
+    border: 2px solid var(--mud-palette-success);
+    border-radius: 8px;
+    text-align: center;
+}
+.prezzo-cliente-box {
+    border: 2px solid var(--mud-palette-primary);
+    border-radius: 8px;
+    text-align: center;
+}
+@media print {
+    .mud-dialog-container > *:not(.mud-dialog) { display: none; }
+    .mud-dialog-actions, .mud-dialog-title { display: none; }
+    .mud-dialog { box-shadow: none !important; }
+    .modulo-cliente-print { display: block; }
+}
+
+
+/* ── Preventivi ─────────────────────────────────────────────────────── */
+.preventivo-card {
+    padding: 10px 14px;
+    cursor: pointer;
+    min-width: 130px;
+    transition: box-shadow 0.15s, border-color 0.15s;
+    border: 2px solid transparent;
+}
+.preventivo-card:hover {
+    box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+}
+.preventivo-card.selected {
+    border-color: var(--mud-palette-primary);
+    background-color: var(--mud-palette-primary-lighten);
+}
+.mud-theme-dark .preventivo-card.selected {
+    border-color: var(--mud-palette-primary);
+    background-color: rgba(var(--mud-palette-primary-rgb), 0.15);
+}
+.sticky-calc {
+    position: sticky;
+    top: 80px;
+}
+.prezzo-vendita-box {
+    border: 2px solid var(--mud-palette-success);
+    border-radius: 8px;
+    text-align: center;
+}
+.prezzo-cliente-box {
+    border: 2px solid var(--mud-palette-primary);
+    border-radius: 8px;
+    text-align: center;
+}
+@media print {
+    .mud-dialog-container > *:not(.mud-dialog) { display: none; }
+    .mud-dialog-actions, .mud-dialog-title { display: none; }
+    .mud-dialog { box-shadow: none !important; }
+    .modulo-cliente-print { display: block; }
+}

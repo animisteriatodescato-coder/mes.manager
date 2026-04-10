@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.63.1";
+    public const string Current = "1.64.0";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.63.0 Rimosso modulo preventivatore esistente (Quote/PriceList/WorkProcessing) in attesa del nuovo
+    public const string Display = "v" + Current; // v1.64.0 Nuovo modulo Preventivi anime in sabbia (S4 full-DB)
 }
