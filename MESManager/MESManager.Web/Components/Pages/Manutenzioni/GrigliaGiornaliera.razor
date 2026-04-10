@@ -91,7 +91,7 @@
                         @foreach (var att in _attivita)
                         {
                             <th class="mes-mant-th-att" title="@att.Nome">
-                                <span class="mes-mant-att-label" style="font-size:@(att.FontSize)px">@att.Nome</span>
+                                <span class="mes-mant-att-label" style="font-size:@(att.FontSize > 0 ? att.FontSize : 11)px">@att.Nome</span>
                             </th>
                         }
                         <th class="mes-mant-th-prog">Avanzamento</th>

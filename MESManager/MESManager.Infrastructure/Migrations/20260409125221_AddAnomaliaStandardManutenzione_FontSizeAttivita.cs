@@ -16,7 +16,7 @@ namespace MESManager.Infrastructure.Migrations
                 table: "ManutenzioneAttivita",
                 type: "int",
                 nullable: false,
-                defaultValue: 0);
+                defaultValue: 11);
 
             migrationBuilder.CreateTable(
                 name: "AnomalieStandardManutenzione",
