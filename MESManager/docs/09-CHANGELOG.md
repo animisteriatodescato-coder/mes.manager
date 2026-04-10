@@ -4,7 +4,24 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.64.0
+## 🔖 Versione Corrente: v1.64.1
+
+---
+
+## 🔖 v1.64.1 — Refactor modulo Preventivi: nomi da tabelle esistenti (10 Apr 2026)
+
+**Data**: 10 Aprile 2026
+
+### 🔧 Refactor — Preventivatore: zero duplicazione, impostazioni prezzi sulla pagina preventivi
+
+**Problema**: I tab "Sabbia Preventivi" / "Vernice Preventivi" aggiunti in `ImpostazioniTabelle.razor` duplicavano le voci già presenti. I nomi sabbia/vernice nel form non provenivano dalle tabelle esistenti.
+
+**Soluzione**:
+- `ImpostazioniTabelle.razor`: rimossi i 2 tab preventivi aggiunti in v1.64.0 → ripristinati i 4 tab originali (Colla, Vernice, Sabbia, Imballo)
+- `CatalogoPreventivi.razor`: aggiunto **Tab 3 "Impostazioni prezzi"** con CRUD in-place per Tipi Sabbia e Tipi Vernice  
+  - Il **nome** viene selezionato da dropdown che legge le voci esistenti da `/api/Tabelle/sabbia` e `/api/Tabelle/vernice` (zero duplicazione)
+  - Il record pricing viene salvato nel DB con Codice auto-sincronizzato dal codice tabella selezionata
+- Tab 1 "Nuovo preventivo": sabbia/vernice selezionate da dropdown che mostra i pricing configurati in Tab 3
 
 ---
 

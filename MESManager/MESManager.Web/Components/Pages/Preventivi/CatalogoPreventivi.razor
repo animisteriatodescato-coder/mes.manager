@@ -6,21 +6,25 @@
 @inject IPreventivoService PreventivoService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject HttpClient Http
 
 <PageTitle>Preventivi</PageTitle>
 
 <div data-testid="page-preventivi" class="pa-4">
-    <MudTabs @ref="_tabs" ActivePanelIndexChanged="OnTabChanged" PanelClass="pt-4" data-testid="tabs-preventivi">
+    <MudTabs @ref="_tabs" PanelClass="pt-4" data-testid="tabs-preventivi">
 
-        <!-- ── TAB NUOVO / MODIFICA ── -->
+        <!-- ══════════════════════════════════════════════════
+             TAB 1 — Nuovo / Modifica preventivo
+        ══════════════════════════════════════════════════ -->
         <MudTabPanel Text="@(_editingId.HasValue ? "Modifica preventivo" : "Nuovo preventivo")"
                      Icon="@Icons.Material.Filled.AddCircleOutline"
                      data-testid="tab-nuovo">
             <MudGrid Spacing="3">
-                <!-- COLONNA SINISTRA: Form -->
+
+                <!-- ── COLONNA FORM ── -->
                 <MudItem xs="12" md="8">
 
-                    <!-- 1. INTESTAZIONE CLIENTE -->
+                    <!-- DATI CLIENTE -->
                     <MudPaper Class="pa-4 mb-3" Elevation="2">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
                             <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" />
@@ -28,88 +32,67 @@
                         </MudStack>
                         <MudGrid Spacing="2">
                             <MudItem xs="12" sm="6">
-                                <MudTextField @bind-Value="_dto.Cliente"
-                                              Label="Cliente *"
-                                              Variant="Variant.Outlined"
-                                              Margin="Margin.Dense"
-                                              Required="true"
+                                <MudTextField @bind-Value="_dto.Cliente" Label="Cliente *"
+                                              Variant="Variant.Outlined" Margin="Margin.Dense"
                                               data-testid="input-cliente" />
                             </MudItem>
                             <MudItem xs="6" sm="3">
-                                <MudTextField @bind-Value="_dto.CodiceArticolo"
-                                              Label="Codice articolo"
-                                              Variant="Variant.Outlined"
-                                              Margin="Margin.Dense"
+                                <MudTextField @bind-Value="_dto.CodiceArticolo" Label="Codice articolo"
+                                              Variant="Variant.Outlined" Margin="Margin.Dense"
                                               data-testid="input-codice-articolo" />
                             </MudItem>
                             <MudItem xs="6" sm="3">
-                                <MudDatePicker @bind-Date="_dataCreazione"
-                                               Label="Data"
-                                               Variant="Variant.Outlined"
-                                               Margin="Margin.Dense"
+                                <MudDatePicker @bind-Date="_dataCreazione" Label="Data"
+                                               Variant="Variant.Outlined" Margin="Margin.Dense"
                                                data-testid="input-data" />
                             </MudItem>
                             <MudItem xs="12">
-                                <MudTextField @bind-Value="_dto.Descrizione"
-                                              Label="Descrizione articolo"
-                                              Variant="Variant.Outlined"
-                                              Margin="Margin.Dense"
+                                <MudTextField @bind-Value="_dto.Descrizione" Label="Descrizione articolo"
+                                              Variant="Variant.Outlined" Margin="Margin.Dense"
                                               data-testid="input-descrizione" />
                             </MudItem>
                             <MudItem xs="12">
                                 <MudTextField @bind-Value="_dto.NoteCliente"
                                               Label="Note cliente (visibili sul modulo)"
-                                              Variant="Variant.Outlined"
-                                              Margin="Margin.Dense"
-                                              Lines="2"
+                                              Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2"
                                               data-testid="input-note-cliente" />
                             </MudItem>
                         </MudGrid>
                     </MudPaper>
 
-                    <!-- 2. SABBIA -->
+                    <!-- SABBIA -->
                     <MudPaper Class="pa-4 mb-3" Elevation="2">
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
                             <MudIcon Icon="@Icons.Material.Filled.Grain" Color="Color.Warning" />
                             <MudText Typo="Typo.subtitle1"><b>TIPO SABBIA</b></MudText>
-                            @if (_dto.TipoSabbiaId.HasValue)
-                            {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.Check">selezionata</MudChip>
-                            }
                         </MudStack>
-                        @if (_tipiSabbia.Count == 0)
+                        @if (!_tipiSabbia.Any(s => s.Attivo))
                         {
                             <MudAlert Severity="Severity.Info" Dense="true">
-                                Nessun tipo sabbia configurato. Aggiungili in <b>Impostazioni → Tabelle → Sabbia Preventivi</b>.
+                                Nessun tipo sabbia configurato. Vai in <b>Impostazioni prezzi</b> (terza tab) per aggiungerne.
                             </MudAlert>
                         }
                         else
                         {
-                            <!-- Cards per famiglia -->
-                            @foreach (var famiglia in _tipiSabbia.Where(s => s.Attivo).GroupBy(s => s.Famiglia).OrderBy(g => g.Key))
-                            {
-                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1 mt-2">
-                                    @famiglia.Key.ToUpper()
-                                </MudText>
-                                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" Class="mb-2">
-                                    @foreach (var sabbia in famiglia.OrderBy(s => s.Ordine))
-                                    {
-                                        var isSelected = _dto.TipoSabbiaId == sabbia.Id;
-                                        <MudPaper Class="@($"preventivo-card{(isSelected ? " selected" : "")}")"
-                                                  Elevation="@(isSelected ? 6 : 1)"
-                                                  @onclick="() => SelezionaSabbia(sabbia)"
-                                                  data-testid="@($"card-sabbia-{sabbia.Codice}")">
-                                            <MudText Typo="Typo.body2"><b>@sabbia.Nome</b></MudText>
-                                            <MudText Typo="Typo.caption" Color="Color.Secondary">€@sabbia.EuroOra/h · @sabbia.PrezzoKg €/kg</MudText>
-                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@sabbia.SpariDefault spari/h</MudText>
-                                        </MudPaper>
-                                    }
-                                </MudStack>
-                            }
+                            <MudSelect T="PreventivoTipoSabbiaDto?"
+                                       @bind-Value="_tipoSabbiaSelezionata"
+                                       @bind-Value:after="OnSabbiaSelezionata"
+                                       Label="Seleziona tipo sabbia"
+                                       Variant="Variant.Outlined" Margin="Margin.Dense"
+                                       ToStringFunc="@(s => s == null ? "— nessuna —" : $"{s.Nome}")"
+                                       data-testid="select-tipo-sabbia">
+                                <MudSelectItem T="PreventivoTipoSabbiaDto?" Value="null">— nessuna —</MudSelectItem>
+                                @foreach (var ts in _tipiSabbia.Where(s => s.Attivo).OrderBy(s => s.Ordine))
+                                {
+                                    <MudSelectItem T="PreventivoTipoSabbiaDto?" Value="ts">
+                                        @ts.Nome — €@ts.EuroOra.ToString("N2")/h · @ts.SpariDefault spari/h · €@ts.PrezzoKg.ToString("N4")/kg
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
                         }
                     </MudPaper>
 
-                    <!-- 3. PARAMETRI PRODUZIONE -->
+                    <!-- PARAMETRI PRODUZIONE -->
                     <MudPaper Class="pa-4 mb-3" Elevation="2">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
                             <MudIcon Icon="@Icons.Material.Filled.Settings" Color="Color.Info" />
@@ -117,238 +100,167 @@
                         </MudStack>
                         <MudGrid Spacing="2">
                             <MudItem xs="6" sm="4" md="2">
-                                <MudNumericField @bind-Value="_dto.Figure"
-                                                 @bind-Value:after="Ricalcola"
-                                                 Label="Figure"
-                                                 Min="1"
-                                                 Variant="Variant.Outlined"
-                                                 Margin="Margin.Dense"
+                                <MudNumericField @bind-Value="_dto.Figure" @bind-Value:after="Ricalcola"
+                                                 Label="Figure" Min="1"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  data-testid="input-figure" />
                             </MudItem>
                             <MudItem xs="6" sm="4" md="2">
-                                <MudNumericField @bind-Value="_dto.PesoAnima"
-                                                 @bind-Value:after="Ricalcola"
-                                                 Label="Peso anima (kg)"
-                                                 Min="0.01m"
-                                                 Step="0.01m"
-                                                 Format="N3"
-                                                 Variant="Variant.Outlined"
-                                                 Margin="Margin.Dense"
+                                <MudNumericField @bind-Value="_dto.PesoAnima" @bind-Value:after="Ricalcola"
+                                                 Label="Peso anima (kg)" Min="0.001m" Step="0.01m" Format="N3"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  data-testid="input-peso-anima" />
                             </MudItem>
                             <MudItem xs="6" sm="4" md="2">
-                                <MudNumericField @bind-Value="_dto.Lotto"
-                                                 @bind-Value:after="Ricalcola"
-                                                 Label="Lotto (pz)"
-                                                 Min="1"
-                                                 Variant="Variant.Outlined"
-                                                 Margin="Margin.Dense"
+                                <MudNumericField @bind-Value="_dto.Lotto" @bind-Value:after="Ricalcola"
+                                                 Label="Lotto (pz)" Min="1"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  data-testid="input-lotto" />
                             </MudItem>
                             <MudItem xs="6" sm="4" md="2">
-                                <MudNumericField @bind-Value="_dto.SpariOrari"
-                                                 @bind-Value:after="Ricalcola"
-                                                 Label="Spari/h"
-                                                 Min="1"
-                                                 Variant="Variant.Outlined"
-                                                 Margin="Margin.Dense"
+                                <MudNumericField @bind-Value="_dto.SpariOrari" @bind-Value:after="Ricalcola"
+                                                 Label="Spari/h" Min="1"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  data-testid="input-spari-orari" />
                             </MudItem>
                             <MudItem xs="6" sm="4" md="2">
-                                <MudNumericField @bind-Value="_dto.CostoAttrezzatura"
-                                                 @bind-Value:after="Ricalcola"
-                                                 Label="Attrezzatura (€)"
-                                                 Min="0"
-                                                 Format="N2"
-                                                 Variant="Variant.Outlined"
-                                                 Margin="Margin.Dense"
+                                <MudNumericField @bind-Value="_dto.CostoAttrezzatura" @bind-Value:after="Ricalcola"
+                                                 Label="Attrezzatura (€)" Min="0" Format="N2"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  data-testid="input-costo-attrezzatura" />
                             </MudItem>
                             <MudItem xs="6" sm="4" md="2">
-                                <MudNumericField @bind-Value="_dto.EuroOraSabbia"
-                                                 @bind-Value:after="Ricalcola"
-                                                 Label="€/h sabbia"
-                                                 Min="0"
-                                                 Format="N2"
-                                                 Variant="Variant.Outlined"
-                                                 Margin="Margin.Dense"
+                                <MudNumericField @bind-Value="_dto.EuroOraSabbia" @bind-Value:after="Ricalcola"
+                                                 Label="€/h sabbia" Min="0" Format="N2"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  data-testid="input-euro-ora-sabbia" />
                             </MudItem>
                         </MudGrid>
                     </MudPaper>
 
-                    <!-- 4. VERNICIATURA -->
+                    <!-- VERNICIATURA -->
                     <MudPaper Class="pa-4 mb-3" Elevation="2">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
                             <MudIcon Icon="@Icons.Material.Filled.FormatColorFill" Color="Color.Secondary" />
                             <MudText Typo="Typo.subtitle1"><b>VERNICIATURA</b></MudText>
-                            <MudSwitch @bind-Value="_dto.VerniciaturaRichiesta"
-                                       @bind-Value:after="Ricalcola"
-                                       Color="Color.Secondary"
-                                       data-testid="switch-verniciatura" />
+                            <MudSwitch @bind-Value="_dto.VerniciaturaRichiesta" @bind-Value:after="Ricalcola"
+                                       Color="Color.Secondary" data-testid="switch-verniciatura" />
                         </MudStack>
                         @if (_dto.VerniciaturaRichiesta)
                         {
-                            @if (_tipiVernice.Count == 0)
+                            @if (!_tipiVernice.Any(v => v.Attivo))
                             {
                                 <MudAlert Severity="Severity.Info" Dense="true">
-                                    Nessun tipo vernice configurato. Aggiungili in <b>Impostazioni → Tabelle → Vernice Preventivi</b>.
+                                    Nessun tipo vernice configurato. Vai in <b>Impostazioni prezzi</b> per aggiungerne.
                                 </MudAlert>
                             }
                             else
                             {
-                                @foreach (var famiglia in _tipiVernice.Where(v => v.Attivo).GroupBy(v => v.Famiglia).OrderBy(g => g.Key))
-                                {
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1 mt-2">
-                                        @famiglia.Key.ToUpper()
-                                    </MudText>
-                                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" Class="mb-2">
-                                        @foreach (var vernice in famiglia.OrderBy(v => v.Ordine))
-                                        {
-                                            var isSelected = _dto.TipoVerniceId == vernice.Id;
-                                            <MudPaper Class="@($"preventivo-card{(isSelected ? " selected" : "")}")"
-                                                      Elevation="@(isSelected ? 6 : 1)"
-                                                      @onclick="() => SelezionaVernice(vernice)"
-                                                      data-testid="@($"card-vernice-{vernice.Codice}")">
-                                                <MudText Typo="Typo.body2"><b>@vernice.Nome</b></MudText>
-                                                <MudText Typo="Typo.caption" Color="Color.Secondary">@vernice.PrezzoKg €/kg · @vernice.PercentualeApplicazione%</MudText>
-                                            </MudPaper>
-                                        }
-                                    </MudStack>
-                                }
-                                <MudGrid Spacing="2" Class="mt-3">
-                                    <MudItem xs="6" sm="3">
-                                        <MudNumericField @bind-Value="_dto.CostoVerniceKg"
-                                                         @bind-Value:after="Ricalcola"
-                                                         Label="€/kg vernice"
-                                                         Min="0"
-                                                         Format="N2"
-                                                         Variant="Variant.Outlined"
-                                                         Margin="Margin.Dense"
-                                                         data-testid="input-costo-vernice-kg" />
-                                    </MudItem>
-                                    <MudItem xs="6" sm="3">
-                                        <MudNumericField @bind-Value="_dto.PercentualeVernice"
-                                                         @bind-Value:after="Ricalcola"
-                                                         Label="% applicazione"
-                                                         Min="0"
-                                                         Max="100"
-                                                         Format="N1"
-                                                         Variant="Variant.Outlined"
-                                                         Margin="Margin.Dense"
-                                                         data-testid="input-perc-vernice" />
-                                    </MudItem>
-                                    <MudItem xs="6" sm="3">
-                                        <MudNumericField @bind-Value="_dto.VerniciaturaPzOra"
-                                                         @bind-Value:after="Ricalcola"
-                                                         Label="Pz/h verniciatura"
-                                                         Min="0"
-                                                         Variant="Variant.Outlined"
-                                                         Margin="Margin.Dense"
-                                                         data-testid="input-verniciatura-pz-ora" />
-                                    </MudItem>
-                                    <MudItem xs="6" sm="3">
-                                        <MudNumericField @bind-Value="_dto.EuroOraVerniciatura"
-                                                         @bind-Value:after="Ricalcola"
-                                                         Label="€/h verniciatura"
-                                                         Min="0"
-                                                         Format="N2"
-                                                         Variant="Variant.Outlined"
-                                                         Margin="Margin.Dense"
-                                                         data-testid="input-euro-ora-verniciatura" />
-                                    </MudItem>
-                                </MudGrid>
+                                <MudSelect T="PreventivoTipoVerniceDto?"
+                                           @bind-Value="_tipoVerniceSelezionata"
+                                           @bind-Value:after="OnVerniceSelezionata"
+                                           Label="Seleziona tipo vernice"
+                                           Variant="Variant.Outlined" Margin="Margin.Dense"
+                                           ToStringFunc="@(v => v == null ? "— nessuna —" : v.Nome)"
+                                           data-testid="select-tipo-vernice"
+                                           Class="mb-3">
+                                    <MudSelectItem T="PreventivoTipoVerniceDto?" Value="null">— nessuna —</MudSelectItem>
+                                    @foreach (var tv in _tipiVernice.Where(v => v.Attivo).OrderBy(v => v.Ordine))
+                                    {
+                                        <MudSelectItem T="PreventivoTipoVerniceDto?" Value="tv">
+                                            @tv.Nome (@tv.Famiglia) — €@tv.PrezzoKg.ToString("N2")/kg · @tv.PercentualeApplicazione.ToString("N1")%
+                                        </MudSelectItem>
+                                    }
+                                </MudSelect>
                             }
+                            <MudGrid Spacing="2" Class="mt-2">
+                                <MudItem xs="6" sm="3">
+                                    <MudNumericField @bind-Value="_dto.CostoVerniceKg" @bind-Value:after="Ricalcola"
+                                                     Label="€/kg vernice" Min="0" Format="N2"
+                                                     Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                     data-testid="input-costo-vernice-kg" />
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <MudNumericField @bind-Value="_dto.PercentualeVernice" @bind-Value:after="Ricalcola"
+                                                     Label="% applicazione" Min="0" Max="100" Format="N1"
+                                                     Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                     data-testid="input-perc-vernice" />
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <MudNumericField @bind-Value="_dto.VerniciaturaPzOra" @bind-Value:after="Ricalcola"
+                                                     Label="Pz/h verniciatura" Min="0"
+                                                     Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                     data-testid="input-verniciatura-pz-ora" />
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <MudNumericField @bind-Value="_dto.EuroOraVerniciatura" @bind-Value:after="Ricalcola"
+                                                     Label="€/h verniciatura" Min="0" Format="N2"
+                                                     Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                     data-testid="input-euro-ora-verniciatura" />
+                                </MudItem>
+                            </MudGrid>
                         }
                     </MudPaper>
 
-                    <!-- 5. SERVIZI AGGIUNTIVI -->
+                    <!-- SERVIZI AGGIUNTIVI -->
                     <MudPaper Class="pa-4 mb-3" Elevation="2">
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
                             <MudIcon Icon="@Icons.Material.Filled.Build" Color="Color.Tertiary" />
                             <MudText Typo="Typo.subtitle1"><b>SERVIZI AGGIUNTIVI</b></MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">(non inclusi nel prezzo, solo per calcolo separato)</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">(calcolati separatamente)</MudText>
                         </MudStack>
-                        <MudGrid Spacing="2">
-                            <!-- Incollaggio -->
-                            <MudItem xs="12">
-                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                    <MudSwitch @bind-Value="_dto.IncollaggioRichiesto"
-                                               @bind-Value:after="Ricalcola"
-                                               Color="Color.Tertiary"
-                                               data-testid="switch-incollaggio" />
-                                    <MudText Typo="Typo.body2">Incollaggio</MudText>
-                                    @if (_dto.IncollaggioRichiesto)
-                                    {
-                                        <MudNumericField @bind-Value="_dto.IncollaggioPzOra"
-                                                         @bind-Value:after="Ricalcola"
-                                                         Label="Pz/h"
-                                                         Min="0"
-                                                         Style="width:100px"
-                                                         Variant="Variant.Outlined"
-                                                         Margin="Margin.Dense"
-                                                         data-testid="input-incollaggio-pz-ora" />
-                                        <MudNumericField @bind-Value="_dto.EuroOraIncollaggio"
-                                                         @bind-Value:after="Ricalcola"
-                                                         Label="€/h"
-                                                         Min="0"
-                                                         Format="N2"
-                                                         Style="width:100px"
-                                                         Variant="Variant.Outlined"
-                                                         Margin="Margin.Dense"
-                                                         data-testid="input-euro-ora-incollaggio" />
-                                        <MudText Typo="Typo.body2" Color="Color.Tertiary">
-                                            = <b>€@_calc.Incollaggio.ToString("N4")</b>/pz
-                                        </MudText>
-                                    }
-                                </MudStack>
-                            </MudItem>
-                            <!-- Imballaggio -->
-                            <MudItem xs="12">
-                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                    <MudSwitch @bind-Value="_dto.ImballaggioRichiesto"
-                                               @bind-Value:after="Ricalcola"
-                                               Color="Color.Tertiary"
-                                               data-testid="switch-imballaggio" />
-                                    <MudText Typo="Typo.body2">Imballaggio</MudText>
-                                    @if (_dto.ImballaggioRichiesto)
-                                    {
-                                        <MudNumericField @bind-Value="_dto.ImballaggioPzOra"
-                                                         @bind-Value:after="Ricalcola"
-                                                         Label="Pz/h"
-                                                         Min="0"
-                                                         Style="width:100px"
-                                                         Variant="Variant.Outlined"
-                                                         Margin="Margin.Dense"
-                                                         data-testid="input-imballaggio-pz-ora" />
-                                        <MudNumericField @bind-Value="_dto.EuroOraImballaggio"
-                                                         @bind-Value:after="Ricalcola"
-                                                         Label="€/h"
-                                                         Min="0"
-                                                         Format="N2"
-                                                         Style="width:100px"
-                                                         Variant="Variant.Outlined"
-                                                         Margin="Margin.Dense"
-                                                         data-testid="input-euro-ora-imballaggio" />
-                                        <MudText Typo="Typo.body2" Color="Color.Tertiary">
-                                            = <b>€@_calc.Imballaggio.ToString("N4")</b>/pz
-                                        </MudText>
-                                    }
-                                </MudStack>
-                            </MudItem>
-                        </MudGrid>
+                        <!-- Incollaggio -->
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
+                            <MudSwitch @bind-Value="_dto.IncollaggioRichiesto" @bind-Value:after="Ricalcola"
+                                       Color="Color.Tertiary" data-testid="switch-incollaggio" />
+                            <MudText Typo="Typo.body2" Style="min-width:90px">Incollaggio</MudText>
+                            @if (_dto.IncollaggioRichiesto)
+                            {
+                                <MudNumericField @bind-Value="_dto.IncollaggioPzOra" @bind-Value:after="Ricalcola"
+                                                 Label="Pz/h" Min="0" Style="width:90px"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 data-testid="input-incollaggio-pz-ora" />
+                                <MudNumericField @bind-Value="_dto.EuroOraIncollaggio" @bind-Value:after="Ricalcola"
+                                                 Label="€/h" Min="0" Format="N2" Style="width:90px"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 data-testid="input-euro-ora-incollaggio" />
+                                <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                                    = <b>€@_calc.Incollaggio.ToString("N4")</b>/pz
+                                </MudText>
+                            }
+                        </MudStack>
+                        <!-- Imballaggio -->
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudSwitch @bind-Value="_dto.ImballaggioRichiesto" @bind-Value:after="Ricalcola"
+                                       Color="Color.Tertiary" data-testid="switch-imballaggio" />
+                            <MudText Typo="Typo.body2" Style="min-width:90px">Imballaggio</MudText>
+                            @if (_dto.ImballaggioRichiesto)
+                            {
+                                <MudNumericField @bind-Value="_dto.ImballaggioPzOra" @bind-Value:after="Ricalcola"
+                                                 Label="Pz/h" Min="0" Style="width:90px"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 data-testid="input-imballaggio-pz-ora" />
+                                <MudNumericField @bind-Value="_dto.EuroOraImballaggio" @bind-Value:after="Ricalcola"
+                                                 Label="€/h" Min="0" Format="N2" Style="width:90px"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 data-testid="input-euro-ora-imballaggio" />
+                                <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                                    = <b>€@_calc.Imballaggio.ToString("N4")</b>/pz
+                                </MudText>
+                            }
+                        </MudStack>
                     </MudPaper>
 
                 </MudItem>
 
-                <!-- COLONNA DESTRA: Calcolo -->
+                <!-- ── COLONNA CALCOLO ── -->
                 <MudItem xs="12" md="4">
                     <MudPaper Class="pa-4 sticky-calc" Elevation="4">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
                             <MudIcon Icon="@Icons.Material.Filled.Calculate" Color="Color.Warning" />
                             <MudText Typo="Typo.subtitle1"><b>CALCOLO INTERNO</b></MudText>
                         </MudStack>
-                        <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3" data-testid="alert-interno">
+                        <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3">
                             NON ESCE SUL MODULO CLIENTE
                         </MudAlert>
 
@@ -363,15 +275,15 @@
                                     <td class="text-right"><MudText Typo="Typo.caption">€@_calc.Sabbia.ToString("N4")</MudText></td>
                                 </tr>
                                 <tr>
-                                    <td><MudText Typo="Typo.caption">Lav+Sab/fig</MudText></td>
+                                    <td><MudText Typo="Typo.caption">Lav+Sab / fig</MudText></td>
                                     <td class="text-right"><MudText Typo="Typo.caption">€@_calc.LavSabFig.ToString("N4")</MudText></td>
                                 </tr>
                                 <tr>
-                                    <td><MudText Typo="Typo.caption">Ripartiz. attrezzatura</MudText></td>
+                                    <td><MudText Typo="Typo.caption">Ripart. attrezzatura</MudText></td>
                                     <td class="text-right"><MudText Typo="Typo.caption">€@_calc.RipartizioneAtt.ToString("N4")</MudText></td>
                                 </tr>
-                                <tr class="font-weight-bold">
-                                    <td><MudText Typo="Typo.body2" Color="Color.Primary"><b>Costo anima</b></MudText></td>
+                                <tr>
+                                    <td><MudText Typo="Typo.body2"><b>Costo anima</b></MudText></td>
                                     <td class="text-right"><MudText Typo="Typo.body2" Color="Color.Primary"><b>€@_calc.CostoAnima.ToString("N4")</b></MudText></td>
                                 </tr>
                                 @if (_dto.VerniciaturaRichiesta)
@@ -392,20 +304,15 @@
                             </tbody>
                         </MudSimpleTable>
 
-                        <!-- PREZZO VENDITA prominente -->
-                        <MudPaper Class="pa-3 prezzo-vendita-box" Elevation="0" data-testid="box-prezzo-vendita">
+                        <MudPaper Class="pa-3 prezzo-vendita-box mb-3" Elevation="0" data-testid="box-prezzo-vendita">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">PREZZO DI VENDITA</MudText>
-                            <MudText Typo="Typo.h4" Color="Color.Success">
-                                €@_calc.PrezzoVendita.ToString("N4")
-                            </MudText>
+                            <MudText Typo="Typo.h4" Color="Color.Success">€@_calc.PrezzoVendita.ToString("N4")</MudText>
                             <MudText Typo="Typo.caption" Color="Color.Secondary">per pezzo</MudText>
                         </MudPaper>
 
-                        <!-- Servizi a parte -->
                         @if (_dto.IncollaggioRichiesto || _dto.ImballaggioRichiesto)
                         {
-                            <MudDivider Class="my-2" />
-                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">Servizi (separati):</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Servizi (separati):</MudText>
                             @if (_dto.IncollaggioRichiesto)
                             {
                                 <MudText Typo="Typo.caption">Incollaggio: €@_calc.Incollaggio.ToString("N4")/pz</MudText>
@@ -414,35 +321,26 @@
                             {
                                 <MudText Typo="Typo.caption">Imballaggio: €@_calc.Imballaggio.ToString("N4")/pz</MudText>
                             }
+                            <MudDivider Class="my-2" />
                         }
 
-                        <MudDivider Class="my-3" />
-
-                        <!-- Azioni -->
                         <MudStack Spacing="2">
-                            <MudButton Variant="Variant.Filled"
-                                       Color="Color.Primary"
-                                       FullWidth="true"
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
                                        StartIcon="@Icons.Material.Filled.Save"
-                                       OnClick="SalvaAsync"
-                                       Disabled="_isSaving"
+                                       OnClick="SalvaAsync" Disabled="_isSaving"
                                        data-testid="btn-salva">
                                 @(_isSaving ? "Salvataggio..." : "Salva in archivio")
                             </MudButton>
-                            <MudButton Variant="Variant.Outlined"
-                                       Color="Color.Secondary"
-                                       FullWidth="true"
+                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true"
                                        StartIcon="@Icons.Material.Filled.Print"
                                        OnClick="ApriModuloCliente"
-                                       Disabled="@(!_editingId.HasValue && string.IsNullOrWhiteSpace(_dto.Cliente))"
+                                       Disabled="@(string.IsNullOrWhiteSpace(_dto.Cliente))"
                                        data-testid="btn-modulo-cliente">
                                 Modulo cliente
                             </MudButton>
                             @if (_editingId.HasValue)
                             {
-                                <MudButton Variant="Variant.Text"
-                                           Color="Color.Default"
-                                           FullWidth="true"
+                                <MudButton Variant="Variant.Text" FullWidth="true"
                                            StartIcon="@Icons.Material.Filled.AddCircle"
                                            OnClick="NuovoPreventivo"
                                            data-testid="btn-nuovo">
@@ -452,28 +350,28 @@
                         </MudStack>
                     </MudPaper>
                 </MudItem>
+
             </MudGrid>
         </MudTabPanel>
 
-        <!-- ── TAB ARCHIVIO ── -->
-        <MudTabPanel data-testid="tab-archivio">
+        <!-- ══════════════════════════════════════════════════
+             TAB 2 — Archivio
+        ══════════════════════════════════════════════════ -->
+        <MudTabPanel Icon="@Icons.Material.Filled.Archive" data-testid="tab-archivio">
             <TabContent>
-                <MudBadge Content="@_preventivi.Count" Color="Color.Primary" Overlap="true">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                     <MudText>Archivio</MudText>
-                </MudBadge>
+                    <MudBadge Content="@_preventivi.Count" Color="Color.Primary" Overlap="false" />
+                </MudStack>
             </TabContent>
             <ChildContent>
                 <MudPaper Class="pa-3 mb-3" Elevation="1">
                     <MudTextField @bind-Value="_searchText"
                                   Placeholder="Cerca per cliente, codice, sabbia..."
-                                  Variant="Variant.Outlined"
-                                  Margin="Margin.Dense"
-                                  Immediate="true"
-                                  DebounceInterval="300"
-                                  OnDebounceIntervalElapsed="OnSearchDebounced"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Search"
-                                  Style="max-width: 400px;"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                                  DebounceInterval="300" OnDebounceIntervalElapsed="@(s => { _searchText = s; StateHasChanged(); })"
+                                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Style="max-width:400px"
                                   data-testid="input-archivio-search" />
                 </MudPaper>
 
@@ -483,10 +381,7 @@
                 }
                 else
                 {
-                    <MudTable Items="@PreventiviFiltrati"
-                              Dense="true"
-                              Hover="true"
-                              SortLabel="Sort By"
+                    <MudTable Items="@PreventiviFiltrati" Dense="true" Hover="true"
                               data-testid="table-archivio">
                         <HeaderContent>
                             <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => x.DataCreazione)">Data</MudTableSortLabel></MudTh>
@@ -495,27 +390,20 @@
                             <MudTh>Sabbia</MudTh>
                             <MudTh>Vernice</MudTh>
                             <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => x.CalcPrezzoVendita)">Prezzo</MudTableSortLabel></MudTh>
-                            <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => x.Stato)">Stato</MudTableSortLabel></MudTh>
+                            <MudTh>Stato</MudTh>
                             <MudTh>Azioni</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd DataLabel="Data">@context.DataCreazione.ToString("dd/MM/yyyy")</MudTd>
-                            <MudTd DataLabel="Cliente">@context.Cliente</MudTd>
-                            <MudTd DataLabel="Codice">@context.CodiceArticolo</MudTd>
-                            <MudTd DataLabel="Sabbia">
-                                <MudText Typo="Typo.caption">@context.SabbiaSnapshot</MudText>
-                            </MudTd>
-                            <MudTd DataLabel="Vernice">
-                                <MudText Typo="Typo.caption">@(context.VerniciaturaRichiesta ? context.VerniceSnapshot : "—")</MudText>
-                            </MudTd>
-                            <MudTd DataLabel="Prezzo">
-                                <MudText Color="Color.Success"><b>€@context.CalcPrezzoVendita.ToString("N4")</b></MudText>
-                            </MudTd>
-                            <MudTd DataLabel="Stato">
+                            <MudTd>@context.DataCreazione.ToString("dd/MM/yyyy")</MudTd>
+                            <MudTd>@context.Cliente</MudTd>
+                            <MudTd><MudText Typo="Typo.caption">@context.CodiceArticolo</MudText></MudTd>
+                            <MudTd><MudText Typo="Typo.caption">@context.SabbiaSnapshot</MudText></MudTd>
+                            <MudTd><MudText Typo="Typo.caption">@(context.VerniciaturaRichiesta ? context.VerniceSnapshot : "—")</MudText></MudTd>
+                            <MudTd><MudText Color="Color.Success"><b>€@context.CalcPrezzoVendita.ToString("N4")</b></MudText></MudTd>
+                            <MudTd>
                                 <MudSelect T="string" Value="@context.Stato"
                                            ValueChanged="@(s => CambiaStatoAsync(context, s))"
-                                           Variant="Variant.Text"
-                                           Margin="Margin.Dense"
+                                           Variant="Variant.Text" Margin="Margin.Dense"
                                            data-testid="@($"select-stato-{context.Id}")">
                                     <MudSelectItem Value="@("InAttesa")">In attesa</MudSelectItem>
                                     <MudSelectItem Value="@("Approvato")">Approvato</MudSelectItem>
@@ -525,21 +413,18 @@
                             <MudTd>
                                 <MudStack Row="true" Spacing="0">
                                     <MudTooltip Text="Modifica">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                                       Size="Size.Small"
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
                                                        OnClick="@(() => CaricaInModifica(context))"
                                                        data-testid="@($"btn-modifica-{context.Id}")" />
                                     </MudTooltip>
                                     <MudTooltip Text="Modulo cliente">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Print"
-                                                       Size="Size.Small"
+                                        <MudIconButton Icon="@Icons.Material.Filled.Print" Size="Size.Small"
                                                        Color="Color.Secondary"
                                                        OnClick="@(() => ApriModuloClienteConDto(context))"
                                                        data-testid="@($"btn-modulo-{context.Id}")" />
                                     </MudTooltip>
                                     <MudTooltip Text="Elimina">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                                       Size="Size.Small"
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
                                                        Color="Color.Error"
                                                        OnClick="@(() => EliminaAsync(context))"
                                                        data-testid="@($"btn-elimina-{context.Id}")" />
@@ -547,12 +432,212 @@
                                 </MudStack>
                             </MudTd>
                         </RowTemplate>
-                        <NoRecordsContent>
-                            <MudText>Nessun preventivo trovato.</MudText>
-                        </NoRecordsContent>
+                        <NoRecordsContent><MudText>Nessun preventivo trovato.</MudText></NoRecordsContent>
                     </MudTable>
                 }
             </ChildContent>
+        </MudTabPanel>
+
+        <!-- ══════════════════════════════════════════════════
+             TAB 3 — Impostazioni prezzi
+        ══════════════════════════════════════════════════ -->
+        <MudTabPanel Text="Impostazioni prezzi" Icon="@Icons.Material.Filled.Tune"
+                     data-testid="tab-impostazioni">
+
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-4">
+                Associa i nomi sabbia/vernice già presenti in <b>Gestione Tabelle</b> con i prezzi usati nel calcolo preventivi.
+            </MudAlert>
+
+            <MudGrid Spacing="3">
+                <!-- ── PREZZI SABBIA ── -->
+                <MudItem xs="12">
+                    <MudPaper Class="pa-4" Elevation="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                            <MudIcon Icon="@Icons.Material.Filled.Grain" Color="Color.Warning" />
+                            <MudText Typo="Typo.subtitle1"><b>PREZZI SABBIA</b></MudText>
+                            <MudSpacer />
+                            <MudButton Variant="Variant.Filled" Color="Color.Success"
+                                       StartIcon="@Icons.Material.Filled.Add"
+                                       OnClick="AggiungiTipoSabbia"
+                                       data-testid="btn-imp-sabbia-add">
+                                Aggiungi
+                            </MudButton>
+                        </MudStack>
+
+                        @if (_tipiSabbia.Count == 0 && _sabbiaTabelle.Count == 0)
+                        {
+                            <MudAlert Severity="Severity.Warning" Dense="true">
+                                Prima aggiungi voci nella tabella Sabbia in <b>Impostazioni → Gestione Tabelle</b>.
+                            </MudAlert>
+                        }
+                        else
+                        {
+                            <MudTable Items="@_tipiSabbia" Dense="true" Hover="true" data-testid="table-imp-sabbia">
+                                <HeaderContent>
+                                    <MudTh>Nome sabbia (da tabelle)</MudTh>
+                                    <MudTh>Famiglia</MudTh>
+                                    <MudTh>€/ora macchina</MudTh>
+                                    <MudTh>€/kg sabbia</MudTh>
+                                    <MudTh>Spari/h default</MudTh>
+                                    <MudTh>Attivo</MudTh>
+                                    <MudTh>Azioni</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd>
+                                        @if (context.Id == Guid.Empty)
+                                        {
+                                            <!-- Nuova riga: dropdown da tabelle esistenti -->
+                                            <MudSelect T="string" @bind-Value="context.Nome"
+                                                       @bind-Value:after="@(() => SincronizzaCodiceSabbia(context))"
+                                                       Variant="Variant.Text" Margin="Margin.Dense"
+                                                       Label="Seleziona da tabelle"
+                                                       data-testid="select-imp-sabbia-nome">
+                                                @foreach (var item in _sabbiaTabelle)
+                                                {
+                                                    <MudSelectItem Value="@item.Descrizione">@item.Codice — @item.Descrizione</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        }
+                                        else
+                                        {
+                                            <MudText Typo="Typo.body2">@context.Nome</MudText>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Codice</MudText>
+                                        }
+                                    </MudTd>
+                                    <MudTd>
+                                        <MudSelect @bind-Value="context.Famiglia" Variant="Variant.Text" Margin="Margin.Dense">
+                                            <MudSelectItem Value="@("distribut")">Distributori</MudSelectItem>
+                                            <MudSelectItem Value="@("cerabeads")">Cerabeads</MudSelectItem>
+                                            <MudSelectItem Value="@("normale")">Normale</MudSelectItem>
+                                        </MudSelect>
+                                    </MudTd>
+                                    <MudTd>
+                                        <MudNumericField @bind-Value="context.EuroOra" HideSpinButtons="true"
+                                                         Variant="Variant.Text" Format="F2" Margin="Margin.Dense" />
+                                    </MudTd>
+                                    <MudTd>
+                                        <MudNumericField @bind-Value="context.PrezzoKg" HideSpinButtons="true"
+                                                         Variant="Variant.Text" Format="F4" Margin="Margin.Dense" />
+                                    </MudTd>
+                                    <MudTd>
+                                        <MudNumericField @bind-Value="context.SpariDefault" HideSpinButtons="true"
+                                                         Variant="Variant.Text" Margin="Margin.Dense" />
+                                    </MudTd>
+                                    <MudTd>
+                                        <MudCheckBox @bind-Value="context.Attivo" Color="Color.Primary" />
+                                    </MudTd>
+                                    <MudTd>
+                                        <MudStack Row="true" Spacing="1">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Primary"
+                                                           Size="Size.Small"
+                                                           OnClick="@(() => SalvaTipoSabbiaAsync(context))"
+                                                           data-testid="@($"btn-imp-sabbia-salva-{context.Id}")" />
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                                           Size="Size.Small"
+                                                           OnClick="@(() => EliminaTipoSabbiaAsync(context))"
+                                                           data-testid="@($"btn-imp-sabbia-elimina-{context.Id}")" />
+                                        </MudStack>
+                                    </MudTd>
+                                </RowTemplate>
+                                <NoRecordsContent>
+                                    <MudText>Nessun tipo sabbia configurato. Clicca <b>Aggiungi</b>.</MudText>
+                                </NoRecordsContent>
+                            </MudTable>
+                        }
+                    </MudPaper>
+                </MudItem>
+
+                <!-- ── PREZZI VERNICE ── -->
+                <MudItem xs="12">
+                    <MudPaper Class="pa-4" Elevation="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                            <MudIcon Icon="@Icons.Material.Filled.FormatColorFill" Color="Color.Secondary" />
+                            <MudText Typo="Typo.subtitle1"><b>PREZZI VERNICE</b></MudText>
+                            <MudSpacer />
+                            <MudButton Variant="Variant.Filled" Color="Color.Success"
+                                       StartIcon="@Icons.Material.Filled.Add"
+                                       OnClick="AggiungiTipoVernice"
+                                       data-testid="btn-imp-vernice-add">
+                                Aggiungi
+                            </MudButton>
+                        </MudStack>
+
+                        @if (_tipiVernice.Count == 0 && _verniceTabelle.Count == 0)
+                        {
+                            <MudAlert Severity="Severity.Warning" Dense="true">
+                                Prima aggiungi voci nella tabella Vernice in <b>Impostazioni → Gestione Tabelle</b>.
+                            </MudAlert>
+                        }
+                        else
+                        {
+                            <MudTable Items="@_tipiVernice" Dense="true" Hover="true" data-testid="table-imp-vernice">
+                                <HeaderContent>
+                                    <MudTh>Nome vernice (da tabelle)</MudTh>
+                                    <MudTh>Famiglia</MudTh>
+                                    <MudTh>€/kg vernice</MudTh>
+                                    <MudTh>% applicazione default</MudTh>
+                                    <MudTh>Attivo</MudTh>
+                                    <MudTh>Azioni</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd>
+                                        @if (context.Id == Guid.Empty)
+                                        {
+                                            <MudSelect T="string" @bind-Value="context.Nome"
+                                                       @bind-Value:after="@(() => SincronizzaCodiceVernice(context))"
+                                                       Variant="Variant.Text" Margin="Margin.Dense"
+                                                       Label="Seleziona da tabelle"
+                                                       data-testid="select-imp-vernice-nome">
+                                                @foreach (var item in _verniceTabelle)
+                                                {
+                                                    <MudSelectItem Value="@item.Descrizione">@item.Codice — @item.Descrizione</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        }
+                                        else
+                                        {
+                                            <MudText Typo="Typo.body2">@context.Nome</MudText>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Codice</MudText>
+                                        }
+                                    </MudTd>
+                                    <MudTd>
+                                        <MudSelect @bind-Value="context.Famiglia" Variant="Variant.Text" Margin="Margin.Dense">
+                                            <MudSelectItem Value="@("acqua")">Ad acqua</MudSelectItem>
+                                            <MudSelectItem Value="@("alcool")">All'alcool</MudSelectItem>
+                                        </MudSelect>
+                                    </MudTd>
+                                    <MudTd>
+                                        <MudNumericField @bind-Value="context.PrezzoKg" HideSpinButtons="true"
+                                                         Variant="Variant.Text" Format="F2" Margin="Margin.Dense" />
+                                    </MudTd>
+                                    <MudTd>
+                                        <MudNumericField @bind-Value="context.PercentualeApplicazione" HideSpinButtons="true"
+                                                         Variant="Variant.Text" Format="F1" Margin="Margin.Dense" />
+                                    </MudTd>
+                                    <MudTd>
+                                        <MudCheckBox @bind-Value="context.Attivo" Color="Color.Primary" />
+                                    </MudTd>
+                                    <MudTd>
+                                        <MudStack Row="true" Spacing="1">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Primary"
+                                                           Size="Size.Small"
+                                                           OnClick="@(() => SalvaTipoVerniceAsync(context))"
+                                                           data-testid="@($"btn-imp-vernice-salva-{context.Id}")" />
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                                           Size="Size.Small"
+                                                           OnClick="@(() => EliminaTipoVerniceAsync(context))"
+                                                           data-testid="@($"btn-imp-vernice-elimina-{context.Id}")" />
+                                        </MudStack>
+                                    </MudTd>
+                                </RowTemplate>
+                                <NoRecordsContent>
+                                    <MudText>Nessun tipo vernice configurato. Clicca <b>Aggiungi</b>.</MudText>
+                                </NoRecordsContent>
+                            </MudTable>
+                        }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
         </MudTabPanel>
 
     </MudTabs>
@@ -561,39 +646,49 @@
 @code {
     private MudTabs? _tabs;
 
-    // Dati
-    private List<PreventivoTipoSabbiaDto> _tipiSabbia = new();
+    // Pricing configurati nel DB
+    private List<PreventivoTipoSabbiaDto> _tipiSabbia  = new();
     private List<PreventivoTipoVerniceDto> _tipiVernice = new();
+
+    // Nomi da Gestione Tabelle esistenti
+    private List<TabellaItem> _sabbiaTabelle  = new();
+    private List<TabellaItem> _verniceTabelle = new();
+
+    // Archivio preventivi
     private List<PreventivoDto> _preventivi = new();
 
-    // Form
+    // Form preventivo
     private PreventivoDto _dto = new();
     private PreventivoCalcoloResult _calc = new();
     private DateTime? _dataCreazione = DateTime.Today;
     private Guid? _editingId;
+    private PreventivoTipoSabbiaDto?  _tipoSabbiaSelezionata;
+    private PreventivoTipoVerniceDto? _tipoVerniceSelezionata;
 
     // UI state
     private bool _isLoading;
     private bool _isSaving;
     private string _searchText = string.Empty;
 
+    // ── Inizializzazione ────────────────────────────────────────────────
+
     protected override async Task OnInitializedAsync()
     {
         _isLoading = true;
+        // Carico prima le tabelle esistenti (HttpClient)
+        var sabbiaRaw  = await Http.GetFromJsonAsync<List<TabellaItem>>("/api/Tabelle/sabbia")  ?? new();
+        var verniceRaw = await Http.GetFromJsonAsync<List<TabellaItem>>("/api/Tabelle/vernice") ?? new();
+        _sabbiaTabelle  = sabbiaRaw;
+        _verniceTabelle = verniceRaw;
+
+        // Poi le entità EF (sequenziali per DbContext Scoped)
         _tipiSabbia  = await PreventivoService.GetTipiSabbiaAsync();
         _tipiVernice = await PreventivoService.GetTipiVerniceAsync();
         _preventivi  = await PreventivoService.GetAllAsync();
         _isLoading = false;
     }
 
-    private IEnumerable<PreventivoDto> PreventiviFiltrati =>
-        string.IsNullOrWhiteSpace(_searchText)
-            ? _preventivi
-            : _preventivi.Where(p =>
-                p.Cliente.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
-                p.CodiceArticolo.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
-                p.SabbiaSnapshot.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
-                (p.VerniceSnapshot ?? "").Contains(_searchText, StringComparison.OrdinalIgnoreCase));
+    // ── Calcolo ─────────────────────────────────────────────────────────
 
     private void Ricalcola()
     {
@@ -601,24 +696,30 @@
         _calc = PreventivoService.Calcola(_dto);
     }
 
-    private void SelezionaSabbia(PreventivoTipoSabbiaDto sabbia)
+    // ── Selezione sabbia/vernice ─────────────────────────────────────────
+
+    private void OnSabbiaSelezionata()
     {
-        _dto.TipoSabbiaId   = sabbia.Id;
-        _dto.SabbiaSnapshot = sabbia.Nome;
-        _dto.EuroOraSabbia  = sabbia.EuroOra;
-        _dto.PrezzoSabbiaKg = sabbia.PrezzoKg;
-        _dto.SpariOrari     = sabbia.SpariDefault;
+        if (_tipoSabbiaSelezionata == null) return;
+        _dto.TipoSabbiaId   = _tipoSabbiaSelezionata.Id;
+        _dto.SabbiaSnapshot = _tipoSabbiaSelezionata.Nome;
+        _dto.EuroOraSabbia  = _tipoSabbiaSelezionata.EuroOra;
+        _dto.PrezzoSabbiaKg = _tipoSabbiaSelezionata.PrezzoKg;
+        _dto.SpariOrari     = _tipoSabbiaSelezionata.SpariDefault;
         Ricalcola();
     }
 
-    private void SelezionaVernice(PreventivoTipoVerniceDto vernice)
+    private void OnVerniceSelezionata()
     {
-        _dto.TipoVerniceId      = vernice.Id;
-        _dto.VerniceSnapshot    = vernice.Nome;
-        _dto.CostoVerniceKg     = vernice.PrezzoKg;
-        _dto.PercentualeVernice = vernice.PercentualeApplicazione;
+        if (_tipoVerniceSelezionata == null) return;
+        _dto.TipoVerniceId      = _tipoVerniceSelezionata.Id;
+        _dto.VerniceSnapshot    = _tipoVerniceSelezionata.Nome;
+        _dto.CostoVerniceKg     = _tipoVerniceSelezionata.PrezzoKg;
+        _dto.PercentualeVernice = _tipoVerniceSelezionata.PercentualeApplicazione;
         Ricalcola();
     }
+
+    // ── Form preventivo ──────────────────────────────────────────────────
 
     private void NuovoPreventivo()
     {
@@ -626,44 +727,39 @@
         _dataCreazione = DateTime.Today;
         _calc = new PreventivoCalcoloResult();
         _editingId = null;
+        _tipoSabbiaSelezionata  = null;
+        _tipoVerniceSelezionata = null;
     }
 
     private async Task CaricaInModifica(PreventivoDto preventivo)
     {
         _dto = new PreventivoDto
         {
-            Id                   = preventivo.Id,
-            Cliente              = preventivo.Cliente,
-            CodiceArticolo       = preventivo.CodiceArticolo,
-            Descrizione          = preventivo.Descrizione,
-            NoteCliente          = preventivo.NoteCliente,
-            DataCreazione        = preventivo.DataCreazione,
-            TipoSabbiaId         = preventivo.TipoSabbiaId,
-            SabbiaSnapshot       = preventivo.SabbiaSnapshot,
-            EuroOraSabbia        = preventivo.EuroOraSabbia,
-            PrezzoSabbiaKg       = preventivo.PrezzoSabbiaKg,
-            Figure               = preventivo.Figure,
-            PesoAnima            = preventivo.PesoAnima,
-            Lotto                = preventivo.Lotto,
-            SpariOrari           = preventivo.SpariOrari,
-            CostoAttrezzatura    = preventivo.CostoAttrezzatura,
+            Id = preventivo.Id, Cliente = preventivo.Cliente,
+            CodiceArticolo = preventivo.CodiceArticolo, Descrizione = preventivo.Descrizione,
+            NoteCliente = preventivo.NoteCliente, DataCreazione = preventivo.DataCreazione,
+            TipoSabbiaId = preventivo.TipoSabbiaId, SabbiaSnapshot = preventivo.SabbiaSnapshot,
+            EuroOraSabbia = preventivo.EuroOraSabbia, PrezzoSabbiaKg = preventivo.PrezzoSabbiaKg,
+            Figure = preventivo.Figure, PesoAnima = preventivo.PesoAnima,
+            Lotto = preventivo.Lotto, SpariOrari = preventivo.SpariOrari,
+            CostoAttrezzatura = preventivo.CostoAttrezzatura,
             VerniciaturaRichiesta = preventivo.VerniciaturaRichiesta,
-            TipoVerniceId        = preventivo.TipoVerniceId,
-            VerniceSnapshot      = preventivo.VerniceSnapshot,
-            CostoVerniceKg       = preventivo.CostoVerniceKg,
-            PercentualeVernice   = preventivo.PercentualeVernice,
-            VerniciaturaPzOra    = preventivo.VerniciaturaPzOra,
-            EuroOraVerniciatura  = preventivo.EuroOraVerniciatura,
-            IncollaggioRichiesto = preventivo.IncollaggioRichiesto,
-            EuroOraIncollaggio   = preventivo.EuroOraIncollaggio,
-            IncollaggioPzOra     = preventivo.IncollaggioPzOra,
-            ImballaggioRichiesto = preventivo.ImballaggioRichiesto,
-            EuroOraImballaggio   = preventivo.EuroOraImballaggio,
-            ImballaggioPzOra     = preventivo.ImballaggioPzOra,
-            Stato                = preventivo.Stato,
+            TipoVerniceId = preventivo.TipoVerniceId, VerniceSnapshot = preventivo.VerniceSnapshot,
+            CostoVerniceKg = preventivo.CostoVerniceKg, PercentualeVernice = preventivo.PercentualeVernice,
+            VerniciaturaPzOra = preventivo.VerniciaturaPzOra, EuroOraVerniciatura = preventivo.EuroOraVerniciatura,
+            IncollaggioRichiesto = preventivo.IncollaggioRichiesto, EuroOraIncollaggio = preventivo.EuroOraIncollaggio,
+            IncollaggioPzOra = preventivo.IncollaggioPzOra,
+            ImballaggioRichiesto = preventivo.ImballaggioRichiesto, EuroOraImballaggio = preventivo.EuroOraImballaggio,
+            ImballaggioPzOra = preventivo.ImballaggioPzOra, Stato = preventivo.Stato,
         };
         _dataCreazione = preventivo.DataCreazione;
         _editingId = preventivo.Id;
+        _tipoSabbiaSelezionata  = preventivo.TipoSabbiaId.HasValue
+            ? _tipiSabbia.FirstOrDefault(s => s.Id == preventivo.TipoSabbiaId)
+            : null;
+        _tipoVerniceSelezionata = preventivo.TipoVerniceId.HasValue
+            ? _tipiVernice.FirstOrDefault(v => v.Id == preventivo.TipoVerniceId)
+            : null;
         Ricalcola();
         if (_tabs != null) await _tabs.ActivatePanelAsync(0);
     }
@@ -677,11 +773,10 @@
         }
         _isSaving = true;
         _dto.DataCreazione = _dataCreazione ?? DateTime.Today;
-        var calcResult = PreventivoService.Calcola(_dto);
-        _dto.CalcCostoAnima       = calcResult.CostoAnima;
-        _dto.CalcVerniciaturaTot  = calcResult.VernTot;
-        _dto.CalcPrezzoVendita    = calcResult.PrezzoVendita;
-
+        var r = PreventivoService.Calcola(_dto);
+        _dto.CalcCostoAnima      = r.CostoAnima;
+        _dto.CalcVerniciaturaTot = r.VernTot;
+        _dto.CalcPrezzoVendita   = r.PrezzoVendita;
         try
         {
             if (_editingId.HasValue)
@@ -691,8 +786,8 @@
                 {
                     var idx = _preventivi.FindIndex(p => p.Id == updated.Id);
                     if (idx >= 0) _preventivi[idx] = updated;
-                    Snackbar.Add("Preventivo aggiornato.", Severity.Success);
                 }
+                Snackbar.Add("Preventivo aggiornato.", Severity.Success);
             }
             else
             {
@@ -703,62 +798,139 @@
                 Snackbar.Add("Preventivo salvato.", Severity.Success);
             }
         }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            _isSaving = false;
-        }
+        catch (Exception ex) { Snackbar.Add($"Errore: {ex.Message}", Severity.Error); }
+        finally { _isSaving = false; }
     }
 
-    private async Task EliminaAsync(PreventivoDto preventivo)
+    // ── Archivio ─────────────────────────────────────────────────────────
+
+    private IEnumerable<PreventivoDto> PreventiviFiltrati =>
+        string.IsNullOrWhiteSpace(_searchText)
+            ? _preventivi
+            : _preventivi.Where(p =>
+                p.Cliente.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                p.CodiceArticolo.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                p.SabbiaSnapshot.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                (p.VerniceSnapshot ?? "").Contains(_searchText, StringComparison.OrdinalIgnoreCase));
+
+    private async Task EliminaAsync(PreventivoDto p)
     {
-        var ok = await PreventivoService.DeleteAsync(preventivo.Id);
-        if (ok)
-        {
-            _preventivi.Remove(preventivo);
-            Snackbar.Add("Preventivo eliminato.", Severity.Info);
-        }
-        else
-        {
-            Snackbar.Add("Errore durante l'eliminazione.", Severity.Error);
-        }
+        if (await PreventivoService.DeleteAsync(p.Id)) { _preventivi.Remove(p); Snackbar.Add("Eliminato.", Severity.Info); }
+        else Snackbar.Add("Errore eliminazione.", Severity.Error);
     }
 
-    private async Task CambiaStatoAsync(PreventivoDto preventivo, string nuovoStato)
+    private async Task CambiaStatoAsync(PreventivoDto p, string stato)
     {
-        var updated = await PreventivoService.UpdateStatoAsync(preventivo.Id, nuovoStato);
-        if (updated != null)
-        {
-            preventivo.Stato = nuovoStato;
-            Snackbar.Add($"Stato aggiornato: {nuovoStato}", Severity.Success);
-        }
+        var updated = await PreventivoService.UpdateStatoAsync(p.Id, stato);
+        if (updated != null) { p.Stato = stato; Snackbar.Add($"Stato: {stato}", Severity.Success); }
     }
 
-    private void OnSearchDebounced(string value)
-    {
-        _searchText = value;
-        StateHasChanged();
-    }
-
-    private void OnTabChanged(int index) { }
+    // ── Modulo cliente ────────────────────────────────────────────────────
 
     private async Task ApriModuloCliente()
     {
         _dto.DataCreazione = _dataCreazione ?? DateTime.Today;
-        var calcResult = PreventivoService.Calcola(_dto);
-        _dto.CalcPrezzoVendita = calcResult.PrezzoVendita;
-        var parameters = new DialogParameters<ModuloClienteDialog> { { d => d.Dto, _dto } };
-        await DialogService.ShowAsync<ModuloClienteDialog>("Modulo Cliente", parameters,
+        var r = PreventivoService.Calcola(_dto);
+        _dto.CalcPrezzoVendita = r.PrezzoVendita;
+        var p = new DialogParameters<ModuloClienteDialog> { { d => d.Dto, _dto } };
+        await DialogService.ShowAsync<ModuloClienteDialog>("Modulo Cliente", p,
             new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
     }
 
     private async Task ApriModuloClienteConDto(PreventivoDto dto)
     {
-        var parameters = new DialogParameters<ModuloClienteDialog> { { d => d.Dto, dto } };
-        await DialogService.ShowAsync<ModuloClienteDialog>("Modulo Cliente", parameters,
+        var p = new DialogParameters<ModuloClienteDialog> { { d => d.Dto, dto } };
+        await DialogService.ShowAsync<ModuloClienteDialog>("Modulo Cliente", p,
             new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
     }
+
+    // ── Impostazioni: Tipi Sabbia ─────────────────────────────────────────
+
+    private void AggiungiTipoSabbia() => _tipiSabbia.Add(new PreventivoTipoSabbiaDto
+    {
+        Id = Guid.Empty, Codice = "", Nome = "", Famiglia = "distribut",
+        EuroOra = 70, PrezzoKg = 1.42m, SpariDefault = 40, Attivo = true,
+        Ordine = _tipiSabbia.Count + 1
+    });
+
+    private void SincronizzaCodiceSabbia(PreventivoTipoSabbiaDto dto)
+    {
+        var match = _sabbiaTabelle.FirstOrDefault(t => t.Descrizione == dto.Nome);
+        if (match != null) dto.Codice = match.Codice;
+    }
+
+    private async Task SalvaTipoSabbiaAsync(PreventivoTipoSabbiaDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Nome)) { Snackbar.Add("Seleziona un nome sabbia.", Severity.Warning); return; }
+        try
+        {
+            if (dto.Id == Guid.Empty)
+            {
+                var created = await PreventivoService.CreateTipoSabbiaAsync(dto);
+                var idx = _tipiSabbia.IndexOf(dto);
+                if (idx >= 0) _tipiSabbia[idx] = created;
+            }
+            else
+            {
+                await PreventivoService.UpdateTipoSabbiaAsync(dto);
+            }
+            Snackbar.Add("Tipo sabbia salvato.", Severity.Success);
+        }
+        catch (Exception ex) { Snackbar.Add($"Errore: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task EliminaTipoSabbiaAsync(PreventivoTipoSabbiaDto dto)
+    {
+        if (dto.Id == Guid.Empty) { _tipiSabbia.Remove(dto); return; }
+        await PreventivoService.DeleteTipoSabbiaAsync(dto.Id);
+        _tipiSabbia.Remove(dto);
+        Snackbar.Add("Tipo sabbia eliminato.", Severity.Success);
+    }
+
+    // ── Impostazioni: Tipi Vernice ────────────────────────────────────────
+
+    private void AggiungiTipoVernice() => _tipiVernice.Add(new PreventivoTipoVerniceDto
+    {
+        Id = Guid.Empty, Codice = "", Nome = "", Famiglia = "acqua",
+        PrezzoKg = 3.20m, PercentualeApplicazione = 8, Attivo = true,
+        Ordine = _tipiVernice.Count + 1
+    });
+
+    private void SincronizzaCodiceVernice(PreventivoTipoVerniceDto dto)
+    {
+        var match = _verniceTabelle.FirstOrDefault(t => t.Descrizione == dto.Nome);
+        if (match != null) dto.Codice = match.Codice;
+    }
+
+    private async Task SalvaTipoVerniceAsync(PreventivoTipoVerniceDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Nome)) { Snackbar.Add("Seleziona un nome vernice.", Severity.Warning); return; }
+        try
+        {
+            if (dto.Id == Guid.Empty)
+            {
+                var created = await PreventivoService.CreateTipoVerniceAsync(dto);
+                var idx = _tipiVernice.IndexOf(dto);
+                if (idx >= 0) _tipiVernice[idx] = created;
+            }
+            else
+            {
+                await PreventivoService.UpdateTipoVerniceAsync(dto);
+            }
+            Snackbar.Add("Tipo vernice salvato.", Severity.Success);
+        }
+        catch (Exception ex) { Snackbar.Add($"Errore: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task EliminaTipoVerniceAsync(PreventivoTipoVerniceDto dto)
+    {
+        if (dto.Id == Guid.Empty) { _tipiVernice.Remove(dto); return; }
+        await PreventivoService.DeleteTipoVerniceAsync(dto.Id);
+        _tipiVernice.Remove(dto);
+        Snackbar.Add("Tipo vernice eliminato.", Severity.Success);
+    }
+
+    // ── Tipi locali ───────────────────────────────────────────────────────
+
+    private record TabellaItem(string Codice, string Descrizione);
 }

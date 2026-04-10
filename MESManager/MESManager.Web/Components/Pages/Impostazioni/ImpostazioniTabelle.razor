@@ -1,9 +1,6 @@
 @page "/impostazioni/tabelle"
-@using MESManager.Application.DTOs
-@using MESManager.Application.Interfaces
 @inject ISnackbar Snackbar
 @inject HttpClient Http
-@inject IPreventivoService PreventivoService
 
 <PageTitle>Impostazioni Tabelle</PageTitle>
 
@@ -200,110 +197,6 @@
                     </MudButton>
                 </MudPaper>
             </MudTabPanel>
-            <!-- Tab Sabbia Preventivi -->
-            <MudTabPanel Text="Sabbia Preventivi" Icon="@Icons.Material.Filled.Grain">
-                <MudPaper Class="pa-4 mt-4">
-                    <MudText Typo="Typo.h6" Class="mb-1">Tipi Sabbia — Preventivi</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">Prezzi e parametri usati nel calcolo preventivi. Non influenzano le tabelle anime.</MudText>
-
-                    <MudButton Variant="Variant.Filled" Color="Color.Success"
-                               StartIcon="@Icons.Material.Filled.Add"
-                               Class="mb-4" OnClick="AggiungiTipoSabbia"
-                               data-testid="btn-prev-sabbia-add">
-                        Aggiungi tipo sabbia
-                    </MudButton>
-
-                    <MudTable Items="@_tipiSabbia" Hover="true" Striped="true" data-testid="table-prev-sabbia">
-                        <HeaderContent>
-                            <MudTh>Codice</MudTh>
-                            <MudTh>Nome</MudTh>
-                            <MudTh>Famiglia</MudTh>
-                            <MudTh>€/ora</MudTh>
-                            <MudTh>€/kg sabbia</MudTh>
-                            <MudTh>Spari default</MudTh>
-                            <MudTh>Ordine</MudTh>
-                            <MudTh>Azioni</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd><MudTextField @bind-Value="context.Codice" Variant="Variant.Text" /></MudTd>
-                            <MudTd><MudTextField @bind-Value="context.Nome" Variant="Variant.Text" /></MudTd>
-                            <MudTd>
-                                <MudSelect @bind-Value="context.Famiglia" Variant="Variant.Text" Dense="true">
-                                    <MudSelectItem Value="@("distribut")">Distributori</MudSelectItem>
-                                    <MudSelectItem Value="@("cerabeads")">Cerabeads</MudSelectItem>
-                                    <MudSelectItem Value="@("normale")">Normale</MudSelectItem>
-                                </MudSelect>
-                            </MudTd>
-                            <MudTd><MudNumericField @bind-Value="context.EuroOra" HideSpinButtons="true" Variant="Variant.Text" Format="F2" /></MudTd>
-                            <MudTd><MudNumericField @bind-Value="context.PrezzoKg" HideSpinButtons="true" Variant="Variant.Text" Format="F4" /></MudTd>
-                            <MudTd><MudNumericField @bind-Value="context.SpariDefault" HideSpinButtons="true" Variant="Variant.Text" /></MudTd>
-                            <MudTd><MudNumericField @bind-Value="context.Ordine" HideSpinButtons="true" Variant="Variant.Text" /></MudTd>
-                            <MudTd>
-                                <MudStack Row="true" Spacing="1">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Primary" Size="Size.Small"
-                                                   OnClick="@(() => SalvaTipoSabbiaAsync(context))"
-                                                   data-testid="btn-prev-sabbia-salva" />
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
-                                                   OnClick="@(() => EliminaTipoSabbiaAsync(context))"
-                                                   data-testid="btn-prev-sabbia-elimina" />
-                                </MudStack>
-                            </MudTd>
-                        </RowTemplate>
-                        <NoRecordsContent><MudText>Nessun tipo sabbia. Usa il pulsante Aggiungi.</MudText></NoRecordsContent>
-                    </MudTable>
-                </MudPaper>
-            </MudTabPanel>
-
-            <!-- Tab Vernice Preventivi -->
-            <MudTabPanel Text="Vernice Preventivi" Icon="@Icons.Material.Filled.FormatPaint">
-                <MudPaper Class="pa-4 mt-4">
-                    <MudText Typo="Typo.h6" Class="mb-1">Tipi Vernice — Preventivi</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">Prezzi e parametri usati nel calcolo preventivi. Non influenzano le tabelle anime.</MudText>
-
-                    <MudButton Variant="Variant.Filled" Color="Color.Success"
-                               StartIcon="@Icons.Material.Filled.Add"
-                               Class="mb-4" OnClick="AggiungiTipoVernice"
-                               data-testid="btn-prev-vernice-add">
-                        Aggiungi tipo vernice
-                    </MudButton>
-
-                    <MudTable Items="@_tipiVernice" Hover="true" Striped="true" data-testid="table-prev-vernice">
-                        <HeaderContent>
-                            <MudTh>Codice</MudTh>
-                            <MudTh>Nome</MudTh>
-                            <MudTh>Famiglia</MudTh>
-                            <MudTh>€/kg</MudTh>
-                            <MudTh>% applicazione</MudTh>
-                            <MudTh>Ordine</MudTh>
-                            <MudTh>Azioni</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd><MudTextField @bind-Value="context.Codice" Variant="Variant.Text" /></MudTd>
-                            <MudTd><MudTextField @bind-Value="context.Nome" Variant="Variant.Text" /></MudTd>
-                            <MudTd>
-                                <MudSelect @bind-Value="context.Famiglia" Variant="Variant.Text" Dense="true">
-                                    <MudSelectItem Value="@("acqua")">Ad acqua</MudSelectItem>
-                                    <MudSelectItem Value="@("alcool")">All'alcool</MudSelectItem>
-                                </MudSelect>
-                            </MudTd>
-                            <MudTd><MudNumericField @bind-Value="context.PrezzoKg" HideSpinButtons="true" Variant="Variant.Text" Format="F2" /></MudTd>
-                            <MudTd><MudNumericField @bind-Value="context.PercentualeApplicazione" HideSpinButtons="true" Variant="Variant.Text" Format="F1" /></MudTd>
-                            <MudTd><MudNumericField @bind-Value="context.Ordine" HideSpinButtons="true" Variant="Variant.Text" /></MudTd>
-                            <MudTd>
-                                <MudStack Row="true" Spacing="1">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Primary" Size="Size.Small"
-                                                   OnClick="@(() => SalvaTipoVerniceAsync(context))"
-                                                   data-testid="btn-prev-vernice-salva" />
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
-                                                   OnClick="@(() => EliminaTipoVerniceAsync(context))"
-                                                   data-testid="btn-prev-vernice-elimina" />
-                                </MudStack>
-                            </MudTd>
-                        </RowTemplate>
-                        <NoRecordsContent><MudText>Nessun tipo vernice. Usa il pulsante Aggiungi.</MudText></NoRecordsContent>
-                    </MudTable>
-                </MudPaper>
-            </MudTabPanel>
         </MudTabs>
     }
 </MudContainer>
@@ -315,9 +208,6 @@
     private List<VerniceDto> vernice = new();
     private List<SabbiaDto> sabbia = new();
     private List<ImballoDto> imballo = new();
-
-    private List<PreventivoTipoSabbiaDto> _tipiSabbia = new();
-    private List<PreventivoTipoVerniceDto> _tipiVernice = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -339,8 +229,6 @@
             sabbia   = sabbiaItems;
             imballo  = imballoItems;
 
-            _tipiSabbia  = await PreventivoService.GetTipiSabbiaAsync();
-            _tipiVernice = await PreventivoService.GetTipiVerniceAsync();
         }
         catch (Exception ex)
         {
@@ -450,77 +338,4 @@
         public string Descrizione { get; set; } = string.Empty;
     }
 
-    // ── Preventivi: Sabbia ─────────────────────────────────────────────
-
-    private void AggiungiTipoSabbia() => _tipiSabbia.Add(new PreventivoTipoSabbiaDto
-    {
-        Id = Guid.Empty, Nome = "", Codice = "", Famiglia = "distribut", EuroOra = 70, PrezzoKg = 1.42m, SpariDefault = 40, Attivo = true, Ordine = _tipiSabbia.Count + 1
-    });
-
-    private async Task SalvaTipoSabbiaAsync(PreventivoTipoSabbiaDto dto)
-    {
-        try
-        {
-            if (dto.Id == Guid.Empty)
-            {
-                var created = await PreventivoService.CreateTipoSabbiaAsync(dto);
-                var idx = _tipiSabbia.IndexOf(dto);
-                if (idx >= 0) _tipiSabbia[idx] = created;
-            }
-            else
-            {
-                await PreventivoService.UpdateTipoSabbiaAsync(dto);
-            }
-            Snackbar.Add("Tipo sabbia salvato.", Severity.Success);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
-        }
-    }
-
-    private async Task EliminaTipoSabbiaAsync(PreventivoTipoSabbiaDto dto)
-    {
-        if (dto.Id == Guid.Empty) { _tipiSabbia.Remove(dto); return; }
-        await PreventivoService.DeleteTipoSabbiaAsync(dto.Id);
-        _tipiSabbia.Remove(dto);
-        Snackbar.Add("Tipo sabbia eliminato.", Severity.Success);
-    }
-
-    // ── Preventivi: Vernice ────────────────────────────────────────────
-
-    private void AggiungiTipoVernice() => _tipiVernice.Add(new PreventivoTipoVerniceDto
-    {
-        Id = Guid.Empty, Nome = "", Codice = "", Famiglia = "acqua", PrezzoKg = 3.20m, PercentualeApplicazione = 8, Attivo = true, Ordine = _tipiVernice.Count + 1
-    });
-
-    private async Task SalvaTipoVerniceAsync(PreventivoTipoVerniceDto dto)
-    {
-        try
-        {
-            if (dto.Id == Guid.Empty)
-            {
-                var created = await PreventivoService.CreateTipoVerniceAsync(dto);
-                var idx = _tipiVernice.IndexOf(dto);
-                if (idx >= 0) _tipiVernice[idx] = created;
-            }
-            else
-            {
-                await PreventivoService.UpdateTipoVerniceAsync(dto);
-            }
-            Snackbar.Add("Tipo vernice salvato.", Severity.Success);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
-        }
-    }
-
-    private async Task EliminaTipoVerniceAsync(PreventivoTipoVerniceDto dto)
-    {
-        if (dto.Id == Guid.Empty) { _tipiVernice.Remove(dto); return; }
-        await PreventivoService.DeleteTipoVerniceAsync(dto.Id);
-        _tipiVernice.Remove(dto);
-        Snackbar.Add("Tipo vernice eliminato.", Severity.Success);
-    }
 }

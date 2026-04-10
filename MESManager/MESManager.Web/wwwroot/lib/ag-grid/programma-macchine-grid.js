@@ -354,66 +354,93 @@ window.programmaMacchineGrid = (function() {
         }
     }
 
-    // Sposta una commessa su/giù nella sequenza della stessa macchina
+    // Sposta una commessa su/giù, anche tra macchine diverse
+    // ▲ in prima posizione → ultima posizione della macchina precedente
+    // ▼ in ultima posizione → prima posizione della macchina successiva
     async function moveRow(commessaId, numeroMacchina, direction) {
         try {
-            // Trova tutte le commesse della stessa macchina (esclusi placeholder)
-            const machineRows = [];
+            // Raggruppa tutte le righe vere (no placeholder) per macchina, nell'ordine corrente
+            const byMachine = {};
+            allMachines.forEach(m => byMachine[m] = []);
             gridApi.forEachNodeAfterFilterAndSort(node => {
-                if (node.data && node.data.numeroMacchina === numeroMacchina && !node.data.isPlaceholder) {
-                    machineRows.push(node.data);
+                if (node.data && !node.data.isPlaceholder && node.data.numeroMacchina) {
+                    const mc = node.data.numeroMacchina;
+                    if (byMachine[mc]) byMachine[mc].push(node.data);
                 }
             });
 
-            // Trova la posizione corrente
+            // Macchine che hanno almeno una commessa (o quella corrente)
+            const activeMachines = allMachines.filter(m => byMachine[m].length > 0);
+            const currentMachineIndex = activeMachines.indexOf(numeroMacchina);
+            const machineRows = byMachine[numeroMacchina] || [];
             const currentIndex = machineRows.findIndex(r => r.id === commessaId);
+
             if (currentIndex === -1) {
-                console.log('Commessa non trovata nella macchina');
+                console.warn('[moveRow] Commessa non trovata nella macchina', numeroMacchina);
                 return;
             }
 
-            // Calcola nuova posizione
-            let newIndex;
+            let targetMachine = numeroMacchina;
+            let targetIndex;
+
             if (direction === 'up') {
-                if (currentIndex === 0) {
-                    console.log('Già in prima posizione');
-                    return;
+                if (currentIndex > 0) {
+                    // Sposta su nella stessa macchina
+                    targetIndex = currentIndex - 1;
+                } else {
+                    // Prima riga della macchina → salta alla macchina precedente (in coda)
+                    if (currentMachineIndex <= 0) {
+                        console.log('[moveRow] Già in prima posizione assoluta');
+                        return;
+                    }
+                    targetMachine = activeMachines[currentMachineIndex - 1];
+                    targetIndex = byMachine[targetMachine].length; // in fondo
                 }
-                newIndex = currentIndex - 1;
             } else {
-                if (currentIndex === machineRows.length - 1) {
-                    console.log('Già in ultima posizione');
-                    return;
+                if (currentIndex < machineRows.length - 1) {
+                    // Sposta giù nella stessa macchina
+                    targetIndex = currentIndex + 1;
+                } else {
+                    // Ultima riga della macchina → salta alla macchina successiva (in testa)
+                    if (currentMachineIndex >= activeMachines.length - 1) {
+                        // Non ci sono macchine successive con commesse: proviamo comunque sulla prossima
+                        const nextAll = allMachines.indexOf(numeroMacchina);
+                        if (nextAll >= allMachines.length - 1) {
+                            console.log('[moveRow] Già in ultima posizione assoluta');
+                            return;
+                        }
+                        targetMachine = allMachines[nextAll + 1];
+                    } else {
+                        targetMachine = activeMachines[currentMachineIndex + 1];
+                    }
+                    targetIndex = 0; // in testa
                 }
-                newIndex = currentIndex + 1;
             }
 
-            console.log(`Spostamento ${direction}: ${currentIndex} -> ${newIndex}`);
+            console.log(`[moveRow] ${direction}: macchina ${numeroMacchina}[${currentIndex}] → ${targetMachine}[${targetIndex}]`);
 
-            // Chiama l'API per salvare
             const response = await fetch('/api/Commesse/riordina', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     commessaId: commessaId,
-                    nuovoNumeroMacchina: getMachineNumber(numeroMacchina),
-                    nuovaPosizioneIndex: newIndex
+                    nuovoNumeroMacchina: getMachineNumber(targetMachine),
+                    nuovaPosizioneIndex: targetIndex
                 })
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || `HTTP ${response.status}`);
+                let err;
+                try { err = await response.json(); } catch { err = {}; }
+                throw new Error(err.error || `HTTP ${response.status}`);
             }
 
-            console.log('✓ Spostamento salvato con successo');
-
-            // Ricarica i dati
+            console.log('[moveRow] ✓ Spostamento salvato');
             await refreshGridData();
 
         } catch (err) {
-            console.error('Errore durante lo spostamento:', err);
-            alert(`Errore: ${err.message}`);
+            console.error('[moveRow] Errore:', err);
+            alert(`Errore spostamento: ${err.message}`);
         }
     }
 
