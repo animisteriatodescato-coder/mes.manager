@@ -28,7 +28,12 @@ public class Preventivo
     // ── Parametri produzione ────────────────────────────────────────────
     public int Figure { get; set; }
     public decimal PesoAnima { get; set; }
+    /// <summary>Lotto principale (obbligatorio)</summary>
     public int Lotto { get; set; }
+    /// <summary>Lotti aggiuntivi opzionali (multi-lotto preventivo)</summary>
+    public int? Lotto2 { get; set; }
+    public int? Lotto3 { get; set; }
+    public int? Lotto4 { get; set; }
     public int SpariOrari { get; set; }
     public decimal CostoAttrezzatura { get; set; }
 

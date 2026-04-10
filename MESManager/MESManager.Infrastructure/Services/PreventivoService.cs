@@ -177,7 +177,24 @@ public class PreventivoService : IPreventivoService
     }
 
     // ── Calcolo ────────────────────────────────────────────────────────────
-
+    public PreventivoCalcoloResult CalcolaConLotto(PreventivoDto dto, int lotto)
+    {
+        // Crea una copia con il lotto specificato e delega a Calcola
+        var dtoLotto = new PreventivoDto
+        {
+            Figure = dto.Figure, PesoAnima = dto.PesoAnima, Lotto = lotto,
+            SpariOrari = dto.SpariOrari, CostoAttrezzatura = dto.CostoAttrezzatura,
+            EuroOraSabbia = dto.EuroOraSabbia, PrezzoSabbiaKg = dto.PrezzoSabbiaKg,
+            VerniciaturaRichiesta = dto.VerniciaturaRichiesta,
+            CostoVerniceKg = dto.CostoVerniceKg, PercentualeVernice = dto.PercentualeVernice,
+            VerniciaturaPzOra = dto.VerniciaturaPzOra, EuroOraVerniciatura = dto.EuroOraVerniciatura,
+            IncollaggioRichiesto = dto.IncollaggioRichiesto, EuroOraIncollaggio = dto.EuroOraIncollaggio,
+            IncollaggioPzOra = dto.IncollaggioPzOra,
+            ImballaggioRichiesto = dto.ImballaggioRichiesto, EuroOraImballaggio = dto.EuroOraImballaggio,
+            ImballaggioPzOra = dto.ImballaggioPzOra
+        };
+        return Calcola(dtoLotto);
+    }
     public PreventivoCalcoloResult Calcola(PreventivoDto dto)
     {
         var result = new PreventivoCalcoloResult();
@@ -257,6 +274,9 @@ public class PreventivoService : IPreventivoService
         Figure = p.Figure,
         PesoAnima = p.PesoAnima,
         Lotto = p.Lotto,
+        Lotto2 = p.Lotto2,
+        Lotto3 = p.Lotto3,
+        Lotto4 = p.Lotto4,
         SpariOrari = p.SpariOrari,
         CostoAttrezzatura = p.CostoAttrezzatura,
         VerniciaturaRichiesta = p.VerniciaturaRichiesta,
@@ -291,6 +311,9 @@ public class PreventivoService : IPreventivoService
         Figure = dto.Figure,
         PesoAnima = dto.PesoAnima,
         Lotto = dto.Lotto,
+        Lotto2 = dto.Lotto2,
+        Lotto3 = dto.Lotto3,
+        Lotto4 = dto.Lotto4,
         SpariOrari = dto.SpariOrari,
         CostoAttrezzatura = dto.CostoAttrezzatura,
         VerniciaturaRichiesta = dto.VerniciaturaRichiesta,
@@ -325,6 +348,9 @@ public class PreventivoService : IPreventivoService
         entity.Figure = dto.Figure;
         entity.PesoAnima = dto.PesoAnima;
         entity.Lotto = dto.Lotto;
+        entity.Lotto2 = dto.Lotto2;
+        entity.Lotto3 = dto.Lotto3;
+        entity.Lotto4 = dto.Lotto4;
         entity.SpariOrari = dto.SpariOrari;
         entity.CostoAttrezzatura = dto.CostoAttrezzatura;
         entity.VerniciaturaRichiesta = dto.VerniciaturaRichiesta;

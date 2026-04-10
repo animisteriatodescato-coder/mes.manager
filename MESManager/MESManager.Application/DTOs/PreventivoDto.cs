@@ -44,6 +44,9 @@ public class PreventivoDto
     public int Figure { get; set; }
     public decimal PesoAnima { get; set; }
     public int Lotto { get; set; }
+    public int? Lotto2 { get; set; }
+    public int? Lotto3 { get; set; }
+    public int? Lotto4 { get; set; }
     public int SpariOrari { get; set; }
     public decimal CostoAttrezzatura { get; set; } = 100;
 

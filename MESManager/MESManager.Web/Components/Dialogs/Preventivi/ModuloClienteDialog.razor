@@ -1,5 +1,7 @@
 @using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
 @inject IJSRuntime JS
+@inject IPreventivoService PreventivoService
 
 <MudDialog Class="modulo-cliente-dialog" data-testid="dlg-modulo-cliente">
     <TitleContent>
@@ -102,14 +104,27 @@
 
                 <MudDivider Class="mb-3" />
 
-                <!-- Prezzo finale (PUBLIC) -->
-                <MudPaper Class="pa-4 prezzo-cliente-box" Elevation="2">
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">PREZZO UNITARIO</MudText>
-                    <MudText Typo="Typo.h4" Color="Color.Primary">
-                        €@Dto.CalcPrezzoVendita.ToString("N4")
-                    </MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">per pezzo · lotto @Dto.Lotto pz</MudText>
-                </MudPaper>
+                <!-- Prezzi per lotto (PUBLIC) -->
+                <MudText Typo="Typo.subtitle1" Class="mb-2"><b>PREZZI PER LOTTO</b></MudText>
+                <MudSimpleTable Dense="true" Class="mb-4" Style="border:1px solid var(--mud-palette-divider)">
+                    <thead>
+                        <tr style="background:var(--mud-palette-background-grey)">
+                            <th><MudText Typo="Typo.body2"><b>Quantità lotto (pz)</b></MudText></th>
+                            <th style="text-align:right"><MudText Typo="Typo.body2"><b>Prezzo unitario (€/pz)</b></MudText></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var (lotto, prezzo) in GetLottiPrezzi())
+                        {
+                            <tr>
+                                <td><MudText Typo="Typo.body1">@lotto pz</MudText></td>
+                                <td style="text-align:right">
+                                    <MudText Typo="Typo.h6" Color="Color.Primary">€@prezzo.ToString("N4")</MudText>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
             </div>
         }
     </DialogContent>
@@ -138,4 +153,30 @@
     }
 
     private void Chiudi() => MudDialog.Close(DialogResult.Ok(true));
+
+    /// <summary>Restituisce le coppie (lotto pz, prezzo/pz) per tutti i lotti compilati.</summary>
+    private IEnumerable<(int Lotto, decimal Prezzo)> GetLottiPrezzi()
+    {
+        if (Dto == null) yield break;
+        if (Dto.Lotto > 0)
+        {
+            var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto);
+            yield return (Dto.Lotto, r.PrezzoVendita);
+        }
+        if (Dto.Lotto2.HasValue && Dto.Lotto2.Value > 0)
+        {
+            var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto2.Value);
+            yield return (Dto.Lotto2.Value, r.PrezzoVendita);
+        }
+        if (Dto.Lotto3.HasValue && Dto.Lotto3.Value > 0)
+        {
+            var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto3.Value);
+            yield return (Dto.Lotto3.Value, r.PrezzoVendita);
+        }
+        if (Dto.Lotto4.HasValue && Dto.Lotto4.Value > 0)
+        {
+            var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto4.Value);
+            yield return (Dto.Lotto4.Value, r.PrezzoVendita);
+        }
+    }
 }

@@ -99,41 +99,75 @@
                             <MudText Typo="Typo.subtitle1"><b>PARAMETRI PRODUZIONE</b></MudText>
                         </MudStack>
                         <MudGrid Spacing="2">
-                            <MudItem xs="6" sm="4" md="2">
+                            <MudItem xs="6" sm="4" md="3">
                                 <MudNumericField @bind-Value="_dto.Figure" @bind-Value:after="Ricalcola"
                                                  Label="Figure" Min="1"
                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  data-testid="input-figure" />
                             </MudItem>
-                            <MudItem xs="6" sm="4" md="2">
+                            <MudItem xs="6" sm="4" md="3">
                                 <MudNumericField @bind-Value="_dto.PesoAnima" @bind-Value:after="Ricalcola"
                                                  Label="Peso anima (kg)" Min="0.001m" Step="0.01m" Format="N3"
                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  data-testid="input-peso-anima" />
                             </MudItem>
-                            <MudItem xs="6" sm="4" md="2">
-                                <MudNumericField @bind-Value="_dto.Lotto" @bind-Value:after="Ricalcola"
-                                                 Label="Lotto (pz)" Min="1"
-                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
-                                                 data-testid="input-lotto" />
-                            </MudItem>
-                            <MudItem xs="6" sm="4" md="2">
+                            <MudItem xs="6" sm="4" md="3">
                                 <MudNumericField @bind-Value="_dto.SpariOrari" @bind-Value:after="Ricalcola"
                                                  Label="Spari/h" Min="1"
                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  data-testid="input-spari-orari" />
                             </MudItem>
-                            <MudItem xs="6" sm="4" md="2">
+                            <MudItem xs="6" sm="4" md="3">
                                 <MudNumericField @bind-Value="_dto.CostoAttrezzatura" @bind-Value:after="Ricalcola"
                                                  Label="Attrezzatura (€)" Min="0" Format="N2"
                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  data-testid="input-costo-attrezzatura" />
                             </MudItem>
-                            <MudItem xs="6" sm="4" md="2">
+                            <MudItem xs="6" sm="4" md="3">
                                 <MudNumericField @bind-Value="_dto.EuroOraSabbia" @bind-Value:after="Ricalcola"
                                                  Label="€/h sabbia" Min="0" Format="N2"
                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  data-testid="input-euro-ora-sabbia" />
+                            </MudItem>
+                        </MudGrid>
+
+                        <!-- LOTTI -->
+                        <MudDivider Class="my-3" />
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Layers" Color="Color.Info" Size="Size.Small" />
+                            <MudText Typo="Typo.body2"><b>LOTTI (fino a 4, il primo è obbligatorio)</b></MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Il calcolo viene eseguito per ogni lotto inserito</MudText>
+                        </MudStack>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField @bind-Value="_dto.Lotto" @bind-Value:after="Ricalcola"
+                                                 Label="Lotto 1 * (pz)" Min="1"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 data-testid="input-lotto1" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField T="int?" Value="_dto.Lotto2"
+                                                 ValueChanged="@(v => { _dto.Lotto2 = v; Ricalcola(); })"
+                                                 Label="Lotto 2 (pz)" Min="1"
+                                                 Clearable="true"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 data-testid="input-lotto2" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField T="int?" Value="_dto.Lotto3"
+                                                 ValueChanged="@(v => { _dto.Lotto3 = v; Ricalcola(); })"
+                                                 Label="Lotto 3 (pz)" Min="1"
+                                                 Clearable="true"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 data-testid="input-lotto3" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField T="int?" Value="_dto.Lotto4"
+                                                 ValueChanged="@(v => { _dto.Lotto4 = v; Ricalcola(); })"
+                                                 Label="Lotto 4 (pz)" Min="1"
+                                                 Clearable="true"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 data-testid="input-lotto4" />
                             </MudItem>
                         </MudGrid>
                     </MudPaper>
@@ -278,14 +312,6 @@
                                     <td><MudText Typo="Typo.caption">Lav+Sab / fig</MudText></td>
                                     <td class="text-right"><MudText Typo="Typo.caption">€@_calc.LavSabFig.ToString("N4")</MudText></td>
                                 </tr>
-                                <tr>
-                                    <td><MudText Typo="Typo.caption">Ripart. attrezzatura</MudText></td>
-                                    <td class="text-right"><MudText Typo="Typo.caption">€@_calc.RipartizioneAtt.ToString("N4")</MudText></td>
-                                </tr>
-                                <tr>
-                                    <td><MudText Typo="Typo.body2"><b>Costo anima</b></MudText></td>
-                                    <td class="text-right"><MudText Typo="Typo.body2" Color="Color.Primary"><b>€@_calc.CostoAnima.ToString("N4")</b></MudText></td>
-                                </tr>
                                 @if (_dto.VerniciaturaRichiesta)
                                 {
                                     <tr>
@@ -296,19 +322,31 @@
                                         <td><MudText Typo="Typo.caption">Vern. manodopera</MudText></td>
                                         <td class="text-right"><MudText Typo="Typo.caption">€@_calc.VernManodopera.ToString("N4")</MudText></td>
                                     </tr>
-                                    <tr>
-                                        <td><MudText Typo="Typo.caption">Vern. tot.</MudText></td>
-                                        <td class="text-right"><MudText Typo="Typo.caption">€@_calc.VernTot.ToString("N4")</MudText></td>
-                                    </tr>
                                 }
                             </tbody>
                         </MudSimpleTable>
 
-                        <MudPaper Class="pa-3 prezzo-vendita-box mb-3" Elevation="0" data-testid="box-prezzo-vendita">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">PREZZO DI VENDITA</MudText>
-                            <MudText Typo="Typo.h4" Color="Color.Success">€@_calc.PrezzoVendita.ToString("N4")</MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">per pezzo</MudText>
-                        </MudPaper>
+                        <!-- TABELLA PREZZI PER LOTTO -->
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">PREZZO PER LOTTO</MudText>
+                        <MudSimpleTable Dense="true" Class="mb-3">
+                            <thead>
+                                <tr style="border-bottom:1px solid var(--mud-palette-divider)">
+                                    <th><MudText Typo="Typo.caption"><b>Lotto (pz)</b></MudText></th>
+                                    <th class="text-right"><MudText Typo="Typo.caption"><b>Prezzo/pz</b></MudText></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var (lotto, calcLotto) in LottiCalcolati)
+                                {
+                                    <tr>
+                                        <td><MudText Typo="Typo.body2">@lotto</MudText></td>
+                                        <td class="text-right">
+                                            <MudText Typo="Typo.body2" Color="Color.Success"><b>€@calcLotto.PrezzoVendita.ToString("N4")</b></MudText>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
 
                         @if (_dto.IncollaggioRichiesto || _dto.ImballaggioRichiesto)
                         {
@@ -696,6 +734,24 @@
         _calc = PreventivoService.Calcola(_dto);
     }
 
+    // Calcola per ogni lotto inserito (Lotto1 sempre, 2-4 se non null)
+    private IEnumerable<(int Lotto, PreventivoCalcoloResult Calc)> LottiCalcolati
+    {
+        get
+        {
+            if (_dto.Lotto > 0 && _dto.Figure > 0 && _dto.PesoAnima > 0 && _dto.SpariOrari > 0)
+            {
+                yield return (_dto.Lotto, PreventivoService.CalcolaConLotto(_dto, _dto.Lotto));
+                if (_dto.Lotto2.HasValue && _dto.Lotto2 > 0)
+                    yield return (_dto.Lotto2.Value, PreventivoService.CalcolaConLotto(_dto, _dto.Lotto2.Value));
+                if (_dto.Lotto3.HasValue && _dto.Lotto3 > 0)
+                    yield return (_dto.Lotto3.Value, PreventivoService.CalcolaConLotto(_dto, _dto.Lotto3.Value));
+                if (_dto.Lotto4.HasValue && _dto.Lotto4 > 0)
+                    yield return (_dto.Lotto4.Value, PreventivoService.CalcolaConLotto(_dto, _dto.Lotto4.Value));
+            }
+        }
+    }
+
     // ── Selezione sabbia/vernice ─────────────────────────────────────────
 
     private void OnSabbiaSelezionata()
@@ -741,7 +797,9 @@
             TipoSabbiaId = preventivo.TipoSabbiaId, SabbiaSnapshot = preventivo.SabbiaSnapshot,
             EuroOraSabbia = preventivo.EuroOraSabbia, PrezzoSabbiaKg = preventivo.PrezzoSabbiaKg,
             Figure = preventivo.Figure, PesoAnima = preventivo.PesoAnima,
-            Lotto = preventivo.Lotto, SpariOrari = preventivo.SpariOrari,
+            Lotto = preventivo.Lotto, Lotto2 = preventivo.Lotto2,
+            Lotto3 = preventivo.Lotto3, Lotto4 = preventivo.Lotto4,
+            SpariOrari = preventivo.SpariOrari,
             CostoAttrezzatura = preventivo.CostoAttrezzatura,
             VerniciaturaRichiesta = preventivo.VerniciaturaRichiesta,
             TipoVerniceId = preventivo.TipoVerniceId, VerniceSnapshot = preventivo.VerniceSnapshot,

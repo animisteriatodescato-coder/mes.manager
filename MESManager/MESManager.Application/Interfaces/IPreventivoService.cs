@@ -26,4 +26,6 @@ public interface IPreventivoService
 
     // ── Calcolo (logica pura, usata anche lato Blazor) ─────────────────
     PreventivoCalcoloResult Calcola(PreventivoDto dto);
+    /// <summary>Calcola con un lotto specifico (per vista multi-lotto)</summary>
+    PreventivoCalcoloResult CalcolaConLotto(PreventivoDto dto, int lotto);
 }
