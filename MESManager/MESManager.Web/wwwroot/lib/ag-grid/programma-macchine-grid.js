@@ -354,9 +354,9 @@ window.programmaMacchineGrid = (function() {
         }
     }
 
-    // Sposta una commessa su/giù, anche tra macchine diverse
-    // ▲ in prima posizione → ultima posizione della macchina precedente
-    // ▼ in ultima posizione → prima posizione della macchina successiva
+    // Sposta una commessa su/giù, anche tra macchine diverse (incluse macchine vuote)
+    // ▲ in prima posizione → ultima posizione della macchina precedente (anche vuota)
+    // ▼ in ultima posizione → prima posizione della macchina successiva (anche vuota)
     async function moveRow(commessaId, numeroMacchina, direction) {
         try {
             // Raggruppa tutte le righe vere (no placeholder) per macchina, nell'ordine corrente
@@ -369,9 +369,8 @@ window.programmaMacchineGrid = (function() {
                 }
             });
 
-            // Macchine che hanno almeno una commessa (o quella corrente)
-            const activeMachines = allMachines.filter(m => byMachine[m].length > 0);
-            const currentMachineIndex = activeMachines.indexOf(numeroMacchina);
+            // Usa allMachines (NON filtra le vuote) per navigare anche nelle macchine senza commesse
+            const currentMachineIndex = allMachines.indexOf(numeroMacchina);
             const machineRows = byMachine[numeroMacchina] || [];
             const currentIndex = machineRows.findIndex(r => r.id === commessaId);
 
@@ -388,31 +387,25 @@ window.programmaMacchineGrid = (function() {
                     // Sposta su nella stessa macchina
                     targetIndex = currentIndex - 1;
                 } else {
-                    // Prima riga della macchina → salta alla macchina precedente (in coda)
+                    // Prima riga della macchina → salta alla macchina precedente (anche se vuota)
                     if (currentMachineIndex <= 0) {
                         console.log('[moveRow] Già in prima posizione assoluta');
                         return;
                     }
-                    targetMachine = activeMachines[currentMachineIndex - 1];
-                    targetIndex = byMachine[targetMachine].length; // in fondo
+                    targetMachine = allMachines[currentMachineIndex - 1];
+                    targetIndex = byMachine[targetMachine].length; // in fondo (0 se vuota)
                 }
             } else {
                 if (currentIndex < machineRows.length - 1) {
                     // Sposta giù nella stessa macchina
                     targetIndex = currentIndex + 1;
                 } else {
-                    // Ultima riga della macchina → salta alla macchina successiva (in testa)
-                    if (currentMachineIndex >= activeMachines.length - 1) {
-                        // Non ci sono macchine successive con commesse: proviamo comunque sulla prossima
-                        const nextAll = allMachines.indexOf(numeroMacchina);
-                        if (nextAll >= allMachines.length - 1) {
-                            console.log('[moveRow] Già in ultima posizione assoluta');
-                            return;
-                        }
-                        targetMachine = allMachines[nextAll + 1];
-                    } else {
-                        targetMachine = activeMachines[currentMachineIndex + 1];
+                    // Ultima riga della macchina → salta alla macchina successiva (anche se vuota)
+                    if (currentMachineIndex >= allMachines.length - 1) {
+                        console.log('[moveRow] Già in ultima posizione assoluta');
+                        return;
                     }
+                    targetMachine = allMachines[currentMachineIndex + 1];
                     targetIndex = 0; // in testa
                 }
             }
