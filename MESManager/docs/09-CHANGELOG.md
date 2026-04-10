@@ -4,7 +4,48 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.62.6
+## 🔖 Versione Corrente: v1.64.0
+
+---
+
+## 🔖 v1.64.0 — Nuovo modulo Preventivi anime in sabbia (10 Apr 2026)
+
+**Data**: 10 Aprile 2026
+
+### ✨ Feature — Preventivatore anime in sabbia (S4: full-DB)
+
+**Nuovo modulo completo** per creare e archiviare preventivi anime in sabbia.
+
+**Database (Migration `AddPreventivi`)**:
+- `PreventivoTipiSabbia` — tabella pricing tipi sabbia (EuroOra, PrezzoKg, SpariDefault, Famiglia)
+- `PreventivoTipiVernice` — tabella pricing tipi vernice (PrezzoKg, PercentualeApplicazione, Famiglia)
+- `Preventivi` — preventivi con FK nullable ai due tipi + campi snapshot + risultati calcolati + Stato
+
+**Architettura**:
+- `MESManager.Domain`: 3 nuove entity (Guid PK) — `PreventivoTipoSabbia`, `PreventivoTipoVernice`, `Preventivo`
+- `MESManager.Application`: `PreventivoDto`, `PreventivoTipoSabbiaDto`, `PreventivoTipoVerniceDto`, `PreventivoCalcoloResult`, `IPreventivoService`
+- `MESManager.Infrastructure`: `PreventivoService` (CRUD + `Calcola()` con formule complete), DI Scoped
+- `MESManager.Web`: `CatalogoPreventivi.razor` (MudTabs Nuovo/Archivio), `ModuloClienteDialog.razor`, `PreventiviController.cs`
+
+**Formule `Calcola()`**:
+- CostoAnima = (EuroOra/SpariOrari + PrezzoKg×PesoAnima×Figure) / Figure + CostoAttrezzatura/Lotto
+- VernTot = VernMateriale + VernManodopera
+- PrezzoVendita = CostoAnima + VernTot (Incoll/Imb separati)
+
+**Impostazioni**:
+- `ImpostazioniTabelle.razor`: 2 nuovi tab "Sabbia Preventivi" / "Vernice Preventivi" con CRUD in-place
+- NavMenu: link `/preventivi` aggiunto nel gruppo Cataloghi
+- PaginaPolicy: `CatPreventivi` aggiunto
+
+**CSS** (`wwwroot/app.css`): `.preventivo-card`, `.sticky-calc`, `.prezzo-vendita-box`, `@media print` per ModuloCliente
+
+---
+
+## 🔖 Versione Corrente: v1.62.6 → v1.63.0 → v1.64.0
+
+---
+
+## 🔖 v1.63.0 — Rimozione modulo preventivatore precedente (9 Apr 2026)
 
 ---
 

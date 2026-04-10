@@ -404,6 +404,9 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
             b.Property(x => x.PrezzoSabbiaKg).HasPrecision(10, 4);
             b.Property(x => x.PesoAnima).HasPrecision(10, 4);
             b.Property(x => x.CostoAttrezzatura).HasPrecision(10, 2);
+            b.Property(x => x.EuroOraVerniciatura).HasPrecision(10, 2);
+            b.Property(x => x.EuroOraIncollaggio).HasPrecision(10, 2);
+            b.Property(x => x.EuroOraImballaggio).HasPrecision(10, 2);
             b.Property(x => x.CostoVerniceKg).HasPrecision(10, 4);
             b.Property(x => x.PercentualeVernice).HasPrecision(5, 2);
             b.Property(x => x.CalcCostoAnima).HasPrecision(10, 4);
