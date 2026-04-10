@@ -60,6 +60,11 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ManutenzioneRiga> ManutenzioneRighe => Set<ManutenzioneRiga>();
     public DbSet<AnomaliaStandardManutenzione> AnomalieStandardManutenzione => Set<AnomaliaStandardManutenzione>();
 
+    // Modulo Preventivi (v1.64.0)
+    public DbSet<PreventivoTipoSabbia> PreventivoTipiSabbia => Set<PreventivoTipoSabbia>();
+    public DbSet<PreventivoTipoVernice> PreventivoTipiVernice => Set<PreventivoTipoVernice>();
+    public DbSet<Preventivo> Preventivi => Set<Preventivo>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -362,6 +367,53 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
             .HasIndex(r => r.SchedaId);
         modelBuilder.Entity<ManutenzioneAttivita>()
             .HasIndex(a => a.TipoFrequenza);
+
+        // ── Modulo Preventivi (v1.64.0) ───────────────────────────────────
+        modelBuilder.Entity<PreventivoTipoSabbia>(b =>
+        {
+            b.ToTable("PreventivoTipiSabbia");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Codice).HasMaxLength(50).IsRequired();
+            b.Property(x => x.Nome).HasMaxLength(100).IsRequired();
+            b.Property(x => x.Famiglia).HasMaxLength(30).IsRequired();
+            b.Property(x => x.EuroOra).HasPrecision(10, 2);
+            b.Property(x => x.PrezzoKg).HasPrecision(10, 4);
+        });
+
+        modelBuilder.Entity<PreventivoTipoVernice>(b =>
+        {
+            b.ToTable("PreventivoTipiVernice");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Codice).HasMaxLength(50).IsRequired();
+            b.Property(x => x.Nome).HasMaxLength(100).IsRequired();
+            b.Property(x => x.Famiglia).HasMaxLength(30).IsRequired();
+            b.Property(x => x.PrezzoKg).HasPrecision(10, 4);
+            b.Property(x => x.PercentualeApplicazione).HasPrecision(5, 2);
+        });
+
+        modelBuilder.Entity<Preventivo>(b =>
+        {
+            b.ToTable("Preventivi");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Cliente).HasMaxLength(200).IsRequired();
+            b.Property(x => x.CodiceArticolo).HasMaxLength(100).IsRequired();
+            b.Property(x => x.SabbiaSnapshot).HasMaxLength(200);
+            b.Property(x => x.VerniceSnapshot).HasMaxLength(200);
+            b.Property(x => x.Stato).HasMaxLength(30).HasDefaultValue("InAttesa");
+            b.Property(x => x.EuroOraSabbia).HasPrecision(10, 2);
+            b.Property(x => x.PrezzoSabbiaKg).HasPrecision(10, 4);
+            b.Property(x => x.PesoAnima).HasPrecision(10, 4);
+            b.Property(x => x.CostoAttrezzatura).HasPrecision(10, 2);
+            b.Property(x => x.CostoVerniceKg).HasPrecision(10, 4);
+            b.Property(x => x.PercentualeVernice).HasPrecision(5, 2);
+            b.Property(x => x.CalcCostoAnima).HasPrecision(10, 4);
+            b.Property(x => x.CalcVerniciaturaTot).HasPrecision(10, 4);
+            b.Property(x => x.CalcPrezzoVendita).HasPrecision(10, 4);
+            b.HasOne(x => x.TipoSabbia).WithMany().HasForeignKey(x => x.TipoSabbiaId).OnDelete(DeleteBehavior.SetNull);
+            b.HasOne(x => x.TipoVernice).WithMany().HasForeignKey(x => x.TipoVerniceId).OnDelete(DeleteBehavior.SetNull);
+            b.HasIndex(x => x.DataCreazione);
+            b.HasIndex(x => x.Cliente);
+        });
     }
 
     private static StatoCommessa ParseStatoCommessa(string? value)

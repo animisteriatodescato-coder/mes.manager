@@ -55,6 +55,9 @@ public static class DependencyInjection
 
         // Anime FTP — Invio scheda produttiva a macchine (v1.62.1)
         services.AddScoped<IAnimeFtpService, AnimeFtpService>();
+
+        // Modulo Preventivi (v1.64.0)
+        services.AddScoped<IPreventivoService, PreventivoService>();
         
         // PLC Recipe Services (v1.33.0 - Trasmissione ricette a PLC)
         services.AddScoped<IRicettaGanttService, RicettaGanttService>();
