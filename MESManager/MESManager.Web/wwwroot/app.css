@@ -739,6 +739,48 @@ h1:focus {
 .mud-nav-group.nav-sec-statistiche  .mud-collapse-container::after { content: "📊"; }
 .mud-nav-group.nav-sec-impostazioni .mud-collapse-container::after { content: "⚙️"; }
 
+/* ==========================================================================
+   Menu laterale — Banda colore sfumata per gruppo (v1.65.2)
+   Override background + border-left per ogni sezione.
+   BIBBIA: usa .mud-nav-group.nav-sec-XXX > .mud-nav-link (figlio diretto).
+   ========================================================================== */
+.mud-drawer .mud-nav-group.nav-sec-prog > .mud-nav-link {
+    border-left: 4px solid rgba(33,150,243,0.85) !important;
+    background: linear-gradient(90deg, rgba(33,150,243,0.22) 0%, rgba(255,255,255,0.07) 55%, rgba(0,0,0,0.06) 100%) !important;
+}
+.mud-drawer .mud-nav-group.nav-sec-produzione > .mud-nav-link {
+    border-left: 4px solid rgba(255,152,0,0.85) !important;
+    background: linear-gradient(90deg, rgba(255,152,0,0.22) 0%, rgba(255,255,255,0.07) 55%, rgba(0,0,0,0.06) 100%) !important;
+}
+.mud-drawer .mud-nav-group.nav-sec-cataloghi > .mud-nav-link {
+    border-left: 4px solid rgba(0,188,212,0.85) !important;
+    background: linear-gradient(90deg, rgba(0,188,212,0.22) 0%, rgba(255,255,255,0.07) 55%, rgba(0,0,0,0.06) 100%) !important;
+}
+.mud-drawer .mud-nav-group.nav-sec-manutenzioni > .mud-nav-link {
+    border-left: 4px solid rgba(156,39,176,0.85) !important;
+    background: linear-gradient(90deg, rgba(156,39,176,0.22) 0%, rgba(255,255,255,0.07) 55%, rgba(0,0,0,0.06) 100%) !important;
+}
+.mud-drawer .mud-nav-group.nav-sec-sync > .mud-nav-link {
+    border-left: 4px solid rgba(76,175,80,0.85) !important;
+    background: linear-gradient(90deg, rgba(76,175,80,0.22) 0%, rgba(255,255,255,0.07) 55%, rgba(0,0,0,0.06) 100%) !important;
+}
+.mud-drawer .mud-nav-group.nav-sec-statistiche > .mud-nav-link {
+    border-left: 4px solid rgba(103,58,183,0.85) !important;
+    background: linear-gradient(90deg, rgba(103,58,183,0.22) 0%, rgba(255,255,255,0.07) 55%, rgba(0,0,0,0.06) 100%) !important;
+}
+.mud-drawer .mud-nav-group.nav-sec-impostazioni > .mud-nav-link {
+    border-left: 4px solid rgba(117,117,117,0.85) !important;
+    background: linear-gradient(90deg, rgba(117,117,117,0.20) 0%, rgba(255,255,255,0.07) 55%, rgba(0,0,0,0.06) 100%) !important;
+}
+/* Dark mode */
+.mud-theme-dark .mud-drawer .mud-nav-group.nav-sec-prog > .mud-nav-link         { background: linear-gradient(90deg, rgba(33,150,243,0.30) 0%, rgba(255,255,255,0.03) 55%, transparent 100%) !important; }
+.mud-theme-dark .mud-drawer .mud-nav-group.nav-sec-produzione > .mud-nav-link   { background: linear-gradient(90deg, rgba(255,152,0,0.30) 0%, rgba(255,255,255,0.03) 55%, transparent 100%) !important; }
+.mud-theme-dark .mud-drawer .mud-nav-group.nav-sec-cataloghi > .mud-nav-link    { background: linear-gradient(90deg, rgba(0,188,212,0.30) 0%, rgba(255,255,255,0.03) 55%, transparent 100%) !important; }
+.mud-theme-dark .mud-drawer .mud-nav-group.nav-sec-manutenzioni > .mud-nav-link { background: linear-gradient(90deg, rgba(156,39,176,0.30) 0%, rgba(255,255,255,0.03) 55%, transparent 100%) !important; }
+.mud-theme-dark .mud-drawer .mud-nav-group.nav-sec-sync > .mud-nav-link         { background: linear-gradient(90deg, rgba(76,175,80,0.30) 0%, rgba(255,255,255,0.03) 55%, transparent 100%) !important; }
+.mud-theme-dark .mud-drawer .mud-nav-group.nav-sec-statistiche > .mud-nav-link  { background: linear-gradient(90deg, rgba(103,58,183,0.30) 0%, rgba(255,255,255,0.03) 55%, transparent 100%) !important; }
+.mud-theme-dark .mud-drawer .mud-nav-group.nav-sec-impostazioni > .mud-nav-link { background: linear-gradient(90deg, rgba(117,117,117,0.25) 0%, rgba(255,255,255,0.03) 55%, transparent 100%) !important; }
+
 /* === AnimeEditDialog layout ottimizzato (v1.60.35) === */
 .anime-edit-dialog .mud-dialog-content { overflow-y: auto !important; max-height: calc(92vh - 120px) !important; }
 .anime-edit-dialog .mud-dialog-title { padding-top: 6px !important; padding-bottom: 6px !important; }

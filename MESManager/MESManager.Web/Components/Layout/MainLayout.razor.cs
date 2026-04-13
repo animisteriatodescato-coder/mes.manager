@@ -63,6 +63,43 @@ public partial class MainLayout : IDisposable
     private bool _isAdmin = false;
     private string _currentCategory = string.Empty;
 
+    // Nav group expanded state — max 2 aperte contemporaneamente (auto-collapse)
+    private bool _expandedProg = true;
+    private bool _expandedProd = false;
+    private bool _expandedCat  = false;
+    private bool _expandedMan  = false;
+    private bool _expandedSync = false;
+    private bool _expandedStat = false;
+    private bool _expandedImp  = false;
+    private readonly List<string> _openGroups = new() { "prog" };
+
+    private void OnNavGroupToggled(string groupId, bool expanded)
+    {
+        if (expanded)
+        {
+            if (!_openGroups.Contains(groupId)) _openGroups.Add(groupId);
+            while (_openGroups.Count > 2)
+            {
+                var toClose = _openGroups[0];
+                _openGroups.RemoveAt(0);
+                switch (toClose)
+                {
+                    case "prog": _expandedProg = false; break;
+                    case "prod": _expandedProd = false; break;
+                    case "cat":  _expandedCat  = false; break;
+                    case "man":  _expandedMan  = false; break;
+                    case "sync": _expandedSync = false; break;
+                    case "stat": _expandedStat = false; break;
+                    case "imp":  _expandedImp  = false; break;
+                }
+            }
+        }
+        else
+        {
+            _openGroups.Remove(groupId);
+        }
+    }
+
     private void ToggleAiPanel() => _aiPanelOpen = !_aiPanelOpen;
     private ErrorBoundary? _errorBoundary;
 
@@ -513,7 +550,8 @@ public partial class MainLayout : IDisposable
                 new("Clienti", "/cataloghi/clienti"),
                 new("Ricette", "/cataloghi/ricette"),
                 new("Anime", "/cataloghi/anime"),
-                new("Foto", "/cataloghi/foto")
+                new("Foto", "/cataloghi/foto"),
+                new("Preventivi", "/preventivi")
             },
             "Manutenzioni" => new List<MenuItem>
             {

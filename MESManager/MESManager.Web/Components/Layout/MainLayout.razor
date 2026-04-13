@@ -399,7 +399,7 @@
                     }
                     @if (_canProg || _canComm || _canGanttP)
                     {
-                        <MudNavGroup Expanded="true" Class="nav-sec-prog">
+                        <MudNavGroup Expanded="@_expandedProg" ExpandedChanged="@(v => OnNavGroupToggled("prog", v))" Class="nav-sec-prog">
                             <TitleContent>
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <span style="font-size: 16px; display: inline-flex; align-items: center;">&#128197;</span>
@@ -444,7 +444,7 @@
                     }
                     @if (_canDash || _canPlcRT || _canPlcSt || _canGantt || _canIncoll)
                     {
-                        <MudNavGroup Title="Produzione" Icon="@Icons.Material.Filled.Factory" IconColor="Color.Warning" Class="nav-sec-produzione">
+                        <MudNavGroup Title="Produzione" Icon="@Icons.Material.Filled.Factory" IconColor="Color.Warning" Expanded="@_expandedProd" ExpandedChanged="@(v => OnNavGroupToggled("prod", v))" Class="nav-sec-produzione">
                             @if (_canDash)
                             {
                                 <MudNavLink Href="/produzione/dashboard">
@@ -490,10 +490,11 @@
                         bool _canCatArt  = _isCatBase || catCtx.User.HasClaim(PaginaPolicy.ClaimType, "cat-articoli");
                         bool _canCatCli  = _isCatBase || catCtx.User.HasClaim(PaginaPolicy.ClaimType, "cat-clienti");
                         bool _canCatRic  = _isCatBase || catCtx.User.HasClaim(PaginaPolicy.ClaimType, "cat-ricette");
+                        bool _canCatPrev = _isCatBase || catCtx.User.HasClaim(PaginaPolicy.ClaimType, "cat-preventivi");
                     }
-                    @if (_canCatComm || _canCatAnim || _canCatArt || _canCatCli || _canCatRic)
+                    @if (_canCatComm || _canCatAnim || _canCatArt || _canCatCli || _canCatRic || _canCatPrev)
                     {
-                        <MudNavGroup Title="Cataloghi" Icon="@Icons.Material.Filled.LibraryBooks" IconColor="Color.Info" Class="nav-sec-cataloghi">
+                        <MudNavGroup Title="Cataloghi" Icon="@Icons.Material.Filled.LibraryBooks" IconColor="Color.Info" Expanded="@_expandedCat" ExpandedChanged="@(v => OnNavGroupToggled("cat", v))" Class="nav-sec-cataloghi">
                             @if (_canCatComm)
                             {
                                 <MudNavLink Href="/cataloghi/commesse">
@@ -524,6 +525,12 @@
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128221;</span><span>Ricette</span></div>
                                 </MudNavLink>
                             }
+                            @if (_canCatPrev)
+                            {
+                                <MudNavLink Href="/preventivi">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#129534;</span><span>Preventivi</span></div>
+                                </MudNavLink>
+                            }
                         </MudNavGroup>
                     }
                 </Authorized>
@@ -541,7 +548,7 @@
                     }
                     @if (_canManAlert || _canManCat || _canManGriglia || _canManImpostazioni)
                     {
-                        <MudNavGroup Title="Manutenzioni" Icon="@Icons.Material.Filled.Build" IconColor="Color.Secondary" Class="nav-sec-manutenzioni">
+                        <MudNavGroup Title="Manutenzioni" Icon="@Icons.Material.Filled.Build" IconColor="Color.Secondary" Expanded="@_expandedMan" ExpandedChanged="@(v => OnNavGroupToggled("man", v))" Class="nav-sec-manutenzioni">
                             @if (_canManGriglia)
                             {
                                 <MudNavLink Href="/manutenzioni/griglia">
@@ -573,7 +580,7 @@
 
             @* Sync - solo Admin *@
             <AuthorizeView Roles="Admin">
-                <MudNavGroup Title="Sync" Icon="@Icons.Material.Filled.Sync" IconColor="Color.Success" Class="nav-sec-sync">
+                <MudNavGroup Title="Sync" Icon="@Icons.Material.Filled.Sync" IconColor="Color.Success" Expanded="@_expandedSync" ExpandedChanged="@(v => OnNavGroupToggled("sync", v))" Class="nav-sec-sync">
                     <MudNavLink Href="/sync/gantt">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128260;</span><span>Gantt</span></div>
                     </MudNavLink>
@@ -598,7 +605,7 @@
                     }
                     @if (_canStatProd || _canStatOrd || _canStatPLC || _canStatOp)
                     {
-                        <MudNavGroup Title="Statistiche" Icon="@Icons.Material.Filled.BarChart" IconColor="Color.Tertiary" Class="nav-sec-statistiche">
+                        <MudNavGroup Title="Statistiche" Icon="@Icons.Material.Filled.BarChart" IconColor="Color.Tertiary" Expanded="@_expandedStat" ExpandedChanged="@(v => OnNavGroupToggled("stat", v))" Class="nav-sec-statistiche">
                             @if (_canStatProd)
                             {
                                 <MudNavLink Href="/statistiche/produzione">
@@ -630,7 +637,7 @@
 
             @* Impostazioni - solo Admin *@
             <AuthorizeView Roles="Admin">
-                <MudNavGroup Title="Impostazioni" Icon="@Icons.Material.Filled.Settings" IconColor="Color.Dark" Class="nav-sec-impostazioni">
+                <MudNavGroup Title="Impostazioni" Icon="@Icons.Material.Filled.Settings" IconColor="Color.Dark" Expanded="@_expandedImp" ExpandedChanged="@(v => OnNavGroupToggled("imp", v))" Class="nav-sec-impostazioni">
                     <MudNavLink Href="/impostazioni/gantt">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9881;&#65039;</span><span>Gantt Macchine</span></div>
                     </MudNavLink>
