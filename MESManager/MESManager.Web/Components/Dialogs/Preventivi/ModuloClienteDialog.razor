@@ -9,6 +9,10 @@
         <MudStack Row="true" AlignItems="AlignItems.Center">
             <MudIcon Icon="@Icons.Material.Filled.Description" />
             <MudText Typo="Typo.h6">Modulo Cliente - @Dto?.Cliente</MudText>
+            @if (Dto?.NumeroPreventivo > 0)
+            {
+                <MudChip T="string" Color="Color.Info" Size="Size.Small">N° @Dto.NumeroPreventivo</MudChip>
+            }
             <MudSpacer />
         </MudStack>
     </TitleContent>
@@ -77,22 +81,22 @@
         if (Dto == null) yield break;
         if (Dto.Lotto > 0)
         {
-            var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto);
+            var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto, Dto.Margine1);
             yield return (Dto.Lotto, r.PrezzoVendita);
         }
         if (Dto.Lotto2.HasValue && Dto.Lotto2.Value > 0)
         {
-            var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto2.Value);
+            var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto2.Value, Dto.Margine2);
             yield return (Dto.Lotto2.Value, r.PrezzoVendita);
         }
         if (Dto.Lotto3.HasValue && Dto.Lotto3.Value > 0)
         {
-            var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto3.Value);
+            var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto3.Value, Dto.Margine3);
             yield return (Dto.Lotto3.Value, r.PrezzoVendita);
         }
         if (Dto.Lotto4.HasValue && Dto.Lotto4.Value > 0)
         {
-            var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto4.Value);
+            var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto4.Value, Dto.Margine4);
             yield return (Dto.Lotto4.Value, r.PrezzoVendita);
         }
     }
@@ -128,6 +132,11 @@
 
         var sabbiaRow = string.IsNullOrWhiteSpace(Dto.SabbiaSnapshot) ? "" :
             $"<div><dt>Tipo sabbia</dt><dd>{System.Web.HttpUtility.HtmlEncode(Dto.SabbiaSnapshot)}</dd></div>";
+
+        var numeroRef = Dto!.NumeroPreventivo > 0 ? $"N. {Dto.NumeroPreventivo}" : "";
+        var emissioneRow = string.IsNullOrWhiteSpace(numeroRef)
+            ? $"Data emissione: {Dto.DataCreazione:dd/MM/yyyy}"
+            : $"Rif. {numeroRef} &nbsp;&bull;&nbsp; Data emissione: {Dto.DataCreazione:dd/MM/yyyy}";
 
         sb.Append($@"<!DOCTYPE html>
 <html lang=""it"">
@@ -172,7 +181,7 @@
   <hr class=""thick"" />
 
   <h1>PREVENTIVO FORNITURA ANIME</h1>
-  <div class=""meta"">Data emissione: {Dto.DataCreazione:dd/MM/yyyy}</div>
+  <div class=""meta"">{emissioneRow}</div>
 
   <div class=""section-title"">Dati Cliente</div>
   <dl>

@@ -10,6 +10,10 @@ public class Preventivo
     public Guid Id { get; set; }
     public DateTime DataCreazione { get; set; } = DateTime.UtcNow;
 
+    // ── Numero progressivo ────────────────────────────────────────────────
+    /// <summary>Numero preventivo progressivo (auto-assegnato, parte da 1000)</summary>
+    public int NumeroPreventivo { get; set; }
+
     // ── Dati cliente / articolo ─────────────────────────────────────────
     public string Cliente { get; set; } = string.Empty;
     public string CodiceArticolo { get; set; } = string.Empty;
@@ -36,6 +40,13 @@ public class Preventivo
     public int? Lotto4 { get; set; }
     public int SpariOrari { get; set; }
     public decimal CostoAttrezzatura { get; set; }
+
+    // ── Margini per lotto ───────────────────────────────────────────────
+    /// <summary>Percentuale di margine applicata su ogni lotto (0 = nessun margine)</summary>
+    public decimal Margine1 { get; set; }
+    public decimal Margine2 { get; set; }
+    public decimal Margine3 { get; set; }
+    public decimal Margine4 { get; set; }
 
     // ── Verniciatura ────────────────────────────────────────────────────
     public bool VerniciaturaRichiesta { get; set; }

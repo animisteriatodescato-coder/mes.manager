@@ -143,6 +143,7 @@ public class PreventivoService : IPreventivoService
         var entity = MapToEntity(dto);
         entity.Id = Guid.NewGuid();
         entity.DataCreazione = DateTime.UtcNow;
+        entity.NumeroPreventivo = Math.Max(await _db.Preventivi.MaxAsync(p => (int?)p.NumeroPreventivo) ?? 0, 999) + 1;
         _db.Preventivi.Add(entity);
         await _db.SaveChangesAsync();
         _logger.LogInformation("[PREVENTIVI] Creato: {Cliente} - {Codice}", entity.Cliente, entity.CodiceArticolo);
@@ -177,9 +178,8 @@ public class PreventivoService : IPreventivoService
     }
 
     // ── Calcolo ────────────────────────────────────────────────────────────
-    public PreventivoCalcoloResult CalcolaConLotto(PreventivoDto dto, int lotto)
+    public PreventivoCalcoloResult CalcolaConLotto(PreventivoDto dto, int lotto, decimal margine = 0)
     {
-        // Crea una copia con il lotto specificato e delega a Calcola
         var dtoLotto = new PreventivoDto
         {
             Figure = dto.Figure, PesoAnima = dto.PesoAnima, Lotto = lotto,
@@ -193,7 +193,13 @@ public class PreventivoService : IPreventivoService
             ImballaggioRichiesto = dto.ImballaggioRichiesto, EuroOraImballaggio = dto.EuroOraImballaggio,
             ImballaggioPzOra = dto.ImballaggioPzOra
         };
-        return Calcola(dtoLotto);
+        var result = Calcola(dtoLotto);
+        if (margine > 0)
+        {
+            result.Margine = margine;
+            result.PrezzoVendita = result.PrezzoVendita * (1 + margine / 100m);
+        }
+        return result;
     }
     public PreventivoCalcoloResult Calcola(PreventivoDto dto)
     {
@@ -262,6 +268,7 @@ public class PreventivoService : IPreventivoService
     private static PreventivoDto MapPreventivo(Preventivo p) => new()
     {
         Id = p.Id,
+        NumeroPreventivo = p.NumeroPreventivo,
         DataCreazione = p.DataCreazione.ToLocalTime(),
         Cliente = p.Cliente,
         CodiceArticolo = p.CodiceArticolo,
@@ -279,6 +286,10 @@ public class PreventivoService : IPreventivoService
         Lotto4 = p.Lotto4,
         SpariOrari = p.SpariOrari,
         CostoAttrezzatura = p.CostoAttrezzatura,
+        Margine1 = p.Margine1,
+        Margine2 = p.Margine2,
+        Margine3 = p.Margine3,
+        Margine4 = p.Margine4,
         VerniciaturaRichiesta = p.VerniciaturaRichiesta,
         TipoVerniceId = p.TipoVerniceId,
         VerniceSnapshot = p.VerniceSnapshot,
@@ -316,6 +327,10 @@ public class PreventivoService : IPreventivoService
         Lotto4 = dto.Lotto4,
         SpariOrari = dto.SpariOrari,
         CostoAttrezzatura = dto.CostoAttrezzatura,
+        Margine1 = dto.Margine1,
+        Margine2 = dto.Margine2,
+        Margine3 = dto.Margine3,
+        Margine4 = dto.Margine4,
         VerniciaturaRichiesta = dto.VerniciaturaRichiesta,
         TipoVerniceId = dto.TipoVerniceId,
         VerniceSnapshot = dto.VerniceSnapshot,
@@ -353,6 +368,10 @@ public class PreventivoService : IPreventivoService
         entity.Lotto4 = dto.Lotto4;
         entity.SpariOrari = dto.SpariOrari;
         entity.CostoAttrezzatura = dto.CostoAttrezzatura;
+        entity.Margine1 = dto.Margine1;
+        entity.Margine2 = dto.Margine2;
+        entity.Margine3 = dto.Margine3;
+        entity.Margine4 = dto.Margine4;
         entity.VerniciaturaRichiesta = dto.VerniciaturaRichiesta;
         entity.TipoVerniceId = dto.TipoVerniceId;
         entity.VerniceSnapshot = dto.VerniceSnapshot;

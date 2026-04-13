@@ -28,6 +28,7 @@ public class PreventivoTipoVerniceDto
 public class PreventivoDto
 {
     public Guid Id { get; set; }
+    public int NumeroPreventivo { get; set; }
     public DateTime DataCreazione { get; set; } = DateTime.Today;
     public string Cliente { get; set; } = string.Empty;
     public string CodiceArticolo { get; set; } = string.Empty;
@@ -49,6 +50,12 @@ public class PreventivoDto
     public int? Lotto4 { get; set; }
     public int SpariOrari { get; set; }
     public decimal CostoAttrezzatura { get; set; } = 100;
+
+    // Margini per lotto (% di ricarico)
+    public decimal Margine1 { get; set; }
+    public decimal Margine2 { get; set; }
+    public decimal Margine3 { get; set; }
+    public decimal Margine4 { get; set; }
 
     // Verniciatura
     public bool VerniciaturaRichiesta { get; set; }
@@ -91,4 +98,6 @@ public class PreventivoCalcoloResult
     public decimal Incollaggio { get; set; }
     public decimal Imballaggio { get; set; }
     public decimal PrezzoVendita { get; set; }
+    /// <summary>Margine % applicato (informativo, per display)</summary>
+    public decimal Margine { get; set; }
 }

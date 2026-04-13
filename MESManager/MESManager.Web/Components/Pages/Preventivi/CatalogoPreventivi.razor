@@ -30,6 +30,13 @@
                         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
                             <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" />
                             <MudText Typo="Typo.subtitle1"><b>DATI CLIENTE</b></MudText>
+                            @if (_dto.NumeroPreventivo > 0)
+                            {
+                                <MudSpacer />
+                                <MudChip T="string" Color="Color.Info" Size="Size.Small" Icon="@Icons.Material.Filled.Tag">
+                                    N° @_dto.NumeroPreventivo
+                                </MudChip>
+                            }
                         </MudStack>
                         <MudGrid Spacing="2">
                             <MudItem xs="12" sm="6">
@@ -181,9 +188,48 @@
                                                  data-testid="input-lotto4" />
                             </MudItem>
                         </MudGrid>
-                    </MudPaper>
 
-                    <!-- VERNICIATURA -->
+                        <!-- MARGINI PER LOTTO -->
+                        <MudDivider Class="mt-2 mb-1" />
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">MARGINE DI PROFITTO PER LOTTO (%)</MudText>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField T="decimal" @bind-Value="_dto.Margine1" @bind-Value:after="Ricalcola"
+                                                 Label="Margine L1 (%)" Min="@(0m)" Max="@(100m)"
+                                                 Format="N1"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 Adornment="Adornment.End" AdornmentText="%"
+                                                 data-testid="input-margine1" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField T="decimal" @bind-Value="_dto.Margine2" @bind-Value:after="Ricalcola"
+                                                 Label="Margine L2 (%)" Min="@(0m)" Max="@(100m)"
+                                                 Format="N1"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 Adornment="Adornment.End" AdornmentText="%"
+                                                 Disabled="@(!_dto.Lotto2.HasValue || _dto.Lotto2 <= 0)"
+                                                 data-testid="input-margine2" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField T="decimal" @bind-Value="_dto.Margine3" @bind-Value:after="Ricalcola"
+                                                 Label="Margine L3 (%)" Min="@(0m)" Max="@(100m)"
+                                                 Format="N1"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 Adornment="Adornment.End" AdornmentText="%"
+                                                 Disabled="@(!_dto.Lotto3.HasValue || _dto.Lotto3 <= 0)"
+                                                 data-testid="input-margine3" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField T="decimal" @bind-Value="_dto.Margine4" @bind-Value:after="Ricalcola"
+                                                 Label="Margine L4 (%)" Min="@(0m)" Max="@(100m)"
+                                                 Format="N1"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 Adornment="Adornment.End" AdornmentText="%"
+                                                 Disabled="@(!_dto.Lotto4.HasValue || _dto.Lotto4 <= 0)"
+                                                 data-testid="input-margine4" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
                     <MudPaper Class="pa-4 mb-3" Elevation="2">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
                             <MudIcon Icon="@Icons.Material.Filled.FormatColorFill" Color="Color.Secondary" />
@@ -343,6 +389,7 @@
                             <thead>
                                 <tr style="border-bottom:1px solid var(--mud-palette-divider)">
                                     <th><MudText Typo="Typo.caption"><b>Lotto (pz)</b></MudText></th>
+                                    <th class="text-right"><MudText Typo="Typo.caption"><b>Margine</b></MudText></th>
                                     <th class="text-right"><MudText Typo="Typo.caption"><b>Prezzo/pz</b></MudText></th>
                                 </tr>
                             </thead>
@@ -351,6 +398,16 @@
                                 {
                                     <tr>
                                         <td><MudText Typo="Typo.body2">@lotto</MudText></td>
+                                        <td class="text-right">
+                                            @if (calcLotto.Margine > 0)
+                                            {
+                                                <MudText Typo="Typo.caption" Color="Color.Warning">+@calcLotto.Margine.ToString("N1")%</MudText>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.caption" Color="Color.Default">—</MudText>
+                                            }
+                                        </td>
                                         <td class="text-right">
                                             <MudText Typo="Typo.body2" Color="Color.Success"><b>€@calcLotto.PrezzoVendita.ToString("N4")</b></MudText>
                                         </td>
@@ -757,13 +814,13 @@
         {
             if (_dto.Lotto > 0 && _dto.Figure > 0 && _dto.PesoAnima > 0 && _dto.SpariOrari > 0)
             {
-                yield return (_dto.Lotto, PreventivoService.CalcolaConLotto(_dto, _dto.Lotto));
+                yield return (_dto.Lotto, PreventivoService.CalcolaConLotto(_dto, _dto.Lotto, _dto.Margine1));
                 if (_dto.Lotto2.HasValue && _dto.Lotto2 > 0)
-                    yield return (_dto.Lotto2.Value, PreventivoService.CalcolaConLotto(_dto, _dto.Lotto2.Value));
+                    yield return (_dto.Lotto2.Value, PreventivoService.CalcolaConLotto(_dto, _dto.Lotto2.Value, _dto.Margine2));
                 if (_dto.Lotto3.HasValue && _dto.Lotto3 > 0)
-                    yield return (_dto.Lotto3.Value, PreventivoService.CalcolaConLotto(_dto, _dto.Lotto3.Value));
+                    yield return (_dto.Lotto3.Value, PreventivoService.CalcolaConLotto(_dto, _dto.Lotto3.Value, _dto.Margine3));
                 if (_dto.Lotto4.HasValue && _dto.Lotto4 > 0)
-                    yield return (_dto.Lotto4.Value, PreventivoService.CalcolaConLotto(_dto, _dto.Lotto4.Value));
+                    yield return (_dto.Lotto4.Value, PreventivoService.CalcolaConLotto(_dto, _dto.Lotto4.Value, _dto.Margine4));
             }
         }
     }
@@ -828,6 +885,8 @@
             Figure = preventivo.Figure, PesoAnima = preventivo.PesoAnima,
             Lotto = preventivo.Lotto, Lotto2 = preventivo.Lotto2,
             Lotto3 = preventivo.Lotto3, Lotto4 = preventivo.Lotto4,
+            Margine1 = preventivo.Margine1, Margine2 = preventivo.Margine2,
+            Margine3 = preventivo.Margine3, Margine4 = preventivo.Margine4,
             SpariOrari = preventivo.SpariOrari,
             CostoAttrezzatura = preventivo.CostoAttrezzatura,
             VerniciaturaRichiesta = preventivo.VerniciaturaRichiesta,
