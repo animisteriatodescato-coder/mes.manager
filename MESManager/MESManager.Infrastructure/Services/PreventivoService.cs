@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MESManager.Application.DTOs;
@@ -154,6 +155,21 @@ public class PreventivoService : IPreventivoService
     {
         var entity = await _db.Preventivi.FindAsync(dto.Id);
         if (entity == null) return null;
+
+        // Feature 2: salva snapshot revisione prima di aggiornare
+        var numeroRev = await _db.PreventivoRevisioni
+            .Where(r => r.PreventivoId == entity.Id)
+            .CountAsync();
+        var snapshot = new PreventivoRevisione
+        {
+            Id = Guid.NewGuid(),
+            PreventivoId = entity.Id,
+            NumeroRevisione = numeroRev + 1,
+            DataRevisione = DateTime.UtcNow,
+            DtoJson = JsonSerializer.Serialize(MapPreventivo(entity))
+        };
+        _db.PreventivoRevisioni.Add(snapshot);
+
         AggiornaDaDto(entity, dto);
         await _db.SaveChangesAsync();
         return MapPreventivo(entity);
@@ -198,6 +214,12 @@ public class PreventivoService : IPreventivoService
         {
             result.Margine = margine;
             result.PrezzoVendita = result.PrezzoVendita * (1 + margine / 100m);
+        }
+        // Feature 8: applica sconto volume DOPO il margine
+        if (dto.Sconto > 0)
+        {
+            result.Sconto = dto.Sconto;
+            result.PrezzoVendita = result.PrezzoVendita * (1 - dto.Sconto / 100m);
         }
         return result;
     }
@@ -306,7 +328,13 @@ public class PreventivoService : IPreventivoService
         CalcCostoAnima = p.CalcCostoAnima,
         CalcVerniciaturaTot = p.CalcVerniciaturaTot,
         CalcPrezzoVendita = p.CalcPrezzoVendita,
-        Stato = p.Stato
+        Stato = p.Stato,
+        // Feature v1.65.7
+        NoteInterne = p.NoteInterne,
+        Sconto = p.Sconto,
+        CommessaId = p.CommessaId,
+        EmailDestinatario = p.EmailDestinatario,
+        EmailInviatoIl = p.EmailInviatoIl
     };
 
     private static Preventivo MapToEntity(PreventivoDto dto) => new()
@@ -347,7 +375,13 @@ public class PreventivoService : IPreventivoService
         CalcCostoAnima = dto.CalcCostoAnima,
         CalcVerniciaturaTot = dto.CalcVerniciaturaTot,
         CalcPrezzoVendita = dto.CalcPrezzoVendita,
-        Stato = dto.Stato
+        Stato = dto.Stato,
+        // Feature v1.65.7
+        NoteInterne = dto.NoteInterne,
+        Sconto = dto.Sconto,
+        CommessaId = dto.CommessaId,
+        EmailDestinatario = dto.EmailDestinatario,
+        EmailInviatoIl = dto.EmailInviatoIl
     };
 
     private static void AggiornaDaDto(Preventivo entity, PreventivoDto dto)
@@ -389,5 +423,125 @@ public class PreventivoService : IPreventivoService
         entity.CalcVerniciaturaTot = dto.CalcVerniciaturaTot;
         entity.CalcPrezzoVendita = dto.CalcPrezzoVendita;
         entity.Stato = dto.Stato;
+        // Feature v1.65.7
+        entity.NoteInterne = dto.NoteInterne;
+        entity.Sconto = dto.Sconto;
+        entity.CommessaId = dto.CommessaId;
+        entity.EmailDestinatario = dto.EmailDestinatario;
+        entity.EmailInviatoIl = dto.EmailInviatoIl;
+    }
+
+    // ── Feature v1.65.7: nuovi metodi ─────────────────────────────────────
+
+    public async Task<PreventivoDto?> DuplicaAsync(Guid id)
+    {
+        var entity = await _db.Preventivi.FindAsync(id);
+        if (entity == null) return null;
+        var clone = MapPreventivo(entity);
+        clone.Id = Guid.Empty;
+        clone.NumeroPreventivo = 0;
+        clone.DataCreazione = DateTime.Today;
+        clone.Stato = "InAttesa";
+        clone.EmailDestinatario = null;
+        clone.EmailInviatoIl = null;
+        clone.NoteInterne = null;
+        var created = await CreateAsync(clone);
+        _logger.LogInformation("[PREVENTIVI] Duplicato {Old} → {New}", id, created.Id);
+        return created;
+    }
+
+    public async Task<List<PreventivoRevisioneDto>> GetRevisioniAsync(Guid preventivoId)
+        => await _db.PreventivoRevisioni
+            .Where(r => r.PreventivoId == preventivoId)
+            .OrderByDescending(r => r.NumeroRevisione)
+            .Select(r => new PreventivoRevisioneDto
+            {
+                Id = r.Id,
+                NumeroRevisione = r.NumeroRevisione,
+                DataRevisione = r.DataRevisione.ToLocalTime(),
+                NoteRevisione = r.NoteRevisione
+            })
+            .ToListAsync();
+
+    public async Task<PreventivoDto?> RipristinaRevisioneAsync(Guid revisioneId)
+    {
+        var rev = await _db.PreventivoRevisioni.FindAsync(revisioneId);
+        if (rev == null) return null;
+        var dto = JsonSerializer.Deserialize<PreventivoDto>(rev.DtoJson);
+        if (dto == null) return null;
+        return await UpdateAsync(dto);
+    }
+
+    public async Task<List<PreventivoTemplateDto>> GetTemplatesAsync()
+        => await _db.PreventivoTemplates
+            .OrderBy(t => t.Nome)
+            .Select(t => new PreventivoTemplateDto
+            {
+                Id = t.Id,
+                Nome = t.Nome,
+                Descrizione = t.Descrizione,
+                DataCreazione = t.DataCreazione.ToLocalTime()
+            })
+            .ToListAsync();
+
+    public async Task<PreventivoTemplateDto> SalvaTemplateAsync(string nome, string? descrizione, PreventivoDto dto)
+    {
+        // Serializza solo i parametri tecnici (no Id/Cliente/Stato/email)
+        var parametri = new PreventivoDto
+        {
+            Figure = dto.Figure, PesoAnima = dto.PesoAnima, Lotto = dto.Lotto,
+            Lotto2 = dto.Lotto2, Lotto3 = dto.Lotto3, Lotto4 = dto.Lotto4,
+            SpariOrari = dto.SpariOrari, CostoAttrezzatura = dto.CostoAttrezzatura,
+            Margine1 = dto.Margine1, Margine2 = dto.Margine2, Margine3 = dto.Margine3, Margine4 = dto.Margine4,
+            TipoSabbiaId = dto.TipoSabbiaId, SabbiaSnapshot = dto.SabbiaSnapshot,
+            EuroOraSabbia = dto.EuroOraSabbia, PrezzoSabbiaKg = dto.PrezzoSabbiaKg,
+            VerniciaturaRichiesta = dto.VerniciaturaRichiesta,
+            TipoVerniceId = dto.TipoVerniceId, VerniceSnapshot = dto.VerniceSnapshot,
+            CostoVerniceKg = dto.CostoVerniceKg, PercentualeVernice = dto.PercentualeVernice,
+            VerniciaturaPzOra = dto.VerniciaturaPzOra, EuroOraVerniciatura = dto.EuroOraVerniciatura,
+            IncollaggioRichiesto = dto.IncollaggioRichiesto, EuroOraIncollaggio = dto.EuroOraIncollaggio,
+            IncollaggioPzOra = dto.IncollaggioPzOra,
+            ImballaggioRichiesto = dto.ImballaggioRichiesto, EuroOraImballaggio = dto.EuroOraImballaggio,
+            ImballaggioPzOra = dto.ImballaggioPzOra,
+            Sconto = dto.Sconto
+        };
+        var entity = new PreventivoTemplate
+        {
+            Id = Guid.NewGuid(),
+            Nome = nome,
+            Descrizione = descrizione,
+            DataCreazione = DateTime.UtcNow,
+            ParametriJson = JsonSerializer.Serialize(parametri)
+        };
+        _db.PreventivoTemplates.Add(entity);
+        await _db.SaveChangesAsync();
+        return new PreventivoTemplateDto { Id = entity.Id, Nome = entity.Nome, Descrizione = entity.Descrizione, DataCreazione = entity.DataCreazione.ToLocalTime() };
+    }
+
+    public async Task<PreventivoDto?> CaricaTemplateAsync(Guid templateId)
+    {
+        var t = await _db.PreventivoTemplates.FindAsync(templateId);
+        if (t == null) return null;
+        return JsonSerializer.Deserialize<PreventivoDto>(t.ParametriJson);
+    }
+
+    public async Task<bool> EliminaTemplateAsync(Guid id)
+    {
+        var t = await _db.PreventivoTemplates.FindAsync(id);
+        if (t == null) return false;
+        _db.PreventivoTemplates.Remove(t);
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<PreventivoDto?> RegistraInvioEmailAsync(Guid id, string destinatario)
+    {
+        var entity = await _db.Preventivi.FindAsync(id);
+        if (entity == null) return null;
+        entity.EmailDestinatario = destinatario;
+        entity.EmailInviatoIl = DateTime.UtcNow;
+        entity.Stato = "Inviato";
+        await _db.SaveChangesAsync();
+        return MapPreventivo(entity);
     }
 }

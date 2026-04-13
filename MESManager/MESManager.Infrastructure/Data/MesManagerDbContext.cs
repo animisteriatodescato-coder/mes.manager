@@ -64,6 +64,8 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<PreventivoTipoSabbia> PreventivoTipiSabbia => Set<PreventivoTipoSabbia>();
     public DbSet<PreventivoTipoVernice> PreventivoTipiVernice => Set<PreventivoTipoVernice>();
     public DbSet<Preventivo> Preventivi => Set<Preventivo>();
+    public DbSet<PreventivoRevisione> PreventivoRevisioni => Set<PreventivoRevisione>();
+    public DbSet<PreventivoTemplate> PreventivoTemplates => Set<PreventivoTemplate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -412,10 +414,33 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
             b.Property(x => x.CalcCostoAnima).HasPrecision(10, 4);
             b.Property(x => x.CalcVerniciaturaTot).HasPrecision(10, 4);
             b.Property(x => x.CalcPrezzoVendita).HasPrecision(10, 4);
+            // Feature v1.65.7
+            b.Property(x => x.Sconto).HasPrecision(5, 2).HasDefaultValue(0m);
+            b.Property(x => x.NoteInterne).HasMaxLength(2000);
+            b.Property(x => x.EmailDestinatario).HasMaxLength(300);
             b.HasOne(x => x.TipoSabbia).WithMany().HasForeignKey(x => x.TipoSabbiaId).OnDelete(DeleteBehavior.SetNull);
             b.HasOne(x => x.TipoVernice).WithMany().HasForeignKey(x => x.TipoVerniceId).OnDelete(DeleteBehavior.SetNull);
             b.HasIndex(x => x.DataCreazione);
             b.HasIndex(x => x.Cliente);
+        });
+
+        modelBuilder.Entity<PreventivoRevisione>(b =>
+        {
+            b.ToTable("PreventivoRevisioni");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.NoteRevisione).HasMaxLength(500);
+            b.Property(x => x.DtoJson).IsRequired();
+            b.HasOne<Preventivo>().WithMany().HasForeignKey(x => x.PreventivoId).OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(x => x.PreventivoId);
+        });
+
+        modelBuilder.Entity<PreventivoTemplate>(b =>
+        {
+            b.ToTable("PreventivoTemplates");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Nome).HasMaxLength(100).IsRequired();
+            b.Property(x => x.Descrizione).HasMaxLength(500);
+            b.Property(x => x.ParametriJson).IsRequired();
         });
     }
 

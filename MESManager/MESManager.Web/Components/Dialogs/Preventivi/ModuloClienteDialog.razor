@@ -2,6 +2,8 @@
 @using MESManager.Application.Interfaces
 @inject IJSRuntime JS
 @inject IPreventivoService PreventivoService
+@inject IEmailService EmailService
+@inject ISnackbar Snackbar
 @inject NavigationManager Nav
 
 <MudDialog Class="modulo-cliente-dialog" data-testid="dlg-modulo-cliente">
@@ -41,13 +43,55 @@
                 </tbody>
             </MudSimpleTable>
             <MudDivider Class="my-2" />
-            @foreach (var (lotto, prezzo) in GetLottiPrezzi())
-            {
-                <MudText Typo="Typo.body1">@lotto pz → <b>€@prezzo.ToString("N4")</b>/pz</MudText>
-            }
+
+            <!-- Prezzi per lotto (Feature 12: Margine + Sconto) -->
+            <MudSimpleTable Dense="true" Style="font-size:0.88rem">
+                <thead>
+                    <tr>
+                        <th>Lotto</th>
+                        <th style="text-align:center">Margine</th>
+                        <th style="text-align:center">Sconto</th>
+                        <th style="text-align:right">Prezzo/pz</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var (lotto, margine, prezzo) in GetLottiPrezziConMargine())
+                    {
+                        <tr>
+                            <td>@lotto pz</td>
+                            <td style="text-align:center">@(margine > 0 ? $"+{margine:N1}%" : "—")</td>
+                            <td style="text-align:center">@(Dto.Sconto > 0 ? $"-{Dto.Sconto:N1}%" : "—")</td>
+                            <td style="text-align:right"><b>€@prezzo.ToString("N4")</b></td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
         }
     </DialogContent>
     <DialogActions>
+        @if (Dto != null && EmailService.IsConfigured)
+        {
+            <MudTextField @bind-Value="_emailDestinatario"
+                          Placeholder="Email destinatario..."
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Style="min-width:200px"
+                          data-testid="input-email-dest" />
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Info"
+                       StartIcon="@Icons.Material.Filled.Email"
+                       OnClick="InviaEmailAsync"
+                       Disabled="@(_isInvioEmail || string.IsNullOrWhiteSpace(_emailDestinatario))"
+                       data-testid="btn-invia-email">
+                @(_isInvioEmail ? "Invio..." : "Invia")
+            </MudButton>
+            @if (Dto.EmailInviatoIl.HasValue)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Success">
+                    @("✓") @Dto.EmailInviatoIl.Value.ToString("dd/MM HH:mm")
+                </MudText>
+            }
+        }
         <MudButton Variant="Variant.Filled"
                    Color="Color.Primary"
                    StartIcon="@Icons.Material.Filled.Print"
@@ -66,171 +110,78 @@
     [Parameter]
     public PreventivoDto? Dto { get; set; }
 
+    private string _emailDestinatario = string.Empty;
+    private bool _isInvioEmail;
+
     private async Task StampaAsync()
     {
         if (Dto == null) return;
         var baseUri = Nav.BaseUri.TrimEnd('/');
-        var html = BuildPrintHtml(baseUri);
+        var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService);
         await JS.InvokeVoidAsync("mesPreventivoPrint", html);
     }
 
     private void Chiudi() => MudDialog.Close(DialogResult.Ok(true));
 
-    private IEnumerable<(int Lotto, decimal Prezzo)> GetLottiPrezzi()
+    private async Task InviaEmailAsync()
+    {
+        if (Dto == null || string.IsNullOrWhiteSpace(_emailDestinatario)) return;
+        _isInvioEmail = true;
+        try
+        {
+            var baseUri = Nav.BaseUri.TrimEnd('/');
+            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService);
+            var ok = await EmailService.InviaPreventivoPdfAsync(
+                _emailDestinatario, html, Dto.Cliente, Dto.NumeroPreventivo);
+            if (ok)
+            {
+                var aggiornato = await PreventivoService.RegistraInvioEmailAsync(Dto.Id, _emailDestinatario);
+                if (aggiornato != null)
+                {
+                    Dto.EmailDestinatario = aggiornato.EmailDestinatario;
+                    Dto.EmailInviatoIl = aggiornato.EmailInviatoIl;
+                    Dto.Stato = aggiornato.Stato;
+                }
+                Snackbar.Add($"Preventivo inviato a {_emailDestinatario}", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Invio email non riuscito.", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore invio email: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isInvioEmail = false;
+        }
+    }
+
+    private IEnumerable<(int Lotto, decimal Margine, decimal Prezzo)> GetLottiPrezziConMargine()
     {
         if (Dto == null) yield break;
         if (Dto.Lotto > 0)
         {
             var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto, Dto.Margine1);
-            yield return (Dto.Lotto, r.PrezzoVendita);
+            yield return (Dto.Lotto, Dto.Margine1, r.PrezzoVendita);
         }
         if (Dto.Lotto2.HasValue && Dto.Lotto2.Value > 0)
         {
             var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto2.Value, Dto.Margine2);
-            yield return (Dto.Lotto2.Value, r.PrezzoVendita);
+            yield return (Dto.Lotto2.Value, Dto.Margine2, r.PrezzoVendita);
         }
         if (Dto.Lotto3.HasValue && Dto.Lotto3.Value > 0)
         {
             var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto3.Value, Dto.Margine3);
-            yield return (Dto.Lotto3.Value, r.PrezzoVendita);
+            yield return (Dto.Lotto3.Value, Dto.Margine3, r.PrezzoVendita);
         }
         if (Dto.Lotto4.HasValue && Dto.Lotto4.Value > 0)
         {
             var r = PreventivoService.CalcolaConLotto(Dto, Dto.Lotto4.Value, Dto.Margine4);
-            yield return (Dto.Lotto4.Value, r.PrezzoVendita);
+            yield return (Dto.Lotto4.Value, Dto.Margine4, r.PrezzoVendita);
         }
-    }
-
-    private string BuildPrintHtml(string baseUri)
-    {
-        var sb = new System.Text.StringBuilder();
-
-        // Costruisci righe prezzi
-        var righi = new System.Text.StringBuilder();
-        foreach (var (lotto, prezzo) in GetLottiPrezzi())
-        {
-            righi.Append($"<tr><td>{lotto:N0} pz</td><td class=\"price\">€{prezzo:N4}</td></tr>");
-        }
-
-        // Servizi aggiuntivi
-        var servizi = new System.Text.StringBuilder();
-        if (Dto!.VerniciaturaRichiesta && !string.IsNullOrWhiteSpace(Dto.VerniceSnapshot))
-            servizi.Append($"<div><dt>Verniciatura</dt><dd>{Dto.VerniceSnapshot}</dd></div>");
-        if (Dto.IncollaggioRichiesto)
-            servizi.Append("<div><dt>Servizi</dt><dd>Incollaggio" + (Dto.ImballaggioRichiesto ? " + Imballaggio" : "") + "</dd></div>");
-        else if (Dto.ImballaggioRichiesto)
-            servizi.Append("<div><dt>Servizi</dt><dd>Imballaggio</dd></div>");
-
-        var note = string.IsNullOrWhiteSpace(Dto.NoteCliente) ? "" :
-            $"<div class=\"section-title\">Note</div><div class=\"note-block\">{System.Web.HttpUtility.HtmlEncode(Dto.NoteCliente)}</div>";
-
-        var codiceArticolo = string.IsNullOrWhiteSpace(Dto.CodiceArticolo) ? "" :
-            $"<div><dt>Codice articolo</dt><dd>{System.Web.HttpUtility.HtmlEncode(Dto.CodiceArticolo)}</dd></div>";
-
-        var descrizione = string.IsNullOrWhiteSpace(Dto.Descrizione) ? "" :
-            $"<div style=\"grid-column:1/-1\"><dt>Descrizione articolo</dt><dd>{System.Web.HttpUtility.HtmlEncode(Dto.Descrizione)}</dd></div>";
-
-        var sabbiaRow = string.IsNullOrWhiteSpace(Dto.SabbiaSnapshot) ? "" :
-            $"<div><dt>Tipo sabbia</dt><dd>{System.Web.HttpUtility.HtmlEncode(Dto.SabbiaSnapshot)}</dd></div>";
-
-        var numeroRef = Dto!.NumeroPreventivo > 0 ? $"N. {Dto.NumeroPreventivo}" : "";
-        var emissioneRow = string.IsNullOrWhiteSpace(numeroRef)
-            ? $"Data emissione: {Dto.DataCreazione:dd/MM/yyyy}"
-            : $"Rif. {numeroRef} &nbsp;&bull;&nbsp; Data emissione: {Dto.DataCreazione:dd/MM/yyyy}";
-
-        sb.Append($@"<!DOCTYPE html>
-<html lang=""it"">
-<head>
-  <meta charset=""utf-8"" />
-  <title>Preventivo Fornitura Anime – {System.Web.HttpUtility.HtmlEncode(Dto.Cliente)}</title>
-  <style>
-    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-    body {{ font-family: Arial, sans-serif; font-size: 10.5pt; color: #111; background: #fff; padding: 10mm 15mm; }}
-    @page {{ margin: 12mm 18mm 18mm 18mm; }}
-    .logo-header {{ width: 100%; max-height: 130px; object-fit: contain; object-position: left center; }}
-    hr.thick {{ border: none; border-top: 2.5px solid #111; margin: 7px 0 10px; }}
-    hr.thin  {{ border: none; border-top: 1px solid #ccc; margin: 6px 0; }}
-    h1 {{ font-size: 16pt; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 3px; }}
-    .meta {{ font-size: 9pt; color: #555; margin-bottom: 10px; }}
-    .section-title {{ font-size: 10pt; font-weight: bold; text-transform: uppercase;
-                      border-bottom: 1.5px solid #111; padding-bottom: 2px; margin: 14px 0 7px; }}
-    dl {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 12px; margin-bottom: 10px; }}
-    dt {{ font-size: 8pt; color: #666; margin-bottom: 1px; }}
-    dd {{ font-size: 10pt; font-weight: 600; }}
-    table.prezzi {{ width: 100%; border-collapse: collapse; margin-top: 4px; }}
-    table.prezzi th {{ background: #f2f2f2; border: 1px solid #bbb; padding: 5px 10px;
-                       font-size: 9pt; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
-    table.prezzi td {{ border: 1px solid #ccc; padding: 6px 10px; font-size: 10.5pt; }}
-    td.price {{ text-align: right; font-weight: bold; color: #1a5c1a; }}
-    .note-block {{ border-left: 3px solid #999; background: #f9f9f9; padding: 7px 12px;
-                   font-size: 9pt; margin-bottom: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
-    .conditions {{ border: 1px solid #2e7d32; border-radius: 4px; padding: 10px 14px;
-                   margin-top: 22px; font-size: 8.5pt; line-height: 1.65;
-                   -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
-    .conditions .cond-title {{ font-weight: bold; color: #1b5e20; font-size: 9pt; margin-bottom: 5px; }}
-    .conditions ul {{ padding-left: 16px; }}
-    .conditions li {{ margin-bottom: 3px; }}
-    @media print {{
-      body {{ padding: 0; }}
-      -webkit-print-color-adjust: exact; print-color-adjust: exact;
-    }}
-  </style>
-</head>
-<body>
-  <picture>
-    <source srcset=""{baseUri}/images/logo-intestazione.png"" type=""image/png"" />
-    <img class=""logo-header"" src=""{baseUri}/images/logo-intestazione.svg"" alt=""Animisteria Todescato""
-         onerror=""this.style.display='none'"" />
-  </picture>
-  <hr class=""thick"" />
-
-  <h1>PREVENTIVO FORNITURA ANIME</h1>
-  <div class=""meta"">{emissioneRow}</div>
-
-  <div class=""section-title"">Dati Cliente</div>
-  <dl>
-    <div style=""grid-column:1/3""><dt>Cliente</dt><dd>{System.Web.HttpUtility.HtmlEncode(Dto.Cliente)}</dd></div>
-    {codiceArticolo}
-    {descrizione}
-  </dl>
-
-  <div class=""section-title"">Parametri Tecnici</div>
-  <dl>
-    <div><dt>Figure per cassa</dt><dd>{Dto.Figure}</dd></div>
-    <div><dt>Peso anima</dt><dd>{Dto.PesoAnima:N3} kg</dd></div>
-    <div><dt>Lotto base</dt><dd>{Dto.Lotto:N0} pz</dd></div>
-    {sabbiaRow}
-    {servizi}
-  </dl>
-
-  {note}
-
-  <div class=""section-title"">Prezzi per Lotto</div>
-  <table class=""prezzi"">
-    <thead><tr><th>Quantità lotto (pz)</th><th style=""text-align:right"">Prezzo unitario (€/pz)</th></tr></thead>
-    <tbody>{righi}</tbody>
-  </table>
-
-  <div class=""conditions"">
-    <div class=""cond-title"">CONDIZIONI DI OFFERTA</div>
-    <ul>
-      <li>La presente offerta ha validità <strong>90 giorni</strong> dalla data di emissione.</li>
-      <li>I prezzi sono soggetti a revisione in funzione dell'andamento dei costi delle materie prime
-          (sabbia silicea, resine fenoliche/furaniche, catalizzatori) e dei vettori energetici
-          (gas naturale, energia elettrica).</li>
-      <li>Prezzi IVA esclusa. L'imposta sarà applicata secondo l'aliquota vigente al momento della fatturazione.</li>
-      <li>Resa merce: <em>Ex Works (EXW) – Sandrigo (VI) – Incoterms® 2020</em>.</li>
-      <li>Pagamento: secondo accordi commerciali in essere.</li>
-      <li>Tolleranze dimensionali delle anime secondo specifiche tecniche concordate con il cliente
-          (rif. UNI EN ISO 8062).</li>
-      <li>La presente offerta è subordinata alla disponibilità di attrezzature e capacità produttiva
-          al momento dell'accettazione dell'ordine.</li>
-      <li>Per accettazione si prega di restituire copia firmata con timbro aziendale.</li>
-    </ul>
-  </div>
-</body>
-</html>");
-
-        return sb.ToString();
     }
 }
+

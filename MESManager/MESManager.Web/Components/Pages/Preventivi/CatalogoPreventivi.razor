@@ -75,6 +75,14 @@
                                               Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2"
                                               data-testid="input-note-cliente" />
                             </MudItem>
+                            <!-- Feature 7: Note interne -->
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="_dto.NoteInterne"
+                                              Label="Note interne (NON escono sul modulo)"
+                                              Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2"
+                                              HelperText="Visibili solo internamente"
+                                              data-testid="input-note-interne" />
+                            </MudItem>
                         </MudGrid>
                     </MudPaper>
 
@@ -227,6 +235,20 @@
                                                  Adornment="Adornment.End" AdornmentText="%"
                                                  Disabled="@(!_dto.Lotto4.HasValue || _dto.Lotto4 <= 0)"
                                                  data-testid="input-margine4" />
+                            </MudItem>
+                        </MudGrid>
+                        <!-- Feature 8: Sconto volume -->
+                        <MudDivider Class="mt-2 mb-1" />
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">SCONTO VOLUME (% sul prezzo finale)</MudText>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField T="decimal" @bind-Value="_dto.Sconto" @bind-Value:after="Ricalcola"
+                                                 Label="Sconto (%)" Min="@(0m)" Max="@(50m)"
+                                                 Format="N1"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 Adornment="Adornment.End" AdornmentText="%"
+                                                 HelperText="Applicato dopo il margine su tutti i lotti"
+                                                 data-testid="input-sconto" />
                             </MudItem>
                         </MudGrid>
                     </MudPaper>
@@ -430,6 +452,34 @@
                             <MudDivider Class="my-2" />
                         }
 
+                        @if (_dto.Sconto > 0)
+                        {
+                            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+                                Sconto volume @_dto.Sconto.ToString("N1")% già applicato ai prezzi
+                            </MudAlert>
+                        }
+
+                        <!-- Feature 4: Template -->
+                        @if (_templates.Any())
+                        {
+                            <MudDivider Class="my-2" />
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">TEMPLATE</MudText>
+                            <MudSelect T="PreventivoTemplateDto?" Value="null"
+                                       ValueChanged="CaricaTemplate"
+                                       Label="Carica da template"
+                                       Variant="Variant.Outlined" Margin="Margin.Dense"
+                                       ToStringFunc="@(t => t == null ? "— seleziona —" : t.Nome)"
+                                       data-testid="select-template">
+                                <MudSelectItem T="PreventivoTemplateDto?" Value="null">— seleziona —</MudSelectItem>
+                                @foreach (var tmpl in _templates)
+                                {
+                                    <MudSelectItem T="PreventivoTemplateDto?" Value="tmpl">@tmpl.Nome</MudSelectItem>
+                                }
+                            </MudSelect>
+                        }
+
+                        <MudDivider Class="my-2" />
+
                         <MudStack Spacing="2">
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
                                        StartIcon="@Icons.Material.Filled.Save"
@@ -443,6 +493,13 @@
                                        Disabled="@(string.IsNullOrWhiteSpace(_dto.Cliente))"
                                        data-testid="btn-modulo-cliente">
                                 Modulo cliente
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" FullWidth="true"
+                                       StartIcon="@Icons.Material.Filled.Bookmark"
+                                       OnClick="SalvaTemplate"
+                                       Disabled="@(string.IsNullOrWhiteSpace(_dto.Cliente))"
+                                       data-testid="btn-salva-template">
+                                Salva come template
                             </MudButton>
                             @if (_editingId.HasValue)
                             {
@@ -507,14 +564,25 @@
                             <MudTd><MudText Typo="Typo.caption">@(context.VerniciaturaRichiesta ? context.VerniceSnapshot : "—")</MudText></MudTd>
                             <MudTd><MudText Color="Color.Success"><b>€@context.CalcPrezzoVendita.ToString("N4")</b></MudText></MudTd>
                             <MudTd>
-                                <MudSelect T="string" Value="@context.Stato"
-                                           ValueChanged="@(s => CambiaStatoAsync(context, s))"
-                                           Variant="Variant.Text" Margin="Margin.Dense"
-                                           data-testid="@($"select-stato-{context.Id}")">
-                                    <MudSelectItem Value="@("InAttesa")">In attesa</MudSelectItem>
-                                    <MudSelectItem Value="@("Approvato")">Approvato</MudSelectItem>
-                                    <MudSelectItem Value="@("Rifiutato")">Rifiutato</MudSelectItem>
-                                </MudSelect>
+                                @{
+                                    var scaduto = context.Stato == "InAttesa" && (DateTime.Today - context.DataCreazione.Date).TotalDays > 90;
+                                }
+                                @if (scaduto)
+                                {
+                                    <MudChip T="string" Color="Color.Error" Size="Size.Small" Icon="@Icons.Material.Filled.Warning">Scaduto</MudChip>
+                                }
+                                else
+                                {
+                                    <MudSelect T="string" Value="@context.Stato"
+                                               ValueChanged="@(s => CambiaStatoAsync(context, s))"
+                                               Variant="Variant.Text" Margin="Margin.Dense"
+                                               data-testid="@($"select-stato-{context.Id}")">
+                                        <MudSelectItem Value="@("InAttesa")">In attesa</MudSelectItem>
+                                        <MudSelectItem Value="@("Inviato")">Inviato</MudSelectItem>
+                                        <MudSelectItem Value="@("Approvato")">Approvato</MudSelectItem>
+                                        <MudSelectItem Value="@("Rifiutato")">Rifiutato</MudSelectItem>
+                                    </MudSelect>
+                                }
                             </MudTd>
                             <MudTd>
                                 <MudStack Row="true" Spacing="0">
@@ -528,6 +596,12 @@
                                                        Color="Color.Secondary"
                                                        OnClick="@(() => ApriModuloClienteConDto(context))"
                                                        data-testid="@($"btn-modulo-{context.Id}")" />
+                                    </MudTooltip>
+                                    <MudTooltip Text="Duplica">
+                                        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small"
+                                                       Color="Color.Info"
+                                                       OnClick="@(() => DuplicaAsync(context))"
+                                                       data-testid="@($"btn-duplica-{context.Id}")" />
                                     </MudTooltip>
                                     <MudTooltip Text="Elimina">
                                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
@@ -746,6 +820,134 @@
             </MudGrid>
         </MudTabPanel>
 
+        <!-- ══════════════════════════════════════════════════
+             TAB 4 — Report mensile
+        ══════════════════════════════════════════════════ -->
+        <MudTabPanel Text="Report" Icon="@Icons.Material.Filled.BarChart" data-testid="tab-report">
+            <MudGrid Spacing="3" Class="mt-2">
+                <!-- Statistiche generali -->
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4 text-center" Elevation="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Primary" Size="Size.Large" />
+                        <MudText Typo="Typo.h4"><b>@_preventivi.Count</b></MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Preventivi totali</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4 text-center" Elevation="2">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+                        <MudText Typo="Typo.h4"><b>@_preventivi.Count(p => p.Stato == "Approvato")</b></MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Approvati</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4 text-center" Elevation="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Email" Color="Color.Info" Size="Size.Large" />
+                        <MudText Typo="Typo.h4"><b>@_preventivi.Count(p => p.Stato == "Inviato")</b></MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Inviati</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4 text-center" Elevation="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" Size="Size.Large" />
+                        <MudText Typo="Typo.h4"><b>@_preventivi.Count(p => p.Stato == "InAttesa" && (DateTime.Today - p.DataCreazione.Date).TotalDays > 90)</b></MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Scaduti (>90gg)</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Ultimi 30 giorni -->
+                <MudItem xs="12">
+                    <MudPaper Class="pa-4" Elevation="2">
+                        <MudText Typo="Typo.subtitle1" Class="mb-3"><b>ULTIMI 30 GIORNI</b></MudText>
+                        @{
+                            var ultimi30 = _preventivi.Where(p => (DateTime.Today - p.DataCreazione.Date).TotalDays <= 30).ToList();
+                            var clientiDistinti = ultimi30.Select(p => p.Cliente).Distinct().Count();
+                        }
+                        <MudGrid Spacing="2">
+                            <MudItem xs="6" sm="3">
+                                <MudText Typo="Typo.h5" Color="Color.Primary">@ultimi30.Count</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Nuovi preventivi</MudText>
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudText Typo="Typo.h5" Color="Color.Success">@ultimi30.Count(p => p.Stato == "Approvato")</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Approvati</MudText>
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudText Typo="Typo.h5" Color="Color.Warning">@clientiDistinti</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Clienti diversi</MudText>
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudText Typo="Typo.h5" Color="Color.Error">@ultimi30.Count(p => p.Stato == "Rifiutato")</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Rifiutati</MudText>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Top clienti -->
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4" Elevation="2">
+                        <MudText Typo="Typo.subtitle1" Class="mb-3"><b>TOP 10 CLIENTI</b></MudText>
+                        <MudSimpleTable Dense="true">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th class="text-right">Preventivi</th>
+                                    <th class="text-right">Approvati</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var g in _preventivi
+                                    .GroupBy(p => p.Cliente)
+                                    .OrderByDescending(g => g.Count())
+                                    .Take(10))
+                                {
+                                    <tr>
+                                        <td>@g.Key</td>
+                                        <td class="text-right">@g.Count()</td>
+                                        <td class="text-right">@g.Count(p => p.Stato == "Approvato")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Preventivi per mese (ultimi 6) -->
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4" Elevation="2">
+                        <MudText Typo="Typo.subtitle1" Class="mb-3"><b>PREVENTIVI PER MESE (ultimi 6)</b></MudText>
+                        <MudSimpleTable Dense="true">
+                            <thead>
+                                <tr>
+                                    <th>Mese</th>
+                                    <th class="text-right">Totale</th>
+                                    <th class="text-right">Approvati</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    var oggi = DateTime.Today;
+                                    for (int m = 5; m >= 0; m--)
+                                    {
+                                        var mese = oggi.AddMonths(-m);
+                                        var prev = _preventivi.Where(p =>
+                                            p.DataCreazione.Year == mese.Year &&
+                                            p.DataCreazione.Month == mese.Month).ToList();
+                                        <tr>
+                                            <td>@mese.ToString("MMM yyyy")</td>
+                                            <td class="text-right">@prev.Count</td>
+                                            <td class="text-right">@prev.Count(p => p.Stato == "Approvato")</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
     </MudTabs>
 </div>
 
@@ -765,6 +967,9 @@
 
     // Archivio preventivi
     private List<PreventivoDto> _preventivi = new();
+
+    // Feature 4: Template
+    private List<PreventivoTemplateDto> _templates = new();
 
     // Form preventivo
     private PreventivoDto _dto = new();
@@ -794,6 +999,7 @@
         _tipiSabbia  = await PreventivoService.GetTipiSabbiaAsync();
         _tipiVernice = await PreventivoService.GetTipiVerniceAsync();
         _preventivi  = await PreventivoService.GetAllAsync();
+        _templates   = await PreventivoService.GetTemplatesAsync();
         var clienti  = await CommessaAppService.GetClienteNomiDistinctAsync();
         _clientiRagioni = clienti;
         _isLoading = false;
@@ -897,6 +1103,12 @@
             IncollaggioPzOra = preventivo.IncollaggioPzOra,
             ImballaggioRichiesto = preventivo.ImballaggioRichiesto, EuroOraImballaggio = preventivo.EuroOraImballaggio,
             ImballaggioPzOra = preventivo.ImballaggioPzOra, Stato = preventivo.Stato,
+            // Feature v1.65.7
+            NoteInterne = preventivo.NoteInterne,
+            Sconto = preventivo.Sconto,
+            CommessaId = preventivo.CommessaId,
+            EmailDestinatario = preventivo.EmailDestinatario,
+            EmailInviatoIl = preventivo.EmailInviatoIl,
         };
         _dataCreazione = preventivo.DataCreazione;
         _editingId = preventivo.Id;
@@ -965,6 +1177,16 @@
         else Snackbar.Add("Errore eliminazione.", Severity.Error);
     }
 
+    private async Task DuplicaAsync(PreventivoDto p)
+    {
+        var duplicato = await PreventivoService.DuplicaAsync(p.Id);
+        if (duplicato != null)
+        {
+            _preventivi.Insert(0, duplicato);
+            Snackbar.Add($"Preventivo duplicato → N° {duplicato.NumeroPreventivo}", Severity.Success);
+        }
+    }
+
     private async Task CambiaStatoAsync(PreventivoDto p, string stato)
     {
         var updated = await PreventivoService.UpdateStatoAsync(p.Id, stato);
@@ -988,6 +1210,49 @@
         var p = new DialogParameters<ModuloClienteDialog> { { d => d.Dto, dto } };
         await DialogService.ShowAsync<ModuloClienteDialog>("Modulo Cliente", p,
             new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+    }
+
+    // ── Feature 4: Template ───────────────────────────────────────────────
+
+    private async Task SalvaTemplate()
+    {
+        if (string.IsNullOrWhiteSpace(_dto.Cliente)) return;
+        var nome = $"Template {_dto.SabbiaSnapshot ?? "generico"} {DateTime.Today:yyyy-MM-dd}";
+        await PreventivoService.SalvaTemplateAsync(nome, null, _dto);
+        _templates = await PreventivoService.GetTemplatesAsync();
+        Snackbar.Add($"Template '{nome}' salvato.", Severity.Success);
+    }
+
+    private async Task CaricaTemplate(PreventivoTemplateDto? tmpl)
+    {
+        if (tmpl == null) return;
+        var parametri = await PreventivoService.CaricaTemplateAsync(tmpl.Id);
+        if (parametri == null) return;
+        // Mantieni cliente e stato attuali, applica solo parametri tecnici
+        _dto.Figure = parametri.Figure; _dto.PesoAnima = parametri.PesoAnima;
+        _dto.Lotto = parametri.Lotto; _dto.Lotto2 = parametri.Lotto2;
+        _dto.Lotto3 = parametri.Lotto3; _dto.Lotto4 = parametri.Lotto4;
+        _dto.SpariOrari = parametri.SpariOrari; _dto.CostoAttrezzatura = parametri.CostoAttrezzatura;
+        _dto.Margine1 = parametri.Margine1; _dto.Margine2 = parametri.Margine2;
+        _dto.Margine3 = parametri.Margine3; _dto.Margine4 = parametri.Margine4;
+        _dto.TipoSabbiaId = parametri.TipoSabbiaId; _dto.SabbiaSnapshot = parametri.SabbiaSnapshot;
+        _dto.EuroOraSabbia = parametri.EuroOraSabbia; _dto.PrezzoSabbiaKg = parametri.PrezzoSabbiaKg;
+        _dto.VerniciaturaRichiesta = parametri.VerniciaturaRichiesta;
+        _dto.TipoVerniceId = parametri.TipoVerniceId; _dto.VerniceSnapshot = parametri.VerniceSnapshot;
+        _dto.CostoVerniceKg = parametri.CostoVerniceKg; _dto.PercentualeVernice = parametri.PercentualeVernice;
+        _dto.VerniciaturaPzOra = parametri.VerniciaturaPzOra; _dto.EuroOraVerniciatura = parametri.EuroOraVerniciatura;
+        _dto.IncollaggioRichiesto = parametri.IncollaggioRichiesto; _dto.EuroOraIncollaggio = parametri.EuroOraIncollaggio;
+        _dto.IncollaggioPzOra = parametri.IncollaggioPzOra;
+        _dto.ImballaggioRichiesto = parametri.ImballaggioRichiesto; _dto.EuroOraImballaggio = parametri.EuroOraImballaggio;
+        _dto.ImballaggioPzOra = parametri.ImballaggioPzOra; _dto.Sconto = parametri.Sconto;
+        _tipoSabbiaSelezionata = parametri.TipoSabbiaId.HasValue
+            ? _tipiSabbia.FirstOrDefault(s => s.Id == parametri.TipoSabbiaId)
+            : null;
+        _tipoVerniceSelezionata = parametri.TipoVerniceId.HasValue
+            ? _tipiVernice.FirstOrDefault(v => v.Id == parametri.TipoVerniceId)
+            : null;
+        Ricalcola();
+        Snackbar.Add($"Template '{tmpl.Nome}' caricato.", Severity.Info);
     }
 
     // ── Impostazioni: Tipi Sabbia ─────────────────────────────────────────

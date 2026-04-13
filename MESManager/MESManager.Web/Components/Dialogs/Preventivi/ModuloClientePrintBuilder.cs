@@ -1,0 +1,193 @@
+using MESManager.Application.DTOs;
+using MESManager.Application.Interfaces;
+
+namespace MESManager.Web.Components.Dialogs.Preventivi;
+
+/// <summary>
+/// Costruisce l'HTML di stampa per il Modulo Cliente (PDF).
+/// Classe separata per evitare problemi di escaping Razor con @page e @media.
+/// </summary>
+public static class ModuloClientePrintBuilder
+{
+    public static string Build(PreventivoDto dto, string baseUri, IPreventivoService preventivoService)
+    {
+        // Righe prezzi (Feature 12: colonne Margine + Sconto)
+        var righi = new System.Text.StringBuilder();
+        foreach (var (lotto, margine, prezzo) in GetLottiPrezziConMargine(dto, preventivoService))
+        {
+            var mCell = margine > 0 ? $"+{margine:N1}%" : "&mdash;";
+            var sCell = dto.Sconto > 0 ? $"-{dto.Sconto:N1}%" : "&mdash;";
+            righi.Append(
+                "<tr>" +
+                $"<td>{lotto:N0} pz</td>" +
+                $"<td style=\"text-align:center\">{mCell}</td>" +
+                $"<td style=\"text-align:center\">{sCell}</td>" +
+                $"<td class=\"price\">&euro;{prezzo:N4}</td>" +
+                "</tr>");
+        }
+
+        // Servizi aggiuntivi
+        var servizi = new System.Text.StringBuilder();
+        if (dto.VerniciaturaRichiesta && !string.IsNullOrWhiteSpace(dto.VerniceSnapshot))
+            servizi.Append($"<div><dt>Verniciatura</dt><dd>{dto.VerniceSnapshot}</dd></div>");
+        if (dto.IncollaggioRichiesto)
+            servizi.Append("<div><dt>Servizi</dt><dd>Incollaggio" + (dto.ImballaggioRichiesto ? " + Imballaggio" : "") + "</dd></div>");
+        else if (dto.ImballaggioRichiesto)
+            servizi.Append("<div><dt>Servizi</dt><dd>Imballaggio</dd></div>");
+
+        var note = string.IsNullOrWhiteSpace(dto.NoteCliente) ? "" :
+            "<div class=\"section-title\">Note</div>" +
+            $"<div class=\"note-block\">{System.Web.HttpUtility.HtmlEncode(dto.NoteCliente)}</div>";
+
+        var codiceArticolo = string.IsNullOrWhiteSpace(dto.CodiceArticolo) ? "" :
+            $"<div><dt>Codice articolo</dt><dd>{System.Web.HttpUtility.HtmlEncode(dto.CodiceArticolo)}</dd></div>";
+
+        var descrizione = string.IsNullOrWhiteSpace(dto.Descrizione) ? "" :
+            "<div style=\"grid-column:1/-1\">" +
+            $"<dt>Descrizione articolo</dt><dd>{System.Web.HttpUtility.HtmlEncode(dto.Descrizione)}</dd></div>";
+
+        var sabbiaRow = string.IsNullOrWhiteSpace(dto.SabbiaSnapshot) ? "" :
+            $"<div><dt>Tipo sabbia</dt><dd>{System.Web.HttpUtility.HtmlEncode(dto.SabbiaSnapshot)}</dd></div>";
+
+        var numeroRef = dto.NumeroPreventivo > 0 ? $"N. {dto.NumeroPreventivo}" : "";
+        var emissioneRow = string.IsNullOrWhiteSpace(numeroRef)
+            ? $"Data emissione: {dto.DataCreazione:dd/MM/yyyy}"
+            : $"Rif. {numeroRef} &nbsp;&bull;&nbsp; Data emissione: {dto.DataCreazione:dd/MM/yyyy}";
+
+        var logoSrcset = $"{baseUri}/images/logo-intestazione.png";
+        var logoSrc    = $"{baseUri}/images/logo-intestazione.svg";
+        var clienteEnc = System.Web.HttpUtility.HtmlEncode(dto.Cliente);
+        var clienteSpan = $"<div style=\"grid-column:1/3\"><dt>Cliente</dt><dd>{clienteEnc}</dd></div>";
+
+        return "<!DOCTYPE html>\n" +
+               "<html lang=\"it\">\n" +
+               "<head>\n" +
+               "  <meta charset=\"utf-8\" />\n" +
+               $"  <title>Preventivo Fornitura Anime \u2013 {clienteEnc}</title>\n" +
+               "  <style>\n" +
+               "    * { box-sizing: border-box; margin: 0; padding: 0; }\n" +
+               "    body { font-family: Arial, sans-serif; font-size: 10.5pt; color: #111; background: #fff; padding: 10mm 15mm; }\n" +
+               "    @page { margin: 12mm 18mm 18mm 18mm; }\n" +
+               "    .logo-header { width: 100%; max-height: 130px; object-fit: contain; object-position: left center; }\n" +
+               "    hr.thick { border: none; border-top: 2.5px solid #111; margin: 7px 0 10px; }\n" +
+               "    hr.thin  { border: none; border-top: 1px solid #ccc; margin: 6px 0; }\n" +
+               "    h1 { font-size: 16pt; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 3px; }\n" +
+               "    .meta { font-size: 9pt; color: #555; margin-bottom: 10px; }\n" +
+               "    .section-title { font-size: 10pt; font-weight: bold; text-transform: uppercase;\n" +
+               "                      border-bottom: 1.5px solid #111; padding-bottom: 2px; margin: 14px 0 7px; }\n" +
+               "    dl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 12px; margin-bottom: 10px; }\n" +
+               "    dt { font-size: 8pt; color: #666; margin-bottom: 1px; }\n" +
+               "    dd { font-size: 10pt; font-weight: 600; }\n" +
+               "    table.prezzi { width: 100%; border-collapse: collapse; margin-top: 4px; }\n" +
+               "    table.prezzi th { background: #f2f2f2; border: 1px solid #bbb; padding: 5px 10px;\n" +
+               "                       font-size: 9pt; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n" +
+               "    table.prezzi td { border: 1px solid #ccc; padding: 6px 10px; font-size: 10.5pt; }\n" +
+               "    td.price { text-align: right; font-weight: bold; color: #1a5c1a; }\n" +
+               "    .note-block { border-left: 3px solid #999; background: #f9f9f9; padding: 7px 12px;\n" +
+               "                   font-size: 9pt; margin-bottom: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n" +
+               "    .conditions { border: 1px solid #2e7d32; border-radius: 4px; padding: 10px 14px;\n" +
+               "                   margin-top: 22px; font-size: 8.5pt; line-height: 1.65;\n" +
+               "                   -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n" +
+               "    .conditions .cond-title { font-weight: bold; color: #1b5e20; font-size: 9pt; margin-bottom: 5px; }\n" +
+               "    .conditions ul { padding-left: 16px; }\n" +
+               "    .conditions li { margin-bottom: 3px; }\n" +
+               "    .firma-section { margin-top: 28px; border-top: 1.5px solid #111; padding-top: 14px; }\n" +
+               "    .firma-title { font-size: 10pt; font-weight: bold; text-transform: uppercase; margin-bottom: 12px; }\n" +
+               "    .firma-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }\n" +
+               "    .firma-label { font-size: 8pt; color: #666; margin-bottom: 3px; }\n" +
+               "    .firma-line { border-bottom: 1px solid #333; height: 32px; }\n" +
+               "    .firma-note { font-size: 7.5pt; color: #666; margin-top: 8px; }\n" +
+               "    @media print {\n" +
+               "      body { padding: 0; }\n" +
+               "      -webkit-print-color-adjust: exact; print-color-adjust: exact;\n" +
+               "    }\n" +
+               "  </style>\n" +
+               "</head>\n" +
+               "<body>\n" +
+               $"  <picture>\n" +
+               $"    <source srcset=\"{logoSrcset}\" type=\"image/png\" />\n" +
+               $"    <img class=\"logo-header\" src=\"{logoSrc}\" alt=\"Animisteria Todescato\"\n" +
+               "         onerror=\"this.style.display='none'\" />\n" +
+               "  </picture>\n" +
+               "  <hr class=\"thick\" />\n\n" +
+               "  <h1>PREVENTIVO FORNITURA ANIME</h1>\n" +
+               $"  <div class=\"meta\">{emissioneRow}</div>\n\n" +
+               "  <div class=\"section-title\">Dati Cliente</div>\n" +
+               "  <dl>\n" +
+               $"    {clienteSpan}\n" +
+               $"    {codiceArticolo}\n" +
+               $"    {descrizione}\n" +
+               "  </dl>\n\n" +
+               "  <div class=\"section-title\">Parametri Tecnici</div>\n" +
+               "  <dl>\n" +
+               $"    <div><dt>Figure per cassa</dt><dd>{dto.Figure}</dd></div>\n" +
+               $"    <div><dt>Peso anima</dt><dd>{dto.PesoAnima:N3} kg</dd></div>\n" +
+               $"    <div><dt>Lotto base</dt><dd>{dto.Lotto:N0} pz</dd></div>\n" +
+               $"    {sabbiaRow}\n" +
+               $"    {servizi}\n" +
+               "  </dl>\n\n" +
+               $"  {note}\n\n" +
+               "  <div class=\"section-title\">Prezzi per Lotto</div>\n" +
+               "  <table class=\"prezzi\">\n" +
+               "    <thead><tr>" +
+               "<th>Quantit&agrave; lotto (pz)</th>" +
+               "<th style=\"text-align:center\">Margine</th>" +
+               "<th style=\"text-align:center\">Sconto</th>" +
+               "<th style=\"text-align:right\">Prezzo unitario (&euro;/pz)</th>" +
+               "</tr></thead>\n" +
+               $"    <tbody>{righi}</tbody>\n" +
+               "  </table>\n\n" +
+               "  <div class=\"conditions\">\n" +
+               "    <div class=\"cond-title\">CONDIZIONI DI OFFERTA</div>\n" +
+               "    <ul>\n" +
+               "      <li>La presente offerta ha validit&agrave; <strong>90 giorni</strong> dalla data di emissione.</li>\n" +
+               "      <li>I prezzi sono soggetti a revisione in funzione dell'andamento dei costi delle materie prime\n" +
+               "          (sabbia silicea, resine fenoliche/furaniche, catalizzatori) e dei vettori energetici\n" +
+               "          (gas naturale, energia elettrica).</li>\n" +
+               "      <li>Prezzi IVA esclusa. L'imposta sar&agrave; applicata secondo l'aliquota vigente al momento della fatturazione.</li>\n" +
+               "      <li>Resa merce: <em>Ex Works (EXW) &ndash; Sandrigo (VI) &ndash; Incoterms&reg; 2020</em>.</li>\n" +
+               "      <li>Pagamento: secondo accordi commerciali in essere.</li>\n" +
+               "      <li>Tolleranze dimensionali delle anime secondo specifiche tecniche concordate con il cliente\n" +
+               "          (rif. UNI EN ISO 8062).</li>\n" +
+               "      <li>La presente offerta &egrave; subordinata alla disponibilit&agrave; di attrezzature e capacit&agrave; produttiva\n" +
+               "          al momento dell'accettazione dell'ordine.</li>\n" +
+               "      <li>Per accettazione si prega di restituire copia firmata con timbro aziendale.</li>\n" +
+               "    </ul>\n" +
+               "  </div>\n\n" +
+               "  <div class=\"firma-section\">\n" +
+               "    <div class=\"firma-title\">PER ACCETTAZIONE</div>\n" +
+               "    <div class=\"firma-grid\">\n" +
+               "      <div><div class=\"firma-label\">Luogo e data</div><div class=\"firma-line\"></div></div>\n" +
+               "      <div><div class=\"firma-label\">Timbro e firma cliente</div><div class=\"firma-line\"></div></div>\n" +
+               "    </div>\n" +
+               "    <p class=\"firma-note\">Restituire copia firmata con timbro aziendale.</p>\n" +
+               "  </div>\n" +
+               "</body>\n" +
+               "</html>";
+    }
+
+    private static IEnumerable<(int Lotto, decimal Margine, decimal Prezzo)> GetLottiPrezziConMargine(
+        PreventivoDto dto, IPreventivoService svc)
+    {
+        if (dto.Lotto > 0)
+        {
+            var r = svc.CalcolaConLotto(dto, dto.Lotto, dto.Margine1);
+            yield return (dto.Lotto, dto.Margine1, r.PrezzoVendita);
+        }
+        if (dto.Lotto2.HasValue && dto.Lotto2.Value > 0)
+        {
+            var r = svc.CalcolaConLotto(dto, dto.Lotto2.Value, dto.Margine2);
+            yield return (dto.Lotto2.Value, dto.Margine2, r.PrezzoVendita);
+        }
+        if (dto.Lotto3.HasValue && dto.Lotto3.Value > 0)
+        {
+            var r = svc.CalcolaConLotto(dto, dto.Lotto3.Value, dto.Margine3);
+            yield return (dto.Lotto3.Value, dto.Margine3, r.PrezzoVendita);
+        }
+        if (dto.Lotto4.HasValue && dto.Lotto4.Value > 0)
+        {
+            var r = svc.CalcolaConLotto(dto, dto.Lotto4.Value, dto.Margine4);
+            yield return (dto.Lotto4.Value, dto.Margine4, r.PrezzoVendita);
+        }
+    }
+}

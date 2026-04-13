@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.6";
+    public const string Current = "1.65.7";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.5: Modulo Cliente Preventivo - nuova finestra stampa isolata, intestazione logo, titolo PREVENTIVO FORNITURA ANIME, condizioni offerta
+    public const string Display = "v" + Current; // v1.65.7: Preventivi: NoteInterne, Sconto volume, Stato Inviato/Scaduto, Duplica, Template, Email (SMTP), Storico revisioni, Firma PDF, Report tab
 }
