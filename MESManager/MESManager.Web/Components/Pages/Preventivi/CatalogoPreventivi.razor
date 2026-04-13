@@ -4,6 +4,7 @@
 @using MESManager.Application.Interfaces
 @using MESManager.Web.Components.Dialogs.Preventivi
 @inject IPreventivoService PreventivoService
+@inject IClienteAppService ClienteAppService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject HttpClient Http
@@ -32,9 +33,17 @@
                         </MudStack>
                         <MudGrid Spacing="2">
                             <MudItem xs="12" sm="6">
-                                <MudTextField @bind-Value="_dto.Cliente" Label="Cliente *"
-                                              Variant="Variant.Outlined" Margin="Margin.Dense"
-                                              data-testid="input-cliente" />
+                                <MudAutocomplete T="string"
+                                                 @bind-Value="_dto.Cliente"
+                                                 Label="Cliente *"
+                                                 SearchFunc="CercaClienti"
+                                                 Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 MinCharacters="1"
+                                                 ResetValueOnEmptyText="true"
+                                                 CoerceText="true"
+                                                 AdornmentIcon="@Icons.Material.Filled.Search"
+                                                 data-testid="input-cliente" />
                             </MudItem>
                             <MudItem xs="6" sm="3">
                                 <MudTextField @bind-Value="_dto.CodiceArticolo" Label="Codice articolo"
@@ -692,6 +701,9 @@
     private List<TabellaItem> _sabbiaTabelle  = new();
     private List<TabellaItem> _verniceTabelle = new();
 
+    // Cache clienti per autocomplete
+    private List<string> _clientiRagioni = new();
+
     // Archivio preventivi
     private List<PreventivoDto> _preventivi = new();
 
@@ -723,6 +735,12 @@
         _tipiSabbia  = await PreventivoService.GetTipiSabbiaAsync();
         _tipiVernice = await PreventivoService.GetTipiVerniceAsync();
         _preventivi  = await PreventivoService.GetAllAsync();
+        var clienti  = await ClienteAppService.GetListaAsync();
+        _clientiRagioni = clienti
+            .Where(c => c.Attivo)
+            .Select(c => c.RagioneSociale)
+            .OrderBy(r => r)
+            .ToList();
         _isLoading = false;
     }
 
@@ -750,6 +768,19 @@
                     yield return (_dto.Lotto4.Value, PreventivoService.CalcolaConLotto(_dto, _dto.Lotto4.Value));
             }
         }
+    }
+
+    // ── Autocomplete clienti ─────────────────────────────────────────────
+
+    private Task<IEnumerable<string>> CercaClienti(string value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult(_clientiRagioni.Take(20).AsEnumerable());
+
+        var result = _clientiRagioni
+            .Where(r => r.Contains(value, StringComparison.OrdinalIgnoreCase))
+            .Take(20);
+        return Task.FromResult(result);
     }
 
     // ── Selezione sabbia/vernice ─────────────────────────────────────────
