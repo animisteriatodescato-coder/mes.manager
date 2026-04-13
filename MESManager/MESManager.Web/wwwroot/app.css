@@ -783,15 +783,15 @@ h1:focus {
 
 /* ==========================================================================
    Menu laterale — Banda colore sugli items figli (v1.65.3)
-   Striscia verticale colorata anche sui link dentro ogni gruppo.
+   Gradient sfumato anche sui link dentro ogni gruppo, come l'header.
    ========================================================================== */
-.mud-drawer .mud-nav-group.nav-sec-prog .mud-collapse-container .mud-nav-link         { border-left: 2px solid rgba(33,150,243,0.45) !important; }
-.mud-drawer .mud-nav-group.nav-sec-produzione .mud-collapse-container .mud-nav-link   { border-left: 2px solid rgba(255,152,0,0.45) !important; }
-.mud-drawer .mud-nav-group.nav-sec-cataloghi .mud-collapse-container .mud-nav-link    { border-left: 2px solid rgba(0,188,212,0.45) !important; }
-.mud-drawer .mud-nav-group.nav-sec-manutenzioni .mud-collapse-container .mud-nav-link { border-left: 2px solid rgba(156,39,176,0.45) !important; }
-.mud-drawer .mud-nav-group.nav-sec-sync .mud-collapse-container .mud-nav-link         { border-left: 2px solid rgba(76,175,80,0.45) !important; }
-.mud-drawer .mud-nav-group.nav-sec-statistiche .mud-collapse-container .mud-nav-link  { border-left: 2px solid rgba(103,58,183,0.45) !important; }
-.mud-drawer .mud-nav-group.nav-sec-impostazioni .mud-collapse-container .mud-nav-link { border-left: 2px solid rgba(117,117,117,0.40) !important; }
+.mud-drawer .mud-nav-group.nav-sec-prog .mud-collapse-container .mud-nav-link         { border-left: 3px solid rgba(33,150,243,0.55) !important; background: linear-gradient(90deg, rgba(33,150,243,0.13) 0%, transparent 60%) !important; }
+.mud-drawer .mud-nav-group.nav-sec-produzione .mud-collapse-container .mud-nav-link   { border-left: 3px solid rgba(255,152,0,0.55) !important;   background: linear-gradient(90deg, rgba(255,152,0,0.13) 0%, transparent 60%) !important; }
+.mud-drawer .mud-nav-group.nav-sec-cataloghi .mud-collapse-container .mud-nav-link    { border-left: 3px solid rgba(0,188,212,0.55) !important;     background: linear-gradient(90deg, rgba(0,188,212,0.13) 0%, transparent 60%) !important; }
+.mud-drawer .mud-nav-group.nav-sec-manutenzioni .mud-collapse-container .mud-nav-link { border-left: 3px solid rgba(156,39,176,0.55) !important;   background: linear-gradient(90deg, rgba(156,39,176,0.13) 0%, transparent 60%) !important; }
+.mud-drawer .mud-nav-group.nav-sec-sync .mud-collapse-container .mud-nav-link         { border-left: 3px solid rgba(76,175,80,0.55) !important;     background: linear-gradient(90deg, rgba(76,175,80,0.13) 0%, transparent 60%) !important; }
+.mud-drawer .mud-nav-group.nav-sec-statistiche .mud-collapse-container .mud-nav-link  { border-left: 3px solid rgba(103,58,183,0.55) !important;   background: linear-gradient(90deg, rgba(103,58,183,0.13) 0%, transparent 60%) !important; }
+.mud-drawer .mud-nav-group.nav-sec-impostazioni .mud-collapse-container .mud-nav-link { border-left: 3px solid rgba(117,117,117,0.50) !important;  background: linear-gradient(90deg, rgba(117,117,117,0.11) 0%, transparent 60%) !important; }
 
 /* === AnimeEditDialog layout ottimizzato (v1.60.35) === */
 .anime-edit-dialog .mud-dialog-content { overflow-y: auto !important; max-height: calc(92vh - 120px) !important; }

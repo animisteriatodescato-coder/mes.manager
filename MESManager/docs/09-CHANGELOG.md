@@ -4,7 +4,31 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.64.1
+## 🔖 Versione Corrente: v1.65.2
+
+---
+
+## 🔖 v1.65.2 / v1.65.3 — Nav sidebar: Preventivi, colori sezione, auto-collapse (13 Apr 2026)
+
+**Data**: 13 Aprile 2026
+
+### ✨ Feature — Sidebar navigation migliorata
+
+- **Preventivi nel nav**: aggiunto link `/preventivi` nella sezione Cataloghi (con controllo claim `cat-preventivi`). Aggiunto anche a `GetMenuItems("Cataloghi")` nella top AppBar dropdown.
+- **Colori sfumati per sezione**: ogni `MudNavGroup` ha ora `border-left` + `background: linear-gradient` colorato sia sull'header che sui link figli:
+  - 📅 Programmazione → blu `#2196F3`
+  - 🏭 Produzione → arancio `#FF9800`
+  - 📚 Cataloghi → cyan `#00BCD4`
+  - 🔧 Manutenzioni → viola `#9C27B0`
+  - 🔄 Sync → verde `#4CAF50`
+  - 📊 Statistiche → indigo `#673AB7`
+  - ⚙️ Impostazioni → grigio `#757575`
+- **Auto-collapse max 2 gruppi**: aggiunto `OnNavGroupToggled(groupId, bool)` con `List<string> _openGroups`. Aprendo un 3° gruppo, il più vecchio si chiude automaticamente. Fix sincronizzazione stato: il metodo aggiorna `_expandedXxx` prima di gestire la coda.
+- **File modificati**: `MainLayout.razor`, `MainLayout.razor.cs`, `wwwroot/app.css`
+
+---
+
+## 🔖 v1.65.0 — Multi-lotto preventivi (10 Apr 2026)
 
 ---
 
