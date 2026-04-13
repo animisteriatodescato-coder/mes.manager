@@ -4,20 +4,23 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.3
+## 🔖 Versione Corrente: v1.65.4
 
 ---
 
-## 🔖 v1.65.3 — Preventivi: campo Cliente → MudAutocomplete con ricerca dal catalogo clienti (13 Apr 2026)
+## 🔖 v1.65.3 / v1.65.4 — Preventivi: campo Cliente → MudAutocomplete con ricerca dal catalogo (13 Apr 2026)
 
 **Data**: 13 Aprile 2026
 
 ### ✨ Feature — Autocomplete cliente nei Preventivi
 
-- Il campo **Cliente *** nel form Nuovo Preventivo è ora un `MudAutocomplete<string>` che legge la ragione sociale dal catalogo Clienti (tabella `Clienti`, solo attivi).
-- La ricerca è in-memory con filtro `Contains` case-insensitive, limitata a 20 risultati.
-- I clienti vengono caricati una volta sola all'`OnInitializedAsync` tramite `IClienteAppService.GetListaAsync()`.
-- **File modificati**: `CatalogoPreventivi.razor`, `AppVersion.cs`
+- Il campo **Cliente *** nel form Nuovo Preventivo è ora un `MudAutocomplete<string>` con ricerca rapida
+- **v1.65.3**: Sorgente iniziale da `Clienti.RagioneSociale` (Attivo=true)
+- **v1.65.4**: Sorgente corretta → `CompanyName DISTINCT FROM Commesse` (stessa sorgente di Catalogo Commesse, risolve "Fonderia Zardo non trovata")
+- **v1.65.4**: Aggiunto `CoerceValue="true"` → consente inserimento libero per clienti nuovi non ancora in anagrafica
+- Rimosso `ResetValueOnEmptyText` → non azzera più il campo uscendo senza selezionare
+- Aggiunto `ICommessaAppService.GetClienteNomiDistinctAsync()` per query DISTINCT sul DB
+- **File modificati**: `CatalogoPreventivi.razor`, `ICommessaAppService.cs`, `CommessaAppService.cs`, `AppVersion.cs`
 
 ---
 
