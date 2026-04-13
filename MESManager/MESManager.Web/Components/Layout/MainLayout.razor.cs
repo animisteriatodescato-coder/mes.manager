@@ -75,6 +75,18 @@ public partial class MainLayout : IDisposable
 
     private void OnNavGroupToggled(string groupId, bool expanded)
     {
+        // Sincronizza lo stato locale con l'azione dell'utente
+        switch (groupId)
+        {
+            case "prog": _expandedProg = expanded; break;
+            case "prod": _expandedProd = expanded; break;
+            case "cat":  _expandedCat  = expanded; break;
+            case "man":  _expandedMan  = expanded; break;
+            case "sync": _expandedSync = expanded; break;
+            case "stat": _expandedStat = expanded; break;
+            case "imp":  _expandedImp  = expanded; break;
+        }
+
         if (expanded)
         {
             if (!_openGroups.Contains(groupId)) _openGroups.Add(groupId);

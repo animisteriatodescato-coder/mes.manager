@@ -781,6 +781,18 @@ h1:focus {
 .mud-theme-dark .mud-drawer .mud-nav-group.nav-sec-statistiche > .mud-nav-link  { background: linear-gradient(90deg, rgba(103,58,183,0.30) 0%, rgba(255,255,255,0.03) 55%, transparent 100%) !important; }
 .mud-theme-dark .mud-drawer .mud-nav-group.nav-sec-impostazioni > .mud-nav-link { background: linear-gradient(90deg, rgba(117,117,117,0.25) 0%, rgba(255,255,255,0.03) 55%, transparent 100%) !important; }
 
+/* ==========================================================================
+   Menu laterale — Banda colore sugli items figli (v1.65.3)
+   Striscia verticale colorata anche sui link dentro ogni gruppo.
+   ========================================================================== */
+.mud-drawer .mud-nav-group.nav-sec-prog .mud-collapse-container .mud-nav-link         { border-left: 2px solid rgba(33,150,243,0.45) !important; }
+.mud-drawer .mud-nav-group.nav-sec-produzione .mud-collapse-container .mud-nav-link   { border-left: 2px solid rgba(255,152,0,0.45) !important; }
+.mud-drawer .mud-nav-group.nav-sec-cataloghi .mud-collapse-container .mud-nav-link    { border-left: 2px solid rgba(0,188,212,0.45) !important; }
+.mud-drawer .mud-nav-group.nav-sec-manutenzioni .mud-collapse-container .mud-nav-link { border-left: 2px solid rgba(156,39,176,0.45) !important; }
+.mud-drawer .mud-nav-group.nav-sec-sync .mud-collapse-container .mud-nav-link         { border-left: 2px solid rgba(76,175,80,0.45) !important; }
+.mud-drawer .mud-nav-group.nav-sec-statistiche .mud-collapse-container .mud-nav-link  { border-left: 2px solid rgba(103,58,183,0.45) !important; }
+.mud-drawer .mud-nav-group.nav-sec-impostazioni .mud-collapse-container .mud-nav-link { border-left: 2px solid rgba(117,117,117,0.40) !important; }
+
 /* === AnimeEditDialog layout ottimizzato (v1.60.35) === */
 .anime-edit-dialog .mud-dialog-content { overflow-y: auto !important; max-height: calc(92vh - 120px) !important; }
 .anime-edit-dialog .mud-dialog-title { padding-top: 6px !important; padding-bottom: 6px !important; }
