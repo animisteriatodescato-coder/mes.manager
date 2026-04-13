@@ -72,6 +72,18 @@ public class Preventivo
     public decimal CalcPrezzoVendita { get; set; }
 
     // ── Stato ───────────────────────────────────────────────────────────
-    /// <summary>InAttesa | Approvato | Rifiutato</summary>
+    /// <summary>InAttesa | Inviato | Approvato | Rifiutato</summary>
     public string Stato { get; set; } = "InAttesa";
+
+    // ── Feature v1.65.7 ─────────────────────────────────────────────────
+    /// <summary>Note interne (non stampate sul modulo cliente)</summary>
+    public string? NoteInterne { get; set; }
+    /// <summary>Sconto commerciale % applicato dopo il margine</summary>
+    public decimal Sconto { get; set; }
+    /// <summary>FK commessa collegata (valorizzata quando approvato e collegato)</summary>
+    public Guid? CommessaId { get; set; }
+    /// <summary>Email destinatario a cui è stato inviato il preventivo</summary>
+    public string? EmailDestinatario { get; set; }
+    /// <summary>Data e ora invio email (null = mai inviato)</summary>
+    public DateTime? EmailInviatoIl { get; set; }
 }

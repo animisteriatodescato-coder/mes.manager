@@ -80,6 +80,13 @@ public class PreventivoDto
     public decimal CalcPrezzoVendita { get; set; }
 
     public string Stato { get; set; } = "InAttesa";
+
+    // Feature v1.65.7
+    public string? NoteInterne { get; set; }
+    public decimal Sconto { get; set; }
+    public Guid? CommessaId { get; set; }
+    public string? EmailDestinatario { get; set; }
+    public DateTime? EmailInviatoIl { get; set; }
 }
 
 /// <summary>
@@ -100,4 +107,24 @@ public class PreventivoCalcoloResult
     public decimal PrezzoVendita { get; set; }
     /// <summary>Margine % applicato (informativo, per display)</summary>
     public decimal Margine { get; set; }
+    /// <summary>Sconto % applicato (informativo, per display)</summary>
+    public decimal Sconto { get; set; }
+}
+
+/// <summary>Revisione storica di un preventivo.</summary>
+public class PreventivoRevisioneDto
+{
+    public Guid Id { get; set; }
+    public int NumeroRevisione { get; set; }
+    public DateTime DataRevisione { get; set; }
+    public string? NoteRevisione { get; set; }
+}
+
+/// <summary>Template riutilizzabile per preventivi.</summary>
+public class PreventivoTemplateDto
+{
+    public Guid Id { get; set; }
+    public string Nome { get; set; } = string.Empty;
+    public string? Descrizione { get; set; }
+    public DateTime DataCreazione { get; set; }
 }

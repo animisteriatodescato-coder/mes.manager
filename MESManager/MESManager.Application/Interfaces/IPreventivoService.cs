@@ -26,6 +26,31 @@ public interface IPreventivoService
 
     // ── Calcolo (logica pura, usata anche lato Blazor) ─────────────────
     PreventivoCalcoloResult Calcola(PreventivoDto dto);
-    /// <summary>Calcola con un lotto specifico e margine % opzionale (per vista multi-lotto)</summary>
+    /// <summary>Calcola con un lotto specifico, margine % e sconto % opzionali.</summary>
     PreventivoCalcoloResult CalcolaConLotto(PreventivoDto dto, int lotto, decimal margine = 0);
+
+    // ── Feature v1.65.7 ────────────────────────────────────────────────
+    /// <summary>Duplica un preventivo esistente creando un nuovo record con nuovo numero.</summary>
+    Task<PreventivoDto?> DuplicaAsync(Guid id);
+
+    /// <summary>Ritorna lo storico revisioni di un preventivo.</summary>
+    Task<List<PreventivoRevisioneDto>> GetRevisioniAsync(Guid preventivoId);
+
+    /// <summary>Ripristina i dati di una revisione precedente (crea nuova revisione con i dati attuali).</summary>
+    Task<PreventivoDto?> RipristinaRevisioneAsync(Guid revisioneId);
+
+    /// <summary>Ritorna tutti i template salvati.</summary>
+    Task<List<PreventivoTemplateDto>> GetTemplatesAsync();
+
+    /// <summary>Salva il preventivo come template riutilizzabile.</summary>
+    Task<PreventivoTemplateDto> SalvaTemplateAsync(string nome, string? descrizione, PreventivoDto dto);
+
+    /// <summary>Carica i parametri di un template nel DTO (senza sovrascrivere cliente/stato).</summary>
+    Task<PreventivoDto?> CaricaTemplateAsync(Guid templateId);
+
+    /// <summary>Elimina un template.</summary>
+    Task<bool> EliminaTemplateAsync(Guid id);
+
+    /// <summary>Registra l'invio email sul preventivo.</summary>
+    Task<PreventivoDto?> RegistraInvioEmailAsync(Guid id, string destinatario);
 }

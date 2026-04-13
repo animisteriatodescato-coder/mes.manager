@@ -177,7 +177,11 @@
   </style>
 </head>
 <body>
-  <img class=""logo-header"" src=""{baseUri}/images/logo-intestazione.png"" alt=""Animisteria Todescato"" />
+  <picture>
+    <source srcset=""{baseUri}/images/logo-intestazione.png"" type=""image/png"" />
+    <img class=""logo-header"" src=""{baseUri}/images/logo-intestazione.svg"" alt=""Animisteria Todescato""
+         onerror=""this.style.display='none'"" />
+  </picture>
   <hr class=""thick"" />
 
   <h1>PREVENTIVO FORNITURA ANIME</h1>
