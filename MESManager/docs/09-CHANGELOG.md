@@ -4,7 +4,20 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.2
+## 🔖 Versione Corrente: v1.65.3
+
+---
+
+## 🔖 v1.65.3 — Preventivi: campo Cliente → MudAutocomplete con ricerca dal catalogo clienti (13 Apr 2026)
+
+**Data**: 13 Aprile 2026
+
+### ✨ Feature — Autocomplete cliente nei Preventivi
+
+- Il campo **Cliente *** nel form Nuovo Preventivo è ora un `MudAutocomplete<string>` che legge la ragione sociale dal catalogo Clienti (tabella `Clienti`, solo attivi).
+- La ricerca è in-memory con filtro `Contains` case-insensitive, limitata a 20 risultati.
+- I clienti vengono caricati una volta sola all'`OnInitializedAsync` tramite `IClienteAppService.GetListaAsync()`.
+- **File modificati**: `CatalogoPreventivi.razor`, `AppVersion.cs`
 
 ---
 

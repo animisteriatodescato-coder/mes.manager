@@ -14,4 +14,5 @@ public interface ICommessaAppService
     Task RiordinaCommessaAsync(Guid commessaId, int? nuovoNumeroMacchina, int nuovaPosizioneIndex);
     Task EliminaAsync(Guid id);
     Task<List<StoricoProgrammazioneDto>> GetStoricoProgrammazioneAsync(Guid commessaId);
+    Task<List<string>> GetClienteNomiDistinctAsync();
 }

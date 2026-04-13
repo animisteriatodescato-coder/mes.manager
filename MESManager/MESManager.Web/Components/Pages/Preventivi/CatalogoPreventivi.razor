@@ -4,7 +4,7 @@
 @using MESManager.Application.Interfaces
 @using MESManager.Web.Components.Dialogs.Preventivi
 @inject IPreventivoService PreventivoService
-@inject IClienteAppService ClienteAppService
+@inject ICommessaAppService CommessaAppService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject HttpClient Http
@@ -39,9 +39,11 @@
                                                  SearchFunc="CercaClienti"
                                                  Variant="Variant.Outlined"
                                                  Margin="Margin.Dense"
-                                                 MinCharacters="1"
-                                                 ResetValueOnEmptyText="true"
+                                                 MinCharacters="0"
+                                                 DebounceInterval="200"
+                                                 ShowProgressIndicator="true"
                                                  CoerceText="true"
+                                                 CoerceValue="false"
                                                  AdornmentIcon="@Icons.Material.Filled.Search"
                                                  data-testid="input-cliente" />
                             </MudItem>
@@ -735,12 +737,8 @@
         _tipiSabbia  = await PreventivoService.GetTipiSabbiaAsync();
         _tipiVernice = await PreventivoService.GetTipiVerniceAsync();
         _preventivi  = await PreventivoService.GetAllAsync();
-        var clienti  = await ClienteAppService.GetListaAsync();
-        _clientiRagioni = clienti
-            .Where(c => c.Attivo)
-            .Select(c => c.RagioneSociale)
-            .OrderBy(r => r)
-            .ToList();
+        var clienti  = await CommessaAppService.GetClienteNomiDistinctAsync();
+        _clientiRagioni = clienti;
         _isLoading = false;
     }
 

@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.3";
+    public const string Current = "1.65.4";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.3: Campo Cliente nei Preventivi diventato autocomplete con ricerca da catalogo clienti
+    public const string Display = "v" + Current; // v1.65.4: Autocomplete Cliente Preventivi ora usa CompanyName da Commesse (come Catalogo Commesse)
 }

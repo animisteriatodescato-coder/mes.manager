@@ -32,6 +32,16 @@ public class CommessaAppService : ICommessaAppService
     {
         _context = context;
     }
+
+    public async Task<List<string>> GetClienteNomiDistinctAsync()
+    {
+        return await _context.Commesse
+            .Where(c => c.CompanyName != null && c.CompanyName != string.Empty)
+            .Select(c => c.CompanyName!)
+            .Distinct()
+            .OrderBy(n => n)
+            .ToListAsync();
+    }
     
     public async Task<List<CommessaDto>> GetListaAsync()
     {
