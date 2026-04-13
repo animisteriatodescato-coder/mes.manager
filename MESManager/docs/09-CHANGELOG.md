@@ -4,7 +4,55 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.4
+## 🔖 Versione Corrente: v1.65.6
+
+---
+
+## 🔖 v1.65.6 — Preventivi: NumeroPreventivo auto-incrementale + Margine% per lotto (13 Apr 2026)
+
+**Data**: 13 Aprile 2026
+
+### ✨ Feature 1 — Numero preventivo progressivo (parte da 1000)
+
+- Aggiunto campo `NumeroPreventivo` (int) a entity `Preventivo` e `PreventivoDto`
+- Auto-assegnato in `CreateAsync`: `MAX(NumeroPreventivo) ?? 999 + 1` → primo = 1000
+- Backfill SQL in migrazione: i preventivi esistenti ricevono numeri 1000, 1001, 1002... in ordine cronologico
+- UI: chip "N° XXXX" visibile nel header DATI CLIENTE del form e nel titolo del Modulo Cliente
+- Stampato nel PDF: `Rif. N. XXXX · Data emissione: gg/mm/aaaa`
+
+### ✨ Feature 2 — Percentuale di margine per lotto
+
+- Aggiunti campi `Margine1/2/3/4` (decimal) a entity e DTO
+- `IPreventivoService.CalcolaConLotto(dto, lotto, margine = 0)` aggiornato con parametro opzionale
+- Margin applicata: `PrezzoVendita = CostoBase × (1 + Margine/100)`
+- UI: 4 campi `MudNumericField<decimal>` sotto i lotti, disabilitati se il lotto corrispondente è vuoto
+- Tabella risultati ora mostra colonna "Margine" (mostra "+X.X%" o "—")
+- `GetLottiPrezzi()` e `LottiCalcolati` ora passano `Margine1..4` al calcolo
+- Modulo Cliente: prezzi aggiornati con margine applicato
+
+### 🗄 Migrazione DB
+
+- `20260413135428_AddNumeroPreventivo_Margini`: aggiunge 5 colonne (NumeroPreventivo int, Margine1-4 decimal(18,2))
+- Applicata al DB di sviluppo ✔
+
+### 📁 File modificati
+
+`Preventivo.cs`, `PreventivoDto.cs`, `IPreventivoService.cs`, `PreventivoService.cs`,  
+`CatalogoPreventivi.razor`, `ModuloClienteDialog.razor`, `AppVersion.cs`,  
+`20260413135428_AddNumeroPreventivo_Margini.cs` (migration)
+
+---
+
+## 🔖 v1.65.5 — Preventivi: rewrite Modulo Cliente con stampa isolata (13 Apr 2026)
+
+**Data**: 13 Aprile 2026
+
+### ✨ Feature — Print module rewrite
+
+- Nuovo `mesPreventivoPrint(html)` in `file-utils.js`: apre finestra isolata, evita doppia pagina
+- `ModuloClienteDialog.razor` riscritto: anteprima compatta + HTML completo generato lato server
+- Intestazione con logo (`/images/logo-intestazione.png`), titolo "PREVENTIVO FORNITURA ANIME"
+- CONDIZIONI DI OFFERTA con 8 bullet (90gg validità, EXW Sandrigo, UNI EN ISO 8062...)
 
 ---
 
