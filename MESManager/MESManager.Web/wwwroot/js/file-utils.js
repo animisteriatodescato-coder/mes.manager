@@ -54,3 +54,14 @@ window.printPdf = function (bytes, fileName) {
         };
     }
 };
+
+// ── Preventivo: apre finestra di stampa isolata ───────────────────────────────
+window.mesPreventivoPrint = function (html) {
+    const win = window.open('', '_blank', 'width=900,height=700');
+    if (!win) { alert('Popup bloccato dal browser. Consenti i popup per questa pagina e riprova.'); return; }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(function () { win.print(); }, 800);
+};

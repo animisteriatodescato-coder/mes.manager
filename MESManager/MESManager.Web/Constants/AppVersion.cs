@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.4";
+    public const string Current = "1.65.5";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.4: Autocomplete Cliente Preventivi ora usa CompanyName da Commesse (come Catalogo Commesse)
+    public const string Display = "v" + Current; // v1.65.5: Modulo Cliente Preventivo - nuova finestra stampa isolata, intestazione logo, titolo PREVENTIVO FORNITURA ANIME, condizioni offerta
 }
