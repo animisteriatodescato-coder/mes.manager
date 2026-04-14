@@ -151,7 +151,13 @@
             // Fallback SVG inline
             var svgPath = Path.Combine(Env.WebRootPath, "images", "logo-intestazione.svg");
             if (File.Exists(svgPath))
-                return File.ReadAllText(svgPath);
+            {
+                var svgContent = File.ReadAllText(svgPath);
+                // Rimuove la dichiarazione XML se presente (non valida in HTML inline)
+                if (svgContent.StartsWith("<?xml"))
+                    svgContent = svgContent.Substring(svgContent.IndexOf("?>") + 2).TrimStart();
+                return svgContent;
+            }
         }
         catch { }
         return null;
