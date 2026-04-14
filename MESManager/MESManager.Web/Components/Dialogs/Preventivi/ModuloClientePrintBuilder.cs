@@ -107,7 +107,7 @@ public static class ModuloClientePrintBuilder
                "<html lang=\"it\">\n" +
                "<head>\n" +
                "  <meta charset=\"utf-8\" />\n" +
-               $"  <title>Preventivo Fornitura Anime \u2013 {clienteEnc}</title>\n" +
+               "  <title>" + TitoloDocumento(dto) + "</title>\n" +
                "  <style>\n" +
                $"    * {{ box-sizing: border-box; margin: 0; padding: 0; }}\n" +
                $"    body {{ font-family: Arial, sans-serif; font-size: {fs}pt; color: #111; background: #fff; padding: 10mm 15mm; display: flex; flex-direction: column; min-height: calc(297mm - 30mm); }}\n" +
@@ -187,6 +187,14 @@ public static class ModuloClientePrintBuilder
                "  </div>\n\n" +
                "</body>\n" +
                "</html>";
+    }
+
+    private static string TitoloDocumento(PreventivoDto dto)
+    {
+        var cliente = (dto.Cliente ?? "").Replace(" ", "_");
+        var num = dto.NumeroPreventivo > 0 ? $"N{dto.NumeroPreventivo}_" : "";
+        var data = dto.DataCreazione.ToString("yyyyMMdd");
+        return $"Preventivo_{num}{cliente}_{data}";
     }
 
     private static IEnumerable<(int Lotto, decimal Margine, decimal Prezzo)> GetLottiPrezziConMargine(
