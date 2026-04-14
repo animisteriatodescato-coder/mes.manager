@@ -9,21 +9,40 @@ namespace MESManager.Web.Components.Dialogs.Preventivi;
 /// </summary>
 public static class ModuloClientePrintBuilder
 {
-    public static string Build(PreventivoDto dto, string baseUri, IPreventivoService preventivoService)
+    /// <param name="interna">true = versione interna (margine, sconto, note interne, firma); false = versione cliente (solo prezzi)</param>
+    /// <param name="fontSize">Dimensione base del testo in pt (default 10.5)</param>
+    public static string Build(PreventivoDto dto, string baseUri, IPreventivoService preventivoService,
+        bool interna = false, decimal fontSize = 10.5m)
     {
-        // Righe prezzi (Feature 12: colonne Margine + Sconto)
+        var fs = fontSize.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+        var fsSmall  = (fontSize - 1.5m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+        var fsTiny   = (fontSize - 2.0m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+        var fsTitle  = (fontSize + 5.5m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+
+        // Righe prezzi
         var righi = new System.Text.StringBuilder();
         foreach (var (lotto, margine, prezzo) in GetLottiPrezziConMargine(dto, preventivoService))
         {
-            var mCell = margine > 0 ? $"+{margine:N1}%" : "&mdash;";
-            var sCell = dto.Sconto > 0 ? $"-{dto.Sconto:N1}%" : "&mdash;";
-            righi.Append(
-                "<tr>" +
-                $"<td>{lotto:N0} pz</td>" +
-                $"<td style=\"text-align:center\">{mCell}</td>" +
-                $"<td style=\"text-align:center\">{sCell}</td>" +
-                $"<td class=\"price\">&euro;{prezzo:N4}</td>" +
-                "</tr>");
+            if (interna)
+            {
+                var mCell = margine > 0 ? $"+{margine:N1}%" : "&mdash;";
+                var sCell = dto.Sconto > 0 ? $"-{dto.Sconto:N1}%" : "&mdash;";
+                righi.Append(
+                    "<tr>" +
+                    $"<td>{lotto:N0} pz</td>" +
+                    $"<td style=\"text-align:center\">{mCell}</td>" +
+                    $"<td style=\"text-align:center\">{sCell}</td>" +
+                    $"<td class=\"price\">&euro;{prezzo:N4}</td>" +
+                    "</tr>");
+            }
+            else
+            {
+                righi.Append(
+                    "<tr>" +
+                    $"<td>{lotto:N0} pz</td>" +
+                    $"<td class=\"price\">&euro;{prezzo:N4}</td>" +
+                    "</tr>");
+            }
         }
 
         // Servizi aggiuntivi
@@ -35,9 +54,16 @@ public static class ModuloClientePrintBuilder
         else if (dto.ImballaggioRichiesto)
             servizi.Append("<div><dt>Servizi</dt><dd>Imballaggio</dd></div>");
 
+        // Note cliente (sempre visibili); note interne solo nella versione interna
         var note = string.IsNullOrWhiteSpace(dto.NoteCliente) ? "" :
             "<div class=\"section-title\">Note</div>" +
             $"<div class=\"note-block\">{System.Web.HttpUtility.HtmlEncode(dto.NoteCliente)}</div>";
+
+        var noteInterne = (interna && !string.IsNullOrWhiteSpace(dto.NoteInterne))
+            ? "<div class=\"section-title\" style=\"color:#b71c1c\">Note Interne</div>" +
+              "<div class=\"note-block\" style=\"border-color:#b71c1c;background:#fff8f8\">" +
+              $"{System.Web.HttpUtility.HtmlEncode(dto.NoteInterne)}</div>"
+            : "";
 
         var codiceArticolo = string.IsNullOrWhiteSpace(dto.CodiceArticolo) ? "" :
             $"<div><dt>Codice articolo</dt><dd>{System.Web.HttpUtility.HtmlEncode(dto.CodiceArticolo)}</dd></div>";
@@ -59,44 +85,68 @@ public static class ModuloClientePrintBuilder
         var clienteEnc = System.Web.HttpUtility.HtmlEncode(dto.Cliente);
         var clienteSpan = $"<div style=\"grid-column:1/3\"><dt>Cliente</dt><dd>{clienteEnc}</dd></div>";
 
+        var intestazioneInterna = interna
+            ? "<div style=\"background:#fff3e0;border:1px solid #e65100;border-radius:3px;padding:3px 8px;" +
+              "font-size:8pt;color:#e65100;font-weight:bold;margin-bottom:6px\">" +
+              "&#128274; USO INTERNO &mdash; NON CONSEGNARE AL CLIENTE</div>"
+            : "";
+
+        var theadPrezzi = interna
+            ? "<tr><th>Quantit&agrave; lotto (pz)</th>" +
+              "<th style=\"text-align:center\">Margine</th>" +
+              "<th style=\"text-align:center\">Sconto</th>" +
+              "<th style=\"text-align:right\">Prezzo unitario (&euro;/pz)</th></tr>"
+            : "<tr><th>Quantit&agrave; lotto (pz)</th>" +
+              "<th style=\"text-align:right\">Prezzo unitario (&euro;/pz)</th></tr>";
+
+        var firmaSection = interna ? "" :
+            "  <div class=\"firma-section\">\n" +
+            "    <div class=\"firma-title\">PER ACCETTAZIONE</div>\n" +
+            "    <div class=\"firma-grid\">\n" +
+            "      <div><div class=\"firma-label\">Luogo e data</div><div class=\"firma-line\"></div></div>\n" +
+            "      <div><div class=\"firma-label\">Timbro e firma cliente</div><div class=\"firma-line\"></div></div>\n" +
+            "    </div>\n" +
+            "    <p class=\"firma-note\">Restituire copia firmata con timbro aziendale.</p>\n" +
+            "  </div>\n";
+
         return "<!DOCTYPE html>\n" +
                "<html lang=\"it\">\n" +
                "<head>\n" +
                "  <meta charset=\"utf-8\" />\n" +
                $"  <title>Preventivo Fornitura Anime \u2013 {clienteEnc}</title>\n" +
                "  <style>\n" +
-               "    * { box-sizing: border-box; margin: 0; padding: 0; }\n" +
-               "    body { font-family: Arial, sans-serif; font-size: 10.5pt; color: #111; background: #fff; padding: 10mm 15mm; }\n" +
+               $"    * {{ box-sizing: border-box; margin: 0; padding: 0; }}\n" +
+               $"    body {{ font-family: Arial, sans-serif; font-size: {fs}pt; color: #111; background: #fff; padding: 10mm 15mm; }}\n" +
                "    @page { margin: 12mm 18mm 18mm 18mm; }\n" +
                "    .logo-header { width: 100%; max-height: 130px; object-fit: contain; object-position: left center; }\n" +
                "    hr.thick { border: none; border-top: 2.5px solid #111; margin: 7px 0 10px; }\n" +
                "    hr.thin  { border: none; border-top: 1px solid #ccc; margin: 6px 0; }\n" +
-               "    h1 { font-size: 16pt; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 3px; }\n" +
-               "    .meta { font-size: 9pt; color: #555; margin-bottom: 10px; }\n" +
-               "    .section-title { font-size: 10pt; font-weight: bold; text-transform: uppercase;\n" +
+               $"    h1 {{ font-size: {fsTitle}pt; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 3px; }}\n" +
+               $"    .meta {{ font-size: {fsTiny}pt; color: #555; margin-bottom: 10px; }}\n" +
+               $"    .section-title {{ font-size: {fsSmall}pt; font-weight: bold; text-transform: uppercase;\n" +
                "                      border-bottom: 1.5px solid #111; padding-bottom: 2px; margin: 14px 0 7px; }\n" +
                "    dl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 12px; margin-bottom: 10px; }\n" +
-               "    dt { font-size: 8pt; color: #666; margin-bottom: 1px; }\n" +
-               "    dd { font-size: 10pt; font-weight: 600; }\n" +
+               $"    dt {{ font-size: {fsTiny}pt; color: #666; margin-bottom: 1px; }}\n" +
+               $"    dd {{ font-size: {fsSmall}pt; font-weight: 600; }}\n" +
                "    table.prezzi { width: 100%; border-collapse: collapse; margin-top: 4px; }\n" +
-               "    table.prezzi th { background: #f2f2f2; border: 1px solid #bbb; padding: 5px 10px;\n" +
-               "                       font-size: 9pt; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n" +
-               "    table.prezzi td { border: 1px solid #ccc; padding: 6px 10px; font-size: 10.5pt; }\n" +
+               $"    table.prezzi th {{ background: #f2f2f2; border: 1px solid #bbb; padding: 5px 10px;\n" +
+               $"                       font-size: {fsTiny}pt; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}\n" +
+               $"    table.prezzi td {{ border: 1px solid #ccc; padding: 6px 10px; font-size: {fs}pt; }}\n" +
                "    td.price { text-align: right; font-weight: bold; color: #1a5c1a; }\n" +
-               "    .note-block { border-left: 3px solid #999; background: #f9f9f9; padding: 7px 12px;\n" +
-               "                   font-size: 9pt; margin-bottom: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n" +
-               "    .conditions { border: 1px solid #2e7d32; border-radius: 4px; padding: 10px 14px;\n" +
-               "                   margin-top: 22px; font-size: 8.5pt; line-height: 1.65;\n" +
+               $"    .note-block {{ border-left: 3px solid #999; background: #f9f9f9; padding: 7px 12px;\n" +
+               $"                   font-size: {fsTiny}pt; margin-bottom: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}\n" +
+               $"    .conditions {{ border: 1px solid #2e7d32; border-radius: 4px; padding: 10px 14px;\n" +
+               $"                   margin-top: 22px; font-size: {fsTiny}pt; line-height: 1.65;\n" +
                "                   -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n" +
-               "    .conditions .cond-title { font-weight: bold; color: #1b5e20; font-size: 9pt; margin-bottom: 5px; }\n" +
+               $"    .conditions .cond-title {{ font-weight: bold; color: #1b5e20; font-size: {fsSmall}pt; margin-bottom: 5px; }}\n" +
                "    .conditions ul { padding-left: 16px; }\n" +
                "    .conditions li { margin-bottom: 3px; }\n" +
                "    .firma-section { margin-top: 28px; border-top: 1.5px solid #111; padding-top: 14px; }\n" +
-               "    .firma-title { font-size: 10pt; font-weight: bold; text-transform: uppercase; margin-bottom: 12px; }\n" +
+               $"    .firma-title {{ font-size: {fsSmall}pt; font-weight: bold; text-transform: uppercase; margin-bottom: 12px; }}\n" +
                "    .firma-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }\n" +
-               "    .firma-label { font-size: 8pt; color: #666; margin-bottom: 3px; }\n" +
+               $"    .firma-label {{ font-size: {fsTiny}pt; color: #666; margin-bottom: 3px; }}\n" +
                "    .firma-line { border-bottom: 1px solid #333; height: 32px; }\n" +
-               "    .firma-note { font-size: 7.5pt; color: #666; margin-top: 8px; }\n" +
+               $"    .firma-note {{ font-size: {fsTiny}pt; color: #666; margin-top: 8px; }}\n" +
                "    @media print {\n" +
                "      body { padding: 0; }\n" +
                "      -webkit-print-color-adjust: exact; print-color-adjust: exact;\n" +
@@ -104,6 +154,7 @@ public static class ModuloClientePrintBuilder
                "  </style>\n" +
                "</head>\n" +
                "<body>\n" +
+               $"  {intestazioneInterna}\n" +
                $"  <picture>\n" +
                $"    <source srcset=\"{logoSrcset}\" type=\"image/png\" />\n" +
                $"    <img class=\"logo-header\" src=\"{logoSrc}\" alt=\"Animisteria Todescato\"\n" +
@@ -126,15 +177,11 @@ public static class ModuloClientePrintBuilder
                $"    {sabbiaRow}\n" +
                $"    {servizi}\n" +
                "  </dl>\n\n" +
-               $"  {note}\n\n" +
+               $"  {note}\n" +
+               $"  {noteInterne}\n\n" +
                "  <div class=\"section-title\">Prezzi per Lotto</div>\n" +
                "  <table class=\"prezzi\">\n" +
-               "    <thead><tr>" +
-               "<th>Quantit&agrave; lotto (pz)</th>" +
-               "<th style=\"text-align:center\">Margine</th>" +
-               "<th style=\"text-align:center\">Sconto</th>" +
-               "<th style=\"text-align:right\">Prezzo unitario (&euro;/pz)</th>" +
-               "</tr></thead>\n" +
+               $"    <thead>{theadPrezzi}</thead>\n" +
                $"    <tbody>{righi}</tbody>\n" +
                "  </table>\n\n" +
                "  <div class=\"conditions\">\n" +
@@ -151,17 +198,9 @@ public static class ModuloClientePrintBuilder
                "          (rif. UNI EN ISO 8062).</li>\n" +
                "      <li>La presente offerta &egrave; subordinata alla disponibilit&agrave; di attrezzature e capacit&agrave; produttiva\n" +
                "          al momento dell'accettazione dell'ordine.</li>\n" +
-               "      <li>Per accettazione si prega di restituire copia firmata con timbro aziendale.</li>\n" +
                "    </ul>\n" +
                "  </div>\n\n" +
-               "  <div class=\"firma-section\">\n" +
-               "    <div class=\"firma-title\">PER ACCETTAZIONE</div>\n" +
-               "    <div class=\"firma-grid\">\n" +
-               "      <div><div class=\"firma-label\">Luogo e data</div><div class=\"firma-line\"></div></div>\n" +
-               "      <div><div class=\"firma-label\">Timbro e firma cliente</div><div class=\"firma-line\"></div></div>\n" +
-               "    </div>\n" +
-               "    <p class=\"firma-note\">Restituire copia firmata con timbro aziendale.</p>\n" +
-               "  </div>\n" +
+               firmaSection +
                "</body>\n" +
                "</html>";
     }

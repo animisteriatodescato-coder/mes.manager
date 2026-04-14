@@ -92,12 +92,25 @@
                 </MudText>
             }
         }
+        <MudTooltip Text="Dimensione testo PDF (pt)">
+            <MudNumericField T="decimal" @bind-Value="_fontSize"
+                             Min="7" Max="14" Step="0.5m"
+                             Variant="Variant.Outlined" Margin="Margin.Dense"
+                             Style="width:80px" Label="Font" />
+        </MudTooltip>
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Warning"
+                   StartIcon="@Icons.Material.Filled.Lock"
+                   OnClick="@(() => StampaAsync(true))"
+                   data-testid="btn-stampa-interna">
+            Interna
+        </MudButton>
         <MudButton Variant="Variant.Filled"
                    Color="Color.Primary"
                    StartIcon="@Icons.Material.Filled.Print"
-                   OnClick="StampaAsync"
-                   data-testid="btn-stampa-modulo">
-            Stampa / PDF
+                   OnClick="@(() => StampaAsync(false))"
+                   data-testid="btn-stampa-cliente">
+            Cliente
         </MudButton>
         <MudButton OnClick="Chiudi" data-testid="btn-chiudi-modulo">Chiudi</MudButton>
     </DialogActions>
@@ -112,12 +125,13 @@
 
     private string _emailDestinatario = string.Empty;
     private bool _isInvioEmail;
+    private decimal _fontSize = 10.5m;
 
-    private async Task StampaAsync()
+    private async Task StampaAsync(bool interna)
     {
         if (Dto == null) return;
         var baseUri = Nav.BaseUri.TrimEnd('/');
-        var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService);
+        var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna, _fontSize);
         await JS.InvokeVoidAsync("mesPreventivoPrint", html);
     }
 
@@ -130,7 +144,7 @@
         try
         {
             var baseUri = Nav.BaseUri.TrimEnd('/');
-            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService);
+            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna: false, _fontSize);
             var ok = await EmailService.InviaPreventivoPdfAsync(
                 _emailDestinatario, html, Dto.Cliente, Dto.NumeroPreventivo);
             if (ok)
