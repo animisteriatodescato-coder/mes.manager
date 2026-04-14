@@ -141,9 +141,17 @@
     {
         try
         {
-            var logoPath = Path.Combine(Env.WebRootPath, "images", "logo-intestazione.svg");
-            if (File.Exists(logoPath))
-                return File.ReadAllText(logoPath);
+            // PNG preferito: caricato come data URI base64 (sempre visibile in stampa)
+            var pngPath = Path.Combine(Env.WebRootPath, "images", "logo-intestazione.png");
+            if (File.Exists(pngPath))
+            {
+                var b64 = Convert.ToBase64String(File.ReadAllBytes(pngPath));
+                return $"<img src=\"data:image/png;base64,{b64}\" style=\"max-height:110px;width:auto;display:block\" alt=\"Animisteria Todescato\" />";
+            }
+            // Fallback SVG inline
+            var svgPath = Path.Combine(Env.WebRootPath, "images", "logo-intestazione.svg");
+            if (File.Exists(svgPath))
+                return File.ReadAllText(svgPath);
         }
         catch { }
         return null;
