@@ -111,9 +111,9 @@ public static class ModuloClientePrintBuilder
                $"    * {{ box-sizing: border-box; margin: 0; padding: 0; }}\n" +
                $"    body {{ font-family: Arial, sans-serif; font-size: {fs}pt; color: #111; background: #fff; padding: 10mm 15mm; }}\n" +
                "    @page { margin: 12mm 18mm 18mm 18mm; }\n" +
-               "    .logo-wrap { width: 100%; margin-bottom: 4px; }\n" +
-               "    .logo-wrap svg { width: 100%; height: auto; }\n" +
-               "    .logo-wrap img { max-height: 110px; width: auto; display: block; -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n" +
+               "    .logo-wrap { width: 100%; margin-bottom: 6px; }\n" +
+               "    .logo-wrap svg { width: 100%; height: auto; max-height: 115px; display: block; }\n" +
+               "    .logo-wrap img { max-height: 115px; width: auto; display: block; -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n" +
                "    hr.thick { border: none; border-top: 2.5px solid #111; margin: 7px 0 10px; }\n" +
                "    hr.thin  { border: none; border-top: 1px solid #ccc; margin: 6px 0; }\n" +
                $"    h1 {{ font-size: {fsTitle}pt; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 3px; }}\n" +
