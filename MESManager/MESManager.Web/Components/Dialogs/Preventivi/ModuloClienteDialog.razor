@@ -127,10 +127,21 @@
     private string _emailDestinatario = string.Empty;
     private bool _isInvioEmail;
     private decimal _fontSize = 10.5m;
+    private const string FontSizeKey = "preventivo_fontsize";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var saved = await JS.InvokeAsync<string?>("localStorage.getItem", FontSizeKey);
+        if (saved != null && decimal.TryParse(saved, System.Globalization.NumberStyles.Float,
+            System.Globalization.CultureInfo.InvariantCulture, out var fs) && fs >= 7 && fs <= 14)
+            _fontSize = fs;
+    }
 
     private async Task StampaAsync(bool interna)
     {
         if (Dto == null) return;
+        await JS.InvokeVoidAsync("localStorage.setItem", FontSizeKey,
+            _fontSize.ToString(System.Globalization.CultureInfo.InvariantCulture));
         var baseUri = Nav.BaseUri.TrimEnd('/');
         var logo = LeggiLogoInline();
         var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna, _fontSize, logo);
