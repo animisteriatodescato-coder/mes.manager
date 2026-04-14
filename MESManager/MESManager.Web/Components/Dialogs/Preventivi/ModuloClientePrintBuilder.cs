@@ -19,6 +19,7 @@ public static class ModuloClientePrintBuilder
         var fsSmall  = (fontSize - 1.5m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
         var fsTiny   = (fontSize - 2.0m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
         var fsTitle  = (fontSize + 5.5m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+        var fsCond   = (fontSize - 3.5m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
 
         // Righe prezzi
         var righi = new System.Text.StringBuilder();
@@ -33,7 +34,7 @@ public static class ModuloClientePrintBuilder
                     $"<td>{lotto:N0} pz</td>" +
                     $"<td style=\"text-align:center\">{mCell}</td>" +
                     $"<td style=\"text-align:center\">{sCell}</td>" +
-                    $"<td class=\"price\">&euro;{prezzo:N4}</td>" +
+                    $"<td class=\"price\">&euro;{prezzo:N2}</td>" +
                     "</tr>");
             }
             else
@@ -41,7 +42,7 @@ public static class ModuloClientePrintBuilder
                 righi.Append(
                     "<tr>" +
                     $"<td>{lotto:N0} pz</td>" +
-                    $"<td class=\"price\">&euro;{prezzo:N4}</td>" +
+                    $"<td class=\"price\">&euro;{prezzo:N2}</td>" +
                     "</tr>");
             }
         }
@@ -109,7 +110,7 @@ public static class ModuloClientePrintBuilder
                $"  <title>Preventivo Fornitura Anime \u2013 {clienteEnc}</title>\n" +
                "  <style>\n" +
                $"    * {{ box-sizing: border-box; margin: 0; padding: 0; }}\n" +
-               $"    body {{ font-family: Arial, sans-serif; font-size: {fs}pt; color: #111; background: #fff; padding: 10mm 15mm; }}\n" +
+               $"    body {{ font-family: Arial, sans-serif; font-size: {fs}pt; color: #111; background: #fff; padding: 10mm 15mm; display: flex; flex-direction: column; min-height: calc(297mm - 30mm); }}\n" +
                "    @page { margin: 12mm 18mm 18mm 18mm; }\n" +
                "    .logo-wrap { width: 100%; margin-bottom: 6px; }\n" +
                "    .logo-wrap svg { width: 100%; height: auto; display: block; }\n" +
@@ -131,7 +132,7 @@ public static class ModuloClientePrintBuilder
                $"    .note-block {{ border-left: 3px solid #999; background: #f9f9f9; padding: 7px 12px;\n" +
                $"                   font-size: {fsTiny}pt; margin-bottom: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}\n" +
                $"    .conditions {{ border: 1px solid #2e7d32; border-radius: 4px; padding: 10px 14px;\n" +
-               $"                   margin-top: 22px; font-size: {fsTiny}pt; line-height: 1.65;\n" +
+               $"                   margin-top: auto; font-size: {fsCond}pt; line-height: 1.65;\n" +
                "                   -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n" +
                $"    .conditions .cond-title {{ font-weight: bold; color: #1b5e20; font-size: {fsSmall}pt; margin-bottom: 5px; }}\n" +
                "    .conditions ul { padding-left: 16px; }\n" +
