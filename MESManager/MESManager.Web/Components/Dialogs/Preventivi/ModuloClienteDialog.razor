@@ -5,6 +5,7 @@
 @inject IEmailService EmailService
 @inject ISnackbar Snackbar
 @inject NavigationManager Nav
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
 
 <MudDialog Class="modulo-cliente-dialog" data-testid="dlg-modulo-cliente">
     <TitleContent>
@@ -131,8 +132,21 @@
     {
         if (Dto == null) return;
         var baseUri = Nav.BaseUri.TrimEnd('/');
-        var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna, _fontSize);
+        var logo = LeggiLogoInline();
+        var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna, _fontSize, logo);
         await JS.InvokeVoidAsync("mesPreventivoPrint", html);
+    }
+
+    private string? LeggiLogoInline()
+    {
+        try
+        {
+            var logoPath = Path.Combine(Env.WebRootPath, "images", "logo-intestazione.svg");
+            if (File.Exists(logoPath))
+                return File.ReadAllText(logoPath);
+        }
+        catch { }
+        return null;
     }
 
     private void Chiudi() => MudDialog.Close(DialogResult.Ok(true));
@@ -144,7 +158,8 @@
         try
         {
             var baseUri = Nav.BaseUri.TrimEnd('/');
-            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna: false, _fontSize);
+            var logo = LeggiLogoInline();
+            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna: false, _fontSize, logo);
             var ok = await EmailService.InviaPreventivoPdfAsync(
                 _emailDestinatario, html, Dto.Cliente, Dto.NumeroPreventivo);
             if (ok)

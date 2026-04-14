@@ -9,10 +9,11 @@ namespace MESManager.Web.Components.Dialogs.Preventivi;
 /// </summary>
 public static class ModuloClientePrintBuilder
 {
-    /// <param name="interna">true = versione interna (margine, sconto, note interne, firma); false = versione cliente (solo prezzi)</param>
+    /// <param name="interna">true = versione interna (margine, sconto, note interne); false = versione cliente (solo prezzi)</param>
     /// <param name="fontSize">Dimensione base del testo in pt (default 10.5)</param>
+    /// <param name="logoInlineHtml">HTML/SVG del logo da incorporare; se null non viene mostrato</param>
     public static string Build(PreventivoDto dto, string baseUri, IPreventivoService preventivoService,
-        bool interna = false, decimal fontSize = 10.5m)
+        bool interna = false, decimal fontSize = 10.5m, string? logoInlineHtml = null)
     {
         var fs = fontSize.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
         var fsSmall  = (fontSize - 1.5m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
@@ -80,8 +81,6 @@ public static class ModuloClientePrintBuilder
             ? $"Data emissione: {dto.DataCreazione:dd/MM/yyyy}"
             : $"Rif. {numeroRef} &nbsp;&bull;&nbsp; Data emissione: {dto.DataCreazione:dd/MM/yyyy}";
 
-        var logoSrcset = $"{baseUri}/images/logo-intestazione.png";
-        var logoSrc    = $"{baseUri}/images/logo-intestazione.svg";
         var clienteEnc = System.Web.HttpUtility.HtmlEncode(dto.Cliente);
         var clienteSpan = $"<div style=\"grid-column:1/3\"><dt>Cliente</dt><dd>{clienteEnc}</dd></div>";
 
@@ -99,15 +98,9 @@ public static class ModuloClientePrintBuilder
             : "<tr><th>Quantit&agrave; lotto (pz)</th>" +
               "<th style=\"text-align:right\">Prezzo unitario (&euro;/pz)</th></tr>";
 
-        var firmaSection = interna ? "" :
-            "  <div class=\"firma-section\">\n" +
-            "    <div class=\"firma-title\">PER ACCETTAZIONE</div>\n" +
-            "    <div class=\"firma-grid\">\n" +
-            "      <div><div class=\"firma-label\">Luogo e data</div><div class=\"firma-line\"></div></div>\n" +
-            "      <div><div class=\"firma-label\">Timbro e firma cliente</div><div class=\"firma-line\"></div></div>\n" +
-            "    </div>\n" +
-            "    <p class=\"firma-note\">Restituire copia firmata con timbro aziendale.</p>\n" +
-            "  </div>\n";
+        var logoBlock = logoInlineHtml != null
+            ? $"  <div class=\"logo-wrap\">{logoInlineHtml}</div>\n"
+            : "";
 
         return "<!DOCTYPE html>\n" +
                "<html lang=\"it\">\n" +
@@ -118,7 +111,8 @@ public static class ModuloClientePrintBuilder
                $"    * {{ box-sizing: border-box; margin: 0; padding: 0; }}\n" +
                $"    body {{ font-family: Arial, sans-serif; font-size: {fs}pt; color: #111; background: #fff; padding: 10mm 15mm; }}\n" +
                "    @page { margin: 12mm 18mm 18mm 18mm; }\n" +
-               "    .logo-header { width: 100%; max-height: 130px; object-fit: contain; object-position: left center; }\n" +
+               "    .logo-wrap { width: 100%; margin-bottom: 0; }\n" +
+               "    .logo-wrap svg, .logo-wrap img { max-height: 80px; width: auto; }\n" +
                "    hr.thick { border: none; border-top: 2.5px solid #111; margin: 7px 0 10px; }\n" +
                "    hr.thin  { border: none; border-top: 1px solid #ccc; margin: 6px 0; }\n" +
                $"    h1 {{ font-size: {fsTitle}pt; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 3px; }}\n" +
@@ -155,11 +149,7 @@ public static class ModuloClientePrintBuilder
                "</head>\n" +
                "<body>\n" +
                $"  {intestazioneInterna}\n" +
-               $"  <picture>\n" +
-               $"    <source srcset=\"{logoSrcset}\" type=\"image/png\" />\n" +
-               $"    <img class=\"logo-header\" src=\"{logoSrc}\" alt=\"Animisteria Todescato\"\n" +
-               "         onerror=\"this.style.display='none'\" />\n" +
-               "  </picture>\n" +
+               logoBlock +
                "  <hr class=\"thick\" />\n\n" +
                "  <h1>PREVENTIVO FORNITURA ANIME</h1>\n" +
                $"  <div class=\"meta\">{emissioneRow}</div>\n\n" +
@@ -188,19 +178,11 @@ public static class ModuloClientePrintBuilder
                "    <div class=\"cond-title\">CONDIZIONI DI OFFERTA</div>\n" +
                "    <ul>\n" +
                "      <li>La presente offerta ha validit&agrave; <strong>90 giorni</strong> dalla data di emissione.</li>\n" +
-               "      <li>I prezzi sono soggetti a revisione in funzione dell'andamento dei costi delle materie prime\n" +
-               "          (sabbia silicea, resine fenoliche/furaniche, catalizzatori) e dei vettori energetici\n" +
-               "          (gas naturale, energia elettrica).</li>\n" +
+               "      <li>I prezzi sono soggetti a revisione in funzione dell'andamento dei costi delle materie prime e dei vettori energetici.</li>\n" +
                "      <li>Prezzi IVA esclusa. L'imposta sar&agrave; applicata secondo l'aliquota vigente al momento della fatturazione.</li>\n" +
-               "      <li>Resa merce: <em>Ex Works (EXW) &ndash; Sandrigo (VI) &ndash; Incoterms&reg; 2020</em>.</li>\n" +
                "      <li>Pagamento: secondo accordi commerciali in essere.</li>\n" +
-               "      <li>Tolleranze dimensionali delle anime secondo specifiche tecniche concordate con il cliente\n" +
-               "          (rif. UNI EN ISO 8062).</li>\n" +
-               "      <li>La presente offerta &egrave; subordinata alla disponibilit&agrave; di attrezzature e capacit&agrave; produttiva\n" +
-               "          al momento dell'accettazione dell'ordine.</li>\n" +
                "    </ul>\n" +
                "  </div>\n\n" +
-               firmaSection +
                "</body>\n" +
                "</html>";
     }
