@@ -210,7 +210,7 @@ public class PreventivoService : IPreventivoService
             ImballaggioPzOra = dto.ImballaggioPzOra
         };
         var result = Calcola(dtoLotto);
-        if (margine > 0)
+        if (margine != 0)
         {
             result.Margine = margine;
             result.PrezzoVendita = result.PrezzoVendita * (1 + margine / 100m);

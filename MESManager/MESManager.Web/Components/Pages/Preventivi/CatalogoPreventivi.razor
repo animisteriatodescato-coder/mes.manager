@@ -203,7 +203,7 @@
                         <MudGrid Spacing="2">
                             <MudItem xs="6" sm="3">
                                 <MudNumericField T="decimal" @bind-Value="_dto.Margine1" @bind-Value:after="Ricalcola"
-                                                 Label="Margine L1 (%)" Min="@(0m)" Max="@(100m)"
+                                                 Label="Margine L1 (%)" Min="@(-99m)" Max="@(100m)"
                                                  Format="N1"
                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  Adornment="Adornment.End" AdornmentText="%"
@@ -211,7 +211,7 @@
                             </MudItem>
                             <MudItem xs="6" sm="3">
                                 <MudNumericField T="decimal" @bind-Value="_dto.Margine2" @bind-Value:after="Ricalcola"
-                                                 Label="Margine L2 (%)" Min="@(0m)" Max="@(100m)"
+                                                 Label="Margine L2 (%)" Min="@(-99m)" Max="@(100m)"
                                                  Format="N1"
                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  Adornment="Adornment.End" AdornmentText="%"
@@ -220,7 +220,7 @@
                             </MudItem>
                             <MudItem xs="6" sm="3">
                                 <MudNumericField T="decimal" @bind-Value="_dto.Margine3" @bind-Value:after="Ricalcola"
-                                                 Label="Margine L3 (%)" Min="@(0m)" Max="@(100m)"
+                                                 Label="Margine L3 (%)" Min="@(-99m)" Max="@(100m)"
                                                  Format="N1"
                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  Adornment="Adornment.End" AdornmentText="%"
@@ -229,7 +229,7 @@
                             </MudItem>
                             <MudItem xs="6" sm="3">
                                 <MudNumericField T="decimal" @bind-Value="_dto.Margine4" @bind-Value:after="Ricalcola"
-                                                 Label="Margine L4 (%)" Min="@(0m)" Max="@(100m)"
+                                                 Label="Margine L4 (%)" Min="@(-99m)" Max="@(100m)"
                                                  Format="N1"
                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  Adornment="Adornment.End" AdornmentText="%"

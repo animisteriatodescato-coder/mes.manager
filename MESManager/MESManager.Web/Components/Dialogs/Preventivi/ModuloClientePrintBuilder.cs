@@ -27,7 +27,7 @@ public static class ModuloClientePrintBuilder
         {
             if (interna)
             {
-                var mCell = margine > 0 ? $"+{margine:N1}%" : "&mdash;";
+                var mCell = margine != 0 ? (margine > 0 ? $"+{margine:N1}%" : $"{margine:N1}%") : "&mdash;";
                 var sCell = dto.Sconto > 0 ? $"-{dto.Sconto:N1}%" : "&mdash;";
                 righi.Append(
                     "<tr>" +
