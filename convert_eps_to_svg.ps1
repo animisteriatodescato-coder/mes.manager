@@ -1,14 +1,10 @@
 # Legge il file EPS del SOLO ICONA (spirale) - BoundingBox 104x83
 $eps = [System.IO.File]::ReadAllText("C:\Users\produ\Desktop\black_logo_transparent_background.eps")
 $ic = [System.Globalization.CultureInfo]::InvariantCulture
-$BBOX_H = 83.0  # altezza BoundingBox EPS
-
-# Helper: flip Y (PS y=0 in basso, SVG y=0 in alto)
-function FlipY([double]$y) { return $BBOX_H - $y }
 
 $stack = [System.Collections.Generic.Stack[double]]::new()
 $pathD = [System.Text.StringBuilder]::new()
-$spiralPaths  = [System.Collections.Generic.List[string]]::new()  # f* = evenodd = spirale
+$spiralPaths = [System.Collections.Generic.List[string]]::new()
 
 # Estrai sezione disegno tra "0 g" e "Q Q"
 $drawStart = $eps.IndexOf("0 g") + 3
@@ -25,35 +21,32 @@ foreach ($t in $tokens) {
         switch ($t) {
             'm' {
                 $y = $stack.Pop(); $x = $stack.Pop()
-                $sy = FlipY($y)
                 if ($pathD.Length -gt 0) { [void]$pathD.Append(' ') }
-                [void]$pathD.Append("M $($x.ToString('G6',$ic)),$($sy.ToString('G6',$ic))")
+                [void]$pathD.Append("M $($x.ToString('G6',$ic)),$($y.ToString('G6',$ic))")
             }
             'l' {
                 $y = $stack.Pop(); $x = $stack.Pop()
-                $sy = FlipY($y)
-                [void]$pathD.Append(" L $($x.ToString('G6',$ic)),$($sy.ToString('G6',$ic))")
+                [void]$pathD.Append(" L $($x.ToString('G6',$ic)),$($y.ToString('G6',$ic))")
             }
             'c' {
                 $y3=$stack.Pop();$x3=$stack.Pop()
                 $y2=$stack.Pop();$x2=$stack.Pop()
                 $y1=$stack.Pop();$x1=$stack.Pop()
-                $sy1=FlipY($y1); $sy2=FlipY($y2); $sy3=FlipY($y3)
-                [void]$pathD.Append(" C $($x1.ToString('G6',$ic)),$($sy1.ToString('G6',$ic)) $($x2.ToString('G6',$ic)),$($sy2.ToString('G6',$ic)) $($x3.ToString('G6',$ic)),$($sy3.ToString('G6',$ic))")
+                [void]$pathD.Append(" C $($x1.ToString('G6',$ic)),$($y1.ToString('G6',$ic)) $($x2.ToString('G6',$ic)),$($y2.ToString('G6',$ic)) $($x3.ToString('G6',$ic)),$($y3.ToString('G6',$ic))")
             }
             'h' { [void]$pathD.Append(" Z") }
             'f' {
-                # f = fill senza evenodd = lettere/testo vettoriale → ignoriamo
+                # f = testo/lettere vettoriali → ignoriamo
                 $pathD.Clear(); $stack.Clear()
             }
             'f*' {
-                # f* = evenodd fill = SPIRALE → la teniamo
+                # f* = evenodd fill = SPIRALE
                 $d = $pathD.ToString()
                 if ($d.Length -gt 0) { $spiralPaths.Add($d) }
                 $pathD.Clear(); $stack.Clear()
             }
             're' {
-                # rettangoli (divisori) → ignoriamo
+                # rettangoli divisori → ignoriamo
                 $h=$stack.Pop();$w=$stack.Pop();$yy=$stack.Pop();$xx=$stack.Pop()
                 $stack.Clear()
             }
@@ -63,15 +56,10 @@ foreach ($t in $tokens) {
 
 Write-Host "Spiral paths trovati: $($spiralPaths.Count)"
 
-# Scala la spirale (BBox 104x83) per riempire la metà sinistra del logo (148x115)
-# Usando scala uniforme = min(148/104, 115/83) ≈ 1.386
-$scaleX = [Math]::Round(148.0 / 104.0, 4)
-$scaleY = [Math]::Round(115.0 / 83.0, 4)
-$scale  = [Math]::Min($scaleX, $scaleY)  # ~1.386 uniforme
+# Scala uniforme per riempire 148x115 dal BBox 104x83
+$scale = [Math]::Min([Math]::Round(148.0 / 104.0, 4), [Math]::Round(115.0 / 83.0, 4))
 
-$spiralG = $spiralPaths | ForEach-Object {
-    "    <path d=`"$_`" fill=`"#000`" fill-rule=`"evenodd`"/>"
-}
+$spiralG = $spiralPaths | ForEach-Object { "    <path d=`"$_`" fill=`"#000`" fill-rule=`"evenodd`"/>" }
 $spiralBlock = $spiralG -join "`n"
 
 $svg = @"
