@@ -4,7 +4,45 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.6
+## 🔖 Versione Corrente: v1.65.8
+
+---
+
+## 🔖 v1.65.8 — Preventivi: logo EPS completo, prezzi N2, condizioni in fondo, margine negativo, titolo PDF (15 Apr 2026)
+
+**Data**: 15 Aprile 2026
+
+### ✨ Feature 1 — Logo SVG da EPS completo
+
+- Conversione completa del file EPS originale in SVG vettoriale puro (spirale + testo ANIMISTERIA TODESCATO + ANIME IN SHELL MOULDING)
+- Spirale e testo scala `scale(1.3333)` per occupare metà sinistra del foglio A4 (420px)
+- Dati aziendali a destra spostati a `x=490` (+2cm rispetto a prima)
+- Rimossa la linea verticale divisoria tra logo e contatti
+
+### ✨ Feature 2 — Prezzi con 2 decimali
+
+- `ModuloClientePrintBuilder.cs`: prezzi da formato N4 a N2 sia nella versione interna che cliente
+
+### ✨ Feature 3 — Condizioni generali in fondo alla pagina
+
+- Layout body con `display:flex; flex-direction:column; min-height:calc(297mm - 30mm)`
+- `.conditions { margin-top: auto }` spinge le condizioni a fondo pagina
+- Font condizioni rimpicciolito di 3.5pt rispetto al font base
+
+### ✨ Feature 4 — Margine negativo (sconto)
+
+- `CatalogoPreventivi.razor`: `Min` dei 4 campi margine da `0m` a `-99m`
+- `PreventivoService.cs`: condizione `if (margine > 0)` → `if (margine != 0)`
+- Visualizzazione: margine positivo `+X.X%`, negativo `X.X%` (es. `-5.0%`)
+
+### ✨ Feature 5 — Titolo PDF con numero preventivo e data
+
+- `TitoloDocumento()` helper in `ModuloClientePrintBuilder.cs`
+- Output: `Preventivo_N1001_ACME_20260414`
+
+### ✨ Feature 6 — Font size persistente nel dialogo Modulo Cliente
+
+- `ModuloClienteDialog.razor`: font size salvato in `localStorage` con chiave `preventivo_fontsize`
 
 ---
 
