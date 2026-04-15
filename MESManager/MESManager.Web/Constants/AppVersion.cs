@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.8";
+    public const string Current = "1.65.9";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.8: Preventivi: logo SVG da EPS completo, prezzi N2, condizioni in fondo, margine negativo, titolo PDF con numero+data
+    public const string Display = "v" + Current; // v1.65.9: Statistiche Ordini: KPI + grafici donut/bar/line + trend mensile + urgenze + top clienti
 }

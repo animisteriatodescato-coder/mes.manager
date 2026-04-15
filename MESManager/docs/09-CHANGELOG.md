@@ -4,7 +4,25 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.8
+## 🔖 Versione Corrente: v1.65.9
+
+---
+
+## 🔖 v1.65.9 — Statistiche Ordini: dashboard completa con KPI, grafici e urgenze (15 Apr 2026)
+
+**Data**: 15 Aprile 2026
+
+### ✨ Feature — Statistiche Ordini (S3 Completa)
+
+- **Filtro periodo**: selezione Anno + Mese (tutti i mesi o mese specifico)
+- **5 KPI cards**: Totale commesse, Aperte/InLavorazione, Completate/Chiuse, In Ritardo, Valore Stimato
+- **4 Tab**:
+  - **Riepilogo**: Donut StatoProgramma + Bar top-5 clienti attivi + Donut StatoCommessa + tabella valore economico per stato
+  - **Trend Mensile**: Line chart nuove commesse vs consegne su 12 mesi + Bar valore stimato mensile + tabella dettaglio mensile
+  - **Urgenze**: tabella commesse scadute o con consegna ≤ 7 gg, ordinata per urgenza con badge colorati
+  - **Clienti**: top-10 clienti per volume con tabella + bar chart
+- Nessuna nuova entità DB — calcoli puri LINQ su `ICommessaAppService.GetListaAsync()`
+- Pattern identico a `StatisticheOperatori.razor` — MudChart + MudSimpleTable
 
 ---
 

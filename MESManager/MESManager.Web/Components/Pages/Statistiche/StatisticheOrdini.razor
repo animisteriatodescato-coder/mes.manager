@@ -1,8 +1,678 @@
 @page "/statistiche/ordini"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.StatOrdini)]
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@using System.Globalization
+@inject ICommessaAppService CommessaService
+@inject ISnackbar Snackbar
 
 <PageTitle>Statistiche Ordini</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" data-testid="page-statistiche-ordini">
-    <MudText>Pagina predisposta per statistiche ordini e commesse</MudText>
+
+    @* ── FILTRI ── *@
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+            <MudSelect T="int" Label="Anno" @bind-Value="_filtroAnno"
+                       Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:120px">
+                @for (int y = DateTime.Today.Year; y >= DateTime.Today.Year - 4; y--)
+                {
+                    var yr = y;
+                    <MudSelectItem T="int" Value="@yr">@yr</MudSelectItem>
+                }
+            </MudSelect>
+            <MudSelect T="int" Label="Mese" @bind-Value="_filtroMese"
+                       Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:140px">
+                <MudSelectItem T="int" Value="0">Tutti</MudSelectItem>
+                @for (int m = 1; m <= 12; m++)
+                {
+                    var mo = m;
+                    <MudSelectItem T="int" Value="@mo">@GetMonthName(mo)</MudSelectItem>
+                }
+            </MudSelect>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Analytics"
+                       OnClick="Aggiorna" Disabled="@_loading">
+                @if (_loading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Analizza
+            </MudButton>
+            <MudSpacer />
+            @if (_commesse != null)
+            {
+                <MudChip T="string" Color="Color.Info" Size="Size.Small">
+                    @_commesseFiltrate.Count commesse nel periodo
+                </MudChip>
+            }
+        </MudStack>
+    </MudPaper>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+    }
+
+    @if (_commesse != null)
+    {
+        @* ── KPI CARDS ── *@
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" sm="6" md="@(_filtroMese == 0 ? 3 : 4)">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.Assignment" Size="Size.Large" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle2">Totale Commesse</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@_commesseFiltrate.Count</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="@(_filtroMese == 0 ? 3 : 4)">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.HourglassEmpty" Size="Size.Large" Color="Color.Warning" />
+                        <MudText Typo="Typo.subtitle2">Aperte / In Lavorazione</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Warning">@_kpiAperte</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="@(_filtroMese == 0 ? 3 : 4)">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Color="Color.Success" />
+                        <MudText Typo="Typo.subtitle2">Completate / Chiuse</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_kpiCompletate</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="@(_filtroMese == 0 ? 3 : 4)">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Large" Color="Color.Error" />
+                        <MudText Typo="Typo.subtitle2">In Ritardo</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Error">@_kpiRitardo</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            @if (_filtroMese == 0)
+            {
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="2">
+                        <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.Euro" Size="Size.Large" Color="Color.Info" />
+                            <MudText Typo="Typo.subtitle2">Valore Stimato</MudText>
+                            <MudText Typo="Typo.h5" Color="Color.Info">@_kpiValore.ToString("C0", new CultureInfo("it-IT"))</MudText>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+
+        @* ── TABS ── *@
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Class="mb-4"
+                 @bind-ActivePanelIndex="_activeTab">
+
+            @* ════ TAB 1: RIEPILOGO ════ *@
+            <MudTabPanel Text="📊 Riepilogo">
+                <MudGrid Class="mt-3">
+
+                    @* Donut StatoProgramma *@
+                    <MudItem xs="12" md="5">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Distribuzione Stato Programmazione</MudText>
+                            @if (_donutData.Length > 0)
+                            {
+                                <MudChart ChartType="ChartType.Donut"
+                                          InputData="@_donutData"
+                                          InputLabels="@_donutLabels"
+                                          Width="100%" Height="260px" />
+                            }
+                            else
+                            {
+                                <MudText Color="Color.Secondary">Nessun dato disponibile</MudText>
+                            }
+                        </MudPaper>
+                    </MudItem>
+
+                    @* Bar top 5 clienti *@
+                    <MudItem xs="12" md="7">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Top 5 Clienti per Commesse Attive</MudText>
+                            @if (_clientiBarSeries.Any())
+                            {
+                                <MudChart ChartType="ChartType.Bar"
+                                          ChartSeries="@_clientiBarSeries"
+                                          XAxisLabels="@_clientiLabels"
+                                          Width="100%" Height="260px"
+                                          ChartOptions="@_clientiBarOptions" />
+                            }
+                            else
+                            {
+                                <MudText Color="Color.Secondary">Nessun dato disponibile</MudText>
+                            }
+                        </MudPaper>
+                    </MudItem>
+
+                    @* Donut stato commessa Mago *@
+                    <MudItem xs="12" md="5">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Distribuzione Stato Commessa</MudText>
+                            @if (_statoCommessaDonutData.Length > 0)
+                            {
+                                <MudChart ChartType="ChartType.Donut"
+                                          InputData="@_statoCommessaDonutData"
+                                          InputLabels="@_statoCommessaDonutLabels"
+                                          Width="100%" Height="240px" />
+                            }
+                        </MudPaper>
+                    </MudItem>
+
+                    @* KPI valore economico *@
+                    <MudItem xs="12" md="7">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Valore Economico Stimato (anno @_filtroAnno)</MudText>
+                            <MudSimpleTable Dense="true" Striped="true">
+                                <thead>
+                                    <tr>
+                                        <th>Stato</th>
+                                        <th style="text-align:right">N° Commesse</th>
+                                        <th style="text-align:right">Valore Stimato</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var kv in _valorePerStato)
+                                    {
+                                        <tr>
+                                            <td>@kv.Key</td>
+                                            <td style="text-align:right">@kv.Value.count</td>
+                                            <td style="text-align:right">@kv.Value.valore.ToString("C0", new CultureInfo("it-IT"))</td>
+                                        </tr>
+                                    }
+                                    <tr style="font-weight:700;border-top:2px solid var(--mud-palette-divider)">
+                                        <td>Totale</td>
+                                        <td style="text-align:right">@_commesseFiltrate.Count</td>
+                                        <td style="text-align:right">@_kpiValore.ToString("C0", new CultureInfo("it-IT"))</td>
+                                    </tr>
+                                </tbody>
+                            </MudSimpleTable>
+                        </MudPaper>
+                    </MudItem>
+
+                </MudGrid>
+            </MudTabPanel>
+
+            @* ════ TAB 2: TREND MENSILE ════ *@
+            <MudTabPanel Text="📈 Trend Mensile">
+                <MudGrid Class="mt-3">
+
+                    @* Line chart consegne mensili *@
+                    <MudItem xs="12">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Nuove Commesse e Consegne per Mese (anno @_filtroAnno)</MudText>
+                            @if (_trendMensileSeries.Any())
+                            {
+                                <MudChart ChartType="ChartType.Line"
+                                          ChartSeries="@_trendMensileSeries"
+                                          XAxisLabels="@_trendMensileLabels"
+                                          Width="100%" Height="300px"
+                                          ChartOptions="@_trendLineOptions" />
+                            }
+                            else
+                            {
+                                <MudText Color="Color.Secondary">Nessun dato trend disponibile</MudText>
+                            }
+                        </MudPaper>
+                    </MudItem>
+
+                    @* Bar chart valore mensile *@
+                    <MudItem xs="12">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Valore Stimato Commesse per Mese (anno @_filtroAnno)</MudText>
+                            @if (_trendValoreSeries.Any())
+                            {
+                                <MudChart ChartType="ChartType.Bar"
+                                          ChartSeries="@_trendValoreSeries"
+                                          XAxisLabels="@_trendMensileLabels"
+                                          Width="100%" Height="280px"
+                                          ChartOptions="@_trendValoreOptions" />
+                            }
+                        </MudPaper>
+                    </MudItem>
+
+                    @* Tabella mensile *@
+                    <MudItem xs="12">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Dettaglio Mensile</MudText>
+                            <MudSimpleTable Dense="true" Striped="true">
+                                <thead>
+                                    <tr>
+                                        <th>Mese</th>
+                                        <th style="text-align:right">Nuove Commesse</th>
+                                        <th style="text-align:right">Data Consegna Prevista</th>
+                                        <th style="text-align:right">Qta Totale</th>
+                                        <th style="text-align:right">Valore Stimato</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var r in _trendMensileRows)
+                                    {
+                                        <tr>
+                                            <td>@r.Mese</td>
+                                            <td style="text-align:right">@r.NuoveCommesse</td>
+                                            <td style="text-align:right">@r.ConsegneInMese</td>
+                                            <td style="text-align:right">@r.QtaTotale.ToString("N0")</td>
+                                            <td style="text-align:right">@r.Valore.ToString("C0", new CultureInfo("it-IT"))</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                        </MudPaper>
+                    </MudItem>
+
+                </MudGrid>
+            </MudTabPanel>
+
+            @* ════ TAB 3: URGENZE ════ *@
+            <MudTabPanel Text="⚠️ Urgenze">
+                <MudGrid Class="mt-3">
+                    <MudItem xs="12">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                                <MudText Typo="Typo.h6">Commesse in Ritardo o Urgenti (≤ 7 gg)</MudText>
+                                <MudSpacer />
+                                <MudChip T="string" Color="Color.Error" Size="Size.Small">@_commesseUrgenti.Count commesse</MudChip>
+                            </MudStack>
+                            @if (_commesseUrgenti.Any())
+                            {
+                                <MudSimpleTable Dense="true" Striped="true" Hover="true">
+                                    <thead>
+                                        <tr>
+                                            <th>Codice</th>
+                                            <th>Cliente</th>
+                                            <th>Articolo</th>
+                                            <th style="text-align:right">Qta</th>
+                                            <th>Data Consegna</th>
+                                            <th>Stato</th>
+                                            <th>Stato Prog.</th>
+                                            <th>Urgenza</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var c in _commesseUrgenti)
+                                        {
+                                            var giorniRimasti = c.DataConsegna.HasValue
+                                                ? (int)(c.DataConsegna.Value.Date - DateTime.Today).TotalDays
+                                                : 0;
+                                            var coloreUrgenza = giorniRimasti < 0 ? "#e53935" : giorniRimasti <= 3 ? "#f57c00" : "#f9a825";
+                                            var labelUrgenza = giorniRimasti < 0 ? $"{-giorniRimasti}gg SCADUTO" : giorniRimasti == 0 ? "OGGI" : $"{giorniRimasti}gg";
+                                            <tr>
+                                                <td><strong>@c.Codice</strong></td>
+                                                <td>@c.ClienteDisplay</td>
+                                                <td>@(c.ArticoloCodice ?? c.Description ?? "-")</td>
+                                                <td style="text-align:right">@c.QuantitaRichiesta.ToString("N0") @c.UoM</td>
+                                                <td>@(c.DataConsegna?.ToString("dd/MM/yyyy") ?? "-")</td>
+                                                <td>
+                                                    <span style="background:@GetStatoColor(c.Stato);color:white;padding:2px 8px;border-radius:10px;font-size:11px">
+                                                        @c.Stato
+                                                    </span>
+                                                </td>
+                                                <td>@c.StatoProgramma</td>
+                                                <td>
+                                                    <span style="background:@coloreUrgenza;color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">
+                                                        @labelUrgenza
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                            else
+                            {
+                                <MudStack AlignItems="AlignItems.Center" Class="pa-8">
+                                    <MudIcon Icon="@Icons.Material.Filled.CheckCircleOutline" Size="Size.Large" Color="Color.Success" />
+                                    <MudText Typo="Typo.h6" Color="Color.Success">Nessuna commessa in ritardo o urgente!</MudText>
+                                </MudStack>
+                            }
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            @* ════ TAB 4: CLIENTI ════ *@
+            <MudTabPanel Text="🏢 Clienti">
+                <MudGrid Class="mt-3">
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Top 10 Clienti per Volume Commesse</MudText>
+                            <MudSimpleTable Dense="true" Striped="true">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Cliente</th>
+                                        <th style="text-align:right">Commesse</th>
+                                        <th style="text-align:right">Qta Totale</th>
+                                        <th style="text-align:right">Valore Stimato</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{var rank = 1;}
+                                    @foreach (var cl in _topClienti)
+                                    {
+                                        <tr>
+                                            <td><strong>@(rank == 1 ? "🥇" : rank == 2 ? "🥈" : rank == 3 ? "🥉" : rank.ToString())</strong></td>
+                                            <td>@cl.Nome</td>
+                                            <td style="text-align:right">@cl.Commesse</td>
+                                            <td style="text-align:right">@cl.QtaTotale.ToString("N0")</td>
+                                            <td style="text-align:right">@cl.Valore.ToString("C0", new CultureInfo("it-IT"))</td>
+                                        </tr>
+                                        rank++;
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Top 10 Clienti — Commesse</MudText>
+                            @if (_topClientiBarSeries.Any())
+                            {
+                                <MudChart ChartType="ChartType.Bar"
+                                          ChartSeries="@_topClientiBarSeries"
+                                          XAxisLabels="@_topClientiLabels"
+                                          Width="100%" Height="320px"
+                                          ChartOptions="@_topClientiBarOptions" />
+                            }
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+        </MudTabs>
+    }
+
+    @if (!_loading && _commesse == null)
+    {
+        <MudPaper Class="pa-8" Elevation="0">
+            <MudStack AlignItems="AlignItems.Center" Spacing="3">
+                <MudIcon Icon="@Icons.Material.Filled.BarChart" Size="Size.Large" Color="Color.Default" />
+                <MudText Typo="Typo.h6" Color="Color.Default">Premi Analizza per caricare le statistiche</MudText>
+            </MudStack>
+        </MudPaper>
+    }
+
 </MudContainer>
+
+@code {
+    // ── State ──
+    private int _filtroAnno = DateTime.Today.Year;
+    private int _filtroMese = 0;
+    private bool _loading = false;
+    private int _activeTab = 0;
+
+    private List<CommessaDto>? _commesse;
+    private List<CommessaDto> _commesseFiltrate = new();
+    private List<CommessaDto> _commesseUrgenti = new();
+
+    // ── KPI ──
+    private int _kpiAperte;
+    private int _kpiCompletate;
+    private int _kpiRitardo;
+    private decimal _kpiValore;
+    private Dictionary<string, (int count, decimal valore)> _valorePerStato = new();
+
+    // ── Chart data – Riepilogo ──
+    private double[] _donutData = Array.Empty<double>();
+    private string[] _donutLabels = Array.Empty<string>();
+    private double[] _statoCommessaDonutData = Array.Empty<double>();
+    private string[] _statoCommessaDonutLabels = Array.Empty<string>();
+    private List<ChartSeries> _clientiBarSeries = new();
+    private string[] _clientiLabels = Array.Empty<string>();
+    private ChartOptions _clientiBarOptions = new() { YAxisTicks = 1 };
+
+    // ── Chart data – Trend Mensile ──
+    private List<ChartSeries> _trendMensileSeries = new();
+    private string[] _trendMensileLabels = Array.Empty<string>();
+    private List<ChartSeries> _trendValoreSeries = new();
+    private ChartOptions _trendLineOptions = new() { YAxisTicks = 5, LineStrokeWidth = 2 };
+    private ChartOptions _trendValoreOptions = new() { YAxisTicks = 10000 };
+    private List<TrendMensileRow> _trendMensileRows = new();
+
+    // ── Chart data – Clienti ──
+    private List<ClienteStatDto> _topClienti = new();
+    private List<ChartSeries> _topClientiBarSeries = new();
+    private string[] _topClientiLabels = Array.Empty<string>();
+    private ChartOptions _topClientiBarOptions = new() { YAxisTicks = 1 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Aggiorna();
+    }
+
+    private async Task Aggiorna()
+    {
+        _loading = true;
+        StateHasChanged();
+        try
+        {
+            _commesse = await CommessaService.GetListaAsync();
+            CalcolaTutto();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore caricamento commesse: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CalcolaTutto()
+    {
+        if (_commesse == null) return;
+
+        // Filtro periodo
+        _commesseFiltrate = _commesse.Where(c =>
+        {
+            var dataRef = c.DataConsegna ?? c.UltimaModifica;
+            if (dataRef.Year != _filtroAnno) return false;
+            if (_filtroMese != 0 && dataRef.Month != _filtroMese) return false;
+            return true;
+        }).ToList();
+
+        // KPI
+        _kpiAperte = _commesseFiltrate.Count(c =>
+            c.Stato == "Aperta" || c.Stato == "InLavorazione");
+        _kpiCompletate = _commesseFiltrate.Count(c =>
+            c.Stato == "Completata" || c.Stato == "Chiusa");
+        _kpiRitardo = _commesseFiltrate.Count(c =>
+            c.DataConsegna.HasValue &&
+            c.DataConsegna.Value.Date < DateTime.Today &&
+            c.Stato != "Completata" && c.Stato != "Chiusa");
+        _kpiValore = _commesseFiltrate
+            .Sum(c => c.QuantitaRichiesta * (c.ArticoloPrezzo ?? 0));
+
+        // Valore per stato
+        _valorePerStato = _commesseFiltrate
+            .GroupBy(c => c.Stato ?? "Sconosciuto")
+            .ToDictionary(
+                g => g.Key,
+                g => (count: g.Count(), valore: g.Sum(c => c.QuantitaRichiesta * (c.ArticoloPrezzo ?? 0))));
+
+        // Commesse urgenti (in ritardo o consegna entro 7 gg)
+        _commesseUrgenti = _commesseFiltrate
+            .Where(c =>
+                c.DataConsegna.HasValue &&
+                c.DataConsegna.Value.Date <= DateTime.Today.AddDays(7) &&
+                c.Stato != "Completata" && c.Stato != "Chiusa")
+            .OrderBy(c => c.DataConsegna)
+            .ToList();
+
+        BuildRiepilogoCharts();
+        BuildTrendMensile();
+        BuildClientiCharts();
+    }
+
+    private void BuildRiepilogoCharts()
+    {
+        // Donut StatoProgramma
+        var gruppiProg = _commesseFiltrate
+            .GroupBy(c => c.StatoProgramma ?? "NonProgrammata")
+            .Where(g => g.Any())
+            .ToList();
+        _donutData = gruppiProg.Select(g => (double)g.Count()).ToArray();
+        _donutLabels = gruppiProg.Select(g => g.Key).ToArray();
+
+        // Donut StatoCommessa
+        var gruppiStato = _commesseFiltrate
+            .GroupBy(c => c.Stato ?? "Sconosciuto")
+            .Where(g => g.Any())
+            .ToList();
+        _statoCommessaDonutData = gruppiStato.Select(g => (double)g.Count()).ToArray();
+        _statoCommessaDonutLabels = gruppiStato.Select(g => g.Key).ToArray();
+
+        // Bar top 5 clienti attivi
+        var top5 = _commesseFiltrate
+            .Where(c => c.Stato != "Completata" && c.Stato != "Chiusa")
+            .GroupBy(c => TruncateLabel(c.ClienteDisplay, 12))
+            .OrderByDescending(g => g.Count())
+            .Take(5)
+            .ToList();
+        _clientiLabels = top5.Select(g => g.Key).ToArray();
+        _clientiBarSeries = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Commesse", Data = top5.Select(g => (double)g.Count()).ToArray() }
+        };
+    }
+
+    private void BuildTrendMensile()
+    {
+        var mesi = Enumerable.Range(1, 12).ToList();
+        var cultura = new CultureInfo("it-IT");
+
+        _trendMensileLabels = mesi
+            .Select(m => new DateTime(_filtroAnno, m, 1).ToString("MMM", cultura))
+            .ToArray();
+
+        // Commesse filtrate sull'intero anno per il trend
+        var commesseAnno = _commesse!.Where(c =>
+        {
+            var dataRef = c.DataConsegna ?? c.UltimaModifica;
+            return dataRef.Year == _filtroAnno;
+        }).ToList();
+
+        var nuovePerMese = mesi.Select(m =>
+            (double)commesseAnno.Count(c =>
+            {
+                var dataRef = c.DataConsegna ?? c.UltimaModifica;
+                return dataRef.Year == _filtroAnno && dataRef.Month == m;
+            })).ToArray();
+
+        var consegnePerMese = mesi.Select(m =>
+            (double)commesseAnno.Count(c =>
+                c.DataConsegna.HasValue &&
+                c.DataConsegna.Value.Year == _filtroAnno &&
+                c.DataConsegna.Value.Month == m)).ToArray();
+
+        _trendMensileSeries = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Commesse", Data = nuovePerMese },
+            new ChartSeries { Name = "Consegne Previste", Data = consegnePerMese }
+        };
+
+        var valorePerMese = mesi.Select(m =>
+            (double)commesseAnno
+                .Where(c =>
+                {
+                    var d = c.DataConsegna ?? c.UltimaModifica;
+                    return d.Year == _filtroAnno && d.Month == m;
+                })
+                .Sum(c => c.QuantitaRichiesta * (c.ArticoloPrezzo ?? 0))).ToArray();
+
+        _trendValoreSeries = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Valore (€)", Data = valorePerMese }
+        };
+
+        _trendMensileRows = mesi.Select(m =>
+        {
+            var inMese = commesseAnno.Where(c =>
+            {
+                var d = c.DataConsegna ?? c.UltimaModifica;
+                return d.Year == _filtroAnno && d.Month == m;
+            }).ToList();
+
+            return new TrendMensileRow
+            {
+                Mese = new DateTime(_filtroAnno, m, 1).ToString("MMMM yyyy", cultura),
+                NuoveCommesse = commesseAnno.Count(c =>
+                {
+                    var d = c.DataConsegna ?? c.UltimaModifica;
+                    return d.Year == _filtroAnno && d.Month == m;
+                }),
+                ConsegneInMese = commesseAnno.Count(c =>
+                    c.DataConsegna.HasValue &&
+                    c.DataConsegna.Value.Year == _filtroAnno &&
+                    c.DataConsegna.Value.Month == m),
+                QtaTotale = inMese.Sum(c => c.QuantitaRichiesta),
+                Valore = inMese.Sum(c => c.QuantitaRichiesta * (c.ArticoloPrezzo ?? 0))
+            };
+        }).ToList();
+    }
+
+    private void BuildClientiCharts()
+    {
+        var top10 = _commesseFiltrate
+            .GroupBy(c => c.ClienteDisplay)
+            .Select(g => new ClienteStatDto
+            {
+                Nome = g.Key,
+                Commesse = g.Count(),
+                QtaTotale = g.Sum(c => c.QuantitaRichiesta),
+                Valore = g.Sum(c => c.QuantitaRichiesta * (c.ArticoloPrezzo ?? 0))
+            })
+            .OrderByDescending(x => x.Commesse)
+            .Take(10)
+            .ToList();
+
+        _topClienti = top10;
+        _topClientiLabels = top10.Select(x => TruncateLabel(x.Nome, 10)).ToArray();
+        _topClientiBarSeries = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Commesse", Data = top10.Select(x => (double)x.Commesse).ToArray() }
+        };
+    }
+
+    private static string GetStatoColor(string? stato) => stato switch
+    {
+        "Aperta" => "#1976d2",
+        "InLavorazione" => "#f57c00",
+        "Completata" => "#388e3c",
+        "Chiusa" => "#616161",
+        _ => "#9e9e9e"
+    };
+
+    private static string TruncateLabel(string s, int max) =>
+        s.Length > max ? s[..max] + "…" : s;
+    private static string GetMonthName(int month) =>
+        new DateTime(2000, month, 1).ToString("MMMM", new CultureInfo("it-IT"));
+    // ── Models locali ──
+    private class TrendMensileRow
+    {
+        public string Mese { get; set; } = string.Empty;
+        public int NuoveCommesse { get; set; }
+        public int ConsegneInMese { get; set; }
+        public decimal QtaTotale { get; set; }
+        public decimal Valore { get; set; }
+    }
+
+    private class ClienteStatDto
+    {
+        public string Nome { get; set; } = string.Empty;
+        public int Commesse { get; set; }
+        public decimal QtaTotale { get; set; }
+        public decimal Valore { get; set; }
+    }
+}
