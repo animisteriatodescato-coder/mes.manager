@@ -1,0 +1,77 @@
+# File e cartelle MAI inclusi nella consegna al cliente
+# Usato da scripts/prepare-customer-delivery.ps1
+
+# ─── BIBBIA E METODOLOGIA DEVELOPER ────────────────────────────────
+# La BIBBIA contiene tutta la metodologia, lessons learned, pattern
+# esclusivi e know-how del developer. Non deve MAI uscire.
+BIBBIA-AI-TEMPLATE.md
+BIBBIA-AI-[NOME_PROGETTO].md        # la BIBBIA developer del progetto specifico
+docs/BIBBIA-AI-*.md                 # qualsiasi BIBBIA developer
+
+# ─── STORICO TECNICO (lessons learned, fix, decisioni) ──────────────
+# Contiene tutti gli errori scoperti, le soluzioni trovate, le
+# decisioni architetturali e il know-how accumulato nel tempo.
+docs/storico/FIX-*.md
+docs/storico/DEPLOY-LESSONS-LEARNED.md
+docs/storico/*.md                   # tutto lo storico (eccetto README)
+
+# ─── BUSINESS E COMMERCIALE ─────────────────────────────────────────
+# Contiene logica di pricing, margini, note commerciali, strategie
+docs/10-BUSINESS.md
+
+# ─── DEPLOY DEVELOPER ───────────────────────────────────────────────
+# Contiene credenziali, IP, procedure di deploy del developer
+docs/01-DEPLOY.md                   # sostituito con versione cliente
+scripts/deploy-*.ps1
+deploy-prod-*.ps1
+publish_v*.txt
+
+# ─── FILE TEMPLATE DEVELOPER ────────────────────────────────────────
+# Questi file fanno parte del template, non del progetto consegnato
+COME-USARE-QUESTO-TEMPLATE.md
+STRUTTURA-PROGETTO.md
+BIBBIA-AI-TEMPLATE.md
+BIBBIA-AI-CLIENTE-TEMPLATE.md
+scripts/prepare-customer-delivery.ps1
+
+# ─── SECRETS (MAI uscire) ────────────────────────────────────────────
+appsettings.Secrets.json
+appsettings.Database.json
+*.Secrets.json
+*.encrypted
+*.pfx
+*.key
+
+# ─── FILE DI LAVORO INTERNI ─────────────────────────────────────────
+backups/
+rag/
+customer-delivery/
+publish/
+*.bak
+build_*.txt
+server_*.txt
+fix-result.txt
+final-fix.txt
+fk-check.txt
+insert-test.txt
+RIEPILOGO-*.txt
+DEPLOY-CHECKLIST-*.md
+
+# ─── COSA RIMANE (consegnato al cliente) ────────────────────────────
+# ✅ Codice sorgente (.cs, .razor, .csproj, .sln)
+# ✅ docs/02-SVILUPPO.md (workflow client-safe)
+# ✅ docs/03-CONFIGURAZIONE.md (senza credenziali)
+# ✅ docs/04-ARCHITETTURA.md (senza pattern esclusivi)
+# ✅ docs/05-MODULO-CORE.md (documentazione moduli)
+# ✅ docs/06-INSTALLAZIONE.md
+# ✅ docs/07-INTEGRAZIONI.md
+# ✅ docs/08-MODULI-EXTRA.md
+# ✅ docs/09-CHANGELOG.md
+# ✅ docs/11-TESTING.md
+# ✅ docs/12-QA-UI.md
+# ✅ docs/storico/README.md (solo il README vuoto)
+# ✅ BIBBIA-AI-[NOME_PROGETTO]-CLIENTE.md (versione safe)
+# ✅ .github/copilot-instructions.md (versione cliente)
+# ✅ scripts/test-smoke.ps1
+# ✅ appsettings.json, appsettings.Development.json
+# ✅ appsettings.Secrets.json.template (solo struttura, senza valori)
