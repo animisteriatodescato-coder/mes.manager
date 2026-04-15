@@ -45,10 +45,10 @@
                                  Clearable="true" />
             </MudItem>
             <MudItem xs="12" sm="6" md="3">
-                <MudTextField T="string" Label="Filtra Commessa (codice)"
-                              @bind-Value="_filtroCommessa"
+                <MudTextField T="string" Label="Filtra Articolo (codice)"
+                              @bind-Value="_filtroArticolo"
                               Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true"
-                              Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                              Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Inventory2"
                               Clearable="true"
                               Immediate="false" />
             </MudItem>
@@ -63,11 +63,11 @@
                         }
                         Analizza
                     </MudButton>
-                    @if (!string.IsNullOrEmpty(_filtroCliente) || !string.IsNullOrEmpty(_filtroCommessa))
+                    @if (!string.IsNullOrEmpty(_filtroCliente) || !string.IsNullOrEmpty(_filtroArticolo))
                     {
                         <MudIconButton Icon="@Icons.Material.Filled.FilterAltOff"
                                        Color="Color.Secondary" Size="Size.Medium"
-                                       Title="Rimuovi filtri commessa/cliente"
+                                       Title="Rimuovi filtri cliente/articolo"
                                        OnClick="ResetFiltri" />
                     }
                 </MudStack>
@@ -85,10 +85,10 @@
                         Cliente: @_filtroCliente
                     </MudChip>
                 }
-                @if (!string.IsNullOrEmpty(_filtroCommessa))
+                @if (!string.IsNullOrEmpty(_filtroArticolo))
                 {
-                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Icon="@Icons.Material.Filled.Tag">
-                        Commessa: @_filtroCommessa
+                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Icon="@Icons.Material.Filled.Inventory2">
+                        Articolo: @_filtroArticolo
                     </MudChip>
                 }
             </MudStack>
@@ -454,7 +454,7 @@
     private int _filtroAnno = DateTime.Today.Year;
     private int _filtroMese = 0;
     private string? _filtroCliente;
-    private string? _filtroCommessa;
+    private string? _filtroArticolo;
     private bool _loading = false;
     private int _activeTab = 0;
 
@@ -528,7 +528,7 @@
     private void ResetFiltri()
     {
         _filtroCliente = null;
-        _filtroCommessa = null;
+        _filtroArticolo = null;
         CalcolaTutto();
     }
 
@@ -552,11 +552,9 @@
             if (_filtroMese != 0 && dataRef.Month != _filtroMese) return false;
             if (!string.IsNullOrWhiteSpace(_filtroCliente) &&
                 !c.ClienteDisplay.Contains(_filtroCliente, StringComparison.OrdinalIgnoreCase)) return false;
-            if (!string.IsNullOrWhiteSpace(_filtroCommessa) &&
-                !(c.Codice?.Contains(_filtroCommessa, StringComparison.OrdinalIgnoreCase) == true ||
-                  c.InternalOrdNo?.Contains(_filtroCommessa, StringComparison.OrdinalIgnoreCase) == true ||
-                  c.ExternalOrdNo?.Contains(_filtroCommessa, StringComparison.OrdinalIgnoreCase) == true ||
-                  c.Description?.Contains(_filtroCommessa, StringComparison.OrdinalIgnoreCase) == true)) return false;
+            if (!string.IsNullOrWhiteSpace(_filtroArticolo) &&
+                !(c.ArticoloCodice?.Contains(_filtroArticolo, StringComparison.OrdinalIgnoreCase) == true ||
+                  c.ArticoloDescrizione?.Contains(_filtroArticolo, StringComparison.OrdinalIgnoreCase) == true)) return false;
             return true;
         }).ToList();
 
