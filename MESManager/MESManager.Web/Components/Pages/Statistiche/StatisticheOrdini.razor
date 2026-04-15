@@ -12,41 +12,87 @@
 
     @* ── FILTRI ── *@
     <MudPaper Class="pa-4 mb-4" Elevation="2">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
-            <MudSelect T="int" Label="Anno" @bind-Value="_filtroAnno"
-                       Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:120px">
-                @for (int y = DateTime.Today.Year; y >= DateTime.Today.Year - 4; y--)
-                {
-                    var yr = y;
-                    <MudSelectItem T="int" Value="@yr">@yr</MudSelectItem>
-                }
-            </MudSelect>
-            <MudSelect T="int" Label="Mese" @bind-Value="_filtroMese"
-                       Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:140px">
-                <MudSelectItem T="int" Value="0">Tutti</MudSelectItem>
-                @for (int m = 1; m <= 12; m++)
-                {
-                    var mo = m;
-                    <MudSelectItem T="int" Value="@mo">@GetMonthName(mo)</MudSelectItem>
-                }
-            </MudSelect>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.Analytics"
-                       OnClick="Aggiorna" Disabled="@_loading">
-                @if (_loading)
-                {
-                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-                }
-                Analizza
-            </MudButton>
-            <MudSpacer />
-            @if (_commesse != null)
-            {
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="6" md="2">
+                <MudSelect T="int" Label="Anno" @bind-Value="_filtroAnno"
+                           Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true">
+                    @for (int y = DateTime.Today.Year; y >= DateTime.Today.Year - 4; y--)
+                    {
+                        var yr = y;
+                        <MudSelectItem T="int" Value="@yr">@yr</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="2">
+                <MudSelect T="int" Label="Mese" @bind-Value="_filtroMese"
+                           Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true">
+                    <MudSelectItem T="int" Value="0">Tutti</MudSelectItem>
+                    @for (int m = 1; m <= 12; m++)
+                    {
+                        var mo = m;
+                        <MudSelectItem T="int" Value="@mo">@GetMonthName(mo)</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudAutocomplete T="string" Label="Filtra Cliente"
+                                 @bind-Value="_filtroCliente"
+                                 SearchFunc="CercaClienti"
+                                 ResetValueOnEmptyText="true"
+                                 CoerceText="true"
+                                 Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true"
+                                 Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Business"
+                                 Clearable="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" Label="Filtra Commessa (codice)"
+                              @bind-Value="_filtroCommessa"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true"
+                              Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                              Clearable="true"
+                              Immediate="false" />
+            </MudItem>
+            <MudItem xs="12" sm="12" md="2" Class="d-flex align-center">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="flex-grow-1">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Analytics"
+                               OnClick="Aggiorna" Disabled="@_loading" FullWidth="true">
+                        @if (_loading)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-1" />
+                        }
+                        Analizza
+                    </MudButton>
+                    @if (!string.IsNullOrEmpty(_filtroCliente) || !string.IsNullOrEmpty(_filtroCommessa))
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.FilterAltOff"
+                                       Color="Color.Secondary" Size="Size.Medium"
+                                       Title="Rimuovi filtri commessa/cliente"
+                                       OnClick="ResetFiltri" />
+                    }
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+        @if (_commesse != null)
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2" Spacing="2">
                 <MudChip T="string" Color="Color.Info" Size="Size.Small">
                     @_commesseFiltrate.Count commesse nel periodo
                 </MudChip>
-            }
-        </MudStack>
+                @if (!string.IsNullOrEmpty(_filtroCliente))
+                {
+                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Icon="@Icons.Material.Filled.Business">
+                        Cliente: @_filtroCliente
+                    </MudChip>
+                }
+                @if (!string.IsNullOrEmpty(_filtroCommessa))
+                {
+                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Icon="@Icons.Material.Filled.Tag">
+                        Commessa: @_filtroCommessa
+                    </MudChip>
+                }
+            </MudStack>
+        }
     </MudPaper>
 
     @if (_loading)
@@ -407,12 +453,15 @@
     // ── State ──
     private int _filtroAnno = DateTime.Today.Year;
     private int _filtroMese = 0;
+    private string? _filtroCliente;
+    private string? _filtroCommessa;
     private bool _loading = false;
     private int _activeTab = 0;
 
     private List<CommessaDto>? _commesse;
     private List<CommessaDto> _commesseFiltrate = new();
     private List<CommessaDto> _commesseUrgenti = new();
+    private List<string> _clientiDisponibili = new();
 
     // ── KPI ──
     private int _kpiAperte;
@@ -456,6 +505,13 @@
         try
         {
             _commesse = await CommessaService.GetListaAsync();
+            // Aggiorna lista clienti per autocomplete
+            _clientiDisponibili = _commesse
+                .Select(c => c.ClienteDisplay)
+                .Where(s => !string.IsNullOrEmpty(s) && s != "N/D")
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
             CalcolaTutto();
         }
         catch (Exception ex)
@@ -469,16 +525,38 @@
         }
     }
 
+    private void ResetFiltri()
+    {
+        _filtroCliente = null;
+        _filtroCommessa = null;
+        CalcolaTutto();
+    }
+
+    private Task<IEnumerable<string>> CercaClienti(string testo, CancellationToken ct)
+    {
+        IEnumerable<string> risultati = string.IsNullOrWhiteSpace(testo)
+            ? _clientiDisponibili
+            : _clientiDisponibili.Where(c => c.Contains(testo, StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(risultati);
+    }
+
     private void CalcolaTutto()
     {
         if (_commesse == null) return;
 
-        // Filtro periodo
+        // Filtro periodo + cliente + commessa
         _commesseFiltrate = _commesse.Where(c =>
         {
             var dataRef = c.DataConsegna ?? c.UltimaModifica;
             if (dataRef.Year != _filtroAnno) return false;
             if (_filtroMese != 0 && dataRef.Month != _filtroMese) return false;
+            if (!string.IsNullOrWhiteSpace(_filtroCliente) &&
+                !c.ClienteDisplay.Contains(_filtroCliente, StringComparison.OrdinalIgnoreCase)) return false;
+            if (!string.IsNullOrWhiteSpace(_filtroCommessa) &&
+                !(c.Codice?.Contains(_filtroCommessa, StringComparison.OrdinalIgnoreCase) == true ||
+                  c.InternalOrdNo?.Contains(_filtroCommessa, StringComparison.OrdinalIgnoreCase) == true ||
+                  c.ExternalOrdNo?.Contains(_filtroCommessa, StringComparison.OrdinalIgnoreCase) == true ||
+                  c.Description?.Contains(_filtroCommessa, StringComparison.OrdinalIgnoreCase) == true)) return false;
             return true;
         }).ToList();
 
