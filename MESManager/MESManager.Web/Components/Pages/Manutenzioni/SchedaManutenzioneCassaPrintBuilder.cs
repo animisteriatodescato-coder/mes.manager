@@ -82,16 +82,14 @@ public static class SchedaManutenzioneCassaPrintBuilder
 
             if (foto.Count > 0)
             {
-                sb.Append("<div style=\"display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px\">\n");
                 foreach (var f in foto)
                 {
-                    sb.Append($"<figure style=\"margin:0;text-align:center;max-width:280px\">");
+                    sb.Append($"<figure style=\"margin:0 0 14px;text-align:center;page-break-inside:avoid\">");
                     sb.Append($"<img src=\"{f.UrlProxy}\" alt=\"{System.Web.HttpUtility.HtmlEncode(f.NomeFile)}\" "
-                             + "style=\"max-width:280px;max-height:200px;border:1px solid #ccc;border-radius:3px;object-fit:contain\" />");
-                    sb.Append($"<figcaption style=\"font-size:8pt;color:#666;margin-top:2px\">{System.Web.HttpUtility.HtmlEncode(f.NomeFile)}</figcaption>");
+                             + "style=\"width:100%;max-height:370px;border:1px solid #ccc;border-radius:3px;object-fit:contain\" />");
+                    sb.Append($"<figcaption style=\"font-size:8pt;color:#666;margin-top:4px\">{System.Web.HttpUtility.HtmlEncode(f.NomeFile)}</figcaption>");
                     sb.Append("</figure>\n");
                 }
-                sb.Append("</div>\n");
             }
 
             // Documenti: lista testuale

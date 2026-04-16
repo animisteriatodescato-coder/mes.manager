@@ -203,6 +203,15 @@ public class ManutenzioneCassaService : IManutenzioneCassaService
         return await GetSchedaByIdAsync(schedaId);
     }
 
+    public async Task<bool> SaveNoteAsync(Guid schedaId, string? note)
+    {
+        var scheda = await _db.ManutenzioneCasseSchede.FindAsync(schedaId);
+        if (scheda == null) return false;
+        scheda.Note = note;
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
     // ──────────────────────────────────────────────────────────
     // CASSE DISPONIBILI
     // ──────────────────────────────────────────────────────────

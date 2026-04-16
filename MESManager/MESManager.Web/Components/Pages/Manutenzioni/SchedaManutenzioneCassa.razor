@@ -96,7 +96,9 @@ else
         @* ── NOTE ────────────────────────────────────────────────── *@
         @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
         {
-            <MudTextField @bind-Value="_scheda.Note" Label="Note generali scheda (opzionale)"
+            <MudTextField Value="@_scheda.Note"
+                          ValueChanged="@((string? v) => OnNoteChanged(v))"
+                          Label="Note generali scheda (opzionale)"
                           Variant="Variant.Outlined" Margin="Margin.Dense" Lines="10"
                           AutoGrow="true" Class="mb-4"
                           data-testid="tf-note-cassa" />
@@ -353,6 +355,13 @@ else
     {
         riga.Commento = newCommento;
         _scheda = await ManutenzioneCassaService.UpdateRigaAsync(_scheda!.Id, riga);
+    }
+
+    private async Task OnNoteChanged(string? note)
+    {
+        if (_scheda == null) return;
+        _scheda.Note = note;
+        await ManutenzioneCassaService.SaveNoteAsync(_scheda.Id, note);
     }
 
     private async Task ChiudiScheda()

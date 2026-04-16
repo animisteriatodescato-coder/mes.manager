@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.17";
+    public const string Current = "1.65.18";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.15: AI: manutenzioni casse - codici liberi + allegati foto/pdf + stampa PDF
+    public const string Display = "v" + Current; // v1.65.18: fix note auto-save su DB + foto PDF full-width (mezza pagina)
 }
