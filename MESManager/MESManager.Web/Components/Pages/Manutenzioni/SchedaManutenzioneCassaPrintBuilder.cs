@@ -29,6 +29,7 @@ public static class SchedaManutenzioneCassaPrintBuilder
     /// <param name="allegati">Lista allegati (opzionale)</param>
     /// <param name="azienda">Nome azienda</param>
     /// <param name="logoInlineHtml">HTML del logo da incorporare inline (es. tag img base64 o svg)</param>
+    /// <param name="fotoBase64">Dizionario id→data-URI per embed diretto nel PDF (evita auth popup)</param>
     /// <param name="problematiche">Lista problematiche da pianificare (opzionale)</param>
     /// <param name="condizioni">Elenco condizioni generali personalizzato (null = usa il default)</param>
     public static string Build(
@@ -36,6 +37,7 @@ public static class SchedaManutenzioneCassaPrintBuilder
         List<ManutenzioneCassaAllegatoDto>? allegati = null,
         string azienda = "Officina",
         string? logoInlineHtml = null,
+        Dictionary<int, string>? fotoBase64 = null,
         List<string>? problematiche = null,
         List<string>? condizioni = null)
     {
@@ -105,9 +107,12 @@ public static class SchedaManutenzioneCassaPrintBuilder
             {
                 foreach (var f in foto)
                 {
+                    // Usa base64 embed se disponibile (pre-caricato da C# → nessun problema auth nel popup)
+                    // altrimenti cade su UrlProxy (funziona grazie al <base href> iniettato da mesPreventivoPrint)
+                    var imgSrc = (fotoBase64 != null && fotoBase64.TryGetValue(f.Id, out var b64src)) ? b64src : f.UrlProxy;
                     allegatiHtml.Append(
                         $"<figure style=\"margin:0 0 14px;text-align:center;page-break-inside:avoid\">" +
-                        $"<img src=\"{f.UrlProxy}\" alt=\"{System.Web.HttpUtility.HtmlEncode(f.NomeFile)}\" " +
+                        $"<img src=\"{imgSrc}\" alt=\"{System.Web.HttpUtility.HtmlEncode(f.NomeFile)}\" " +
                         "style=\"width:100%;max-height:370px;border:1px solid #ccc;border-radius:3px;object-fit:contain;" +
                         "-webkit-print-color-adjust:exact;print-color-adjust:exact\" />" +
                         $"<figcaption style=\"font-size:8pt;color:#666;margin-top:4px\">{System.Web.HttpUtility.HtmlEncode(f.NomeFile)}</figcaption>" +

@@ -134,14 +134,19 @@ window.cassaAllegatoUpload = {
 };
 
 // ── Preventivo: apre finestra di stampa isolata ───────────────────────────────
+// IMPORTANTE: inietta <base href> perché il popup è about:blank e i path
+// relativi (/api/...) non si risolvono senza ancora il dominio base.
 window.mesPreventivoPrint = function (html) {
     const win = window.open('', '_blank', 'width=900,height=700');
     if (!win) { alert('Popup bloccato dal browser. Consenti i popup per questa pagina e riprova.'); return; }
+    // Inietta <base> subito dopo <head> così tutti i src="/api/..." si risolvono
+    var baseTag = '<base href="' + window.location.origin + '/">';
+    var injected = html.replace(/<head>/i, '<head>' + baseTag);
     win.document.open();
-    win.document.write(html);
+    win.document.write(injected);
     win.document.close();
     win.focus();
-    setTimeout(function () { win.print(); }, 800);
+    setTimeout(function () { win.print(); }, 1000);
 };
 
 // ── Stampa con foto autenticate: pre-carica img come base64 poi apre popup ────

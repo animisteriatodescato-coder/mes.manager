@@ -3,6 +3,7 @@
 @using MESManager.Application.DTOs
 @using MESManager.Application.Interfaces
 @using MESManager.Domain.Enums
+@using ImageMagick
 @inject IManutenzioneCassaService ManutenzioneCassaService
 @inject IManutenzioneCassaAllegatoService AllegatoService
 @inject MESManager.Application.Services.CurrentUserService CurrentUserService
@@ -589,14 +590,43 @@ else
         var tuttiAllegati = _allegati == null ? new List<ManutenzioneCassaAllegatoDto>() :
             _allegati.Foto.Concat(_allegati.Documenti).ToList();
 
+        // Pre-carica le foto direttamente da disco (C# → nessun problema auth nel popup about:blank)
+        // Per file mancanti su disco cade in silenzio → mesPreventivoPrint inietta <base href> come fallback
+        var fotoBase64 = new Dictionary<int, string>();
+        foreach (var f in tuttiAllegati.Where(a => a.IsFoto))
+        {
+            try
+            {
+                var content = await AllegatoService.GetFileContentAsync(f.Id);
+                if (content != null)
+                {
+                    var bytes = content.Value.Content;
+                    var mime = "image/jpeg";
+                    var ext = System.IO.Path.GetExtension(content.Value.FileName).ToLowerInvariant();
+                    if (ext == ".heic" || ext == ".heif")
+                    {
+                        using var magick = new MagickImage(bytes);
+                        magick.Quality = 82;
+                        magick.Format = MagickFormat.Jpeg;
+                        bytes = magick.ToByteArray();
+                    }
+                    else if (ext == ".png")  mime = "image/png";
+                    else if (ext == ".gif")  mime = "image/gif";
+                    else if (ext == ".webp") mime = "image/webp";
+                    fotoBase64[f.Id] = $"data:{mime};base64,{Convert.ToBase64String(bytes)}";
+                }
+            }
+            catch { /* file non su disco: usa UrlProxy + <base href> come fallback */ }
+        }
+
         var azienda = Env.ApplicationName;
         var logo = LeggiLogoInline();
         var html = SchedaManutenzioneCassaPrintBuilder.Build(
             _scheda, tuttiAllegati, azienda, logo,
+            fotoBase64: fotoBase64.Count > 0 ? fotoBase64 : null,
             problematiche: _problematiche.Count > 0 ? _problematiche : null,
             condizioni: _condizioni);
-        // mesStampaConFoto: async JS che pre-carica immagini con credentials prima del popup
-        await JS.InvokeAsync<bool>("mesStampaConFoto", html);
+        await JS.InvokeVoidAsync("mesPreventivoPrint", html);
     }
 
     private string? LeggiLogoInline()
