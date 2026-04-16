@@ -55,6 +55,46 @@ window.printPdf = function (bytes, fileName) {
     }
 };
 
+// ── Allegati Manutenzione Casse: upload diretto HTTP (bypassa SignalR, funziona su mobile) ──
+window.cassaAllegatoUpload = {
+    openAndUpload: function (inputId, schedaId, dotnetRef) {
+        const el = document.getElementById(inputId);
+        if (!el) { console.error('[cassaAllegatoUpload] input non trovato: ' + inputId); return; }
+
+        el.onchange = async function () {
+            if (!el.files || el.files.length === 0) return;
+
+            await dotnetRef.invokeMethodAsync('OnUploadStarted');
+
+            const results = [];
+            for (let i = 0; i < el.files.length; i++) {
+                const file = el.files[i];
+                const fd = new FormData();
+                fd.append('file', file);
+                try {
+                    const resp = await fetch('/api/allegati-manutenzione-casse/upload/' + schedaId, {
+                        method: 'POST',
+                        body: fd
+                    });
+                    if (resp.ok) {
+                        results.push({ Name: file.name, Success: true, Size: file.size, Error: null });
+                    } else {
+                        const msg = await resp.text();
+                        results.push({ Name: file.name, Success: false, Size: file.size, Error: msg || 'HTTP ' + resp.status });
+                    }
+                } catch (err) {
+                    results.push({ Name: file.name, Success: false, Size: file.size, Error: err.message || 'Errore di rete' });
+                }
+            }
+
+            el.value = ''; // reset per permettere upload dello stesso file
+            await dotnetRef.invokeMethodAsync('OnUploadComplete', results);
+        };
+
+        el.click();
+    }
+};
+
 // ── Preventivo: apre finestra di stampa isolata ───────────────────────────────
 window.mesPreventivoPrint = function (html) {
     const win = window.open('', '_blank', 'width=900,height=700');
