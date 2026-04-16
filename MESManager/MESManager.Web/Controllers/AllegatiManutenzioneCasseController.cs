@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
 
 namespace MESManager.Web.Controllers;
 
@@ -8,6 +11,7 @@ namespace MESManager.Web.Controllers;
 /// Controller per upload/download/delete allegati delle schede manutenzione casse d'anima.
 /// </summary>
 [ApiController]
+[Authorize]
 [Route("api/allegati-manutenzione-casse")]
 public class AllegatiManutenzioneCasseController : ControllerBase
 {
@@ -49,14 +53,49 @@ public class AllegatiManutenzioneCasseController : ControllerBase
         if (file == null || file.Length == 0)
             return BadRequest("File non valido");
 
-        if (file.Length > 20 * 1024 * 1024)
-            return BadRequest("File troppo grande (max 20 MB)");
+        if (file.Length > 10 * 1024 * 1024)
+            return BadRequest("File troppo grande (max 10 MB)");
 
         _logger.LogInformation("Upload allegato cassa: SchedaId={SchedaId}, File={Nome}, Size={Size}",
             schedaId, file.FileName, file.Length);
 
-        using var stream = file.OpenReadStream();
-        var result = await _service.UploadAsync(schedaId, stream, file.FileName, file.Length, descrizione);
+        using var rawStream = file.OpenReadStream();
+        using var ms = new MemoryStream();
+        await rawStream.CopyToAsync(ms);
+        ms.Position = 0;
+
+        string uploadName = file.FileName;
+        Stream uploadStream = ms;
+        MemoryStream? compressedMs = null;
+
+        // Comprimi immagini > 2 MB come fallback server-side
+        bool isImage = file.ContentType?.StartsWith("image/") == true;
+        if (isImage && ms.Length > 2 * 1024 * 1024)
+        {
+            try
+            {
+                ms.Position = 0;
+                using var img = await Image.LoadAsync(ms);
+                compressedMs = new MemoryStream();
+                var encoder = new JpegEncoder { Quality = 78 };
+                await img.SaveAsync(compressedMs, encoder);
+                compressedMs.Position = 0;
+                if (compressedMs.Length < ms.Length)
+                {
+                    uploadName = Path.ChangeExtension(file.FileName, ".jpg");
+                    uploadStream = compressedMs;
+                }
+                else { ms.Position = 0; }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Compressione immagine fallita per {Nome}: {Err}", file.FileName, ex.Message);
+                ms.Position = 0;
+            }
+        }
+
+        var result = await _service.UploadAsync(schedaId, uploadStream, uploadName, uploadStream.Length, descrizione);
+        compressedMs?.Dispose();
         return Ok(result);
     }
 

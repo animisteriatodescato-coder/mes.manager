@@ -221,9 +221,10 @@ else
                 <MudText Typo="Typo.subtitle1"><b>Allegati</b></MudText>
                 <MudChip T="string" Size="Size.Small" Color="Color.Default">@((_allegati?.Totale ?? 0))</MudChip>
                 <MudSpacer />
-                <MudFileUpload T="IBrowserFile"
+                <MudFileUpload T="IReadOnlyList<IBrowserFile>"
                                Accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf,.doc,.docx,.xls,.xlsx"
                                OnFilesChanged="@OnAllegatoUpload"
+                               MaximumFileCount="10"
                                Style="margin:0"
                                data-testid="upload-allegato-cassa">
                     <ActivatorContent>
@@ -376,28 +377,88 @@ else
 
     private async Task OnAllegatoUpload(InputFileChangeEventArgs e)
     {
-        if (e.File == null) return;
+        var files = e.GetMultipleFiles(10);
+        if (!files.Any()) return;
+
         _uploadingAllegato = true;
         StateHasChanged();
-        try
+
+        const long maxSize = 10L * 1024 * 1024; // 10 MB max per file
+        const long compressThreshold = 2L * 1024 * 1024; // comprimi se > 2 MB
+        int success = 0;
+
+        foreach (var file in files)
         {
-            using var stream = e.File.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);
-            using var ms = new System.IO.MemoryStream();
-            await stream.CopyToAsync(ms);
-            ms.Position = 0;
-            await AllegatoService.UploadAsync(SchedaId, ms, e.File.Name, e.File.Size, null);
-            Snackbar.Add($"File '{e.File.Name}' caricato.", Severity.Success);
+            try
+            {
+                // Check preventivo dimensione (senza trasferire nulla)
+                if (file.Size > maxSize)
+                {
+                    Snackbar.Add($"'{file.Name}' troppo grande ({FormatSize(file.Size)}). Massimo 10 MB.",
+                        Severity.Warning, c => c.VisibleStateDuration = 8000);
+                    continue;
+                }
+
+                using var rawStream = file.OpenReadStream(maxAllowedSize: maxSize);
+                using var ms = new System.IO.MemoryStream();
+                await rawStream.CopyToAsync(ms);
+                ms.Position = 0;
+
+                string uploadName = file.Name;
+                System.IO.Stream uploadStream = ms;
+                System.IO.MemoryStream? compressedMs = null;
+
+                // Comprimi immagini > 2 MB con ImageSharp (mantiene dimensioni, riduce qualità)
+                bool isImage = file.ContentType?.StartsWith("image/") == true;
+                if (isImage && ms.Length > compressThreshold)
+                {
+                    try
+                    {
+                        ms.Position = 0;
+                        using var img = await SixLabors.ImageSharp.Image.LoadAsync(ms);
+                        compressedMs = new System.IO.MemoryStream();
+                        var encoder = new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder { Quality = 78 };
+                        await img.SaveAsync(compressedMs, encoder);
+                        compressedMs.Position = 0;
+
+                        if (compressedMs.Length < ms.Length)
+                        {
+                            uploadName = System.IO.Path.ChangeExtension(file.Name, ".jpg");
+                            uploadStream = compressedMs;
+                        }
+                        else
+                        {
+                            ms.Position = 0;
+                        }
+                    }
+                    catch
+                    {
+                        // Fallback: usa file originale se la compressione fallisce
+                        ms.Position = 0;
+                        uploadStream = ms;
+                    }
+                }
+
+                await AllegatoService.UploadAsync(SchedaId, uploadStream, uploadName, uploadStream.Length, null);
+                var sizeInfo = uploadStream.Length < ms.Length
+                    ? $" (compresso da {FormatSize(ms.Length)} a {FormatSize(uploadStream.Length)})"
+                    : $" ({FormatSize(uploadStream.Length)})";
+                Snackbar.Add($"'{file.Name}' caricato{sizeInfo}.", Severity.Success);
+                success++;
+
+                compressedMs?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Errore '{file.Name}': {ex.Message}",
+                    Severity.Error, c => c.VisibleStateDuration = 8000);
+            }
+        }
+
+        _uploadingAllegato = false;
+        if (success > 0)
             await CaricaAllegatiAsync();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Errore upload: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            _uploadingAllegato = false;
-            StateHasChanged();
-        }
+        StateHasChanged();
     }
 
     private async Task DeleteAllegato(ManutenzioneCassaAllegatoDto allegato)

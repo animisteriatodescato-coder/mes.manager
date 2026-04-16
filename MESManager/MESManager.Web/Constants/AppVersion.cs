@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.18";
+    public const string Current = "1.65.19";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.18: fix note auto-save su DB + foto PDF full-width (mezza pagina)
+    public const string Display = "v" + Current; // v1.65.19: upload multiplo + compressione immagini automatica (max 10MB, qualità 78)
 }
