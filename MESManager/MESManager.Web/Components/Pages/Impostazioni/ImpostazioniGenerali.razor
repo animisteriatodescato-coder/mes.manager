@@ -293,7 +293,7 @@
         </div>
 
         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
-            Scegli se usare OpenAI (cloud, richiede API key) oppure Ollama (locale, gratuito, richiede installazione locale).
+            Scegli se usare OpenAI (cloud), Google Gemini (cloud, piano free disponibile) oppure Ollama (locale, gratuito).
         </MudText>
 
         @* Selezione provider *@
@@ -304,6 +304,12 @@
                 <div class="d-flex align-center gap-2">
                     <MudIcon Icon="@Icons.Material.Filled.Cloud" Size="Size.Small" />
                     OpenAI (cloud)
+                </div>
+            </MudSelectItem>
+            <MudSelectItem Value='"Gemini"'>
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Size="Size.Small" />
+                    Google Gemini (cloud)
                 </div>
             </MudSelectItem>
             <MudSelectItem Value='"Ollama"'>
@@ -324,6 +330,52 @@
             <MudTextField Label="Modello OpenAI" @bind-Value="_draft.OpenAiModel"
                           Variant="Variant.Outlined" Style="max-width:300px"
                           HelperText="Es. gpt-4o-mini, gpt-4o, gpt-4-turbo" />
+        }
+
+        @* Pannello Gemini *@
+        @if (_draft.AiProviderType == "Gemini")
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-3">
+                <b>Google Gemini</b>: ottieni una API key gratuita su
+                <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a>
+                e configurala in <code>appsettings.Secrets.json</code> (campo <code>Gemini:ApiKey</code>).
+            </MudAlert>
+
+            <div class="d-flex align-center gap-3 mb-3 flex-wrap">
+                <MudTextField Label="Modello Gemini" @bind-Value="_draft.GeminiModel"
+                              Variant="Variant.Outlined" Style="max-width:300px"
+                              HelperText="Es. gemini-2.0-flash, gemini-1.5-flash, gemini-1.5-pro"
+                              data-testid="input-gemini-model" />
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           OnClick="CheckAiHealth" Disabled="@_aiHealthLoading">
+                    Verifica + Rileva modelli
+                </MudButton>
+            </div>
+
+            @* Lista modelli disponibili *@
+            @if (_aiHealth?.IsAvailable == true && _aiHealth.Models.Count > 0)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">
+                    Modelli disponibili — clicca per selezionare:
+                </MudText>
+                <div class="d-flex gap-2 flex-wrap mb-2">
+                    @foreach (var model in _aiHealth.Models)
+                    {
+                        <MudChip T="string" Color="@(_draft.GeminiModel == model ? Color.Primary : Color.Default)"
+                                 Variant="@(_draft.GeminiModel == model ? Variant.Filled : Variant.Outlined)"
+                                 Size="Size.Small" OnClick="@(() => _draft.GeminiModel = model)">
+                            @model
+                        </MudChip>
+                    }
+                </div>
+            }
+            else if (_aiHealth?.IsAvailable == false)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">
+                    @(_aiHealth.Error ?? "Gemini non raggiungibile — verifica la API key.")
+                </MudAlert>
+            }
         }
 
         @* Pannello Ollama *@

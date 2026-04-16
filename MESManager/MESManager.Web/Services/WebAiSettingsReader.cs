@@ -25,7 +25,8 @@ public class WebAiSettingsReader : IAiSettingsReader
             ProviderType  = s.AiProviderType,
             OllamaBaseUrl = s.OllamaBaseUrl,
             OllamaModel   = s.OllamaModel,
-            OpenAiModel   = string.IsNullOrWhiteSpace(s.OpenAiModel) ? "gpt-4o-mini" : s.OpenAiModel
+            OpenAiModel   = string.IsNullOrWhiteSpace(s.OpenAiModel) ? "gpt-4o-mini" : s.OpenAiModel,
+            GeminiModel   = string.IsNullOrWhiteSpace(s.GeminiModel) ? "gemini-2.0-flash" : s.GeminiModel
         };
     }
 }

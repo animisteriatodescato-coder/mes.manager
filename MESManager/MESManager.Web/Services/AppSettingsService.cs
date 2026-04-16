@@ -321,6 +321,9 @@ public class AppSettings
     /// <summary>Modello OpenAI (override della config in appsettings). Vuoto = usa IConfiguration.</summary>
     public string OpenAiModel { get; set; } = "gpt-4o-mini";
 
+    /// <summary>Modello Gemini da usare (es. gemini-2.0-flash, gemini-1.5-pro)</summary>
+    public string GeminiModel { get; set; } = "gemini-2.0-flash";
+
     /// <summary>
     /// Crea una copia profonda delle impostazioni.
     /// Usato da ImpostazioniGenerali per il draft pattern: si lavora sul clone
@@ -353,5 +356,6 @@ public class AppSettings
         OllamaBaseUrl           = source.OllamaBaseUrl,
         OllamaModel             = source.OllamaModel,
         OpenAiModel             = source.OpenAiModel,
+        GeminiModel             = source.GeminiModel,
     };
 }

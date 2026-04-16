@@ -14,4 +14,7 @@ public record AiProviderConfig
 
     /// <summary>Modello OpenAI (override di IConfiguration["OpenAI:Model"])</summary>
     public string OpenAiModel { get; init; } = "gpt-4o-mini";
+
+    /// <summary>Modello Google Gemini (es. gemini-2.0-flash, gemini-1.5-pro)</summary>
+    public string GeminiModel { get; init; } = "gemini-2.0-flash";
 }

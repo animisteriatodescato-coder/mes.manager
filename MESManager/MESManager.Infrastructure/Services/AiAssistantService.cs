@@ -26,6 +26,7 @@ public class AiAssistantService : IAiAssistantService
     private readonly IAiSettingsReader           _settingsReader;
     private readonly OpenAiProvider              _openAiProvider;
     private readonly OllamaProvider              _ollamaProvider;
+    private readonly GeminiProvider              _geminiProvider;
     private readonly ILogger<AiAssistantService> _logger;
 
     public AiAssistantService(
@@ -40,6 +41,7 @@ public class AiAssistantService : IAiAssistantService
         _logger         = logger;
         _openAiProvider = new OpenAiProvider();
         _ollamaProvider = new OllamaProvider();
+        _geminiProvider = new GeminiProvider();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -51,14 +53,23 @@ public class AiAssistantService : IAiAssistantService
     {
         var config = _settingsReader.GetConfig();
 
-        return config.ProviderType == "Ollama"
-            ? await AskWithOllamaAsync(config, history, userMessage, ct)
-            : await AskWithOpenAiAsync(config, history, userMessage, ct);
+        return config.ProviderType switch
+        {
+            "Ollama" => await AskWithOllamaAsync(config, history, userMessage, ct),
+            "Gemini" => await AskWithGeminiAsync(config, history, userMessage, ct),
+            _        => await AskWithOpenAiAsync(config, history, userMessage, ct),
+        };
     }
 
     public async Task<AiHealthResult> CheckHealthAsync(CancellationToken ct = default)
     {
         var config = _settingsReader.GetConfig();
+
+        if (config.ProviderType == "Gemini")
+        {
+            var geminiKey = _configuration["Gemini:ApiKey"];
+            return await _geminiProvider.CheckHealthAsync(geminiKey ?? "", config.GeminiModel, ct);
+        }
 
         if (config.ProviderType == "Ollama")
             return await _ollamaProvider.CheckHealthAsync(config.OllamaBaseUrl, ct);
@@ -156,6 +167,186 @@ public class AiAssistantService : IAiAssistantService
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // GEMINI FLOW
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private async Task<string> AskWithGeminiAsync(
+        AiProviderConfig config, IList<AiChatMessage> history, string userMessage, CancellationToken ct)
+    {
+        var apiKey = _configuration["Gemini:ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey) || apiKey.StartsWith("YOUR_"))
+            return "⚠️ API Key Gemini non configurata. Aggiungere 'Gemini:ApiKey' in appsettings.Secrets.json.";
+
+        var systemInstruction = new GeminiContent { Parts = [new GeminiPart { Text = BuildSystemPrompt() }] };
+        var contents          = BuildGeminiContents(history, userMessage);
+        var tools             = BuildGeminiTools();
+
+        try
+        {
+            var req1 = new GeminiRequest
+            {
+                SystemInstruction = systemInstruction,
+                Contents          = contents,
+                Tools             = tools,
+                ToolConfig        = new GeminiToolConfig
+                {
+                    FunctionCallingConfig = new GeminiFunctionCallingConfig { Mode = "AUTO" }
+                }
+            };
+            var res1 = await _geminiProvider.CallAsync(req1, config.GeminiModel, apiKey, ct);
+            return await ProcessGeminiResponseAsync(res1, systemInstruction, contents, config.GeminiModel, apiKey, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AskWithGeminiAsync: errore comunicazione Gemini");
+            return $"❌ Errore Gemini: {ex.Message}";
+        }
+    }
+
+    private async Task<string> ProcessGeminiResponseAsync(
+        GeminiResponse      response,
+        GeminiContent       systemInstruction,
+        List<GeminiContent> contents,
+        string              model,
+        string              apiKey,
+        CancellationToken   ct)
+    {
+        var candidate = response.Candidates?.FirstOrDefault();
+        if (candidate?.Content == null)
+            return "❌ Risposta vuota da Gemini.";
+
+        var functionCallParts = candidate.Content.Parts?
+            .Where(p => p.FunctionCall != null)
+            .ToList() ?? [];
+
+        if (functionCallParts.Count > 0)
+        {
+            // Aggiunge la risposta del modello (con i function calls) alla storia
+            contents.Add(new GeminiContent { Role = "model", Parts = candidate.Content.Parts! });
+
+            // Esegue ciascun tool call e raccoglie le risposte
+            var responseParts = new List<GeminiPart>();
+            foreach (var part in functionCallParts)
+            {
+                var fc = part.FunctionCall!;
+                try
+                {
+                    // Riusa ExecuteToolAsync avvolgendo nel formato OAI
+                    var fakeOaiCall = new OaiToolCall
+                    {
+                        Id       = Guid.NewGuid().ToString("N"),
+                        Function = new OaiToolCallFunction
+                        {
+                            Name      = fc.Name,
+                            Arguments = fc.Args.ValueKind == System.Text.Json.JsonValueKind.Undefined
+                                        ? "{}" : fc.Args.GetRawText()
+                        }
+                    };
+                    var result = await ExecuteToolAsync(fakeOaiCall, ct);
+                    responseParts.Add(new GeminiPart
+                    {
+                        FunctionResponse = new GeminiFunctionResponse
+                        {
+                            Name     = fc.Name,
+                            Response = new GeminiFunctionResponseContent { Content = result }
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "ProcessGeminiResponseAsync: errore tool {Tool}", fc.Name);
+                    responseParts.Add(new GeminiPart
+                    {
+                        FunctionResponse = new GeminiFunctionResponse
+                        {
+                            Name     = fc.Name,
+                            Response = new GeminiFunctionResponseContent { Content = $"Errore: {ex.Message}" }
+                        }
+                    });
+                }
+            }
+
+            // Aggiunge i risultati dei tool come messaggio "user"
+            contents.Add(new GeminiContent { Role = "user", Parts = responseParts });
+
+            // Seconda chiamata — risposta finale senza tools
+            var req2 = new GeminiRequest
+            {
+                SystemInstruction = systemInstruction,
+                Contents          = contents
+            };
+            var res2       = await _geminiProvider.CallAsync(req2, model, apiKey, ct);
+            var candidate2 = res2.Candidates?.FirstOrDefault();
+            return candidate2?.Content?.Parts?.FirstOrDefault(p => p.Text != null)?.Text
+                   ?? "❌ Nessuna risposta da Gemini.";
+        }
+
+        return candidate.Content.Parts?.FirstOrDefault(p => p.Text != null)?.Text
+               ?? "❌ Nessuna risposta da Gemini.";
+    }
+
+    private static List<GeminiContent> BuildGeminiContents(IList<AiChatMessage> history, string userMessage)
+    {
+        var contents = new List<GeminiContent>();
+        foreach (var m in history.TakeLast(10))
+        {
+            var role = m.Role == "assistant" ? "model" : "user";
+            contents.Add(new GeminiContent { Role = role, Parts = [new GeminiPart { Text = m.Content }] });
+        }
+        contents.Add(new GeminiContent { Role = "user", Parts = [new GeminiPart { Text = userMessage }] });
+        return contents;
+    }
+
+    private static List<GeminiTool> BuildGeminiTools() =>
+    [
+        new GeminiTool
+        {
+            FunctionDeclarations =
+            [
+                GemFun("get_operators_start_times",
+                    "Restituisce gli orari di inizio e fine lavoro degli operatori per una data specifica.",
+                    new() { ["date"] = GemParam("Data in formato YYYY-MM-DD. Usa la data odierna se non specificata.") },
+                    ["date"]),
+
+                GemFun("get_machines_status",
+                    "Restituisce lo stato attuale di tutte le macchine (PLCRealtime): stato, operatore attivo, cicli.",
+                    null, null),
+
+                GemFun("get_active_orders",
+                    "Restituisce le commesse aperte o in lavorazione con data di consegna e avanzamento.",
+                    null, null),
+
+                GemFun("get_kpi_day",
+                    "Restituisce i KPI produttivi per macchina in una data: % automatico, allarmi, emergenze.",
+                    new() { ["date"] = GemParam("Data in formato YYYY-MM-DD.") },
+                    ["date"]),
+
+                GemFun("get_alarms",
+                    "Restituisce gli eventi di allarme o emergenza registrati per una data.",
+                    new() { ["date"] = GemParam("Data in formato YYYY-MM-DD.") },
+                    ["date"])
+            ]
+        }
+    ];
+
+    private static GeminiFunctionDeclaration GemFun(
+        string name, string desc,
+        Dictionary<string, GeminiParamProp>? props,
+        string[]? required) => new()
+    {
+        Name        = name,
+        Description = desc,
+        Parameters  = (props is { Count: > 0 }) ? new GeminiParameters
+        {
+            Type       = "OBJECT",
+            Properties = props,
+            Required   = required is { Length: > 0 } ? required : null
+        } : null
+    };
+
+    private static GeminiParamProp GemParam(string desc) => new() { Type = "STRING", Description = desc };
+
+    // ─────────────────────────────────────────────────────────────────────────
     // TOOL CALLING ORCHESTRATION (comune a OpenAI e Ollama con tools)
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -207,16 +398,17 @@ public class AiAssistantService : IAiAssistantService
     // MESSAGE BUILDING
     // ─────────────────────────────────────────────────────────────────────────
 
+    private static string BuildSystemPrompt() =>
+        $"""
+        Sei l'assistente AI di MESManager, il sistema MES (Manufacturing Execution System) di Todescato.
+        Rispondi SEMPRE in italiano. Sii conciso, diretto e formatta i dati in modo leggibile (elenchi puntati, orari HH:mm).
+        Usa le funzioni disponibili per rispondere. Non inventare mai dati che non provengono dal database.
+        Data e ora corrente: {DateTime.Now:dddd d MMMM yyyy HH:mm}
+        """;
+
     private static List<OaiMessage> BuildMessages(IList<AiChatMessage> history, string userMessage)
     {
-        var systemPrompt = $"""
-            Sei l'assistente AI di MESManager, il sistema MES (Manufacturing Execution System) di Todescato.
-            Rispondi SEMPRE in italiano. Sii conciso, diretto e formatta i dati in modo leggibile (elenchi puntati, orari HH:mm).
-            Usa le funzioni disponibili per rispondere. Non inventare mai dati che non provengono dal database.
-            Data e ora corrente: {DateTime.Now:dddd d MMMM yyyy HH:mm}
-            """;
-
-        var messages = new List<OaiMessage> { new() { Role = "system", Content = systemPrompt } };
+        var messages = new List<OaiMessage> { new() { Role = "system", Content = BuildSystemPrompt() } };
 
         foreach (var m in history.TakeLast(10))
             messages.Add(new OaiMessage { Role = m.Role, Content = m.Content });

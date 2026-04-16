@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.12";
+    public const string Current = "1.65.13";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.11: Statistiche Ordini: filtro articolo (codice/descrizione) invece di commessa
+    public const string Display = "v" + Current; // v1.65.13: AI: aggiunto Google Gemini come terzo provider
 }
