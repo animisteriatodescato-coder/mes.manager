@@ -111,7 +111,18 @@ public class ManutenzioneCassaService : IManutenzioneCassaService
                 && s.DataEsecuzione.Date == data.Date);
 
         if (existing != null)
+        {
+            // Se la scheda è ancora in compilazione, aggiorna l'operatore con chi la sta aprendo ora
+            if (existing.Stato == StatoSchedaManutenzione.InCompilazione
+                && !string.IsNullOrEmpty(nomeOperatore)
+                && existing.NomeOperatore != nomeOperatore)
+            {
+                existing.OperatoreId = operatoreId;
+                existing.NomeOperatore = nomeOperatore;
+                await _db.SaveChangesAsync();
+            }
             return MapScheda(existing);
+        }
 
         return await CreateSchedaInternalAsync(new NuovaSchedaCassaRequest
         {

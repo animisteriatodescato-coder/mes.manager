@@ -212,23 +212,21 @@ else
                 <MudText Typo="Typo.subtitle1"><b>Allegati</b></MudText>
                 <MudChip T="string" Size="Size.Small" Color="Color.Default">@((_allegati?.Totale ?? 0))</MudChip>
                 <MudSpacer />
-                @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
-                {
-                    <MudFileUpload T="IBrowserFile"
-                                   Accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf,.doc,.docx,.xls,.xlsx"
-                                   OnFilesChanged="@OnAllegatoUpload"
-                                   Style="margin:0"
-                                   data-testid="upload-allegato-cassa">
-                        <ActivatorContent>
-                            <MudButton Variant="Variant.Text" Color="Color.Primary"
-                                       StartIcon="@Icons.Material.Filled.CloudUpload"
-                                       Disabled="@_uploadingAllegato">
-                                @if (_uploadingAllegato) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-1" /> }
-                                Aggiungi
-                            </MudButton>
-                        </ActivatorContent>
-                    </MudFileUpload>
-                }
+                <MudFileUpload T="IBrowserFile"
+                               Accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf,.doc,.docx,.xls,.xlsx"
+                               OnFilesChanged="@OnAllegatoUpload"
+                               Style="margin:0"
+                               data-testid="upload-allegato-cassa">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.CloudUpload"
+                                   Disabled="@_uploadingAllegato"
+                                   Size="Size.Small">
+                            @if (_uploadingAllegato) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-1" /> }
+                            Carica allegato
+                        </MudButton>
+                    </ActivatorContent>
+                </MudFileUpload>
             </MudStack>
 
             @if (_loadingAllegati)
