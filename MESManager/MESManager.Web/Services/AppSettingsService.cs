@@ -307,6 +307,20 @@ public class AppSettings
     /// </summary>
     public string ThemeDrawerBgColorDark { get; set; } = "";
 
+    // ── Configurazione AI Assistant ────────────────────────────────────────────
+
+    /// <summary>Provider AI attivo. Valori: "OpenAI" | "Ollama"</summary>
+    public string AiProviderType { get; set; } = "OpenAI";
+
+    /// <summary>URL base di Ollama (es. http://localhost:11434)</summary>
+    public string OllamaBaseUrl { get; set; } = "http://localhost:11434";
+
+    /// <summary>Modello Ollama da usare (es. llama3.1:8b, qwen2.5:7b)</summary>
+    public string OllamaModel { get; set; } = "llama3.1:8b";
+
+    /// <summary>Modello OpenAI (override della config in appsettings). Vuoto = usa IConfiguration.</summary>
+    public string OpenAiModel { get; set; } = "gpt-4o-mini";
+
     /// <summary>
     /// Crea una copia profonda delle impostazioni.
     /// Usato da ImpostazioniGenerali per il draft pattern: si lavora sul clone
@@ -335,5 +349,9 @@ public class AppSettings
         ThemeButtonTextColor    = source.ThemeButtonTextColor,
         ThemeAppBarBgColorDark  = source.ThemeAppBarBgColorDark,
         ThemeDrawerBgColorDark  = source.ThemeDrawerBgColorDark,
+        AiProviderType          = source.AiProviderType,
+        OllamaBaseUrl           = source.OllamaBaseUrl,
+        OllamaModel             = source.OllamaModel,
+        OpenAiModel             = source.OpenAiModel,
     };
 }

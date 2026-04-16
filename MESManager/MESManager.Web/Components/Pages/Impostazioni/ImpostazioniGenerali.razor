@@ -1,10 +1,12 @@
 @page "/impostazioni/generali"
 @using MESManager.Web.Services
 @using MESManager.Web.Constants
+@using MESManager.Application.Interfaces
 @inject AppSettingsService AppSettingsService
 @inject UserThemeService UserThemeService
 @inject ThemeCssService ThemeCssService
 @inject IThemeModeService ThemeModeService
+@inject IAiAssistantService AiService
 @inject IJSRuntime JS
 @inject ISnackbar Snackbar
 
@@ -269,6 +271,113 @@
                           FallbackColor="@_draft.ThemePrimaryColor" />
     </MudPaper>
 
+    @* ── Configurazione Assistente AI ─────────────────────────────────────── *@
+    <MudPaper Class="pa-4 mt-4" Elevation="2" data-testid="panel-ai-settings">
+        <div class="d-flex align-center gap-3 mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.SmartToy" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Assistente AI</MudText>
+            @if (_aiHealthLoading)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Color="Color.Default" />
+            }
+            else if (_aiHealth != null)
+            {
+                <MudChip T="string" Size="Size.Small"
+                         Color="@(_aiHealth.IsAvailable ? Color.Success : Color.Error)"
+                         Icon="@(_aiHealth.IsAvailable ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.ErrorOutline)">
+                    @_aiHealth.ProviderName: @(_aiHealth.IsAvailable ? "Online" : "Offline")
+                </MudChip>
+            }
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small"
+                           OnClick="CheckAiHealth" title="Verifica connessione AI" />
+        </div>
+
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
+            Scegli se usare OpenAI (cloud, richiede API key) oppure Ollama (locale, gratuito, richiede installazione locale).
+        </MudText>
+
+        @* Selezione provider *@
+        <MudSelect T="string" Label="Provider AI" @bind-Value="_draft.AiProviderType"
+                   Variant="Variant.Outlined" Class="mb-4" Style="max-width:300px"
+                   data-testid="select-ai-provider">
+            <MudSelectItem Value='"OpenAI"'>
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Cloud" Size="Size.Small" />
+                    OpenAI (cloud)
+                </div>
+            </MudSelectItem>
+            <MudSelectItem Value='"Ollama"'>
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Computer" Size="Size.Small" />
+                    Ollama (locale)
+                </div>
+            </MudSelectItem>
+        </MudSelect>
+
+        @* Pannello OpenAI *@
+        @if (_draft.AiProviderType == "OpenAI")
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-3">
+                <b>OpenAI</b>: la API key è configurata in <code>appsettings.Secrets.json</code> (campo <code>OpenAI:ApiKey</code>).
+                Non inserire chiavi in questa pagina.
+            </MudAlert>
+            <MudTextField Label="Modello OpenAI" @bind-Value="_draft.OpenAiModel"
+                          Variant="Variant.Outlined" Style="max-width:300px"
+                          HelperText="Es. gpt-4o-mini, gpt-4o, gpt-4-turbo" />
+        }
+
+        @* Pannello Ollama *@
+        @if (_draft.AiProviderType == "Ollama")
+        {
+            <MudAlert Severity="Severity.Success" Class="mb-3">
+                <b>Ollama locale</b>: nessun costo. Installa Ollama da <a href="https://ollama.com" target="_blank">ollama.com</a>
+                e poi esegui: <code>ollama pull llama3.1:8b</code>
+            </MudAlert>
+
+            <MudTextField Label="URL Ollama" @bind-Value="_draft.OllamaBaseUrl"
+                          Variant="Variant.Outlined" Class="mb-3" Style="max-width:400px"
+                          HelperText="Default: http://localhost:11434"
+                          data-testid="input-ollama-url" />
+
+            <div class="d-flex align-center gap-3 mb-3 flex-wrap">
+                <MudTextField Label="Modello Ollama" @bind-Value="_draft.OllamaModel"
+                              Variant="Variant.Outlined" Style="max-width:300px"
+                              HelperText="Es. llama3.1:8b, qwen2.5:7b, mistral"
+                              data-testid="input-ollama-model" />
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           OnClick="CheckAiHealth" Disabled="@_aiHealthLoading">
+                    Verifica + Rileva modelli
+                </MudButton>
+            </div>
+
+            @* Lista modelli installati *@
+            @if (_aiHealth?.IsAvailable == true && _aiHealth.Models.Count > 0)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">
+                    Modelli installati — clicca per selezionare:
+                </MudText>
+                <div class="d-flex gap-2 flex-wrap mb-2">
+                    @foreach (var model in _aiHealth.Models)
+                    {
+                        <MudChip T="string" Color="@(_draft.OllamaModel == model ? Color.Primary : Color.Default)"
+                                 Variant="@(_draft.OllamaModel == model ? Variant.Filled : Variant.Outlined)"
+                                 Size="Size.Small" OnClick="@(() => _draft.OllamaModel = model)">
+                            @model
+                        </MudChip>
+                    }
+                </div>
+            }
+            else if (_aiHealth?.IsAvailable == false)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">
+                    @(_aiHealth.Error ?? "Ollama non raggiungibile.")
+                    Assicurati che Ollama sia avviato (<code>ollama serve</code>).
+                </MudAlert>
+            }
+        }
+    </MudPaper>
+
     <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" 
                Size="Size.Large" OnClick="SalvaImpostazioni" StartIcon="@Icons.Material.Filled.Save"
                data-testid="btn-generali-salva">
@@ -285,6 +394,31 @@
 @code {
     private AppSettings _draft = new();
     private bool _isUploading = false;
+
+    // ── AI health check ───────────────────────────────────────────────────────
+    private MESManager.Application.DTOs.AiHealthResult? _aiHealth;
+    private bool _aiHealthLoading = false;
+
+    private async Task CheckAiHealth()
+    {
+        _aiHealthLoading = true;
+        StateHasChanged();
+        try
+        {
+            // Salva temporaneamente il draft per far leggere i valori aggiornati al reader
+            await AppSettingsService.SaveSettingsAsync(_draft);
+            _aiHealth = await AiService.CheckHealthAsync();
+        }
+        catch (Exception ex)
+        {
+            _aiHealth = new MESManager.Application.DTOs.AiHealthResult(false, [], _draft.AiProviderType, ex.Message);
+        }
+        finally
+        {
+            _aiHealthLoading = false;
+            StateHasChanged();
+        }
+    }
 
     // Preset per colore testo nav (bianco, quasi-bianco, grigio, nero)
     private static readonly List<string> NavTextPresets = new() { "#FFFFFF", "#E8E8E8", "#C8C8C8", "#000000" };

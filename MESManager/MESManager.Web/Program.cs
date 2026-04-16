@@ -155,6 +155,9 @@ builder.Services.AddScoped<AppBarContentService>();
 builder.Services.AddSingleton<ColorExtractionService>();
 builder.Services.AddSingleton<AppSettingsService>();
 
+// Bridge AI: legge la config provider (OpenAI/Ollama) da AppSettingsService per Infrastructure (v1.65.12)
+builder.Services.AddSingleton<IAiSettingsReader, WebAiSettingsReader>();
+
 // Tabelle di lookup con persistenza su file JSON (tabelle-config.json)
 builder.Services.AddSingleton<ITabelleService, TabelleService>();
 

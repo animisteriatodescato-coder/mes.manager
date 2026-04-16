@@ -9,4 +9,9 @@ public interface IAiAssistantService
     /// e restituisce la risposta in italiano.
     /// </summary>
     Task<string> AskAsync(IList<AiChatMessage> history, string userMessage, CancellationToken ct = default);
+
+    /// <summary>
+    /// Verifica se il provider AI attivo è raggiungibile e restituisce i modelli disponibili.
+    /// </summary>
+    Task<AiHealthResult> CheckHealthAsync(CancellationToken ct = default);
 }

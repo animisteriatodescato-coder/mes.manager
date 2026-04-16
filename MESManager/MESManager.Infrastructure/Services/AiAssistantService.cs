@@ -1,11 +1,10 @@
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
 using MESManager.Domain.Enums;
 using MESManager.Infrastructure.Data;
+using MESManager.Infrastructure.Services.AI;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -13,74 +12,174 @@ using Microsoft.Extensions.Logging;
 namespace MESManager.Infrastructure.Services;
 
 /// <summary>
-/// Servizio AI assistant basato su OpenAI function calling.
+/// Orchestratore AI per MESManager.
+/// Delega la comunicazione HTTP a OpenAiProvider o OllamaProvider
+/// in base alla configurazione runtime (IAiSettingsReader).
+/// Mantiene tutta la logica di tool calling (function calling) e le query DB.
+///
 /// Sicurezza: l'AI NON esegue SQL libero — chiama solo funzioni C# pre-approvate.
 /// </summary>
 public class AiAssistantService : IAiAssistantService
 {
-    private readonly MesManagerDbContext _context;
-    private readonly IConfiguration _configuration;
+    private readonly MesManagerDbContext         _context;
+    private readonly IConfiguration              _configuration;
+    private readonly IAiSettingsReader           _settingsReader;
+    private readonly OpenAiProvider              _openAiProvider;
+    private readonly OllamaProvider              _ollamaProvider;
     private readonly ILogger<AiAssistantService> _logger;
 
-    private const string ApiEndpoint = "https://api.openai.com/v1/chat/completions";
-
-    private static readonly JsonSerializerOptions JsonOpts = new()
-    {
-        PropertyNamingPolicy        = JsonNamingPolicy.SnakeCaseLower,
-        DefaultIgnoreCondition      = JsonIgnoreCondition.WhenWritingNull,
-        PropertyNameCaseInsensitive = true
-    };
-
     public AiAssistantService(
-        MesManagerDbContext context,
-        IConfiguration configuration,
-        ILogger<AiAssistantService> logger)
+        MesManagerDbContext          context,
+        IConfiguration               configuration,
+        IAiSettingsReader            settingsReader,
+        ILogger<AiAssistantService>  logger)
     {
-        _context       = context;
-        _configuration = configuration;
-        _logger        = logger;
+        _context        = context;
+        _configuration  = configuration;
+        _settingsReader = settingsReader;
+        _logger         = logger;
+        _openAiProvider = new OpenAiProvider();
+        _ollamaProvider = new OllamaProvider();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
     // PUBLIC API
     // ─────────────────────────────────────────────────────────────────────────
 
-    public async Task<string> AskAsync(IList<AiChatMessage> history, string userMessage, CancellationToken ct = default)
+    public async Task<string> AskAsync(
+        IList<AiChatMessage> history, string userMessage, CancellationToken ct = default)
+    {
+        var config = _settingsReader.GetConfig();
+
+        return config.ProviderType == "Ollama"
+            ? await AskWithOllamaAsync(config, history, userMessage, ct)
+            : await AskWithOpenAiAsync(config, history, userMessage, ct);
+    }
+
+    public async Task<AiHealthResult> CheckHealthAsync(CancellationToken ct = default)
+    {
+        var config = _settingsReader.GetConfig();
+
+        if (config.ProviderType == "Ollama")
+            return await _ollamaProvider.CheckHealthAsync(config.OllamaBaseUrl, ct);
+
+        var apiKey = _configuration["OpenAI:ApiKey"];
+        return await _openAiProvider.CheckHealthAsync(apiKey ?? "", config.OpenAiModel, ct);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // OPENAI FLOW
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private async Task<string> AskWithOpenAiAsync(
+        AiProviderConfig config, IList<AiChatMessage> history, string userMessage, CancellationToken ct)
     {
         var apiKey = _configuration["OpenAI:ApiKey"];
         if (string.IsNullOrWhiteSpace(apiKey) || apiKey.StartsWith("sk-your"))
             return "⚠️ API Key OpenAI non configurata. Aggiungere 'OpenAI:ApiKey' in appsettings.Secrets.json.";
 
-        var model   = _configuration["OpenAI:Model"] ?? "gpt-4o-mini";
+        var model    = config.OpenAiModel;
         var messages = BuildMessages(history, userMessage);
         var tools    = BuildTools();
 
-        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-        http.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+        try
+        {
+            var req1 = new OaiRequest { Model = model, Messages = messages, Tools = tools, ToolChoice = "auto" };
+            var res1 = await _openAiProvider.CallAsync(req1, apiKey, ct);
+            return await ProcessResponseAsync(config, res1, messages, apiKey, null, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AskWithOpenAiAsync: errore comunicazione OpenAI");
+            return $"❌ Errore OpenAI: {ex.Message}";
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // OLLAMA FLOW
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private async Task<string> AskWithOllamaAsync(
+        AiProviderConfig config, IList<AiChatMessage> history, string userMessage, CancellationToken ct)
+    {
+        var model   = config.OllamaModel;
+        var baseUrl = config.OllamaBaseUrl;
+        var messages = BuildMessages(history, userMessage);
+        var tools    = BuildTools();
 
         try
         {
-        // Prima chiamata — il modello può richiedere un tool call
-        var req1 = new OaiRequest { Model = model, Messages = messages, Tools = tools, ToolChoice = "auto" };
-        var res1 = await CallApiAsync(http, req1, ct);
-
-        var choice1 = res1.Choices?.FirstOrDefault();
-        if (choice1 == null) return "❌ Risposta vuota da OpenAI.";
-
-        // Se il modello ha chiamato uno o più tool, li eseguiamo e richiamiamo
-        if (choice1.FinishReason == "tool_calls" && choice1.Message?.ToolCalls?.Length > 0)
+            var req1 = new OaiRequest { Model = model, Messages = messages, Tools = tools, ToolChoice = "auto" };
+            var res1 = await _ollamaProvider.CallAsync(req1, baseUrl, ct);
+            return await ProcessResponseAsync(config, res1, messages, null, baseUrl, ct);
+        }
+        catch (HttpRequestException ex) when ((int?)ex.StatusCode >= 400 && (int?)ex.StatusCode < 500)
         {
-            // Aggiungi il messaggio assistant (con tool_calls) alla conversazione
+            // Il modello non supporta tool calling → fallback a prompt con contesto DB pre-iniettato
+            _logger.LogWarning("Ollama tools non supportati ({Status}), fallback a prompt-only", ex.StatusCode);
+            return await AskOllamaNoToolsFallbackAsync(config, messages, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AskWithOllamaAsync: errore comunicazione Ollama");
+            return $"❌ Errore Ollama: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Fallback per modelli Ollama senza supporto tool calling:
+    /// pre-raccoglie i dati DB e li inietta nel system prompt.
+    /// </summary>
+    private async Task<string> AskOllamaNoToolsFallbackAsync(
+        AiProviderConfig config, List<OaiMessage> originalMessages, CancellationToken ct)
+    {
+        try
+        {
+            var context = await GatherAllContextAsync(ct);
+
+            var enrichedSystem = originalMessages.FirstOrDefault(m => m.Role == "system")?.Content ?? "";
+            enrichedSystem += $"\n\n--- DATI ATTUALI DAL DATABASE ---\n{context}\n--- FINE DATI ---\n";
+            enrichedSystem += "\nUsa i dati sopra per rispondere. Non inventare dati non presenti.";
+
+            var messages = new List<OaiMessage> { new() { Role = "system", Content = enrichedSystem } };
+            messages.AddRange(originalMessages.Where(m => m.Role != "system"));
+
+            var req = new OaiRequest { Model = config.OllamaModel, Messages = messages };
+            var res = await _ollamaProvider.CallAsync(req, config.OllamaBaseUrl, ct);
+            return res.Choices?.FirstOrDefault()?.Message?.Content ?? "❌ Nessuna risposta da Ollama.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AskOllamaNoToolsFallbackAsync: errore");
+            return $"❌ Errore Ollama (fallback): {ex.Message}";
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // TOOL CALLING ORCHESTRATION (comune a OpenAI e Ollama con tools)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private async Task<string> ProcessResponseAsync(
+        AiProviderConfig  config,
+        OaiResponse       response,
+        List<OaiMessage>  messages,
+        string?           openAiApiKey,
+        string?           ollamaBaseUrl,
+        CancellationToken ct)
+    {
+        var choice = response.Choices?.FirstOrDefault();
+        if (choice == null) return "❌ Risposta vuota dal provider AI.";
+
+        if (choice.FinishReason == "tool_calls" && choice.Message?.ToolCalls?.Length > 0)
+        {
             messages.Add(new OaiMessage
             {
                 Role      = "assistant",
-                Content   = choice1.Message.Content,
-                ToolCalls = choice1.Message.ToolCalls
+                Content   = choice.Message.Content,
+                ToolCalls = choice.Message.ToolCalls
             });
 
-            // Esegui ogni tool e aggiungi il risultato
-            foreach (var tc in choice1.Message.ToolCalls)
+            foreach (var tc in choice.Message.ToolCalls)
             {
                 var result = await ExecuteToolAsync(tc, ct);
                 messages.Add(new OaiMessage
@@ -91,19 +190,17 @@ public class AiAssistantService : IAiAssistantService
                 });
             }
 
-            // Seconda chiamata — risposta finale in linguaggio naturale
-            var req2 = new OaiRequest { Model = model, Messages = messages };
-            var res2 = await CallApiAsync(http, req2, ct);
+            var model = openAiApiKey != null ? config.OpenAiModel : config.OllamaModel;
+            var req2  = new OaiRequest { Model = model, Messages = messages };
+
+            OaiResponse res2 = openAiApiKey != null
+                ? await _openAiProvider.CallAsync(req2, openAiApiKey, ct)
+                : await _ollamaProvider.CallAsync(req2, ollamaBaseUrl!, ct);
+
             return res2.Choices?.FirstOrDefault()?.Message?.Content ?? "❌ Nessuna risposta.";
         }
 
-        return choice1.Message?.Content ?? "❌ Nessuna risposta.";
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "AskAsync: errore comunicazione OpenAI");
-            return $"❌ Errore OpenAI: {ex.Message}";
-        }
+        return choice.Message?.Content ?? "❌ Nessuna risposta.";
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -121,7 +218,6 @@ public class AiAssistantService : IAiAssistantService
 
         var messages = new List<OaiMessage> { new() { Role = "system", Content = systemPrompt } };
 
-        // Includi max ultimi 10 messaggi della history per contenere il numero di token
         foreach (var m in history.TakeLast(10))
             messages.Add(new OaiMessage { Role = m.Role, Content = m.Content });
 
@@ -198,7 +294,23 @@ public class AiAssistantService : IAiAssistantService
         }
     }
 
-    // ── Tool: operatori oggi ─────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    // CONTEXT GATHERING (usato dal fallback no-tools Ollama)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private async Task<string> GatherAllContextAsync(CancellationToken ct)
+    {
+        var sb   = new StringBuilder();
+        var today = JsonDocument.Parse($"{{\"date\":\"{DateTime.Today:yyyy-MM-dd}\"}}").RootElement;
+        sb.AppendLine(await GetMachinesStatusAsync(ct));
+        sb.AppendLine(await GetActiveOrdersAsync(ct));
+        sb.AppendLine(await GetAlarmsAsync(today, ct));
+        return sb.ToString();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // TOOL IMPLEMENTATIONS (query DB — sequenziali, no Task.WhenAll su EF Core)
+    // ─────────────────────────────────────────────────────────────────────────
 
     private async Task<string> GetOperatorsStartTimesAsync(JsonElement args, CancellationToken ct)
     {
@@ -212,28 +324,24 @@ public class AiAssistantService : IAiAssistantService
             .GroupBy(p => p.OperatoreId)
             .Select(g => new
             {
-                Nome    = g.First().Operatore != null
-                              ? g.First().Operatore!.Nome + " " + g.First().Operatore!.Cognome
-                              : "N/D",
-                Numero  = g.First().NumeroOperatore,
-                Inizio  = g.Min(p => p.DataOra),
-                Ultimo  = g.Max(p => p.DataOra)
+                Nome   = g.First().Operatore != null
+                             ? g.First().Operatore!.Nome + " " + g.First().Operatore!.Cognome
+                             : "N/D",
+                Numero = g.First().NumeroOperatore,
+                Inizio = g.Min(p => p.DataOra),
+                Ultimo = g.Max(p => p.DataOra)
             })
             .OrderBy(g => g.Inizio)
             .ToListAsync(ct);
 
-        if (!data.Any())
-            return $"Nessun operatore registrato per il {date:dd/MM/yyyy}.";
+        if (!data.Any()) return $"Nessun operatore registrato per il {date:dd/MM/yyyy}.";
 
         var sb = new StringBuilder();
         sb.AppendLine($"Operatori del {date:dd/MM/yyyy} ({data.Count} rilevati):");
         foreach (var op in data)
             sb.AppendLine($"• {op.Nome} (#{op.Numero}): inizio {op.Inizio:HH:mm} — ultimo rilevamento {op.Ultimo:HH:mm}");
-
         return sb.ToString();
     }
-
-    // ── Tool: stato macchine ─────────────────────────────────────────────────
 
     private async Task<string> GetMachinesStatusAsync(CancellationToken ct)
     {
@@ -255,8 +363,6 @@ public class AiAssistantService : IAiAssistantService
         return sb.ToString();
     }
 
-    // ── Tool: commesse aperte ────────────────────────────────────────────────
-
     private async Task<string> GetActiveOrdersAsync(CancellationToken ct)
     {
         var data = await _context.Commesse
@@ -266,10 +372,10 @@ public class AiAssistantService : IAiAssistantService
             .Select(c => new
             {
                 c.Codice,
-                Stato        = c.Stato.ToString(),
-                Cliente      = c.CompanyName ?? "N/D",
-                Consegna     = c.DataConsegna,
-                Qta          = c.QuantitaRichiesta
+                Stato    = c.Stato.ToString(),
+                Cliente  = c.CompanyName ?? "N/D",
+                Consegna = c.DataConsegna,
+                Qta      = c.QuantitaRichiesta
             })
             .ToListAsync(ct);
 
@@ -285,8 +391,6 @@ public class AiAssistantService : IAiAssistantService
         return sb.ToString();
     }
 
-    // ── Tool: KPI giornalieri ────────────────────────────────────────────────
-
     private async Task<string> GetKpiDayAsync(JsonElement args, CancellationToken ct)
     {
         var date = ParseDate(args, "date", DateTime.Today);
@@ -301,11 +405,11 @@ public class AiAssistantService : IAiAssistantService
             {
                 g.Key.Codice,
                 g.Key.Nome,
-                Totale       = g.Count(),
-                Automatico   = g.Count(p => p.StatoMacchina != null &&
-                                             (p.StatoMacchina.Contains("AUTOMATICO") || p.StatoMacchina.Contains("CICLO"))),
-                Allarme      = g.Count(p => p.StatoMacchina != null && p.StatoMacchina.Contains("ALLARME")),
-                Emergenza    = g.Count(p => p.StatoMacchina != null && p.StatoMacchina.Contains("EMERGENZA"))
+                Totale     = g.Count(),
+                Automatico = g.Count(p => p.StatoMacchina != null &&
+                                         (p.StatoMacchina.Contains("AUTOMATICO") || p.StatoMacchina.Contains("CICLO"))),
+                Allarme    = g.Count(p => p.StatoMacchina != null && p.StatoMacchina.Contains("ALLARME")),
+                Emergenza  = g.Count(p => p.StatoMacchina != null && p.StatoMacchina.Contains("EMERGENZA"))
             })
             .OrderBy(g => g.Codice)
             .ToListAsync(ct);
@@ -321,8 +425,6 @@ public class AiAssistantService : IAiAssistantService
         }
         return sb.ToString();
     }
-
-    // ── Tool: allarmi ────────────────────────────────────────────────────────
 
     private async Task<string> GetAlarmsAsync(JsonElement args, CancellationToken ct)
     {
@@ -361,93 +463,5 @@ public class AiAssistantService : IAiAssistantService
         if (args.TryGetProperty(key, out var el) && el.GetString() is string s && DateTime.TryParse(s, out var d))
             return d;
         return fallback;
-    }
-
-    private async Task<OaiResponse> CallApiAsync(HttpClient http, OaiRequest request, CancellationToken ct)
-    {
-        var body = JsonSerializer.Serialize(request, JsonOpts);
-        using var content = new StringContent(body, Encoding.UTF8, "application/json");
-        using var resp = await http.PostAsync(ApiEndpoint, content, ct);
-
-        if (!resp.IsSuccessStatusCode)
-        {
-            var errorBody = await resp.Content.ReadAsStringAsync(ct);
-            _logger.LogError("OpenAI HTTP {Status}: {Body}", (int)resp.StatusCode, errorBody);
-            throw new HttpRequestException(
-                $"OpenAI HTTP {(int)resp.StatusCode}: {errorBody[..Math.Min(300, errorBody.Length)]}");
-        }
-
-        return await resp.Content.ReadFromJsonAsync<OaiResponse>(JsonOpts, ct)
-               ?? throw new InvalidOperationException("OpenAI ha restituito una risposta vuota.");
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // OPENAI REQUEST / RESPONSE MODELS  (privati — non esposti all'esterno)
-    // ─────────────────────────────────────────────────────────────────────────
-
-    private sealed record OaiRequest
-    {
-        public string        Model      { get; init; } = "gpt-4o-mini";
-        public List<OaiMessage> Messages { get; init; } = [];
-        public List<OaiTool>?   Tools    { get; init; }
-        public string?          ToolChoice { get; init; }
-    }
-
-    private sealed record OaiMessage
-    {
-        public string          Role       { get; init; } = "user";
-        public string?         Content    { get; init; }
-        public OaiToolCall[]?  ToolCalls  { get; init; }
-        public string?         ToolCallId { get; init; }
-    }
-
-    private sealed record OaiTool
-    {
-        public string      Type     { get; init; } = "function";
-        public OaiFunction Function { get; init; } = new();
-    }
-
-    private sealed record OaiFunction
-    {
-        public string         Name        { get; init; } = string.Empty;
-        public string         Description { get; init; } = string.Empty;
-        public OaiParameters  Parameters  { get; init; } = new();
-    }
-
-    private sealed record OaiParameters
-    {
-        public string                          Type       { get; init; } = "object";
-        public Dictionary<string, OaiParamProp> Properties { get; init; } = [];
-        public string[]                        Required   { get; init; } = [];
-    }
-
-    private sealed record OaiParamProp
-    {
-        public string Type        { get; init; } = "string";
-        public string Description { get; init; } = string.Empty;
-    }
-
-    private sealed record OaiToolCall
-    {
-        public string              Id       { get; init; } = string.Empty;
-        public string              Type     { get; init; } = "function";
-        public OaiToolCallFunction Function { get; init; } = new();
-    }
-
-    private sealed record OaiToolCallFunction
-    {
-        public string Name      { get; init; } = string.Empty;
-        public string Arguments { get; init; } = string.Empty;
-    }
-
-    private sealed record OaiResponse
-    {
-        public OaiChoice[]? Choices { get; init; }
-    }
-
-    private sealed record OaiChoice
-    {
-        public string?     FinishReason { get; init; }
-        public OaiMessage? Message      { get; init; }
     }
 }
