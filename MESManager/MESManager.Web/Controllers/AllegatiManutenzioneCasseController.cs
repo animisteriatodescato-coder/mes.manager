@@ -68,28 +68,28 @@ public class AllegatiManutenzioneCasseController : ControllerBase
         Stream uploadStream = ms;
         MemoryStream? compressedMs = null;
 
-        // Comprimi immagini > 2 MB come fallback server-side
-        bool isImage = file.ContentType?.StartsWith("image/") == true;
-        if (isImage && ms.Length > 2 * 1024 * 1024)
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        bool isHeic = ext == ".heic" || ext == ".heif";
+        bool isImage = file.ContentType?.StartsWith("image/") == true || isHeic;
+
+        // Converti HEIC/HEIF → JPEG (non supportati dai browser nella finestra di stampa)
+        // Comprimi anche immagini > 2 MB
+        if (isImage && (isHeic || ms.Length > 2 * 1024 * 1024))
         {
             try
             {
                 ms.Position = 0;
                 using var img = await Image.LoadAsync(ms);
                 compressedMs = new MemoryStream();
-                var encoder = new JpegEncoder { Quality = 78 };
+                var encoder = new JpegEncoder { Quality = 82 };
                 await img.SaveAsync(compressedMs, encoder);
                 compressedMs.Position = 0;
-                if (compressedMs.Length < ms.Length)
-                {
-                    uploadName = Path.ChangeExtension(file.FileName, ".jpg");
-                    uploadStream = compressedMs;
-                }
-                else { ms.Position = 0; }
+                uploadName = Path.ChangeExtension(file.FileName, ".jpg");
+                uploadStream = compressedMs;
             }
             catch (Exception ex)
             {
-                _logger.LogWarning("Compressione immagine fallita per {Nome}: {Err}", file.FileName, ex.Message);
+                _logger.LogWarning("Conversione/compressione immagine fallita per {Nome}: {Err}", file.FileName, ex.Message);
                 ms.Position = 0;
             }
         }
