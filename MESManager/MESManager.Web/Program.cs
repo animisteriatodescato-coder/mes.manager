@@ -145,6 +145,7 @@ builder.Services.AddScoped<PianificazioneNotificationService>();
 // Modulo Manutenzioni
 builder.Services.AddScoped<IManutenzioneService, ManutenzioneService>();
 builder.Services.AddScoped<IManutenzioneCassaService, ManutenzioneCassaService>();
+builder.Services.AddScoped<IManutenzioneCassaAllegatoService, ManutenzioneCassaAllegatoService>();
 builder.Services.AddHttpClient<PlcDataService>(client =>
 {
     client.BaseAddress = new Uri("http://localhost:5156/");

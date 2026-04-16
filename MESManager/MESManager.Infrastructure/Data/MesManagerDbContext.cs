@@ -64,6 +64,7 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ManutenzioneCassaAttivita> ManutenzioneCassaAttivita => Set<ManutenzioneCassaAttivita>();
     public DbSet<ManutenzioneCassaScheda> ManutenzioneCasseSchede => Set<ManutenzioneCassaScheda>();
     public DbSet<ManutenzioneCassaRiga> ManutenzioneCasseRighe => Set<ManutenzioneCassaRiga>();
+    public DbSet<ManutenzioneCassaAllegato> ManutenzioneCasseAllegati => Set<ManutenzioneCassaAllegato>();
 
     // Modulo Preventivi (v1.64.0)
     public DbSet<PreventivoTipoSabbia> PreventivoTipiSabbia => Set<PreventivoTipoSabbia>();
@@ -480,6 +481,22 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany(a => a.Righe)
                 .HasForeignKey(r => r.AttivitaId)
                 .OnDelete(DeleteBehavior.Restrict);
+            b.HasIndex(x => x.SchedaId);
+        });
+
+        modelBuilder.Entity<ManutenzioneCassaAllegato>(b =>
+        {
+            b.ToTable("ManutenzioneCasseAllegati");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.NomeFile).HasMaxLength(260).IsRequired();
+            b.Property(x => x.PathFile).HasMaxLength(500).IsRequired();
+            b.Property(x => x.TipoFile).HasMaxLength(20).HasDefaultValue("Documento");
+            b.Property(x => x.Estensione).HasMaxLength(20);
+            b.Property(x => x.Descrizione).HasMaxLength(500);
+            b.HasOne(a => a.Scheda)
+                .WithMany()
+                .HasForeignKey(a => a.SchedaId)
+                .OnDelete(DeleteBehavior.Cascade);
             b.HasIndex(x => x.SchedaId);
         });
     }

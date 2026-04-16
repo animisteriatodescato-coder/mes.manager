@@ -4,8 +4,11 @@
 @using MESManager.Application.Interfaces
 @using MESManager.Domain.Enums
 @inject IManutenzioneCassaService ManutenzioneCassaService
+@inject IManutenzioneCassaAllegatoService AllegatoService
 @inject NavigationManager Nav
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
 
 <PageTitle>Scheda Manutenzione Cassa</PageTitle>
 
@@ -75,6 +78,13 @@ else
                     Chiudi Scheda
                 </MudButton>
             }
+
+            <MudButton Variant="Variant.Outlined" Color="Color.Default"
+                       StartIcon="@Icons.Material.Filled.Print"
+                       OnClick="@StampaScheda"
+                       data-testid="btn-stampa-scheda-cassa">
+                Stampa PDF
+            </MudButton>
         </MudStack>
 
         @* ── NOTE ────────────────────────────────────────────────── *@
@@ -195,6 +205,97 @@ else
             </MudPaper>
         </MudStack>
 
+        @* ── ALLEGATI ──────────────────────────────────────────── *@
+        <MudPaper Elevation="1" Class="pa-3 mt-4" data-testid="sezione-allegati-cassa">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudIcon Icon="@Icons.Material.Filled.AttachFile" Color="Color.Secondary" />
+                <MudText Typo="Typo.subtitle1"><b>Allegati</b></MudText>
+                <MudChip T="string" Size="Size.Small" Color="Color.Default">@((_allegati?.Totale ?? 0))</MudChip>
+                <MudSpacer />
+                @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
+                {
+                    <MudFileUpload T="IBrowserFile"
+                                   Accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf,.doc,.docx,.xls,.xlsx"
+                                   OnFilesChanged="@OnAllegatoUpload"
+                                   Style="margin:0"
+                                   data-testid="upload-allegato-cassa">
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Text" Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.CloudUpload"
+                                       Disabled="@_uploadingAllegato">
+                                @if (_uploadingAllegato) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-1" /> }
+                                Aggiungi
+                            </MudButton>
+                        </ActivatorContent>
+                    </MudFileUpload>
+                }
+            </MudStack>
+
+            @if (_loadingAllegati)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            }
+            else if (_allegati == null || _allegati.Totale == 0)
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
+                    Nessun allegato. @(_scheda.Stato == StatoSchedaManutenzione.InCompilazione ? "Usa il pulsante Aggiungi per caricare foto o documenti." : "")
+                </MudText>
+            }
+            else
+            {
+                @* Foto *@
+                @if (_allegati.Foto.Any())
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Primary" Class="mb-1"><b>FOTO (@_allegati.Foto.Count)</b></MudText>
+                    <MudList T="ManutenzioneCassaAllegatoDto" Dense="true">
+                        @foreach (var foto in _allegati.Foto)
+                        {
+                            <MudListItem Icon="@Icons.Material.Filled.Image" IconColor="Color.Primary">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Style="width:100%">
+                                    <MudText Typo="Typo.body2" Style="flex:1">@foto.NomeFile</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@FormatSize(foto.DimensioneBytes)</MudText>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small"
+                                                   OnClick="@(() => DownloadAllegato(foto))"
+                                                   Title="Scarica" />
+                                    @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                                       OnClick="@(() => DeleteAllegato(foto))"
+                                                       Title="Elimina" />
+                                    }
+                                </MudStack>
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
+                @* Documenti *@
+                @if (_allegati.Documenti.Any())
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Warning" Class="mb-1 mt-2"><b>DOCUMENTI (@_allegati.Documenti.Count)</b></MudText>
+                    <MudList T="ManutenzioneCassaAllegatoDto" Dense="true">
+                        @foreach (var doc in _allegati.Documenti)
+                        {
+                            <MudListItem Icon="@GetDocIcon(doc.Estensione)" IconColor="Color.Default">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Style="width:100%">
+                                    <MudText Typo="Typo.body2" Style="flex:1">@doc.NomeFile</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@FormatSize(doc.DimensioneBytes)</MudText>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small"
+                                                   OnClick="@(() => DownloadAllegato(doc))"
+                                                   Title="Scarica" />
+                                    @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                                       OnClick="@(() => DeleteAllegato(doc))"
+                                                       Title="Elimina" />
+                                    }
+                                </MudStack>
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
+            }
+        </MudPaper>
+
     </MudContainer>
 }
 
@@ -205,10 +306,24 @@ else
     private bool _saving;
     private ManutenzioneCassaSchedaDto? _scheda;
 
+    // Allegati
+    private AllegatiManutenzioneCassaResponse? _allegati;
+    private bool _loadingAllegati;
+    private bool _uploadingAllegato;
+
     protected override async Task OnInitializedAsync()
     {
         _scheda = await ManutenzioneCassaService.GetSchedaByIdAsync(SchedaId);
         _loading = false;
+        if (_scheda != null)
+            await CaricaAllegatiAsync();
+    }
+
+    private async Task CaricaAllegatiAsync()
+    {
+        _loadingAllegati = true;
+        _allegati = await AllegatoService.GetAllegatiBySchedaAsync(SchedaId);
+        _loadingAllegati = false;
     }
 
     private async Task OnEsitoChanged(ManutenzioneCassaRigaDto riga, EsitoAttivitaManutenzione newEsito)
@@ -230,4 +345,70 @@ else
         _saving = false;
         Snackbar.Add("Scheda chiusa con successo.", Severity.Success);
     }
+
+    // ── Allegati ─────────────────────────────────────────────────────────────
+
+    private async Task OnAllegatoUpload(InputFileChangeEventArgs e)
+    {
+        if (e.File == null) return;
+        _uploadingAllegato = true;
+        StateHasChanged();
+        try
+        {
+            using var stream = e.File.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);
+            using var ms = new System.IO.MemoryStream();
+            await stream.CopyToAsync(ms);
+            ms.Position = 0;
+            await AllegatoService.UploadAsync(SchedaId, ms, e.File.Name, e.File.Size, null);
+            Snackbar.Add($"File '{e.File.Name}' caricato.", Severity.Success);
+            await CaricaAllegatiAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore upload: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _uploadingAllegato = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteAllegato(ManutenzioneCassaAllegatoDto allegato)
+    {
+        await AllegatoService.DeleteAsync(allegato.Id);
+        Snackbar.Add($"'{allegato.NomeFile}' eliminato.", Severity.Info);
+        await CaricaAllegatiAsync();
+    }
+
+    private async Task DownloadAllegato(ManutenzioneCassaAllegatoDto allegato)
+    {
+        await JS.InvokeVoidAsync("window.open", allegato.UrlProxy, "_blank");
+    }
+
+    // ── Stampa PDF ────────────────────────────────────────────────────────────
+
+    private async Task StampaScheda()
+    {
+        if (_scheda == null) return;
+        var tuttiAllegati = _allegati == null ? new List<ManutenzioneCassaAllegatoDto>() :
+            _allegati.Foto.Concat(_allegati.Documenti).ToList();
+
+        var azienda = Env.ApplicationName;
+        var html = SchedaManutenzioneCassaPrintBuilder.Build(_scheda, tuttiAllegati, azienda);
+        await JS.InvokeVoidAsync("mesPreventivoPrint", html);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private static string FormatSize(long bytes) =>
+        bytes >= 1024 * 1024 ? $"{bytes / 1024.0 / 1024.0:N1} MB" : $"{bytes / 1024.0:N0} KB";
+
+    private static string GetDocIcon(string ext) => ext.ToLowerInvariant() switch
+    {
+        ".pdf"           => Icons.Material.Filled.PictureAsPdf,
+        ".doc" or ".docx" => Icons.Material.Filled.Description,
+        ".xls" or ".xlsx" => Icons.Material.Filled.TableChart,
+        _                => Icons.Material.Filled.InsertDriveFile
+    };
 }

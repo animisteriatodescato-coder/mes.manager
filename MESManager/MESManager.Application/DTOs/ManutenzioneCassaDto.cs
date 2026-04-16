@@ -43,3 +43,27 @@ public class NuovaSchedaCassaRequest
     public string? NomeOperatore { get; set; }
     public string? Note { get; set; }
 }
+
+// ── Allegati ──────────────────────────────────────────────────────────────────
+
+public class ManutenzioneCassaAllegatoDto
+{
+    public int Id { get; set; }
+    public Guid SchedaId { get; set; }
+    public string NomeFile { get; set; } = string.Empty;
+    public string TipoFile { get; set; } = "Documento";
+    public string Estensione { get; set; } = string.Empty;
+    public string? Descrizione { get; set; }
+    public long DimensioneBytes { get; set; }
+    public DateTime DataCaricamento { get; set; }
+    public bool IsFoto => TipoFile == "Foto";
+    /// <summary>URL proxy per scaricare/visualizzare il file</summary>
+    public string UrlProxy => $"/api/allegati-manutenzione-casse/{Id}/file";
+}
+
+public class AllegatiManutenzioneCassaResponse
+{
+    public List<ManutenzioneCassaAllegatoDto> Foto { get; set; } = new();
+    public List<ManutenzioneCassaAllegatoDto> Documenti { get; set; } = new();
+    public int Totale => Foto.Count + Documenti.Count;
+}
