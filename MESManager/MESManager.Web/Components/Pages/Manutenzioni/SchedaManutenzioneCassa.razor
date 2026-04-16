@@ -5,6 +5,7 @@
 @using MESManager.Domain.Enums
 @inject IManutenzioneCassaService ManutenzioneCassaService
 @inject IManutenzioneCassaAllegatoService AllegatoService
+@inject MESManager.Application.Services.CurrentUserService CurrentUserService
 @inject NavigationManager Nav
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
@@ -312,6 +313,18 @@ else
     protected override async Task OnInitializedAsync()
     {
         _scheda = await ManutenzioneCassaService.GetSchedaByIdAsync(SchedaId);
+
+        // Se la scheda è ancora InCompilazione, aggiorna l'operatore con l'utente che la sta aprendo
+        if (_scheda != null && _scheda.Stato == Domain.Enums.StatoSchedaManutenzione.InCompilazione
+            && CurrentUserService.HasUser)
+        {
+            _scheda = await ManutenzioneCassaService.GetOrCreateSchedaAsync(
+                _scheda.CodiceCassa,
+                _scheda.DataEsecuzione,
+                CurrentUserService.UserId,
+                CurrentUserService.UserName);
+        }
+
         _loading = false;
         if (_scheda != null)
             await CaricaAllegatiAsync();
