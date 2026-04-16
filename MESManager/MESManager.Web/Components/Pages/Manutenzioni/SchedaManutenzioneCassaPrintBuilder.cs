@@ -9,15 +9,35 @@ namespace MESManager.Web.Components.Pages.Manutenzioni;
 /// </summary>
 public static class SchedaManutenzioneCassaPrintBuilder
 {
+    private static readonly List<string> _defaultCondizioni = new()
+    {
+        "Le attivit\u00e0 di manutenzione vengono eseguite da personale qualificato nel rispetto delle normative vigenti in materia di sicurezza sul lavoro (D.Lgs. 81/2008).",
+        "La presente scheda costituisce documento ufficiale di avvenuta manutenzione e deve essere conservata agli atti per almeno <strong>5 anni</strong>.",
+        "Qualsiasi anomalia rilevata durante l\u2019intervento deve essere segnalata tempestivamente al responsabile di reparto e all\u2019ufficio tecnico prima di riprendere la produzione.",
+        "La cassa deve essere rimessa in servizio esclusivamente a seguito di verifica con esito positivo da parte dell\u2019operatore responsabile. In caso di anomalie non risolte, la cassa non deve essere utilizzata.",
+        "I materiali di consumo impiegati (lubrificanti, guarnizioni, prodotti chimici) devono essere conformi alle specifiche tecniche del fornitore della cassa e compatibili con il tipo di sabbia e resina utilizzati.",
+        "Ogni sostituzione di componenti (inserti, piastre, perni) deve essere documentata indicando il codice del pezzo di ricambio e il fornitore, e registrata nel sistema gestionale aziendale.",
+        "Le fotografie allegate hanno valore documentale e devono ritrarre fedelmente lo stato della cassa prima, durante e dopo l\u2019intervento; non \u00e8 ammessa alterazione delle immagini.",
+        "In caso di manutenzione straordinaria non pianificata, il responsabile di produzione deve approvare la scheda prima della rimessa in produzione della cassa.",
+        "Il piano di manutenzione periodica pu\u00f2 essere modificato solo dall\u2019ufficio tecnico sulla base dell\u2019andamento storico delle anomalie rilevate e delle indicazioni del costruttore dell\u2019attrezzatura.",
+        "I dati contenuti in questa scheda sono riservati e ad uso interno; la diffusione a terzi \u00e8 subordinata all\u2019autorizzazione della direzione aziendale.",
+        "La firma di chiusura scheda attesta che l\u2019operatore ha eseguito tutte le attivit\u00e0 previste con la diligenza richiesta e che le informazioni riportate sono veritiere e complete.",
+        "Per le casse soggette a garanzia del costruttore, il mancato rispetto del piano di manutenzione programmata pu\u00f2 invalidare la garanzia stessa; \u00e8 responsabilit\u00e0 del manutentore verificarne i termini."
+    };
+
     /// <param name="scheda">DTO scheda (con righe già caricate)</param>
     /// <param name="allegati">Lista allegati (opzionale)</param>
     /// <param name="azienda">Nome azienda</param>
     /// <param name="logoInlineHtml">HTML del logo da incorporare inline (es. tag img base64 o svg)</param>
+    /// <param name="fotoBase64">Mappa id→data-URI base64 per incorporare le foto direttamente nel PDF</param>
+    /// <param name="condizioni">Elenco condizioni generali personalizzato (null = usa il default)</param>
     public static string Build(
         ManutenzioneCassaSchedaDto scheda,
         List<ManutenzioneCassaAllegatoDto>? allegati = null,
         string azienda = "Officina",
-        string? logoInlineHtml = null)
+        string? logoInlineHtml = null,
+        Dictionary<int, string>? fotoBase64 = null,
+        List<string>? condizioni = null)
     {
         const decimal fs = 10.5m;
         var fsBase  = fs.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
@@ -85,9 +105,11 @@ public static class SchedaManutenzioneCassaPrintBuilder
             {
                 foreach (var f in foto)
                 {
+                    // Preferisci base64 inline (nessun caricamento rete nel popup di stampa)
+                    var imgSrc = (fotoBase64 != null && fotoBase64.TryGetValue(f.Id, out var b64)) ? b64 : f.UrlProxy;
                     allegatiHtml.Append(
                         $"<figure style=\"margin:0 0 14px;text-align:center;page-break-inside:avoid\">" +
-                        $"<img src=\"{f.UrlProxy}\" alt=\"{System.Web.HttpUtility.HtmlEncode(f.NomeFile)}\" " +
+                        $"<img src=\"{imgSrc}\" alt=\"{System.Web.HttpUtility.HtmlEncode(f.NomeFile)}\" " +
                         "style=\"width:100%;max-height:370px;border:1px solid #ccc;border-radius:3px;object-fit:contain;" +
                         "-webkit-print-color-adjust:exact;print-color-adjust:exact\" />" +
                         $"<figcaption style=\"font-size:8pt;color:#666;margin-top:4px\">{System.Web.HttpUtility.HtmlEncode(f.NomeFile)}</figcaption>" +
@@ -218,18 +240,8 @@ public static class SchedaManutenzioneCassaPrintBuilder
                "\n  <div class=\"conditions\" style=\"margin-top:20px\">\n" +
                "    <div class=\"cond-title\">CONDIZIONI GENERALI DI MANUTENZIONE</div>\n" +
                "    <ul>\n" +
-               "      <li>Le attivit&agrave; di manutenzione vengono eseguite da personale qualificato nel rispetto delle normative vigenti in materia di sicurezza sul lavoro (D.Lgs. 81/2008).</li>\n" +
-               "      <li>La presente scheda costituisce documento ufficiale di avvenuta manutenzione e deve essere conservata agli atti per almeno <strong>5 anni</strong>.</li>\n" +
-               "      <li>Qualsiasi anomalia rilevata durante l&apos;intervento deve essere segnalata tempestivamente al responsabile di reparto e all&apos;ufficio tecnico prima di riprendere la produzione.</li>\n" +
-               "      <li>La cassa deve essere rimessa in servizio esclusivamente a seguito di verifica con esito positivo da parte dell&apos;operatore responsabile. In caso di anomalie non risolte, la cassa non deve essere utilizzata.</li>\n" +
-               "      <li>I materiali di consumo impiegati (lubrificanti, guarnizioni, prodotti chimici) devono essere conformi alle specifiche tecniche del fornitore della cassa e compatibili con il tipo di sabbia e resina utilizzati.</li>\n" +
-               "      <li>Ogni sostituzione di componenti (inserti, piastre, perni) deve essere documentata indicando il codice del pezzo di ricambio e il fornitore, e registrata nel sistema gestionale aziendale.</li>\n" +
-               "      <li>Le fotografie allegate hanno valore documentale e devono ritrarre fedelmente lo stato della cassa prima, durante e dopo l&apos;intervento; non &egrave; ammessa alterazione delle immagini.</li>\n" +
-               "      <li>In caso di manutenzione straordinaria non pianificata, il responsabile di produzione deve approvare la scheda prima della rimessa in produzione della cassa.</li>\n" +
-               "      <li>Il piano di manutenzione periodica pu&ograve; essere modificato solo dall&apos;ufficio tecnico sulla base dell&apos;andamento storico delle anomalie rilevate e delle indicazioni del costruttore dell&apos;attrezzatura.</li>\n" +
-               "      <li>I dati contenuti in questa scheda sono riservati e ad uso interno; la diffusione a terzi &egrave; subordinata all&apos;autorizzazione della direzione aziendale.</li>\n" +
-               "      <li>La firma di chiusura scheda attesta che l&apos;operatore ha eseguito tutte le attivit&agrave; previste con la diligenza richiesta e che le informazioni riportate sono veritiere e complete.</li>\n" +
-               "      <li>Per le casse soggette a garanzia del costruttore, il mancato rispetto del piano di manutenzione programmata pu&ograve; invalidare la garanzia stessa; &egrave; responsabilit&agrave; del manutentore verificarne i termini.</li>\n" +
+               string.Concat((condizioni ?? _defaultCondizioni).Select(c =>
+                   $"      <li>{System.Web.HttpUtility.HtmlEncode(c).Replace("&lt;strong&gt;", "<strong>").Replace("&lt;/strong&gt;", "</strong>")}</li>\n")) +
                "    </ul>\n" +
                "  </div>\n\n" +
                "</body>\n" +
