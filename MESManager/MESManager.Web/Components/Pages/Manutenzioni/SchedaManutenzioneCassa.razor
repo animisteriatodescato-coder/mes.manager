@@ -3,7 +3,6 @@
 @using MESManager.Application.DTOs
 @using MESManager.Application.Interfaces
 @using MESManager.Domain.Enums
-@using ImageMagick
 @inject IManutenzioneCassaService ManutenzioneCassaService
 @inject IManutenzioneCassaAllegatoService AllegatoService
 @inject MESManager.Application.Services.CurrentUserService CurrentUserService
@@ -304,6 +303,58 @@ else
             }
         </MudPaper>
 
+        @* ── PROBLEMATICHE DA PIANIFICARE ─────────────────────────────────── *@
+        <MudPaper Elevation="1" Class="pa-3 mt-4">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" />
+                <MudText Typo="Typo.subtitle1"><b>Problematiche da Pianificare</b></MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-2">Appaiono nel PDF · non salvate su DB</MudText>
+                <MudSpacer />
+                <MudIconButton Icon="@(_showProblematiche ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                               Size="Size.Small"
+                               OnClick="@(() => _showProblematiche = !_showProblematiche)" />
+            </MudStack>
+            @if (_showProblematiche)
+            {
+                <MudStack Spacing="1">
+                    @if (_problematiche.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Nessuna problematica aggiunta. Usa il pulsante per aggiungere voci che appariranno nel PDF.
+                        </MudText>
+                    }
+                    @for (int i = 0; i < _problematiche.Count; i++)
+                    {
+                        var idx = i;
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Style="min-width:22px;text-align:right">@(idx+1).</MudText>
+                            <MudTextField T="string" Value="@_problematiche[idx]"
+                                          ValueChanged="@(v => _problematiche[idx] = v ?? "")"
+                                          Variant="Variant.Outlined" Margin="Margin.Dense"
+                                          FullWidth="true" Lines="2"
+                                          Style="font-size:12px"
+                                          Placeholder="es. Sostituzione inserto porta maschio lato SX — pianificare entro 2 settimane" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                           OnClick="@(() => { _problematiche.RemoveAt(idx); StateHasChanged(); })"
+                                           Title="Rimuovi" />
+                        </MudStack>
+                    }
+                    <MudStack Row="true" Spacing="2" Class="mt-2" Wrap="Wrap.Wrap">
+                        <MudButton Variant="Variant.Filled" Size="Size.Small" Color="Color.Error"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="@(() => { _problematiche.Add(""); StateHasChanged(); })">
+                            Aggiungi problematica
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error"
+                                   StartIcon="@Icons.Material.Filled.AutoAwesome"
+                                   OnClick="@AggiungiProblematicheComuni">
+                            Suggerimenti tipici
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            }
+        </MudPaper>
+
         @* ── CONDIZIONI GENERALI DI STAMPA ───────────────────────── *@
         <MudPaper Elevation="1" Class="pa-3 mt-4">
             <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
@@ -361,8 +412,31 @@ else
 
     // ── Condizioni generali di stampa (editabili pre-stampa) ─────────────────
     private bool _showCondizioni;
-    private List<string> _condizioni = new()
+
+    // ── Problematiche da pianificare (editabili pre-stampa) ──────────────────
+    private bool _showProblematiche = true;
+    private List<string> _problematiche = new();
+
+    private void AggiungiProblematicheComuni()
     {
+        var suggerimenti = new[]
+        {
+            "Usura avanzata degli inserti — pianificare sostituzione entro il prossimo ciclo di manutenzione.",
+            "Perdita di tenuta sulla cerniera — verificare guarnizioni e bulloneria di chiusura.",
+            "Segni di erosione sulla camera di iniezione — valutare ripristino superficiale o sostituzione.",
+            "Surriscaldamento localizzato rilevato — controllare circuito di raffreddamento e ugelli.",
+            "Gioco eccessivo sui perni di centraggio — misurare tolleranze e pianificare rettifica o sostituzione.",
+            "Incrostazioni di sabbia/resina nelle vie di sfiato — pulizia profonda programmata.",
+            "Corrosione superficiale sulle guide — trattamento antiossidante e lubrificazione.",
+            "Crepa rilevata sul corpo cassa — eseguire controllo non distruttivo (liquidi penetranti) e decidere su riparazione."
+        };
+        foreach (var s in suggerimenti)
+            if (!_problematiche.Contains(s))
+                _problematiche.Add(s);
+        StateHasChanged();
+    }
+
+    private List<string> _condizioni = new()    {
         "Le attività di manutenzione vengono eseguite da personale qualificato nel rispetto delle normative vigenti in materia di sicurezza sul lavoro (D.Lgs. 81/2008).",
         "La presente scheda costituisce documento ufficiale di avvenuta manutenzione e deve essere conservata agli atti per almeno 5 anni.",
         "Qualsiasi anomalia rilevata durante l\u2019intervento deve essere segnalata tempestivamente al responsabile di reparto e all\u2019ufficio tecnico prima di riprendere la produzione.",
@@ -515,38 +589,14 @@ else
         var tuttiAllegati = _allegati == null ? new List<ManutenzioneCassaAllegatoDto>() :
             _allegati.Foto.Concat(_allegati.Documenti).ToList();
 
-        // Pre-converti le foto in base64 così il popup di stampa non ha bisogno di caricare URL autenticati
-        var fotoBase64 = new Dictionary<int, string>();
-        foreach (var f in tuttiAllegati.Where(a => a.IsFoto))
-        {
-            try
-            {
-                var content = await AllegatoService.GetFileContentAsync(f.Id);
-                if (content != null)
-                {
-                    var bytes = content.Value.Content;
-                    var mime = "image/jpeg";
-                    var ext = System.IO.Path.GetExtension(content.Value.FileName).ToLowerInvariant();
-                    if (ext == ".heic" || ext == ".heif")
-                    {
-                        using var magick = new ImageMagick.MagickImage(bytes);
-                        magick.Quality = 82;
-                        magick.Format = ImageMagick.MagickFormat.Jpeg;
-                        bytes = magick.ToByteArray();
-                    }
-                    else if (ext == ".png")  mime = "image/png";
-                    else if (ext == ".gif")  mime = "image/gif";
-                    else if (ext == ".webp") mime = "image/webp";
-                    fotoBase64[f.Id] = $"data:{mime};base64,{Convert.ToBase64String(bytes)}";
-                }
-            }
-            catch { /* in caso di errore usa UrlProxy */ }
-        }
-
         var azienda = Env.ApplicationName;
         var logo = LeggiLogoInline();
-        var html = SchedaManutenzioneCassaPrintBuilder.Build(_scheda, tuttiAllegati, azienda, logo, fotoBase64, _condizioni);
-        await JS.InvokeVoidAsync("mesPreventivoPrint", html);
+        var html = SchedaManutenzioneCassaPrintBuilder.Build(
+            _scheda, tuttiAllegati, azienda, logo,
+            problematiche: _problematiche.Count > 0 ? _problematiche : null,
+            condizioni: _condizioni);
+        // mesStampaConFoto: async JS che pre-carica immagini con credentials prima del popup
+        await JS.InvokeAsync<bool>("mesStampaConFoto", html);
     }
 
     private string? LeggiLogoInline()

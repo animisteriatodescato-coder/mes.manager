@@ -29,14 +29,14 @@ public static class SchedaManutenzioneCassaPrintBuilder
     /// <param name="allegati">Lista allegati (opzionale)</param>
     /// <param name="azienda">Nome azienda</param>
     /// <param name="logoInlineHtml">HTML del logo da incorporare inline (es. tag img base64 o svg)</param>
-    /// <param name="fotoBase64">Mappa id→data-URI base64 per incorporare le foto direttamente nel PDF</param>
+    /// <param name="problematiche">Lista problematiche da pianificare (opzionale)</param>
     /// <param name="condizioni">Elenco condizioni generali personalizzato (null = usa il default)</param>
     public static string Build(
         ManutenzioneCassaSchedaDto scheda,
         List<ManutenzioneCassaAllegatoDto>? allegati = null,
         string azienda = "Officina",
         string? logoInlineHtml = null,
-        Dictionary<int, string>? fotoBase64 = null,
+        List<string>? problematiche = null,
         List<string>? condizioni = null)
     {
         const decimal fs = 10.5m;
@@ -105,11 +105,9 @@ public static class SchedaManutenzioneCassaPrintBuilder
             {
                 foreach (var f in foto)
                 {
-                    // Preferisci base64 inline (nessun caricamento rete nel popup di stampa)
-                    var imgSrc = (fotoBase64 != null && fotoBase64.TryGetValue(f.Id, out var b64)) ? b64 : f.UrlProxy;
                     allegatiHtml.Append(
                         $"<figure style=\"margin:0 0 14px;text-align:center;page-break-inside:avoid\">" +
-                        $"<img src=\"{imgSrc}\" alt=\"{System.Web.HttpUtility.HtmlEncode(f.NomeFile)}\" " +
+                        $"<img src=\"{f.UrlProxy}\" alt=\"{System.Web.HttpUtility.HtmlEncode(f.NomeFile)}\" " +
                         "style=\"width:100%;max-height:370px;border:1px solid #ccc;border-radius:3px;object-fit:contain;" +
                         "-webkit-print-color-adjust:exact;print-color-adjust:exact\" />" +
                         $"<figcaption style=\"font-size:8pt;color:#666;margin-top:4px\">{System.Web.HttpUtility.HtmlEncode(f.NomeFile)}</figcaption>" +
@@ -159,7 +157,7 @@ public static class SchedaManutenzioneCassaPrintBuilder
             : "";
 
         var logoBlock = logoInlineHtml != null
-            ? $"  <div style=\"margin-bottom:6px\">{logoInlineHtml}</div>\n"
+            ? $"  <div class=\"logo-block\">{logoInlineHtml}</div>\n"
             : "";
 
         var titolo = $"ManutCassa_{scheda.CodiceCassa}_{scheda.DataEsecuzione:yyyyMMdd}";
@@ -196,6 +194,15 @@ public static class SchedaManutenzioneCassaPrintBuilder
                $"    .conditions .cond-title {{ font-weight: bold; color: #1565c0; font-size: {fsS}pt; margin-bottom: 5px; }}\n" +
                "    .conditions ul { padding-left: 16px; }\n" +
                "    .conditions li { margin-bottom: 3px; }\n" +
+               $"    .issues {{ border: 1px solid #c62828; border-radius: 4px; padding: 10px 14px; margin: 16px 0;\n" +
+               $"               font-size: {fsCond}pt; line-height: 1.65;\n" +
+               "               -webkit-print-color-adjust: exact; print-color-adjust: exact; }}\n" +
+               $"    .issues .iss-title {{ font-weight: bold; color: #c62828; font-size: {fsS}pt; margin-bottom: 5px; }}\n" +
+               "    .issues ol { padding-left: 18px; }\n" +
+               "    .issues li { margin-bottom: 3px; }\n" +
+               "    .logo-block { line-height: 0; margin-bottom: 6px; }\n" +
+               "    .logo-block img { max-height: 77px; width: auto; }\n" +
+               "    .logo-block svg { height: 77px; width: auto; }\n" +
                "    @media print { body { padding: 0; } -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n" +
                "  </style>\n" +
                "</head>\n" +
@@ -236,6 +243,16 @@ public static class SchedaManutenzioneCassaPrintBuilder
                    : "") +
                // Allegati
                allegatiHtml +
+               // Problematiche da pianificare (se presenti)
+               (problematiche != null && problematiche.Any(p => !string.IsNullOrWhiteSpace(p))
+                   ? "\n  <div class=\"issues\">\n" +
+                     "    <div class=\"iss-title\">&#9888; PROBLEMATICHE DA PIANIFICARE</div>\n" +
+                     "    <ol>\n" +
+                     string.Concat(problematiche.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p =>
+                         $"      <li>{System.Web.HttpUtility.HtmlEncode(p)}</li>\n")) +
+                     "    </ol>\n" +
+                     "  </div>\n"
+                   : "") +
                // Condizioni generali
                "\n  <div class=\"conditions\" style=\"margin-top:20px\">\n" +
                "    <div class=\"cond-title\">CONDIZIONI GENERALI DI MANUTENZIONE</div>\n" +

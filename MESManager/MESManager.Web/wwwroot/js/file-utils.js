@@ -143,3 +143,44 @@ window.mesPreventivoPrint = function (html) {
     win.focus();
     setTimeout(function () { win.print(); }, 800);
 };
+
+// ── Stampa con foto autenticate: pre-carica img come base64 poi apre popup ────
+// Usare con JS.InvokeAsync<bool> perché la funzione è async e ritorna Promise
+window.mesStampaConFoto = async function (html) {
+    // Parse dell'HTML per trovare le img con src relativo (es. /api/...)
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const imgs = Array.from(doc.querySelectorAll('img')).filter(function (img) {
+        var src = img.getAttribute('src') || '';
+        return src.startsWith('/') && !src.startsWith('//');
+    });
+
+    // Fetch parallelo con credenziali (cookie di sessione inclusi automaticamente)
+    await Promise.all(imgs.map(async function (img) {
+        try {
+            var resp = await fetch(img.getAttribute('src'), { credentials: 'include' });
+            if (resp.ok) {
+                var blob = await resp.blob();
+                var dataUrl = await new Promise(function (resolve, reject) {
+                    var reader = new FileReader();
+                    reader.onload = function () { resolve(reader.result); };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+                img.src = dataUrl;
+            }
+        } catch (e) {
+            console.warn('Foto non caricata:', img.getAttribute('src'), e);
+        }
+    }));
+
+    var newHtml = '<!DOCTYPE html>' + doc.documentElement.outerHTML;
+    var win = window.open('', '_blank', 'width=900,height=700');
+    if (!win) { alert('Popup bloccato dal browser. Consenti i popup per questa pagina e riprova.'); return false; }
+    win.document.open();
+    win.document.write(newHtml);
+    win.document.close();
+    win.focus();
+    setTimeout(function () { win.print(); }, 1000);
+    return true;
+};
