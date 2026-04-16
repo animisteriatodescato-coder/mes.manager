@@ -4,6 +4,7 @@
 @using MESManager.Application.Interfaces
 @using MESManager.Domain.Enums
 @inject IManutenzioneService ManutenzioneService
+@inject IManutenzioneCassaService ManutenzioneCassaService
 @inject ISnackbar Snackbar
 
 <PageTitle>Impostazioni Manutenzioni</PageTitle>
@@ -234,6 +235,100 @@
                 </NoRecordsContent>
             </MudTable>
         </MudTabPanel>
+
+        @* ══ TAB 3 — ATTIVITÀ CASSE D'ANIMA ══════════════════════ *@
+        <MudTabPanel Text="Attività Casse" Icon="@Icons.Material.Filled.Cases">
+
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                <MudText Typo="Typo.body2" Color="Color.Tertiary">
+                    Attività di controllo eseguite ad ogni scheda manutenzione per le casse d'anima.
+                </MudText>
+                <MudSpacer />
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="@NuovaAttivitaCassa"
+                           data-testid="btn-nuova-att-cassa">
+                    Nuova Attività
+                </MudButton>
+            </MudStack>
+
+            @if (_loadingAttCassa)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Secondary" Class="mb-2" />
+            }
+
+            <MudTable Items="@_attivitaCassa" Hover="true" Dense="true" Striped="true"
+                      Loading="@_loadingAttCassa" data-testid="tbl-attivita-cassa">
+                <HeaderContent>
+                    <MudTh Style="width:60px">Ordine</MudTh>
+                    <MudTh>Nome</MudTh>
+                    <MudTh Style="width:100px">Font (px)</MudTh>
+                    <MudTh Style="width:80px">Attiva</MudTh>
+                    <MudTh Style="width:100px">Azioni</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    @if (_editingAttCassaId == context.Id)
+                    {
+                        <MudTd>
+                            <MudNumericField @bind-Value="_attCassaDraft.Ordine" Min="1" Max="99"
+                                             Variant="Variant.Outlined" Margin="Margin.Dense" Style="width:60px" />
+                        </MudTd>
+                        <MudTd>
+                            <MudTextField @bind-Value="_attCassaDraft.Nome" Variant="Variant.Outlined"
+                                          Margin="Margin.Dense" AutoFocus="true"
+                                          data-testid="inp-att-cassa-nome" />
+                        </MudTd>
+                        <MudTd>
+                            <MudNumericField @bind-Value="_attCassaDraft.FontSize" Min="8" Max="18"
+                                             Variant="Variant.Outlined" Margin="Margin.Dense" Style="width:70px" />
+                        </MudTd>
+                        <MudTd>
+                            <MudCheckBox @bind-Value="_attCassaDraft.Attiva" Color="Color.Primary" />
+                        </MudTd>
+                        <MudTd>
+                            <MudStack Row="true">
+                                <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Success"
+                                               Size="Size.Small" Title="Salva"
+                                               OnClick="@SalvaAttivitaCassa"
+                                               data-testid="btn-save-att-cassa" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Cancel" Color="Color.Default"
+                                               Size="Size.Small" Title="Annulla"
+                                               OnClick="@(() => _editingAttCassaId = null)" />
+                            </MudStack>
+                        </MudTd>
+                    }
+                    else
+                    {
+                        <MudTd>@context.Ordine</MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2">@context.Nome</MudText>
+                        </MudTd>
+                        <MudTd>@context.FontSize px</MudTd>
+                        <MudTd>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(context.Attiva ? Color.Success : Color.Default)">
+                                @(context.Attiva ? "Attiva" : "Inattiva")
+                            </MudChip>
+                        </MudTd>
+                        <MudTd>
+                            <MudStack Row="true">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary"
+                                               Size="Size.Small" Title="Modifica"
+                                               OnClick="@(() => IniziaEditAttivitaCassa(context))"
+                                               data-testid="@($"btn-edit-att-cassa-{context.Id}")" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                               Size="Size.Small" Title="Elimina (disattiva)"
+                                               OnClick="@(() => EliminaAttivitaCassa(context.Id))"
+                                               data-testid="@($"btn-del-att-cassa-{context.Id}")" />
+                            </MudStack>
+                        </MudTd>
+                    }
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4">Nessuna attività configurata per le casse d'anima.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
     </MudTabs>
 
 </MudPaper>
@@ -255,12 +350,19 @@
             ? _attivita
             : _attivita.Where(a => a.TipoFrequenza == _filtroTipoAtt);
 
-    // ── Anomalie ─────────────────────────────────────────────
+    // ── Anomalie ─────────────────────────────────────────────────
     private List<AnomaliaStandardDto> _anomalie = new();
     private bool _loadingAnom = true;
 
     private Guid? _editingAnomaliaId;
     private AnomaliaStandardDto _anomDraft = new();
+
+    // ── Attività Casse d'Anima ────────────────────────────────
+    private List<ManutenzioneCassaAttivitaDto> _attivitaCassa = new();
+    private bool _loadingAttCassa = true;
+
+    private Guid? _editingAttCassaId;
+    private ManutenzioneCassaAttivitaDto _attCassaDraft = new();
 
     // ── Init ─────────────────────────────────────────────────
     private bool _initialized = false;
@@ -274,6 +376,8 @@
         _loadingAtt = false;
         _anomalie = await ManutenzioneService.GetAnomalieStandardAsync();
         _loadingAnom = false;
+        _attivitaCassa = await ManutenzioneCassaService.GetAttivitaAsync();
+        _loadingAttCassa = false;
         StateHasChanged();
     }
 
@@ -432,6 +536,75 @@
         {
             _anomalie.RemoveAll(a => a.Id == id);
             Snackbar.Add("Anomalia eliminata.", Severity.Info);
+        }
+    }
+
+    // ── CRUD Attività Casse d'Anima ───────────────────────────
+
+    private void NuovaAttivitaCassa()
+    {
+        _editingAttCassaId = Guid.Empty;
+        _attCassaDraft = new ManutenzioneCassaAttivitaDto
+        {
+            Id = Guid.Empty,
+            Attiva = true,
+            FontSize = 11,
+            Ordine = (_attivitaCassa.Count > 0 ? _attivitaCassa.Max(a => a.Ordine) : 0) + 1
+        };
+        _attivitaCassa.Insert(0, _attCassaDraft);
+    }
+
+    private void IniziaEditAttivitaCassa(ManutenzioneCassaAttivitaDto att)
+    {
+        _editingAttCassaId = att.Id;
+        _attCassaDraft = new ManutenzioneCassaAttivitaDto
+        {
+            Id = att.Id,
+            Nome = att.Nome,
+            Ordine = att.Ordine,
+            Attiva = att.Attiva,
+            FontSize = att.FontSize
+        };
+    }
+
+    private async Task SalvaAttivitaCassa()
+    {
+        if (string.IsNullOrWhiteSpace(_attCassaDraft.Nome))
+        {
+            Snackbar.Add("Il nome dell'attività è obbligatorio.", Severity.Warning);
+            return;
+        }
+
+        if (_attCassaDraft.Id == Guid.Empty)
+        {
+            var created = await ManutenzioneCassaService.CreateAttivitaAsync(_attCassaDraft);
+            _attivitaCassa.RemoveAt(0);
+            _attivitaCassa.Add(created);
+            _attivitaCassa = _attivitaCassa.OrderBy(a => a.Ordine).ToList();
+            Snackbar.Add("Attività cassa creata.", Severity.Success);
+        }
+        else
+        {
+            var updated = await ManutenzioneCassaService.UpdateAttivitaAsync(_attCassaDraft);
+            if (updated != null)
+            {
+                var idx = _attivitaCassa.FindIndex(a => a.Id == updated.Id);
+                if (idx >= 0) _attivitaCassa[idx] = updated;
+            }
+            Snackbar.Add("Attività cassa aggiornata.", Severity.Success);
+        }
+
+        _editingAttCassaId = null;
+        _attCassaDraft = new();
+    }
+
+    private async Task EliminaAttivitaCassa(Guid id)
+    {
+        var ok = await ManutenzioneCassaService.DeleteAttivitaAsync(id);
+        if (ok)
+        {
+            _attivitaCassa.RemoveAll(a => a.Id == id);
+            Snackbar.Add("Attività cassa disattivata.", Severity.Info);
         }
     }
 }

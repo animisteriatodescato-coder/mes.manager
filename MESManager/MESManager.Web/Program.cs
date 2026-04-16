@@ -144,6 +144,7 @@ builder.Services.AddScoped<IPianificazioneService, PianificazioneService>();
 builder.Services.AddScoped<PianificazioneNotificationService>();
 // Modulo Manutenzioni
 builder.Services.AddScoped<IManutenzioneService, ManutenzioneService>();
+builder.Services.AddScoped<IManutenzioneCassaService, ManutenzioneCassaService>();
 builder.Services.AddHttpClient<PlcDataService>(client =>
 {
     client.BaseAddress = new Uri("http://localhost:5156/");
@@ -252,6 +253,9 @@ using (var seedScope = app.Services.CreateScope())
     // Seed attività manutenzione di default (idempotente)
     var manService = seedScope.ServiceProvider.GetRequiredService<IManutenzioneService>();
     await manService.SeedAttivitaDefaultAsync();
+    // Seed attività manutenzione casse d'anima (idempotente)
+    var manCassaService = seedScope.ServiceProvider.GetRequiredService<IManutenzioneCassaService>();
+    await manCassaService.SeedAttivitaDefaultAsync();
 }
 var enableE2ESeed = (Environment.GetEnvironmentVariable("E2E_SEED") ?? "")
     .Equals("1", StringComparison.OrdinalIgnoreCase)

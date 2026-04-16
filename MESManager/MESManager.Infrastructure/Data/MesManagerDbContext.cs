@@ -60,6 +60,11 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ManutenzioneRiga> ManutenzioneRighe => Set<ManutenzioneRiga>();
     public DbSet<AnomaliaStandardManutenzione> AnomalieStandardManutenzione => Set<AnomaliaStandardManutenzione>();
 
+    // Modulo Manutenzioni Casse d'Anima (v1.65.14)
+    public DbSet<ManutenzioneCassaAttivita> ManutenzioneCassaAttivita => Set<ManutenzioneCassaAttivita>();
+    public DbSet<ManutenzioneCassaScheda> ManutenzioneCasseSchede => Set<ManutenzioneCassaScheda>();
+    public DbSet<ManutenzioneCassaRiga> ManutenzioneCasseRighe => Set<ManutenzioneCassaRiga>();
+
     // Modulo Preventivi (v1.64.0)
     public DbSet<PreventivoTipoSabbia> PreventivoTipiSabbia => Set<PreventivoTipoSabbia>();
     public DbSet<PreventivoTipoVernice> PreventivoTipiVernice => Set<PreventivoTipoVernice>();
@@ -441,6 +446,41 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
             b.Property(x => x.Nome).HasMaxLength(100).IsRequired();
             b.Property(x => x.Descrizione).HasMaxLength(500);
             b.Property(x => x.ParametriJson).IsRequired();
+        });
+
+        // ── Modulo Manutenzioni Casse d'Anima (v1.65.14) ──────────────────────
+        modelBuilder.Entity<ManutenzioneCassaAttivita>(b =>
+        {
+            b.ToTable("ManutenzioneCassaAttivita");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Nome).HasMaxLength(200).IsRequired();
+            b.HasIndex(x => x.Attiva);
+        });
+
+        modelBuilder.Entity<ManutenzioneCassaScheda>(b =>
+        {
+            b.ToTable("ManutenzioneCasseSchede");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.CodiceCassa).HasMaxLength(100).IsRequired();
+            b.Property(x => x.OperatoreId).HasMaxLength(450);
+            b.Property(x => x.NomeOperatore).HasMaxLength(200);
+            b.HasIndex(x => x.CodiceCassa);
+            b.HasIndex(x => x.DataEsecuzione);
+        });
+
+        modelBuilder.Entity<ManutenzioneCassaRiga>(b =>
+        {
+            b.ToTable("ManutenzioneCasseRighe");
+            b.HasKey(x => x.Id);
+            b.HasOne(r => r.Scheda)
+                .WithMany(s => s.Righe)
+                .HasForeignKey(r => r.SchedaId)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(r => r.Attivita)
+                .WithMany(a => a.Righe)
+                .HasForeignKey(r => r.AttivitaId)
+                .OnDelete(DeleteBehavior.Restrict);
+            b.HasIndex(x => x.SchedaId);
         });
     }
 

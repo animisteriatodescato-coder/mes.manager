@@ -544,15 +544,22 @@
                         bool _canManAlert         = _isManBase || manCtx.User.HasClaim(PaginaPolicy.ClaimType, "manutenzioni-alert");
                         bool _canManCat           = _isManBase || manCtx.User.HasClaim(PaginaPolicy.ClaimType, "manutenzioni-catalogo");
                         bool _canManGriglia       = _isManBase || manCtx.User.HasClaim(PaginaPolicy.ClaimType, "manutenzioni-griglia");
+                        bool _canManCasse         = _isManBase || manCtx.User.HasClaim(PaginaPolicy.ClaimType, "manutenzioni-casse");
                         bool _canManImpostazioni  = _isManBase || manCtx.User.HasClaim(PaginaPolicy.ClaimType, "manutenzioni-impostazioni");
                     }
-                    @if (_canManAlert || _canManCat || _canManGriglia || _canManImpostazioni)
+                    @if (_canManAlert || _canManCat || _canManGriglia || _canManCasse || _canManImpostazioni)
                     {
                         <MudNavGroup Title="Manutenzioni" Icon="@Icons.Material.Filled.Build" IconColor="Color.Secondary" Expanded="@_expandedMan" ExpandedChanged="@(v => OnNavGroupToggled("man", v))" Class="nav-sec-manutenzioni">
                             @if (_canManGriglia)
                             {
                                 <MudNavLink Href="/manutenzioni/griglia">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9989;</span><span>Manutenzione Giornaliera</span></div>
+                                </MudNavLink>
+                            }
+                            @if (_canManCasse)
+                            {
+                                <MudNavLink Href="/manutenzioni/casse">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128230;</span><span>Casse d'Anima</span></div>
                                 </MudNavLink>
                             }
                             @if (_canManAlert)

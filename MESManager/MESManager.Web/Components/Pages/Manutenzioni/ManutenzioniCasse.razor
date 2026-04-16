@@ -1,0 +1,177 @@
+@page "/manutenzioni/casse"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.ManutenzioniCasse)]
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@using MESManager.Domain.Enums
+@inject IManutenzioneCassaService ManutenzioneCassaService
+@inject MESManager.Application.Services.CurrentUserService CurrentUserService
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+
+<PageTitle>Manutenzioni Casse d'Anima</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4 px-3" data-testid="page-manutenzioni-casse">
+<MudPaper Elevation="1" Class="pa-3">
+
+    @* ── TOOLBAR ─────────────────────────────────────────────── *@
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2" Wrap="Wrap.Wrap">
+
+        <MudIcon Icon="@Icons.Material.Filled.Cases" Color="Color.Secondary" />
+        <MudText Typo="Typo.h6" Class="me-3">Manutenzioni Casse d'Anima</MudText>
+
+        @* Selezione cassa *@
+        <MudAutocomplete T="string"
+                         Label="Filtra per cassa"
+                         @bind-Value="_filtroCodiceCassa"
+                         SearchFunc="@SearchCasse"
+                         Clearable="true"
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         Style="max-width:220px"
+                         data-testid="autocomplete-cassa" />
+
+        @* Data scheda da compilare *@
+        <MudDatePicker @bind-Date="_dataScheda"
+                       Label="Data"
+                       DateFormat="dd/MM/yyyy"
+                       Editable="true"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       PickerVariant="PickerVariant.Dialog"
+                       Style="max-width:180px"
+                       data-testid="dp-data-cassa" />
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.AddCircle"
+                   Disabled="@(string.IsNullOrWhiteSpace(_filtroCodiceCassa) || _dataScheda == null)"
+                   OnClick="@AprioCompilaCassa"
+                   data-testid="btn-nuova-scheda-cassa">
+            Apri / Compila
+        </MudButton>
+
+        <MudSpacer />
+
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Default"
+                   StartIcon="@Icons.Material.Filled.Refresh"
+                   OnClick="@LoadSchede">
+            Aggiorna
+        </MudButton>
+    </MudStack>
+
+    @* ── TABELLA STORICO ──────────────────────────────────────── *@
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+    }
+    else if (!_schede.Any())
+    {
+        <MudAlert Severity="Severity.Info">
+            Nessuna scheda trovata. Seleziona una cassa e una data, poi premi "Apri / Compila".
+        </MudAlert>
+    }
+    else
+    {
+        <MudTable Items="@_schede" Hover="true" Dense="true" Breakpoint="Breakpoint.Sm"
+                  SortLabel="Ordina" data-testid="tabella-schede-casse">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortBy="new Func<ManutenzioneCassaSchedaDto, object>(x => x.CodiceCassa)">Cassa</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<ManutenzioneCassaSchedaDto, object>(x => x.DataEsecuzione)">Data</MudTableSortLabel></MudTh>
+                <MudTh>Operatore</MudTh>
+                <MudTh>Stato</MudTh>
+                <MudTh>Avanzamento</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Cassa">
+                    <MudText Typo="Typo.body2"><b>@context.CodiceCassa</b></MudText>
+                </MudTd>
+                <MudTd DataLabel="Data">@context.DataEsecuzione.ToString("dd/MM/yyyy")</MudTd>
+                <MudTd DataLabel="Operatore">@(context.NomeOperatore ?? "-")</MudTd>
+                <MudTd DataLabel="Stato">
+                    @{
+                        var (colore, etichetta) = GetStatoInfo(context.Stato);
+                    }
+                    <MudChip T="string" Color="@colore" Size="Size.Small" Variant="Variant.Filled">@etichetta</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Avanzamento">
+                    @{
+                        var tot = context.Righe.Count;
+                        var ok = context.Righe.Count(r => r.Esito != EsitoAttivitaManutenzione.NonEseguita);
+                    }
+                    @if (tot > 0)
+                    {
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.caption">@ok/@tot</MudText>
+                            <MudProgressLinear Value="@(100.0 * ok / tot)"
+                                              Color="@(ok == tot ? Color.Success : Color.Primary)"
+                                              Rounded="true" Size="Size.Small" Style="width:80px" />
+                        </MudStack>
+                    }
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                                   Size="Size.Small"
+                                   Color="Color.Primary"
+                                   Title="Apri scheda"
+                                   OnClick="@(() => Nav.NavigateTo($"/manutenzioni/casse/scheda/{context.Id}"))"
+                                   data-testid="btn-apri-scheda" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+
+</MudPaper>
+</MudContainer>
+
+@code {
+    private bool _loading = true;
+    private List<ManutenzioneCassaSchedaDto> _schede = new();
+    private List<string> _casseDisponibili = new();
+    private string? _filtroCodiceCassa;
+    private DateTime? _dataScheda = DateTime.Today;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _casseDisponibili = await ManutenzioneCassaService.GetCasseDisponibiliAsync();
+        await LoadSchede();
+    }
+
+    private async Task LoadSchede()
+    {
+        _loading = true;
+        _schede = await ManutenzioneCassaService.GetSchedeAsync();
+        _loading = false;
+    }
+
+    private Task<IEnumerable<string>> SearchCasse(string? value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult(_casseDisponibili.AsEnumerable());
+
+        return Task.FromResult(
+            _casseDisponibili.Where(c => c.Contains(value, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private async Task AprioCompilaCassa()
+    {
+        if (string.IsNullOrWhiteSpace(_filtroCodiceCassa) || _dataScheda == null) return;
+
+        var scheda = await ManutenzioneCassaService.GetOrCreateSchedaAsync(
+            _filtroCodiceCassa,
+            _dataScheda.Value,
+            CurrentUserService.UserId,
+            CurrentUserService.UserName);
+
+        Nav.NavigateTo($"/manutenzioni/casse/scheda/{scheda.Id}");
+    }
+
+    private static (Color colore, string etichetta) GetStatoInfo(StatoSchedaManutenzione stato) => stato switch
+    {
+        StatoSchedaManutenzione.Completata    => (Color.Success, "Completata"),
+        StatoSchedaManutenzione.ConAnomalie   => (Color.Warning, "Con Anomalie"),
+        StatoSchedaManutenzione.InCompilazione => (Color.Info,   "In Compilazione"),
+        _                                      => (Color.Default, stato.ToString())
+    };
+}
