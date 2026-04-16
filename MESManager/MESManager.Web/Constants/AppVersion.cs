@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.23";
+    public const string Current = "1.65.24";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.23: HEIC→JPEG on-the-fly nel download (fix foto storiche nel PDF)
+    public const string Display = "v" + Current; // v1.65.24: Magick.NET per decodifica HEIC nativa (fix foto iPhone nel PDF)
 }

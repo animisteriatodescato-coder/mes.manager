@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
+using ImageMagick;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Jpeg;
 
@@ -41,19 +42,18 @@ public class AllegatiManutenzioneCasseController : ControllerBase
         var result = await _service.GetFileContentAsync(id);
         if (result == null) return NotFound();
 
-        // Converti HEIC/HEIF → JPEG al volo (file caricati prima del fix server-side)
+        // Converti HEIC/HEIF → JPEG al volo usando Magick.NET (file caricati prima del fix server-side)
         var ext = Path.GetExtension(result.Value.FileName).ToLowerInvariant();
         if (ext == ".heic" || ext == ".heif")
         {
             try
             {
-                using var ms = new MemoryStream(result.Value.Content);
-                using var img = await Image.LoadAsync(ms);
-                var outMs = new MemoryStream();
-                await img.SaveAsync(outMs, new JpegEncoder { Quality = 82 });
-                outMs.Position = 0;
+                using var magick = new MagickImage(result.Value.Content);
+                magick.Quality = 82;
+                magick.Format = MagickFormat.Jpeg;
+                var jpgBytes = magick.ToByteArray();
                 var jpgName = Path.ChangeExtension(result.Value.FileName, ".jpg");
-                return File(outMs.ToArray(), "image/jpeg", jpgName);
+                return File(jpgBytes, "image/jpeg", jpgName);
             }
             catch (Exception ex)
             {
@@ -94,9 +94,28 @@ public class AllegatiManutenzioneCasseController : ControllerBase
         bool isHeic = ext == ".heic" || ext == ".heif";
         bool isImage = file.ContentType?.StartsWith("image/") == true || isHeic;
 
-        // Converti HEIC/HEIF → JPEG (non supportati dai browser nella finestra di stampa)
-        // Comprimi anche immagini > 2 MB
-        if (isImage && (isHeic || ms.Length > 2 * 1024 * 1024))
+        // Converti HEIC/HEIF → JPEG con Magick.NET (ha il codec HEIC nativo)
+        // Comprimi anche immagini > 2 MB con ImageSharp
+        if (isHeic)
+        {
+            try
+            {
+                ms.Position = 0;
+                using var magick = new MagickImage(ms);
+                magick.Quality = 82;
+                magick.Format = MagickFormat.Jpeg;
+                compressedMs = new MemoryStream(magick.ToByteArray());
+                compressedMs.Position = 0;
+                uploadName = Path.ChangeExtension(file.FileName, ".jpg");
+                uploadStream = compressedMs;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Conversione HEIC→JPEG (Magick) fallita per {Nome}: {Err}", file.FileName, ex.Message);
+                ms.Position = 0;
+            }
+        }
+        else if (isImage && ms.Length > 2 * 1024 * 1024)
         {
             try
             {
@@ -111,7 +130,7 @@ public class AllegatiManutenzioneCasseController : ControllerBase
             }
             catch (Exception ex)
             {
-                _logger.LogWarning("Conversione/compressione immagine fallita per {Nome}: {Err}", file.FileName, ex.Message);
+                _logger.LogWarning("Compressione immagine fallita per {Nome}: {Err}", file.FileName, ex.Message);
                 ms.Position = 0;
             }
         }
