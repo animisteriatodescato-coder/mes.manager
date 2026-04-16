@@ -96,7 +96,20 @@ public class ManutenzioneCassaService : IManutenzioneCassaService
         var entity = await _db.ManutenzioneCasseSchede
             .Include(s => s.Righe).ThenInclude(r => r.Attivita)
             .FirstOrDefaultAsync(s => s.Id == id);
-        return entity == null ? null : MapScheda(entity);
+        if (entity == null) return null;
+        var dto = MapScheda(entity);
+        // Arricchisci con dati cliente da Anime (via CodiceCassa)
+        var anime = await _db.Anime
+            .Where(a => a.CodiceCassa == entity.CodiceCassa)
+            .Select(a => new { a.Cliente, a.DescrizioneArticolo, a.CodiceArticolo })
+            .FirstOrDefaultAsync();
+        if (anime != null)
+        {
+            dto.Cliente = anime.Cliente;
+            dto.ArticoloDescrizione = anime.DescrizioneArticolo;
+            dto.CodiceArticolo = anime.CodiceArticolo;
+        }
+        return dto;
     }
 
     public async Task<ManutenzioneCassaSchedaDto> GetOrCreateSchedaAsync(

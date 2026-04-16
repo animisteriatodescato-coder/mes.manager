@@ -34,6 +34,10 @@ public class ManutenzioneCassaSchedaDto
     public StatoSchedaManutenzione Stato { get; set; } = StatoSchedaManutenzione.InCompilazione;
     public DateTime? DataChiusura { get; set; }
     public List<ManutenzioneCassaRigaDto> Righe { get; set; } = new();
+    /// <summary>Dati cliente ricavati dall'entity Anime (via CodiceCassa)</summary>
+    public string? Cliente { get; set; }
+    public string? ArticoloDescrizione { get; set; }
+    public string? CodiceArticolo { get; set; }
 }
 
 public class NuovaSchedaCassaRequest

@@ -436,8 +436,32 @@ else
             _allegati.Foto.Concat(_allegati.Documenti).ToList();
 
         var azienda = Env.ApplicationName;
-        var html = SchedaManutenzioneCassaPrintBuilder.Build(_scheda, tuttiAllegati, azienda);
+        var logo = LeggiLogoInline();
+        var html = SchedaManutenzioneCassaPrintBuilder.Build(_scheda, tuttiAllegati, azienda, logo);
         await JS.InvokeVoidAsync("mesPreventivoPrint", html);
+    }
+
+    private string? LeggiLogoInline()
+    {
+        try
+        {
+            var pngPath = System.IO.Path.Combine(Env.WebRootPath, "images", "logo-intestazione.png");
+            if (System.IO.File.Exists(pngPath))
+            {
+                var b64 = Convert.ToBase64String(System.IO.File.ReadAllBytes(pngPath));
+                return $"<img src=\"data:image/png;base64,{b64}\" style=\"max-height:110px;width:auto;display:block\" alt=\"{System.Web.HttpUtility.HtmlEncode(Env.ApplicationName)}\" />";
+            }
+            var svgPath = System.IO.Path.Combine(Env.WebRootPath, "images", "logo-intestazione.svg");
+            if (System.IO.File.Exists(svgPath))
+            {
+                var svgContent = System.IO.File.ReadAllText(svgPath);
+                if (svgContent.StartsWith("<?xml"))
+                    svgContent = svgContent.Substring(svgContent.IndexOf("?>") + 2).TrimStart();
+                return svgContent;
+            }
+        }
+        catch { }
+        return null;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
