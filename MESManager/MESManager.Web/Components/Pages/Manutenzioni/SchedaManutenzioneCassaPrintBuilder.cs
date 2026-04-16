@@ -74,18 +74,40 @@ public static class SchedaManutenzioneCassaPrintBuilder
         if (allegati != null && allegati.Count > 0)
         {
             var sb = new System.Text.StringBuilder();
-            sb.Append("<div class=\"section-title\">Allegati</div>\n<ul style=\"margin:0;padding-left:18px\">\n");
-            foreach (var a in allegati)
+            sb.Append("<div class=\"section-title\">Allegati</div>\n");
+
+            // Foto: mostrate come immagini
+            var foto = allegati.Where(a => a.IsFoto).ToList();
+            var docs = allegati.Where(a => !a.IsFoto).ToList();
+
+            if (foto.Count > 0)
             {
-                var dim = a.DimensioneBytes > 1024 * 1024
-                    ? $"{a.DimensioneBytes / 1024.0 / 1024.0:N1} MB"
-                    : $"{a.DimensioneBytes / 1024.0:N0} KB";
-                sb.Append($"<li>{System.Web.HttpUtility.HtmlEncode(a.NomeFile)} <span style=\"color:#888\">({a.TipoFile}, {dim})</span>");
-                if (!string.IsNullOrEmpty(a.Descrizione))
-                    sb.Append($" — <em>{System.Web.HttpUtility.HtmlEncode(a.Descrizione)}</em>");
-                sb.Append("</li>\n");
+                sb.Append("<div style=\"display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px\">\n");
+                foreach (var f in foto)
+                {
+                    sb.Append($"<figure style=\"margin:0;text-align:center;max-width:280px\">");
+                    sb.Append($"<img src=\"{f.UrlProxy}\" alt=\"{System.Web.HttpUtility.HtmlEncode(f.NomeFile)}\" "
+                             + "style=\"max-width:280px;max-height:200px;border:1px solid #ccc;border-radius:3px;object-fit:contain\" />");
+                    sb.Append($"<figcaption style=\"font-size:8pt;color:#666;margin-top:2px\">{System.Web.HttpUtility.HtmlEncode(f.NomeFile)}</figcaption>");
+                    sb.Append("</figure>\n");
+                }
+                sb.Append("</div>\n");
             }
-            sb.Append("</ul>\n");
+
+            // Documenti: lista testuale
+            if (docs.Count > 0)
+            {
+                sb.Append("<ul style=\"margin:0 0 10px;padding-left:18px\">\n");
+                foreach (var a in docs)
+                {
+                    var dim = a.DimensioneBytes > 1024 * 1024
+                        ? $"{a.DimensioneBytes / 1024.0 / 1024.0:N1} MB"
+                        : $"{a.DimensioneBytes / 1024.0:N0} KB";
+                    sb.Append($"<li>{System.Web.HttpUtility.HtmlEncode(a.NomeFile)} <span style=\"color:#888\">({a.TipoFile}, {dim})</span></li>\n");
+                }
+                sb.Append("</ul>\n");
+            }
+
             allegatiHtml = sb.ToString();
         }
 
@@ -163,17 +185,6 @@ public static class SchedaManutenzioneCassaPrintBuilder
                      "  </div>\n\n"
                    : "") +
                allegatiHtml +
-               // Firma
-               "  <div class=\"firma-grid\">\n" +
-               "    <div>\n" +
-               $"      <div class=\"firma-label\">Firma operatore</div>\n" +
-               "      <div class=\"firma-line\"></div>\n" +
-               "    </div>\n" +
-               "    <div>\n" +
-               "      <div class=\"firma-label\">Visto responsabile</div>\n" +
-               "      <div class=\"firma-line\"></div>\n" +
-               "    </div>\n" +
-               "  </div>\n" +
                "</body>\n" +
                "</html>";
     }
