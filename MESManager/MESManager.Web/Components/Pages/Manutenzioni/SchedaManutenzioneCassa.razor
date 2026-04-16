@@ -92,7 +92,8 @@ else
         @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
         {
             <MudTextField @bind-Value="_scheda.Note" Label="Note generali scheda (opzionale)"
-                          Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2" Class="mb-4"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Lines="10"
+                          AutoGrow="true" Class="mb-4"
                           data-testid="tf-note-cassa" />
         }
         else if (!string.IsNullOrEmpty(_scheda.Note))

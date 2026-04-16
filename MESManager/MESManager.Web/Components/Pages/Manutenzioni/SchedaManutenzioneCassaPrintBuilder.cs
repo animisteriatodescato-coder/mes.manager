@@ -44,7 +44,7 @@ public static class SchedaManutenzioneCassaPrintBuilder
 
         // ── Tabella attività ────────────────────────────────────────────────
         var righeHtml = new System.Text.StringBuilder();
-        foreach (var riga in scheda.Righe.OrderBy(r => r.OrdineAttivita))
+        foreach (var riga in scheda.Righe.Where(r => r.Esito != EsitoAttivitaManutenzione.NonEseguita).OrderBy(r => r.OrdineAttivita))
         {
             var esitoLabel = riga.Esito switch
             {
@@ -92,7 +92,7 @@ public static class SchedaManutenzioneCassaPrintBuilder
         // ── Note ────────────────────────────────────────────────────────────
         var noteHtml = string.IsNullOrWhiteSpace(scheda.Note) ? "" :
             $"<div class=\"section-title\">Note</div>\n" +
-            $"<p style=\"margin:0 0 10px;padding:8px 10px;border-left:3px solid #1565c0;background:#e8f0fe\">" +
+            $"<p style=\"margin:0 0 10px;padding:8px 10px;border-left:3px solid #1565c0;background:#e8f0fe;white-space:pre-wrap\">" +
             $"{System.Web.HttpUtility.HtmlEncode(scheda.Note)}</p>\n";
 
         var dataChiusuraHtml = scheda.DataChiusura.HasValue
@@ -153,10 +153,9 @@ public static class SchedaManutenzioneCassaPrintBuilder
                "  </table>\n\n" +
                // Riepilogo
                "  <div class=\"section-title\">Riepilogo</div>\n" +
-               "  <div class=\"riepilogo\">\n" +
+               "  <div class=\"riepilogo\" style=\"grid-template-columns:1fr 1fr\">\n" +
                $"    <div class=\"rie-box\"><div class=\"rie-num\" style=\"color:#1b5e20\">{totOk}</div><div class=\"rie-label\">OK</div></div>\n" +
                $"    <div class=\"rie-box\"><div class=\"rie-num\" style=\"color:#b71c1c\">{totAnomalie}</div><div class=\"rie-label\">Anomalie</div></div>\n" +
-               $"    <div class=\"rie-box\"><div class=\"rie-num\" style=\"color:#555\">{totNonEseguite}</div><div class=\"rie-label\">Non Eseguite</div></div>\n" +
                "  </div>\n\n" +
                allegatiHtml +
                // Firma
