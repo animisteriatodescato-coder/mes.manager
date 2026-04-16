@@ -20,6 +20,9 @@ public class ManutenzioneCassaScheda
     public string? OperatoreId { get; set; }
     public string? NomeOperatore { get; set; }
 
+    /// <summary>Codice progressivo autogenerato a partire da 1000</summary>
+    public int CodiceRiferimento { get; set; }
+
     public string? Note { get; set; }
     public StatoSchedaManutenzione Stato { get; set; } = StatoSchedaManutenzione.InCompilazione;
     public DateTime? DataChiusura { get; set; }

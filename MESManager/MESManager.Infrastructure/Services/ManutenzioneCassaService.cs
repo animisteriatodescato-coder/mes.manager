@@ -140,9 +140,14 @@ public class ManutenzioneCassaService : IManutenzioneCassaService
             .OrderBy(a => a.Ordine)
             .ToListAsync();
 
+        var nextCode = await _db.ManutenzioneCasseSchede.AnyAsync()
+            ? await _db.ManutenzioneCasseSchede.MaxAsync(s => s.CodiceRiferimento) + 1
+            : 1000;
+
         var scheda = new ManutenzioneCassaScheda
         {
             Id = Guid.NewGuid(),
+            CodiceRiferimento = nextCode,
             CodiceCassa = request.CodiceCassa,
             DataEsecuzione = request.DataEsecuzione,
             OperatoreId = request.OperatoreId,
@@ -251,6 +256,7 @@ public class ManutenzioneCassaService : IManutenzioneCassaService
     private static ManutenzioneCassaSchedaDto MapScheda(ManutenzioneCassaScheda s) => new()
     {
         Id = s.Id,
+        CodiceRiferimento = s.CodiceRiferimento,
         CodiceCassa = s.CodiceCassa,
         DataEsecuzione = s.DataEsecuzione,
         OperatoreId = s.OperatoreId,

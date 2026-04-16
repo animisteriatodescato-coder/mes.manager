@@ -36,9 +36,14 @@ else
                            OnClick="@(() => Nav.NavigateTo("/manutenzioni/casse"))"
                            data-testid="btn-torna-casse" />
             <MudStack Spacing="0">
-                <MudText Typo="Typo.h5">
-                    Cassa <b>@_scheda.CodiceCassa</b>
-                </MudText>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText Typo="Typo.h5">
+                        Cassa <b>@_scheda.CodiceCassa</b>
+                    </MudText>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
+                        Rif. #@_scheda.CodiceRiferimento
+                    </MudChip>
+                </MudStack>
                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
                     <MudText Typo="Typo.body2" Color="Color.Secondary">
                         @_scheda.DataEsecuzione.ToString("dddd dd MMMM yyyy")

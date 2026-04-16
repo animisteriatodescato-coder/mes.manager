@@ -25,6 +25,7 @@ public class ManutenzioneCassaRigaDto
 public class ManutenzioneCassaSchedaDto
 {
     public Guid Id { get; set; }
+    public int CodiceRiferimento { get; set; }
     public string CodiceCassa { get; set; } = string.Empty;
     public DateTime DataEsecuzione { get; set; }
     public string? OperatoreId { get; set; }

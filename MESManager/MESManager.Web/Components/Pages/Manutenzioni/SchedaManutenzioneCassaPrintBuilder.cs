@@ -138,6 +138,7 @@ public static class SchedaManutenzioneCassaPrintBuilder
                // Dati cassa
                "  <div class=\"section-title\">Dati Attrezzatura</div>\n" +
                "  <dl>\n" +
+               $"    <div><dt>Rif. #</dt><dd style=\"color:#1565c0;font-weight:800\">{scheda.CodiceRiferimento}</dd></div>\n" +
                $"    <div><dt>Codice cassa</dt><dd>{System.Web.HttpUtility.HtmlEncode(scheda.CodiceCassa)}</dd></div>\n" +
                $"    <div><dt>Data esecuzione</dt><dd>{scheda.DataEsecuzione:dd/MM/yyyy}</dd></div>\n" +
                $"    <div><dt>Operatore</dt><dd>{System.Web.HttpUtility.HtmlEncode(scheda.NomeOperatore ?? "—")}</dd></div>\n" +
@@ -145,18 +146,22 @@ public static class SchedaManutenzioneCassaPrintBuilder
                $"    {dataChiusuraHtml}\n" +
                "  </dl>\n\n" +
                noteHtml +
-               // Tabella attività
-               "  <div class=\"section-title\">Attività Manutentive</div>\n" +
-               "  <table class=\"att\">\n" +
-               $"    <thead><tr><th style=\"width:36px\">#</th><th>Attività</th><th style=\"width:130px\">Esito</th><th>Commento / Anomalia</th></tr></thead>\n" +
-               $"    <tbody>\n{righeHtml}    </tbody>\n" +
-               "  </table>\n\n" +
-               // Riepilogo
-               "  <div class=\"section-title\">Riepilogo</div>\n" +
-               "  <div class=\"riepilogo\" style=\"grid-template-columns:1fr 1fr\">\n" +
-               $"    <div class=\"rie-box\"><div class=\"rie-num\" style=\"color:#1b5e20\">{totOk}</div><div class=\"rie-label\">OK</div></div>\n" +
-               $"    <div class=\"rie-box\"><div class=\"rie-num\" style=\"color:#b71c1c\">{totAnomalie}</div><div class=\"rie-label\">Anomalie</div></div>\n" +
-               "  </div>\n\n" +
+               // Tabella attività (solo se ci sono righe compilate)
+               (righeHtml.Length > 0
+                   ? "  <div class=\"section-title\">Attività Manutentive</div>\n" +
+                     "  <table class=\"att\">\n" +
+                     $"    <thead><tr><th style=\"width:36px\">#</th><th>Attività</th><th style=\"width:130px\">Esito</th><th>Commento / Anomalia</th></tr></thead>\n" +
+                     $"    <tbody>\n{righeHtml}    </tbody>\n" +
+                     "  </table>\n\n"
+                   : "") +
+               // Riepilogo (solo se ci sono attività compilate)
+               (totOk + totAnomalie > 0
+                   ? "  <div class=\"section-title\">Riepilogo</div>\n" +
+                     "  <div class=\"riepilogo\" style=\"grid-template-columns:1fr 1fr\">\n" +
+                     $"    <div class=\"rie-box\"><div class=\"rie-num\" style=\"color:#1b5e20\">{totOk}</div><div class=\"rie-label\">OK</div></div>\n" +
+                     $"    <div class=\"rie-box\"><div class=\"rie-num\" style=\"color:#b71c1c\">{totAnomalie}</div><div class=\"rie-label\">Anomalie</div></div>\n" +
+                     "  </div>\n\n"
+                   : "") +
                allegatiHtml +
                // Firma
                "  <div class=\"firma-grid\">\n" +
