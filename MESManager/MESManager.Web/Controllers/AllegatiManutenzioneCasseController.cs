@@ -40,6 +40,28 @@ public class AllegatiManutenzioneCasseController : ControllerBase
     {
         var result = await _service.GetFileContentAsync(id);
         if (result == null) return NotFound();
+
+        // Converti HEIC/HEIF → JPEG al volo (file caricati prima del fix server-side)
+        var ext = Path.GetExtension(result.Value.FileName).ToLowerInvariant();
+        if (ext == ".heic" || ext == ".heif")
+        {
+            try
+            {
+                using var ms = new MemoryStream(result.Value.Content);
+                using var img = await Image.LoadAsync(ms);
+                var outMs = new MemoryStream();
+                await img.SaveAsync(outMs, new JpegEncoder { Quality = 82 });
+                outMs.Position = 0;
+                var jpgName = Path.ChangeExtension(result.Value.FileName, ".jpg");
+                return File(outMs.ToArray(), "image/jpeg", jpgName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Conversione HEIC→JPEG on-the-fly fallita per id={Id}: {Err}", id, ex.Message);
+                // fallback: servi il file originale
+            }
+        }
+
         return File(result.Value.Content, result.Value.ContentType, result.Value.FileName);
     }
 
