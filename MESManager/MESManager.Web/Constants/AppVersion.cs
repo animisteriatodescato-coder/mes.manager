@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.20";
+    public const string Current = "1.65.21";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.20: upload allegati via fetch diretto (bypass SignalR) - fix upload mobile
+    public const string Display = "v" + Current; // v1.65.21: fix allegati HEIC - conversione JPEG + classificazione foto
 }

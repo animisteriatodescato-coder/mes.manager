@@ -19,7 +19,7 @@ public class ManutenzioneCassaAllegatoService : IManutenzioneCassaAllegatoServic
     private readonly string _basePath;
 
     private static readonly HashSet<string> _fotoExt = new(StringComparer.OrdinalIgnoreCase)
-        { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
+        { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".heic", ".heif" };
 
     public ManutenzioneCassaAllegatoService(
         MesManagerDbContext db,
@@ -43,7 +43,7 @@ public class ManutenzioneCassaAllegatoService : IManutenzioneCassaAllegatoServic
         foreach (var a in list)
         {
             var dto = MapToDto(a);
-            if (a.TipoFile == "Foto") response.Foto.Add(dto);
+            if (dto.IsFoto) response.Foto.Add(dto);
             else response.Documenti.Add(dto);
         }
         return response;
@@ -124,7 +124,8 @@ public class ManutenzioneCassaAllegatoService : IManutenzioneCassaAllegatoServic
         Id = e.Id,
         SchedaId = e.SchedaId,
         NomeFile = e.NomeFile,
-        TipoFile = e.TipoFile,
+        // Ricalcola TipoFile dall'estensione: gestisce file storici salvati come "Documento" (es. .heic)
+        TipoFile = _fotoExt.Contains(e.Estensione ?? "") ? "Foto" : e.TipoFile,
         Estensione = e.Estensione,
         Descrizione = e.Descrizione,
         DimensioneBytes = e.DimensioneBytes,
@@ -139,6 +140,8 @@ public class ManutenzioneCassaAllegatoService : IManutenzioneCassaAllegatoServic
         ".gif" => "image/gif",
         ".bmp" => "image/bmp",
         ".webp" => "image/webp",
+        ".heic" => "image/heic",
+        ".heif" => "image/heif",
         ".doc" => "application/msword",
         ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         ".xls" => "application/vnd.ms-excel",

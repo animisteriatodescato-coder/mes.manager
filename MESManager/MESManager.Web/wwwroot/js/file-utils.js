@@ -56,6 +56,40 @@ window.printPdf = function (bytes, fileName) {
 };
 
 // ── Allegati Manutenzione Casse: upload diretto HTTP (bypassa SignalR, funziona su mobile) ──
+
+// Converte HEIC/HEIF in JPEG via canvas (iPhone → browser desktop compatibile)
+async function _cassaConvertToJpeg(file) {
+    return new Promise(function (resolve) {
+        try {
+            var img = new window.Image();
+            var url = URL.createObjectURL(file);
+            img.onload = function () {
+                var canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob(function (blob) {
+                    URL.revokeObjectURL(url);
+                    if (blob) {
+                        var newName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
+                        resolve(new File([blob], newName, { type: 'image/jpeg' }));
+                    } else {
+                        resolve(file); // fallback: invia originale
+                    }
+                }, 'image/jpeg', 0.85);
+            };
+            img.onerror = function () {
+                URL.revokeObjectURL(url);
+                resolve(file); // fallback: invia originale
+            };
+            img.src = url;
+        } catch (e) {
+            resolve(file);
+        }
+    });
+}
+
 window.cassaAllegatoUpload = {
     openAndUpload: function (inputId, schedaId, dotnetRef) {
         const el = document.getElementById(inputId);
@@ -68,7 +102,11 @@ window.cassaAllegatoUpload = {
 
             const results = [];
             for (let i = 0; i < el.files.length; i++) {
-                const file = el.files[i];
+                let file = el.files[i];
+                // Converti HEIC/HEIF in JPEG (file iPhone) per compatibilità browser desktop
+                if (/\.(heic|heif)$/i.test(file.name)) {
+                    try { file = await _cassaConvertToJpeg(file); } catch (e) { /* usa originale */ }
+                }
                 const fd = new FormData();
                 fd.append('file', file);
                 try {
