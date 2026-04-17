@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.30";
+    public const string Current = "1.65.31";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.30: PathMapping C:\MESManager\ → UNC per allegati casse (dev→prod)
+    public const string Display = "v" + Current; // v1.65.31: elimina scheda, PDF problematiche ante tabella, intestazione 2col, dati 2col
 }

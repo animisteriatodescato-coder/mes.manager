@@ -7,6 +7,7 @@
 @inject MESManager.Application.Services.CurrentUserService CurrentUserService
 @inject ISnackbar Snackbar
 @inject NavigationManager Nav
+@inject IDialogService DialogService
 
 <PageTitle>Manutenzioni Casse d'Anima</PageTitle>
 
@@ -114,12 +115,20 @@
                     }
                 </MudTd>
                 <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
-                                   Size="Size.Small"
-                                   Color="Color.Primary"
-                                   Title="Apri scheda"
-                                   OnClick="@(() => Nav.NavigateTo($"/manutenzioni/casse/scheda/{context.Id}"))"
-                                   data-testid="btn-apri-scheda" />
+                    <MudStack Row="true" Spacing="0">
+                        <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                                       Size="Size.Small"
+                                       Color="Color.Primary"
+                                       Title="Apri scheda"
+                                       OnClick="@(() => Nav.NavigateTo($"/manutenzioni/casse/scheda/{context.Id}"))"
+                                       data-testid="btn-apri-scheda" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Size="Size.Small"
+                                       Color="Color.Error"
+                                       Title="Elimina scheda"
+                                       OnClick="@(() => ConfermaEliminaScheda(context))"
+                                       data-testid="btn-elimina-scheda" />
+                    </MudStack>
                 </MudTd>
             </RowTemplate>
         </MudTable>
@@ -168,6 +177,31 @@
             CurrentUserService.UserName);
 
         Nav.NavigateTo($"/manutenzioni/casse/scheda/{scheda.Id}");
+    }
+
+    private async Task ConfermaEliminaScheda(ManutenzioneCassaSchedaDto scheda)
+    {
+        var parameters = new DialogParameters<MudMessageBox>();
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowMessageBox(
+            "Elimina scheda",
+            $"Eliminare definitivamente la scheda della cassa {scheda.CodiceCassa} del {scheda.DataEsecuzione:dd/MM/yyyy}? L'operazione non può essere annullata.",
+            yesText: "Elimina",
+            cancelText: "Annulla");
+
+        if (dialog == true)
+        {
+            var ok = await ManutenzioneCassaService.DeleteSchedaAsync(scheda.Id);
+            if (ok)
+            {
+                Snackbar.Add($"Scheda {scheda.CodiceCassa} eliminata", Severity.Success);
+                await LoadSchede();
+            }
+            else
+            {
+                Snackbar.Add("Errore durante l'eliminazione", Severity.Error);
+            }
+        }
     }
 
     private static (Color colore, string etichetta) GetStatoInfo(StatoSchedaManutenzione stato) => stato switch

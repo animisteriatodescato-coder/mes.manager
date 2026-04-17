@@ -225,6 +225,30 @@ public class ManutenzioneCassaService : IManutenzioneCassaService
         return true;
     }
 
+    public async Task<bool> DeleteSchedaAsync(Guid id)
+    {
+        var scheda = await _db.ManutenzioneCasseSchede
+            .Include(s => s.Righe)
+            .FirstOrDefaultAsync(s => s.Id == id);
+        if (scheda == null) return false;
+
+        // Elimina prima gli allegati sul disco (via tabella separata, no cascade automatico)
+        var allegati = await _db.ManutenzioneCasseAllegati.Where(a => a.SchedaId == id).ToListAsync();
+        foreach (var a in allegati)
+        {
+            if (System.IO.File.Exists(a.PathFile))
+                System.IO.File.Delete(a.PathFile);
+        }
+        _db.ManutenzioneCasseAllegati.RemoveRange(allegati);
+
+        // Righe: cascade via FK, ma le rimuoviamo esplicitamente per sicurezza
+        _db.ManutenzioneCasseSchede.Remove(scheda);
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("[MANUT-CASSA] Scheda eliminata: Id={Id}, Cassa={Cassa}", id, scheda.CodiceCassa);
+        return true;
+    }
+
     // ──────────────────────────────────────────────────────────
     // CASSE DISPONIBILI
     // ──────────────────────────────────────────────────────────

@@ -161,9 +161,11 @@ public static class SchedaManutenzioneCassaPrintBuilder
             ? $"  <div><dt>Data chiusura</dt><dd style=\"font-size:{fsData}pt\">{scheda.DataChiusura.Value:dd/MM/yyyy HH:mm}</dd></div>\n"
             : "";
 
+        // ── Intestazione: logo sx + nome azienda / dati aziendali dx ─────────
+        // logoInlineHtml contiene un <img> base64 o SVG
         var logoBlock = logoInlineHtml != null
-            ? $"  <div class=\"logo-block\">{logoInlineHtml}</div>\n"
-            : "";
+            ? $"  <div class=\"hdr-logo\">{logoInlineHtml}<div class=\"hdr-azienda\">{System.Web.HttpUtility.HtmlEncode(azienda)}</div></div>\n"
+            : $"  <div class=\"hdr-logo\"><div class=\"hdr-azienda\">{System.Web.HttpUtility.HtmlEncode(azienda)}</div></div>\n";
 
         var titolo = $"ManutCassa_{scheda.CodiceCassa}_{scheda.DataEsecuzione:yyyyMMdd}";
 
@@ -184,6 +186,14 @@ public static class SchedaManutenzioneCassaPrintBuilder
                "    dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 12px; margin-bottom: 10px; }\n" +
                $"    dt {{ font-size: {fsT}pt; color: #666; margin-bottom: 1px; }}\n" +
                $"    dd {{ font-size: {fsData}pt; font-weight: 600; }}\n" +
+               // Intestazione 2 colonne: logo+nome sx, dati aziendali dx
+               "    .hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }\n" +
+               "    .hdr-logo { display: flex; align-items: center; gap: 10px; }\n" +
+               "    .hdr-logo img { max-height: 77px; width: auto; }\n" +
+               "    .hdr-logo svg { height: 77px; width: auto; }\n" +
+               $"    .hdr-azienda {{ font-size: {(fs + 2m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)}pt; font-weight: 800; letter-spacing: 0.3px; }}\n" +
+               "    .hdr-info { text-align: right; font-size: 7.5pt; color: #444; line-height: 1.55; }\n" +
+               "    .hdr-info strong { display: block; font-size: 8.5pt; color: #111; margin-bottom: 2px; }\n" +
                "    table.att { width: 100%; border-collapse: collapse; margin-top: 4px; }\n" +
                $"    table.att th {{ background: #f2f2f2; border: 1px solid #bbb; padding: 5px 8px; font-size: {fsT}pt; text-align: left;\n" +
                "                    -webkit-print-color-adjust: exact; print-color-adjust: exact; }}\n" +
@@ -205,31 +215,57 @@ public static class SchedaManutenzioneCassaPrintBuilder
                $"    .issues .iss-title {{ font-weight: bold; color: #c62828; font-size: {fsS}pt; margin-bottom: 5px; }}\n" +
                "    .issues ol { padding-left: 18px; }\n" +
                "    .issues li { margin-bottom: 3px; }\n" +
-               "    .logo-block { line-height: 0; margin-bottom: 6px; }\n" +
-               "    .logo-block img { max-height: 77px; width: auto; }\n" +
-               "    .logo-block svg { height: 77px; width: auto; }\n" +
+               // layout 2 colonne per dati attrezzatura + cliente
+               "    .two-col-data { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; margin-bottom: 12px; }\n" +
+               "    .two-col-data .col { }\n" +
                "    @media print { body { padding: 0; } -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n" +
                "  </style>\n" +
                "</head>\n" +
                "<body>\n" +
-               // Logo + intestazione
+               // ── Intestazione: logo+nome sx | dati aziendali dx ────────────
+               "  <div class=\"hdr\">\n" +
                logoBlock +
+               "    <div class=\"hdr-info\">\n" +
+               "      <strong>ANIMISTERIA TODESCATO SRL</strong>\n" +
+               "      Via Luigi Galvani 1 &bull; 36060 Sarcedo (VI)<br/>\n" +
+               "      Tel: 0445 356028 &bull; animisteria@todescato.it<br/>\n" +
+               "      P.IVA &bull; C.F.: 01234560240\n" +
+               "    </div>\n" +
+               "  </div>\n" +
                "  <hr style=\"border:none;border-top:2.5px solid #111;margin:7px 0 10px\" />\n" +
                "  <h1>Scheda Manutenzione Cassa d'Anima</h1>\n" +
-               $"  <div class=\"meta\">{System.Web.HttpUtility.HtmlEncode(azienda)} &bull; Documento generato il {DateTime.Now:dd/MM/yyyy HH:mm}</div>\n\n" +
-               // Dati Cliente / Articolo
-               clienteHtml +
-               // Dati Attrezzatura
-               "  <div class=\"section-title\">Dati Attrezzatura</div>\n" +
-               "  <dl>\n" +
-               $"    <div><dt>Rif. #</dt><dd style=\"color:#1565c0;font-size:{(fs + 3m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)}pt;font-weight:800\">{scheda.CodiceRiferimento}</dd></div>\n" +
-               $"    <div><dt>Codice cassa</dt><dd style=\"font-size:{fsData}pt\">{System.Web.HttpUtility.HtmlEncode(scheda.CodiceCassa)}</dd></div>\n" +
-               $"    <div><dt>Data esecuzione</dt><dd style=\"font-size:{fsData}pt\">{scheda.DataEsecuzione:dd/MM/yyyy}</dd></div>\n" +
-               $"    <div><dt>Operatore</dt><dd style=\"font-size:{fsData}pt\">{System.Web.HttpUtility.HtmlEncode(scheda.NomeOperatore ?? "—")}</dd></div>\n" +
-               $"    <div><dt>Stato</dt><dd style=\"color:{statoColor};font-size:{fsData}pt\">{statoLabel}</dd></div>\n" +
-               dataChiusuraHtml +
-               "  </dl>\n\n" +
+               $"  <div class=\"meta\">Documento generato il {DateTime.Now:dd/MM/yyyy HH:mm}</div>\n\n" +
+               // ── Dati Attrezzatura + Dati Cliente in 2 colonne side-by-side ──
+               "  <div class=\"two-col-data\">\n" +
+               // Colonna sx: Dati Attrezzatura
+               "    <div class=\"col\">\n" +
+               "      <div class=\"section-title\">Dati Attrezzatura</div>\n" +
+               "      <dl style=\"grid-template-columns:1fr 1fr\">\n" +
+               $"        <div><dt>Rif. #</dt><dd style=\"color:#1565c0;font-size:{(fs + 3m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)}pt;font-weight:800\">{scheda.CodiceRiferimento}</dd></div>\n" +
+               $"        <div><dt>Codice cassa</dt><dd style=\"font-size:{fsData}pt\">{System.Web.HttpUtility.HtmlEncode(scheda.CodiceCassa)}</dd></div>\n" +
+               $"        <div><dt>Data esecuzione</dt><dd style=\"font-size:{fsData}pt\">{scheda.DataEsecuzione:dd/MM/yyyy}</dd></div>\n" +
+               $"        <div><dt>Operatore</dt><dd style=\"font-size:{fsData}pt\">{System.Web.HttpUtility.HtmlEncode(scheda.NomeOperatore ?? "—")}</dd></div>\n" +
+               $"        <div><dt>Stato</dt><dd style=\"color:{statoColor};font-size:{fsData}pt\">{statoLabel}</dd></div>\n" +
+               (scheda.DataChiusura.HasValue ? $"        <div><dt>Data chiusura</dt><dd style=\"font-size:{fsData}pt\">{scheda.DataChiusura.Value:dd/MM/yyyy HH:mm}</dd></div>\n" : "") +
+               "      </dl>\n" +
+               "    </div>\n" +
+               // Colonna dx: Dati Cliente (se presenti, altrimenti spazio vuoto)
+               "    <div class=\"col\">\n" +
+               (clienteHtml.Length > 0 ? clienteHtml.ToString() : "") +
+               "    </div>\n" +
+               "  </div>\n\n" +
+               // ── Note operatore ────────────────────────────────────────────
                noteHtml +
+               // ── Problematiche (prima della tabella attività) ──────────────
+               (problematiche != null && problematiche.Any(p => !string.IsNullOrWhiteSpace(p))
+                   ? "\n  <div class=\"issues\">\n" +
+                     "    <div class=\"iss-title\">&#9888; PROBLEMATICHE</div>\n" +
+                     "    <ol>\n" +
+                     string.Concat(problematiche.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p =>
+                         $"      <li>{System.Web.HttpUtility.HtmlEncode(p)}</li>\n")) +
+                     "    </ol>\n" +
+                     "  </div>\n"
+                   : "") +
                // Tabella attività
                (righeHtml.Length > 0
                    ? "  <div class=\"section-title\">Attività Manutentive</div>\n" +
@@ -248,16 +284,6 @@ public static class SchedaManutenzioneCassaPrintBuilder
                    : "") +
                // Allegati
                allegatiHtml +
-               // Problematiche da pianificare (se presenti)
-               (problematiche != null && problematiche.Any(p => !string.IsNullOrWhiteSpace(p))
-                   ? "\n  <div class=\"issues\">\n" +
-                     "    <div class=\"iss-title\">&#9888; PROBLEMATICHE DA PIANIFICARE</div>\n" +
-                     "    <ol>\n" +
-                     string.Concat(problematiche.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p =>
-                         $"      <li>{System.Web.HttpUtility.HtmlEncode(p)}</li>\n")) +
-                     "    </ol>\n" +
-                     "  </div>\n"
-                   : "") +
                // Condizioni generali
                "\n  <div class=\"conditions\" style=\"margin-top:20px\">\n" +
                "    <div class=\"cond-title\">CONDIZIONI GENERALI DI MANUTENZIONE</div>\n" +
