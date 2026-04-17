@@ -57,8 +57,11 @@ public class AllegatiManutenzioneCasseController : ControllerBase
             }
             catch (Exception ex)
             {
-                _logger.LogWarning("Conversione HEIC→JPEG on-the-fly fallita per id={Id}: {Err}", id, ex.Message);
-                // fallback: servi il file originale
+                _logger.LogWarning("Conversione HEIC→JPEG (Magick) fallita per id={Id}: {Err}. Provo a servire come JPEG.", id, ex.Message);
+                // Fallback: il file potrebbe essere già JPEG con nome .heic (upload da iOS con conversione parziale)
+                // Servi con content-type jpeg così il browser può decodificarlo
+                var jpgNameFallback = Path.ChangeExtension(result.Value.FileName, ".jpg");
+                return File(result.Value.Content, "image/jpeg", jpgNameFallback);
             }
         }
 

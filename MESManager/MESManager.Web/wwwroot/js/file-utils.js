@@ -133,13 +133,10 @@ window.cassaAllegatoUpload = {
     }
 };
 
-// ── Preventivo: apre finestra di stampa isolata ───────────────────────────────
-// IMPORTANTE: inietta <base href> perché il popup è about:blank e i path
-// relativi (/api/...) non si risolvono senza ancora il dominio base.
+// ── Preventivo: apre finestra di stampa isolata (solo base-href, senza fetch) ──
 window.mesPreventivoPrint = function (html) {
     const win = window.open('', '_blank', 'width=900,height=700');
     if (!win) { alert('Popup bloccato dal browser. Consenti i popup per questa pagina e riprova.'); return; }
-    // Inietta <base> subito dopo <head> così tutti i src="/api/..." si risolvono
     var baseTag = '<base href="' + window.location.origin + '/">';
     var injected = html.replace(/<head>/i, '<head>' + baseTag);
     win.document.open();
@@ -149,43 +146,71 @@ window.mesPreventivoPrint = function (html) {
     setTimeout(function () { win.print(); }, 1000);
 };
 
-// ── Stampa con foto autenticate: pre-carica img come base64 poi apre popup ────
-// Usare con JS.InvokeAsync<bool> perché la funzione è async e ritorna Promise
-window.mesStampaConFoto = async function (html) {
-    // Parse dell'HTML per trovare le img con src relativo (es. /api/...)
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const imgs = Array.from(doc.querySelectorAll('img')).filter(function (img) {
+// ── Stampa scheda cassa: combina base64 C# + fetch autenticato per foto restanti ──
+// Strategia tripla:
+//   1. Foto già data-URI (precaricate da C#): usate direttamente
+//   2. Foto con src relativo (/api/...): fetch con credenziali dalla pagina principale
+//   3. Fetch fallita: placeholder testo (non immagine rotta)
+// Infine: <base href> come ultimo fallback per risorse CSS/font.
+window.mesStampaCassa = async function (html) {
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(html, 'text/html');
+
+    // Solo img con src relativo (non data URI, non external)
+    var imgs = Array.from(doc.querySelectorAll('img[src]')).filter(function (img) {
         var src = img.getAttribute('src') || '';
         return src.startsWith('/') && !src.startsWith('//');
     });
 
-    // Fetch parallelo con credenziali (cookie di sessione inclusi automaticamente)
-    await Promise.all(imgs.map(async function (img) {
-        try {
-            var resp = await fetch(img.getAttribute('src'), { credentials: 'include' });
-            if (resp.ok) {
-                var blob = await resp.blob();
-                var dataUrl = await new Promise(function (resolve, reject) {
-                    var reader = new FileReader();
-                    reader.onload = function () { resolve(reader.result); };
-                    reader.onerror = reject;
-                    reader.readAsDataURL(blob);
-                });
-                img.src = dataUrl;
+    if (imgs.length > 0) {
+        await Promise.all(imgs.map(async function (img) {
+            var originalSrc = img.getAttribute('src');
+            try {
+                var resp = await fetch(originalSrc, { credentials: 'include' });
+                if (resp.ok) {
+                    var blob = await resp.blob();
+                    var dataUrl = await new Promise(function (resolve, reject) {
+                        var reader = new FileReader();
+                        reader.onload = function () { resolve(reader.result); };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                    img.src = dataUrl;
+                } else {
+                    // File non trovato o auth fallita: sostituisci con testo placeholder
+                    var p = doc.createElement('p');
+                    p.textContent = '\u26a0 Immagine non disponibile: ' + (img.alt || originalSrc);
+                    p.setAttribute('style', 'color:#999;font-style:italic;text-align:center;padding:8px;border:1px dashed #ccc;margin:0 0 8px');
+                    if (img.parentNode) img.parentNode.replaceChild(p, img);
+                }
+            } catch (e) {
+                console.warn('[mesStampaCassa] fetch fallita:', originalSrc, e);
+                img.setAttribute('style', (img.getAttribute('style') || '') + ';opacity:0.2');
+                img.title = 'Immagine non disponibile';
             }
-        } catch (e) {
-            console.warn('Foto non caricata:', img.getAttribute('src'), e);
-        }
-    }));
+        }));
+    }
+
+    // Inietta <base href> per CSS/font relativi (failsafe)
+    var head = doc.querySelector('head');
+    if (head && !head.querySelector('base')) {
+        var base = doc.createElement('base');
+        base.href = window.location.origin + '/';
+        head.insertBefore(base, head.firstChild);
+    }
 
     var newHtml = '<!DOCTYPE html>' + doc.documentElement.outerHTML;
     var win = window.open('', '_blank', 'width=900,height=700');
-    if (!win) { alert('Popup bloccato dal browser. Consenti i popup per questa pagina e riprova.'); return false; }
+    if (!win) { alert('Popup bloccato dal browser. Consenti i popup per questa pagina e riprova.'); return; }
     win.document.open();
     win.document.write(newHtml);
     win.document.close();
     win.focus();
-    setTimeout(function () { win.print(); }, 1000);
+    setTimeout(function () { win.print(); }, 1500);
+};
+
+// ── Stampa con foto autenticate (legacy - mantenuta per compatibilità) ──────────
+window.mesStampaConFoto = async function (html) {
+    await window.mesStampaCassa(html);
     return true;
 };

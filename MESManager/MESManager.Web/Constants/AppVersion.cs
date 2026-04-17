@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.28";
+    public const string Current = "1.65.29";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.28: PDF cassa - fix definitivo foto (base64+base-href)
+    public const string Display = "v" + Current; // v1.65.29: PDF cassa - mesStampaCassa (fetch creds + base64 + placeholder), thumbnail foto, HEIC fallback JPEG
 }
