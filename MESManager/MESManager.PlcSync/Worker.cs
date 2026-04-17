@@ -174,7 +174,11 @@ public class PlcSyncWorker : BackgroundService
                     await ReloadMachineIpsAsync(machines, stoppingToken);
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(pollingInterval), stoppingToken);
+                // Attesa inter-ciclo con fast event polling ogni 500ms
+                await FastEventPollingDuringDelayAsync(
+                    machines.Where(m => m.Enabled).ToList(),
+                    pollingInterval,
+                    stoppingToken);
             }
             catch (Exception ex)
             {
@@ -201,6 +205,51 @@ public class PlcSyncWorker : BackgroundService
         await _statusWriter.LogInfoAsync("Servizio arrestato correttamente (graceful shutdown)");
         await _statusWriter.MarkStoppedAsync(CancellationToken.None);
         _logger.LogInformation("✅ PlcSyncWorker arrestato correttamente");
+    }
+
+    /// <summary>
+    /// Durante l'attesa inter-ciclo (es. 4s) esegue un fast polling dei soli
+    /// 4 flag evento ogni 500ms su tutte le macchine abilitate e connesse.
+    /// Quando rileva un rising edge 0→1, salva subito EventoPLC + PLCStorico
+    /// tramite ProcessEventFlagsAsync, aggiornando i Prev* in MachineState.
+    /// Questo garantisce cattura ~90% degli eventi indipendentemente dal polling principale.
+    /// </summary>
+    private async Task FastEventPollingDuringDelayAsync(
+        List<PlcMachineConfig> machines,
+        int totalSeconds,
+        CancellationToken ct)
+    {
+        const int fastIntervalMs = 500;
+        int totalMs = totalSeconds * 1000;
+        int elapsed  = 0;
+
+        while (elapsed < totalMs && !ct.IsCancellationRequested && !_isShuttingDown)
+        {
+            await Task.Delay(fastIntervalMs, ct);
+            elapsed += fastIntervalMs;
+
+            foreach (var machine in machines)
+            {
+                try
+                {
+                    var flags = _readerService.ReadEventFlagsOnly(machine);
+                    if (flags == null) continue;
+
+                    var state = _connectionService.GetMachineState(machine.MacchinaId);
+                    if (state == null) continue;
+
+                    await _syncService.ProcessEventFlagsAsync(machine.MacchinaId, flags, state, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Errore fast event polling macchina {Id}", machine.MacchinaId);
+                }
+            }
+        }
     }
 
     private async Task<List<PlcMachineConfig>> LoadMachineConfigsAsync()

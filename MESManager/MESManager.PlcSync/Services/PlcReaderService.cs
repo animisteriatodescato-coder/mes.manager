@@ -123,6 +123,43 @@ public class PlcReaderService
         }
     }
 
+    /// <summary>
+    /// Legge SOLO i 4 flag evento da DB55 (offset 8-14, ~16 byte).
+    /// Usato dal fast polling loop ogni 500ms per rilevare rising edge
+    /// senza leggere l'intero buffer da 200 byte.
+    /// </summary>
+    public PlcEventFlagsSnapshot? ReadEventFlagsOnly(PlcMachineConfig config)
+    {
+        try
+        {
+            var state = _connectionService.GetMachineState(config.MacchinaId);
+            if (state == null || !state.Client.Connected)
+                return null;
+
+            // Leggi solo i primi 16 byte di DB55 (copre tutti i flag evento agli offset 8-14)
+            const int readLength = 16;
+            var buffer = new byte[readLength];
+            var result = state.Client.DBRead(PlcConstants.PRODUCTION_DATABASE, 0, readLength, buffer);
+
+            if (result != 0)
+                return null;
+
+            return new PlcEventFlagsSnapshot
+            {
+                NuovaProduzione = S7.GetIntAt(buffer, PlcConstants.Offsets.Fields.NuovaProduzione) != 0,
+                InizioSetup     = S7.GetIntAt(buffer, PlcConstants.Offsets.Fields.InizioSetup)     != 0,
+                FineSetup       = S7.GetIntAt(buffer, PlcConstants.Offsets.Fields.FineSetup)       != 0,
+                FineProduzione  = S7.GetIntAt(buffer, PlcConstants.Offsets.Fields.FineProduzione)  != 0,
+                Timestamp       = DateTime.Now
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Errore lettura event flags PLC {MacchinaNumero}", config.Numero);
+            return null;
+        }
+    }
+
     private int ReadInt(byte[] buffer, int offset)
     {
         return S7.GetIntAt(buffer, offset);

@@ -100,7 +100,13 @@ public class PlcSyncService : IPlcSyncService
                 shouldSaveEvery20Cycles = cyclesSinceLastSave >= 20;
             }
 
-            if (_settings.EnableStorico && (hasChange || shouldSaveEvery20Cycles))
+            // Fix S1: salva anche quando il main loop ha catturato un evento (flag rimasto alto abbastanza a lungo)
+            bool hasEventInSnapshot = !string.IsNullOrEmpty(snapshot.NuovaProduzioneTs) ||
+                                      !string.IsNullOrEmpty(snapshot.InizioSetupTs)     ||
+                                      !string.IsNullOrEmpty(snapshot.FineSetupTs)       ||
+                                      !string.IsNullOrEmpty(snapshot.InProduzioneTs);
+
+            if (_settings.EnableStorico && (hasChange || shouldSaveEvery20Cycles || hasEventInSnapshot))
             {
                 var storico = new PLCStorico
                 {
@@ -280,6 +286,87 @@ public class PlcSyncService : IPlcSyncService
         }
     }
     
+    /// <summary>
+    /// Fast event polling: rileva rising edge dei 4 flag evento dal mini-snapshot
+    /// (letto ogni 500ms) e salva EventoPLC + PLCStorico immediatamente.
+    /// I Prev* su MachineState vengono aggiornati qui, così il main loop
+    /// non genera doppi eventi sugli stessi flag.
+    /// </summary>
+    public async Task ProcessEventFlagsAsync(Guid macchinaId, PlcEventFlagsSnapshot flags, MachineState state, CancellationToken ct = default)
+    {
+        string ts = flags.Timestamp.ToString("dd.MM.yy HH:mm:ss");
+
+        var risingEdges = new List<(string tipo, string dettagli)>();
+
+        if (!state.PrevNuovaProduzione && flags.NuovaProduzione)
+            risingEdges.Add((PlcEventType.NuovaProduzione, $"Nuova produzione - {ts}"));
+        if (!state.PrevInizioSetup && flags.InizioSetup)
+            risingEdges.Add((PlcEventType.InizioSetup,     $"Inizio setup - {ts}"));
+        if (!state.PrevFineSetup && flags.FineSetup)
+            risingEdges.Add((PlcEventType.FineSetup,       $"Fine setup - {ts}"));
+        if (!state.PrevInProduzione && flags.FineProduzione)
+            risingEdges.Add((PlcEventType.InProduzione,    $"Fine produzione - {ts}"));
+
+        // Aggiorna sempre i Prev* per tenere traccia dello stato corrente
+        state.PrevNuovaProduzione = flags.NuovaProduzione;
+        state.PrevInizioSetup     = flags.InizioSetup;
+        state.PrevFineSetup       = flags.FineSetup;
+        state.PrevInProduzione    = flags.FineProduzione;
+
+        if (!risingEdges.Any()) return;
+
+        try
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync(ct);
+
+            if (_settings.EnableEvents)
+            {
+                var eventi = risingEdges.Select(e => new EventoPLC
+                {
+                    Id         = Guid.NewGuid(),
+                    MacchinaId = macchinaId,
+                    DataOra    = flags.Timestamp,
+                    TipoEvento = e.tipo,
+                    Dettagli   = e.dettagli
+                }).ToList();
+                context.EventiPLC.AddRange(eventi);
+            }
+
+            if (_settings.EnableStorico)
+            {
+                // Snapshot minimale con solo i Ts valorizzati per gli eventi rilevati
+                var mini = new PlcSnapshot
+                {
+                    MacchinaId        = macchinaId,
+                    Timestamp         = flags.Timestamp,
+                    NuovaProduzioneTs = risingEdges.Any(e => e.tipo == PlcEventType.NuovaProduzione) ? ts : string.Empty,
+                    InizioSetupTs     = risingEdges.Any(e => e.tipo == PlcEventType.InizioSetup)     ? ts : string.Empty,
+                    FineSetupTs       = risingEdges.Any(e => e.tipo == PlcEventType.FineSetup)       ? ts : string.Empty,
+                    InProduzioneTs    = risingEdges.Any(e => e.tipo == PlcEventType.InProduzione)    ? ts : string.Empty,
+                };
+                context.PLCStorico.Add(new PLCStorico
+                {
+                    Id              = Guid.NewGuid(),
+                    MacchinaId      = macchinaId,
+                    DataOra         = flags.Timestamp,
+                    Dati            = JsonSerializer.Serialize(mini),
+                    StatoMacchina   = string.Join("+", risingEdges.Select(e => e.tipo)),
+                    NumeroOperatore = 0,
+                    OperatoreId     = null
+                });
+            }
+
+            await context.SaveChangesAsync(ct);
+
+            _logger.LogInformation("⚡ [FAST-EVENT] Macchina {Id}: {Events}",
+                macchinaId, string.Join(", ", risingEdges.Select(e => e.tipo)));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Errore salvataggio fast event per macchina {Id}", macchinaId);
+        }
+    }
+
     /// <summary>
     /// Rileva cambio barcode e triggera evento CommessaCambiata
     /// </summary>
