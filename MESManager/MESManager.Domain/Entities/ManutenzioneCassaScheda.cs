@@ -24,6 +24,10 @@ public class ManutenzioneCassaScheda
     public int CodiceRiferimento { get; set; }
 
     public string? Note { get; set; }
+
+    /// <summary>Lista problematiche da pianificare serializzata come JSON (null = nessuna)</summary>
+    public string? ProblematicheJson { get; set; }
+
     public StatoSchedaManutenzione Stato { get; set; } = StatoSchedaManutenzione.InCompilazione;
     public DateTime? DataChiusura { get; set; }
 

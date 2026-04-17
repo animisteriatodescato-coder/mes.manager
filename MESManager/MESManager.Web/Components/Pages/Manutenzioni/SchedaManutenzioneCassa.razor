@@ -120,7 +120,7 @@ else
             <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
                 <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" />
                 <MudText Typo="Typo.subtitle1"><b>Problematiche</b></MudText>
-                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-2">Appaiono nel PDF · non salvate su DB</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-2">Appaiono nel PDF · salvate nel DB</MudText>
                 <MudSpacer />
                 <MudIconButton Icon="@(_showProblematiche ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
                                Size="Size.Small"
@@ -141,20 +141,20 @@ else
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                             <MudText Typo="Typo.caption" Color="Color.Secondary" Style="min-width:22px;text-align:right">@(idx+1).</MudText>
                             <MudTextField T="string" Value="@_problematiche[idx]"
-                                          ValueChanged="@(v => _problematiche[idx] = v ?? "")"
+                                          ValueChanged="@(async v => { _problematiche[idx] = v ?? ""; await SalvaProblematiche(); })"
                                           Variant="Variant.Outlined" Margin="Margin.Dense"
                                           FullWidth="true" Lines="2"
                                           Style="font-size:12px"
                                           Placeholder="es. Sostituzione inserto porta maschio lato SX — pianificare entro 2 settimane" />
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                                           OnClick="@(() => { _problematiche.RemoveAt(idx); StateHasChanged(); })"
+                                           OnClick="@(async () => { _problematiche.RemoveAt(idx); await SalvaProblematiche(); StateHasChanged(); })"
                                            Title="Rimuovi" />
                         </MudStack>
                     }
                     <MudStack Row="true" Spacing="2" Class="mt-2" Wrap="Wrap.Wrap">
                         <MudButton Variant="Variant.Filled" Size="Size.Small" Color="Color.Error"
                                    StartIcon="@Icons.Material.Filled.Add"
-                                   OnClick="@(() => { _problematiche.Add(""); StateHasChanged(); })">
+                                   OnClick="@(async () => { _problematiche.Add(""); await SalvaProblematiche(); StateHasChanged(); })">
                             Aggiungi problematica
                         </MudButton>
                         <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error"
@@ -424,7 +424,7 @@ else
     private bool _showProblematiche = true;
     private List<string> _problematiche = new();
 
-    private void AggiungiProblematicheComuni()
+    private async Task AggiungiProblematicheComuni()
     {
         var suggerimenti = new[]
         {
@@ -440,6 +440,7 @@ else
         foreach (var s in suggerimenti)
             if (!_problematiche.Contains(s))
                 _problematiche.Add(s);
+        await SalvaProblematiche();
         StateHasChanged();
     }
 
@@ -498,7 +499,10 @@ else
 
         _loading = false;
         if (_scheda != null)
+        {
+            _problematiche = _scheda.Problematiche.Count > 0 ? new(_scheda.Problematiche) : new();
             await CaricaAllegatiAsync();
+        }
     }
 
     private async Task CaricaAllegatiAsync()
@@ -525,6 +529,12 @@ else
         if (_scheda == null) return;
         _scheda.Note = note;
         await ManutenzioneCassaService.SaveNoteAsync(_scheda.Id, note);
+    }
+
+    private async Task SalvaProblematiche()
+    {
+        if (_scheda == null) return;
+        await ManutenzioneCassaService.SaveProblematicheAsync(_scheda.Id, _problematiche);
     }
 
     private async Task ChiudiScheda()

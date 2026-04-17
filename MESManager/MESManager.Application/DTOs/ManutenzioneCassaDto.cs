@@ -38,6 +38,7 @@ public class ManutenzioneCassaSchedaDto
     public string? Cliente { get; set; }
     public string? ArticoloDescrizione { get; set; }
     public string? CodiceArticolo { get; set; }
+    public List<string> Problematiche { get; set; } = new();
 }
 
 public class NuovaSchedaCassaRequest

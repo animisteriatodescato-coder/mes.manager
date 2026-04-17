@@ -21,6 +21,7 @@ public interface IManutenzioneCassaService
     // Righe
     Task<ManutenzioneCassaSchedaDto?> UpdateRigaAsync(Guid schedaId, ManutenzioneCassaRigaDto riga);
     Task<bool> SaveNoteAsync(Guid schedaId, string? note);
+    Task<bool> SaveProblematicheAsync(Guid schedaId, List<string> problematiche);
 
     // Lista casse disponibili (da Anime.CodiceCassa distinti)
     Task<List<string>> GetCasseDisponibiliAsync();

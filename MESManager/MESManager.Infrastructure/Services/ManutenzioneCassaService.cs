@@ -225,6 +225,18 @@ public class ManutenzioneCassaService : IManutenzioneCassaService
         return true;
     }
 
+    public async Task<bool> SaveProblematicheAsync(Guid schedaId, List<string> problematiche)
+    {
+        var scheda = await _db.ManutenzioneCasseSchede.FindAsync(schedaId);
+        if (scheda == null) return false;
+        var voci = problematiche.Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
+        scheda.ProblematicheJson = voci.Count > 0
+            ? System.Text.Json.JsonSerializer.Serialize(voci)
+            : null;
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
     public async Task<bool> DeleteSchedaAsync(Guid id)
     {
         var scheda = await _db.ManutenzioneCasseSchede
@@ -308,6 +320,9 @@ public class ManutenzioneCassaService : IManutenzioneCassaService
         OperatoreId = s.OperatoreId,
         NomeOperatore = s.NomeOperatore,
         Note = s.Note,
+        Problematiche = string.IsNullOrWhiteSpace(s.ProblematicheJson)
+            ? new()
+            : System.Text.Json.JsonSerializer.Deserialize<List<string>>(s.ProblematicheJson) ?? new(),
         Stato = s.Stato,
         DataChiusura = s.DataChiusura,
         Righe = s.Righe
