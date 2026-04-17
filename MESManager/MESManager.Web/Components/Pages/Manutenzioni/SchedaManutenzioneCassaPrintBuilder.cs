@@ -164,8 +164,8 @@ public static class SchedaManutenzioneCassaPrintBuilder
         // ── Intestazione: logo sx + nome azienda / dati aziendali dx ─────────
         // logoInlineHtml contiene un <img> base64 o SVG
         var logoBlock = logoInlineHtml != null
-            ? $"  <div class=\"hdr-logo\">{logoInlineHtml}<div class=\"hdr-azienda\">{System.Web.HttpUtility.HtmlEncode(azienda)}</div></div>\n"
-            : $"  <div class=\"hdr-logo\"><div class=\"hdr-azienda\">{System.Web.HttpUtility.HtmlEncode(azienda)}</div></div>\n";
+            ? $"  <div class=\"hdr-logo\">{logoInlineHtml}</div>\n"
+            : $"  <div class=\"hdr-logo\"></div>\n";
 
         var titolo = $"ManutCassa_{scheda.CodiceCassa}_{scheda.DataEsecuzione:yyyyMMdd}";
 

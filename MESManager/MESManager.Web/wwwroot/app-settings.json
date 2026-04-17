@@ -13,7 +13,7 @@
   "ThemePrimaryColor": "#04972dff",
   "ThemeSecondaryColor": "#04972dff",
   "ThemeAccentColor": "#0400005b",
-  "ThemeIsDarkMode": true,
+  "ThemeIsDarkMode": false,
   "ThemeTextOnPrimary": "#FFFFFF",
   "ThemePrimaryTextColor": "#1565C0",
   "ThemeNavTextColor": "",
@@ -28,5 +28,10 @@
   "ThemeButtonColor": "#484747ff",
   "ThemeButtonTextColor": "#FFFFFF",
   "ThemeAppBarBgColorDark": "#1c1c1cff",
-  "ThemeDrawerBgColorDark": "#0c0c0ca3"
+  "ThemeDrawerBgColorDark": "#0c0c0ca3",
+  "AiProviderType": "OpenAI",
+  "OllamaBaseUrl": "http://localhost:11434",
+  "OllamaModel": "llama3.1:8b",
+  "OpenAiModel": "gpt-4o-mini",
+  "GeminiModel": "gemini-2.0-flash"
 }
