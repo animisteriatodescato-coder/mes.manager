@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.29";
+    public const string Current = "1.65.30";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.29: PDF cassa - mesStampaCassa (fetch creds + base64 + placeholder), thumbnail foto, HEIC fallback JPEG
+    public const string Display = "v" + Current; // v1.65.30: PathMapping C:\MESManager\ → UNC per allegati casse (dev→prod)
 }
