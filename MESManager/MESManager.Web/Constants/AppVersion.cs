@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.34";
+    public const string Current = "1.65.35";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.34: PDF cassa — rimosse scritta MES Manager Web e doppione dati aziendali dall'intestazione
+    public const string Display = "v" + Current; // v1.65.35: SVG logo — rimossi contatti baked-in (erano doppioni del blocco intestazione dx)
 }
