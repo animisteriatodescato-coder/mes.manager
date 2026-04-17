@@ -41,7 +41,7 @@ public static class SchedaManutenzioneCassaPrintBuilder
         List<string>? problematiche = null,
         List<string>? condizioni = null)
     {
-        const decimal fs = 10.5m;
+        const decimal fs = 13.5m;
         var fsBase  = fs.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
         var fsS     = (fs - 1.0m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);  // small
         var fsT     = (fs - 2.0m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);  // tiny

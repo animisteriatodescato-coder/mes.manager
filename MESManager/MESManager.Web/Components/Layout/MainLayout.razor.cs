@@ -358,13 +358,11 @@ public partial class MainLayout : IDisposable
     
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
-        // Su mobile: chiude il drawer automaticamente dopo la navigazione
-        // e riporta la AppBar visibile (resetta lo stato scroll auto-hide)
+        // Ripristina AppBar visibile via JS (rimuove mes-appbar-hidden dal body)
+        // Il drawer resta aperto: l'utente lo chiude esplicitamente con il pulsante menu.
         InvokeAsync(async () =>
         {
-            _drawerOpen = false;
             StateHasChanged();
-            // Ripristina AppBar visibile via JS (rimuove mes-appbar-hidden dal body)
             try { await JS.InvokeVoidAsync("mesMobile.showAppBar"); } catch { /* JS non ancora pronto */ }
         });
     }

@@ -115,6 +115,58 @@ else
             <MudAlert Severity="Severity.Normal" Dense="true" Class="mb-4">Note: @_scheda.Note</MudAlert>
         }
 
+        @* ── PROBLEMATICHE ─────────────────────────────────────────── *@
+        <MudPaper Elevation="1" Class="pa-3 mb-4">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" />
+                <MudText Typo="Typo.subtitle1"><b>Problematiche</b></MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-2">Appaiono nel PDF · non salvate su DB</MudText>
+                <MudSpacer />
+                <MudIconButton Icon="@(_showProblematiche ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                               Size="Size.Small"
+                               OnClick="@(() => _showProblematiche = !_showProblematiche)" />
+            </MudStack>
+            @if (_showProblematiche)
+            {
+                <MudStack Spacing="1">
+                    @if (_problematiche.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Nessuna problematica aggiunta. Usa il pulsante per aggiungere voci che appariranno nel PDF.
+                        </MudText>
+                    }
+                    @for (int i = 0; i < _problematiche.Count; i++)
+                    {
+                        var idx = i;
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Style="min-width:22px;text-align:right">@(idx+1).</MudText>
+                            <MudTextField T="string" Value="@_problematiche[idx]"
+                                          ValueChanged="@(v => _problematiche[idx] = v ?? "")"
+                                          Variant="Variant.Outlined" Margin="Margin.Dense"
+                                          FullWidth="true" Lines="2"
+                                          Style="font-size:12px"
+                                          Placeholder="es. Sostituzione inserto porta maschio lato SX — pianificare entro 2 settimane" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                           OnClick="@(() => { _problematiche.RemoveAt(idx); StateHasChanged(); })"
+                                           Title="Rimuovi" />
+                        </MudStack>
+                    }
+                    <MudStack Row="true" Spacing="2" Class="mt-2" Wrap="Wrap.Wrap">
+                        <MudButton Variant="Variant.Filled" Size="Size.Small" Color="Color.Error"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="@(() => { _problematiche.Add(""); StateHasChanged(); })">
+                            Aggiungi problematica
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error"
+                                   StartIcon="@Icons.Material.Filled.AutoAwesome"
+                                   OnClick="@AggiungiProblematicheComuni">
+                            Suggerimenti tipici
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            }
+        </MudPaper>
+
         @* ── TABELLA ATTIVITÀ ──────────────────────────────────────── *@
         @if (!_scheda.Righe.Any())
         {
@@ -307,58 +359,6 @@ else
                         }
                     </MudList>
                 }
-            }
-        </MudPaper>
-
-        @* ── PROBLEMATICHE DA PIANIFICARE ─────────────────────────────────── *@
-        <MudPaper Elevation="1" Class="pa-3 mt-4">
-            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
-                <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" />
-                <MudText Typo="Typo.subtitle1"><b>Problematiche da Pianificare</b></MudText>
-                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-2">Appaiono nel PDF · non salvate su DB</MudText>
-                <MudSpacer />
-                <MudIconButton Icon="@(_showProblematiche ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
-                               Size="Size.Small"
-                               OnClick="@(() => _showProblematiche = !_showProblematiche)" />
-            </MudStack>
-            @if (_showProblematiche)
-            {
-                <MudStack Spacing="1">
-                    @if (_problematiche.Count == 0)
-                    {
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">
-                            Nessuna problematica aggiunta. Usa il pulsante per aggiungere voci che appariranno nel PDF.
-                        </MudText>
-                    }
-                    @for (int i = 0; i < _problematiche.Count; i++)
-                    {
-                        var idx = i;
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary" Style="min-width:22px;text-align:right">@(idx+1).</MudText>
-                            <MudTextField T="string" Value="@_problematiche[idx]"
-                                          ValueChanged="@(v => _problematiche[idx] = v ?? "")"
-                                          Variant="Variant.Outlined" Margin="Margin.Dense"
-                                          FullWidth="true" Lines="2"
-                                          Style="font-size:12px"
-                                          Placeholder="es. Sostituzione inserto porta maschio lato SX — pianificare entro 2 settimane" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                                           OnClick="@(() => { _problematiche.RemoveAt(idx); StateHasChanged(); })"
-                                           Title="Rimuovi" />
-                        </MudStack>
-                    }
-                    <MudStack Row="true" Spacing="2" Class="mt-2" Wrap="Wrap.Wrap">
-                        <MudButton Variant="Variant.Filled" Size="Size.Small" Color="Color.Error"
-                                   StartIcon="@Icons.Material.Filled.Add"
-                                   OnClick="@(() => { _problematiche.Add(""); StateHasChanged(); })">
-                            Aggiungi problematica
-                        </MudButton>
-                        <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error"
-                                   StartIcon="@Icons.Material.Filled.AutoAwesome"
-                                   OnClick="@AggiungiProblematicheComuni">
-                            Suggerimenti tipici
-                        </MudButton>
-                    </MudStack>
-                </MudStack>
             }
         </MudPaper>
 
