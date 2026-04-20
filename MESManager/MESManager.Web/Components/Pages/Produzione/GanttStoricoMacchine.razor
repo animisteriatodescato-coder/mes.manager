@@ -117,6 +117,41 @@
         </div>
     }
 
+    @* ── Legenda colori ───────────────────────────────────────────────────── *@
+    <MudPaper Class="pa-2 mb-2" Elevation="0" Style="border:1px solid var(--mud-palette-lines-default)">
+        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mr-1"><b>Legenda:</b></MudText>
+            <div style="display:flex;align-items:center;gap:4px">
+                <div style="width:14px;height:14px;border-radius:3px;background:@MesDesignTokens.PlcStatoAutomatico"></div>
+                <MudText Typo="Typo.caption">Automatico</MudText>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px">
+                <div style="width:14px;height:14px;border-radius:3px;background:@MesDesignTokens.PlcStatoAllarme"></div>
+                <MudText Typo="Typo.caption">Allarme</MudText>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px">
+                <div style="width:14px;height:14px;border-radius:3px;background:@MesDesignTokens.PlcStatoEmergenza"></div>
+                <MudText Typo="Typo.caption">Emergenza</MudText>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px">
+                <div style="width:14px;height:14px;border-radius:3px;background:@MesDesignTokens.PlcStatoManuale"></div>
+                <MudText Typo="Typo.caption">Manuale</MudText>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px">
+                <div style="width:14px;height:14px;border-radius:3px;background:@MesDesignTokens.PlcStatoSetup"></div>
+                <MudText Typo="Typo.caption">Setup</MudText>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px">
+                <div style="width:14px;height:14px;border-radius:3px;background:@MesDesignTokens.PlcStatoSconosciuto"></div>
+                <MudText Typo="Typo.caption">Altro</MudText>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px">
+                <div style="width:14px;height:14px;border-radius:3px;background:repeating-linear-gradient(45deg,#78909C,#78909C 5px,#B0BEC5 5px,#B0BEC5 10px)"></div>
+                <MudText Typo="Typo.caption">Non Connessa</MudText>
+            </div>
+        </MudStack>
+    </MudPaper>
+
     @* ── Gantt Container ──────────────────────────────────────────────────── *@
     <MudPaper Class="pa-3 mb-2" Elevation="2" data-testid="gantt-storico-container">
         @if (_loading)
@@ -138,19 +173,6 @@
         </div>
     </MudPaper>
 
-    @* ── Legenda colori ───────────────────────────────────────────────────── *@
-    <MudPaper Class="pa-2" Elevation="0">
-        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
-            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mr-1">Stati:</MudText>
-            <MudChip T="string" Style="@($"background:{MesDesignTokens.PlcStatoAutomatico};color:#fff")" Size="Size.Small">AUTOMATICO</MudChip>
-            <MudChip T="string" Style="@($"background:{MesDesignTokens.PlcStatoAllarme};color:#fff")" Size="Size.Small">ALLARME</MudChip>
-            <MudChip T="string" Style="@($"background:{MesDesignTokens.PlcStatoEmergenza};color:#fff")" Size="Size.Small">EMERGENZA</MudChip>
-            <MudChip T="string" Style="@($"background:{MesDesignTokens.PlcStatoManuale};color:#fff")" Size="Size.Small">MANUALE</MudChip>
-            <MudChip T="string" Style="@($"background:{MesDesignTokens.PlcStatoSetup};color:#fff")" Size="Size.Small">SETUP</MudChip>
-            <MudChip T="string" Style="@($"background:{MesDesignTokens.PlcStatoSconosciuto};color:#fff")" Size="Size.Small">ALTRO</MudChip>
-            <MudChip T="string" Style="background:repeating-linear-gradient(45deg,#78909C,#78909C 5px,#B0BEC5 5px,#B0BEC5 10px);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)" Size="Size.Small">NON CONNESSA</MudChip>
-        </MudStack>
-    </MudPaper>
 
 </div>
 

@@ -32,11 +32,23 @@ window.GanttStorico = (function () {
     }
 
     // ─── Contenuto breve dell'item (visibile sulla barra) ─────────────────────
+    // Formato: Op: NOME • durata [• N pz]  —  stato rimosso (coperto dalla legenda colori)
     function _buildContent(s) {
-        var parts = [_esc(s.statoMacchina)];
+        var parts = [];
         if (s.nomeOperatore) parts.push('Op: ' + _esc(s.nomeOperatore));
         parts.push(_formatDurata(s.durataMinuti));
+        if (s.cicliFatti > 0) parts.push(s.cicliFatti + ' pz');
         return parts.join(' \u2022 ');
+    }
+
+    // ─── Formatta tempo ciclo medio (secondi → "Xm Ys" o "Xs") ─────────────────
+    function _formatTempoCiclo(secondi) {
+        var s = Math.round(secondi);
+        if (s <= 0) return '—';
+        var m = Math.floor(s / 60);
+        var r = s % 60;
+        if (m > 0) return m + 'm ' + String(r).padStart(2, '0') + 's';
+        return r + 's';
     }
 
     // ─── Tooltip HTML (Vis-Timeline usa innerHTML) ────────────────────────────
@@ -46,7 +58,7 @@ window.GanttStorico = (function () {
         var locale = 'it-IT';
         var tOpts = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
 
-        var html = '<div style="min-width:200px;padding:4px 0">';
+        var html = '<div style="min-width:220px;padding:4px 0">';
         html += '<b style="font-size:1em">' + _esc(s.statoMacchina) + '</b><br>';
         html += '<span style="color:#888">Macchina: </span>' + _esc(s.macchianaNome) + '<br>';
         html += '<span style="color:#888">Da: </span>' + d.toLocaleString(locale, tOpts) + '<br>';
@@ -55,11 +67,14 @@ window.GanttStorico = (function () {
         if (s.nomeOperatore) {
             html += '<span style="color:#888">Operatore: </span>' + _esc(s.nomeOperatore) + '<br>';
         }
+        if (s.cicliFatti > 0) {
+            html += '<span style="color:#888">Pezzi fatti: </span><b>' + s.cicliFatti + '</b><br>';
+            // Tempo ciclo medio: durata totale in secondi / pezzi fatti
+            var tempoCicloMedioSec = (s.durataMinuti * 60) / s.cicliFatti;
+            html += '<span style="color:#888">Tempo ciclo medio: </span><b>' + _formatTempoCiclo(tempoCicloMedioSec) + '</b><br>';
+        }
         if (s.barcodeLavorazione > 0) {
             html += '<span style="color:#888">Barcode: </span>' + _esc(String(s.barcodeLavorazione)) + '<br>';
-        }
-        if (s.cicliFatti > 0) {
-            html += '<span style="color:#888">Cicli: </span>' + s.cicliFatti + '<br>';
         }
         html += '</div>';
         return html;
