@@ -13,7 +13,7 @@
   "ThemePrimaryColor": "#04972dff",
   "ThemeSecondaryColor": "#04972dff",
   "ThemeAccentColor": "#0400005b",
-  "ThemeIsDarkMode": false,
+  "ThemeIsDarkMode": true,
   "ThemeTextOnPrimary": "#FFFFFF",
   "ThemePrimaryTextColor": "#1565C0",
   "ThemeNavTextColor": "",
