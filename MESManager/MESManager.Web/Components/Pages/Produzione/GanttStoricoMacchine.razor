@@ -173,6 +173,86 @@
         </div>
     </MudPaper>
 
+    @* ── Analisi Intervallo ─────────────────────────────────────────────────── *@
+    @if (_segmenti.Any())
+    {
+        <MudPaper Class="pa-3 mt-2" Elevation="1" data-testid="gantt-storico-analisi">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3" Wrap="Wrap.Wrap">
+                <MudIcon Icon="@Icons.Material.Filled.Analytics" Color="Color.Primary" />
+                <MudText Typo="Typo.subtitle1"><b>Analisi Intervallo</b></MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Filtra i dati già caricati per calcolare pezzi e tempo ciclo medio in uno slot specifico.</MudText>
+                <MudSpacer />
+                <MudDatePicker Label="Analisi Da" @bind-Date="_analisiDa"
+                               Variant="Variant.Outlined" Margin="Margin.Dense"
+                               data-testid="analisi-da" />
+                <MudTimePicker Label="Ora Da" @bind-Time="_analisiDaTime"
+                               Variant="Variant.Outlined" Margin="Margin.Dense"
+                               AmPm="false" Style="max-width:120px" />
+                <MudDatePicker Label="Analisi A" @bind-Date="_analisiA"
+                               Variant="Variant.Outlined" Margin="Margin.Dense"
+                               data-testid="analisi-a" />
+                <MudTimePicker Label="Ora A" @bind-Time="_analisiATime"
+                               Variant="Variant.Outlined" Margin="Margin.Dense"
+                               AmPm="false" Style="max-width:120px" />
+                <MudButton Variant="Variant.Outlined" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.RestartAlt"
+                           OnClick="@ResetAnalisiRange"
+                           data-testid="analisi-reset">
+                    Reset
+                </MudButton>
+            </MudStack>
+
+            @{
+                var stats = CalcolaStats().ToList();
+            }
+            @if (stats.Any())
+            {
+                <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                    <thead>
+                        <tr>
+                            <th>Macchina</th>
+                            <th style="text-align:right">Pezzi fatti</th>
+                            <th style="text-align:right">Durata tot.</th>
+                            <th style="text-align:right">Durata AUTO</th>
+                            <th style="text-align:right">% AUTO</th>
+                            <th style="text-align:right">Tempo ciclo medio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in stats)
+                        {
+                            <tr>
+                                <td><b>@row.Macchina</b></td>
+                                <td style="text-align:right">
+                                    @if (row.Pezzi > 0) { <b>@row.Pezzi</b> } else { <span style="color:var(--mud-palette-text-secondary)">—</span> }
+                                </td>
+                                <td style="text-align:right">@FormatMinuti(row.DurataTotaleMin)</td>
+                                <td style="text-align:right">@FormatMinuti(row.DurataAutoMin)</td>
+                                <td style="text-align:right">
+                                    @{
+                                        var percColor = row.PercAuto >= 70 ? "color:var(--mud-palette-success)" :
+                                                        row.PercAuto >= 40 ? "color:var(--mud-palette-warning)" :
+                                                                             "color:var(--mud-palette-error)";
+                                    }
+                                    <span style="@percColor;font-weight:600">@(row.PercAuto.ToString("F1"))%</span>
+                                </td>
+                                <td style="text-align:right">
+                                    @if (row.TempoCicloMedioSec > 0)
+                                    { <b>@FormatTempoCiclo(row.TempoCicloMedioSec)</b> }
+                                    else
+                                    { <span style="color:var(--mud-palette-text-secondary)">—</span> }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info" Dense="true">Nessun segmento nel range di analisi selezionato.</MudAlert>
+            }
+        </MudPaper>
+    }
 
 </div>
 
@@ -195,6 +275,24 @@
     private List<PlcGanttSegmentoDto> _segmenti = new();
     private List<PlcKpiStoricoDto>    _kpi      = new();
     private List<MacchinaDto>         _macchine = new();
+
+    // ── Analisi intervallo ────────────────────────────────────────────────────
+    private DateTime? _analisiDa;
+    private DateTime? _analisiA;
+
+    // Parti time dei picker (separate da Date per MudBlazor v8 compatibility)
+    private TimeSpan? _analisiDaTime;
+    private TimeSpan? _analisiATime;
+
+    private DateTime? AnalisiDaEffettiva =>
+        _analisiDa.HasValue
+            ? _analisiDa.Value.Date + (_analisiDaTime ?? TimeSpan.Zero)
+            : (DateTime?)null;
+
+    private DateTime? AnalisiAEffettiva =>
+        _analisiA.HasValue
+            ? _analisiA.Value.Date + (_analisiATime ?? new TimeSpan(23, 59, 59))
+            : (DateTime?)null;
 
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -252,6 +350,11 @@
         {
             _loading = false;
             _pendingGanttRender = _segmenti.Any();
+            // Inizializza il range di analisi sincronizzato con i filtri caricati
+            _analisiDa     = _from;
+            _analisiA      = _to;
+            _analisiDaTime = _from.HasValue ? (TimeSpan?)_from.Value.TimeOfDay : TimeSpan.Zero;
+            _analisiATime  = _to.HasValue   ? (TimeSpan?)_to.Value.TimeOfDay   : new TimeSpan(23, 59, 59);
             StateHasChanged();
         }
 
@@ -295,6 +398,53 @@
                     await InvokeAsync(LoadData);
             }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
         }
+    }
+
+    private void ResetAnalisiRange()
+    {
+        _analisiDa     = _from;
+        _analisiA      = _to;
+        _analisiDaTime = _from.HasValue ? (TimeSpan?)_from.Value.TimeOfDay : TimeSpan.Zero;
+        _analisiATime  = _to.HasValue   ? (TimeSpan?)_to.Value.TimeOfDay   : new TimeSpan(23, 59, 59);
+    }
+
+    private record AnalisiRow(
+        string Macchina,
+        int    Pezzi,
+        double DurataTotaleMin,
+        double DurataAutoMin,
+        double TempoCicloMedioSec,
+        double PercAuto);
+
+    /// <summary>Calcola statistiche per macchina sull'intervallo di analisi, client-side sui dati già caricati.</summary>
+    private IEnumerable<AnalisiRow> CalcolaStats()
+    {
+        var da = AnalisiDaEffettiva ?? _from ?? DateTime.MinValue;
+        var a  = AnalisiAEffettiva  ?? _to   ?? DateTime.MaxValue;
+
+        return _segmenti
+            .Where(s => s.Inizio < a && s.Fine > da)
+            .GroupBy(s => new { s.MacchinaId, s.MacchianaNome })
+            .Select(g =>
+            {
+                var pezzi         = g.Sum(s => s.CicliFatti);
+                var durAutoMin    = g.Where(s => s.StatoMacchina == "AUTOMATICO").Sum(s => s.DurataMinuti);
+                var durTotMin     = g.Sum(s => s.DurataMinuti);
+                var percAuto      = durTotMin > 0 ? durAutoMin / durTotMin * 100 : 0;
+                // Tempo ciclo medio: secondi totali in AUTO diviso pezzi fatti
+                var tempoCicloSec = pezzi > 0 ? durAutoMin * 60.0 / pezzi : 0;
+                return new AnalisiRow(g.Key.MacchianaNome, pezzi, durTotMin, durAutoMin, tempoCicloSec, percAuto);
+            })
+            .OrderBy(r => r.Macchina);
+    }
+
+    private static string FormatTempoCiclo(double secondi)
+    {
+        var s = (int)Math.Round(secondi);
+        if (s <= 0) return "—";
+        var m = s / 60;
+        var r = s % 60;
+        return m > 0 ? $"{m}m {r:D2}s" : $"{r}s";
     }
 
     private static string FormatMinuti(double minuti)

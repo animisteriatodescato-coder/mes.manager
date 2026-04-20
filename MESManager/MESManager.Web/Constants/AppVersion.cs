@@ -14,5 +14,5 @@ public static class AppVersion
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.44: Gantt Storico - legenda top, barre senza stato, pezzi + tempo ciclo medio nel tooltip
+    public const string Display = "v" + Current; // v1.65.45: Gantt Storico - pannello Analisi Intervallo con pezzi e tempo ciclo medio per range
 }
