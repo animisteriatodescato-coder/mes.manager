@@ -133,9 +133,22 @@ window.cassaAllegatoUpload = {
     }
 };
 
+// ── Download file da base64 (allegati preventivi) ──────────────────────────
+window.mesDownloadFile = function (base64, contentType, fileName) {
+    var bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    var blob = new Blob([bytes], { type: contentType });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+};
+
 // ── Preventivo: apre finestra di stampa isolata (solo base-href, senza fetch) ──
-window.mesPreventivoPrint = function (html) {
-    const win = window.open('', '_blank', 'width=900,height=700');
+window.mesPreventivoPrint = function (html) {    const win = window.open('', '_blank', 'width=900,height=700');
     if (!win) { alert('Popup bloccato dal browser. Consenti i popup per questa pagina e riprova.'); return; }
     var baseTag = '<base href="' + window.location.origin + '/">';
     var injected = html.replace(/<head>/i, '<head>' + baseTag);

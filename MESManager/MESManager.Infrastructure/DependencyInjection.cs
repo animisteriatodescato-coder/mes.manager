@@ -59,6 +59,7 @@ public static class DependencyInjection
         // Modulo Preventivi (v1.64.0)
         services.AddScoped<IPreventivoService, PreventivoService>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IAllegatoPreventivoService, AllegatoPreventivoRepository>();
         
         // PLC Recipe Services (v1.33.0 - Trasmissione ricette a PLC)
         services.AddScoped<IRicettaGanttService, RicettaGanttService>();

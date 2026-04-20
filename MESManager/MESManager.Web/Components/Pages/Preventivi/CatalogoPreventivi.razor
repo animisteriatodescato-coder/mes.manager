@@ -4,6 +4,7 @@
 @using MESManager.Application.Interfaces
 @using MESManager.Web.Components.Dialogs.Preventivi
 @inject IPreventivoService PreventivoService
+@inject IAllegatoPreventivoService AllegatiPreventivoService
 @inject ICommessaAppService CommessaAppService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -557,7 +558,7 @@
                             <MudTh>Azioni</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd>@context.DataCreazione.ToString("dd/MM/yyyy")</MudTd>
+                            <MudTd>@context.DataCreazione.ToString("dd/MM/yyyy HH:mm")</MudTd>
                             <MudTd>@context.Cliente</MudTd>
                             <MudTd><MudText Typo="Typo.caption">@context.CodiceArticolo</MudText></MudTd>
                             <MudTd><MudText Typo="Typo.caption">@context.SabbiaSnapshot</MudText></MudTd>
@@ -608,6 +609,12 @@
                                                        Color="Color.Error"
                                                        OnClick="@(() => EliminaAsync(context))"
                                                        data-testid="@($"btn-elimina-{context.Id}")" />
+                                    </MudTooltip>
+                                    <MudTooltip Text="Allegati">
+                                        <MudIconButton Icon="@Icons.Material.Filled.AttachFile" Size="Size.Small"
+                                                       Color="Color.Default"
+                                                       OnClick="@(() => ApriAllegatiAsync(context))"
+                                                       data-testid="@($"btn-allegati-{context.Id}")" />
                                     </MudTooltip>
                                 </MudStack>
                             </MudTd>
@@ -1210,6 +1217,17 @@
         var p = new DialogParameters<ModuloClienteDialog> { { d => d.Dto, dto } };
         await DialogService.ShowAsync<ModuloClienteDialog>("Modulo Cliente", p,
             new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+    }
+
+    private async Task ApriAllegatiAsync(PreventivoDto dto)
+    {
+        var p = new DialogParameters<AllegatiPreventivoDialog>
+        {
+            { d => d.PreventivoId, dto.Id },
+            { d => d.ClienteLabel, $"{dto.Cliente} — {dto.CodiceArticolo}" }
+        };
+        await DialogService.ShowAsync<AllegatiPreventivoDialog>("Allegati preventivo", p,
+            new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
     }
 
     // ── Feature 4: Template ───────────────────────────────────────────────

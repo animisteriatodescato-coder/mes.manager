@@ -72,6 +72,7 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Preventivo> Preventivi => Set<Preventivo>();
     public DbSet<PreventivoRevisione> PreventivoRevisioni => Set<PreventivoRevisione>();
     public DbSet<PreventivoTemplate> PreventivoTemplates => Set<PreventivoTemplate>();
+    public DbSet<AllegatoPreventivo> AllegatiPreventivi => Set<AllegatoPreventivo>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
