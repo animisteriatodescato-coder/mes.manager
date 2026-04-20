@@ -117,7 +117,7 @@ public static class ModuloClientePrintBuilder
                "    .hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }\n" +
                "    .hdr-logo { display: flex; align-items: center; gap: 10px; }\n" +
                "    .hdr-logo img { max-height: 96px; width: auto; }\n" +
-               "    .hdr-logo svg { height: 110px; width: auto; }\n" +
+               "    .hdr-logo svg { height: 77px; width: auto; }\n" +
                "    .hdr-info { text-align: right; font-size: 7.5pt; color: #444; line-height: 1.55; }\n" +
                "    .hdr-info strong { display: block; font-size: 8.5pt; color: #111; margin-bottom: 2px; }\n" +
                "    hr.thick { border: none; border-top: 2.5px solid #111; margin: 7px 0 10px; }\n" +
