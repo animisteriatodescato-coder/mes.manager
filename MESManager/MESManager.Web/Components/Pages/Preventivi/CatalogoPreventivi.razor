@@ -31,12 +31,16 @@
                         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
                             <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" />
                             <MudText Typo="Typo.subtitle1"><b>DATI CLIENTE</b></MudText>
+                            <MudSpacer />
                             @if (_dto.NumeroPreventivo > 0)
                             {
-                                <MudSpacer />
-                                <MudChip T="string" Color="Color.Info" Size="Size.Small" Icon="@Icons.Material.Filled.Tag">
-                                    N° @_dto.NumeroPreventivo
+                                <MudChip T="string" Color="Color.Info" Size="Size.Medium" Icon="@Icons.Material.Filled.Tag">
+                                    <b>N° @_dto.NumeroPreventivo</b>
                                 </MudChip>
+                            }
+                            else if (_editingId.HasValue)
+                            {
+                                <MudChip T="string" Color="Color.Default" Size="Size.Small">N° —</MudChip>
                             }
                         </MudStack>
                         <MudGrid Spacing="2">
@@ -548,6 +552,7 @@
                     <MudTable Items="@PreventiviFiltrati" Dense="true" Hover="true"
                               data-testid="table-archivio">
                         <HeaderContent>
+                            <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => x.NumeroPreventivo)">N°</MudTableSortLabel></MudTh>
                             <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => x.DataCreazione)">Data</MudTableSortLabel></MudTh>
                             <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => x.Cliente)">Cliente</MudTableSortLabel></MudTh>
                             <MudTh>Codice</MudTh>
@@ -558,6 +563,7 @@
                             <MudTh>Azioni</MudTh>
                         </HeaderContent>
                         <RowTemplate>
+                            <MudTd><MudText Typo="Typo.caption" Color="Color.Info"><b>@(context.NumeroPreventivo > 0 ? context.NumeroPreventivo.ToString() : "—")</b></MudText></MudTd>
                             <MudTd>@context.DataCreazione.ToString("dd/MM/yyyy HH:mm")</MudTd>
                             <MudTd>@context.Cliente</MudTd>
                             <MudTd><MudText Typo="Typo.caption">@context.CodiceArticolo</MudText></MudTd>
