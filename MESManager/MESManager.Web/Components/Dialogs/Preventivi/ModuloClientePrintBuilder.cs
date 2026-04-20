@@ -100,8 +100,8 @@ public static class ModuloClientePrintBuilder
               "<th style=\"text-align:right\">Prezzo unitario (&euro;/pz)</th></tr>";
 
         var logoBlock = logoInlineHtml != null
-            ? $"  <div class=\"logo-wrap\">{logoInlineHtml}</div>\n"
-            : "";
+            ? $"  <div class=\"hdr-logo\">{logoInlineHtml}</div>\n"
+            : "  <div class=\"hdr-logo\"></div>\n";
 
         return "<!DOCTYPE html>\n" +
                "<html lang=\"it\">\n" +
@@ -112,9 +112,12 @@ public static class ModuloClientePrintBuilder
                $"    * {{ box-sizing: border-box; margin: 0; padding: 0; }}\n" +
                $"    body {{ font-family: Arial, sans-serif; font-size: {fs}pt; color: #111; background: #fff; padding: 10mm 15mm; display: flex; flex-direction: column; min-height: calc(297mm - 30mm); }}\n" +
                "    @page { margin: 12mm 18mm 18mm 18mm; }\n" +
-               "    .logo-wrap { width: 100%; margin-bottom: 6px; }\n" +
-               "    .logo-wrap svg { width: 100%; height: auto; display: block; }\n" +
-               "    .logo-wrap img { max-height: 90px; width: auto; display: block; -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n" +
+               "    .hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }\n" +
+               "    .hdr-logo { display: flex; align-items: center; gap: 10px; }\n" +
+               "    .hdr-logo img { max-height: 77px; width: auto; }\n" +
+               "    .hdr-logo svg { height: 77px; width: auto; }\n" +
+               "    .hdr-info { text-align: right; font-size: 7.5pt; color: #444; line-height: 1.55; }\n" +
+               "    .hdr-info strong { display: block; font-size: 8.5pt; color: #111; margin-bottom: 2px; }\n" +
                "    hr.thick { border: none; border-top: 2.5px solid #111; margin: 7px 0 10px; }\n" +
                "    hr.thin  { border: none; border-top: 1px solid #ccc; margin: 6px 0; }\n" +
                $"    h1 {{ font-size: {fsTitle}pt; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 3px; }}\n" +
@@ -151,7 +154,15 @@ public static class ModuloClientePrintBuilder
                "</head>\n" +
                "<body>\n" +
                $"  {intestazioneInterna}\n" +
+               "  <div class=\"hdr\">\n" +
                logoBlock +
+               "    <div class=\"hdr-info\">\n" +
+               "      <strong>ANIMISTERIA TODESCATO SRL</strong>\n" +
+               "      Via Luigi Galvani 1 &bull; 36060 Sarcedo (VI)<br/>\n" +
+               "      Tel: 0445 356028 &bull; animisteria@todescato.it<br/>\n" +
+               "      P.IVA &bull; C.F.: 01234560240\n" +
+               "    </div>\n" +
+               "  </div>\n" +
                "  <hr class=\"thick\" />\n\n" +
                "  <h1>PREVENTIVO FORNITURA ANIME</h1>\n" +
                $"  <div class=\"meta\">{emissioneRow}</div>\n\n" +
