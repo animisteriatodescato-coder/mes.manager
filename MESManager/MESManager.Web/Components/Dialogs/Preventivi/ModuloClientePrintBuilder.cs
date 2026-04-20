@@ -13,13 +13,15 @@ public static class ModuloClientePrintBuilder
     /// <param name="fontSize">Dimensione base del testo in pt (default 10.5)</param>
     /// <param name="logoInlineHtml">HTML/SVG del logo da incorporare; se null non viene mostrato</param>
     public static string Build(PreventivoDto dto, string baseUri, IPreventivoService preventivoService,
-        bool interna = false, decimal fontSize = 10.5m, string? logoInlineHtml = null)
+        bool interna = false, decimal fontSize = 10.5m, string? logoInlineHtml = null,
+        List<string>? condizioni = null)
     {
         var fs = fontSize.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
         var fsSmall  = (fontSize - 1.5m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
         var fsTiny   = (fontSize - 2.0m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
         var fsTitle  = (fontSize + 5.5m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
         var fsCond   = (fontSize - 3.5m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+        var fsSec    = (fontSize + 0.5m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
 
         // Righe prezzi
         var righi = new System.Text.StringBuilder();
@@ -122,8 +124,8 @@ public static class ModuloClientePrintBuilder
                "    hr.thin  { border: none; border-top: 1px solid #ccc; margin: 6px 0; }\n" +
                $"    h1 {{ font-size: {fsTitle}pt; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 3px; }}\n" +
                $"    .meta {{ font-size: {fsTiny}pt; color: #555; margin-bottom: 10px; }}\n" +
-               $"    .section-title {{ font-size: {fsSmall}pt; font-weight: bold; text-transform: uppercase;\n" +
-               "                      border-bottom: 1.5px solid #111; padding-bottom: 2px; margin: 14px 0 7px; }\n" +
+               $"    .section-title {{ font-size: {fsSec}pt; font-weight: bold; text-transform: uppercase;\n" +
+               "                      border-bottom: 1.5px solid #111; padding-bottom: 2px; margin: 14px 0 7px; }}\n" +
                "    dl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 12px; margin-bottom: 10px; }\n" +
                $"    dt {{ font-size: {fsTiny}pt; color: #666; margin-bottom: 1px; }}\n" +
                $"    dd {{ font-size: {fsSmall}pt; font-weight: 600; }}\n" +
@@ -187,17 +189,31 @@ public static class ModuloClientePrintBuilder
                $"    <thead>{theadPrezzi}</thead>\n" +
                $"    <tbody>{righi}</tbody>\n" +
                "  </table>\n\n" +
-               "  <div class=\"conditions\">\n" +
-               "    <div class=\"cond-title\">CONDIZIONI DI OFFERTA</div>\n" +
-               "    <ul>\n" +
-               "      <li>La presente offerta ha validit&agrave; <strong>90 giorni</strong> dalla data di emissione.</li>\n" +
-               "      <li>I prezzi sono soggetti a revisione in funzione dell'andamento dei costi delle materie prime e dei vettori energetici.</li>\n" +
-               "      <li>Prezzi IVA esclusa. L'imposta sar&agrave; applicata secondo l'aliquota vigente al momento della fatturazione.</li>\n" +
-               "      <li>Pagamento: secondo accordi commerciali in essere.</li>\n" +
-               "    </ul>\n" +
-               "  </div>\n\n" +
+               BuildCondizioniHtml(condizioni) +
                "</body>\n" +
                "</html>";
+    }
+
+    private static readonly List<string> _defaultCondizioni = new()
+    {
+        "La presente offerta ha validità <strong>90 giorni</strong> dalla data di emissione.",
+        "I prezzi sono soggetti a revisione in funzione dell'andamento dei costi delle materie prime e dei vettori energetici.",
+        "Prezzi IVA esclusa. L'imposta sarà applicata secondo l'aliquota vigente al momento della fatturazione.",
+        "Pagamento: secondo accordi commerciali in essere."
+    };
+
+    private static string BuildCondizioniHtml(List<string>? condizioni)
+    {
+        var list = condizioni ?? _defaultCondizioni;
+        var sb = new System.Text.StringBuilder();
+        sb.Append("  <div class=\"conditions\">\n");
+        sb.Append("    <div class=\"cond-title\">CONDIZIONI DI OFFERTA</div>\n");
+        sb.Append("    <ul>\n");
+        foreach (var c in list.Where(c => !string.IsNullOrWhiteSpace(c)))
+            sb.Append($"      <li>{c}</li>\n");
+        sb.Append("    </ul>\n");
+        sb.Append("  </div>\n\n");
+        return sb.ToString();
     }
 
     private static string TitoloDocumento(PreventivoDto dto)

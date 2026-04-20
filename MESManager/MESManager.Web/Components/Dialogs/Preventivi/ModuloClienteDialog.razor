@@ -67,6 +67,52 @@
                     }
                 </tbody>
             </MudSimpleTable>
+
+            <!-- Condizioni di offerta editabili -->
+            <MudDivider Class="my-2" />
+            <MudPaper Elevation="0" Class="pa-2" Style="border:1px solid var(--mud-palette-lines-default);border-radius:4px">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                    <MudIcon Icon="@Icons.Material.Filled.Gavel" Size="Size.Small" Color="Color.Secondary" />
+                    <MudText Typo="Typo.subtitle2"><b>Condizioni di Offerta</b></MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-2">Modificabili prima della stampa</MudText>
+                    <MudSpacer />
+                    <MudIconButton Icon="@(_showCondizioni ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                                   Size="Size.Small"
+                                   OnClick="@(() => _showCondizioni = !_showCondizioni)" />
+                </MudStack>
+                @if (_showCondizioni)
+                {
+                    <MudStack Spacing="1">
+                        @for (int i = 0; i < _condizioni.Count; i++)
+                        {
+                            var idx = i;
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Style="min-width:20px;text-align:right">@(idx+1).</MudText>
+                                <MudTextField T="string" Value="@_condizioni[idx]"
+                                              ValueChanged="@(v => _condizioni[idx] = v ?? "")"
+                                              Variant="Variant.Outlined" Margin="Margin.Dense"
+                                              FullWidth="true" Lines="2"
+                                              Style="font-size:12px" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => { _condizioni.RemoveAt(idx); StateHasChanged(); })"
+                                               Title="Rimuovi" />
+                            </MudStack>
+                        }
+                        <MudStack Row="true" Spacing="2" Class="mt-1">
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.Add"
+                                       OnClick="@(() => { _condizioni.Add(""); StateHasChanged(); })">
+                                Aggiungi condizione
+                            </MudButton>
+                            <MudButton Variant="Variant.Text" Size="Size.Small" Color="Color.Warning"
+                                       StartIcon="@Icons.Material.Filled.RestartAlt"
+                                       OnClick="@RipristinaCondizioni">
+                                Ripristina default
+                            </MudButton>
+                        </MudStack>
+                    </MudStack>
+                }
+            </MudPaper>
         }
     </DialogContent>
     <DialogActions>
@@ -129,6 +175,24 @@
     private decimal _fontSize = 10.5m;
     private const string FontSizeKey = "preventivo_fontsize";
 
+    // ── Condizioni di offerta (editabili pre-stampa) ──────────────────────────
+    private bool _showCondizioni;
+    private List<string> _condizioni = new()
+    {
+        "La presente offerta ha validità <strong>90 giorni</strong> dalla data di emissione.",
+        "I prezzi sono soggetti a revisione in funzione dell'andamento dei costi delle materie prime e dei vettori energetici.",
+        "Prezzi IVA esclusa. L'imposta sarà applicata secondo l'aliquota vigente al momento della fatturazione.",
+        "Pagamento: secondo accordi commerciali in essere."
+    };
+
+    private void RipristinaCondizioni() => _condizioni = new()
+    {
+        "La presente offerta ha validità <strong>90 giorni</strong> dalla data di emissione.",
+        "I prezzi sono soggetti a revisione in funzione dell'andamento dei costi delle materie prime e dei vettori energetici.",
+        "Prezzi IVA esclusa. L'imposta sarà applicata secondo l'aliquota vigente al momento della fatturazione.",
+        "Pagamento: secondo accordi commerciali in essere."
+    };
+
     protected override async Task OnInitializedAsync()
     {
         var saved = await JS.InvokeAsync<string?>("localStorage.getItem", FontSizeKey);
@@ -144,7 +208,7 @@
             _fontSize.ToString(System.Globalization.CultureInfo.InvariantCulture));
         var baseUri = Nav.BaseUri.TrimEnd('/');
         var logo = LeggiLogoInline();
-        var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna, _fontSize, logo);
+        var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna, _fontSize, logo, _condizioni);
         await JS.InvokeVoidAsync("mesPreventivoPrint", html);
     }
 
@@ -184,7 +248,7 @@
         {
             var baseUri = Nav.BaseUri.TrimEnd('/');
             var logo = LeggiLogoInline();
-            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna: false, _fontSize, logo);
+            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna: false, _fontSize, logo, _condizioni);
             var ok = await EmailService.InviaPreventivoPdfAsync(
                 _emailDestinatario, html, Dto.Cliente, Dto.NumeroPreventivo);
             if (ok)
