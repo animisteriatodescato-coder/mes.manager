@@ -72,10 +72,16 @@
             <MudDivider Class="my-2" />
             <MudPaper Elevation="0" Class="pa-2" Style="border:1px solid var(--mud-palette-lines-default);border-radius:4px">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
-                    <MudIcon Icon="@Icons.Material.Filled.Gavel" Size="Size.Small" Color="Color.Secondary" />
-                    <MudText Typo="Typo.subtitle2"><b>Condizioni di Offerta</b></MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.Gavel" Size="Size.Small" Color="@(_includiCondizioni ? Color.Secondary : Color.Default)" />
+                    <MudText Typo="Typo.subtitle2" Style="@(_includiCondizioni ? "" : "text-decoration:line-through;opacity:.5")"><b>Condizioni di Offerta</b></MudText>
                     <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-2">Modificabili prima della stampa</MudText>
                     <MudSpacer />
+                    <MudButton Variant="Variant.Text" Size="Size.Small"
+                               Color="@(_includiCondizioni ? Color.Error : Color.Success)"
+                               StartIcon="@(_includiCondizioni ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                               OnClick="@(() => _includiCondizioni = !_includiCondizioni)">
+                        @(_includiCondizioni ? "Escludi dal PDF" : "Includi nel PDF")
+                    </MudButton>
                     <MudIconButton Icon="@(_showCondizioni ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
                                    Size="Size.Small"
                                    OnClick="@(() => _showCondizioni = !_showCondizioni)" />
@@ -177,6 +183,7 @@
 
     // ── Condizioni di offerta (editabili pre-stampa) ──────────────────────────
     private bool _showCondizioni = true;
+    private bool _includiCondizioni = true;
     private List<string> _condizioni = new()
     {
         "La presente offerta ha validità <strong>90 giorni</strong> dalla data di emissione.",
@@ -208,7 +215,7 @@
             _fontSize.ToString(System.Globalization.CultureInfo.InvariantCulture));
         var baseUri = Nav.BaseUri.TrimEnd('/');
         var logo = LeggiLogoInline();
-        var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna, _fontSize, logo, _condizioni);
+        var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna, _fontSize, logo, _includiCondizioni ? _condizioni : null);
         await JS.InvokeVoidAsync("mesPreventivoPrint", html);
     }
 
@@ -248,7 +255,7 @@
         {
             var baseUri = Nav.BaseUri.TrimEnd('/');
             var logo = LeggiLogoInline();
-            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna: false, _fontSize, logo, _condizioni);
+            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna: false, _fontSize, logo, _includiCondizioni ? _condizioni : null);
             var ok = await EmailService.InviaPreventivoPdfAsync(
                 _emailDestinatario, html, Dto.Cliente, Dto.NumeroPreventivo);
             if (ok)

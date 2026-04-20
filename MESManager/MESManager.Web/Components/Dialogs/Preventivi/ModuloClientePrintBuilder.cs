@@ -204,7 +204,8 @@ public static class ModuloClientePrintBuilder
 
     private static string BuildCondizioniHtml(List<string>? condizioni)
     {
-        var list = condizioni ?? _defaultCondizioni;
+        if (condizioni == null) return "";
+        var list = condizioni;
         var sb = new System.Text.StringBuilder();
         sb.Append("  <div class=\"conditions\">\n");
         sb.Append("    <div class=\"cond-title\">CONDIZIONI DI OFFERTA</div>\n");
