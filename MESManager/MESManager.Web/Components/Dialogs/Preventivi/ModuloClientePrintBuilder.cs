@@ -122,7 +122,7 @@ public static class ModuloClientePrintBuilder
                "    .hdr-info strong { display: block; font-size: 8.5pt; color: #111; margin-bottom: 2px; }\n" +
                "    hr.thick { border: none; border-top: 2.5px solid #111; margin: 7px 0 10px; }\n" +
                "    hr.thin  { border: none; border-top: 1px solid #ccc; margin: 6px 0; }\n" +
-               $"    h1 {{ font-size: {fsTitle}pt; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 3px; }}\n" +
+               $"    h1 {{ font-size: {fsTitle}pt; font-weight: 800; letter-spacing: 0.5px; margin-top: 1cm; margin-bottom: 3px; }}\n" +
                $"    .meta {{ font-size: {fsTiny}pt; color: #555; margin-bottom: 10px; }}\n" +
                $"    .section-title {{ font-size: {fsSec}pt; font-weight: bold; text-transform: uppercase;\n" +
                "                      border-bottom: 1.5px solid #111; padding-bottom: 2px; margin: 14px 0 7px; }}\n" +
@@ -165,7 +165,6 @@ public static class ModuloClientePrintBuilder
                "      P.IVA &bull; C.F.: 01234560240\n" +
                "    </div>\n" +
                "  </div>\n" +
-               "  <hr class=\"thick\" />\n\n" +
                "  <h1>PREVENTIVO FORNITURA ANIME</h1>\n" +
                $"  <div class=\"meta\">{emissioneRow}</div>\n\n" +
                "  <div class=\"section-title\">Dati Cliente</div>\n" +
