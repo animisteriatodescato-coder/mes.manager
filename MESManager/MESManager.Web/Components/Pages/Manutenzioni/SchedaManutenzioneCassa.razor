@@ -143,8 +143,8 @@ else
                             <MudTextField T="string" Value="@_problematiche[idx]"
                                           ValueChanged="@(async v => { _problematiche[idx] = v ?? ""; await SalvaProblematiche(); })"
                                           Variant="Variant.Outlined" Margin="Margin.Dense"
-                                          FullWidth="true" Lines="2"
-                                          Style="font-size:12px"
+                                          FullWidth="true" Lines="4"
+                                          Style="font-size:14px"
                                           Placeholder="es. Sostituzione inserto porta maschio lato SX — pianificare entro 2 settimane" />
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
                                            OnClick="@(async () => { _problematiche.RemoveAt(idx); await SalvaProblematiche(); StateHasChanged(); })"
@@ -369,6 +369,13 @@ else
                 <MudText Typo="Typo.subtitle1"><b>Condizioni Generali di Stampa</b></MudText>
                 <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-2">Modificabili prima della stampa PDF · non salvate su DB</MudText>
                 <MudSpacer />
+                <MudButton Size="Size.Small" Variant="Variant.Outlined"
+                           Color="@(_includiCondizioni ? Color.Error : Color.Success)"
+                           StartIcon="@(_includiCondizioni ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                           OnClick="@(() => _includiCondizioni = !_includiCondizioni)"
+                           Class="mr-2">
+                    @(_includiCondizioni ? "Escludi dal PDF" : "Includi nel PDF")
+                </MudButton>
                 <MudIconButton Icon="@(_showCondizioni ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
                                Size="Size.Small"
                                OnClick="@(() => _showCondizioni = !_showCondizioni)" />
@@ -419,6 +426,7 @@ else
 
     // ── Condizioni generali di stampa (editabili pre-stampa) ─────────────────
     private bool _showCondizioni;
+    private bool _includiCondizioni = false;
 
     // ── Problematiche da pianificare (editabili pre-stampa) ──────────────────
     private bool _showProblematiche = true;
@@ -670,7 +678,7 @@ else
             _scheda, tuttiAllegati, azienda, logo,
             fotoBase64: fotoBase64.Count > 0 ? fotoBase64 : null,
             problematiche: _problematiche.Count > 0 ? _problematiche : null,
-            condizioni: _condizioni);
+            condizioni: _includiCondizioni ? _condizioni : null);
 
         // mesStampaCassa: triplice strategia
         //   1. data-URI già embed da C# → usati direttamente

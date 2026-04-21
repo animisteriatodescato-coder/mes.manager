@@ -4,11 +4,26 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.9
+## 🔖 Versione Corrente: v1.65.50
 
 ---
 
-## 🔖 v1.65.9 — Statistiche Ordini: dashboard completa con KPI, grafici e urgenze (15 Apr 2026)
+## 🔖 v1.65.50 — Manutenzioni casse: condizioni off default + pulsante Includi PDF, problematiche +altezza +font (oggi)
+
+**Data**: 2026
+
+### 🐛 Fix
+- Scheda manutenzione cassa: condizioni generali non incluse nel PDF di default (`_includiCondizioni = false`)
+- Aggiunto pulsante **"Includi nel PDF" / "Escludi dal PDF"** nella sezione Condizioni Generali di Stampa
+- Build call ora passa `_includiCondizioni ? _condizioni : null` al builder
+
+### ✨ UI
+- Caselle **Problematiche**: altezza raddoppiata (`Lines="4"` → da 2 a 4 righe visibili)
+- Caselle **Problematiche**: font aumentato (`14px` → da 12px)
+
+---
+
+## 🔖 v1.65.49 — Statistiche Ordini: dashboard completa con KPI, grafici e urgenze (15 Apr 2026)
 
 **Data**: 15 Aprile 2026
 
