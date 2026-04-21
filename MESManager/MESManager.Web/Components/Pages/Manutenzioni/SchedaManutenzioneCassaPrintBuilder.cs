@@ -179,7 +179,7 @@ public static class SchedaManutenzioneCassaPrintBuilder
                $"    body {{ font-family: Arial, sans-serif; font-size: {fsBase}pt; color: #111; background: #fff;" +
                "            padding: 10mm 15mm; display: flex; flex-direction: column; min-height: calc(297mm - 30mm); }}\n" +
                "    @page { margin: 12mm 18mm 18mm 18mm; }\n" +
-               $"    h1 {{ font-size: {fsH}pt; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 3px; }}\n" +
+               $"    h1 {{ font-size: {fsH}pt; font-weight: 800; letter-spacing: 0.5px; margin-top: 1cm; margin-bottom: 3px; }}\n" +
                $"    .meta {{ font-size: {fsT}pt; color: #555; margin-bottom: 10px; }}\n" +
                $"    .section-title {{ font-size: {fsS}pt; font-weight: bold; text-transform: uppercase;\n" +
                "                       border-bottom: 1.5px solid #111; padding-bottom: 2px; margin: 14px 0 7px; }}\n" +
@@ -232,7 +232,6 @@ public static class SchedaManutenzioneCassaPrintBuilder
                "      P.IVA &bull; C.F.: 01234560240\n" +
                "    </div>\n" +
                "  </div>\n" +
-               "  <hr style=\"border:none;border-top:2.5px solid #111;margin:7px 0 10px\" />\n" +
                "  <h1>Scheda Manutenzione Cassa d'Anima</h1>\n" +
                $"  <div class=\"meta\">Documento generato il {DateTime.Now:dd/MM/yyyy HH:mm}</div>\n\n" +
                // ── Dati Attrezzatura + Dati Cliente in 2 colonne side-by-side ──

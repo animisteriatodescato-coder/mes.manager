@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.47";
+    public const string Current = "1.65.48";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.47: Stampa preventivi - rimossa linea nera header, +1cm spazio h1
+    public const string Display = "v" + Current; // v1.65.48: Manutenzioni casse - rimossa linea nera header, +1cm margine h1
 }
