@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.48";
+    public const string Current = "1.65.49";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.48: Manutenzioni casse - rimossa linea nera header, +1cm margine h1
+    public const string Display = "v" + Current; // v1.65.49: Problematiche +2pt, condizioni offerta disattivate di default
 }

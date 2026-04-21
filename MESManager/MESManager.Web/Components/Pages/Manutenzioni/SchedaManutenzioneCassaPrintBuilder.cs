@@ -47,6 +47,7 @@ public static class SchedaManutenzioneCassaPrintBuilder
         var fsT     = (fs - 2.0m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);  // tiny
         var fsH     = (fs + 5.0m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);  // title
         var fsCond  = (fs - 3.0m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);  // condizioni
+        var fsProb  = (fs - 1.0m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);  // problematiche (+2pt rispetto fsCond)
         // Font dati principali (codice, data, operatore) +2pt rispetto al base
         var fsData  = (fs + 2.0m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
 
@@ -210,7 +211,7 @@ public static class SchedaManutenzioneCassaPrintBuilder
                "    .conditions ul { padding-left: 16px; }\n" +
                "    .conditions li { margin-bottom: 3px; }\n" +
                $"    .issues {{ border: 1px solid #c62828; border-radius: 4px; padding: 10px 14px; margin: 16px 0;\n" +
-               $"               font-size: {fsCond}pt; line-height: 1.65;\n" +
+               $"               font-size: {fsProb}pt; line-height: 1.65;\n" +
                "               -webkit-print-color-adjust: exact; print-color-adjust: exact; }}\n" +
                $"    .issues .iss-title {{ font-weight: bold; color: #c62828; font-size: {fsS}pt; margin-bottom: 5px; }}\n" +
                "    .issues ol { padding-left: 18px; }\n" +
