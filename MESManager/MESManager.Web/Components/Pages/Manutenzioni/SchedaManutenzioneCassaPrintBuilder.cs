@@ -284,14 +284,16 @@ public static class SchedaManutenzioneCassaPrintBuilder
                    : "") +
                // Allegati
                allegatiHtml +
-               // Condizioni generali
-               "\n  <div class=\"conditions\" style=\"margin-top:20px\">\n" +
-               "    <div class=\"cond-title\">CONDIZIONI GENERALI DI MANUTENZIONE</div>\n" +
-               "    <ul>\n" +
-               string.Concat((condizioni ?? _defaultCondizioni).Select(c =>
-                   $"      <li>{System.Web.HttpUtility.HtmlEncode(c).Replace("&lt;strong&gt;", "<strong>").Replace("&lt;/strong&gt;", "</strong>")}</li>\n")) +
-               "    </ul>\n" +
-               "  </div>\n\n" +
+               // Condizioni generali (solo se esplicitamente passate)
+               (condizioni != null
+                   ? "\n  <div class=\"conditions\" style=\"margin-top:20px\">\n" +
+                     "    <div class=\"cond-title\">CONDIZIONI GENERALI DI MANUTENZIONE</div>\n" +
+                     "    <ul>\n" +
+                     string.Concat(condizioni.Select(c =>
+                         $"      <li>{System.Web.HttpUtility.HtmlEncode(c).Replace("&lt;strong&gt;", "<strong>").Replace("&lt;/strong&gt;", "</strong>")}</li>\n")) +
+                     "    </ul>\n" +
+                     "  </div>\n\n"
+                   : "") +
                "</body>\n" +
                "</html>";
     }
