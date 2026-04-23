@@ -4,7 +4,25 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.50
+## 🔖 Versione Corrente: v1.65.53
+
+---
+
+## 🔖 v1.65.53 — Fix mobile scroll: DrawerVariant.Responsive ripristina scroll su smartphone
+
+**Data**: 23 Aprile 2026
+
+### 🐛 Fix
+- **Problema**: Su tutti i dispositivi mobile le pagine (dashboard, ecc.) non scorrevano verso il basso — visibili solo i primi 2 elementi
+- **Causa**: commit v1.65.33 aveva forzato `DrawerVariant.Persistent` sul drawer principale. Con `Persistent`, MudBlazor blocca il layout a `height: 100vh` su tutti i breakpoint, impedendo il normale scroll di pagina su schermi piccoli
+- **Fix**: `DrawerVariant.Persistent` → `DrawerVariant.Responsive` in `MainLayout.razor`
+  - Su desktop (> 960px): comportamento identico a Persistent (drawer fisso, non si chiude alla navigazione ✅)
+  - Su mobile (< 960px): drawer diventa Temporary (overlay), layout torna scrollabile ✅
+- File modificato: `MESManager.Web/Components/Layout/MainLayout.razor`
+
+---
+
+## 🔖 v1.65.50
 
 ---
 

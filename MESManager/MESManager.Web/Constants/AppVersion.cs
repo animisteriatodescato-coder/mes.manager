@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.52";
+    public const string Current = "1.65.53";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.52: Fix dati aziendali intestazione stampe (preventivi + manutenzioni)
+    public const string Display = "v" + Current; // v1.65.53: Fix mobile scroll — DrawerVariant.Responsive (invece di Persistent) ripristina overflow pagine su smartphone
 }
