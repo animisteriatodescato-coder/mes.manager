@@ -287,7 +287,11 @@
             if (resp.IsSuccessStatusCode)
             {
                 var bytes = await resp.Content.ReadAsByteArrayAsync();
-                await JS.InvokeVoidAsync("downloadFile", bytes, fileName, "application/pdf");
+                // DotNetStreamReference: stream diretto .NET→browser, evita corruzione
+                // base64 SignalR su file grandi (PDF > qualche KB vengono troncati/corrotti)
+                using var ms = new System.IO.MemoryStream(bytes);
+                using var streamRef = new Microsoft.JSInterop.DotNetStreamReference(ms);
+                await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
                 Snackbar.Add($"PDF scaricato: {fileName}", Severity.Success);
             }
             else if ((int)resp.StatusCode == 503)

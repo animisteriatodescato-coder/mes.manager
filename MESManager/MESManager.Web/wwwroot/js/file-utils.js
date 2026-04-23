@@ -31,6 +31,21 @@ window.downloadFile = function (bytes, fileName, contentType) {
     URL.revokeObjectURL(url);
 };
 
+// Download tramite DotNetStreamReference (consigliato per file grandi in Blazor Server)
+// Evita la serializzazione base64 via SignalR che può corrompere file binari grandi
+window.downloadFileFromStream = async function (fileName, contentStreamRef) {
+    const arrayBuffer = await contentStreamRef.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+};
+
 // Print PDF directly
 window.printPdf = function (bytes, fileName) {
     let blob;
