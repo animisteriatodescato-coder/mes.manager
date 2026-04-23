@@ -31,25 +31,29 @@ public class ChromiumPdfService
         var exe = FindExecutable();
         if (exe == null) return null;
 
-        var tempDir = Path.GetTempPath();
+        var tempDir   = Path.GetTempPath();
         var inputFile  = Path.Combine(tempDir, $"mesprev_{Guid.NewGuid():N}.html");
         var outputFile = Path.Combine(tempDir, $"mesprev_{Guid.NewGuid():N}.pdf");
+        var tempProfile = Path.Combine(tempDir, $"mesprev_p_{Guid.NewGuid():N}");
 
         try
         {
             await File.WriteAllTextAsync(inputFile, html, Encoding.UTF8, ct);
 
-            // file:/// URI (Chrome richiede forward slash)
+            // file:/// URI — Chrome richiede forward slash
             var uri = "file:///" + inputFile.Replace('\\', '/');
 
-            // --print-to-pdf-no-header-footer: niente timbro URL/data in cima e fondo
-            // --no-margins: rispetta i margini definiti dal CSS @page
+            // --virtual-time-budget: aspetta il rendering CSS/font prima di stampare
+            // I margini sono gestiti dal CSS @page nel documento HTML
             var args = $"--headless=new " +
                        $"--print-to-pdf=\"{outputFile}\" " +
                        $"--print-to-pdf-no-header-footer " +
-                       $"--no-margins " +
                        $"--run-all-compositor-stages-before-draw " +
+                       $"--virtual-time-budget=5000 " +
                        $"--disable-gpu " +
+                       $"--no-first-run " +
+                       $"--disable-extensions " +
+                       $"--user-data-dir=\"{tempProfile}\" " +
                        $"\"{uri}\"";
 
             var psi = new ProcessStartInfo(exe, args)
@@ -63,20 +67,20 @@ public class ChromiumPdfService
             using var proc = Process.Start(psi);
             if (proc == null) return null;
 
-            // Timeout 30s per sicurezza
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             cts.CancelAfter(TimeSpan.FromSeconds(30));
             await proc.WaitForExitAsync(cts.Token);
 
-            if (File.Exists(outputFile))
-                return await File.ReadAllBytesAsync(outputFile, ct);
-
-            return null;
+            if (!File.Exists(outputFile)) return null;
+            var bytes = await File.ReadAllBytesAsync(outputFile, ct);
+            // Un PDF valido ha sempre più di 500 byte
+            return bytes.Length > 500 ? bytes : null;
         }
         finally
         {
             try { if (File.Exists(inputFile))  File.Delete(inputFile);  } catch { /* ignore */ }
             try { if (File.Exists(outputFile)) File.Delete(outputFile); } catch { /* ignore */ }
+            try { if (Directory.Exists(tempProfile)) Directory.Delete(tempProfile, recursive: true); } catch { /* ignore */ }
         }
     }
 }
