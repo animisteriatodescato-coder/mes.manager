@@ -66,7 +66,7 @@ public class ChromiumPdfService(ILogger<ChromiumPdfService> logger)
             {
                 UseShellExecute        = false,
                 CreateNoWindow         = true,
-                RedirectStandardOutput = true,
+                RedirectStandardOutput = false,   // non ci serve, non redirigere per evitare deadlock
                 RedirectStandardError  = true,
             };
             psi.ArgumentList.Add("--headless=new");
@@ -89,8 +89,10 @@ public class ChromiumPdfService(ILogger<ChromiumPdfService> logger)
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             cts.CancelAfter(TimeSpan.FromSeconds(30));
 
-            var stdErr = await proc.StandardError.ReadToEndAsync(cts.Token);
+            // Legge stderr in parallelo con WaitForExitAsync per evitare deadlock
+            var stderrTask = proc.StandardError.ReadToEndAsync(cts.Token);
             await proc.WaitForExitAsync(cts.Token);
+            var stdErr = await stderrTask;
 
             logger.LogInformation("ChromiumPdfService: exitCode={Code}, stderr={Err}", proc.ExitCode, stdErr);
 
