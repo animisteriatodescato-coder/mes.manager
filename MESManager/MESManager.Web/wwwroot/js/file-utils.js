@@ -55,33 +55,69 @@ window.printPdf = function (bytes, fileName) {
     }
 };
 
-// ── Preventivo: scarica direttamente il PDF senza dialog di stampa (v1.65.54) ──
-// Usa html2pdf.js (CDN bundle). Crea iframe nascosto con il full HTML così gli stili vengono
-// applicati correttamente, poi genera il PDF da iframe.document.body.
+// ── Preventivo: apre finestra di stampa con banner istruzioni "Salva come PDF" (v1.65.55) ──
+// Usa la stessa logica di mesPreventivoPrint (che già funziona) ma aggiunge un banner
+// blu con istruzioni + bottone "Salva come PDF". Il titolo della pagina diventa il nome file
+// suggerito da Chrome/Edge nel dialog di salvataggio.
 window.mesPreventivoDownloadPdf = function (htmlContent, fileName) {
-    return new Promise(function (resolve, reject) {
-        var iframe = document.createElement('iframe');
-        iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:794px;height:1123px;border:none;visibility:hidden;';
-        document.body.appendChild(iframe);
-        iframe.onload = function () {
-            var body = iframe.contentDocument ? iframe.contentDocument.body : null;
-            if (!body) { document.body.removeChild(iframe); reject(new Error('iframe body non disponibile')); return; }
-            html2pdf()
-                .set({
-                    margin: [8, 8, 8, 8],
-                    filename: fileName,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', windowWidth: 794 },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                })
-                .from(body)
-                .save()
-                .then(function () { document.body.removeChild(iframe); resolve(); })
-                .catch(function (err) { document.body.removeChild(iframe); reject(err); });
-        };
-        iframe.contentDocument.open();
-        iframe.contentDocument.write(htmlContent);
-        iframe.contentDocument.close();
+    return new Promise(function (resolve) {
+        var win = window.open('', '_blank', 'width=960,height=720');
+        if (!win) {
+            alert('Popup bloccato dal browser. Consenti i popup per questa pagina e riprova.');
+            resolve();
+            return;
+        }
+
+        // Imposta il titolo = nome file per far sì che Chrome lo suggerisca nel salvataggio
+        var withTitle = htmlContent.replace(/<title>[^<]*<\/title>/i, '<title>' + fileName + '<\/title>');
+
+        // Inietta <base href> per risorse CSS/font (stesso trick di mesPreventivoPrint)
+        var baseTag = '<base href="' + window.location.origin + '/">';
+        var injected = withTitle.replace(/<head>/i, '<head>' + baseTag);
+
+        win.document.open();
+        win.document.write(injected);
+        win.document.close();
+        win.focus();
+
+        // Aspetta che il browser applichi CSS prima di iniettare il banner
+        setTimeout(function () {
+            try {
+                // Banner istruzioni (nascosto durante la stampa via @media print)
+                var banner = win.document.createElement('div');
+                banner.className = 'mes-pdf-banner';
+                banner.style.cssText =
+                    'position:fixed;top:0;left:0;right:0;z-index:99999;' +
+                    'background:#1565c0;color:white;padding:9px 20px;' +
+                    'font-family:Arial,sans-serif;font-size:13px;' +
+                    'display:flex;align-items:center;justify-content:space-between;gap:16px;' +
+                    'box-shadow:0 2px 8px rgba(0,0,0,.35);';
+
+                var msg = win.document.createElement('span');
+                msg.innerHTML =
+                    '📄 Premi <strong>Ctrl+P</strong> oppure il pulsante &rarr; ' +
+                    'scegli destinazione <strong>&ldquo;Salva come PDF&rdquo;</strong> &rarr; ' +
+                    'il nome file suggerito sarà <em>' + fileName + '</em>';
+
+                var btn = win.document.createElement('button');
+                btn.innerHTML = '🖨&nbsp; Salva come PDF';
+                btn.style.cssText =
+                    'background:white;color:#1565c0;border:none;' +
+                    'padding:7px 18px;border-radius:4px;cursor:pointer;' +
+                    'font-weight:bold;font-size:13px;white-space:nowrap;flex-shrink:0;';
+                btn.onclick = function () { win.print(); };
+
+                banner.appendChild(msg);
+                banner.appendChild(btn);
+                win.document.body.insertBefore(banner, win.document.body.firstChild);
+
+                // Nascondi il banner durante la stampa effettiva
+                var ps = win.document.createElement('style');
+                ps.textContent = '@media print { .mes-pdf-banner { display:none !important; } }';
+                win.document.head.appendChild(ps);
+            } catch (e) { /* se il popup viene chiuso subito, ignora */ }
+            resolve();
+        }, 700);
     });
 };
 

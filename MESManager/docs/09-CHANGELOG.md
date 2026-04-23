@@ -4,7 +4,30 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.53
+## 🔖 Versione Corrente: v1.65.54
+
+---
+
+## 🔖 v1.65.54 — Preventivi: Scarica PDF diretto + Nuova Mail per eM Client
+
+**Data**: 23 Aprile 2026
+
+### ✨ Nuove funzionalità
+- **Bottone "Scarica PDF"** nel dialog Modulo Cliente Preventivo
+  - Download diretto del PDF nella cartella Download del browser (senza finestra di stampa)
+  - Nome file automatico: `Preventivo_N{num}_{Cliente}_{yyyyMMdd}.pdf`
+  - Usa `html2pdf.js 0.10.1` (CDN bundle) via iframe nascosto per preservare tutti gli stili CSS
+  - Stato `Disabled` + label "Generazione..." durante la creazione
+- **Bottone "Nuova Mail"** nel dialog Modulo Cliente Preventivo
+  - Apre eM Client (o qualunque client mail default Windows) via `mailto:`
+  - Oggetto preimpostato: `Offerta N° {num} – {Cliente}`
+  - Corpo preimpostato: saluto professionale + firma aziendale (indirizzo, tel, email)
+  - Se l'email destinatario è già salvata nel preventivo, viene precompilata automaticamente
+
+### 📁 File modificati
+- `MESManager.Web/Components/App.razor` — aggiunto script html2pdf.js CDN
+- `MESManager.Web/wwwroot/js/file-utils.js` — aggiunte `mesPreventivoDownloadPdf` e `mesPreventivoApriMail`
+- `MESManager.Web/Components/Dialogs/Preventivi/ModuloClienteDialog.razor` — nuovi bottoni + metodi C#
 
 ---
 
