@@ -227,10 +227,11 @@ public static class SchedaManutenzioneCassaPrintBuilder
                "  <div class=\"hdr\">\n" +
                logoBlock +
                "    <div class=\"hdr-info\">\n" +
-               "      <strong>ANIMISTERIA TODESCATO SRL</strong>\n" +
-               "      Via Luigi Galvani 1 &bull; 36060 Sarcedo (VI)<br/>\n" +
-               "      Tel: 0445 356028 &bull; animisteria@todescato.it<br/>\n" +
-               "      P.IVA &bull; C.F.: 01234560240\n" +
+               "      <strong>ANIMISTERIA TODESCATO</strong>\n" +
+               "      Via Luigi Galvani 44/46 &bull; 36066 Sandrigo (VI)<br/>\n" +
+               "      Tel: 0444 658208 &bull; info@animisteriatodescato.it<br/>\n" +
+               "      PEC: animisteriatodescatosas@cgn.legalmail.it<br/>\n" +
+               "      P.I.: 03200610248 &bull; SDI: SUBM70N\n" +
                "    </div>\n" +
                "  </div>\n" +
                "  <h1>Scheda Manutenzione Cassa d'Anima</h1>\n" +

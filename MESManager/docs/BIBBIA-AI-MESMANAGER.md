@@ -570,10 +570,38 @@ proponile dettagliatamente e aspetta conferma. ogni nuova implementazione deve t
 
 ---
 
+---
+
+## 🏢 DATI AZIENDALI — FONTE DI VERITÀ UFFICIALE
+
+> ⛔ **REGOLA ASSOLUTA**: NON inventare mai dati aziendali. Usare ESCLUSIVAMENTE quelli qui sotto.
+> Se un dato non è presente, **CHIEDERE all'utente** prima di procedere. MAI assumere/inventare.
+
+```
+Ragione Sociale : ANIMISTERIA TODESCATO
+Indirizzo       : Via Luigi Galvani 44/46 - 36066 Sandrigo (VI)
+Telefono        : 0444 658208
+Email           : info@animisteriatodescato.it
+PEC             : animisteriatodescatosas@cgn.legalmail.it
+P.I. / C.F.     : 03200610248
+SDI             : SUBM70N
+```
+
+**Uso in stampe PDF / intestazioni HTML** — blocco standard da copiare:
+```csharp
+"      <strong>ANIMISTERIA TODESCATO</strong>\n" +
+"      Via Luigi Galvani 44/46 &bull; 36066 Sandrigo (VI)<br/>\n" +
+"      Tel: 0444 658208 &bull; info@animisteriatodescato.it<br/>\n" +
+"      PEC: animisteriatodescatosas@cgn.legalmail.it<br/>\n" +
+"      P.I.: 03200610248 &bull; SDI: SUBM70N\n"
+```
+
+---
+
 ## 📞 Supporto Documentazione
 
-**Versione**: 4.5  
-**Data**: 1 Aprile 2026  
+**Versione**: 4.6  
+**Data**: 23 Aprile 2026  
 **Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
 **Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: v4.5 — Aggiunta regola OBBLIGATORIA tabella comparativa nelle proposte 4 soluzioni
+**Ultimo aggiornamento**: v4.6 — Aggiunta sezione DATI AZIENDALI obbligatoria (regola: mai inventare dati, chiedere se mancanti)

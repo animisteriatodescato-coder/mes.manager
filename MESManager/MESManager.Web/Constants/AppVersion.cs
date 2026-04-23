@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.51";
+    public const string Current = "1.65.52";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.51: Fix builder manutenzioni - condizioni null = non stampate (non default)
+    public const string Display = "v" + Current; // v1.65.52: Fix dati aziendali intestazione stampe (preventivi + manutenzioni)
 }
