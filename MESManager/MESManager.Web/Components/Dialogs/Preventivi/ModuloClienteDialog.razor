@@ -6,6 +6,7 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager Nav
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@inject HttpClient Http
 
 <MudDialog Class="modulo-cliente-dialog" data-testid="dlg-modulo-cliente">
     <TitleContent>
@@ -278,11 +279,32 @@
             var clienteSafe = System.Text.RegularExpressions.Regex.Replace(Dto.Cliente ?? "Cliente", @"[^\w]", "");
             var numStr = Dto.NumeroPreventivo > 0 ? $"N{Dto.NumeroPreventivo}" : $"ID{Dto.Id}";
             var fileName = $"Preventivo_{numStr}_{clienteSafe}_{DateTime.Today:yyyyMMdd}.pdf";
-            await JS.InvokeVoidAsync("mesPreventivoDownloadPdf", html, fileName);
+
+            // Tenta generazione server-side (headless Chrome/Edge)
+            // Se 503 (Chrome non trovato) → fallback alla finestra di stampa
+            var payload = new { Html = html, FileName = fileName };
+            using var resp = await Http.PostAsJsonAsync("/api/preventivo/pdf", payload);
+            if (resp.IsSuccessStatusCode)
+            {
+                var bytes = await resp.Content.ReadAsByteArrayAsync();
+                await JS.InvokeVoidAsync("downloadFile", bytes, fileName, "application/pdf");
+                Snackbar.Add($"PDF scaricato: {fileName}", Severity.Success);
+            }
+            else if ((int)resp.StatusCode == 503)
+            {
+                // Chrome/Edge non disponibile → fallback stampa
+                Snackbar.Add("Chrome/Edge non trovato. Apertura finestra di stampa...", Severity.Info);
+                await JS.InvokeVoidAsync("mesPreventivoDownloadPdf", html, fileName);
+            }
+            else
+            {
+                var err = await resp.Content.ReadAsStringAsync();
+                Snackbar.Add($"Errore generazione PDF: {resp.StatusCode}", Severity.Error);
+            }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Errore generazione PDF: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
         }
         finally
         {

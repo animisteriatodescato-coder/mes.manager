@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.55";
+    public const string Current = "1.65.56";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.55: Preventivi — fix Scarica PDF: sostituito html2pdf.js con print-window + banner istruzioni (rendering corretto logo e colori)
+    public const string Display = "v" + Current; // v1.65.56: Preventivi — Apri PDF usa headless Chrome/Edge (download diretto) + fix N° preventivo in modifica (CaricaInModifica mancava NumeroPreventivo)
 }

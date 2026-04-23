@@ -156,6 +156,8 @@ builder.Services.AddSingleton<IPageToolbarService, PageToolbarService>();
 builder.Services.AddScoped<AppBarContentService>();
 builder.Services.AddSingleton<ColorExtractionService>();
 builder.Services.AddSingleton<AppSettingsService>();
+// Generazione PDF preventivi via headless Chrome/Edge (v1.65.56)
+builder.Services.AddSingleton<ChromiumPdfService>();
 
 // Bridge AI: legge la config provider (OpenAI/Ollama) da AppSettingsService per Infrastructure (v1.65.12)
 builder.Services.AddSingleton<IAiSettingsReader, WebAiSettingsReader>();
@@ -305,7 +307,39 @@ app.MapControllers();
 var realtimeService = app.Services.GetRequiredService<RealtimeStateService>();
 realtimeService.Start();
 
+// ── Preventivo PDF: genera PDF via headless Chrome/Edge e lo restituisce come file download (v1.65.56) ──
+app.MapPost("/api/preventivo/pdf", async (
+    HttpContext ctx,
+    ChromiumPdfService pdfSvc) =>
+{
+    // Legge manualmente il body JSON per evitare problemi con antiforgery
+    using var reader = new System.IO.StreamReader(ctx.Request.Body);
+    var body = await reader.ReadToEndAsync();
+    var req = System.Text.Json.JsonSerializer.Deserialize<PreventivoRenderPdfRequest>(
+        body,
+        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    if (req == null || string.IsNullOrWhiteSpace(req.Html))
+        return Results.BadRequest("HTML mancante.");
+
+    if (!pdfSvc.IsAvailable())
+        return Results.Problem(
+            "Chrome/Edge non trovato sul server. Usa 'Stampa Cliente' per salvare il PDF.",
+            statusCode: 503);
+
+    var bytes = await pdfSvc.GeneratePdfAsync(req.Html);
+    if (bytes == null || bytes.Length == 0)
+        return Results.Problem("Generazione PDF fallita.", statusCode: 500);
+
+    var fileName = string.IsNullOrWhiteSpace(req.FileName) ? "preventivo.pdf" : req.FileName;
+    return Results.File(bytes, "application/pdf", fileName);
+})
+.DisableAntiforgery()
+.RequireAuthorization();
+
 app.Run();
 
 // Rendi Program visibile ai test E2E
 public partial class Program { }
+
+/// <summary>Payload per l'endpoint /api/preventivo/pdf (v1.65.56)</summary>
+internal record PreventivoRenderPdfRequest(string Html, string FileName);
