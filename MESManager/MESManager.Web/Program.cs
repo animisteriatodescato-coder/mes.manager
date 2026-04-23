@@ -326,9 +326,9 @@ app.MapPost("/api/preventivo/pdf", async (
             "Chrome/Edge non trovato sul server. Usa 'Stampa Cliente' per salvare il PDF.",
             statusCode: 503);
 
-    var bytes = await pdfSvc.GeneratePdfAsync(req.Html);
-    if (bytes == null || bytes.Length == 0)
-        return Results.Problem("Generazione PDF fallita.", statusCode: 500);
+    var (bytes, pdfError) = await pdfSvc.GeneratePdfAsync(req.Html);
+    if (bytes == null)
+        return Results.Problem($"Generazione PDF fallita: {pdfError}", statusCode: 500);
 
     var fileName = string.IsNullOrWhiteSpace(req.FileName) ? "preventivo.pdf" : req.FileName;
     return Results.File(bytes, "application/pdf", fileName);

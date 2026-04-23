@@ -299,7 +299,7 @@
             else
             {
                 var err = await resp.Content.ReadAsStringAsync();
-                Snackbar.Add($"Errore generazione PDF: {resp.StatusCode}", Severity.Error);
+                Snackbar.Add($"Errore PDF ({(int)resp.StatusCode}): {err}", Severity.Error, cfg => cfg.VisibleStateDuration = 15000);
             }
         }
         catch (Exception ex)
