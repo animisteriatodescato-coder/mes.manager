@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.53";
+    public const string Current = "1.65.54";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.53: Fix mobile scroll — DrawerVariant.Responsive (invece di Persistent) ripristina overflow pagine su smartphone
+    public const string Display = "v" + Current; // v1.65.54: Preventivi — bottone Scarica PDF (download diretto via html2pdf.js) + bottone Nuova Mail (apre eM Client con testo preimpostato)
 }

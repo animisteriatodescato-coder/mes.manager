@@ -165,6 +165,21 @@
                    data-testid="btn-stampa-cliente">
             Cliente
         </MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Success"
+                   StartIcon="@Icons.Material.Filled.Download"
+                   OnClick="ScaricanPdfAsync"
+                   Disabled="@_isScaricaPdf"
+                   data-testid="btn-scarica-pdf">
+            @(_isScaricaPdf ? "Generazione..." : "Scarica PDF")
+        </MudButton>
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Secondary"
+                   StartIcon="@Icons.Material.Filled.MailOutline"
+                   OnClick="ApriMailAsync"
+                   data-testid="btn-apri-mail">
+            Nuova Mail
+        </MudButton>
         <MudButton OnClick="Chiudi" data-testid="btn-chiudi-modulo">Chiudi</MudButton>
     </DialogActions>
 </MudDialog>
@@ -178,6 +193,7 @@
 
     private string _emailDestinatario = string.Empty;
     private bool _isInvioEmail;
+    private bool _isScaricaPdf;
     private decimal _fontSize = 10.5m;
     private const string FontSizeKey = "preventivo_fontsize";
 
@@ -246,6 +262,53 @@
     }
 
     private void Chiudi() => MudDialog.Close(DialogResult.Ok(true));
+
+    private async Task ScaricanPdfAsync()
+    {
+        if (Dto == null) return;
+        _isScaricaPdf = true;
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", FontSizeKey,
+                _fontSize.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            var baseUri = Nav.BaseUri.TrimEnd('/');
+            var logo = LeggiLogoInline();
+            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna: false, _fontSize, logo, _includiCondizioni ? _condizioni : null);
+            // Nome file: Preventivo_N42_BianchiSrl_20260423.pdf
+            var clienteSafe = System.Text.RegularExpressions.Regex.Replace(Dto.Cliente ?? "Cliente", @"[^\w]", "");
+            var numStr = Dto.NumeroPreventivo > 0 ? $"N{Dto.NumeroPreventivo}" : $"ID{Dto.Id}";
+            var fileName = $"Preventivo_{numStr}_{clienteSafe}_{DateTime.Today:yyyyMMdd}.pdf";
+            await JS.InvokeVoidAsync("mesPreventivoDownloadPdf", html, fileName);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore generazione PDF: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isScaricaPdf = false;
+        }
+    }
+
+    private async Task ApriMailAsync()
+    {
+        if (Dto == null) return;
+        var numStr = Dto.NumeroPreventivo > 0 ? $"N\u00b0 {Dto.NumeroPreventivo}" : "";
+        var oggetto = string.IsNullOrWhiteSpace(numStr)
+            ? $"Offerta \u2013 {Dto.Cliente}"
+            : $"Offerta {numStr} \u2013 {Dto.Cliente}";
+        var corpo =
+            $"Buongiorno,\n\n" +
+            $"in allegato alla presente trovate l'offerta richiesta.\n\n" +
+            $"Rimaniamo a disposizione per qualsiasi chiarimento.\n\n" +
+            $"Cordiali saluti,\n" +
+            $"Animisteria Todescato\n" +
+            $"Via Luigi Galvani 44/46 - 36066 Sandrigo (VI)\n" +
+            $"Tel: 0444 658208\n" +
+            $"info@animisteriatodescato.it";
+        var destinatario = Dto.EmailDestinatario ?? "";
+        await JS.InvokeVoidAsync("mesPreventivoApriMail", destinatario, oggetto, corpo);
+    }
 
     private async Task InviaEmailAsync()
     {

@@ -55,6 +55,48 @@ window.printPdf = function (bytes, fileName) {
     }
 };
 
+// ── Preventivo: scarica direttamente il PDF senza dialog di stampa (v1.65.54) ──
+// Usa html2pdf.js (CDN bundle). Crea iframe nascosto con il full HTML così gli stili vengono
+// applicati correttamente, poi genera il PDF da iframe.document.body.
+window.mesPreventivoDownloadPdf = function (htmlContent, fileName) {
+    return new Promise(function (resolve, reject) {
+        var iframe = document.createElement('iframe');
+        iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:794px;height:1123px;border:none;visibility:hidden;';
+        document.body.appendChild(iframe);
+        iframe.onload = function () {
+            var body = iframe.contentDocument ? iframe.contentDocument.body : null;
+            if (!body) { document.body.removeChild(iframe); reject(new Error('iframe body non disponibile')); return; }
+            html2pdf()
+                .set({
+                    margin: [8, 8, 8, 8],
+                    filename: fileName,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', windowWidth: 794 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                })
+                .from(body)
+                .save()
+                .then(function () { document.body.removeChild(iframe); resolve(); })
+                .catch(function (err) { document.body.removeChild(iframe); reject(err); });
+        };
+        iframe.contentDocument.open();
+        iframe.contentDocument.write(htmlContent);
+        iframe.contentDocument.close();
+    });
+};
+
+// ── Preventivo: apre eM Client (o qualunque client mail default) con oggetto e corpo preimpostati ──
+window.mesPreventivoApriMail = function (destinatario, oggetto, corpo) {
+    var mailto = 'mailto:' + encodeURIComponent(destinatario)
+        + '?subject=' + encodeURIComponent(oggetto)
+        + '&body=' + encodeURIComponent(corpo);
+    var a = document.createElement('a');
+    a.href = mailto;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+};
+
 // ── Allegati Manutenzione Casse: upload diretto HTTP (bypassa SignalR, funziona su mobile) ──
 
 // Converte HEIC/HEIF in JPEG via canvas (iPhone → browser desktop compatibile)
