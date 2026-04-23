@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace MESManager.Infrastructure.Services.AI;
 
@@ -27,7 +28,11 @@ internal sealed record GeminiContent
 internal sealed record GeminiPart
 {
     public string?                 Text             { get; init; }
+    // Gemini REST API returns camelCase in responses — explicit mapping required
+    // (SnakeCaseLower naming policy + PropertyNameCaseInsensitive can't resolve underscore vs camelCase)
+    [JsonPropertyName("functionCall")]
     public GeminiFunctionCall?     FunctionCall     { get; init; }
+    [JsonPropertyName("functionResponse")]
     public GeminiFunctionResponse? FunctionResponse { get; init; }
 }
 
@@ -62,14 +67,14 @@ internal sealed record GeminiFunctionDeclaration
 
 internal sealed record GeminiParameters
 {
-    public string                                Type       { get; init; } = "OBJECT";
+    public string                                Type       { get; init; } = "object";  // Gemini richiede minuscolo
     public Dictionary<string, GeminiParamProp>?  Properties { get; init; }
     public string[]?                             Required   { get; init; }
 }
 
 internal sealed record GeminiParamProp
 {
-    public string Type        { get; init; } = "STRING";
+    public string Type        { get; init; } = "string";  // Gemini richiede minuscolo
     public string Description { get; init; } = "";
 }
 
@@ -93,6 +98,7 @@ internal sealed record GeminiResponse
 internal sealed record GeminiCandidate
 {
     public GeminiContent? Content      { get; init; }
+    [JsonPropertyName("finishReason")]
     public string?        FinishReason { get; init; }
 }
 

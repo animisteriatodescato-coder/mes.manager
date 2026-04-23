@@ -46,6 +46,29 @@ window.downloadFileFromStream = async function (fileName, contentStreamRef) {
     URL.revokeObjectURL(url);
 };
 
+// Download PDF direttamente via fetch() dal browser — bypass totale SignalR/Blazor
+// I byte del PDF vanno HTTP response → browser senza nessuna serializzazione intermedia
+window.downloadPdfViaFetch = async function (html, fileName) {
+    const resp = await fetch('/api/preventivo/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Html: html, FileName: fileName })
+    });
+    if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error('HTTP ' + resp.status + ': ' + txt);
+    }
+    const blob = await resp.blob();
+    const url  = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href     = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+};
+
 // Print PDF directly
 window.printPdf = function (bytes, fileName) {
     let blob;

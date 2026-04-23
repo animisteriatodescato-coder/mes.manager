@@ -17,21 +17,21 @@
   "ThemeTextOnPrimary": "#FFFFFF",
   "ThemePrimaryTextColor": "#1565C0",
   "ThemeNavTextColor": "",
-  "ThemeBgOpacity": 0.4,
-  "ThemePanelOpacity": 0.61,
+  "ThemeBgOpacity": 0.35,
+  "ThemePanelOpacity": 0.98,
   "ThemeExtraColors": [
     "#484747ff",
     "#04972dff"
   ],
-  "ThemeAppBarBgColor": "#d0cfcfd3",
-  "ThemeDrawerBgColor": "#efeaead4",
+  "ThemeAppBarBgColor": "#d0cfcf66",
+  "ThemeDrawerBgColor": "#efeaeaff",
   "ThemeButtonColor": "#484747ff",
   "ThemeButtonTextColor": "#FFFFFF",
   "ThemeAppBarBgColorDark": "#1c1c1cff",
-  "ThemeDrawerBgColorDark": "#0c0c0ca3",
-  "AiProviderType": "OpenAI",
+  "ThemeDrawerBgColorDark": "#010101ff",
+  "AiProviderType": "Gemini",
   "OllamaBaseUrl": "http://localhost:11434",
   "OllamaModel": "llama3.1:8b",
   "OpenAiModel": "gpt-4o-mini",
-  "GeminiModel": "gemini-2.0-flash"
+  "GeminiModel": "gemini-3-flash-preview"
 }

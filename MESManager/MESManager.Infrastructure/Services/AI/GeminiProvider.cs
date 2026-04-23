@@ -35,7 +35,11 @@ internal sealed class GeminiProvider
         using var body  = new StringContent(json, Encoding.UTF8, "application/json");
 
         var resp = await http.PostAsync(url, body, ct);
-        resp.EnsureSuccessStatusCode();
+        if (!resp.IsSuccessStatusCode)
+        {
+            var errBody = await resp.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException($"Gemini HTTP {(int)resp.StatusCode}: {errBody}");
+}
 
         var responseBody = await resp.Content.ReadAsStringAsync(ct);
         return JsonSerializer.Deserialize<GeminiResponse>(responseBody, _jsonOpts)

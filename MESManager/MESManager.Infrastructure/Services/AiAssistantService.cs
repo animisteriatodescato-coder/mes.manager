@@ -213,7 +213,11 @@ public class AiAssistantService : IAiAssistantService
     {
         var candidate = response.Candidates?.FirstOrDefault();
         if (candidate?.Content == null)
+        {
+            _logger.LogWarning("ProcessGeminiResponseAsync: risposta senza candidates o content. FinishReason={FR}",
+                response.Candidates?.FirstOrDefault()?.FinishReason ?? "N/A");
             return "❌ Risposta vuota da Gemini.";
+        }
 
         var functionCallParts = candidate.Content.Parts?
             .Where(p => p.FunctionCall != null)

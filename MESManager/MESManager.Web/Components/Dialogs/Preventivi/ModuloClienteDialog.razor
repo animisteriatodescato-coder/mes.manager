@@ -6,7 +6,6 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager Nav
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
-@inject HttpClient Http
 
 <MudDialog Class="modulo-cliente-dialog" data-testid="dlg-modulo-cliente">
     <TitleContent>
@@ -275,36 +274,30 @@
             var baseUri = Nav.BaseUri.TrimEnd('/');
             var logo = LeggiLogoInline();
             var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna: false, _fontSize, logo, _includiCondizioni ? _condizioni : null);
-            // Nome file: Preventivo_N42_BianchiSrl_20260423.pdf
             var clienteSafe = System.Text.RegularExpressions.Regex.Replace(Dto.Cliente ?? "Cliente", @"[^\w]", "");
             var numStr = Dto.NumeroPreventivo > 0 ? $"N{Dto.NumeroPreventivo}" : $"ID{Dto.Id}";
             var fileName = $"Preventivo_{numStr}_{clienteSafe}_{DateTime.Today:yyyyMMdd}.pdf";
 
-            // Tenta generazione server-side (headless Chrome/Edge)
-            // Se 503 (Chrome non trovato) → fallback alla finestra di stampa
-            var payload = new { Html = html, FileName = fileName };
-            using var resp = await Http.PostAsJsonAsync("/api/preventivo/pdf", payload);
-            if (resp.IsSuccessStatusCode)
-            {
-                var bytes = await resp.Content.ReadAsByteArrayAsync();
-                // DotNetStreamReference: stream diretto .NET→browser, evita corruzione
-                // base64 SignalR su file grandi (PDF > qualche KB vengono troncati/corrotti)
-                using var ms = new System.IO.MemoryStream(bytes);
-                using var streamRef = new Microsoft.JSInterop.DotNetStreamReference(ms);
-                await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
-                Snackbar.Add($"PDF scaricato: {fileName}", Severity.Success);
-            }
-            else if ((int)resp.StatusCode == 503)
-            {
-                // Chrome/Edge non disponibile → fallback stampa
-                Snackbar.Add("Chrome/Edge non trovato. Apertura finestra di stampa...", Severity.Info);
-                await JS.InvokeVoidAsync("mesPreventivoDownloadPdf", html, fileName);
-            }
-            else
-            {
-                var err = await resp.Content.ReadAsStringAsync();
-                Snackbar.Add($"Errore PDF ({(int)resp.StatusCode}): {err}", Severity.Error, cfg => cfg.VisibleStateDuration = 15000);
-            }
+            // fetch() diretto dal browser → nessun byte passa per SignalR/Blazor
+            // Il PDF viene scaricato direttamente dalla risposta HTTP, senza serializzazione
+            await JS.InvokeVoidAsync("downloadPdfViaFetch", html, fileName);
+            Snackbar.Add($"PDF scaricato: {fileName}", Severity.Success);
+        }
+        catch (JSException jsEx) when (jsEx.Message.Contains("503"))
+        {
+            // Chrome/Edge non disponibile → fallback stampa
+            Snackbar.Add("Chrome/Edge non trovato sul server. Apertura finestra di stampa...", Severity.Info);
+            var baseUri = Nav.BaseUri.TrimEnd('/');
+            var logo = LeggiLogoInline();
+            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna: false, _fontSize, logo, _includiCondizioni ? _condizioni : null);
+            var clienteSafe = System.Text.RegularExpressions.Regex.Replace(Dto.Cliente ?? "Cliente", @"[^\w]", "");
+            var numStr = Dto!.NumeroPreventivo > 0 ? $"N{Dto.NumeroPreventivo}" : $"ID{Dto.Id}";
+            var fallbackFileName = $"Preventivo_{numStr}_{clienteSafe}_{DateTime.Today:yyyyMMdd}.pdf";
+            await JS.InvokeVoidAsync("mesPreventivoDownloadPdf", html, fallbackFileName);
+        }
+        catch (JSException jsEx)
+        {
+            Snackbar.Add($"Errore PDF: {jsEx.Message}", Severity.Error, cfg => cfg.VisibleStateDuration = 15000);
         }
         catch (Exception ex)
         {
