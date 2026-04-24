@@ -531,6 +531,21 @@ h1:focus {
     width: 100%;
     height: calc(100vh - 380px);
     min-height: 280px;
+    overflow: visible;          /* consente al tooltip di uscire dal container */
+}
+
+/* Vis-Timeline ha overflow:hidden built-in — override per evitare che il tooltip venga tagliato */
+.gantt-storico-vis .vis-timeline {
+    overflow: visible !important;
+}
+/* Il pannello interno degli item deve rimanere clip per non rompere il layout delle barre */
+.gantt-storico-vis .vis-content,
+.gantt-storico-vis .vis-itemset {
+    overflow: visible !important;
+}
+/* Il tooltip esce liberamente sopra tutto */
+.gantt-storico-vis .vis-tooltip {
+    z-index: 9999;
 }
 
 /* ── KPI Cards: riga orizzontale scorrevole (una sola riga) ── */

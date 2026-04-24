@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.62";
+    public const string Current = "1.65.63";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.62: fix Gantt Storico - CicliFatti/TempoMedioRilevato da Dati JSON + tooltip pezzi e media ciclo
+    public const string Display = "v" + Current; // v1.65.63: fix Gantt Storico - tooltip non più tagliato dal container (overflow visible su vis-timeline)
 }
