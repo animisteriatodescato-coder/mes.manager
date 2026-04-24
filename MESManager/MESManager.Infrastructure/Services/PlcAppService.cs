@@ -343,7 +343,13 @@ public class PlcAppService : IPlcAppService
 
     /// <summary>Helper: costruisce un PlcGanttSegmentoDto da un record PLCStorico.</summary>
     private static PlcGanttSegmentoDto BuildSegmento(Domain.Entities.PLCStorico rec, DateTime inizio, DateTime fine)
-        => new PlcGanttSegmentoDto
+    {
+        ParseDatiStorico(rec.Dati,
+            out int cicliFatti, out _, out _,
+            out int tempoMedioRil, out _, out _, out int barcode,
+            out _, out _, out _, out _);
+
+        return new PlcGanttSegmentoDto
         {
             MacchinaId         = rec.MacchinaId,
             MacchianaNome      = rec.Macchina.Codice,
@@ -354,10 +360,12 @@ public class PlcAppService : IPlcAppService
                 ? $"{rec.Operatore.Nome} {rec.Operatore.Cognome}"
                 : (rec.NumeroOperatore > 0 ? rec.NumeroOperatore.ToString() : null),
             NumeroOperatore    = rec.NumeroOperatore > 0 ? rec.NumeroOperatore : (int?)null,
-            CicliFatti         = 0,
-            BarcodeLavorazione = 0
+            CicliFatti         = cicliFatti,
+            BarcodeLavorazione = barcode,
+            TempoMedioRilevato = tempoMedioRil
             // Colore: popolato dal controller via MesDesignTokens.PlcStatoColore()
         };
+    }
 
     /// <summary>Mappa un entity PLCStorico a PlcStoricoDto — unica fonte di verità, evita duplicazione.</summary>
     private static PlcStoricoDto MapToStoricoDto(Domain.Entities.PLCStorico p)

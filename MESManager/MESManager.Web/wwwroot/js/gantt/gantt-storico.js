@@ -69,9 +69,14 @@ window.GanttStorico = (function () {
         }
         if (s.cicliFatti > 0) {
             html += '<span style="color:#888">Pezzi fatti: </span><b>' + s.cicliFatti + '</b><br>';
-            // Tempo ciclo medio: durata totale in secondi / pezzi fatti
-            var tempoCicloMedioSec = (s.durataMinuti * 60) / s.cicliFatti;
+            // Preferisce il valore hardware PLC (tempoMedioRilevato); fallback su durata/pezzi
+            var tempoCicloMedioSec = (s.tempoMedioRilevato && s.tempoMedioRilevato > 0)
+                ? s.tempoMedioRilevato
+                : (s.durataMinuti * 60) / s.cicliFatti;
             html += '<span style="color:#888">Tempo ciclo medio: </span><b>' + _formatTempoCiclo(tempoCicloMedioSec) + '</b><br>';
+        } else if (s.tempoMedioRilevato && s.tempoMedioRilevato > 0) {
+            // Ha tempo medio rilevato anche senza conteggio pezzi visibile
+            html += '<span style="color:#888">Tempo ciclo medio: </span><b>' + _formatTempoCiclo(s.tempoMedioRilevato) + '</b><br>';
         }
         if (s.barcodeLavorazione > 0) {
             html += '<span style="color:#888">Barcode: </span>' + _esc(String(s.barcodeLavorazione)) + '<br>';

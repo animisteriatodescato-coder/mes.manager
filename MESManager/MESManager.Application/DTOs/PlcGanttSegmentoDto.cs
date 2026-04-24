@@ -24,6 +24,9 @@ public class PlcGanttSegmentoDto
     public int CicliFatti { get; set; }
     public int BarcodeLavorazione { get; set; }
 
+    /// <summary>Tempo ciclo medio rilevato dal PLC (secondi). 0 se non disponibile.</summary>
+    public int TempoMedioRilevato { get; set; }
+
     /// <summary>Durata in minuti — calcolato da Inizio/Fine, serializzato nel JSON per il client JS.</summary>
     public double DurataMinuti => (Fine - Inizio).TotalMinutes;
 }
