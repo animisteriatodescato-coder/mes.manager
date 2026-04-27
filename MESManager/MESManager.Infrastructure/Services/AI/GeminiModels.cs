@@ -34,6 +34,11 @@ internal sealed record GeminiPart
     public GeminiFunctionCall?     FunctionCall     { get; init; }
     [JsonPropertyName("functionResponse")]
     public GeminiFunctionResponse? FunctionResponse { get; init; }
+    // gemini-2.5-flash/pro (thinking models) return thoughtSignature in function call parts.
+    // MUST be preserved and sent back in the second turn, otherwise Gemini returns 400 INVALID_ARGUMENT.
+    // See: https://ai.google.dev/gemini-api/docs/thought-signatures
+    [JsonPropertyName("thoughtSignature")]
+    public string?                 ThoughtSignature { get; init; }
 }
 
 internal sealed record GeminiFunctionCall

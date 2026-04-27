@@ -112,7 +112,7 @@ public static class ModuloClientePrintBuilder
                "  <title>" + TitoloDocumento(dto) + "</title>\n" +
                "  <style>\n" +
                $"    * {{ box-sizing: border-box; margin: 0; padding: 0; }}\n" +
-               $"    body {{ font-family: Arial, sans-serif; font-size: {fs}pt; color: #111; background: #fff; padding: 10mm 15mm; display: flex; flex-direction: column; min-height: calc(297mm - 30mm); }}\n" +
+               $"    body {{ font-family: Arial, sans-serif; font-size: {fs}pt; color: #111; background: #fff; display: flex; flex-direction: column; min-height: calc(297mm - 30mm); }}\n" +
                "    @page { margin: 12mm 18mm 18mm 18mm; }\n" +
                "    .hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }\n" +
                "    .hdr-logo { display: flex; align-items: center; gap: 10px; }\n" +
