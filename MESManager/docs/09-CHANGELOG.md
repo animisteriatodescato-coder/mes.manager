@@ -4,7 +4,26 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.54
+## 🔖 Versione Corrente: v1.65.63
+
+---
+
+## 🔖 v1.65.63 — Preventivi: PDF senza header Chrome e senza seconda pagina
+
+**Data**: 27 Aprile 2026
+
+### 🐛 Fix
+- Rimossi header/footer automatici inseriti da Chrome nella stampa PDF headless
+  - causa: in alto venivano stampati data e titolo/URL del file, con la parte centrale evidenziata in azzurro
+  - fix: `ChromiumPdfService` ora usa `--headless=new`, che non aggiunge più l'intestazione automatica nel PDF generato
+- Eliminato l'overflow che portava il preventivo cliente su una seconda pagina non necessaria
+  - causa: il `body` aveva padding interno oltre ai margini `@page`, aumentando artificialmente l'altezza utile della pagina
+  - fix: rimosso `padding: 10mm 15mm` dal `body` in `ModuloClientePrintBuilder`
+
+### 📁 File modificati
+- `MESManager.Web/Services/ChromiumPdfService.cs` — passaggio a `--headless=new`
+- `MESManager.Web/Components/Dialogs/Preventivi/ModuloClientePrintBuilder.cs` — rimosso padding dal `body`
+- `MESManager.Web/Constants/AppVersion.cs` — versione `1.65.63`
 
 ---
 
