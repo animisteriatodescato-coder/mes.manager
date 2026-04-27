@@ -342,13 +342,13 @@ public class AiAssistantService : IAiAssistantService
         Description = desc,
         Parameters  = (props is { Count: > 0 }) ? new GeminiParameters
         {
-            Type       = "OBJECT",
+            Type       = "object",
             Properties = props,
             Required   = required is { Length: > 0 } ? required : null
         } : null
     };
 
-    private static GeminiParamProp GemParam(string desc) => new() { Type = "STRING", Description = desc };
+    private static GeminiParamProp GemParam(string desc) => new() { Type = "string", Description = desc };
 
     // ─────────────────────────────────────────────────────────────────────────
     // TOOL CALLING ORCHESTRATION (comune a OpenAI e Ollama con tools)

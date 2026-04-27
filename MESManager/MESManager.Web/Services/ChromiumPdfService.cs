@@ -69,7 +69,7 @@ public class ChromiumPdfService(ILogger<ChromiumPdfService> logger)
                 RedirectStandardOutput = false,   // non ci serve, non redirigere per evitare deadlock
                 RedirectStandardError  = true,
             };
-            psi.ArgumentList.Add("--headless=new");
+            psi.ArgumentList.Add("--headless=old");  // più affidabile con --print-to-pdf-no-header-footer (Chrome 112-147 testato)
             psi.ArgumentList.Add($"--print-to-pdf={outputFile}");
             psi.ArgumentList.Add("--print-to-pdf-no-header-footer");
             psi.ArgumentList.Add("--run-all-compositor-stages-before-draw");
