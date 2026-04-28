@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.65";
+    public const string Current = "1.65.66";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.64: PDF preventivi senza header/footer Chrome automatici, data spostata nel footer documento
+    public const string Display = "v" + Current; // v1.65.66: stampa Programma Macchine con intestazioni abbreviate e colonne compatte
 }

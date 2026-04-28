@@ -954,6 +954,25 @@ window.programmaMacchineGrid = (function() {
         }
     }
 
+    function getPrintHeaderName(colDef) {
+        const field = (colDef?.field || '').toLowerCase();
+        const header = (colDef?.headerName || '').toLowerCase().trim();
+
+        if (field === 'ubicazione' || header === 'ubicazione') return 'Ubic.';
+        if (field === 'quantitarichiesta' || header === 'quantita' || header === 'quantita\u0300' || header === 'quantita\u00e0') return 'Q.t.';
+        if (field === 'toglieresparo' || header === 'tog. sparo' || header === 'tog sparo') return 'Tog. sp.';
+
+        return colDef?.headerName || '';
+    }
+
+    function isPrintWideColumn(colDef) {
+        const field = colDef?.field;
+        return field === 'description' ||
+               field === 'clienteDisplay' ||
+               field === 'codice' ||
+               field === 'articoloCodice';
+    }
+
     function generatePrintTable() {
         if (!gridApi) return;
 
@@ -983,7 +1002,7 @@ window.programmaMacchineGrid = (function() {
         html += `<h2 style="margin: 0 0 5px 0; color: black;">Programma Macchine</h2>`;
         html += `<p style="margin: 0; font-size: 12px; color: #666;">Data stampa: ${dateStr} ${timeStr}</p>`;
         html += `</div>`;
-        html += '<table style="width: 100%; border-collapse: collapse; font-size: 10px; background: white;">';
+        html += '<table style="width: 100%; border-collapse: collapse; font-size: 10px; background: white; table-layout: auto;">';
         
         // Header
         html += '<thead><tr style="background-color: #f0f0f0; -webkit-print-color-adjust: exact; print-color-adjust: exact;">';
@@ -991,8 +1010,9 @@ window.programmaMacchineGrid = (function() {
             const colDef = col.getColDef();
             const align = colDef.type === 'numericColumn' ? 'right' : 
                          colDef.field === 'numeroMacchina' ? 'center' : 'left';
-            const style = `border: 1px solid #ddd; padding: 4px; text-align: ${align}; font-weight: bold; background-color: #f0f0f0; -webkit-print-color-adjust: exact; print-color-adjust: exact;`;
-            html += `<th style="${style}">${colDef.headerName}</th>`;
+            const compact = isPrintWideColumn(colDef) ? 'white-space: normal;' : 'white-space: nowrap; width: 1%;';
+            const style = `border: 1px solid #ddd; padding: 4px; text-align: ${align}; ${compact} font-weight: bold; background-color: #f0f0f0; -webkit-print-color-adjust: exact; print-color-adjust: exact;`;
+            html += `<th style="${style}">${getPrintHeaderName(colDef)}</th>`;
         });
         html += '</tr></thead>';
 
@@ -1030,7 +1050,8 @@ window.programmaMacchineGrid = (function() {
                 const align = colDef.type === 'numericColumn' ? 'right' : 
                              field === 'numeroMacchina' ? 'center' : 'left';
                 const fontWeight = field === 'numeroMacchina' ? 'font-weight: bold;' : '';
-                const style = `border: 1px solid #ddd; padding: 3px; text-align: ${align}; ${fontWeight} background-color: ${bgColor}; -webkit-print-color-adjust: exact; print-color-adjust: exact;`;
+                const compact = isPrintWideColumn(colDef) ? 'white-space: normal;' : 'white-space: nowrap; width: 1%;';
+                const style = `border: 1px solid #ddd; padding: 3px; text-align: ${align}; ${compact} ${fontWeight} background-color: ${bgColor}; -webkit-print-color-adjust: exact; print-color-adjust: exact;`;
                 html += `<td style="${style}">${value}</td>`;
             });
             html += '</tr>';
@@ -1097,7 +1118,7 @@ window.programmaMacchineGrid = (function() {
         }
         h2 { text-align: center; margin-bottom: 5px; color: #000; }
         .print-date { text-align: center; font-size: 12px; color: #666; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; font-size: 10px; background-color: #ffffff; }
+        table { width: 100%; border-collapse: collapse; font-size: 10px; background-color: #ffffff; table-layout: auto; }
         th { 
             border: 1px solid #ccc; 
             padding: 4px; 
@@ -1107,6 +1128,8 @@ window.programmaMacchineGrid = (function() {
             print-color-adjust: exact !important;
         }
         td { border: 1px solid #ddd; padding: 3px; }
+        .narrow-col { white-space: nowrap; width: 1%; }
+        .wide-col { white-space: normal; }
         .footer { margin-top: 10px; font-size: 9px; color: #666; text-align: right; }
         .machine-light { background-color: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         .machine-dark { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -1128,7 +1151,8 @@ window.programmaMacchineGrid = (function() {
             const colDef = col.getColDef();
             const alignClass = colDef.type === 'numericColumn' ? 'right' : 
                               colDef.field === 'numeroMacchina' ? 'center' : '';
-            html += `<th class="${alignClass}">${colDef.headerName}</th>`;
+            const widthClass = isPrintWideColumn(colDef) ? 'wide-col' : 'narrow-col';
+            html += `<th class="${alignClass} ${widthClass}">${getPrintHeaderName(colDef)}</th>`;
         });
 
         html += `</tr>
@@ -1166,7 +1190,8 @@ window.programmaMacchineGrid = (function() {
 
                 const alignClass = colDef.type === 'numericColumn' ? 'right' : 
                                   field === 'numeroMacchina' ? 'center bold' : '';
-                html += `<td class="${alignClass}">${value}</td>`;
+                const widthClass = isPrintWideColumn(colDef) ? 'wide-col' : 'narrow-col';
+                html += `<td class="${alignClass} ${widthClass}">${value}</td>`;
             });
             html += '</tr>';
         });
@@ -1256,7 +1281,7 @@ window.programmaMacchineGrid = (function() {
         }
         h2 { text-align: center; margin-bottom: 5px; color: #000; }
         .print-date { text-align: center; font-size: 12px; color: #666; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; font-size: ${printFontSize}px; background-color: #ffffff; }
+        table { width: 100%; border-collapse: collapse; font-size: ${printFontSize}px; background-color: #ffffff; table-layout: auto; }
         th { 
             border: 1px solid #ccc; 
             padding: 4px; 
@@ -1266,6 +1291,8 @@ window.programmaMacchineGrid = (function() {
             print-color-adjust: exact !important;
         }
         td { border: 1px solid #ddd; padding: 3px; }
+        .narrow-col { white-space: nowrap; width: 1%; }
+        .wide-col { white-space: normal; }
         .footer { margin-top: 10px; font-size: 9px; color: #666; text-align: right; }
         .machine-light { background-color: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         .machine-dark { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -1287,7 +1314,8 @@ window.programmaMacchineGrid = (function() {
             const colDef = col.getColDef();
             const alignClass = colDef.type === 'numericColumn' ? 'right' : 
                               colDef.field === 'numeroMacchina' ? 'center' : '';
-            html += `<th class="${alignClass}">${colDef.headerName}</th>`;
+            const widthClass = isPrintWideColumn(colDef) ? 'wide-col' : 'narrow-col';
+            html += `<th class="${alignClass} ${widthClass}">${getPrintHeaderName(colDef)}</th>`;
         });
 
         html += `</tr>
@@ -1324,7 +1352,8 @@ window.programmaMacchineGrid = (function() {
 
                 const alignClass = colDef.type === 'numericColumn' ? 'right' : 
                                   field === 'numeroMacchina' ? 'center bold' : '';
-                html += `<td class="${alignClass}">${value}</td>`;
+                const widthClass = isPrintWideColumn(colDef) ? 'wide-col' : 'narrow-col';
+                html += `<td class="${alignClass} ${widthClass}">${value}</td>`;
             });
             html += '</tr>';
         });

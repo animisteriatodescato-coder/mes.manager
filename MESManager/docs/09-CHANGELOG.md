@@ -4,7 +4,25 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.65
+## 🔖 Versione Corrente: v1.65.66
+
+
+## 🔖 v1.65.66 — Stampa Programma Macchine piu compatta
+
+**Data**: 28 Aprile 2026
+
+### ✨ Miglioramento
+- In stampa, intestazioni abbreviate per risparmio spazio:
+  - `Ubicazione` -> `Ubic.`
+  - `Quantita` -> `Q.t.`
+  - `Tog. Sparo` -> `Tog. sp.`
+- Colonne in stampa rese piu compatte con larghezza minima necessaria (`nowrap + width: 1%`)
+- Espansione libera mantenuta solo per le colonne testuali lunghe (`Codice`, `Cod. Articolo`, `Descrizione`, `Cliente`)
+- Miglioria applicata a tutti i percorsi di stampa della pagina (tabella interna, nuova finestra, iframe)
+
+### 📁 File Modificati
+- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` — helper intestazioni stampa + layout colonne compatto
+- `MESManager.Web/Constants/AppVersion.cs` — v1.65.65 -> v1.65.66
 
 
 ## 🔖 v1.65.65 — Strip suffissi societari da ClienteDisplay
