@@ -4,7 +4,23 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.66
+## 🔖 Versione Corrente: v1.65.67
+
+
+## 🔖 v1.65.67 — Font stampa legato alle Impostazioni + deploy
+
+**Data**: 28 Aprile 2026
+
+### 🐛 Fix
+- Corretto il comportamento della stampa Programma Macchine: il font ora segue il valore `Font Size` delle Impostazioni pagina
+- Eliminato l'effetto di riduzione automatica eccessiva (auto-shrink):
+  - `nowrap` mantenuto solo per colonne realmente corte
+  - le altre colonne vanno a capo (`word-break`) per evitare che il browser rimpicciolisca tutto
+- Intestazioni/data/footer della stampa ora scalano in modo coerente con il font impostato
+
+### 📁 File Modificati
+- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` — migliorata logica classi colonne print (`narrow` vs `wrap`) + font dinamico da impostazioni
+- `MESManager.Web/Constants/AppVersion.cs` — v1.65.66 -> v1.65.67
 
 
 ## 🔖 v1.65.66 — Stampa Programma Macchine piu compatta

@@ -973,6 +973,20 @@ window.programmaMacchineGrid = (function() {
                field === 'articoloCodice';
     }
 
+    function isPrintNoWrapColumn(colDef) {
+        const field = colDef?.field;
+        return field === 'numeroMacchina' ||
+               field === 'ordineSequenza' ||
+               field === 'quantitaRichiesta' ||
+               field === 'uoM' ||
+               field === 'ubicazione' ||
+               field === 'togliereSparo' ||
+               field === 'ordine' ||
+               field === 'storico' ||
+               field === 'stampaEtichetta' ||
+               field === 'hasRicetta';
+    }
+
     function generatePrintTable() {
         if (!gridApi) return;
 
@@ -1010,7 +1024,9 @@ window.programmaMacchineGrid = (function() {
             const colDef = col.getColDef();
             const align = colDef.type === 'numericColumn' ? 'right' : 
                          colDef.field === 'numeroMacchina' ? 'center' : 'left';
-            const compact = isPrintWideColumn(colDef) ? 'white-space: normal;' : 'white-space: nowrap; width: 1%;';
+            const compact = isPrintNoWrapColumn(colDef)
+                ? 'white-space: nowrap; width: 1%;'
+                : 'white-space: normal; word-break: break-word;';
             const style = `border: 1px solid #ddd; padding: 4px; text-align: ${align}; ${compact} font-weight: bold; background-color: #f0f0f0; -webkit-print-color-adjust: exact; print-color-adjust: exact;`;
             html += `<th style="${style}">${getPrintHeaderName(colDef)}</th>`;
         });
@@ -1050,7 +1066,9 @@ window.programmaMacchineGrid = (function() {
                 const align = colDef.type === 'numericColumn' ? 'right' : 
                              field === 'numeroMacchina' ? 'center' : 'left';
                 const fontWeight = field === 'numeroMacchina' ? 'font-weight: bold;' : '';
-                const compact = isPrintWideColumn(colDef) ? 'white-space: normal;' : 'white-space: nowrap; width: 1%;';
+                const compact = isPrintNoWrapColumn(colDef)
+                    ? 'white-space: nowrap; width: 1%;'
+                    : 'white-space: normal; word-break: break-word;';
                 const style = `border: 1px solid #ddd; padding: 3px; text-align: ${align}; ${compact} ${fontWeight} background-color: ${bgColor}; -webkit-print-color-adjust: exact; print-color-adjust: exact;`;
                 html += `<td style="${style}">${value}</td>`;
             });
@@ -1129,7 +1147,7 @@ window.programmaMacchineGrid = (function() {
         }
         td { border: 1px solid #ddd; padding: 3px; }
         .narrow-col { white-space: nowrap; width: 1%; }
-        .wide-col { white-space: normal; }
+        .wrap-col { white-space: normal; word-break: break-word; }
         .footer { margin-top: 10px; font-size: 9px; color: #666; text-align: right; }
         .machine-light { background-color: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         .machine-dark { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -1151,7 +1169,7 @@ window.programmaMacchineGrid = (function() {
             const colDef = col.getColDef();
             const alignClass = colDef.type === 'numericColumn' ? 'right' : 
                               colDef.field === 'numeroMacchina' ? 'center' : '';
-            const widthClass = isPrintWideColumn(colDef) ? 'wide-col' : 'narrow-col';
+            const widthClass = isPrintNoWrapColumn(colDef) ? 'narrow-col' : 'wrap-col';
             html += `<th class="${alignClass} ${widthClass}">${getPrintHeaderName(colDef)}</th>`;
         });
 
@@ -1190,7 +1208,7 @@ window.programmaMacchineGrid = (function() {
 
                 const alignClass = colDef.type === 'numericColumn' ? 'right' : 
                                   field === 'numeroMacchina' ? 'center bold' : '';
-                const widthClass = isPrintWideColumn(colDef) ? 'wide-col' : 'narrow-col';
+                const widthClass = isPrintNoWrapColumn(colDef) ? 'narrow-col' : 'wrap-col';
                 html += `<td class="${alignClass} ${widthClass}">${value}</td>`;
             });
             html += '</tr>';
@@ -1225,7 +1243,11 @@ window.programmaMacchineGrid = (function() {
     function printViaIframe(printColumnFields, fontSize) {
         if (!gridApi) return;
 
-        const printFontSize = (fontSize && fontSize > 0) ? fontSize : 10;
+        const parsedFontSize = Number(fontSize);
+        const printFontSize = (Number.isFinite(parsedFontSize) && parsedFontSize > 0) ? parsedFontSize : 10;
+        const headerFontSize = Math.max(printFontSize + 4, 14);
+        const dateFontSize = Math.max(printFontSize, 11);
+        const footerFontSize = Math.max(printFontSize - 1, 9);
 
         // Ottieni le colonne nell'ordine attuale della griglia (come visualizzato dall'utente)
         // getAllDisplayedColumns() rispetta l'ordine delle colonne dopo drag & drop
@@ -1279,8 +1301,8 @@ window.programmaMacchineGrid = (function() {
             html, body { background: white !important; background-color: white !important; }
             * { background-color: inherit; }
         }
-        h2 { text-align: center; margin-bottom: 5px; color: #000; }
-        .print-date { text-align: center; font-size: 12px; color: #666; margin-bottom: 15px; }
+        h2 { text-align: center; margin-bottom: 5px; color: #000; font-size: ${headerFontSize}px; }
+        .print-date { text-align: center; font-size: ${dateFontSize}px; color: #666; margin-bottom: 15px; }
         table { width: 100%; border-collapse: collapse; font-size: ${printFontSize}px; background-color: #ffffff; table-layout: auto; }
         th { 
             border: 1px solid #ccc; 
@@ -1292,8 +1314,8 @@ window.programmaMacchineGrid = (function() {
         }
         td { border: 1px solid #ddd; padding: 3px; }
         .narrow-col { white-space: nowrap; width: 1%; }
-        .wide-col { white-space: normal; }
-        .footer { margin-top: 10px; font-size: 9px; color: #666; text-align: right; }
+        .wrap-col { white-space: normal; word-break: break-word; }
+        .footer { margin-top: 10px; font-size: ${footerFontSize}px; color: #666; text-align: right; }
         .machine-light { background-color: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         .machine-dark { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         .machine-separator { border-top: 3px solid #000 !important; }
@@ -1314,7 +1336,7 @@ window.programmaMacchineGrid = (function() {
             const colDef = col.getColDef();
             const alignClass = colDef.type === 'numericColumn' ? 'right' : 
                               colDef.field === 'numeroMacchina' ? 'center' : '';
-            const widthClass = isPrintWideColumn(colDef) ? 'wide-col' : 'narrow-col';
+            const widthClass = isPrintNoWrapColumn(colDef) ? 'narrow-col' : 'wrap-col';
             html += `<th class="${alignClass} ${widthClass}">${getPrintHeaderName(colDef)}</th>`;
         });
 
@@ -1352,7 +1374,7 @@ window.programmaMacchineGrid = (function() {
 
                 const alignClass = colDef.type === 'numericColumn' ? 'right' : 
                                   field === 'numeroMacchina' ? 'center bold' : '';
-                const widthClass = isPrintWideColumn(colDef) ? 'wide-col' : 'narrow-col';
+                const widthClass = isPrintNoWrapColumn(colDef) ? 'narrow-col' : 'wrap-col';
                 html += `<td class="${alignClass} ${widthClass}">${value}</td>`;
             });
             html += '</tr>';
