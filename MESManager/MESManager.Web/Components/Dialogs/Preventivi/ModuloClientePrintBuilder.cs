@@ -81,8 +81,9 @@ public static class ModuloClientePrintBuilder
 
         var numeroRef = dto.NumeroPreventivo > 0 ? $"N. {dto.NumeroPreventivo}" : "";
         var emissioneRow = string.IsNullOrWhiteSpace(numeroRef)
-            ? $"Data emissione: {dto.DataCreazione:dd/MM/yyyy}"
-            : $"Rif. {numeroRef} &nbsp;&bull;&nbsp; Data emissione: {dto.DataCreazione:dd/MM/yyyy}";
+            ? ""
+            : $"Rif. {numeroRef}";
+        var footerDateRow = $"Data emissione: {dto.DataCreazione:dd/MM/yyyy}";
 
         var clienteEnc = System.Web.HttpUtility.HtmlEncode(dto.Cliente);
         var clienteSpan = $"<div style=\"grid-column:1/3\"><dt>Cliente</dt><dd>{clienteEnc}</dd></div>";
@@ -112,7 +113,7 @@ public static class ModuloClientePrintBuilder
                "  <title>" + TitoloDocumento(dto) + "</title>\n" +
                "  <style>\n" +
                $"    * {{ box-sizing: border-box; margin: 0; padding: 0; }}\n" +
-               $"    body {{ font-family: Arial, sans-serif; font-size: {fs}pt; color: #111; background: #fff; display: flex; flex-direction: column; min-height: calc(297mm - 30mm); }}\n" +
+               $"    body {{ font-family: Arial, sans-serif; font-size: {fs}pt; color: #111; background: #fff; display: flex; flex-direction: column; }}\n" +
                "    @page { margin: 12mm 18mm 18mm 18mm; }\n" +
                "    .hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }\n" +
                "    .hdr-logo { display: flex; align-items: center; gap: 10px; }\n" +
@@ -148,6 +149,7 @@ public static class ModuloClientePrintBuilder
                $"    .firma-label {{ font-size: {fsTiny}pt; color: #666; margin-bottom: 3px; }}\n" +
                "    .firma-line { border-bottom: 1px solid #333; height: 32px; }\n" +
                $"    .firma-note {{ font-size: {fsTiny}pt; color: #666; margin-top: 8px; }}\n" +
+               $"    .doc-footer {{ position: fixed; left: 18mm; right: 18mm; bottom: 6mm; text-align: right; font-size: {fsTiny}pt; color: #666; }}\n" +
                "    @media print {\n" +
                "      body { padding: 0; }\n" +
                "      -webkit-print-color-adjust: exact; print-color-adjust: exact;\n" +
@@ -190,6 +192,7 @@ public static class ModuloClientePrintBuilder
                $"    <tbody>{righi}</tbody>\n" +
                "  </table>\n\n" +
                BuildCondizioniHtml(condizioni) +
+               $"  <div class=\"doc-footer\">{footerDateRow}</div>\n" +
                "</body>\n" +
                "</html>";
     }

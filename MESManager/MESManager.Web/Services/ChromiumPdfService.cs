@@ -69,8 +69,9 @@ public class ChromiumPdfService(ILogger<ChromiumPdfService> logger)
                 RedirectStandardOutput = false,   // non ci serve, non redirigere per evitare deadlock
                 RedirectStandardError  = true,
             };
-            psi.ArgumentList.Add("--headless=new");  // Chrome 112+: no header/footer di default, no flag --print-to-pdf-no-header-footer necessario
+            psi.ArgumentList.Add("--headless=new");
             psi.ArgumentList.Add($"--print-to-pdf={outputFile}");
+            psi.ArgumentList.Add("--print-to-pdf-no-header-footer"); // elimina data/url/paginazione automatiche di Chrome
             psi.ArgumentList.Add("--run-all-compositor-stages-before-draw");
             psi.ArgumentList.Add("--virtual-time-budget=5000");
             psi.ArgumentList.Add("--disable-gpu");

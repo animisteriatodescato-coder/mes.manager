@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.63";
+    public const string Current = "1.65.64";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.63: fix Gantt Storico - tooltip non più tagliato dal container (overflow visible su vis-timeline)
+    public const string Display = "v" + Current; // v1.65.64: PDF preventivi senza header/footer Chrome automatici, data spostata nel footer documento
 }

@@ -4,7 +4,29 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.63
+## 🔖 Versione Corrente: v1.65.64
+
+---
+
+## 🔖 v1.65.64 — Preventivi: rimozione footer Chrome + data documento in basso
+
+**Data**: 28 Aprile 2026
+
+### 🐛 Fix
+- Rimossi definitivamente header/footer automatici di Chrome nel PDF (`data`, `nome file/URL`, numerazione pagina)
+  - fix tecnico: aggiunto flag `--print-to-pdf-no-header-footer` in `ChromiumPdfService`
+- Eliminata la pagina 2 vuota residua
+  - causa: `min-height` del `body` in area stampa che forzava overflow
+  - fix: rimosso `min-height: calc(297mm - 30mm)` da `ModuloClientePrintBuilder`
+
+### ✨ UX PDF
+- Spostata la data di emissione dal blocco meta in alto a un footer documento in basso pagina
+- Riferimento preventivo in alto mantenuto come `Rif. N.xxx` (senza data)
+
+### 📁 File modificati
+- `MESManager.Web/Services/ChromiumPdfService.cs`
+- `MESManager.Web/Components/Dialogs/Preventivi/ModuloClientePrintBuilder.cs`
+- `MESManager.Web/Constants/AppVersion.cs` — versione `1.65.64`
 
 ---
 
