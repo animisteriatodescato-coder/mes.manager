@@ -27,7 +27,7 @@
         else
         {
             <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
-                Anteprima — il PDF verrà aperto in una nuova finestra.
+                Anteprima documento. Per un PDF pulito (senza intestazioni/piè di pagina del browser) usa il pulsante verde Apri PDF.
             </MudText>
 
             <!-- Anteprima compatta -->
@@ -158,21 +158,25 @@
                    data-testid="btn-stampa-interna">
             Interna
         </MudButton>
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Print"
-                   OnClick="@(() => StampaAsync(false))"
-                   data-testid="btn-stampa-cliente">
-            Cliente
-        </MudButton>
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Success"
-                   StartIcon="@Icons.Material.Filled.PictureAsPdf"
-                   OnClick="ScaricanPdfAsync"
-                   Disabled="@_isScaricaPdf"
-                   data-testid="btn-scarica-pdf">
-            @(_isScaricaPdf ? "Apertura..." : "Apri PDF")
-        </MudButton>
+        <MudTooltip Text="Apre la stampa browser: il risultato può includere intestazioni/piè di pagina del browser.">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Print"
+                       OnClick="@(() => StampaAsync(false))"
+                       data-testid="btn-stampa-cliente">
+                Cliente
+            </MudButton>
+        </MudTooltip>
+        <MudTooltip Text="Genera PDF server-side (consigliato): niente header/footer del browser.">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Success"
+                       StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                       OnClick="ScaricanPdfAsync"
+                       Disabled="@_isScaricaPdf"
+                       data-testid="btn-scarica-pdf">
+                @(_isScaricaPdf ? "Apertura..." : "Apri PDF")
+            </MudButton>
+        </MudTooltip>
         <MudButton Variant="Variant.Outlined"
                    Color="Color.Secondary"
                    StartIcon="@Icons.Material.Filled.MailOutline"

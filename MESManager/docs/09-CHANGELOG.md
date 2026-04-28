@@ -1,10 +1,30 @@
-# 08 - Changelog e Workflow
+﻿# 08 - Changelog e Workflow
 
 > **Scopo**: Storico versioni, modifiche pendenti e workflow AI per deploy
 
 ---
 
-## 🔖 Versione Corrente: v1.65.67
+## 🔖 Versione Corrente: v1.65.68
+
+
+## 🔖 v1.65.68 — Preventivo cliente: impaginazione piu compatta + guida PDF pulito
+
+**Data**: 28 Aprile 2026
+
+### ✨ Miglioramenti
+- Rifinita l'impaginazione del modulo cliente preventivo per ridurre spazi vuoti e aumentare la densita informativa:
+  - ridotti margini verticali di titolo/sezioni
+  - tabella prezzi piu compatta (header/celle)
+  - blocchi dati tecnici/cliente con gap ridotto
+- Data emissione resa piu naturale nel flusso documento (non piu in footer fisso assoluto)
+- Chiarito nel dialog il flusso consigliato:
+  - `Apri PDF` (verde) = PDF server-side pulito, senza header/footer browser
+  - `Cliente` (stampa browser) = puo includere intestazioni/pie di pagina del browser
+
+### 📁 File Modificati
+- `MESManager.Web/Components/Dialogs/Preventivi/ModuloClientePrintBuilder.cs` — ottimizzazione CSS/layout stampa cliente
+- `MESManager.Web/Components/Dialogs/Preventivi/ModuloClienteDialog.razor` — tooltip e testo guida per distinguere stampa browser vs PDF pulito
+- `MESManager.Web/Constants/AppVersion.cs` — v1.65.67 -> v1.65.68
 
 
 ## 🔖 v1.65.67 — Font stampa legato alle Impostazioni + deploy

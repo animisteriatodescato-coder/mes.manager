@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.67";
+    public const string Current = "1.65.68";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.67: stampa Programma Macchine rispetta font impostazioni senza autoshrink
+    public const string Display = "v" + Current; // v1.65.68: preventivo cliente piu compatto e flusso PDF consigliato chiarito in dialog
 }

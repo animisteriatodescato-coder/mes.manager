@@ -113,7 +113,7 @@ public static class ModuloClientePrintBuilder
                "  <title>" + TitoloDocumento(dto) + "</title>\n" +
                "  <style>\n" +
                $"    * {{ box-sizing: border-box; margin: 0; padding: 0; }}\n" +
-               $"    body {{ font-family: Arial, sans-serif; font-size: {fs}pt; color: #111; background: #fff; display: flex; flex-direction: column; }}\n" +
+               $"    body {{ font-family: Arial, sans-serif; font-size: {fs}pt; color: #111; background: #fff; }}\n" +
                "    @page { margin: 12mm 18mm 18mm 18mm; }\n" +
                "    .hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }\n" +
                "    .hdr-logo { display: flex; align-items: center; gap: 10px; }\n" +
@@ -123,22 +123,22 @@ public static class ModuloClientePrintBuilder
                "    .hdr-info strong { display: block; font-size: 8.5pt; color: #111; margin-bottom: 2px; }\n" +
                "    hr.thick { border: none; border-top: 2.5px solid #111; margin: 7px 0 10px; }\n" +
                "    hr.thin  { border: none; border-top: 1px solid #ccc; margin: 6px 0; }\n" +
-               $"    h1 {{ font-size: {fsTitle}pt; font-weight: 800; letter-spacing: 0.5px; margin-top: 1cm; margin-bottom: 3px; }}\n" +
-               $"    .meta {{ font-size: {fsTiny}pt; color: #555; margin-bottom: 10px; }}\n" +
+               $"    h1 {{ font-size: {fsTitle}pt; font-weight: 800; letter-spacing: 0.5px; margin-top: 4mm; margin-bottom: 2px; }}\n" +
+               $"    .meta {{ font-size: {fsTiny}pt; color: #555; margin-bottom: 6px; }}\n" +
                $"    .section-title {{ font-size: {fsSec}pt; font-weight: bold; text-transform: uppercase;\n" +
-               "                      border-bottom: 1.5px solid #111; padding-bottom: 2px; margin: 14px 0 7px; }}\n" +
-               "    dl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 12px; margin-bottom: 10px; }\n" +
+               "                      border-bottom: 1.5px solid #111; padding-bottom: 2px; margin: 9px 0 5px; }}\n" +
+               "    dl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 10px; margin-bottom: 6px; }\n" +
                $"    dt {{ font-size: {fsTiny}pt; color: #666; margin-bottom: 1px; }}\n" +
                $"    dd {{ font-size: {fsSmall}pt; font-weight: 600; }}\n" +
-               "    table.prezzi { width: 100%; border-collapse: collapse; margin-top: 4px; }\n" +
+               "    table.prezzi { width: 100%; border-collapse: collapse; margin-top: 2px; }\n" +
                $"    table.prezzi th {{ background: #f2f2f2; border: 1px solid #bbb; padding: 5px 10px;\n" +
                $"                       font-size: {fsTiny}pt; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}\n" +
-               $"    table.prezzi td {{ border: 1px solid #ccc; padding: 6px 10px; font-size: {fs}pt; }}\n" +
+               $"    table.prezzi td {{ border: 1px solid #ccc; padding: 5px 10px; font-size: {fs}pt; }}\n" +
                "    td.price { text-align: right; font-weight: bold; color: #1a5c1a; }\n" +
                $"    .note-block {{ border-left: 3px solid #999; background: #f9f9f9; padding: 7px 12px;\n" +
-               $"                   font-size: {fsTiny}pt; margin-bottom: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}\n" +
+               $"                   font-size: {fsTiny}pt; margin-bottom: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}\n" +
                $"    .conditions {{ border: 1px solid #2e7d32; border-radius: 4px; padding: 10px 14px;\n" +
-               $"                   margin-top: auto; font-size: {fsCond}pt; line-height: 1.65;\n" +
+               $"                   margin-top: 8px; font-size: {fsCond}pt; line-height: 1.55;\n" +
                "                   -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n" +
                $"    .conditions .cond-title {{ font-weight: bold; color: #1b5e20; font-size: {fsSmall}pt; margin-bottom: 5px; }}\n" +
                "    .conditions ul { padding-left: 16px; }\n" +
@@ -149,7 +149,7 @@ public static class ModuloClientePrintBuilder
                $"    .firma-label {{ font-size: {fsTiny}pt; color: #666; margin-bottom: 3px; }}\n" +
                "    .firma-line { border-bottom: 1px solid #333; height: 32px; }\n" +
                $"    .firma-note {{ font-size: {fsTiny}pt; color: #666; margin-top: 8px; }}\n" +
-               $"    .doc-footer {{ position: fixed; left: 18mm; right: 18mm; bottom: 6mm; text-align: right; font-size: {fsTiny}pt; color: #666; }}\n" +
+               $"    .doc-footer {{ margin-top: 10px; text-align: right; font-size: {fsTiny}pt; color: #666; }}\n" +
                "    @media print {\n" +
                "      body { padding: 0; }\n" +
                "      -webkit-print-color-adjust: exact; print-color-adjust: exact;\n" +
@@ -191,8 +191,8 @@ public static class ModuloClientePrintBuilder
                $"    <thead>{theadPrezzi}</thead>\n" +
                $"    <tbody>{righi}</tbody>\n" +
                "  </table>\n\n" +
-               BuildCondizioniHtml(condizioni) +
                $"  <div class=\"doc-footer\">{footerDateRow}</div>\n" +
+               BuildCondizioniHtml(condizioni) +
                "</body>\n" +
                "</html>";
     }
