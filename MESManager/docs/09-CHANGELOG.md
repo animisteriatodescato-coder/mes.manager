@@ -4,7 +4,22 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.64
+## 🔖 Versione Corrente: v1.65.65
+
+
+## 🔖 v1.65.65 — Strip suffissi societari da ClienteDisplay
+
+**Data**: 28 Aprile 2026
+
+### ✨ Miglioramento
+- Rimossi automaticamente i suffissi societari italiani (S.R.L., S.P.A., S.N.C., S.A.S., S.C.R.L., S.A.P.A., S.S., S.C.) dalla proprietà `ClienteDisplay` in `CommessaDto`
+- Riduzione nomi cliente in tutte le griglie e stampe (zero duplicazione - unica fonte di verità)
+- Regex case-insensitive compilata, gestisce varianti con/senza punti (es. SRL, S.R.L, S.R.L.)
+- Beneficio principale: stampa Programma Macchine — nomi cliente non vanno più a capo e la tabella entra su un foglio
+
+### 📁 File Modificati
+- `MESManager.Application/DTOs/CommessaDto.cs` — `ClienteDisplay` da expression body a property con `StripBusinessSuffix`
+- `MESManager.Web/Constants/AppVersion.cs` — v1.65.64 → v1.65.65
 
 ---
 

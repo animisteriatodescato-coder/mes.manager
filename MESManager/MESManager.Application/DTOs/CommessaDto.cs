@@ -21,9 +21,29 @@ public class CommessaDto
     
     /// <summary>
     /// Cliente da visualizzare: priorità a CompanyName (dati Mago - fonte corretta),
-    /// fallback a ClienteRagioneSociale (tabella Clienti - può contenere dati errati)
+    /// fallback a ClienteRagioneSociale (tabella Clienti - può contenere dati errati).
+    /// I suffissi societari italiani (S.R.L., S.P.A., S.N.C., ecc.) vengono rimossi
+    /// per compattare la visualizzazione nelle griglie e stampe.
     /// </summary>
-    public string ClienteDisplay => CompanyName ?? ClienteRagioneSociale ?? "N/D";
+    public string ClienteDisplay
+    {
+        get
+        {
+            var name = CompanyName ?? ClienteRagioneSociale ?? "N/D";
+            return StripBusinessSuffix(name);
+        }
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex _businessSuffixRegex =
+        new(@"\s+(?:s\.?r\.?l|s\.?p\.?a|s\.?n\.?c|s\.?a\.?s|s\.?c\.?r\.?l|s\.?a\.?p\.?a|s\.?s|s\.?c)\.?\s*$",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase |
+            System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private static string StripBusinessSuffix(string name)
+    {
+        if (string.IsNullOrEmpty(name) || name == "N/D") return name;
+        return _businessSuffixRegex.Replace(name, string.Empty).Trim();
+    }
     public string? ArticoloCodice { get; set; }
     public string? ArticoloDescrizione { get; set; }
     public decimal? ArticoloPrezzo { get; set; }
