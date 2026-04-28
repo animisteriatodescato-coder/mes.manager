@@ -4,7 +4,31 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.68
+## 🔖 Versione Corrente: v1.65.70
+
+
+## 🔖 v1.65.70 — Programma Macchine: frecce ordinamento coerenti in dark mode
+
+**Data**: 28 Aprile 2026
+
+### 🐛 Fix Preventivi
+- Il pulsante `Cliente` del modulo preventivo ora genera direttamente il PDF pulito server-side tramite `/api/preventivo/pdf`.
+- Eliminato il percorso di stampa browser per il PDF cliente, evitando intestazioni e pie di pagina automatici di Chrome.
+- Rinominato il metodo handler in `ScaricaPdfAsync` per rimuovere il refuso precedente.
+
+### 🎨 UI
+- Uniformate le frecce su/giu della prima colonna in Programma Macchine al tema dark:
+  - freccia nera
+  - sfondo grigio chiaro
+  - hover neutro senza azzurro/blu
+- Spostati i colori da inline JS a `app.css`, usando `.mud-theme-dark` come fonte corretta del tema.
+
+### 📁 File Modificati
+- `MESManager.Web/Components/Dialogs/Preventivi/ModuloClienteDialog.razor` — pulsante Cliente collegato al PDF server-side
+- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` — renderer frecce con classi CSS dedicate
+- `MESManager.Web/wwwroot/app.css` — stile light/dark centralizzato per `.mes-move-btn`
+- `MESManager.Web/Components/App.razor` — cache busting CSS/JS
+- `MESManager.Web/Constants/AppVersion.cs` — v1.65.69 -> v1.65.70
 
 
 ## 🔖 v1.65.68 — Preventivo cliente: impaginazione piu compatta + guida PDF pulito

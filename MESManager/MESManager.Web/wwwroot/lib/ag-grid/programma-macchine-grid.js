@@ -42,13 +42,9 @@ window.programmaMacchineGrid = (function() {
                 if (params.data.isPlaceholder) {
                     return '<span style="color:#bbb;font-style:italic;font-size:11px;">(vuoto)</span>';
                 }
-                const isDark = document.body.classList.contains('mud-theme-dark');
-                const btnStyle = isDark
-                    ? 'border:none;background:#37474f;color:#000000;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:3px;font-weight:bold;'
-                    : 'border:none;background:#e3f2fd;color:#1565c0;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:3px;';
-                return `<div style="display:flex;gap:2px;justify-content:center;align-items:center;height:100%;">
-                    <button class="move-up-btn" style="${btnStyle}" title="Sposta su">▲</button>
-                    <button class="move-down-btn" style="${btnStyle}" title="Sposta giù">▼</button>
+                return `<div class="mes-move-cell">
+                    <button class="mes-move-btn move-up-btn" title="Sposta su">▲</button>
+                    <button class="mes-move-btn move-down-btn" title="Sposta giù">▼</button>
                 </div>`;
             },
             onCellClicked: async (params) => {

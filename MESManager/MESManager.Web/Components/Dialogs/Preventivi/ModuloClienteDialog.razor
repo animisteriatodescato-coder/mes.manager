@@ -27,7 +27,7 @@
         else
         {
             <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
-                Anteprima documento. Per un PDF pulito (senza intestazioni/piè di pagina del browser) usa il pulsante verde Apri PDF.
+                Anteprima documento. Usa <b>Cliente</b> per generare il PDF pulito da inviare al cliente.
             </MudText>
 
             <!-- Anteprima compatta -->
@@ -158,23 +158,14 @@
                    data-testid="btn-stampa-interna">
             Interna
         </MudButton>
-        <MudTooltip Text="Apre la stampa browser: il risultato può includere intestazioni/piè di pagina del browser.">
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.Print"
-                       OnClick="@(() => StampaAsync(false))"
-                       data-testid="btn-stampa-cliente">
-                Cliente
-            </MudButton>
-        </MudTooltip>
-        <MudTooltip Text="Genera PDF server-side (consigliato): niente header/footer del browser.">
+        <MudTooltip Text="Genera PDF pulito (server-side): niente intestazioni/piè di pagina del browser.">
             <MudButton Variant="Variant.Filled"
                        Color="Color.Success"
                        StartIcon="@Icons.Material.Filled.PictureAsPdf"
-                       OnClick="ScaricanPdfAsync"
+                       OnClick="ScaricaPdfAsync"
                        Disabled="@_isScaricaPdf"
-                       data-testid="btn-scarica-pdf">
-                @(_isScaricaPdf ? "Apertura..." : "Apri PDF")
+                       data-testid="btn-stampa-cliente">
+                @(_isScaricaPdf ? "Generazione..." : "Cliente")
             </MudButton>
         </MudTooltip>
         <MudButton Variant="Variant.Outlined"
@@ -267,7 +258,7 @@
 
     private void Chiudi() => MudDialog.Close(DialogResult.Ok(true));
 
-    private async Task ScaricanPdfAsync()
+    private async Task ScaricaPdfAsync()
     {
         if (Dto == null) return;
         _isScaricaPdf = true;

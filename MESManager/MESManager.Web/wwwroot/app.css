@@ -322,6 +322,43 @@ h1:focus {
     border-color: var(--mes-ag-input-border, #4a4a6a) !important;
 }
 
+/* Programma Macchine — frecce ordinamento righe */
+.ag-theme-alpine .mes-move-cell {
+    display: flex;
+    gap: 2px;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.ag-theme-alpine .mes-move-btn {
+    min-width: 26px;
+    height: 22px;
+    padding: 0 6px;
+    border: 1px solid rgba(21, 101, 192, 0.20);
+    border-radius: 3px;
+    background: #e3f2fd;
+    color: #1565c0;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 18px;
+}
+
+.ag-theme-alpine .mes-move-btn:hover {
+    background: #d6ecfc;
+}
+
+.mud-theme-dark .ag-theme-alpine .mes-move-btn {
+    background: #d8dde3 !important;
+    color: #05070a !important;
+    border-color: rgba(255, 255, 255, 0.28) !important;
+}
+
+.mud-theme-dark .ag-theme-alpine .mes-move-btn:hover {
+    background: #eef1f4 !important;
+}
+
 /* ==========================================================================
    AG GRID — Tutte le classi condizionali delle celle (unica fonte di verità)
    Approccio: cellClassRules (JS) + colore (CSS). Il cascade .mud-theme-dark
