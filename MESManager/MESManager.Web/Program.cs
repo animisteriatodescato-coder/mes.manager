@@ -323,7 +323,7 @@ app.MapPost("/api/preventivo/pdf", async (
 
     if (!pdfSvc.IsAvailable())
         return Results.Problem(
-            "Chrome/Edge non trovato sul server. Usa 'Stampa Cliente' per salvare il PDF.",
+            "Chrome/Edge non trovato dal servizio server-side. Installare Chrome/Edge o configurare PATH.",
             statusCode: 503);
 
     var (bytes, pdfError) = await pdfSvc.GeneratePdfAsync(req.Html);

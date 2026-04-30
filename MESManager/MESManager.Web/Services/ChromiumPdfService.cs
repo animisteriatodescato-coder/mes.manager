@@ -15,15 +15,24 @@ public class ChromiumPdfService(ILogger<ChromiumPdfService> logger)
     private static IEnumerable<string> GetCandidates()
     {
         var localApp = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return
-        [
+        var candidates = new List<string>
+        {
             @"C:\Program Files\Google\Chrome\Application\chrome.exe",
             @"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
             Path.Combine(localApp, @"Google\Chrome\Application\chrome.exe"),
             @"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
             @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
             Path.Combine(localApp, @"Microsoft\Edge\Application\msedge.exe"),
-        ];
+        };
+
+        var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
+        foreach (var dir in pathEnv.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+        {
+            candidates.Add(Path.Combine(dir.Trim(), "chrome.exe"));
+            candidates.Add(Path.Combine(dir.Trim(), "msedge.exe"));
+        }
+
+        return candidates.Distinct(StringComparer.OrdinalIgnoreCase);
     }
 
     public bool IsAvailable() => FindExecutable() != null;
@@ -75,6 +84,7 @@ public class ChromiumPdfService(ILogger<ChromiumPdfService> logger)
             psi.ArgumentList.Add("--run-all-compositor-stages-before-draw");
             psi.ArgumentList.Add("--virtual-time-budget=5000");
             psi.ArgumentList.Add("--disable-gpu");
+            psi.ArgumentList.Add("--no-sandbox");
             psi.ArgumentList.Add("--no-first-run");
             psi.ArgumentList.Add("--disable-extensions");
             psi.ArgumentList.Add($"--user-data-dir={tempProfile}");

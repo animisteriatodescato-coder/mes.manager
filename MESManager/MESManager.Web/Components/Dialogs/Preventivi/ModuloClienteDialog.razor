@@ -280,15 +280,7 @@
         }
         catch (JSException jsEx) when (jsEx.Message.Contains("503"))
         {
-            // Chrome/Edge non disponibile → fallback stampa
-            Snackbar.Add("Chrome/Edge non trovato sul server. Apertura finestra di stampa...", Severity.Info);
-            var baseUri = Nav.BaseUri.TrimEnd('/');
-            var logo = LeggiLogoInline();
-            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna: false, _fontSize, logo, _includiCondizioni ? _condizioni : null);
-            var clienteSafe = System.Text.RegularExpressions.Regex.Replace(Dto.Cliente ?? "Cliente", @"[^\w]", "");
-            var numStr = Dto!.NumeroPreventivo > 0 ? $"N{Dto.NumeroPreventivo}" : $"ID{Dto.Id}";
-            var fallbackFileName = $"Preventivo_{numStr}_{clienteSafe}_{DateTime.Today:yyyyMMdd}.pdf";
-            await JS.InvokeVoidAsync("mesPreventivoDownloadPdf", html, fallbackFileName);
+            Snackbar.Add("PDF cliente non generato: Chrome/Edge non trovato dal servizio server-side. Nessun fallback stampa browser eseguito.", Severity.Error, cfg => cfg.VisibleStateDuration = 15000);
         }
         catch (JSException jsEx)
         {

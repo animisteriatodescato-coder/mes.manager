@@ -4,7 +4,26 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.70
+## 🔖 Versione Corrente: v1.65.71
+
+
+## 🔖 v1.65.71 — Fix reale frecce Programma + blocco fallback stampa browser preventivo
+
+**Data**: 28 Aprile 2026
+
+### 🐛 Fix
+- Frecce su/giu di Programma Macchine rese neutre direttamente nello stile base (`sfondo grigio chiaro`, `freccia nera`), senza dipendere dal selettore `.mud-theme-dark` che non agganciava la griglia nel DOM reale.
+- Il pulsante `Cliente` del modulo preventivo non usa piu il fallback stampa browser quando il PDF server-side non parte: mostra errore chiaro e non genera PDF sporchi con header/footer Chrome.
+- Ricerca Chrome/Edge resa piu robusta anche tramite directory presenti in `PATH`.
+- Aggiunto `--no-sandbox` al processo Chromium headless per migliorare compatibilita in esecuzione server.
+
+### 📁 File Modificati
+- `MESManager.Web/wwwroot/app.css` — frecce Programma Macchine neutre come stile base
+- `MESManager.Web/Components/App.razor` — cache busting CSS
+- `MESManager.Web/Components/Dialogs/Preventivi/ModuloClienteDialog.razor` — rimosso fallback stampa browser dal pulsante Cliente
+- `MESManager.Web/Services/ChromiumPdfService.cs` — ricerca browser piu ampia + flag headless
+- `MESManager.Web/Program.cs` — messaggio 503 coerente con PDF server-side
+- `MESManager.Web/Constants/AppVersion.cs` — v1.65.70 -> v1.65.71
 
 
 ## 🔖 v1.65.70 — Programma Macchine: frecce ordinamento coerenti in dark mode

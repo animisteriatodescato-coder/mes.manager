@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.70";
+    public const string Current = "1.65.71";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.70: frecce Programma Macchine dark + PDF cliente server-side
+    public const string Display = "v" + Current; // v1.65.71: frecce neutre + niente fallback stampa browser PDF cliente
 }
