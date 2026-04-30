@@ -20,7 +20,7 @@
         {
             <MudDivider />
             <MudMenuItem Icon="@Icons.Material.Filled.PublishedWithChanges" OnClick="@OnSaveGlobalClicked"
-                         Style="color: var(--mud-palette-warning-text);">
+                         Style="color: var(--mud-palette-warning-darken);">
                 Imposta come Default per tutti
             </MudMenuItem>
         }
@@ -77,7 +77,7 @@
     private async Task OnSaveGlobalClicked()
     {
         var parameters = new DialogParameters<ConfirmDialog>();
-        parameters.Add(x => x.ContentText, "Vuoi impostare lo stato attuale come DEFAULT per TUTTI gli utenti? Il loro stato personalizzato non verrà cancellato, ma i nuovi utenti partiranno da questa configurazione.");
+        parameters.Add(x => x.ContentText, "Vuoi impostare lo stato attuale come DEFAULT per TUTTI gli utenti? Le preferenze personali salvate verranno azzerate: al prossimo aggiornamento pagina tutti vedranno questa configurazione.");
         parameters.Add(x => x.ButtonText, "Imposta Default");
         parameters.Add(x => x.Color, Color.Warning);
 

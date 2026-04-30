@@ -130,4 +130,14 @@ public class PreferenzeUtenteService : IPreferenzeUtenteService
 
         await context.SaveChangesAsync();
     }
+
+    public async Task DeleteAllUsersAsync(string chiave)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var preferenze = await context.PreferenzeUtente
+            .Where(p => !p.IsGlobal && p.Chiave == chiave)
+            .ToListAsync();
+        context.PreferenzeUtente.RemoveRange(preferenze);
+        await context.SaveChangesAsync();
+    }
 }

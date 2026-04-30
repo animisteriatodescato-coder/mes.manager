@@ -16,4 +16,7 @@ public interface IPreferenzeUtenteService
 
     /// <summary>Salva/aggiorna il default globale (solo Admin).</summary>
     Task SaveGlobalAsync(string chiave, string valoreJson);
+
+    /// <summary>Elimina le preferenze personali di TUTTI gli utenti per una chiave (usato da Admin per forzare reset).</summary>
+    Task DeleteAllUsersAsync(string chiave);
 }
