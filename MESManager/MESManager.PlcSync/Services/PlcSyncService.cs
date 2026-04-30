@@ -77,9 +77,22 @@ public class PlcSyncService : IPlcSyncService
                 operatoreId = realtime.OperatoreId;
 
                 await context.SaveChangesAsync(cancellationToken);
-                
-                // Rilevamento cambio barcode (trigger evento CommessaCambiata)
-                DetectBarcodeChange(macchinaId, snapshot.BarcodeLavorazione.ToString());
+
+                // Rilevamento cambio barcode:
+                // 1) Imposta NuovaProduzioneTs PRIMA del save storico (segnale affidabile vs pulse PLC)
+                string newBarcodeStr = snapshot.BarcodeLavorazione.ToString();
+                if (snapshot.BarcodeLavorazione > 0 &&
+                    _ultimoBarcodeLetto.TryGetValue(macchinaId, out var lastTrackedBarcode) &&
+                    lastTrackedBarcode != newBarcodeStr &&
+                    string.IsNullOrEmpty(snapshot.NuovaProduzioneTs))
+                {
+                    snapshot.NuovaProduzioneTs = snapshot.Timestamp.ToString("dd.MM.yy HH:mm:ss");
+                    _logger.LogInformation("Barcode cambiato ({Old} → {New}) → NuovaProduzione via barcode rilevata su macchina {Id}",
+                        lastTrackedBarcode, newBarcodeStr, macchinaId);
+                }
+
+                // 2) Trigger evento CommessaCambiata e aggiorna cache barcode
+                DetectBarcodeChange(macchinaId, newBarcodeStr);
             }
             else
             {

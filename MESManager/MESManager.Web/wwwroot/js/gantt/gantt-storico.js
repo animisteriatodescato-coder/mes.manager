@@ -69,10 +69,12 @@ window.GanttStorico = (function () {
         }
         if (s.cicliFatti > 0) {
             html += '<span style="color:#888">Pezzi fatti: </span><b>' + s.cicliFatti + '</b><br>';
-            // Preferisce il valore hardware PLC (tempoMedioRilevato); fallback su durata/pezzi
-            var tempoCicloMedioSec = (s.tempoMedioRilevato && s.tempoMedioRilevato > 0)
-                ? s.tempoMedioRilevato
-                : (s.durataMinuti * 60) / s.cicliFatti;
+            // Ciclo medio: preferisce delta pezzi del segmento (preciso); fallback PLC cumulativo; ultimo fallback su totale
+            var tempoCicloMedioSec = (s.cicliFattiDelta > 0)
+                ? (s.durataMinuti * 60) / s.cicliFattiDelta
+                : (s.tempoMedioRilevato && s.tempoMedioRilevato > 0)
+                    ? s.tempoMedioRilevato
+                    : (s.durataMinuti * 60) / s.cicliFatti;
             html += '<span style="color:#888">Tempo ciclo medio: </span><b>' + _formatTempoCiclo(tempoCicloMedioSec) + '</b><br>';
         } else if (s.tempoMedioRilevato && s.tempoMedioRilevato > 0) {
             // Ha tempo medio rilevato anche senza conteggio pezzi visibile

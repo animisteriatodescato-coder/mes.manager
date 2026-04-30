@@ -231,11 +231,19 @@ public class PlcAppService : IPlcAppService
         foreach (var gruppo in records.GroupBy(p => p.MacchinaId))
         {
             var lista = gruppo.ToList();
+            int prevCicliFattiInGroup = 0;   // traccia valore cumulativo del record precedente
             for (int i = 0; i < lista.Count; i++)
             {
                 var rec = lista[i];
                 var inizio = rec.DataOra;
                 bool isLast = i == lista.Count - 1;
+
+                // Calcola delta pezzi per questo segmento (forward-looking per non-last)
+                int currCicli = ParseCicliFattiOnly(lista[i].Dati);
+                int cicliFattiDelta = !isLast
+                    ? Math.Max(0, ParseCicliFattiOnly(lista[i + 1].Dati) - currCicli)
+                    : Math.Max(0, currCicli - prevCicliFattiInGroup);
+                prevCicliFattiInGroup = currCicli;
 
                 DateTime fine;
                 if (!isLast)
@@ -261,7 +269,7 @@ public class PlcAppService : IPlcAppService
                     );
 
                     if (fine <= inizio) continue;
-                    segmenti.Add(BuildSegmento(rec, inizio, fine));
+                    segmenti.Add(BuildSegmento(rec, inizio, fine, cicliFattiDelta));
 
                     // Se il bordo è fornito da look-ahead/realtime con stato NON CONNESSA,
                     // aggiungi il segmento trailing fino a fine_range.
@@ -284,7 +292,7 @@ public class PlcAppService : IPlcAppService
                 }
 
                 if (fine <= inizio) continue;
-                segmenti.Add(BuildSegmento(rec, inizio, fine));
+                segmenti.Add(BuildSegmento(rec, inizio, fine, cicliFattiDelta));
             }
         }
 
@@ -342,7 +350,7 @@ public class PlcAppService : IPlcAppService
     }
 
     /// <summary>Helper: costruisce un PlcGanttSegmentoDto da un record PLCStorico.</summary>
-    private static PlcGanttSegmentoDto BuildSegmento(Domain.Entities.PLCStorico rec, DateTime inizio, DateTime fine)
+    private static PlcGanttSegmentoDto BuildSegmento(Domain.Entities.PLCStorico rec, DateTime inizio, DateTime fine, int cicliFattiDelta = 0)
     {
         ParseDatiStorico(rec.Dati,
             out int cicliFatti, out _, out _,
@@ -362,9 +370,23 @@ public class PlcAppService : IPlcAppService
             NumeroOperatore    = rec.NumeroOperatore > 0 ? rec.NumeroOperatore : (int?)null,
             CicliFatti         = cicliFatti,
             BarcodeLavorazione = barcode,
-            TempoMedioRilevato = tempoMedioRil
+            TempoMedioRilevato = tempoMedioRil,
+            CicliFattiDelta    = cicliFattiDelta
             // Colore: popolato dal controller via MesDesignTokens.PlcStatoColore()
         };
+    }
+
+    /// <summary>Parsing veloce solo di CicliFatti dal blob JSON — evita di istanziare tutti gli out param.</summary>
+    private static int ParseCicliFattiOnly(string? dati)
+    {
+        if (string.IsNullOrWhiteSpace(dati)) return 0;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(dati);
+            if (doc.RootElement.TryGetProperty("CicliFatti", out var cf)) return cf.GetInt32();
+        }
+        catch { }
+        return 0;
     }
 
     /// <summary>Mappa un entity PLCStorico a PlcStoricoDto — unica fonte di verità, evita duplicazione.</summary>

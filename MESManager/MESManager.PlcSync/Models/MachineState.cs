@@ -14,6 +14,9 @@ public class MachineState
     public bool PrevInizioSetup { get; set; }
     public bool PrevFineSetup { get; set; }
     public bool PrevInProduzione { get; set; }
+
+    /// <summary>Ultimo barcode rilevato — usato per rilevare cambio commessa (NuovaProduzione) in modo affidabile.</summary>
+    public string LastBarcode { get; set; } = string.Empty;
     
     public MachineState()
     {

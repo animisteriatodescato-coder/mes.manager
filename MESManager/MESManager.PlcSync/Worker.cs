@@ -219,7 +219,7 @@ public class PlcSyncWorker : BackgroundService
         int totalSeconds,
         CancellationToken ct)
     {
-        const int fastIntervalMs = 500;
+        const int fastIntervalMs = 100;   // Ridotto da 500ms: migliora cattura pulse PLC (<100ms)
         int totalMs = totalSeconds * 1000;
         int elapsed  = 0;
 
