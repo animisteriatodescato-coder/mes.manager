@@ -254,8 +254,8 @@ public class PreventivoService : IPreventivoService
         if (dto.ImballaggioRichiesto && dto.ImballaggioPzOra > 0)
             result.Imballaggio = dto.EuroOraImballaggio / dto.ImballaggioPzOra;
 
-        // Prezzo vendita = CostoAnima + Verniciatura (incoll/imb sono VOCE SEPARATA)
-        result.PrezzoVendita = result.CostoAnima + result.VernTot;
+        // Prezzo vendita = CostoAnima + Verniciatura + Incollaggio + Imballaggio
+        result.PrezzoVendita = result.CostoAnima + result.VernTot + result.Incollaggio + result.Imballaggio;
 
         return result;
     }

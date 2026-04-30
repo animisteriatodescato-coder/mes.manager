@@ -325,7 +325,6 @@
                         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
                             <MudIcon Icon="@Icons.Material.Filled.Build" Color="Color.Tertiary" />
                             <MudText Typo="Typo.subtitle1"><b>SERVIZI AGGIUNTIVI</b></MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">(calcolati separatamente)</MudText>
                         </MudStack>
                         <!-- Incollaggio -->
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
@@ -407,6 +406,20 @@
                                         <td class="text-right"><MudText Typo="Typo.caption">€@_calc.VernManodopera.ToString("N4")</MudText></td>
                                     </tr>
                                 }
+                                @if (_dto.IncollaggioRichiesto)
+                                {
+                                    <tr>
+                                        <td><MudText Typo="Typo.caption">Incollaggio</MudText></td>
+                                        <td class="text-right"><MudText Typo="Typo.caption">€@_calc.Incollaggio.ToString("N4")</MudText></td>
+                                    </tr>
+                                }
+                                @if (_dto.ImballaggioRichiesto)
+                                {
+                                    <tr>
+                                        <td><MudText Typo="Typo.caption">Imballaggio</MudText></td>
+                                        <td class="text-right"><MudText Typo="Typo.caption">€@_calc.Imballaggio.ToString("N4")</MudText></td>
+                                    </tr>
+                                }
                             </tbody>
                         </MudSimpleTable>
 
@@ -443,19 +456,7 @@
                             </tbody>
                         </MudSimpleTable>
 
-                        @if (_dto.IncollaggioRichiesto || _dto.ImballaggioRichiesto)
-                        {
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Servizi (separati):</MudText>
-                            @if (_dto.IncollaggioRichiesto)
-                            {
-                                <MudText Typo="Typo.caption">Incollaggio: €@_calc.Incollaggio.ToString("N4")/pz</MudText>
-                            }
-                            @if (_dto.ImballaggioRichiesto)
-                            {
-                                <MudText Typo="Typo.caption">Imballaggio: €@_calc.Imballaggio.ToString("N4")/pz</MudText>
-                            }
-                            <MudDivider Class="my-2" />
-                        }
+
 
                         @if (_dto.Sconto > 0)
                         {
