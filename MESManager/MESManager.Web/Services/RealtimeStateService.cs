@@ -155,7 +155,7 @@ public class RealtimeStateService : IDisposable
             // Notifica i client SignalR
             await _hubContext.Clients.All.SendAsync("PlcDataUpdated", data);
             
-            _logger.LogDebug("RealtimeStateService: caricati {Count} record PLC", data.Count);
+            _logger.LogTrace("RealtimeStateService: caricati {Count} record PLC", data.Count);
         }
         catch (Exception ex)
         {

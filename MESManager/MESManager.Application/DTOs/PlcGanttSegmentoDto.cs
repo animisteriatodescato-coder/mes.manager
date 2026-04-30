@@ -30,6 +30,9 @@ public class PlcGanttSegmentoDto
     /// <summary>Pezzi prodotti SOLO in questo segmento (Δ rispetto al record precedente). Usato per calcolo tempo ciclo preciso nel tooltip.</summary>
     public int CicliFattiDelta { get; set; }
 
+    /// <summary>Pezzi per ciclo macchina (da DB56 runtime). Divide CicliFattiDelta per ottenere i cicli macchina reali.</summary>
+    public int Figure { get; set; }
+
     /// <summary>Durata in minuti — calcolato da Inizio/Fine, serializzato nel JSON per il client JS.</summary>
     public double DurataMinuti => (Fine - Inizio).TotalMinutes;
 }

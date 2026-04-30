@@ -354,7 +354,7 @@ public class PlcAppService : IPlcAppService
     {
         ParseDatiStorico(rec.Dati,
             out int cicliFatti, out _, out _,
-            out int tempoMedioRil, out _, out _, out int barcode,
+            out int tempoMedioRil, out _, out int figure, out int barcode,
             out _, out _, out _, out _);
 
         return new PlcGanttSegmentoDto
@@ -371,7 +371,8 @@ public class PlcAppService : IPlcAppService
             CicliFatti         = cicliFatti,
             BarcodeLavorazione = barcode,
             TempoMedioRilevato = tempoMedioRil,
-            CicliFattiDelta    = cicliFattiDelta
+            CicliFattiDelta    = cicliFattiDelta,
+            Figure             = figure > 0 ? figure : 1   // default 1 se non configurato
             // Colore: popolato dal controller via MesDesignTokens.PlcStatoColore()
         };
     }
