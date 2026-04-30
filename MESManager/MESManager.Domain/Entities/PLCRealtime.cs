@@ -24,7 +24,15 @@ public class PLCRealtime
     // === STATI ===
     public string StatoMacchina { get; set; } = string.Empty;
     public bool QuantitaRaggiunta { get; set; }
-    
+
+    // === EVENTI (ultimo timestamp rilevato per tipo) ===
+    /// <summary>Ultimo cambio commessa/barcode rilevato.</summary>
+    public DateTime? UltimaNuovaProduzione { get; set; }
+    /// <summary>Ultimo inizio setup rilevato dal PLC.</summary>
+    public DateTime? UltimoInizioSetup { get; set; }
+    /// <summary>Ultimo fine setup rilevato dal PLC.</summary>
+    public DateTime? UltimoFineSetup { get; set; }
+
     // Navigazioni
     public Macchina Macchina { get; set; } = null!;
     public Operatore? Operatore { get; set; }

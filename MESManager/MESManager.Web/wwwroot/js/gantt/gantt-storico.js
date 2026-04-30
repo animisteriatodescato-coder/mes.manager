@@ -41,6 +41,22 @@ window.GanttStorico = (function () {
         return parts.join(' \u2022 ');
     }
 
+    // ─── Parsa timestamp formato "dd.MM.yy HH:mm:ss" in Date ─────────────────
+    function _parseTs(ts) {
+        if (!ts) return null;
+        try {
+            // formato: "30.04.26 08:14:22"
+            var parts = ts.split(' ');
+            if (parts.length !== 2) return null;
+            var dp = parts[0].split('.');
+            var tp = parts[1].split(':');
+            if (dp.length !== 3 || tp.length !== 3) return null;
+            var year = 2000 + parseInt(dp[2], 10);
+            return new Date(year, parseInt(dp[1], 10) - 1, parseInt(dp[0], 10),
+                            parseInt(tp[0], 10), parseInt(tp[1], 10), parseInt(tp[2], 10));
+        } catch(e) { return null; }
+    }
+
     // ─── Formatta tempo ciclo medio (secondi → "Xm Ys" o "Xs") ─────────────────
     function _formatTempoCiclo(secondi) {
         var s = Math.round(secondi);
@@ -83,6 +99,28 @@ window.GanttStorico = (function () {
         }
         if (s.barcodeLavorazione > 0) {
             html += '<span style="color:#888">Barcode: </span>' + _esc(String(s.barcodeLavorazione)) + '<br>';
+        }
+        // Sezione eventi rilevati nel segmento
+        if (s.nuovaProduzioneTs) {
+            html += '<span style="color:#888">Nuova produzione: </span><b>' + _esc(s.nuovaProduzioneTs) + '</b><br>';
+        }
+        if (s.inizioSetupTs) {
+            html += '<span style="color:#888">Inizio setup: </span><b>' + _esc(s.inizioSetupTs) + '</b>';
+            if (s.fineSetupTs) {
+                // Calcola durata setup in minuti dalla differenza tra i timestamp
+                try {
+                    var dtInizio = _parseTs(s.inizioSetupTs);
+                    var dtFine   = _parseTs(s.fineSetupTs);
+                    if (dtInizio && dtFine && dtFine > dtInizio) {
+                        var durSetup = Math.round((dtFine - dtInizio) / 60000);
+                        html += ' <span style="color:#ff9800">(' + durSetup + ' min setup)</span>';
+                    }
+                } catch(e) {}
+            }
+            html += '<br>';
+        }
+        if (s.fineSetupTs) {
+            html += '<span style="color:#888">Fine setup: </span><b>' + _esc(s.fineSetupTs) + '</b><br>';
         }
         html += '</div>';
         return html;

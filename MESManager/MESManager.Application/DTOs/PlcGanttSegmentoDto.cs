@@ -33,6 +33,11 @@ public class PlcGanttSegmentoDto
     /// <summary>Pezzi per ciclo macchina (da DB56 runtime). Divide CicliFattiDelta per ottenere i cicli macchina reali.</summary>
     public int Figure { get; set; }
 
+    // === Timestamp eventi (stringa "dd.MM.yy HH:mm:ss" dal blob JSON, se presenti nel record) ===
+    public string? NuovaProduzioneTs { get; set; }
+    public string? InizioSetupTs { get; set; }
+    public string? FineSetupTs { get; set; }
+
     /// <summary>Durata in minuti — calcolato da Inizio/Fine, serializzato nel JSON per il client JS.</summary>
     public double DurataMinuti => (Fine - Inizio).TotalMinutes;
 }

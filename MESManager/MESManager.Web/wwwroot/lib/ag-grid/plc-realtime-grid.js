@@ -270,6 +270,57 @@ window.plcRealtimeGrid = (function () {
                 resizable: true,
                 valueFormatter: params => params.value ? new Date(params.value).toLocaleString('it-IT') : ''
             },
+            {
+                field: 'ultimaNuovaProduzione',
+                headerName: 'Ultima Nuova Prod.',
+                width: 170,
+                sortable: true,
+                filter: 'agDateColumnFilter',
+                resizable: true,
+                valueFormatter: params => params.value ? new Date(params.value).toLocaleString('it-IT') : '—'
+            },
+            {
+                field: 'ultimoInizioSetup',
+                headerName: 'Ultimo Inizio Setup',
+                width: 170,
+                sortable: true,
+                filter: 'agDateColumnFilter',
+                resizable: true,
+                valueFormatter: params => params.value ? new Date(params.value).toLocaleString('it-IT') : '—'
+            },
+            {
+                field: 'ultimoFineSetup',
+                headerName: 'Ultimo Fine Setup',
+                width: 170,
+                sortable: true,
+                filter: 'agDateColumnFilter',
+                resizable: true,
+                cellRenderer: params => {
+                    const inizio = params.data?.ultimoInizioSetup;
+                    const fine   = params.value;
+                    if (!fine) return '<span style="color:#9e9e9e">—</span>';
+                    const fineDate  = new Date(fine);
+                    const str = fineDate.toLocaleString('it-IT');
+                    if (!inizio) return str;
+                    const inizioDate = new Date(inizio);
+                    if (fineDate > inizioDate) {
+                        const minuti = Math.round((fineDate - inizioDate) / 60000);
+                        return `${str} <span style="color:#9e9e9e;font-size:0.85em">(${minuti}min)</span>`;
+                    }
+                    return str;
+                }
+            },
+            {
+                field: 'inSetupOra',
+                headerName: 'In Setup',
+                width: 90,
+                sortable: true,
+                filter: true,
+                resizable: true,
+                cellRenderer: params => params.value
+                    ? '<span style="background:#ff9800;color:white;padding:2px 8px;border-radius:4px;font-weight:bold">SETUP</span>'
+                    : ''
+            },
             { 
                 field: 'macchinaId', 
                 headerName: 'Macchina ID', 

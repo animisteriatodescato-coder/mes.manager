@@ -85,8 +85,12 @@ public class PlcAppService : IPlcAppService
                 
                 StatoMacchina = statoMacchina,
                 QuantitaRaggiunta = p.QuantitaRaggiunta,
-                
+
                 UltimoAggiornamento = p.DataUltimoAggiornamento,
+
+                UltimaNuovaProduzione = p.UltimaNuovaProduzione,
+                UltimoInizioSetup     = p.UltimoInizioSetup,
+                UltimoFineSetup       = p.UltimoFineSetup,
 
                 ProssimoArticoloCodice = prossimoPerMacchina.TryGetValue(machineNumber, out var codice) ? codice : null
             };
@@ -355,7 +359,7 @@ public class PlcAppService : IPlcAppService
         ParseDatiStorico(rec.Dati,
             out int cicliFatti, out _, out _,
             out int tempoMedioRil, out _, out int figure, out int barcode,
-            out _, out _, out _, out _);
+            out string? nuovaProdTs, out string? inizioSetupTs, out string? fineSetupTs, out _);
 
         return new PlcGanttSegmentoDto
         {
@@ -372,7 +376,10 @@ public class PlcAppService : IPlcAppService
             BarcodeLavorazione = barcode,
             TempoMedioRilevato = tempoMedioRil,
             CicliFattiDelta    = cicliFattiDelta,
-            Figure             = figure > 0 ? figure : 1   // default 1 se non configurato
+            Figure             = figure > 0 ? figure : 1,
+            NuovaProduzioneTs  = nuovaProdTs,
+            InizioSetupTs      = inizioSetupTs,
+            FineSetupTs        = fineSetupTs
             // Colore: popolato dal controller via MesDesignTokens.PlcStatoColore()
         };
     }

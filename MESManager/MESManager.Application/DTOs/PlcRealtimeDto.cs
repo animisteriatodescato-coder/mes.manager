@@ -32,7 +32,26 @@ public class PlcRealtimeDto
     public bool QuantitaRaggiunta { get; set; }
     
     public DateTime UltimoAggiornamento { get; set; }
-    
+
+    // === EVENTI ===
+    /// <summary>Ultimo cambio commessa/barcode rilevato.</summary>
+    public DateTime? UltimaNuovaProduzione { get; set; }
+    /// <summary>Ultimo inizio setup rilevato dal PLC.</summary>
+    public DateTime? UltimoInizioSetup { get; set; }
+    /// <summary>Ultimo fine setup rilevato dal PLC.</summary>
+    public DateTime? UltimoFineSetup { get; set; }
+
+    /// <summary>Durata dell'ultimo setup in minuti (null se InizioSetup o FineSetup mancante, o FineSetup precedente a InizioSetup).</summary>
+    public double? DurataUltimoSetupMinuti =>
+        UltimoInizioSetup.HasValue && UltimoFineSetup.HasValue && UltimoFineSetup > UltimoInizioSetup
+            ? (UltimoFineSetup.Value - UltimoInizioSetup.Value).TotalMinutes
+            : null;
+
+    /// <summary>True se la macchina è attualmente in setup (InizioSetup rilevato ma FineSetup non ancora arrivato o precedente).</summary>
+    public bool InSetupOra =>
+        UltimoInizioSetup.HasValue &&
+        (!UltimoFineSetup.HasValue || UltimoFineSetup < UltimoInizioSetup);
+
     /// <summary>
     /// Codice articolo della prossima commessa programmata nel Gantt per questa macchina.
     /// </summary>

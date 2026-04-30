@@ -72,6 +72,14 @@ public class PlcSyncService : IPlcSyncService
                 realtime.QuantitaRaggiunta = snapshot.QuantitaRaggiunta;
                 realtime.NumeroOperatore = snapshot.NumeroOperatore;
 
+                // Aggiorna timestamp eventi — usa il più recente disponibile (non sovrascrivere con null)
+                if (!string.IsNullOrEmpty(snapshot.NuovaProduzioneTs))
+                    realtime.UltimaNuovaProduzione = snapshot.Timestamp;
+                if (!string.IsNullOrEmpty(snapshot.InizioSetupTs))
+                    realtime.UltimoInizioSetup = snapshot.Timestamp;
+                if (!string.IsNullOrEmpty(snapshot.FineSetupTs))
+                    realtime.UltimoFineSetup = snapshot.Timestamp;
+
                 // Risolvi operatore
                 realtime.OperatoreId = await ResolveOperatoreIdAsync(context, snapshot.NumeroOperatore, cancellationToken);
                 operatoreId = realtime.OperatoreId;
@@ -343,6 +351,21 @@ public class PlcSyncService : IPlcSyncService
                     Dettagli   = e.dettagli
                 }).ToList();
                 context.EventiPLC.AddRange(eventi);
+            }
+
+            // Aggiorna timestamp eventi in PLCRealtime anche dal fast polling
+            if (_settings.EnableRealtime)
+            {
+                var rt = await context.PLCRealtime.FirstOrDefaultAsync(r => r.MacchinaId == macchinaId, ct);
+                if (rt != null)
+                {
+                    if (risingEdges.Any(e => e.tipo == PlcEventType.NuovaProduzione))
+                        rt.UltimaNuovaProduzione = flags.Timestamp;
+                    if (risingEdges.Any(e => e.tipo == PlcEventType.InizioSetup))
+                        rt.UltimoInizioSetup = flags.Timestamp;
+                    if (risingEdges.Any(e => e.tipo == PlcEventType.FineSetup))
+                        rt.UltimoFineSetup = flags.Timestamp;
+                }
             }
 
             if (_settings.EnableStorico)
