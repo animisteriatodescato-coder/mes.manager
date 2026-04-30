@@ -11,6 +11,7 @@
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@inject IDialogService DialogService
 @implements IDisposable
 
 <PageTitle>Scheda Manutenzione Cassa</PageTitle>
@@ -323,12 +324,9 @@ else
                                     <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small"
                                                    OnClick="@(() => DownloadAllegato(foto))"
                                                    Title="Scarica" />
-                                    @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
-                                    {
-                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                                                       OnClick="@(() => DeleteAllegato(foto))"
-                                                       Title="Elimina" />
-                                    }
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                                   OnClick="@(() => DeleteAllegato(foto))"
+                                                   Title="Elimina" />
                                 </MudStack>
                             </MudListItem>
                         }
@@ -348,12 +346,9 @@ else
                                     <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small"
                                                    OnClick="@(() => DownloadAllegato(doc))"
                                                    Title="Scarica" />
-                                    @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
-                                    {
-                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                                                       OnClick="@(() => DeleteAllegato(doc))"
-                                                       Title="Elimina" />
-                                    }
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                                   OnClick="@(() => DeleteAllegato(doc))"
+                                                   Title="Elimina" />
                                 </MudStack>
                             </MudListItem>
                         }
@@ -596,6 +591,12 @@ else
 
     private async Task DeleteAllegato(ManutenzioneCassaAllegatoDto allegato)
     {
+        var confirm = await DialogService.ShowMessageBox(
+            "Elimina allegato",
+            $"Eliminare '{allegato.NomeFile}'? L'operazione non è reversibile.",
+            yesText: "Elimina", cancelText: "Annulla");
+        if (confirm != true) return;
+
         await AllegatoService.DeleteAsync(allegato.Id);
         Snackbar.Add($"'{allegato.NomeFile}' eliminato.", Severity.Info);
         await CaricaAllegatiAsync();
