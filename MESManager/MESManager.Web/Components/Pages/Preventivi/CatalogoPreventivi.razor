@@ -60,9 +60,19 @@
                                                  data-testid="input-cliente" />
                             </MudItem>
                             <MudItem xs="6" sm="3">
-                                <MudTextField @bind-Value="_dto.CodiceArticolo" Label="Codice articolo"
-                                              Variant="Variant.Outlined" Margin="Margin.Dense"
-                                              data-testid="input-codice-articolo" />
+                                <MudAutocomplete T="string"
+                                                 @bind-Value="_dto.CodiceArticolo"
+                                                 Label="Codice articolo"
+                                                 SearchFunc="CercaCodiciArticolo"
+                                                 Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 MinCharacters="0"
+                                                 DebounceInterval="150"
+                                                 CoerceText="true"
+                                                 CoerceValue="true"
+                                                 Clearable="true"
+                                                 HelperText="Scegli da lista o inserisci manualmente"
+                                                 data-testid="input-codice-articolo" />
                             </MudItem>
                             <MudItem xs="6" sm="3">
                                 <MudDatePicker @bind-Date="_dataCreazione" Label="Data"
@@ -325,6 +335,7 @@
                         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
                             <MudIcon Icon="@Icons.Material.Filled.Build" Color="Color.Tertiary" />
                             <MudText Typo="Typo.subtitle1"><b>SERVIZI AGGIUNTIVI</b></MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">(calcolati separatamente)</MudText>
                         </MudStack>
                         <!-- Incollaggio -->
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
@@ -406,20 +417,6 @@
                                         <td class="text-right"><MudText Typo="Typo.caption">€@_calc.VernManodopera.ToString("N4")</MudText></td>
                                     </tr>
                                 }
-                                @if (_dto.IncollaggioRichiesto)
-                                {
-                                    <tr>
-                                        <td><MudText Typo="Typo.caption">Incollaggio</MudText></td>
-                                        <td class="text-right"><MudText Typo="Typo.caption">€@_calc.Incollaggio.ToString("N4")</MudText></td>
-                                    </tr>
-                                }
-                                @if (_dto.ImballaggioRichiesto)
-                                {
-                                    <tr>
-                                        <td><MudText Typo="Typo.caption">Imballaggio</MudText></td>
-                                        <td class="text-right"><MudText Typo="Typo.caption">€@_calc.Imballaggio.ToString("N4")</MudText></td>
-                                    </tr>
-                                }
                             </tbody>
                         </MudSimpleTable>
 
@@ -456,7 +453,19 @@
                             </tbody>
                         </MudSimpleTable>
 
-
+                        @if (_dto.IncollaggioRichiesto || _dto.ImballaggioRichiesto)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Servizi (separati):</MudText>
+                            @if (_dto.IncollaggioRichiesto)
+                            {
+                                <MudText Typo="Typo.caption">Incollaggio: €@_calc.Incollaggio.ToString("N4")/pz</MudText>
+                            }
+                            @if (_dto.ImballaggioRichiesto)
+                            {
+                                <MudText Typo="Typo.caption">Imballaggio: €@_calc.Imballaggio.ToString("N4")/pz</MudText>
+                            }
+                            <MudDivider Class="my-2" />
+                        }
 
                         @if (_dto.Sconto > 0)
                         {
@@ -1043,6 +1052,24 @@
                     yield return (_dto.Lotto4.Value, PreventivoService.CalcolaConLotto(_dto, _dto.Lotto4.Value, _dto.Margine4));
             }
         }
+    }
+
+    // ── Autocomplete codici articolo ─────────────────────────────────────
+
+    private Task<IEnumerable<string>> CercaCodiciArticolo(string? value, CancellationToken ct)
+    {
+        var codici = _preventivi
+            .Select(p => p.CodiceArticolo)
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(c => c)
+            .ToList();
+
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult(codici.Take(20).AsEnumerable()!);
+
+        return Task.FromResult(
+            codici.Where(c => c!.Contains(value, StringComparison.OrdinalIgnoreCase)).Take(20).AsEnumerable()!);
     }
 
     // ── Autocomplete clienti ─────────────────────────────────────────────
