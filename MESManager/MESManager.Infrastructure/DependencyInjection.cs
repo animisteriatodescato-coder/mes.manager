@@ -71,6 +71,7 @@ public static class DependencyInjection
         // Modulo Non Conformità (v1.65.68)
         services.AddScoped<INonConformitaService, NonConformitaService>();
         services.AddScoped<IAlertProduzioneService, AlertProduzioneService>();
+        services.AddScoped<IAllegatoNonConformitaService, AllegatoNonConformitaRepository>();
 
         // Aggiungi altri servizi qui quando implementati
 

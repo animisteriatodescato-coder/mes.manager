@@ -68,6 +68,7 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
 
     // Modulo Non Conformità (v1.65.68)
     public DbSet<NonConformita> NonConformita => Set<NonConformita>();
+    public DbSet<AllegatoNonConformita> AllegatiNonConformita => Set<AllegatoNonConformita>();
 
     // Modulo Preventivi (v1.64.0)
     public DbSet<PreventivoTipoSabbia> PreventivoTipiSabbia => Set<PreventivoTipoSabbia>();

@@ -1,0 +1,188 @@
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@inject IAllegatoNonConformitaService AllegatiService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <MudIcon Icon="@Icons.Material.Filled.AttachFile" Color="Color.Error" />
+            <MudText Typo="Typo.h6">Allegati — @Label</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Error" Class="mb-2" />
+        }
+
+        @* ── Upload area ── *@
+        <MudPaper Elevation="0" Class="pa-3 mb-3"
+                  Style="border:1px dashed var(--mud-palette-lines-default);border-radius:6px">
+            <MudFileUpload T="IReadOnlyList<IBrowserFile>" FilesChanged="OnFilesChanged"
+                           Multiple="true" Accept="*/*">
+                <ActivatorContent>
+                    <MudButton Variant="Variant.Outlined"
+                               StartIcon="@Icons.Material.Filled.CloudUpload"
+                               Color="Color.Error" Disabled="_uploading">
+                        Scegli file da allegare
+                    </MudButton>
+                </ActivatorContent>
+            </MudFileUpload>
+            @if (_fileDaCaricari.Any())
+            {
+                <MudStack Class="mt-2" Spacing="1">
+                    @foreach (var f in _fileDaCaricari)
+                    {
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@GetFileIcon(f.ContentType)" Size="Size.Small" Color="Color.Secondary" />
+                            <MudText Typo="Typo.caption">@f.Name (@FormatBytes(f.Size))</MudText>
+                        </MudStack>
+                    }
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.Upload"
+                               OnClick="UploadAsync" Disabled="_uploading"
+                               data-testid="btn-nc-upload">
+                        @(_uploading ? "Caricamento…" : $"Carica {_fileDaCaricari.Count} file")
+                    </MudButton>
+                </MudStack>
+            }
+        </MudPaper>
+
+        @* ── Lista allegati ── *@
+        @if (_allegati.Any())
+        {
+            <MudTable Items="_allegati" Dense="true" Elevation="0" data-testid="tabella-allegati-nc">
+                <HeaderContent>
+                    <MudTh>File</MudTh>
+                    <MudTh>Dimensione</MudTh>
+                    <MudTh>Data</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@GetFileIcon(context.ContentType)" Size="Size.Small" Color="Color.Secondary" />
+                            <MudText Typo="Typo.body2">@context.NomeFile</MudText>
+                        </MudStack>
+                    </MudTd>
+                    <MudTd><MudText Typo="Typo.caption">@FormatBytes(context.DimensioneBytes)</MudText></MudTd>
+                    <MudTd><MudText Typo="Typo.caption">@context.DataCaricamento.ToString("dd/MM/yyyy HH:mm")</MudText></MudTd>
+                    <MudTd>
+                        <MudStack Row="true" Spacing="0">
+                            <MudTooltip Text="Scarica">
+                                <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small"
+                                               Color="Color.Primary"
+                                               OnClick="@(() => DownloadAsync(context))"
+                                               data-testid="btn-nc-download" />
+                            </MudTooltip>
+                            <MudTooltip Text="Elimina">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="@(() => EliminaAsync(context))"
+                                               data-testid="btn-nc-delete-allegato" />
+                            </MudTooltip>
+                        </MudStack>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Typo="Typo.caption">Nessun allegato.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        }
+        else if (!_loading)
+        {
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Nessun allegato. Usa il pulsante sopra per caricare immagini, PDF o documenti.
+            </MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => MudDialog.Close()">Chiudi</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public Guid NonConformitaId { get; set; }
+    [Parameter] public string Label { get; set; } = "";
+
+    private List<AllegatoNonConformitaDto> _allegati = new();
+    private List<IBrowserFile> _fileDaCaricari = new();
+    private bool _loading = true;
+    private bool _uploading;
+
+    protected override async Task OnInitializedAsync() => await CaricaAsync();
+
+    private async Task CaricaAsync()
+    {
+        _loading = true;
+        _allegati = await AllegatiService.GetByNcIdAsync(NonConformitaId);
+        _loading = false;
+    }
+
+    private void OnFilesChanged(IReadOnlyList<IBrowserFile> files)
+        => _fileDaCaricari = files.ToList();
+
+    private async Task UploadAsync()
+    {
+        _uploading = true;
+        int ok = 0;
+        foreach (var file in _fileDaCaricari)
+        {
+            try
+            {
+                const long maxSize = 20 * 1024 * 1024; // 20 MB
+                using var ms = new MemoryStream();
+                await file.OpenReadStream(maxSize).CopyToAsync(ms);
+                await AllegatiService.AddAsync(NonConformitaId, file.Name, file.ContentType, ms.ToArray());
+                ok++;
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Errore caricando {file.Name}: {ex.Message}", Severity.Error);
+            }
+        }
+        _fileDaCaricari.Clear();
+        _uploading = false;
+        if (ok > 0)
+        {
+            Snackbar.Add($"{ok} file caricati.", Severity.Success);
+            await CaricaAsync();
+        }
+    }
+
+    private async Task DownloadAsync(AllegatoNonConformitaDto dto)
+    {
+        var result = await AllegatiService.GetFileAsync(dto.Id);
+        if (result == null) return;
+        var (dati, contentType, nomeFile) = result.Value;
+        var base64 = Convert.ToBase64String(dati);
+        await JS.InvokeVoidAsync("mesDownloadFile", base64, contentType, nomeFile);
+    }
+
+    private async Task EliminaAsync(AllegatoNonConformitaDto dto)
+    {
+        await AllegatiService.DeleteAsync(dto.Id);
+        Snackbar.Add($"'{dto.NomeFile}' eliminato.", Severity.Info);
+        await CaricaAsync();
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:N1} KB";
+        return $"{bytes / (1024.0 * 1024):N1} MB";
+    }
+
+    private static string GetFileIcon(string contentType) => contentType switch
+    {
+        var ct when ct.StartsWith("image/")                        => Icons.Material.Filled.Image,
+        "application/pdf"                                          => Icons.Material.Filled.PictureAsPdf,
+        var ct when ct.Contains("word") || ct.Contains("document") => Icons.Material.Filled.Description,
+        var ct when ct.Contains("excel") || ct.Contains("sheet")   => Icons.Material.Filled.TableChart,
+        _                                                          => Icons.Material.Filled.InsertDriveFile
+    };
+}

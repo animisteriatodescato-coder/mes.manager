@@ -3,6 +3,7 @@
 @using MESManager.Application.DTOs
 @using MESManager.Application.Interfaces
 @using MESManager.Web.Services
+@using MESManager.Web.Components.Dialogs.Cataloghi
 @inject INonConformitaService NcService
 @inject IAnimeService AnimeService
 @inject ICommessaAppService CommessaAppService
@@ -100,6 +101,9 @@
                 </MudTd>
                 <MudTd>
                     <MudStack Row="true" Spacing="0">
+                        <MudIconButton Icon="@Icons.Material.Filled.AttachFile" Size="Size.Small" Color="Color.Secondary"
+                                       Title="Allegati" OnClick="@(() => ApriAllegatiAsync(context))"
+                                       data-testid="btn-nc-allegati" />
                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
                                        Title="Modifica" OnClick="@(() => ApriModifica(context))"
                                        data-testid="btn-nc-edit" />
@@ -349,6 +353,17 @@
         {
             Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
         }
+    }
+
+    private async Task ApriAllegatiAsync(NonConformitaDto nc)
+    {
+        var p = new DialogParameters<AllegatiNcDialog>
+        {
+            { x => x.NonConformitaId, nc.Id },
+            { x => x.Label, $"{nc.CodiceArticolo} — {nc.DataSegnalazione:dd/MM/yyyy}" }
+        };
+        await DialogService.ShowAsync<AllegatiNcDialog>("Allegati Non Conformità", p,
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true });
     }
 
     private async Task ConfermaChiudi(NonConformitaDto nc)
