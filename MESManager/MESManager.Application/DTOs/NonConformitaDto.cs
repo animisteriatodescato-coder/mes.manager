@@ -13,6 +13,13 @@ public class NonConformitaDto
     public string Gravita { get; set; } = "Media";
     public string Descrizione { get; set; } = string.Empty;
     public string? AzioneCorrettiva { get; set; }
+    /// <summary>Tipologia NC da ImpostazioniTabelle.</summary>
+    public string? TipologiaNc { get; set; }
+    /// <summary>Motivo tecnico/descrittivo del problema.</summary>
+    public string? MotivoProblema { get; set; }
+    /// <summary>null = non valutato | Positivo | Negativo</summary>
+    public string? Esito { get; set; }
+    public DateTime? DataEsito { get; set; }
     /// <summary>Aperta | InGestione | Chiusa</summary>
     public string Stato { get; set; } = "Aperta";
     public string? CreatoDa { get; set; }

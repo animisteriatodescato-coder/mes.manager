@@ -4,9 +4,11 @@
 @using MESManager.Application.Interfaces
 @using MESManager.Web.Services
 @using MESManager.Web.Components.Dialogs.Cataloghi
+@using MudBlazor
 @inject INonConformitaService NcService
 @inject IAnimeService AnimeService
 @inject ICommessaAppService CommessaAppService
+@inject ITabelleService TabelleService
 @inject MESManager.Application.Services.CurrentUserService CurrentUserService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -57,18 +59,53 @@
     }
     else
     {
-        <MudTable Items="@RigheVisibili" Hover="true" Dense="true" Breakpoint="Breakpoint.Sm"
+        <MudTable Items="@RigheVisibili" GroupBy="@_groupDef" Hover="true" Dense="true" Breakpoint="Breakpoint.Sm"
                   SortLabel="Ordina" data-testid="tabella-nc">
+            <ColGroup>
+                <col style="width:100px" />
+                <col style="width:140px" />
+                <col style="width:130px" />
+                <col style="width:120px" />
+                <col style="width:100px" />
+                <col style="width:110px" />
+                <col />
+                <col style="width:100px" />
+                <col style="width:110px" />
+            </ColGroup>
             <HeaderContent>
                 <MudTh><MudTableSortLabel SortBy="@(new Func<NonConformitaDto, object>(x => x.DataSegnalazione))">Data</MudTableSortLabel></MudTh>
                 <MudTh><MudTableSortLabel SortBy="@(new Func<NonConformitaDto, object>(x => x.CodiceArticolo))">Articolo</MudTableSortLabel></MudTh>
                 <MudTh><MudTableSortLabel SortBy="@(new Func<NonConformitaDto, object>(x => x.Cliente ?? string.Empty))">Cliente</MudTableSortLabel></MudTh>
-                <MudTh><MudTableSortLabel SortBy="@(new Func<NonConformitaDto, object>(x => x.Tipo))">Tipo</MudTableSortLabel></MudTh>
+                <MudTh>Tipologia</MudTh>
                 <MudTh><MudTableSortLabel SortBy="@(new Func<NonConformitaDto, object>(x => x.Gravita))">Gravità</MudTableSortLabel></MudTh>
-                <MudTh>Descrizione</MudTh>
+                <MudTh><MudTableSortLabel SortBy="@(new Func<NonConformitaDto, object>(x => x.Esito ?? string.Empty))">Esito</MudTableSortLabel></MudTh>
+                <MudTh>Descrizione / Motivo</MudTh>
                 <MudTh><MudTableSortLabel SortBy="@(new Func<NonConformitaDto, object>(x => x.Stato))">Stato</MudTableSortLabel></MudTh>
                 <MudTh></MudTh>
             </HeaderContent>
+            <GroupHeaderTemplate>
+                <MudTh colspan="9" Style="padding:6px 12px;background:var(--mud-palette-background-grey)">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Small" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle2"><b>@context.Key</b></MudText>
+                        @{
+                            var descr = _articoliDescr.TryGetValue(context.Key?.ToString() ?? "", out var d) ? d : null;
+                        }
+                        @if (!string.IsNullOrWhiteSpace(descr))
+                        {
+                            <MudText Typo="Typo.caption" Style="opacity:.7">— @descr</MudText>
+                        }
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@context.Items.Count() NC</MudChip>
+                        @{
+                            int aperte = context.Items.Count(x => x.Stato != "Chiusa");
+                        }
+                        @if (aperte > 0)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled">@aperte aperte</MudChip>
+                        }
+                    </MudStack>
+                </MudTh>
+            </GroupHeaderTemplate>
             <RowTemplate>
                 <MudTd DataLabel="Data">@context.DataSegnalazione.ToString("dd/MM/yyyy")</MudTd>
                 <MudTd DataLabel="Articolo">
@@ -79,22 +116,47 @@
                     }
                 </MudTd>
                 <MudTd DataLabel="Cliente">@(context.Cliente ?? "-")</MudTd>
-                <MudTd DataLabel="Tipo">
-                    <MudChip T="string" Size="Size.Small" Color="@(context.Tipo == "NonConformita" ? Color.Error : Color.Warning)"
-                             Variant="Variant.Outlined">
-                        @(context.Tipo == "NonConformita" ? "NC" : "Segnalazione")
-                    </MudChip>
+                <MudTd DataLabel="Tipologia">
+                    @if (!string.IsNullOrWhiteSpace(context.TipologiaNc))
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">@context.TipologiaNc</MudChip>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption" Style="opacity:.5">—</MudText>
+                    }
                 </MudTd>
                 <MudTd DataLabel="Gravità">
                     <MudChip T="string" Size="Size.Small" Color="@GetGravitaColor(context.Gravita)" Variant="Variant.Filled">
                         @context.Gravita
                     </MudChip>
                 </MudTd>
-                <MudTd DataLabel="Descrizione">
-                    <MudText Typo="Typo.body2" Style="max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"
+                <MudTd DataLabel="Esito">
+                    @if (context.Esito == "Positivo")
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">Positivo</MudChip>
+                    }
+                    else if (context.Esito == "Negativo")
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.Cancel">Negativo</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">In corso</MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Descrizione / Motivo">
+                    <MudText Typo="Typo.body2" Style="max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"
                              title="@context.Descrizione">
                         @context.Descrizione
                     </MudText>
+                    @if (!string.IsNullOrWhiteSpace(context.MotivoProblema))
+                    {
+                        <MudText Typo="Typo.caption" Style="opacity:.7;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"
+                                 title="@context.MotivoProblema">
+                            🔍 @context.MotivoProblema
+                        </MudText>
+                    }
                 </MudTd>
                 <MudTd DataLabel="Stato">
                     <MudChip T="string" Size="Size.Small" Color="@GetStatoColor(context.Stato)">@context.Stato</MudChip>
@@ -177,7 +239,7 @@
                     <MudText Typo="Typo.caption" Style="opacity:.7">📦 @_form.DescrizioneArticolo</MudText>
                 </MudItem>
             }
-            <MudItem xs="12">
+            <MudItem xs="12" sm="6">
                 <MudAutocomplete T="string"
                                  @bind-Value="_form.Cliente"
                                  Label="Cliente"
@@ -191,26 +253,67 @@
                                  Clearable="true"
                                  data-testid="autocomplete-cliente" />
             </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudSelect T="string" @bind-Value="_form.TipologiaNc" Label="Tipologia NC" Variant="Variant.Outlined"
+                           Margin="Margin.Dense" Clearable="true" data-testid="select-form-tipologia">
+                    @foreach (var tip in _tipologieNc)
+                    {
+                        <MudSelectItem Value="@tip.Descrizione">@tip.Descrizione</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
             <MudItem xs="12">
                 <MudTextField @bind-Value="_form.Descrizione" Label="Descrizione problema *"
-                              Variant="Variant.Outlined" Margin="Margin.Dense" Lines="3"
-                              HelperText="Descrivi in dettaglio il problema segnalato dal cliente"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2"
+                              HelperText="Descrivi il problema segnalato dal cliente"
                               data-testid="input-nc-descrizione" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_form.MotivoProblema" Label="Motivo tecnico del problema"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2"
+                              HelperText="Analisi della causa radice (opzionale)"
+                              data-testid="input-nc-motivo" />
             </MudItem>
             <MudItem xs="12">
                 <MudTextField @bind-Value="_form.AzioneCorrettiva" Label="Azione correttiva"
                               Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2"
-                              HelperText="Opzionale — cosa è stato fatto o pianificato"
+                              HelperText="Cosa è stato fatto o pianificato"
                               data-testid="input-nc-azione" />
             </MudItem>
-            <MudItem xs="12" sm="6">
-                <MudSelect T="string" @bind-Value="_form.Stato" Label="Stato" Variant="Variant.Outlined"
-                           Margin="Margin.Dense" data-testid="select-form-stato">
-                    <MudSelectItem Value="@("Aperta")">Aperta</MudSelectItem>
-                    <MudSelectItem Value="@("InGestione")">In Gestione</MudSelectItem>
-                    <MudSelectItem Value="@("Chiusa")">Chiusa</MudSelectItem>
-                </MudSelect>
+
+            @* ── SEZIONE ESITO ── *@
+            <MudItem xs="12">
+                <MudDivider Class="mb-1" />
+                <MudText Typo="Typo.subtitle2" Class="mb-2">✅ Esito</MudText>
+                <MudRadioGroup T="string" @bind-Value="_form.Esito" data-testid="radio-esito">
+                    <MudRadio T="string" Value="@((string?)null)" Color="Color.Default">Non valutato</MudRadio>
+                    <MudRadio T="string" Value="@("Positivo")" Color="Color.Success">✅ Positivo (chiude la NC)</MudRadio>
+                    <MudRadio T="string" Value="@("Negativo")" Color="Color.Error">❌ Negativo (richiede nuova azione)</MudRadio>
+                </MudRadioGroup>
             </MudItem>
+            @if (_form.Esito == "Negativo")
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-1">
+                        Esito negativo: inserisci una nuova azione correttiva.
+                    </MudAlert>
+                    <MudTextField @bind-Value="_form.AzioneCorrettiva" Label="Nuova azione correttiva *"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense" Lines="3"
+                                  HelperText="Obbligatorio con esito negativo" Class="mt-1"
+                                  data-testid="input-nc-azione-negativo" />
+                </MudItem>
+            }
+            @if (_form.Esito != "Positivo")
+            {
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string" @bind-Value="_form.Stato" Label="Stato" Variant="Variant.Outlined"
+                               Margin="Margin.Dense" data-testid="select-form-stato">
+                        <MudSelectItem Value="@("Aperta")">Aperta</MudSelectItem>
+                        <MudSelectItem Value="@("InGestione")">In Gestione</MudSelectItem>
+                        <MudSelectItem Value="@("Chiusa")">Chiusa</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+            }
         </MudGrid>
     </DialogContent>
     <DialogActions>
@@ -227,11 +330,21 @@
 @code {
     private bool _loading;
     private List<NonConformitaDto> _nc = new();
+    private List<MESManager.Domain.Constants.LookupItem> _tipologieNc = new();
     private List<string> _articoliCodici = new();
     private Dictionary<string, string> _articoliDescr = new(StringComparer.OrdinalIgnoreCase);
     private List<string> _clienti = new();
     private string _searchText = string.Empty;
     private string _filtroStato = "Aperta";
+
+    private TableGroupDefinition<NonConformitaDto> _groupDef = new()
+    {
+        GroupName   = "Articolo",
+        Indentation = false,
+        Expandable  = true,
+        IsInitiallyExpanded = true,
+        Selector    = (e) => e.CodiceArticolo
+    };
 
     // Dialog
     private bool _dialogOpen;
@@ -256,6 +369,8 @@
             .ToDictionary(g => g.Key, g => g.First().DescrizioneArticolo ?? "", StringComparer.OrdinalIgnoreCase);
         var clientiList = await CommessaAppService.GetClienteNomiDistinctAsync();
         _clienti = clientiList;
+        // Singleton - chiamata sincrona sicura
+        _tipologieNc = TabelleService.GetTipologiaNcList();
 
         _loading = false;
     }
@@ -300,7 +415,7 @@
     private void ApriNuovaNc()
     {
         _editingId = null;
-        _form = new NonConformitaDto { Tipo = "NonConformita", Gravita = "Media", Stato = "Aperta" };
+        _form = new NonConformitaDto { Tipo = "NonConformita", Gravita = "Media", Stato = "Aperta", Esito = null };
         _dataForm = DateTime.Today;
         _dialogOpen = true;
     }
@@ -318,7 +433,10 @@
             Tipo                = nc.Tipo,
             Gravita             = nc.Gravita,
             Descrizione         = nc.Descrizione,
+            MotivoProblema      = nc.MotivoProblema,
             AzioneCorrettiva    = nc.AzioneCorrettiva,
+            TipologiaNc         = nc.TipologiaNc,
+            Esito               = nc.Esito,
             Stato               = nc.Stato
         };
         _dataForm = nc.DataSegnalazione;
@@ -327,7 +445,8 @@
 
     private bool FormValido =>
         !string.IsNullOrWhiteSpace(_form.CodiceArticolo) &&
-        !string.IsNullOrWhiteSpace(_form.Descrizione);
+        !string.IsNullOrWhiteSpace(_form.Descrizione) &&
+        (_form.Esito != "Negativo" || !string.IsNullOrWhiteSpace(_form.AzioneCorrettiva));
 
     private async Task SalvaAsync()
     {

@@ -197,6 +197,55 @@
                     </MudButton>
                 </MudPaper>
             </MudTabPanel>
+
+            <!-- Tab Tipologie NC -->
+            <MudTabPanel Text="Tipologie NC" Icon="@Icons.Material.Filled.ReportProblem">
+                <MudPaper Class="pa-4 mt-4">
+                    <MudText Typo="Typo.h6" Class="mb-1">Tipologie Non Conformità</MudText>
+                    <MudText Typo="Typo.caption" Class="mb-3" Style="opacity:.7">
+                        Definisci le tipologie disponibili nel menù a tendina del modulo Non Conformità.
+                    </MudText>
+
+                    <MudButton Variant="Variant.Filled"
+                              Color="Color.Success"
+                              StartIcon="@Icons.Material.Filled.Add"
+                              Class="mb-4"
+                              OnClick="AggiungiTipologiaNc"
+                              data-testid="btn-tabelle-tipologia-nc-add">
+                        Aggiungi Tipologia
+                    </MudButton>
+
+                    <MudTable Items="@tipologiaNc" Hover="true" Striped="true" data-testid="table-tabelle-tipologia-nc">
+                        <HeaderContent>
+                            <MudTh>Codice (chiave interna)</MudTh>
+                            <MudTh>Descrizione (visualizzata)</MudTh>
+                            <MudTh>Azioni</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Codice">
+                                <MudTextField @bind-Value="context.Codice" Variant="Variant.Text" />
+                            </MudTd>
+                            <MudTd DataLabel="Descrizione">
+                                <MudTextField @bind-Value="context.Descrizione" Variant="Variant.Text" />
+                            </MudTd>
+                            <MudTd DataLabel="Azioni">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                              Color="Color.Error"
+                                              Size="Size.Small"
+                                              OnClick="@(() => EliminaTipologiaNc(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+
+                    <MudButton Variant="Variant.Filled"
+                              Color="Color.Primary"
+                              Class="mt-4"
+                              OnClick="SalvaTipologiaNcAsync"
+                              data-testid="btn-tabelle-tipologia-nc-salva">
+                        Salva Tipologie NC
+                    </MudButton>
+                </MudPaper>
+            </MudTabPanel>
         </MudTabs>
     }
 </MudContainer>
@@ -208,6 +257,7 @@
     private List<VerniceDto> vernice = new();
     private List<SabbiaDto> sabbia = new();
     private List<ImballoDto> imballo = new();
+    private List<TipologiaNcDto> tipologiaNc = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -219,15 +269,17 @@
         isLoading = true;
         try
         {
-            var collaItems   = await Http.GetFromJsonAsync<List<CollaDto>>("/api/Tabelle/colla")   ?? new();
-            var verniceItems  = await Http.GetFromJsonAsync<List<VerniceDto>>("/api/Tabelle/vernice") ?? new();
-            var sabbiaItems   = await Http.GetFromJsonAsync<List<SabbiaDto>>("/api/Tabelle/sabbia")  ?? new();
-            var imballoItems  = await Http.GetFromJsonAsync<List<ImballoDto>>("/api/Tabelle/imballo") ?? new();
+            var collaItems        = await Http.GetFromJsonAsync<List<CollaDto>>("/api/Tabelle/colla")         ?? new();
+            var verniceItems      = await Http.GetFromJsonAsync<List<VerniceDto>>("/api/Tabelle/vernice")       ?? new();
+            var sabbiaItems       = await Http.GetFromJsonAsync<List<SabbiaDto>>("/api/Tabelle/sabbia")        ?? new();
+            var imballoItems      = await Http.GetFromJsonAsync<List<ImballoDto>>("/api/Tabelle/imballo")       ?? new();
+            var tipologiaNcItems  = await Http.GetFromJsonAsync<List<TipologiaNcDto>>("/api/Tabelle/tipologia-nc") ?? new();
 
-            colla   = collaItems;
-            vernice  = verniceItems;
-            sabbia   = sabbiaItems;
-            imballo  = imballoItems;
+            colla       = collaItems;
+            vernice     = verniceItems;
+            sabbia      = sabbiaItems;
+            imballo     = imballoItems;
+            tipologiaNc = tipologiaNcItems;
 
         }
         catch (Exception ex)
@@ -240,15 +292,17 @@
         }
     }
 
-    private void AggiungiColla()   => colla.Add(new CollaDto   { Codice = "", Descrizione = "" });
-    private void AggiungiVernice()  => vernice.Add(new VerniceDto  { Codice = "", Descrizione = "" });
-    private void AggiungiSabbia()   => sabbia.Add(new SabbiaDto   { Codice = "", Descrizione = "" });
-    private void AggiungiImballo()  => imballo.Add(new ImballoDto  { Codice = "", Descrizione = "" });
+    private void AggiungiColla()       => colla.Add(new CollaDto          { Codice = "", Descrizione = "" });
+    private void AggiungiVernice()     => vernice.Add(new VerniceDto       { Codice = "", Descrizione = "" });
+    private void AggiungiSabbia()      => sabbia.Add(new SabbiaDto         { Codice = "", Descrizione = "" });
+    private void AggiungiImballo()     => imballo.Add(new ImballoDto       { Codice = "", Descrizione = "" });
+    private void AggiungiTipologiaNc() => tipologiaNc.Add(new TipologiaNcDto { Codice = "", Descrizione = "" });
 
-    private void EliminaColla(CollaDto collaItem)     => colla.Remove(collaItem);
-    private void EliminaVernice(VerniceDto verniceItem) => vernice.Remove(verniceItem);
-    private void EliminaSabbia(SabbiaDto sabbiaItem)   => sabbia.Remove(sabbiaItem);
-    private void EliminaImballo(ImballoDto imballoItem) => imballo.Remove(imballoItem);
+    private void EliminaColla(CollaDto collaItem)             => colla.Remove(collaItem);
+    private void EliminaVernice(VerniceDto verniceItem)       => vernice.Remove(verniceItem);
+    private void EliminaSabbia(SabbiaDto sabbiaItem)          => sabbia.Remove(sabbiaItem);
+    private void EliminaImballo(ImballoDto imballoItem)       => imballo.Remove(imballoItem);
+    private void EliminaTipologiaNc(TipologiaNcDto t)        => tipologiaNc.Remove(t);
 
     private async Task SalvaCollaAsync()
     {
@@ -314,6 +368,22 @@
         }
     }
 
+    private async Task SalvaTipologiaNcAsync()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("/api/Tabelle/tipologia-nc", tipologiaNc);
+            if (response.IsSuccessStatusCode)
+                Snackbar.Add("Tipologie NC salvate!", Severity.Success);
+            else
+                Snackbar.Add($"Errore salvataggio: {response.StatusCode}", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+    }
+
     public class CollaDto 
     { 
         public string Codice { get; set; } = string.Empty;
@@ -334,6 +404,12 @@
     
     public class ImballoDto 
     { 
+        public string Codice { get; set; } = string.Empty;
+        public string Descrizione { get; set; } = string.Empty;
+    }
+
+    public class TipologiaNcDto
+    {
         public string Codice { get; set; } = string.Empty;
         public string Descrizione { get; set; } = string.Empty;
     }

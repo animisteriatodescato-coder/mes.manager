@@ -37,6 +37,19 @@ public class NonConformita
 
     public string? AzioneCorrettiva { get; set; }
 
+    /// <summary>Tipologia NC configurabile da ImpostazioniTabelle (es. Difetto superficiale, Dimensioni errate...).</summary>
+    [MaxLength(150)]
+    public string? TipologiaNc { get; set; }
+
+    /// <summary>Motivo tecnico del problema (campo descrittivo libero).</summary>
+    public string? MotivoProblema { get; set; }
+
+    /// <summary>null = non valutato | Positivo | Negativo</summary>
+    [MaxLength(50)]
+    public string? Esito { get; set; }
+
+    public DateTime? DataEsito { get; set; }
+
     /// <summary>Aperta | InGestione | Chiusa</summary>
     [MaxLength(50)]
     public string Stato { get; set; } = "Aperta";

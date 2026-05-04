@@ -16,7 +16,8 @@ public static class LookupTables
         Dictionary<string, string> colla,
         Dictionary<string, string> vernice,
         Dictionary<string, string> sabbia,
-        Dictionary<string, string> imballo)
+        Dictionary<string, string> imballo,
+        Dictionary<string, string>? tipologiaNc = null)
     {
         Colla.Clear();
         foreach (var kv in colla)   Colla[kv.Key]   = kv.Value;
@@ -36,6 +37,12 @@ public static class LookupTables
         {
             if (int.TryParse(kv.Key, out var k))
                 ImballoInt[k] = kv.Value;
+        }
+
+        if (tipologiaNc != null)
+        {
+            TipologiaNc.Clear();
+            foreach (var kv in tipologiaNc) TipologiaNc[kv.Key] = kv.Value;
         }
     }
 
@@ -94,6 +101,18 @@ public static class LookupTables
         { "-6", "CARRELLI A PIANI" },
         { "-7", "CARRELLI GRANDI" },
         { "-8", "SCATOLE" }
+    };
+
+    public static Dictionary<string, string> TipologiaNc = new()
+    {
+        { "difetto-superficie", "Difetto superficiale" },
+        { "dimensioni", "Dimensioni errate" },
+        { "contaminazione", "Contaminazione materiale" },
+        { "rottura", "Rottura / criccatura" },
+        { "colore", "Colore / finitura errata" },
+        { "documentazione", "Documentazione errata" },
+        { "spedizione", "Errore spedizione" },
+        { "altro", "Altro" }
     };
 
     /// <summary>

@@ -20,6 +20,7 @@ public class TabelleService : ITabelleService
     private Dictionary<string, string> _vernice  = new();
     private Dictionary<string, string> _sabbia   = new();
     private Dictionary<string, string> _imballo  = new();
+    private Dictionary<string, string> _tipologiaNc = new();
 
     private static readonly JsonSerializerOptions _jsonOpts = new()
     {
@@ -40,11 +41,13 @@ public class TabelleService : ITabelleService
     public Dictionary<string, string> GetVernice()  => new(_vernice);
     public Dictionary<string, string> GetSabbia()   => new(_sabbia);
     public Dictionary<string, string> GetImballo()  => new(_imballo);
+    public Dictionary<string, string> GetTipologiaNc() => new(_tipologiaNc);
 
     public List<LookupItem> GetCollaList()   => ToDtoList(_colla);
     public List<LookupItem> GetVerniceList()  => ToDtoList(_vernice);
     public List<LookupItem> GetSabbiaList()   => ToDtoList(_sabbia);
     public List<LookupItem> GetImballoList()  => ToDtoList(_imballo);
+    public List<LookupItem> GetTipologiaNcList() => ToDtoList(_tipologiaNc);
 
     // ─── Scrittura ─────────────────────────────────────────────────────────
 
@@ -77,6 +80,13 @@ public class TabelleService : ITabelleService
         return PersistiAsync();
     }
 
+    public Task SalvaTipologiaNcAsync(List<LookupItem> items)
+    {
+        _tipologiaNc = items.ToDictionary(i => i.Codice, i => i.Descrizione);
+        SincronizzaStatico();
+        return PersistiAsync();
+    }
+
     // ─── Privati ────────────────────────────────────────────────────────────
 
     private void CaricaDati()
@@ -89,10 +99,11 @@ public class TabelleService : ITabelleService
                 var cfg  = JsonSerializer.Deserialize<TabelleConfig>(json, _jsonOpts);
                 if (cfg != null)
                 {
-                    _colla   = cfg.Colla   ?? new();
-                    _vernice  = cfg.Vernice  ?? new();
-                    _sabbia   = cfg.Sabbia   ?? new();
-                    _imballo  = cfg.Imballo  ?? new();
+                    _colla       = cfg.Colla       ?? new();
+                    _vernice     = cfg.Vernice     ?? new();
+                    _sabbia      = cfg.Sabbia      ?? new();
+                    _imballo     = cfg.Imballo     ?? new();
+                    _tipologiaNc = cfg.TipologiaNc ?? new();
                     SincronizzaStatico();
                     _logger.LogInformation("TabelleService: caricato da {File}", _filePath);
                     return;
@@ -105,10 +116,11 @@ public class TabelleService : ITabelleService
         }
 
         // Fallback: clona i valori di default da LookupTables
-        _colla   = new Dictionary<string, string>(LookupTables.Colla);
-        _vernice  = new Dictionary<string, string>(LookupTables.Vernice);
-        _sabbia   = new Dictionary<string, string>(LookupTables.Sabbia);
-        _imballo  = new Dictionary<string, string>(LookupTables.Imballo);
+        _colla       = new Dictionary<string, string>(LookupTables.Colla);
+        _vernice     = new Dictionary<string, string>(LookupTables.Vernice);
+        _sabbia      = new Dictionary<string, string>(LookupTables.Sabbia);
+        _imballo     = new Dictionary<string, string>(LookupTables.Imballo);
+        _tipologiaNc = new Dictionary<string, string>(LookupTables.TipologiaNc);
         _logger.LogInformation("TabelleService: nessun file trovato, uso valori LookupTables hardcoded");
     }
 
@@ -119,7 +131,7 @@ public class TabelleService : ITabelleService
     /// </summary>
     private void SincronizzaStatico()
     {
-        LookupTables.Aggiorna(_colla, _vernice, _sabbia, _imballo);
+        LookupTables.Aggiorna(_colla, _vernice, _sabbia, _imballo, _tipologiaNc);
     }
 
     private async Task PersistiAsync()
@@ -129,10 +141,11 @@ public class TabelleService : ITabelleService
         {
             var cfg = new TabelleConfig
             {
-                Colla   = _colla,
-                Vernice  = _vernice,
-                Sabbia   = _sabbia,
-                Imballo  = _imballo
+                Colla        = _colla,
+                Vernice      = _vernice,
+                Sabbia       = _sabbia,
+                Imballo      = _imballo,
+                TipologiaNc  = _tipologiaNc
             };
             var json = JsonSerializer.Serialize(cfg, _jsonOpts);
             await File.WriteAllTextAsync(_filePath, json);
@@ -149,9 +162,10 @@ public class TabelleService : ITabelleService
 
     private class TabelleConfig
     {
-        public Dictionary<string, string>? Colla   { get; set; }
-        public Dictionary<string, string>? Vernice  { get; set; }
-        public Dictionary<string, string>? Sabbia   { get; set; }
-        public Dictionary<string, string>? Imballo  { get; set; }
+        public Dictionary<string, string>? Colla        { get; set; }
+        public Dictionary<string, string>? Vernice      { get; set; }
+        public Dictionary<string, string>? Sabbia       { get; set; }
+        public Dictionary<string, string>? Imballo      { get; set; }
+        public Dictionary<string, string>? TipologiaNc  { get; set; }
     }
 }

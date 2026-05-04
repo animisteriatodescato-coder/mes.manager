@@ -50,11 +50,18 @@ public class NonConformitaService : INonConformitaService
             Tipo                 = dto.Tipo,
             Gravita              = dto.Gravita,
             Descrizione          = dto.Descrizione.Trim(),
+            MotivoProblema       = dto.MotivoProblema?.Trim(),
             AzioneCorrettiva     = dto.AzioneCorrettiva?.Trim(),
+            TipologiaNc          = dto.TipologiaNc?.Trim(),
+            Esito                = dto.Esito,
+            DataEsito            = dto.Esito != null ? DateTime.Today : null,
             Stato                = dto.Stato,
             CreatoDa             = userId,
             CreatoIl             = DateTime.UtcNow
         };
+        // Logica esito automatico
+        if (dto.Esito == "Positivo") { entity.Stato = "Chiusa"; entity.DataChiusura = DateTime.Today; }
+        else if (dto.Esito == "Negativo" && entity.Stato == "Aperta") entity.Stato = "InGestione";
         _db.NonConformita.Add(entity);
         await _db.SaveChangesAsync();
         return MapToDto(entity);
@@ -72,13 +79,22 @@ public class NonConformitaService : INonConformitaService
         entity.Tipo                = dto.Tipo;
         entity.Gravita             = dto.Gravita;
         entity.Descrizione         = dto.Descrizione.Trim();
+        entity.MotivoProblema      = dto.MotivoProblema?.Trim();
         entity.AzioneCorrettiva    = dto.AzioneCorrettiva?.Trim();
+        entity.TipologiaNc         = dto.TipologiaNc?.Trim();
+        entity.Esito               = dto.Esito;
         entity.Stato               = dto.Stato;
         entity.ModificatoDa        = userId;
         entity.ModificatoIl        = DateTime.UtcNow;
 
-        if (dto.Stato == "Chiusa" && entity.DataChiusura == null)
-            entity.DataChiusura = DateTime.Today;
+        // Aggiorna DataEsito solo quando cambia
+        if (dto.Esito != null && entity.DataEsito == null)
+            entity.DataEsito = DateTime.Today;
+
+        // Logica esito automatico
+        if (dto.Esito == "Positivo") { entity.Stato = "Chiusa"; entity.DataChiusura = DateTime.Today; }
+        else if (dto.Esito == "Negativo" && entity.Stato == "Aperta") entity.Stato = "InGestione";
+        else if (dto.Stato == "Chiusa" && entity.DataChiusura == null) entity.DataChiusura = DateTime.Today;
 
         await _db.SaveChangesAsync();
         return MapToDto(entity);
@@ -118,7 +134,11 @@ public class NonConformitaService : INonConformitaService
         Tipo                = x.Tipo,
         Gravita             = x.Gravita,
         Descrizione         = x.Descrizione,
+        MotivoProblema      = x.MotivoProblema,
         AzioneCorrettiva    = x.AzioneCorrettiva,
+        TipologiaNc         = x.TipologiaNc,
+        Esito               = x.Esito,
+        DataEsito           = x.DataEsito,
         Stato               = x.Stato,
         CreatoDa            = x.CreatoDa,
         CreatoIl            = x.CreatoIl,

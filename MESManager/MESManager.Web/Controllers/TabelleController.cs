@@ -34,7 +34,9 @@ namespace MESManager.Web.Controllers
         [HttpGet("imballo")]
         public ActionResult<List<LookupItem>> GetImballo() =>
             Ok(_tabelleService.GetImballoList());
-
+        [HttpGet("tipologia-nc")]
+        public ActionResult<List<LookupItem>> GetTipologiaNc() =>
+            Ok(_tabelleService.GetTipologiaNcList());
         // ─── POST (salvataggio) ─────────────────────────────────────────────
 
         [HttpPost("colla")]
@@ -66,6 +68,14 @@ namespace MESManager.Web.Controllers
         {
             if (items == null) return BadRequest("Payload vuoto");
             await _tabelleService.SalvaImballoAsync(items);
+            return Ok();
+        }
+
+        [HttpPost("tipologia-nc")]
+        public async Task<IActionResult> SalvaTipologiaNc([FromBody] List<LookupItem> items)
+        {
+            if (items == null) return BadRequest("Payload vuoto");
+            await _tabelleService.SalvaTipologiaNcAsync(items);
             return Ok();
         }
     }
