@@ -4,8 +4,10 @@
 @using MESManager.Application.Services
 @using MESManager.Web.Models
 @using MESManager.Web.Services
+@using MESManager.Web.Components.Dialogs
 @using Microsoft.JSInterop
 @using Microsoft.JSInterop.Infrastructure
+@using System.Text.Json
 @inject NavigationManager Nav
 @inject PreferencesService PreferencesService
 @inject CurrentUserService CurrentUserService
@@ -30,7 +32,8 @@
                          OnDebounceIntervalElapsed="OnSearchDebounced" />
             <MudSpacer />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="@ToggleColumnPanel">Colonne</MudButton>
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@ResetGrid">Reset</MudButton>
+            <FixResetMenu OnFix="@FixGridState" OnReset="@ResetToFixedState"
+                         ShowGlobalSave="@IsAdmin" OnSaveGlobal="@SaveAsGlobalDefault" />
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Settings" OnClick="@(() => _showSettings = !_showSettings)">Impostazioni</MudButton>
         </MudStack>
         @if (_showSettings)
@@ -61,6 +64,8 @@
 </div>
 
 @code {
+    [CascadingParameter(Name = "IsAdmin")] private bool IsAdmin { get; set; }
+
     private GridUiSettings settings = new();
     private string searchText = string.Empty;
     private bool _showSettings = false;
@@ -170,13 +175,55 @@
         catch { }
     }
 
-    private async Task ResetGrid()
+    private async Task FixGridState()
     {
         try
         {
-            await PreferencesService.RemoveAsync("plc-realtime-grid-columns");
-            await JSRuntime.InvokeVoidAsync("plcRealtimeGrid.resetGrid");
-            Nav.NavigateTo(Nav.Uri, forceLoad: true);
+            var gridState = await JSRuntime.InvokeAsync<string>("plcRealtimeGrid.getState");
+            await PreferencesService.SetAsync("plc-realtime-grid-fixed-state", gridState);
+            await PreferencesService.SetAsync("plc-realtime-grid-fixed-settings", JsonSerializer.Serialize(settings));
+        }
+        catch { }
+    }
+
+    private async Task ResetToFixedState()
+    {
+        try
+        {
+            var fixedState = await PreferencesService.GetAsync<string>("plc-realtime-grid-fixed-state");
+            var fixedSettings = await PreferencesService.GetAsync<string>("plc-realtime-grid-fixed-settings");
+
+            if (!string.IsNullOrEmpty(fixedState))
+            {
+                await JSRuntime.InvokeVoidAsync("plcRealtimeGrid.setState", fixedState);
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("plcRealtimeGrid.resetState");
+            }
+
+            if (!string.IsNullOrEmpty(fixedSettings))
+            {
+                settings = JsonSerializer.Deserialize<GridUiSettings>(fixedSettings) ?? new GridUiSettings();
+            }
+            else
+            {
+                settings = new GridUiSettings();
+            }
+
+            await ApplyUiSettings();
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    private async Task SaveAsGlobalDefault()
+    {
+        try
+        {
+            var gridState = await JSRuntime.InvokeAsync<string>("plcRealtimeGrid.getState");
+            settings.ColumnStateJson = gridState;
+            await PreferencesService.SetGlobalAsync("plc-realtime-grid-settings", settings);
         }
         catch { }
     }

@@ -507,6 +507,34 @@ window.plcRealtimeGrid = (function () {
         }
     }
 
+    function resetState() {
+        if (gridApi) {
+            gridApi.resetColumnState();
+            gridApi.setFilterModel(null);
+        }
+    }
+
+    function getState() {
+        if (!gridApi) return null;
+        return JSON.stringify(gridApi.getColumnState());
+    }
+
+    function setState(stateJson) {
+        if (!gridApi || !stateJson) return;
+        try {
+            const state = JSON.parse(stateJson);
+            setTimeout(() => {
+                try {
+                    gridApi.applyColumnState({ state: state, applyOrder: true });
+                } catch (err) {
+                    console.warn('setState failed:', err);
+                }
+            }, 0);
+        } catch (e) {
+            console.error('setState: error parsing state', e);
+        }
+    }
+
     function applySettings(settings) {
         if (!gridApi) return;
 
@@ -545,6 +573,9 @@ window.plcRealtimeGrid = (function () {
         setQuickFilter,
         toggleColumnPanel,
         resetGrid,
+        resetState,
+        getState,
+        setState,
         applySettings,
         getColumnState,
         setCurrentUser
