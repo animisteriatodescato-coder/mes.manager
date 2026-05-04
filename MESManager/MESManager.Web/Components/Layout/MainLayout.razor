@@ -491,8 +491,9 @@
                         bool _canCatCli  = _isCatBase || catCtx.User.HasClaim(PaginaPolicy.ClaimType, "cat-clienti");
                         bool _canCatRic  = _isCatBase || catCtx.User.HasClaim(PaginaPolicy.ClaimType, "cat-ricette");
                         bool _canCatPrev = _isCatBase || catCtx.User.HasClaim(PaginaPolicy.ClaimType, "cat-preventivi");
+                        bool _canCatNc   = _isCatBase || catCtx.User.HasClaim(PaginaPolicy.ClaimType, "cat-non-conformita");
                     }
-                    @if (_canCatComm || _canCatAnim || _canCatArt || _canCatCli || _canCatRic || _canCatPrev)
+                    @if (_canCatComm || _canCatAnim || _canCatArt || _canCatCli || _canCatRic || _canCatPrev || _canCatNc)
                     {
                         <MudNavGroup Title="Cataloghi" Icon="@Icons.Material.Filled.LibraryBooks" IconColor="Color.Info" Expanded="@_expandedCat" ExpandedChanged="@(v => OnNavGroupToggled("cat", v))" Class="nav-sec-cataloghi">
                             @if (_canCatComm)
@@ -529,6 +530,12 @@
                             {
                                 <MudNavLink Href="/preventivi">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#129534;</span><span>Preventivi</span></div>
+                                </MudNavLink>
+                            }
+                            @if (_canCatNc)
+                            {
+                                <MudNavLink Href="/cataloghi/non-conformita">
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9888;&#65039;</span><span>Non Conformit&#xE0;</span></div>
                                 </MudNavLink>
                             }
                         </MudNavGroup>
