@@ -158,13 +158,6 @@
                    data-testid="btn-stampa-interna">
             Interna
         </MudButton>
-        <MudButton Variant="Variant.Outlined"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Print"
-                   OnClick="@(() => StampaAsync(false))"
-                   data-testid="btn-stampa-cliente-browser">
-            Stampa cliente
-        </MudButton>
         <MudTooltip Text="Genera PDF pulito (server-side): niente intestazioni/piè di pagina del browser.">
             <MudButton Variant="Variant.Filled"
                        Color="Color.Success"
@@ -196,7 +189,7 @@
     private string _emailDestinatario = string.Empty;
     private bool _isInvioEmail;
     private bool _isScaricaPdf;
-    private decimal _fontSize = 12m;
+    private decimal _fontSize = 10.5m;
     private const string FontSizeKey = "preventivo_fontsize";
 
     // ── Condizioni di offerta (editabili pre-stampa) ──────────────────────────
