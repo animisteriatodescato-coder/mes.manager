@@ -35,5 +35,11 @@
     "-6": "CARRELLI A PIANI",
     "-7": "CARRELLI GRANDI",
     "-8": "SCATOLE"
+  },
+  "TipologiaNc": {
+    "1": "LAVORAZIONE",
+    "2": "INCOLLAGGIO",
+    "3": "VERNICIATURA",
+    "4": "IMBALLO"
   }
 }
