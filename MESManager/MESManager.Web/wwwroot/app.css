@@ -1055,6 +1055,38 @@ h1:focus {
 .mud-theme-dark .mes-mant-btn-active-ok   { border-color: #66bb6a !important; background: rgba(76,175,80,.35) !important; box-shadow: 0 0 0 2px rgba(76,175,80,.5) !important; filter: drop-shadow(0 1px 4px rgba(76,175,80,.8)) !important; }
 .mud-theme-dark .mes-mant-btn-active-anom { border-color: #ffa726 !important; background: rgba(255,152,0,.35) !important; box-shadow: 0 0 0 2px rgba(255,152,0,.5) !important; filter: drop-shadow(0 1px 4px rgba(255,152,0,.8)) !important; }
 
+/* Pulsante "Seleziona tutti OK" nell'intestazione colonna */
+.mes-mant-btn-selall {
+    display: block;
+    margin: 5px auto 0;
+    background: none;
+    border: 1px solid rgba(76,175,80,.45);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 3px 8px;
+    transition: background .15s, transform .1s, border-color .15s;
+    opacity: 0.72;
+    white-space: nowrap;
+    color: inherit;
+    line-height: 1.5;
+}
+.mes-mant-btn-selall:hover {
+    background: rgba(76,175,80,.18);
+    opacity: 1;
+    transform: scale(1.05);
+    border-color: rgba(76,175,80,.75);
+}
+.mes-mant-btn-selall:disabled {
+    opacity: .25;
+    cursor: not-allowed;
+    transform: none;
+}
+.mud-theme-dark .mes-mant-btn-selall {
+    border-color: rgba(76,175,80,.55);
+    opacity: 0.78;
+}
+
 /* Commento anomalia — sempre visibile sotto i bottoni */
 .mes-mant-comment-saved {
     display: flex;

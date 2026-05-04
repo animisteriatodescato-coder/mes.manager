@@ -92,6 +92,12 @@
                         {
                             <th class="mes-mant-th-att" title="@att.Nome">
                                 <span class="mes-mant-att-label" style="font-size:@(att.FontSize > 0 ? att.FontSize : 11)px">@att.Nome</span>
+                                <button class="mes-mant-btn-selall"
+                                        title="Seleziona tutti OK — @att.Nome"
+                                        @onclick="@(() => SelezionaTuttiOkAsync(att))"
+                                        disabled="@_saving">
+                                    ✅ tutti
+                                </button>
                             </th>
                         }
                         <th class="mes-mant-th-prog">Avanzamento</th>
@@ -448,6 +454,51 @@
         }
         Snackbar.Add("Scheda chiusa", Severity.Success);
         StateHasChanged();
+    }
+
+    // ── Seleziona tutti OK per colonna ───────────────────────
+    private async Task SelezionaTuttiOkAsync(ManutenzioneAttivitaDto att)
+    {
+        if (_saving) return;
+        _saving = true;
+        try
+        {
+            var data = _dataGiornata ?? DateTime.Today;
+            foreach (var mac in _macchine)
+            {
+                var scheda = _schedeMap.TryGetValue(mac.Id, out var s) ? s : null;
+                var chiusa = scheda?.Stato == StatoSchedaManutenzione.Completata
+                          || scheda?.Stato == StatoSchedaManutenzione.ConAnomalie;
+                if (chiusa) continue;
+
+                if (_schedeMap[mac.Id] == null)
+                {
+                    _schedeMap[mac.Id] = await ManutenzioneService.GetOrCreateSchedaAsync(
+                        mac.Id, _tipo, data,
+                        CurrentUserService.UserId,
+                        CurrentUserService.UserName);
+                }
+
+                scheda = _schedeMap[mac.Id]!;
+                var riga = scheda.Righe.FirstOrDefault(r => r.AttivitaId == att.Id);
+                if (riga == null || riga.Esito == EsitoAttivitaManutenzione.OK) continue;
+
+                riga.Esito = EsitoAttivitaManutenzione.OK;
+                if (_commentEditingRigaId == riga.Id)
+                    AnnullaCommento();
+                riga.Commento = null;
+
+                var updated = await ManutenzioneService.UpdateRigaAsync(scheda.Id, riga);
+                if (updated != null)
+                    _schedeMap[mac.Id] = updated;
+            }
+            Snackbar.Add($"Tutti OK per «{att.Nome}»", Severity.Success);
+        }
+        finally
+        {
+            _saving = false;
+            StateHasChanged();
+        }
     }
 
     // ── Helpers UI ────────────────────────────────────────────
