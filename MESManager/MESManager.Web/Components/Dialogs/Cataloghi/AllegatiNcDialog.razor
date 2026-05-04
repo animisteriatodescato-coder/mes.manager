@@ -20,7 +20,7 @@
         @* ── Upload area ── *@
         <MudPaper Elevation="0" Class="pa-3 mb-3"
                   Style="border:1px dashed var(--mud-palette-lines-default);border-radius:6px">
-            <MudFileUpload T="IReadOnlyList<IBrowserFile>" FilesChanged="OnFilesChanged"
+            <MudFileUpload T="IReadOnlyList<IBrowserFile>" FilesChanged="OnFilesChangedAsync"
                            Multiple="true" Accept="*/*">
                 <ActivatorContent>
                     <MudButton Variant="Variant.Outlined"
@@ -36,7 +36,14 @@
                     @foreach (var f in _fileDaCaricari)
                     {
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                            <MudIcon Icon="@GetFileIcon(f.ContentType)" Size="Size.Small" Color="Color.Secondary" />
+                            @if (_uploadPreviewUrls.TryGetValue(f.Name, out var up))
+                            {
+                                <img src="@up" style="width:40px;height:40px;border-radius:4px;object-fit:cover" />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@GetFileIcon(f.ContentType)" Size="Size.Small" Color="Color.Secondary" />
+                            }
                             <MudText Typo="Typo.caption">@f.Name (@FormatBytes(f.Size))</MudText>
                         </MudStack>
                     }
@@ -55,17 +62,28 @@
         {
             <MudTable Items="_allegati" Dense="true" Elevation="0" data-testid="tabella-allegati-nc">
                 <HeaderContent>
+                    <MudTh>Anteprima</MudTh>
                     <MudTh>File</MudTh>
                     <MudTh>Dimensione</MudTh>
                     <MudTh>Data</MudTh>
                     <MudTh></MudTh>
                 </HeaderContent>
                 <RowTemplate>
+                    <MudTd Style="width:110px">
+                        @if (_previewUrls.TryGetValue(context.Id, out var prevUrl))
+                        {
+                            <img src="@prevUrl" alt="anteprima"
+                                 style="max-width:100px;max-height:70px;border-radius:6px;object-fit:cover;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25)"
+                                 title="Clicca per ingrandire"
+                                 @onclick="@(async () => await ApriAnteprimaAsync(prevUrl))" />
+                        }
+                        else
+                        {
+                            <MudIcon Icon="@GetFileIcon(context.ContentType)" Size="Size.Medium" Color="Color.Secondary" />
+                        }
+                    </MudTd>
                     <MudTd>
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                            <MudIcon Icon="@GetFileIcon(context.ContentType)" Size="Size.Small" Color="Color.Secondary" />
-                            <MudText Typo="Typo.body2">@context.NomeFile</MudText>
-                        </MudStack>
+                        <MudText Typo="Typo.body2">@context.NomeFile</MudText>
                     </MudTd>
                     <MudTd><MudText Typo="Typo.caption">@FormatBytes(context.DimensioneBytes)</MudText></MudTd>
                     <MudTd><MudText Typo="Typo.caption">@context.DataCaricamento.ToString("dd/MM/yyyy HH:mm")</MudText></MudTd>
@@ -111,6 +129,8 @@
 
     private List<AllegatoNonConformitaDto> _allegati = new();
     private List<IBrowserFile> _fileDaCaricari = new();
+    private Dictionary<int, string> _previewUrls = new();
+    private Dictionary<string, string> _uploadPreviewUrls = new();
     private bool _loading = true;
     private bool _uploading;
 
@@ -120,11 +140,32 @@
     {
         _loading = true;
         _allegati = await AllegatiService.GetByNcIdAsync(NonConformitaId);
+        _previewUrls.Clear();
+        foreach (var a in _allegati.Where(x => x.ContentType.StartsWith("image/")))
+        {
+            var result = await AllegatiService.GetFileAsync(a.Id);
+            if (result.HasValue)
+                _previewUrls[a.Id] = $"data:{a.ContentType};base64,{Convert.ToBase64String(result.Value.Dati)}";
+        }
         _loading = false;
     }
 
-    private void OnFilesChanged(IReadOnlyList<IBrowserFile> files)
-        => _fileDaCaricari = files.ToList();
+    private async Task OnFilesChangedAsync(IReadOnlyList<IBrowserFile> files)
+    {
+        _fileDaCaricari = files.ToList();
+        _uploadPreviewUrls.Clear();
+        foreach (var f in files.Where(f => f.ContentType.StartsWith("image/")))
+        {
+            try
+            {
+                var resized = await f.RequestImageFileAsync(f.ContentType, 200, 200);
+                using var ms = new MemoryStream();
+                await resized.OpenReadStream(2 * 1024 * 1024).CopyToAsync(ms);
+                _uploadPreviewUrls[f.Name] = $"data:{f.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+            }
+            catch { /* ignora errori preview */ }
+        }
+    }
 
     private async Task UploadAsync()
     {
@@ -169,6 +210,9 @@
         Snackbar.Add($"'{dto.NomeFile}' eliminato.", Severity.Info);
         await CaricaAsync();
     }
+
+    private async Task ApriAnteprimaAsync(string dataUrl)
+        => await JS.InvokeVoidAsync("open", dataUrl, "_blank");
 
     private static string FormatBytes(long bytes)
     {
