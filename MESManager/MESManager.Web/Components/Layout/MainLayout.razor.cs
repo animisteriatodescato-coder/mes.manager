@@ -404,6 +404,7 @@ public partial class MainLayout : IDisposable
             "cataloghi/clienti" => "Catalogo Clienti",
             "cataloghi/ricette" => "Catalogo Ricette",
             "cataloghi/foto" => "Catalogo Foto",
+            "cataloghi/non-conformita" => "Non Conformità",
             
             // Manutenzioni
             "manutenzioni/alert" => "Alert Manutenzioni",
@@ -561,7 +562,8 @@ public partial class MainLayout : IDisposable
                 new("Ricette", "/cataloghi/ricette"),
                 new("Anime", "/cataloghi/anime"),
                 new("Foto", "/cataloghi/foto"),
-                new("Preventivi", "/preventivi")
+                new("Preventivi", "/preventivi"),
+                new("Non Conformità", "/cataloghi/non-conformita")
             },
             "Manutenzioni" => new List<MenuItem>
             {

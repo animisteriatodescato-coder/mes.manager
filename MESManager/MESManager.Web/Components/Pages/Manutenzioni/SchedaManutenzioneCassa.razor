@@ -102,19 +102,12 @@ else
         </MudStack>
 
         @* ── NOTE ────────────────────────────────────────────────── *@
-        @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
-        {
-            <MudTextField Value="@_scheda.Note"
-                          ValueChanged="@((string? v) => OnNoteChanged(v))"
-                          Label="Note generali scheda (opzionale)"
-                          Variant="Variant.Outlined" Margin="Margin.Dense" Lines="10"
-                          AutoGrow="true" Class="mb-4"
-                          data-testid="tf-note-cassa" />
-        }
-        else if (!string.IsNullOrEmpty(_scheda.Note))
-        {
-            <MudAlert Severity="Severity.Normal" Dense="true" Class="mb-4">Note: @_scheda.Note</MudAlert>
-        }
+        <MudTextField Value="@_scheda.Note"
+                      ValueChanged="@((string? v) => OnNoteChanged(v))"
+                      Label="Note generali scheda (opzionale)"
+                      Variant="Variant.Outlined" Margin="Margin.Dense" Lines="10"
+                      AutoGrow="true" Class="mb-4"
+                      data-testid="tf-note-cassa" />
 
         @* ── PROBLEMATICHE ─────────────────────────────────────────── *@
         <MudPaper Elevation="1" Class="pa-3 mb-4">

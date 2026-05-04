@@ -1,0 +1,397 @@
+@page "/cataloghi/non-conformita"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.CatNonConformita)]
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@using MESManager.Web.Services
+@inject INonConformitaService NcService
+@inject IAnimeService AnimeService
+@inject ICommessaAppService CommessaAppService
+@inject MESManager.Application.Services.CurrentUserService CurrentUserService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Non Conformità</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-2 px-3" data-testid="page-non-conformita">
+<MudPaper Elevation="1" Class="pa-3">
+
+    @* ── TOOLBAR ── *@
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2" Wrap="Wrap.Wrap">
+        <MudIcon Icon="@Icons.Material.Filled.ReportProblem" Color="Color.Error" />
+        <MudText Typo="Typo.h6" Class="me-2">Non Conformità e Segnalazioni</MudText>
+        <MudSpacer />
+        <MudTextField @bind-Value="_searchText"
+                      Placeholder="Cerca articolo, cliente, descrizione…"
+                      Variant="Variant.Outlined" Margin="Margin.Dense"
+                      Style="width:260px" Immediate="true" DebounceInterval="220"
+                      AdornmentIcon="@Icons.Material.Filled.Search" Adornment="Adornment.End"
+                      data-testid="input-nc-search" />
+        <MudSelect T="string" @bind-Value="_filtroStato" Label="Stato" Variant="Variant.Outlined"
+                   Margin="Margin.Dense" Style="width:140px" data-testid="select-nc-stato">
+            <MudSelectItem Value="@("")">Tutti</MudSelectItem>
+            <MudSelectItem Value="@("Aperta")">Aperte</MudSelectItem>
+            <MudSelectItem Value="@("InGestione")">In Gestione</MudSelectItem>
+            <MudSelectItem Value="@("Chiusa")">Chiuse</MudSelectItem>
+        </MudSelect>
+        <MudButton Variant="Variant.Filled" Color="Color.Error"
+                   StartIcon="@Icons.Material.Filled.AddCircle"
+                   OnClick="@ApriNuovaNc"
+                   data-testid="btn-nuova-nc">
+            Nuova NC
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh"
+                   OnClick="@LoadData">Aggiorna</MudButton>
+    </MudStack>
+
+    @* ── LISTA ── *@
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Error" Class="mb-2" />
+    }
+    else if (!RigheVisibili.Any())
+    {
+        <MudAlert Severity="Severity.Info" Class="mt-2">
+            Nessuna segnalazione trovata. Premi "Nuova NC" per registrarne una.
+        </MudAlert>
+    }
+    else
+    {
+        <MudTable Items="@RigheVisibili" Hover="true" Dense="true" Breakpoint="Breakpoint.Sm"
+                  SortLabel="Ordina" data-testid="tabella-nc">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortBy="@(new Func<NonConformitaDto, object>(x => x.DataSegnalazione))">Data</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="@(new Func<NonConformitaDto, object>(x => x.CodiceArticolo))">Articolo</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="@(new Func<NonConformitaDto, object>(x => x.Cliente ?? string.Empty))">Cliente</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="@(new Func<NonConformitaDto, object>(x => x.Tipo))">Tipo</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="@(new Func<NonConformitaDto, object>(x => x.Gravita))">Gravità</MudTableSortLabel></MudTh>
+                <MudTh>Descrizione</MudTh>
+                <MudTh><MudTableSortLabel SortBy="@(new Func<NonConformitaDto, object>(x => x.Stato))">Stato</MudTableSortLabel></MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Data">@context.DataSegnalazione.ToString("dd/MM/yyyy")</MudTd>
+                <MudTd DataLabel="Articolo">
+                    <MudText Typo="Typo.body2"><b>@context.CodiceArticolo</b></MudText>
+                    @if (!string.IsNullOrWhiteSpace(context.DescrizioneArticolo))
+                    {
+                        <MudText Typo="Typo.caption" Style="opacity:.7">@context.DescrizioneArticolo</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Cliente">@(context.Cliente ?? "-")</MudTd>
+                <MudTd DataLabel="Tipo">
+                    <MudChip T="string" Size="Size.Small" Color="@(context.Tipo == "NonConformita" ? Color.Error : Color.Warning)"
+                             Variant="Variant.Outlined">
+                        @(context.Tipo == "NonConformita" ? "NC" : "Segnalazione")
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Gravità">
+                    <MudChip T="string" Size="Size.Small" Color="@GetGravitaColor(context.Gravita)" Variant="Variant.Filled">
+                        @context.Gravita
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Descrizione">
+                    <MudText Typo="Typo.body2" Style="max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"
+                             title="@context.Descrizione">
+                        @context.Descrizione
+                    </MudText>
+                </MudTd>
+                <MudTd DataLabel="Stato">
+                    <MudChip T="string" Size="Size.Small" Color="@GetStatoColor(context.Stato)">@context.Stato</MudChip>
+                </MudTd>
+                <MudTd>
+                    <MudStack Row="true" Spacing="0">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                       Title="Modifica" OnClick="@(() => ApriModifica(context))"
+                                       data-testid="btn-nc-edit" />
+                        @if (context.Stato != "Chiusa")
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success"
+                                           Title="Chiudi" OnClick="@(() => ConfermaChiudi(context))"
+                                           data-testid="btn-nc-chiudi" />
+                        }
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                       Title="Elimina" OnClick="@(() => ConfermaElimina(context))"
+                                       data-testid="btn-nc-delete" />
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+
+</MudPaper>
+</MudContainer>
+
+@* ── DIALOG NUOVA / MODIFICA NC ── *@
+<MudDialog @bind-IsVisible="_dialogOpen" Options="_dialogOptions">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <MudIcon Icon="@Icons.Material.Filled.ReportProblem" Color="Color.Error" />
+            <MudText Typo="Typo.h6">@(_editingId.HasValue ? "Modifica" : "Nuova") Non Conformità / Segnalazione</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="6">
+                <MudRadioGroup T="string" @bind-Value="_form.Tipo">
+                    <MudRadio T="string" Value="@("NonConformita")" Color="Color.Error">Non Conformità</MudRadio>
+                    <MudRadio T="string" Value="@("Segnalazione")" Color="Color.Warning">Segnalazione</MudRadio>
+                </MudRadioGroup>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudSelect T="string" @bind-Value="_form.Gravita" Label="Gravità *" Variant="Variant.Outlined"
+                           Margin="Margin.Dense" data-testid="select-form-gravita">
+                    <MudSelectItem Value="@("Bassa")">🟢 Bassa</MudSelectItem>
+                    <MudSelectItem Value="@("Media")">🟡 Media</MudSelectItem>
+                    <MudSelectItem Value="@("Alta")">🟠 Alta</MudSelectItem>
+                    <MudSelectItem Value="@("Critica")">🔴 Critica</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="8">
+                <MudAutocomplete T="string"
+                                 Value="_form.CodiceArticolo"
+                                 ValueChanged="OnArticoloSelezionato"
+                                 Label="Codice articolo *"
+                                 SearchFunc="CercaArticoli"
+                                 CoerceText="true"
+                                 CoerceValue="true"
+                                 Variant="Variant.Outlined"
+                                 Margin="Margin.Dense"
+                                 MinCharacters="0"
+                                 DebounceInterval="150"
+                                 Clearable="true"
+                                 HelperText="Scegli da CatalogoAnime o inserisci manualmente"
+                                 data-testid="autocomplete-articolo" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudDatePicker @bind-Date="_dataForm" Label="Data segnalazione" DateFormat="dd/MM/yyyy"
+                               Editable="true" Variant="Variant.Outlined" Margin="Margin.Dense"
+                               PickerVariant="PickerVariant.Dialog" data-testid="dp-data-nc" />
+            </MudItem>
+            @if (!string.IsNullOrWhiteSpace(_form.DescrizioneArticolo))
+            {
+                <MudItem xs="12">
+                    <MudText Typo="Typo.caption" Style="opacity:.7">📦 @_form.DescrizioneArticolo</MudText>
+                </MudItem>
+            }
+            <MudItem xs="12">
+                <MudAutocomplete T="string"
+                                 @bind-Value="_form.Cliente"
+                                 Label="Cliente"
+                                 SearchFunc="CercaClienti"
+                                 CoerceText="true"
+                                 CoerceValue="true"
+                                 Variant="Variant.Outlined"
+                                 Margin="Margin.Dense"
+                                 MinCharacters="0"
+                                 DebounceInterval="150"
+                                 Clearable="true"
+                                 data-testid="autocomplete-cliente" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_form.Descrizione" Label="Descrizione problema *"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" Lines="3"
+                              HelperText="Descrivi in dettaglio il problema segnalato dal cliente"
+                              data-testid="input-nc-descrizione" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_form.AzioneCorrettiva" Label="Azione correttiva"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2"
+                              HelperText="Opzionale — cosa è stato fatto o pianificato"
+                              data-testid="input-nc-azione" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudSelect T="string" @bind-Value="_form.Stato" Label="Stato" Variant="Variant.Outlined"
+                           Margin="Margin.Dense" data-testid="select-form-stato">
+                    <MudSelectItem Value="@("Aperta")">Aperta</MudSelectItem>
+                    <MudSelectItem Value="@("InGestione")">In Gestione</MudSelectItem>
+                    <MudSelectItem Value="@("Chiusa")">Chiusa</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _dialogOpen = false)">Annulla</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Error"
+                   Disabled="@(!FormValido)"
+                   OnClick="@SalvaAsync"
+                   data-testid="btn-nc-salva">
+            Salva
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private bool _loading;
+    private List<NonConformitaDto> _nc = new();
+    private List<string> _articoliCodici = new();
+    private Dictionary<string, string> _articoliDescr = new(StringComparer.OrdinalIgnoreCase);
+    private List<string> _clienti = new();
+    private string _searchText = string.Empty;
+    private string _filtroStato = "Aperta";
+
+    // Dialog
+    private bool _dialogOpen;
+    private Guid? _editingId;
+    private NonConformitaDto _form = new();
+    private DateTime? _dataForm = DateTime.Today;
+    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        _loading = true;
+
+        // Sequenziale (DbContext scoped)
+        _nc = await NcService.GetAllAsync();
+        var anime = await AnimeService.GetAllAsync();
+        _articoliCodici = anime.Select(a => a.CodiceArticolo).OrderBy(c => c).ToList();
+        _articoliDescr  = anime
+            .Where(a => !string.IsNullOrWhiteSpace(a.DescrizioneArticolo))
+            .GroupBy(a => a.CodiceArticolo, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().DescrizioneArticolo ?? "", StringComparer.OrdinalIgnoreCase);
+        var clientiList = await CommessaAppService.GetClienteNomiDistinctAsync();
+        _clienti = clientiList;
+
+        _loading = false;
+    }
+
+    private IEnumerable<NonConformitaDto> RigheVisibili => _nc.Where(nc =>
+    {
+        if (!string.IsNullOrWhiteSpace(_filtroStato) && nc.Stato != _filtroStato) return false;
+        if (string.IsNullOrWhiteSpace(_searchText)) return true;
+        var q = _searchText.Trim();
+        return nc.CodiceArticolo.Contains(q, StringComparison.OrdinalIgnoreCase)
+            || (nc.Cliente?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
+            || nc.Descrizione.Contains(q, StringComparison.OrdinalIgnoreCase)
+            || (nc.DescrizioneArticolo?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false);
+    });
+
+    // ── Autocomplete ──────────────────────────────────────────────────────────
+
+    private Task<IEnumerable<string>> CercaArticoli(string? value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult(_articoliCodici.Take(20).AsEnumerable());
+        return Task.FromResult(
+            _articoliCodici.Where(c => c.Contains(value, StringComparison.OrdinalIgnoreCase)).Take(20).AsEnumerable());
+    }
+
+    private Task<IEnumerable<string>> CercaClienti(string? value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult(_clienti.Take(20).AsEnumerable());
+        return Task.FromResult(
+            _clienti.Where(c => c.Contains(value, StringComparison.OrdinalIgnoreCase)).Take(20).AsEnumerable());
+    }
+
+    private void OnArticoloSelezionato(string? codice)
+    {
+        _form.CodiceArticolo = codice ?? string.Empty;
+        _form.DescrizioneArticolo = codice != null && _articoliDescr.TryGetValue(codice, out var d) ? d : null;
+    }
+
+    // ── Dialog ───────────────────────────────────────────────────────────────
+
+    private void ApriNuovaNc()
+    {
+        _editingId = null;
+        _form = new NonConformitaDto { Tipo = "NonConformita", Gravita = "Media", Stato = "Aperta" };
+        _dataForm = DateTime.Today;
+        _dialogOpen = true;
+    }
+
+    private void ApriModifica(NonConformitaDto nc)
+    {
+        _editingId = nc.Id;
+        _form = new NonConformitaDto
+        {
+            Id                  = nc.Id,
+            CodiceArticolo      = nc.CodiceArticolo,
+            DescrizioneArticolo = nc.DescrizioneArticolo,
+            Cliente             = nc.Cliente,
+            DataSegnalazione    = nc.DataSegnalazione,
+            Tipo                = nc.Tipo,
+            Gravita             = nc.Gravita,
+            Descrizione         = nc.Descrizione,
+            AzioneCorrettiva    = nc.AzioneCorrettiva,
+            Stato               = nc.Stato
+        };
+        _dataForm = nc.DataSegnalazione;
+        _dialogOpen = true;
+    }
+
+    private bool FormValido =>
+        !string.IsNullOrWhiteSpace(_form.CodiceArticolo) &&
+        !string.IsNullOrWhiteSpace(_form.Descrizione);
+
+    private async Task SalvaAsync()
+    {
+        if (!FormValido) return;
+        _form.DataSegnalazione = _dataForm ?? DateTime.Today;
+
+        try
+        {
+            if (_editingId.HasValue)
+            {
+                await NcService.UpdateAsync(_form, CurrentUserService.UserId ?? "");
+                Snackbar.Add("NC aggiornata.", Severity.Success);
+            }
+            else
+            {
+                await NcService.CreateAsync(_form, CurrentUserService.UserId ?? "");
+                Snackbar.Add("NC registrata.", Severity.Success);
+            }
+            _dialogOpen = false;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ConfermaChiudi(NonConformitaDto nc)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Chiudi NC",
+            $"Chiudere la NC su {nc.CodiceArticolo}?",
+            yesText: "Chiudi", cancelText: "Annulla");
+        if (result != true) return;
+
+        await NcService.ChiudiAsync(nc.Id, null, CurrentUserService.UserId ?? "");
+        Snackbar.Add("NC chiusa.", Severity.Success);
+        await LoadData();
+    }
+
+    private async Task ConfermaElimina(NonConformitaDto nc)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Elimina NC",
+            $"Eliminare definitivamente la NC su {nc.CodiceArticolo} del {nc.DataSegnalazione:dd/MM/yyyy}?",
+            yesText: "Elimina", cancelText: "Annulla");
+        if (result != true) return;
+
+        await NcService.DeleteAsync(nc.Id);
+        Snackbar.Add("NC eliminata.", Severity.Success);
+        await LoadData();
+    }
+
+    // ── Helpers colori ────────────────────────────────────────────────────────
+
+    private static Color GetGravitaColor(string gravita) => gravita switch
+    {
+        "Critica" => Color.Error,
+        "Alta"    => Color.Warning,
+        "Media"   => Color.Info,
+        _         => Color.Success
+    };
+
+    private static Color GetStatoColor(string stato) => stato switch
+    {
+        "Aperta"     => Color.Error,
+        "InGestione" => Color.Warning,
+        "Chiusa"     => Color.Success,
+        _            => Color.Default
+    };
+}

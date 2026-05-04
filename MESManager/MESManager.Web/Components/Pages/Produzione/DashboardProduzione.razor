@@ -100,6 +100,18 @@
                                         <MudText Typo="Typo.body2" Style="color: var(--mud-palette-info);">@machine.ProssimoArticoloCodice</MudText>
                                     }
                                 </div>
+                                @if (machine.HasAlert)
+                                {
+                                    <MudDivider Class="my-1" />
+                                    <MudAlert Severity="Severity.Warning" Dense="true" Class="pa-1 mt-1"
+                                              Icon="@Icons.Material.Filled.ReportProblem">
+                                        <MudText Typo="Typo.caption"><b>@machine.AlertCount NC aperte su @machine.ProssimoArticoloCodice</b></MudText>
+                                        @foreach (var alert in machine.AlertProduzione.Take(2))
+                                        {
+                                            <MudText Typo="Typo.caption" Class="d-block">• @GetGravitaIcon(alert.Gravita) @alert.Messaggio</MudText>
+                                        }
+                                    </MudAlert>
+                                }
                             </div>
                         }
                     </MudCardContent>
@@ -453,6 +465,14 @@
             _loading = false;
         }
     }
+
+    private static string GetGravitaIcon(string gravita) => gravita switch
+    {
+        "Critica" => "🔴",
+        "Alta"    => "🟠",
+        "Media"   => "🟡",
+        _         => "🟢"
+    };
 
     private string GetMachineCardClass(string? stato)
     {

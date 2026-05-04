@@ -23,12 +23,13 @@ public static class PaginaPolicy
     public const string GanttMacchine     = "pagina-gantt-macchine";
 
     // ── Cataloghi ──
-    public const string CatCommesse   = "pagina-cat-commesse";
-    public const string CatAnime      = "pagina-cat-anime";
-    public const string CatArticoli   = "pagina-cat-articoli";
-    public const string CatClienti    = "pagina-cat-clienti";
-    public const string CatRicette    = "pagina-cat-ricette";
-    public const string CatPreventivi = "pagina-cat-preventivi";
+    public const string CatCommesse        = "pagina-cat-commesse";
+    public const string CatAnime           = "pagina-cat-anime";
+    public const string CatArticoli        = "pagina-cat-articoli";
+    public const string CatClienti         = "pagina-cat-clienti";
+    public const string CatRicette         = "pagina-cat-ricette";
+    public const string CatPreventivi      = "pagina-cat-preventivi";
+    public const string CatNonConformita   = "pagina-cat-non-conformita";
 
     // ── Manutenzioni ──
     public const string ManutenzioniAlert        = "pagina-manutenzioni-alert";
@@ -65,12 +66,14 @@ public static class PaginaPolicy
         ]),
         new("Cataloghi", ["Admin", "Produzione", "Ufficio", "Manutenzione"],
         [
-            new("cat-commesse",   "Commesse",   "/cataloghi/commesse",  CatCommesse),
-            new("cat-anime",      "Anime",       "/cataloghi/anime",     CatAnime),
-            new("cat-articoli",   "Articoli",    "/cataloghi/articoli",  CatArticoli),
-            new("cat-clienti",    "Clienti",     "/cataloghi/clienti",   CatClienti),
-            new("cat-ricette",    "Ricette",     "/cataloghi/ricette",   CatRicette),
-            new("cat-preventivi", "Preventivi",  "/preventivi",         CatPreventivi),
+            new("cat-commesse",       "Commesse",        "/cataloghi/commesse",          CatCommesse),
+            new("cat-anime",          "Anime",           "/cataloghi/anime",             CatAnime),
+            new("cat-articoli",       "Articoli",        "/cataloghi/articoli",          CatArticoli),
+            new("cat-clienti",        "Clienti",         "/cataloghi/clienti",           CatClienti),
+            new("cat-ricette",        "Ricette",         "/cataloghi/ricette",           CatRicette),
+            new("cat-preventivi",     "Preventivi",      "/preventivi",                 CatPreventivi),
+            new("cat-non-conformita", "Non Conformità",  "/cataloghi/non-conformita",   CatNonConformita),
+            new("cat-non-conformita", "Non Conformità",  "/cataloghi/non-conformita",       CatNonConformita),
         ]),
         new("Manutenzioni", ["Admin", "Manutenzione"],
         [
