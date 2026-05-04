@@ -9,10 +9,12 @@ namespace MESManager.Infrastructure.Services;
 public class PlcAppService : IPlcAppService
 {
     private readonly MesManagerDbContext _context;
+    private readonly IAlertProduzioneService _alertService;
 
-    public PlcAppService(MesManagerDbContext context)
+    public PlcAppService(MesManagerDbContext context, IAlertProduzioneService alertService)
     {
         _context = context;
+        _alertService = alertService;
     }
 
     /// <summary>
@@ -51,6 +53,16 @@ public class PlcAppService : IPlcAppService
         var prossimoPerMacchina = prossimiArticoli
             .GroupBy(c => c.NumeroMacchina!.Value)
             .ToDictionary(g => g.Key, g => g.First().Articolo?.Codice);
+
+        // ── Batch alert NC per articoli prossimi in produzione (S4) ──────────────
+        var codiciArticoloConAlert = prossimoPerMacchina.Values
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Select(c => c!)
+            .Distinct()
+            .ToList();
+        var alertPerArticolo = codiciArticoloConAlert.Any()
+            ? await _alertService.GetAlertPerArticoliBatchAsync(codiciArticoloConAlert)
+            : new Dictionary<string, List<AlertProduzioneDto>>(StringComparer.OrdinalIgnoreCase);
 
         return query.Select(p => {
             // Determina se la macchina è connessa
@@ -92,7 +104,12 @@ public class PlcAppService : IPlcAppService
                 UltimoInizioSetup     = p.UltimoInizioSetup,
                 UltimoFineSetup       = p.UltimoFineSetup,
 
-                ProssimoArticoloCodice = prossimoPerMacchina.TryGetValue(machineNumber, out var codice) ? codice : null
+                ProssimoArticoloCodice = prossimoPerMacchina.TryGetValue(machineNumber, out var codice) ? codice : null,
+                AlertProduzione = (prossimoPerMacchina.TryGetValue(machineNumber, out var codiceAlert)
+                    && codiceAlert != null
+                    && alertPerArticolo.TryGetValue(codiceAlert, out var alerts))
+                    ? alerts
+                    : new List<AlertProduzioneDto>()
             };
         }).ToList();
     }

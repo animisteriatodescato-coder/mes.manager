@@ -68,6 +68,10 @@ public static class DependencyInjection
         // Analisi Operatori (v1.54.2 - Performance/premi produttivi)
         services.AddScoped<IOperatoreAnalisiService, OperatoreAnalisiService>();
 
+        // Modulo Non Conformità (v1.65.68)
+        services.AddScoped<INonConformitaService, NonConformitaService>();
+        services.AddScoped<IAlertProduzioneService, AlertProduzioneService>();
+
         // Aggiungi altri servizi qui quando implementati
 
         return services;

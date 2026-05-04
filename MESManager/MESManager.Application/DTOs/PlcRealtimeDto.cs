@@ -56,6 +56,18 @@ public class PlcRealtimeDto
     /// Codice articolo della prossima commessa programmata nel Gantt per questa macchina.
     /// </summary>
     public string? ProssimoArticoloCodice { get; set; }
+
+    /// <summary>
+    /// Alert produzione attivi (NC aperte) sull'articolo prossimo in produzione.
+    /// Popolato da PlcAppService via IAlertProduzioneService — zero chiamate HTTP extra dal client.
+    /// </summary>
+    public List<AlertProduzioneDto> AlertProduzione { get; set; } = new();
+
+    /// <summary>Numero totale alert attivi — shortcut per badge UI.</summary>
+    public int AlertCount => AlertProduzione.Count;
+
+    /// <summary>True se ci sono alert attivi sull'articolo prossimo.</summary>
+    public bool HasAlert => AlertProduzione.Count > 0;
     
     // Percentuale completamento
     public decimal PercentualeCompletamento => 
