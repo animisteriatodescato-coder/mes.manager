@@ -427,6 +427,14 @@ window.plcRealtimeGrid = (function () {
             return;
         }
 
+        const isDark = document.body.classList.contains('mud-theme-dark');
+        const panelBg    = isDark ? '#1e1e2e' : '#ffffff';
+        const panelColor = isDark ? '#e6e6f0' : '#212121';
+        const borderCol  = isDark ? '#444460' : '#e0e0e0';
+        const btnBg      = isDark ? '#37374f' : '#f5f5f5';
+        const btnColor   = isDark ? '#e6e6f0' : '#212121';
+        const dividerCol = isDark ? '#333348' : '#f0f0f0';
+
         const overlay = document.createElement('div');
         overlay.id = 'columnSelectorOverlay';
         overlay.style.cssText = `
@@ -444,46 +452,68 @@ window.plcRealtimeGrid = (function () {
 
         const panel = document.createElement('div');
         panel.style.cssText = `
-            background: white;
+            background: ${panelBg};
+            color: ${panelColor};
             border-radius: 8px;
             padding: 20px;
+            min-width: 280px;
             max-width: 400px;
             max-height: 80vh;
             overflow-y: auto;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            border: 1px solid ${borderCol};
         `;
 
         const title = document.createElement('h3');
         title.textContent = 'Gestione Colonne';
-        title.style.marginTop = '0';
+        title.style.cssText = `margin-top: 0; color: ${panelColor}; font-size: 16px;`;
         panel.appendChild(title);
 
         const columns = gridApi.getColumns();
-        columns.forEach(col => {
+        columns.forEach((col, idx) => {
             const colDef = col.getColDef();
             const div = document.createElement('div');
-            div.style.padding = '8px 0';
+            div.style.cssText = `
+                padding: 8px 4px;
+                border-bottom: 1px solid ${dividerCol};
+                display: flex;
+                align-items: center;
+            `;
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = col.isVisible();
-            checkbox.style.marginRight = '8px';
+            checkbox.style.cssText = 'margin-right: 10px; width: 16px; height: 16px; cursor: pointer; flex-shrink: 0;';
             checkbox.onchange = () => {
                 gridApi.setColumnsVisible([col.getColId()], checkbox.checked);
             };
 
             const label = document.createElement('label');
             label.textContent = colDef.headerName || colDef.field;
-            label.style.cursor = 'pointer';
-            label.prepend(checkbox);
+            label.style.cssText = `cursor: pointer; color: ${panelColor}; font-size: 14px; user-select: none;`;
+            label.onclick = () => {
+                checkbox.checked = !checkbox.checked;
+                checkbox.onchange();
+            };
 
+            div.appendChild(checkbox);
             div.appendChild(label);
             panel.appendChild(div);
         });
 
         const closeBtn = document.createElement('button');
         closeBtn.textContent = 'Chiudi';
-        closeBtn.style.cssText = 'margin-top: 15px; padding: 8px 16px; cursor: pointer;';
+        closeBtn.style.cssText = `
+            margin-top: 15px;
+            padding: 8px 20px;
+            cursor: pointer;
+            background: ${btnBg};
+            color: ${btnColor};
+            border: 1px solid ${borderCol};
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100%;
+        `;
         closeBtn.onclick = () => overlay.remove();
         panel.appendChild(closeBtn);
 

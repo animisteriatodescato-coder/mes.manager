@@ -25,6 +25,12 @@ public class ManutenzioneAttivita
     /// </summary>
     public int? CicliSogliaPLC { get; set; }
 
+    /// <summary>
+    /// Se valorizzato (es. "M011"), questa attività si applica SOLO alla macchina con quel codice.
+    /// NULL = applicabile a tutte le macchine.
+    /// </summary>
+    public string? MacchinaCodiceFiltro { get; set; }
+
     // Navigazioni
     public ICollection<ManutenzioneRiga> Righe { get; set; } = new List<ManutenzioneRiga>();
 }

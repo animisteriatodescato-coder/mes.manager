@@ -11,6 +11,8 @@ public class ManutenzioneAttivitaDto
     public bool Attiva { get; set; } = true;
     public int FontSize { get; set; } = 11;
     public int? CicliSogliaPLC { get; set; }
+    /// <summary>Se valorizzato, attività applicabile solo a questa macchina (codice es. "M011"). NULL = tutte.</summary>
+    public string? MacchinaCodiceFiltro { get; set; }
 }
 
 public class AnomaliaStandardDto

@@ -1086,6 +1086,22 @@ h1:focus {
     border-color: rgba(76,175,80,.55);
     opacity: 0.78;
 }
+/* Cella N/A — attività non applicabile a questa macchina */
+.mes-mant-cell-na {
+    background: rgba(128,128,128,.06);
+    cursor: default;
+    text-align: center;
+    vertical-align: middle;
+    min-width: 60px;
+}
+.mes-mant-na-dash {
+    font-size: 13px;
+    opacity: .35;
+    user-select: none;
+}
+.mud-theme-dark .mes-mant-cell-na {
+    background: rgba(128,128,128,.10);
+}
 
 /* Commento anomalia — sempre visibile sotto i bottoni */
 .mes-mant-comment-saved {

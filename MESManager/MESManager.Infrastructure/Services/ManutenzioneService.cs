@@ -48,7 +48,8 @@ public class ManutenzioneService : IManutenzioneService
             Ordine = dto.Ordine,
             Attiva = dto.Attiva,
             FontSize = dto.FontSize,
-            CicliSogliaPLC = dto.CicliSogliaPLC
+            CicliSogliaPLC = dto.CicliSogliaPLC,
+            MacchinaCodiceFiltro = string.IsNullOrWhiteSpace(dto.MacchinaCodiceFiltro) ? null : dto.MacchinaCodiceFiltro.Trim().ToUpper()
         };
         _db.ManutenzioneAttivita.Add(entity);
         await _db.SaveChangesAsync();
@@ -66,6 +67,7 @@ public class ManutenzioneService : IManutenzioneService
         entity.Attiva = dto.Attiva;
         entity.FontSize = dto.FontSize;
         entity.CicliSogliaPLC = dto.CicliSogliaPLC;
+        entity.MacchinaCodiceFiltro = string.IsNullOrWhiteSpace(dto.MacchinaCodiceFiltro) ? null : dto.MacchinaCodiceFiltro.Trim().ToUpper();
         await _db.SaveChangesAsync();
         return MapAttivita(entity);
     }
@@ -160,8 +162,15 @@ public class ManutenzioneService : IManutenzioneService
 
     public async Task<ManutenzioneSchedaDto> CreateSchedaAsync(NuovaSchedaRequest request)
     {
+        // Recupera il codice macchina per filtrare le attività con restrizione per macchina specifica
+        var machinaCodice = await _db.Macchine
+            .Where(m => m.Id == request.MacchinaId)
+            .Select(m => m.Codice)
+            .FirstOrDefaultAsync() ?? string.Empty;
+
         var attivita = await _db.ManutenzioneAttivita
-            .Where(a => a.Attiva && a.TipoFrequenza == request.TipoFrequenza)
+            .Where(a => a.Attiva && a.TipoFrequenza == request.TipoFrequenza
+                && (a.MacchinaCodiceFiltro == null || a.MacchinaCodiceFiltro == machinaCodice))
             .OrderBy(a => a.Ordine)
             .ToListAsync();
 
@@ -341,7 +350,8 @@ public class ManutenzioneService : IManutenzioneService
         Ordine = a.Ordine,
         Attiva = a.Attiva,
         FontSize = a.FontSize,
-        CicliSogliaPLC = a.CicliSogliaPLC
+        CicliSogliaPLC = a.CicliSogliaPLC,
+        MacchinaCodiceFiltro = a.MacchinaCodiceFiltro
     };
 
     private static ManutenzioneSchedaDto MapScheda(ManutenzioneScheda s) => new()

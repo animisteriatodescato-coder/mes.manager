@@ -56,7 +56,7 @@
 
         @* Statistica globale *@
         @{
-            var totCelle = _macchine.Count * _attivita.Count;
+            var totCelle = _macchine.Sum(m => _attivita.Count(a => AttivitaApplicabile(a, m)));
             var okCelle = _schedeMap.Values.Where(s => s != null)
                 .SelectMany(s => s!.Righe)
                 .Count(r => r.Esito == EsitoAttivitaManutenzione.OK);
@@ -110,10 +110,12 @@
                         var chiusa = scheda?.Stato == StatoSchedaManutenzione.Completata || scheda?.Stato == StatoSchedaManutenzione.ConAnomalie;
 
                         @* Conteggio per progress bar *@
-                        var righeOk     = scheda?.Righe.Count(r => r.Esito == EsitoAttivitaManutenzione.OK) ?? 0;
-                        var righeAnom   = scheda?.Righe.Count(r => r.Esito == EsitoAttivitaManutenzione.Anomalia) ?? 0;
-                        var righeNE     = _attivita.Count - righeOk - righeAnom;
-                        var progPct     = _attivita.Count > 0 ? (double)(righeOk + righeAnom) / _attivita.Count * 100 : 0;
+                        var attApplicabili = _attivita.Where(a => AttivitaApplicabile(a, mac)).ToList();
+                        var attApplicabiliIds = attApplicabili.Select(a => a.Id).ToHashSet();
+                        var righeOk     = scheda?.Righe.Count(r => r.Esito == EsitoAttivitaManutenzione.OK      && attApplicabiliIds.Contains(r.AttivitaId)) ?? 0;
+                        var righeAnom   = scheda?.Righe.Count(r => r.Esito == EsitoAttivitaManutenzione.Anomalia && attApplicabiliIds.Contains(r.AttivitaId)) ?? 0;
+                        var righeNE     = attApplicabili.Count - righeOk - righeAnom;
+                        var progPct     = attApplicabili.Count > 0 ? (double)(righeOk + righeAnom) / attApplicabili.Count * 100 : 0;
 
                         <tr class="@(chiusa ? "mes-mant-row-closed" : "")">
                             @* Colonna macchina *@
@@ -128,6 +130,15 @@
                             @* Colonne attività *@
                             @foreach (var att in _attivita)
                             {
+                                @if (!AttivitaApplicabile(att, mac))
+                                {
+                                    <td class="mes-mant-td-cell mes-mant-cell-na"
+                                        data-testid="cell-@mac.Id-@att.Id">
+                                        <span class="mes-mant-na-dash">—</span>
+                                    </td>
+                                }
+                                else
+                                {
                                 var riga = scheda?.Righe.FirstOrDefault(r => r.AttivitaId == att.Id);
                                 var esito = riga?.Esito ?? EsitoAttivitaManutenzione.NonEseguita;
                                 var isEditingComment = _commentEditingRigaId == riga?.Id;
@@ -236,6 +247,7 @@
                                         </div>
                                     }
                                 </td>
+                                }
                             }
 
                             @* Colonna avanzamento *@
@@ -243,14 +255,14 @@
                                 <MudStack AlignItems="AlignItems.Center" Spacing="0">
                                     <MudProgressCircular Value="@progPct"
                                                          Size="Size.Small"
-                                                         Color="@(righeAnom > 0 ? Color.Error : (righeOk == _attivita.Count ? Color.Success : Color.Default))" />
-                                    <MudText Typo="Typo.caption">@(righeOk + righeAnom)/@_attivita.Count</MudText>
+                                                         Color="@(righeAnom > 0 ? Color.Error : (righeOk == attApplicabili.Count ? Color.Success : Color.Default))" />
+                                    <MudText Typo="Typo.caption">@(righeOk + righeAnom)/@attApplicabili.Count</MudText>
                                     @if (chiusa)
                                     {
                                         <MudIcon Icon="@Icons.Material.Filled.Lock"
                                                  Size="Size.Small" Color="Color.Default" Style="opacity:.5" />
                                     }
-                                    else if (scheda != null && (righeOk + righeAnom) == _attivita.Count)
+                                    else if (scheda != null && (righeOk + righeAnom) == attApplicabili.Count)
                                     {
                                         @* Tutte compilate: mostra pulsante Chiudi *@
                                         <MudTooltip Text="Chiudi scheda macchina">
@@ -470,6 +482,7 @@
                 var chiusa = scheda?.Stato == StatoSchedaManutenzione.Completata
                           || scheda?.Stato == StatoSchedaManutenzione.ConAnomalie;
                 if (chiusa) continue;
+                if (!AttivitaApplicabile(att, mac)) continue;
 
                 if (_schedeMap[mac.Id] == null)
                 {
@@ -502,6 +515,10 @@
     }
 
     // ── Helpers UI ────────────────────────────────────────────
+    /// <summary>Restituisce true se l'attività si applica alla macchina (filtro codice).</summary>
+    private static bool AttivitaApplicabile(ManutenzioneAttivitaDto att, MacchinaDto mac) =>
+        string.IsNullOrEmpty(att.MacchinaCodiceFiltro) || att.MacchinaCodiceFiltro == mac.Codice;
+
     private static string GetCellClass(EsitoAttivitaManutenzione esito) => esito switch
     {
         EsitoAttivitaManutenzione.OK       => "mes-mant-cell-ok",
