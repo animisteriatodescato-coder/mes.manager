@@ -413,6 +413,32 @@ _attivita = await ManutenzioneService.GetAttivitaAsync();
 
 ---
 
+### EF Core DbContext: MainLayout + Pagina figlia non devono condividere operazioni concorrenti (LESSON LEARNED v1.65.74)
+
+**Problema ricorrente**: eccezione runtime su navigazione interna:
+
+```text
+InvalidOperationException: A second operation was started on this context instance
+before a previous operation completed
+```
+
+**Causa**: in Blazor Server il `DbContext` scoped vive per circuito SignalR. Se `MainLayout` esegue query Identity (`UserManager`) mentre la pagina figlia esegue query business nello stesso momento, si crea concorrenza sulla stessa istanza di `MesManagerDbContext`.
+
+**Regola fissa**:
+- In `MainLayout`: usare `IServiceScopeFactory.CreateAsyncScope()` per chiamate `UserManager`/`RoleManager`
+- Nei servizi chiamati da layout, badge, hub o componenti globali: usare `IDbContextFactory<MesManagerDbContext>` e creare un context per metodo (`await using var db = await _dbFactory.CreateDbContextAsync();`)
+- Nei componenti con ricarichi multipli: serializzare i load con `SemaphoreSlim(1,1)`
+
+**Anti-pattern** (vietato):
+- `UserManager<ApplicationUser>` iniettato direttamente in `MainLayout` e usato su `OnInitializedAsync`
+- Servizi Infrastructure che iniettano `MesManagerDbContext` scoped e vengono chiamati sia dal layout che dalle pagine
+
+**Riferimenti**:
+- [04-ARCHITETTURA.md](docs/04-ARCHITETTURA.md)
+- [FIX-DBCONTEXT-CONCURRENCY-NC-20260505.md](docs/storico/FIX-DBCONTEXT-CONCURRENCY-NC-20260505.md)
+
+---
+
 ### Dashboard e PLCRealtime
 
 **Problema comune**: Dashboard vuote o macchine non visibili
