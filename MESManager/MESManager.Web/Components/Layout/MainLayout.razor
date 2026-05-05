@@ -535,7 +535,14 @@
                             @if (_canCatNc)
                             {
                                 <MudNavLink Href="/cataloghi/non-conformita">
-                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9888;&#65039;</span><span>Non Conformit&#xE0;</span></div>
+                                    <div style="display: flex; align-items: center; gap: 8px; width:100%">
+                                        <span style="font-size: 13px;">&#9888;&#65039;</span>
+                                        <span>Non Conformit&#xE0;</span>
+                                        @if (_ncAperteCount > 0)
+                                        {
+                                            <span style="margin-left:auto;background:#d32f2f;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:bold;min-width:20px;text-align:center">@_ncAperteCount</span>
+                                        }
+                                    </div>
                                 </MudNavLink>
                             }
                         </MudNavGroup>

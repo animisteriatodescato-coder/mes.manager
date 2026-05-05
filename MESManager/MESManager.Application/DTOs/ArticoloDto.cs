@@ -9,4 +9,9 @@ public class ArticoloDto
     public bool Attivo { get; set; }
     public DateTime UltimaModifica { get; set; }
     public DateTime TimestampSync { get; set; }
+
+    /// <summary>
+    /// NC aperte per l'articolo — campo calcolato lato Blazor, NON persistito su DB.
+    /// </summary>
+    public int NcAperteCount { get; set; }
 }

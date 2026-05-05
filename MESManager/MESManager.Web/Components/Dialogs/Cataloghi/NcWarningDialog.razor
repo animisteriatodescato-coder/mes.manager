@@ -1,0 +1,90 @@
+@using MESManager.Application.DTOs
+@using Microsoft.AspNetCore.Components
+@inject NavigationManager Nav
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <MudIcon Icon="@Icons.Material.Filled.ReportProblem" Color="Color.Warning" />
+            <MudText Typo="Typo.h6">Non Conformità Aperte</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudAlert Severity="Severity.Warning" Class="mb-3" Dense="true">
+            L'articolo <strong>@CodiceArticolo</strong> ha
+            <strong>@NcList.Count</strong>
+            non conformit@(NcList.Count == 1 ? "à aperta" : "à aperte").
+            Verifica prima di procedere.
+        </MudAlert>
+
+        <MudSimpleTable Dense="true" Striped="true" Hover="true" Style="max-height:320px;overflow-y:auto">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Tipologia</th>
+                    <th>Gravità</th>
+                    <th>Descrizione</th>
+                    <th>Stato</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var nc in NcList)
+                {
+                    var gravColor = nc.Gravita switch
+                    {
+                        "Critica" => "color:#d32f2f;font-weight:bold",
+                        "Alta"    => "color:#f57c00;font-weight:bold",
+                        "Media"   => "color:#f9a825",
+                        _         => "color:#757575"
+                    };
+                    var statoColor = nc.Stato switch
+                    {
+                        "InGestione" => "background:#fff3e0;color:#e65100",
+                        _            => "background:#fce4ec;color:#c62828"
+                    };
+                    <tr>
+                        <td>@nc.DataSegnalazione.ToString("dd/MM/yy")</td>
+                        <td>@(nc.TipologiaNc ?? nc.Tipo)</td>
+                        <td><span style="@gravColor">@nc.Gravita</span></td>
+                        <td style="max-width:280px;white-space:normal">@nc.Descrizione</td>
+                        <td><span style="@statoColor;border-radius:8px;padding:2px 8px;font-size:11px">@nc.Stato</span></td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.OpenInNew"
+                   OnClick="@VaiAlleNc">
+            Vai alle NC
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Warning"
+                   StartIcon="@Icons.Material.Filled.ArrowForward"
+                   OnClick="@Continua"
+                   data-testid="btn-nc-warning-continua">
+            Ignora e continua
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    /// <summary>Codice articolo con NC aperte.</summary>
+    [Parameter] public string CodiceArticolo { get; set; } = string.Empty;
+
+    /// <summary>Codice commessa di contesto (mostrato nel titolo se fornito).</summary>
+    [Parameter] public string CommessaCodice { get; set; } = string.Empty;
+
+    /// <summary>Lista NC aperte per questo articolo.</summary>
+    [Parameter] public List<NonConformitaDto> NcList { get; set; } = new();
+
+    private void Continua() => MudDialog.Close(DialogResult.Ok(true));
+
+    private void VaiAlleNc()
+    {
+        MudDialog.Close(DialogResult.Ok(false));
+        Nav.NavigateTo($"/cataloghi/non-conformita?articolo={Uri.EscapeDataString(CodiceArticolo)}");
+    }
+}

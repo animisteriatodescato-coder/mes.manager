@@ -5,12 +5,14 @@
 @using MESManager.Web.Services
 @using MESManager.Application.DTOs
 @using MESManager.Application.Services
+@using MESManager.Application.Interfaces
 @using MESManager.Web.Components.Dialogs
 @inject HttpClient Http
 @inject NavigationManager Nav
 @inject CurrentUserService CurrentUserService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject INonConformitaService NcService
 
 <PageTitle>Catalogo Anime</PageTitle>
 
@@ -83,6 +85,20 @@
         StateHasChanged();
 
         _anime = await Http.GetFromJsonAsync<List<AnimeDto>>("api/Anime") ?? new();
+
+        // Arricchisci con conteggio NC aperte per articolo
+        try
+        {
+            var ncAperte = await NcService.GetAperteAsync();
+            var ncCounts = ncAperte
+                .GroupBy(nc => nc.CodiceArticolo)
+                .ToDictionary(g => g.Key, g => g.Count());
+            foreach (var a in _anime)
+                if (!string.IsNullOrEmpty(a.CodiceArticolo) && ncCounts.TryGetValue(a.CodiceArticolo, out int cnt))
+                    a.NcAperteCount = cnt;
+        }
+        catch { }
+
         _isDataLoaded = true;
         isLoading = false;
         gridStatus = "Pronto";

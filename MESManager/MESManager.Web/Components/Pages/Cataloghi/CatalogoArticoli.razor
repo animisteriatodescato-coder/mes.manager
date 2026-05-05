@@ -3,8 +3,10 @@
 @inherits CatalogoGridBase
 @using MESManager.Web.Models
 @using MESManager.Web.Services
+@using MESManager.Application.Interfaces
 @inject HttpClient Http
 @inject NavigationManager Nav
+@inject INonConformitaService NcService
 
 <PageTitle>Catalogo Articoli</PageTitle>
 
@@ -74,6 +76,19 @@
         StateHasChanged();
 
         _articoli    = await Http.GetFromJsonAsync<List<ArticoloDto>>("api/Articoli") ?? new();
+
+        // Arricchisci con conteggio NC aperte per articolo
+        try
+        {
+            var ncAperte = await NcService.GetAperteAsync();
+            var ncCounts = ncAperte
+                .GroupBy(nc => nc.CodiceArticolo)
+                .ToDictionary(g => g.Key, g => g.Count());
+            foreach (var a in _articoli)
+                if (!string.IsNullOrEmpty(a.Codice) && ncCounts.TryGetValue(a.Codice, out int cnt))
+                    a.NcAperteCount = cnt;
+        }
+        catch { }
         totalRows    = _articoli.Count;
         filteredRows = _articoli.Count;
         lastUpdate   = DateTime.Now;
@@ -112,5 +127,6 @@
         public bool     Attivo          { get; set; }
         public DateTime UltimaModifica  { get; set; }
         public DateTime TimestampSync   { get; set; }
+        public int      NcAperteCount   { get; set; }
     }
 }

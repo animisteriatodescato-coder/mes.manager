@@ -2,13 +2,16 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.CatCommesse)]
 @inherits CatalogoGridBase
 @using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
 @using MESManager.Web.Models
 @using MESManager.Web.Services
 @using MESManager.Web.Components.Dialogs
+@using MESManager.Web.Components.Dialogs.Cataloghi
 @inject HttpClient Http
 @inject NavigationManager Nav
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject INonConformitaService NcService
 
 <PageTitle>Catalogo Commesse</PageTitle>
 
@@ -56,6 +59,16 @@
             <MudDivider Vertical="true" FlexItem="true" />
             <MudText Typo="Typo.caption" Color="Color.Secondary">Ultimo aggiornamento: <strong>@lastUpdate.ToString("HH:mm:ss")</strong></MudText>
             <MudSpacer />
+            @if (_ncAlertsCount > 0)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Warning"
+                         Icon="@Icons.Material.Filled.ReportProblem"
+                         OnClick="@GoToNcPage"
+                         Style="cursor:pointer" data-testid="chip-nc-alert-commesse">
+                    @_ncAlertsCount articol@(_ncAlertsCount == 1 ? "o" : "i") con NC aperte
+                </MudChip>
+                <MudDivider Vertical="true" FlexItem="true" />
+            }
             <MudChip T="string" Size="Size.Small" Color="@(isLoading ? Color.Warning : Color.Success)" 
                      Icon="@(isLoading ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.CheckCircle)"
                      data-testid="status-catalogo-commesse">
@@ -74,6 +87,7 @@
     private List<CommessaDto> _commesse = new();
     private int aperteCount = 0;
     private int chiuseCount = 0;
+    private int _ncAlertsCount = 0;
     private IJSObjectReference? jsModule;
 
     private LabelPrintDialog? _labelDialog;
@@ -82,6 +96,20 @@
     {
         PageToolbarService.SetActivePage(PageKey, this);
         _commesse   = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
+
+        // Arricchisci con conteggio NC aperte per articolo
+        try
+        {
+            var ncAperte = await NcService.GetAperteAsync();
+            var ncCounts = ncAperte
+                .GroupBy(nc => nc.CodiceArticolo)
+                .ToDictionary(g => g.Key, g => g.Count());
+            foreach (var c in _commesse)
+                if (!string.IsNullOrEmpty(c.ArticoloCodice) && ncCounts.TryGetValue(c.ArticoloCodice, out int cnt))
+                    c.NcAperteCount = cnt;
+            _ncAlertsCount = _commesse.Count(c => c.NcAperteCount > 0);
+        }
+        catch { }
         totalRows   = _commesse.Count;
         aperteCount = _commesse.Count(c => c.Stato == "Aperta");
         chiuseCount = _commesse.Count(c => c.Stato == "Chiusa");
@@ -201,6 +229,35 @@
     {
         await SaveSettings();
     }
+
+    [JSInvokable]
+    public async Task OpenNcWarning(string articoloCodice)
+    {
+        if (string.IsNullOrEmpty(articoloCodice)) return;
+        try
+        {
+            var ncList = await NcService.GetByCodiceArticoloAsync(articoloCodice);
+            ncList = ncList.Where(nc => nc.Stato != "Chiusa").ToList();
+            if (ncList.Count == 0)
+            {
+                Snackbar.Add("Nessuna NC aperta per questo articolo", Severity.Info);
+                return;
+            }
+            var parameters = new DialogParameters<NcWarningDialog>
+            {
+                { x => x.CodiceArticolo, articoloCodice },
+                { x => x.NcList, ncList }
+            };
+            var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+            await DialogService.ShowAsync<NcWarningDialog>($"⚠️ NC Aperte: {articoloCodice}", parameters, options);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore caricamento NC: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void GoToNcPage() => Nav.NavigateTo("/cataloghi/non-conformita");
 
     public override async ValueTask DisposeAsync()
     {

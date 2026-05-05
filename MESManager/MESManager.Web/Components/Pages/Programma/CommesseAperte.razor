@@ -2,9 +2,11 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.CommesseAperte)]
 @using MESManager.Application.DTOs
 @using MESManager.Application.Services
+@using MESManager.Application.Interfaces
 @using MESManager.Web.Models
 @using MESManager.Web.Services
 @using MESManager.Web.Components.Dialogs
+@using MESManager.Web.Components.Dialogs.Cataloghi
 @using Microsoft.JSInterop
 @using System.Text.Json
 @inject HttpClient Http
@@ -15,6 +17,7 @@
 @inject IPageToolbarService PageToolbarService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject INonConformitaService NcService
 @implements IAsyncDisposable
 
 <PageTitle>Commesse Aperte</PageTitle>
@@ -216,8 +219,32 @@
             }
             
             var commessa = selectedRows[0];
-            
-            // Verifica se già ha una macchina assegnata
+
+            // ⚠️ Controlla NC aperte sull'articolo prima di procedere (sempre, indipendente da NcAperteCount JS)
+            if (!string.IsNullOrEmpty(commessa.ArticoloCodice))
+            {
+                try
+                {
+                    var ncList = await NcService.GetByCodiceArticoloAsync(commessa.ArticoloCodice);
+                    ncList = ncList.Where(nc => nc.Stato != "Chiusa").ToList();
+                    if (ncList.Count > 0)
+                    {
+                        var ncParams = new DialogParameters<NcWarningDialog>
+                        {
+                            { x => x.CodiceArticolo, commessa.ArticoloCodice },
+                            { x => x.CommessaCodice, commessa.Codice },
+                            { x => x.NcList, ncList }
+                        };
+                        var ncOptions = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+                        var ncDialog = await DialogService.ShowAsync<NcWarningDialog>(
+                            $"⚠️ NC Aperte: {commessa.ArticoloCodice}", ncParams, ncOptions);
+                        var ncResult = await ncDialog.Result;
+                        if (ncResult == null || ncResult.Canceled || ncResult.Data is false)
+                            return;
+                    }
+                }
+                catch { /* Non bloccante: se la query fallisce, si continua */ }
+            }
             if (commessa.NumeroMacchina.HasValue)
             {
                 var confirm = await DialogService.ShowMessageBox(
@@ -394,6 +421,19 @@
         try
         {
             var allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
+
+            // Arricchisci con conteggio NC aperte per articolo
+            try
+            {
+                var ncAperte = await NcService.GetAperteAsync();
+                var ncCounts = ncAperte
+                    .GroupBy(nc => nc.CodiceArticolo)
+                    .ToDictionary(g => g.Key, g => g.Count());
+                foreach (var c in allCommesse)
+                    if (!string.IsNullOrEmpty(c.ArticoloCodice) && ncCounts.TryGetValue(c.ArticoloCodice, out int cnt))
+                        c.NcAperteCount = cnt;
+            }
+            catch { }
             
             // Filtra solo le commesse aperte, e opzionalmente esclude archiviate
             if (showArchived)
@@ -585,6 +625,33 @@
         catch
         {
             // Error initializing grid
+        }
+    }
+
+    [JSInvokable]
+    public async Task OpenNcWarning(string articoloCodice)
+    {
+        if (string.IsNullOrEmpty(articoloCodice)) return;
+        try
+        {
+            var ncList = await NcService.GetByCodiceArticoloAsync(articoloCodice);
+            ncList = ncList.Where(nc => nc.Stato != "Chiusa").ToList();
+            if (ncList.Count == 0)
+            {
+                Snackbar.Add("Nessuna NC aperta per questo articolo", Severity.Info);
+                return;
+            }
+            var parameters = new DialogParameters<NcWarningDialog>
+            {
+                { x => x.CodiceArticolo, articoloCodice },
+                { x => x.NcList, ncList }
+            };
+            var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+            await DialogService.ShowAsync<NcWarningDialog>($"⚠️ NC Aperte: {articoloCodice}", parameters, options);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore caricamento NC: {ex.Message}", Severity.Error);
         }
     }
 

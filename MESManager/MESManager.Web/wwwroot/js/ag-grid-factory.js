@@ -83,6 +83,14 @@ window.agGridFactory = (function () {
                 rowSelection: config.rowSelection || 'single',
                 suppressRowClickSelection: config.rowSelection === 'multiple',
                 enableCellTextSelection: true,
+                // ── NC row coloring centralizzato ──────────────────────────────────
+                // Rosso pallido = ≥2 NC aperte | Giallo pallido = 1 NC aperta
+                getRowStyle: params => {
+                    const nc = params.data && params.data.ncAperteCount;
+                    if (nc >= 2) return { background: 'rgba(244,67,54,0.12)' };
+                    if (nc === 1) return { background: 'rgba(255,193,7,0.18)' };
+                    return null;
+                },
                 onGridReady: (params) => {
                     gridApi = params.api;
                     isGridInitialized = true;

@@ -21,6 +21,11 @@ namespace MESManager.Application.DTOs
         public string? CodiceCassa { get; set; }
         public string? CodiceAnime { get; set; }
         public int? IdArticolo { get; set; }
+
+        /// <summary>
+        /// NC aperte per l'articolo — campo calcolato lato Blazor, NON persistito su DB.
+        /// </summary>
+        public int NcAperteCount { get; set; }
         public string? MacchineSuDisponibili { get; set; }
         public string? MacchineSuDisponibiliDescrizione { get; set; }  // Descrizione lookup
         public string? Colla { get; set; }

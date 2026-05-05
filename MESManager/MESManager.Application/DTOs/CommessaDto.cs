@@ -125,4 +125,10 @@ public class CommessaDto
     public bool HasRicetta { get; set; }
     public int NumeroParametri { get; set; }
     public DateTime? RicettaUltimaModifica { get; set; }
+
+    /// <summary>
+    /// NC aperte per l'articolo — campo calcolato lato Blazor, NON persistito su DB.
+    /// Popolato dopo il caricamento commesse via /api/NonConformita/count-per-articolo.
+    /// </summary>
+    public int NcAperteCount { get; set; }
 }

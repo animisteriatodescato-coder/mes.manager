@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.JSInterop;
 using MudBlazor;
+using MESManager.Application.Interfaces;
 using MESManager.Application.Services;
 using MESManager.Infrastructure.Entities;
 using MESManager.Web.Constants;
@@ -54,9 +55,13 @@ public partial class MainLayout : IDisposable
     [Inject]
     private CurrentUserService CurrentUserService { get; set; } = default!;
 
+    [Inject]
+    private INonConformitaService NcService { get; set; } = default!;
+
     private bool _isDarkMode = false;
     private bool _drawerOpen = false;
     private bool _aiPanelOpen = false;
+    private int _ncAperteCount = 0;
     /// <summary>True se l'utente ha SOLO ruolo Visualizzazione (nessun ruolo write). Propagato come CascadingValue alle pagine figlie.</summary>
     private bool _isReadOnly = false;
     /// <summary>True se l'utente ha ruolo Admin. Propagato come CascadingValue alle pagine figlie per funzioni riservate (es. Imposta Default Globale).</summary>
@@ -203,6 +208,16 @@ public partial class MainLayout : IDisposable
                 await ThemeCssService.ApplyAsync(JS, userSettings, _isDarkMode);
                 await InvokeAsync(StateHasChanged);
             }
+
+            // Carica conteggio NC aperte per badge menu (non bloccante)
+            try
+            {
+                var ncAperte = await NcService.GetAperteAsync();
+                _ncAperteCount = ncAperte.Count;
+                if (_ncAperteCount > 0)
+                    await InvokeAsync(StateHasChanged);
+            }
+            catch { /* badge NC non bloccante */ }
         }
     }
 

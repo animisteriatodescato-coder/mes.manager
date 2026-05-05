@@ -69,6 +69,33 @@ window.commesseAperteGrid = (function() {
                 showStoricoProgrammazione(params.data.id, params.data.numeroCommessa);
             }
         },
+        // ── NC aperte: colonna di allerta non conformità ──
+        {
+            field: 'ncAperteCount',
+            headerName: '⚠️ NC',
+            width: 80,
+            pinned: 'left',
+            sortable: true,
+            filter: true,
+            suppressMenu: false,
+            cellRenderer: params => {
+                const count = params.value || 0;
+                if (count === 0) return '<span title="Nessuna NC aperta" style="color:gray;opacity:0.4;font-size:14px;">—</span>';
+                const color = count >= 2 ? '#d32f2f' : '#f57c00';
+                return `<button class="nc-alert-btn" style="border:none;background:transparent;cursor:pointer;font-weight:bold;color:${color};font-size:13px" title="${count} NC aperta/e — clicca per dettagli">⚠️ ${count}</button>`;
+            },
+            cellStyle: params => {
+                const count = params.value || 0;
+                if (count === 0) return null;
+                const bg = count >= 2 ? 'rgba(211,47,47,0.08)' : 'rgba(245,124,0,0.08)';
+                return { background: bg };
+            },
+            onCellClicked: params => {
+                if ((params.value || 0) > 0 && dotNetHelper && params.data.articoloCodice) {
+                    dotNetHelper.invokeMethodAsync('OpenNcWarning', params.data.articoloCodice);
+                }
+            }
+        },
         { field: 'codice', headerName: 'Codice', sortable: true, filter: true, width: 180, pinned: 'left' },
         { field: 'internalOrdNo', headerName: 'Num. Ordine', sortable: true, filter: true, width: 130 },
         { field: 'saleOrdId', headerName: 'ID Mago', sortable: true, filter: true, width: 100, hide: true },
@@ -400,8 +427,12 @@ window.commesseAperteGrid = (function() {
                 suppressMenu: true
             },
             getRowStyle: params => {
+                // NC coloring ha priorità sul verde "assegnato a macchina"
+                const nc = params.data && params.data.ncAperteCount;
+                if (nc >= 2) return { backgroundColor: 'rgba(244,67,54,0.12)' };
+                if (nc === 1) return { backgroundColor: 'rgba(255,193,7,0.18)' };
                 if (params.data && params.data.numeroMacchina != null && params.data.numeroMacchina !== '') {
-                    return { backgroundColor: '#e8f5e9' }; // Verde chiaro per commesse assegnate a macchina
+                    return { backgroundColor: '#e8f5e9' }; // Verde chiaro per commesse assegnate
                 }
                 return null;
             },
