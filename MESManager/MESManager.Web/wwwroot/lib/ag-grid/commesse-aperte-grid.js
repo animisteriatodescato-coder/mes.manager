@@ -84,12 +84,6 @@ window.commesseAperteGrid = (function() {
                 const color = count >= 2 ? '#d32f2f' : '#f57c00';
                 return `<button class="nc-alert-btn" style="border:none;background:transparent;cursor:pointer;font-weight:bold;color:${color};font-size:13px" title="${count} NC aperta/e — clicca per dettagli">⚠️ ${count}</button>`;
             },
-            cellStyle: params => {
-                const count = params.value || 0;
-                if (count === 0) return null;
-                const bg = count >= 2 ? 'rgba(211,47,47,0.08)' : 'rgba(245,124,0,0.08)';
-                return { background: bg };
-            },
             onCellClicked: params => {
                 if ((params.value || 0) > 0 && dotNetHelper && params.data.articoloCodice) {
                     dotNetHelper.invokeMethodAsync('OpenNcWarning', params.data.articoloCodice);
