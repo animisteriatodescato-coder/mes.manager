@@ -22,6 +22,7 @@ public interface IManutenzioneService
     Task<ManutenzioneSchedaDto?> GetSchedaByIdAsync(Guid id);
     Task<ManutenzioneSchedaDto> CreateSchedaAsync(NuovaSchedaRequest request);
     Task<ManutenzioneSchedaDto?> ChiudiSchedaAsync(Guid id);
+    Task<ManutenzioneSchedaDto?> CambiaStatoAsync(Guid id, StatoSchedaManutenzione nuovoStato, string? operatoreId, string? nomeOperatore);
 
     // Righe
     Task<ManutenzioneSchedaDto?> UpdateRigaAsync(Guid schedaId, ManutenzioneRigaDto riga);

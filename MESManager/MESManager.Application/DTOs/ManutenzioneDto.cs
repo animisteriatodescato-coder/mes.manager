@@ -50,6 +50,7 @@ public class ManutenzioneSchedaDto
     public StatoSchedaManutenzione Stato { get; set; } = StatoSchedaManutenzione.InCompilazione;
     public DateTime? DataChiusura { get; set; }
     public List<ManutenzioneRigaDto> Righe { get; set; } = new();
+    public List<SchedaStatoLogDto> StoricoStati { get; set; } = new();
 }
 
 public class NuovaSchedaRequest
@@ -60,4 +61,15 @@ public class NuovaSchedaRequest
     public string? OperatoreId { get; set; }
     public string? NomeOperatore { get; set; }
     public string? Note { get; set; }
+}
+
+/// <summary>Log di un singolo cambio stato scheda manutenzione (catalogo o casse).</summary>
+public class SchedaStatoLogDto
+{
+    public Guid Id { get; set; }
+    public StatoSchedaManutenzione StatoPrecedente { get; set; }
+    public StatoSchedaManutenzione StatoNuovo { get; set; }
+    public DateTime DataCambio { get; set; }
+    public string? OperatoreId { get; set; }
+    public string? NomeOperatore { get; set; }
 }

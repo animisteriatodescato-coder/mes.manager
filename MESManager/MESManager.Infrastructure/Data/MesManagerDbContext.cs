@@ -70,6 +70,9 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<NonConformita> NonConformita => Set<NonConformita>();
     public DbSet<AllegatoNonConformita> AllegatiNonConformita => Set<AllegatoNonConformita>();
 
+    // Log cambi stato schede manutenzione (v1.65.73)
+    public DbSet<SchedaStatoLog> SchedeStatoLog => Set<SchedaStatoLog>();
+
     // Modulo Preventivi (v1.64.0)
     public DbSet<PreventivoTipoSabbia> PreventivoTipiSabbia => Set<PreventivoTipoSabbia>();
     public DbSet<PreventivoTipoVernice> PreventivoTipiVernice => Set<PreventivoTipoVernice>();
@@ -503,6 +506,16 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(a => a.SchedaId)
                 .OnDelete(DeleteBehavior.Cascade);
             b.HasIndex(x => x.SchedaId);
+        });
+
+        // Log cambi stato schede manutenzione (v1.65.73)
+        modelBuilder.Entity<SchedaStatoLog>(b =>
+        {
+            b.ToTable("SchedeStatoLog");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.OperatoreId).HasMaxLength(450);
+            b.Property(x => x.NomeOperatore).HasMaxLength(200);
+            b.HasIndex(x => new { x.SchedaId, x.TipoScheda });
         });
     }
 

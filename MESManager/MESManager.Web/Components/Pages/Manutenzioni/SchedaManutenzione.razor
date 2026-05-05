@@ -5,6 +5,7 @@
 @using MESManager.Domain.Enums
 @using MESManager.Web.Components.Dialogs.Manutenzioni
 @inject IManutenzioneService ManutenzioneService
+@inject MESManager.Application.Services.CurrentUserService CurrentUserService
 @inject IDialogService DialogService
 @inject NavigationManager Nav
 @inject ISnackbar Snackbar
@@ -56,19 +57,57 @@ else
                 </MudStack>
             </MudStack>
             <MudSpacer />
-            @* BADGE STATO *@
-            @switch (_scheda.Stato)
-            {
-                case StatoSchedaManutenzione.InCompilazione:
-                    <MudChip T="string" Color="Color.Warning" Icon="@Icons.Material.Filled.Edit">In Compilazione</MudChip>
-                    break;
-                case StatoSchedaManutenzione.Completata:
-                    <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">Completata il @_scheda.DataChiusura?.ToString("dd/MM/yyyy")</MudChip>
-                    break;
-                case StatoSchedaManutenzione.ConAnomalie:
-                    <MudChip T="string" Color="Color.Error" Icon="@Icons.Material.Filled.Warning">Con Anomalie — @_scheda.DataChiusura?.ToString("dd/MM/yyyy")</MudChip>
-                    break;
-            }
+            @* BADGE STATO cliccabile *@
+            <MudMenu T="string" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                <ActivatorContent>
+                    @switch (_scheda.Stato)
+                    {
+                        case StatoSchedaManutenzione.InCompilazione:
+                            <MudChip T="string" Color="Color.Warning" Icon="@Icons.Material.Filled.Edit" Style="cursor:pointer">In Compilazione</MudChip>
+                            break;
+                        case StatoSchedaManutenzione.Segnalata:
+                            <MudChip T="string" Color="Color.Info" Icon="@Icons.Material.Filled.Flag" Style="cursor:pointer">Segnalata</MudChip>
+                            break;
+                        case StatoSchedaManutenzione.InManutenzione:
+                            <MudChip T="string" Color="Color.Primary" Icon="@Icons.Material.Filled.Build" Style="cursor:pointer">In Manutenzione</MudChip>
+                            break;
+                        case StatoSchedaManutenzione.Completata:
+                            <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle" Style="cursor:pointer">Completata il @_scheda.DataChiusura?.ToString("dd/MM/yyyy")</MudChip>
+                            break;
+                        case StatoSchedaManutenzione.ConAnomalie:
+                            <MudChip T="string" Color="Color.Error" Icon="@Icons.Material.Filled.Warning" Style="cursor:pointer">Con Anomalie — @_scheda.DataChiusura?.ToString("dd/MM/yyyy")</MudChip>
+                            break;
+                    }
+                </ActivatorContent>
+                <ChildContent>
+                    <MudText Typo="Typo.caption" Class="px-3 pt-2 pb-1" Color="Color.Secondary">Cambia stato:</MudText>
+                    <MudMenuItem OnClick="@(() => CambiaStato(StatoSchedaManutenzione.InCompilazione))" Disabled="@(_scheda.Stato == StatoSchedaManutenzione.InCompilazione)">
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" /><span>In Compilazione</span>
+                        </MudStack>
+                    </MudMenuItem>
+                    <MudMenuItem OnClick="@(() => CambiaStato(StatoSchedaManutenzione.Segnalata))" Disabled="@(_scheda.Stato == StatoSchedaManutenzione.Segnalata)">
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                            <MudIcon Icon="@Icons.Material.Filled.Flag" Color="Color.Info" Size="Size.Small" /><span>Segnalata</span>
+                        </MudStack>
+                    </MudMenuItem>
+                    <MudMenuItem OnClick="@(() => CambiaStato(StatoSchedaManutenzione.InManutenzione))" Disabled="@(_scheda.Stato == StatoSchedaManutenzione.InManutenzione)">
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                            <MudIcon Icon="@Icons.Material.Filled.Build" Color="Color.Primary" Size="Size.Small" /><span>In Manutenzione</span>
+                        </MudStack>
+                    </MudMenuItem>
+                    <MudMenuItem OnClick="@(() => CambiaStato(StatoSchedaManutenzione.Completata))" Disabled="@(_scheda.Stato == StatoSchedaManutenzione.Completata)">
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" /><span>Completata</span>
+                        </MudStack>
+                    </MudMenuItem>
+                    <MudMenuItem OnClick="@(() => CambiaStato(StatoSchedaManutenzione.ConAnomalie))" Disabled="@(_scheda.Stato == StatoSchedaManutenzione.ConAnomalie)">
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                            <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" Size="Size.Small" /><span>Con Anomalie</span>
+                        </MudStack>
+                    </MudMenuItem>
+                </ChildContent>
+            </MudMenu>
             @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
             {
                 <MudButton Variant="Variant.Filled" Color="Color.Success"
@@ -110,7 +149,7 @@ else
                         <MudText>@context.NomeAttivita</MudText>
                     </MudTd>
                     <MudTd>
-                        @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
+                        @if (_scheda.Stato is not (StatoSchedaManutenzione.Completata or StatoSchedaManutenzione.ConAnomalie))
                         {
                             <MudSelect Value="@context.Esito"
                                        ValueChanged="@((EsitoAttivitaManutenzione v) => OnEsitoChanged(context, v))"
@@ -153,7 +192,7 @@ else
                         }
                     </MudTd>
                     <MudTd>
-                        @if (_scheda.Stato == StatoSchedaManutenzione.InCompilazione)
+                        @if (_scheda.Stato is not (StatoSchedaManutenzione.Completata or StatoSchedaManutenzione.ConAnomalie))
                         {
                             <MudTextField Value="@context.Commento"
                                           ValueChanged="@((string? v) => OnCommentoChanged(context, v))"
@@ -204,6 +243,45 @@ else
             </MudPaper>
         </MudStack>
 
+        @* STORICO STATI *@
+        @if (_scheda.StoricoStati.Any())
+        {
+            <MudPaper Elevation="1" Class="pa-3 mt-4">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                    <MudIcon Icon="@Icons.Material.Filled.History" Color="Color.Secondary" />
+                    <MudText Typo="Typo.subtitle1"><b>Storico stati</b></MudText>
+                    <MudChip T="string" Size="Size.Small">@_scheda.StoricoStati.Count</MudChip>
+                    <MudSpacer />
+                    <MudIconButton Icon="@(_showStorico ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                                   Size="Size.Small" OnClick="@(() => _showStorico = !_showStorico)" />
+                </MudStack>
+                @if (_showStorico)
+                {
+                    <MudSimpleTable Dense="true">
+                        <thead>
+                            <tr>
+                                <th>Data / Ora</th>
+                                <th>Da</th>
+                                <th>A</th>
+                                <th>Operatore</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in _scheda.StoricoStati)
+                            {
+                                <tr>
+                                    <td>@log.DataCambio.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@StatoLabel(log.StatoPrecedente)</td>
+                                    <td>@StatoLabel(log.StatoNuovo)</td>
+                                    <td>@(log.NomeOperatore ?? "—")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                }
+            </MudPaper>
+        }
+
     </MudContainer>
 }
 
@@ -213,6 +291,7 @@ else
     private ManutenzioneSchedaDto? _scheda;
     private bool _loading = true;
     private bool _saving;
+    private bool _showStorico = true;
     private System.Timers.Timer? _saveTimer;
 
     protected override async Task OnInitializedAsync()
@@ -281,6 +360,37 @@ else
             _saving = false;
         }
     }
+
+    private async Task CambiaStato(StatoSchedaManutenzione nuovoStato)
+    {
+        if (_scheda == null || _scheda.Stato == nuovoStato) return;
+        _saving = true;
+        try
+        {
+            _scheda = await ManutenzioneService.CambiaStatoAsync(
+                _scheda.Id, nuovoStato,
+                CurrentUserService.UserId, CurrentUserService.UserName);
+            Snackbar.Add($"Stato cambiato in: {StatoLabel(nuovoStato)}", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private static string StatoLabel(StatoSchedaManutenzione s) => s switch
+    {
+        StatoSchedaManutenzione.InCompilazione  => "In Compilazione",
+        StatoSchedaManutenzione.Segnalata       => "Segnalata",
+        StatoSchedaManutenzione.InManutenzione  => "In Manutenzione",
+        StatoSchedaManutenzione.Completata      => "Completata",
+        StatoSchedaManutenzione.ConAnomalie     => "Con Anomalie",
+        _                                       => s.ToString()
+    };
 
     private async Task AprireFotoDialog(ManutenzioneRigaDto riga)
     {

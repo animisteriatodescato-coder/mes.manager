@@ -157,7 +157,21 @@ public class ManutenzioneService : IManutenzioneService
             .Include(s => s.Macchina)
             .Include(s => s.Righe).ThenInclude(r => r.Attivita)
             .FirstOrDefaultAsync(s => s.Id == id);
-        return entity == null ? null : MapScheda(entity);
+        if (entity == null) return null;
+        var dto = MapScheda(entity);
+        dto.StoricoStati = await _db.SchedeStatoLog
+            .Where(l => l.SchedaId == id && l.TipoScheda == Domain.Enums.TipoSchedaManutenzione.Catalogo)
+            .OrderByDescending(l => l.DataCambio)
+            .Select(l => new SchedaStatoLogDto
+            {
+                Id = l.Id,
+                StatoPrecedente = l.StatoPrecedente,
+                StatoNuovo = l.StatoNuovo,
+                DataCambio = l.DataCambio,
+                OperatoreId = l.OperatoreId,
+                NomeOperatore = l.NomeOperatore
+            }).ToListAsync();
+        return dto;
     }
 
     public async Task<ManutenzioneSchedaDto> CreateSchedaAsync(NuovaSchedaRequest request)
@@ -208,12 +222,52 @@ public class ManutenzioneService : IManutenzioneService
             .FirstOrDefaultAsync(s => s.Id == id);
         if (scheda == null) return null;
 
+        var statoVecchio = scheda.Stato;
         var haAnomalie = scheda.Righe.Any(r => r.Esito == EsitoAttivitaManutenzione.Anomalia);
         scheda.Stato = haAnomalie ? StatoSchedaManutenzione.ConAnomalie : StatoSchedaManutenzione.Completata;
         scheda.DataChiusura = DateTime.UtcNow;
+
+        _db.SchedeStatoLog.Add(new Domain.Entities.SchedaStatoLog
+        {
+            SchedaId = id,
+            TipoScheda = Domain.Enums.TipoSchedaManutenzione.Catalogo,
+            StatoPrecedente = statoVecchio,
+            StatoNuovo = scheda.Stato,
+            NomeOperatore = scheda.NomeOperatore,
+            OperatoreId = scheda.OperatoreId
+        });
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("[MANUTENZIONE] Scheda chiusa: {Id} stato={Stato}", id, scheda.Stato);
+        return await GetSchedaByIdAsync(id);
+    }
+
+    public async Task<ManutenzioneSchedaDto?> CambiaStatoAsync(Guid id, StatoSchedaManutenzione nuovoStato, string? operatoreId, string? nomeOperatore)
+    {
+        var scheda = await _db.ManutenzioneSchede.FindAsync(id);
+        if (scheda == null) return null;
+
+        var statoVecchio = scheda.Stato;
+        scheda.Stato = nuovoStato;
+
+        if (nuovoStato is StatoSchedaManutenzione.Completata or StatoSchedaManutenzione.ConAnomalie)
+            scheda.DataChiusura ??= DateTime.UtcNow;
+        else if (nuovoStato == StatoSchedaManutenzione.InCompilazione)
+            scheda.DataChiusura = null;
+
+        _db.SchedeStatoLog.Add(new Domain.Entities.SchedaStatoLog
+        {
+            SchedaId = id,
+            TipoScheda = Domain.Enums.TipoSchedaManutenzione.Catalogo,
+            StatoPrecedente = statoVecchio,
+            StatoNuovo = nuovoStato,
+            OperatoreId = operatoreId,
+            NomeOperatore = nomeOperatore
+        });
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("[MANUTENZIONE] Stato cambiato: {Id} {Da} -> {A} da {Op}",
+            id, statoVecchio, nuovoStato, nomeOperatore);
         return await GetSchedaByIdAsync(id);
     }
 

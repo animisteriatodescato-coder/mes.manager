@@ -16,6 +16,7 @@ public interface IManutenzioneCassaService
     Task<ManutenzioneCassaSchedaDto?> GetSchedaByIdAsync(Guid id);
     Task<ManutenzioneCassaSchedaDto> GetOrCreateSchedaAsync(string codiceCassa, DateTime data, string? operatoreId, string? nomeOperatore);
     Task<ManutenzioneCassaSchedaDto?> ChiudiSchedaAsync(Guid id);
+    Task<ManutenzioneCassaSchedaDto?> CambiaStatoAsync(Guid id, StatoSchedaManutenzione nuovoStato, string? operatoreId, string? nomeOperatore);
     Task<bool> DeleteSchedaAsync(Guid id);
 
     // Righe
