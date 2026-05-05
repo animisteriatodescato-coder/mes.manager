@@ -432,6 +432,10 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
             b.Property(x => x.Sconto).HasPrecision(5, 2).HasDefaultValue(0m);
             b.Property(x => x.NoteInterne).HasMaxLength(2000);
             b.Property(x => x.EmailDestinatario).HasMaxLength(300);
+            b.Property(x => x.Margine1).HasPrecision(5, 2);
+            b.Property(x => x.Margine2).HasPrecision(5, 2);
+            b.Property(x => x.Margine3).HasPrecision(5, 2);
+            b.Property(x => x.Margine4).HasPrecision(5, 2);
             b.HasOne(x => x.TipoSabbia).WithMany().HasForeignKey(x => x.TipoSabbiaId).OnDelete(DeleteBehavior.SetNull);
             b.HasOne(x => x.TipoVernice).WithMany().HasForeignKey(x => x.TipoVerniceId).OnDelete(DeleteBehavior.SetNull);
             b.HasIndex(x => x.DataCreazione);

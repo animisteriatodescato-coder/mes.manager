@@ -188,7 +188,7 @@
         var dialog = await DialogService.ShowAsync<NuovaSchedaDialog>("Nuova Scheda", parameters, opts);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is ManutenzioneSchedaDto scheda)
+        if (result is { Canceled: false } && result.Data is ManutenzioneSchedaDto scheda)
         {
             Nav.NavigateTo($"/manutenzioni/scheda/{scheda.Id}");
         }

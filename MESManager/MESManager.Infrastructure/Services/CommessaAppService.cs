@@ -384,7 +384,7 @@ LEFT JOIN Clienti cl ON cl.Id = c.ClienteId";
     // Se serve assegnare macchina → usa Gantt Macchine
     // Programma = vista read-only auto-sync del Gantt
     [Obsolete("Usa Gantt per assegnare macchine. Programma è read-only.")]
-    public async Task AggiornaNumeroMacchinaAsync(Guid id, int? numeroMacchina)
+    public Task AggiornaNumeroMacchinaAsync(Guid id, int? numeroMacchina)
     {
         throw new InvalidOperationException(
             "Assegnazione macchina disabilitata da questa interfaccia. " +

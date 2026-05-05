@@ -169,8 +169,8 @@ public class ManutenzioneCassaAllegatoService : IManutenzioneCassaAllegatoServic
         SchedaId = e.SchedaId,
         NomeFile = e.NomeFile,
         // Ricalcola TipoFile dall'estensione: gestisce file storici salvati come "Documento" (es. .heic)
-        TipoFile = _fotoExt.Contains(e.Estensione ?? "") ? "Foto" : e.TipoFile,
-        Estensione = e.Estensione,
+        TipoFile = _fotoExt.Contains(e.Estensione ?? "") ? "Foto" : (e.TipoFile ?? "Documento"),
+        Estensione = e.Estensione ?? string.Empty,
         Descrizione = e.Descrizione,
         DimensioneBytes = e.DimensioneBytes,
         DataCaricamento = e.DataCaricamento.ToLocalTime()

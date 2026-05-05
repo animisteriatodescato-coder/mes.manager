@@ -24,7 +24,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <NoWarn>$(NoWarn);MUD0002</NoWarn>
+    <NoWarn>$(NoWarn);MUD0002;CS8669</NoWarn>
   </PropertyGroup>
 
 </Project>

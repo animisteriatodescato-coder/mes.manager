@@ -404,7 +404,7 @@ else
         var dialog = await DialogService.ShowAsync<FotoManutenzioneDialog>("Foto Attività", parameters, opts);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result is { Canceled: false })
         {
             // Aggiorna il path foto nella riga locale
             riga.FotoPath = result.Data as string;

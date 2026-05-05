@@ -5,6 +5,7 @@ using MESManager.Application.Interfaces;
 using MESManager.Infrastructure.Data;
 using System.Net;
 
+#pragma warning disable SYSLIB0014 // FTP non supportato da HttpClient, usiamo FtpWebRequest
 namespace MESManager.Infrastructure.Services;
 
 /// <summary>
@@ -299,3 +300,4 @@ public class AnimeFtpService : IAnimeFtpService
 
     private record FtpFileInfo(string Name, DateTime LastModified);
 }
+#pragma warning restore SYSLIB0014
