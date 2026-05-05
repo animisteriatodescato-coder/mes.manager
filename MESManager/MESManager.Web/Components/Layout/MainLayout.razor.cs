@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using MudBlazor;
 using MESManager.Application.Interfaces;
@@ -56,7 +57,7 @@ public partial class MainLayout : IDisposable
     private CurrentUserService CurrentUserService { get; set; } = default!;
 
     [Inject]
-    private INonConformitaService NcService { get; set; } = default!;
+    private IServiceScopeFactory ScopeFactory { get; set; } = default!;
 
     private bool _isDarkMode = false;
     private bool _drawerOpen = false;
@@ -209,10 +210,12 @@ public partial class MainLayout : IDisposable
                 await InvokeAsync(StateHasChanged);
             }
 
-            // Carica conteggio NC aperte per badge menu (non bloccante)
+            // Carica conteggio NC aperte per badge menu — scope isolato per evitare DbContext concurrency
             try
             {
-                var ncAperte = await NcService.GetAperteAsync();
+                await using var scope = ScopeFactory.CreateAsyncScope();
+                var ncService = scope.ServiceProvider.GetRequiredService<INonConformitaService>();
+                var ncAperte = await ncService.GetAperteAsync();
                 _ncAperteCount = ncAperte.Count;
                 if (_ncAperteCount > 0)
                     await InvokeAsync(StateHasChanged);
