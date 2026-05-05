@@ -8,33 +8,43 @@ namespace MESManager.Infrastructure.Services;
 
 public class NonConformitaService : INonConformitaService
 {
-    private readonly MesManagerDbContext _db;
+    private readonly IDbContextFactory<MesManagerDbContext> _dbFactory;
 
-    public NonConformitaService(MesManagerDbContext db) => _db = db;
+    public NonConformitaService(IDbContextFactory<MesManagerDbContext> dbFactory) => _dbFactory = dbFactory;
 
     public async Task<List<NonConformitaDto>> GetAllAsync()
-        => await _db.NonConformita
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.NonConformita
             .OrderByDescending(x => x.DataSegnalazione)
             .Select(x => MapToDto(x))
             .ToListAsync();
+    }
 
     public async Task<List<NonConformitaDto>> GetByCodiceArticoloAsync(string codiceArticolo)
-        => await _db.NonConformita
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.NonConformita
             .Where(x => x.CodiceArticolo == codiceArticolo)
             .OrderByDescending(x => x.DataSegnalazione)
             .Select(x => MapToDto(x))
             .ToListAsync();
+    }
 
     public async Task<List<NonConformitaDto>> GetAperteAsync()
-        => await _db.NonConformita
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.NonConformita
             .Where(x => x.Stato != "Chiusa")
             .OrderByDescending(x => x.DataSegnalazione)
             .Select(x => MapToDto(x))
             .ToListAsync();
+    }
 
     public async Task<NonConformitaDto?> GetByIdAsync(Guid id)
     {
-        var entity = await _db.NonConformita.FindAsync(id);
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var entity = await db.NonConformita.FindAsync(id);
         return entity == null ? null : MapToDto(entity);
     }
 
@@ -62,14 +72,16 @@ public class NonConformitaService : INonConformitaService
         // Logica esito automatico
         if (dto.Esito == "Positivo") { entity.Stato = "Chiusa"; entity.DataChiusura = DateTime.Today; }
         else if (dto.Esito == "Negativo" && entity.Stato == "Aperta") entity.Stato = "InGestione";
-        _db.NonConformita.Add(entity);
-        await _db.SaveChangesAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        db.NonConformita.Add(entity);
+        await db.SaveChangesAsync();
         return MapToDto(entity);
     }
 
     public async Task<NonConformitaDto?> UpdateAsync(NonConformitaDto dto, string userId)
     {
-        var entity = await _db.NonConformita.FindAsync(dto.Id);
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var entity = await db.NonConformita.FindAsync(dto.Id);
         if (entity == null) return null;
 
         entity.CodiceArticolo      = dto.CodiceArticolo.Trim();
@@ -96,22 +108,24 @@ public class NonConformitaService : INonConformitaService
         else if (dto.Esito == "Negativo" && entity.Stato == "Aperta") entity.Stato = "InGestione";
         else if (dto.Stato == "Chiusa" && entity.DataChiusura == null) entity.DataChiusura = DateTime.Today;
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
         return MapToDto(entity);
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        var entity = await _db.NonConformita.FindAsync(id);
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var entity = await db.NonConformita.FindAsync(id);
         if (entity == null) return false;
-        _db.NonConformita.Remove(entity);
-        await _db.SaveChangesAsync();
+        db.NonConformita.Remove(entity);
+        await db.SaveChangesAsync();
         return true;
     }
 
     public async Task<NonConformitaDto?> ChiudiAsync(Guid id, string? azioneCorrettiva, string userId)
     {
-        var entity = await _db.NonConformita.FindAsync(id);
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var entity = await db.NonConformita.FindAsync(id);
         if (entity == null) return null;
 
         entity.Stato             = "Chiusa";
@@ -120,7 +134,7 @@ public class NonConformitaService : INonConformitaService
         entity.ModificatoDa      = userId;
         entity.ModificatoIl      = DateTime.UtcNow;
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
         return MapToDto(entity);
     }
 

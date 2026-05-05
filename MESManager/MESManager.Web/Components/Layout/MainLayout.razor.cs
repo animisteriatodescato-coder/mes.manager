@@ -51,9 +51,6 @@ public partial class MainLayout : IDisposable
     private ThemeCssService ThemeCssService { get; set; } = default!;
 
     [Inject]
-    private UserManager<ApplicationUser> UserManager { get; set; } = default!;
-
-    [Inject]
     private CurrentUserService CurrentUserService { get; set; } = default!;
 
     [Inject]
@@ -141,14 +138,18 @@ public partial class MainLayout : IDisposable
             }
 
             // Popola CurrentUserService con i dati dell'utente autenticato
+            // SCOPE ISOLATO: UserManager usa MesManagerDbContext (stesso di NcService, AnimeService, etc.)
+            // Se condiviso con la pagina figlia, genera "A second operation was started on this context instance"
             var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (userId != null)
             {
-                var appUser = await UserManager.FindByIdAsync(userId);
+                await using var userScope = ScopeFactory.CreateAsyncScope();
+                var userManager = userScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                var appUser = await userManager.FindByIdAsync(userId);
                 CurrentUserService.SetUser(userId, appUser?.Nome ?? appUser?.UserName, appUser?.Colore);
                 if (appUser != null)
                 {
-                    var roles = await UserManager.GetRolesAsync(appUser);
+                    var roles = await userManager.GetRolesAsync(appUser);
                     _isReadOnly = roles.Contains("Visualizzazione") &&
                                   !roles.Any(r => r is "Admin" or "Produzione" or "Manutenzione" or "Ufficio");
                     _isAdmin = roles.Contains("Admin");
