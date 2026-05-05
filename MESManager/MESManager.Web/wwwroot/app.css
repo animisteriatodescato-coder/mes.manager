@@ -200,6 +200,26 @@ h1:focus {
     --ag-input-focus-border-color: rgba(99, 179, 237, 0.5);
     --ag-control-panel-background-color: #1a1c2e;
 }
+
+/* ── NC row coloring — intera riga colorata in tutte le griglie AG Grid ──────
+   Root cause: ag-theme-alpine dark usa --ag-background-color (opaco) sulle .ag-cell.
+   getRowStyle colora il .ag-row ma è nascosto da .ag-cell opache.
+   Soluzione: rowClassRules + CSS con !important sulle .ag-cell direttamente. */
+.ag-theme-alpine .ag-row.nc-row-red .ag-cell,
+.ag-theme-alpine .ag-row.nc-row-red .ag-cell-value {
+    background-color: rgba(244, 67, 54, 0.18) !important;
+}
+.ag-theme-alpine .ag-row.nc-row-yellow .ag-cell,
+.ag-theme-alpine .ag-row.nc-row-yellow .ag-cell-value {
+    background-color: rgba(255, 193, 7, 0.22) !important;
+}
+/* Hover mantenuto leggermente più scuro */
+.ag-theme-alpine .ag-row.nc-row-red:hover .ag-cell {
+    background-color: rgba(244, 67, 54, 0.28) !important;
+}
+.ag-theme-alpine .ag-row.nc-row-yellow:hover .ag-cell {
+    background-color: rgba(255, 193, 7, 0.32) !important;
+}
 .mud-theme-dark .ag-theme-alpine .ag-paging-panel {
     background-color: #16213e !important;
     border-top-color: rgba(255,255,255,0.1) !important;

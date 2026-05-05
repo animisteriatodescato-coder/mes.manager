@@ -423,12 +423,14 @@ window.commesseAperteGrid = (function() {
             getRowStyle: params => {
                 // NC coloring ha priorità sul verde "assegnato a macchina"
                 const nc = params.data && params.data.ncAperteCount;
-                if (nc >= 2) return { backgroundColor: 'rgba(244,67,54,0.12)' };
-                if (nc === 1) return { backgroundColor: 'rgba(255,193,7,0.18)' };
                 if (params.data && params.data.numeroMacchina != null && params.data.numeroMacchina !== '') {
-                    return { backgroundColor: '#e8f5e9' }; // Verde chiaro per commesse assegnate
+                    if (!(nc >= 1)) return { backgroundColor: '#e8f5e9' };
                 }
                 return null;
+            },
+            rowClassRules: {
+                'nc-row-red':    params => (params.data?.ncAperteCount || 0) >= 2,
+                'nc-row-yellow': params => (params.data?.ncAperteCount || 0) === 1,
             },
             sideBar: {
                 toolPanels: [

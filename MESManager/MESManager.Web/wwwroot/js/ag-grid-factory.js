@@ -85,11 +85,11 @@ window.agGridFactory = (function () {
                 enableCellTextSelection: true,
                 // ── NC row coloring centralizzato ──────────────────────────────────
                 // Rosso pallido = ≥2 NC aperte | Giallo pallido = 1 NC aperta
-                getRowStyle: params => {
-                    const nc = params.data && params.data.ncAperteCount;
-                    if (nc >= 2) return { background: 'rgba(244,67,54,0.12)' };
-                    if (nc === 1) return { background: 'rgba(255,193,7,0.18)' };
-                    return null;
+                // Usa rowClassRules + CSS (app.css .nc-row-red/.nc-row-yellow) per
+                // colorare l'intera riga anche in dark mode (le .ag-cell hanno bg opaco)
+                rowClassRules: {
+                    'nc-row-red':    params => (params.data?.ncAperteCount || 0) >= 2,
+                    'nc-row-yellow': params => (params.data?.ncAperteCount || 0) === 1,
                 },
                 onGridReady: (params) => {
                     gridApi = params.api;
