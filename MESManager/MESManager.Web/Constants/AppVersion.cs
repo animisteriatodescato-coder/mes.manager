@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.71";
+    public const string Current = "1.65.74";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.71: frecce neutre + niente fallback stampa browser PDF cliente
+    public const string Display = "v" + Current; // v1.65.74: security hardening — [Authorize] su tutti i controller/hub, CSP headers, MIME validation, path traversal fix, NuGet updates, rimozione credenziali da config
 }

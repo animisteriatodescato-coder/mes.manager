@@ -4,160 +4,96 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.71
-
-
-## 🔖 v1.65.71 — Fix reale frecce Programma + blocco fallback stampa browser preventivo
-
-**Data**: 28 Aprile 2026
-
-### 🐛 Fix
-- Frecce su/giu di Programma Macchine rese neutre direttamente nello stile base (`sfondo grigio chiaro`, `freccia nera`), senza dipendere dal selettore `.mud-theme-dark` che non agganciava la griglia nel DOM reale.
-- Il pulsante `Cliente` del modulo preventivo non usa piu il fallback stampa browser quando il PDF server-side non parte: mostra errore chiaro e non genera PDF sporchi con header/footer Chrome.
-- Ricerca Chrome/Edge resa piu robusta anche tramite directory presenti in `PATH`.
-- Aggiunto `--no-sandbox` al processo Chromium headless per migliorare compatibilita in esecuzione server.
-
-### 📁 File Modificati
-- `MESManager.Web/wwwroot/app.css` — frecce Programma Macchine neutre come stile base
-- `MESManager.Web/Components/App.razor` — cache busting CSS
-- `MESManager.Web/Components/Dialogs/Preventivi/ModuloClienteDialog.razor` — rimosso fallback stampa browser dal pulsante Cliente
-- `MESManager.Web/Services/ChromiumPdfService.cs` — ricerca browser piu ampia + flag headless
-- `MESManager.Web/Program.cs` — messaggio 503 coerente con PDF server-side
-- `MESManager.Web/Constants/AppVersion.cs` — v1.65.70 -> v1.65.71
-
-
-## 🔖 v1.65.70 — Programma Macchine: frecce ordinamento coerenti in dark mode
-
-**Data**: 28 Aprile 2026
-
-### 🐛 Fix Preventivi
-- Il pulsante `Cliente` del modulo preventivo ora genera direttamente il PDF pulito server-side tramite `/api/preventivo/pdf`.
-- Eliminato il percorso di stampa browser per il PDF cliente, evitando intestazioni e pie di pagina automatici di Chrome.
-- Rinominato il metodo handler in `ScaricaPdfAsync` per rimuovere il refuso precedente.
-
-### 🎨 UI
-- Uniformate le frecce su/giu della prima colonna in Programma Macchine al tema dark:
-  - freccia nera
-  - sfondo grigio chiaro
-  - hover neutro senza azzurro/blu
-- Spostati i colori da inline JS a `app.css`, usando `.mud-theme-dark` come fonte corretta del tema.
-
-### 📁 File Modificati
-- `MESManager.Web/Components/Dialogs/Preventivi/ModuloClienteDialog.razor` — pulsante Cliente collegato al PDF server-side
-- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` — renderer frecce con classi CSS dedicate
-- `MESManager.Web/wwwroot/app.css` — stile light/dark centralizzato per `.mes-move-btn`
-- `MESManager.Web/Components/App.razor` — cache busting CSS/JS
-- `MESManager.Web/Constants/AppVersion.cs` — v1.65.69 -> v1.65.70
-
-
-## 🔖 v1.65.68 — Preventivo cliente: impaginazione piu compatta + guida PDF pulito
-
-**Data**: 28 Aprile 2026
-
-### ✨ Miglioramenti
-- Rifinita l'impaginazione del modulo cliente preventivo per ridurre spazi vuoti e aumentare la densita informativa:
-  - ridotti margini verticali di titolo/sezioni
-  - tabella prezzi piu compatta (header/celle)
-  - blocchi dati tecnici/cliente con gap ridotto
-- Data emissione resa piu naturale nel flusso documento (non piu in footer fisso assoluto)
-- Chiarito nel dialog il flusso consigliato:
-  - `Apri PDF` (verde) = PDF server-side pulito, senza header/footer browser
-  - `Cliente` (stampa browser) = puo includere intestazioni/pie di pagina del browser
-
-### 📁 File Modificati
-- `MESManager.Web/Components/Dialogs/Preventivi/ModuloClientePrintBuilder.cs` — ottimizzazione CSS/layout stampa cliente
-- `MESManager.Web/Components/Dialogs/Preventivi/ModuloClienteDialog.razor` — tooltip e testo guida per distinguere stampa browser vs PDF pulito
-- `MESManager.Web/Constants/AppVersion.cs` — v1.65.67 -> v1.65.68
-
-
-## 🔖 v1.65.67 — Font stampa legato alle Impostazioni + deploy
-
-**Data**: 28 Aprile 2026
-
-### 🐛 Fix
-- Corretto il comportamento della stampa Programma Macchine: il font ora segue il valore `Font Size` delle Impostazioni pagina
-- Eliminato l'effetto di riduzione automatica eccessiva (auto-shrink):
-  - `nowrap` mantenuto solo per colonne realmente corte
-  - le altre colonne vanno a capo (`word-break`) per evitare che il browser rimpicciolisca tutto
-- Intestazioni/data/footer della stampa ora scalano in modo coerente con il font impostato
-
-### 📁 File Modificati
-- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` — migliorata logica classi colonne print (`narrow` vs `wrap`) + font dinamico da impostazioni
-- `MESManager.Web/Constants/AppVersion.cs` — v1.65.66 -> v1.65.67
-
-
-## 🔖 v1.65.66 — Stampa Programma Macchine piu compatta
-
-**Data**: 28 Aprile 2026
-
-### ✨ Miglioramento
-- In stampa, intestazioni abbreviate per risparmio spazio:
-  - `Ubicazione` -> `Ubic.`
-  - `Quantita` -> `Q.t.`
-  - `Tog. Sparo` -> `Tog. sp.`
-- Colonne in stampa rese piu compatte con larghezza minima necessaria (`nowrap + width: 1%`)
-- Espansione libera mantenuta solo per le colonne testuali lunghe (`Codice`, `Cod. Articolo`, `Descrizione`, `Cliente`)
-- Miglioria applicata a tutti i percorsi di stampa della pagina (tabella interna, nuova finestra, iframe)
-
-### 📁 File Modificati
-- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` — helper intestazioni stampa + layout colonne compatto
-- `MESManager.Web/Constants/AppVersion.cs` — v1.65.65 -> v1.65.66
-
-
-## 🔖 v1.65.65 — Strip suffissi societari da ClienteDisplay
-
-**Data**: 28 Aprile 2026
-
-### ✨ Miglioramento
-- Rimossi automaticamente i suffissi societari italiani (S.R.L., S.P.A., S.N.C., S.A.S., S.C.R.L., S.A.P.A., S.S., S.C.) dalla proprietà `ClienteDisplay` in `CommessaDto`
-- Riduzione nomi cliente in tutte le griglie e stampe (zero duplicazione - unica fonte di verità)
-- Regex case-insensitive compilata, gestisce varianti con/senza punti (es. SRL, S.R.L, S.R.L.)
-- Beneficio principale: stampa Programma Macchine — nomi cliente non vanno più a capo e la tabella entra su un foglio
-
-### 📁 File Modificati
-- `MESManager.Application/DTOs/CommessaDto.cs` — `ClienteDisplay` da expression body a property con `StripBusinessSuffix`
-- `MESManager.Web/Constants/AppVersion.cs` — v1.65.64 → v1.65.65
+## 🔖 Versione Corrente: v1.65.74
 
 ---
 
-## 🔖 v1.65.64 — Preventivi: rimozione footer Chrome + data documento in basso
+## 🔖 v1.65.74 — Security Hardening completo
 
-**Data**: 28 Aprile 2026
+**Data**: 6 Maggio 2026
 
-### 🐛 Fix
-- Rimossi definitivamente header/footer automatici di Chrome nel PDF (`data`, `nome file/URL`, numerazione pagina)
-  - fix tecnico: aggiunto flag `--print-to-pdf-no-header-footer` in `ChromiumPdfService`
-- Eliminata la pagina 2 vuota residua
-  - causa: `min-height` del `body` in area stampa che forzava overflow
-  - fix: rimosso `min-height: calc(297mm - 30mm)` da `ModuloClientePrintBuilder`
+### 🔒 Security Fixes (ordinati per gravità)
 
-### ✨ UX PDF
-- Spostata la data di emissione dal blocco meta in alto a un footer documento in basso pagina
-- Riferimento preventivo in alto mantenuto come `Rif. N.xxx` (senza data)
+#### CRITICO — Autenticazione e autorizzazione
+- **[Authorize] su tutti i controller**: 14 controller avevano `[Authorize]` commentato, 4 ne erano privi. Tutti ora protetti. `DbMaintenanceController` e `DiagnosticsController` richiedono ruolo `Admin`
+- **CookieForwardingHandler**: nuovo handler che propaga il cookie di sessione dell'utente dalle chiamate Blazor Server verso i controller API interni (pattern necessario per Blazor Server)
+- **Named HttpClient `blazor-internal`**: registrato con `CookieForwardingHandler` per garantire che tutte le chiamate server-side portino l'autenticazione
+- **[Authorize] su SignalR hub**: `RealtimeHub` e `PianificazioneHub` ora richiedono autenticazione
 
-### 📁 File modificati
-- `MESManager.Web/Services/ChromiumPdfService.cs`
-- `MESManager.Web/Components/Dialogs/Preventivi/ModuloClientePrintBuilder.cs`
-- `MESManager.Web/Constants/AppVersion.cs` — versione `1.65.64`
+#### ALTO — Dati sensibili e configurazione
+- **Credenziali rimosse da `appsettings.Production.json`**: le connection string di produzione (FAB/password.123, Gantt/Gantt2019) erano in chiaro nel file versionato. Ora sono stringhe vuote; le credenziali devono essere in `appsettings.Secrets.json` sul server di produzione
+- **AllowedHosts ristretto**: da `"*"` a `"192.168.1.230;localhost"` in produzione
+- **Stack trace rimosso da risposte HTTP**: `SyncController` non include più `ex.StackTrace` nelle risposte di errore
+- **System.Text.Json aggiornato a 8.0.5**: fix vulnerabilità GHSA (CVE) su Web, Application e Infrastructure
+
+#### MEDIO — Sicurezza HTTP e upload
+- **CSP Headers**: aggiunto `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, `Referrer-Policy` a tutte le risposte HTTP
+- **Cookie SecurePolicy=Always in produzione**: i cookie di autenticazione vengono inviati solo su HTTPS in produzione
+- **Validazione magic bytes Excel**: `AnimeController` ora verifica la firma del file (PK per .xlsx, D0CF11E0 per .xls) oltre all'estensione, prevenendo upload di file mascherati
+- **Path traversal fix**: `AllegatiAnimaService` e `AllegatoArticoloService` ora validano i path con `IsPathSafe()` prima di leggere file dal filesystem
+
+### ⚠️ Note operative pre-deploy
+> **PRIMA del prossimo deploy in produzione**: aggiornare `C:\MESManager\Web\appsettings.Secrets.json` sul server `192.168.1.230` con le connection string di produzione (MESManagerDb, GanttDb, MagoDb). Senza questo passaggio l'app non si avvia.
 
 ---
 
-## 🔖 v1.65.63 — Preventivi: PDF senza header Chrome e senza seconda pagina
+## 🔖 v1.65.73 — Fix definitivo DbContext concurrency su click NC
 
-**Data**: 27 Aprile 2026
+**Data**: 5 Maggio 2026
 
-### 🐛 Fix
-- Rimossi header/footer automatici inseriti da Chrome nella stampa PDF headless
-  - causa: in alto venivano stampati data e titolo/URL del file, con la parte centrale evidenziata in azzurro
-  - fix: `ChromiumPdfService` ora usa `--headless=new`, che non aggiunge più l'intestazione automatica nel PDF generato
-- Eliminato l'overflow che portava il preventivo cliente su una seconda pagina non necessaria
-  - causa: il `body` aveva padding interno oltre ai margini `@page`, aumentando artificialmente l'altezza utile della pagina
-  - fix: rimosso `padding: 10mm 15mm` dal `body` in `ModuloClientePrintBuilder`
+### 🐛 Bug Fix
+- **MainLayout Identity in scope isolato**: in `MainLayout.razor.cs` le chiamate a `UserManager.FindByIdAsync` / `GetRolesAsync` ora usano `IServiceScopeFactory.CreateAsyncScope()` per evitare condivisione dello stesso `MesManagerDbContext` con le pagine figlie
+- **NonConformitaService thread-safe**: `NonConformitaService` convertito da `MesManagerDbContext` scoped a `IDbContextFactory<MesManagerDbContext>` con creazione context per ogni metodo (`Get*`, `Create`, `Update`, `Delete`, `Chiudi`)
+- **CatalogoNonConformita anti-overlap**: aggiunto lock asincrono (`SemaphoreSlim`) in `LoadData()` con `try/finally`, prevenendo caricamenti concorrenti in caso di eventi multipli ravvicinati
+- **Filtro query articolo**: `CatalogoNonConformita` ora legge `?articolo=` via `SupplyParameterFromQuery` e applica subito il filtro testo, migliorando il deep-link dal click `📋`
+
+### ✅ Esito atteso
+- Nessun errore `A second operation was started on this context instance` quando si clicca la colonna NC da Commesse Aperte verso Catalogo NC
+
+---
+
+## 🔖 v1.65.72 — NC Alert S3 + Fix layout NC page + Fix Autocomplete Preventivi
+
+**Data**: 5 Maggio 2026
+
+### ✨ Nuove funzionalità (NC Alert S3 — completamento)
+- **Coloring righe uniforme**: rimosso `cellStyle` dalla colonna NC in `commesse-grid.js` e `commesse-aperte-grid.js` → ora il `getRowStyle` centralizzato colora l'intera riga (giallo/rosso) senza sovrascritture per singola cella
+
+### 🐛 Bug Fix
+- **CatalogoNonConformita layout**: rimosso spazio vuoto eccessivo in alto (`mt-2` → `pt-2`), aggiunto `overflow:auto` sul container per evitare il taglio dei pulsanti Modifica/Elimina/Chiudi in basso
+
+### 🚀 Deploy
+- Servizi su `192.168.1.230` aggiornati: Web ✅ | Worker ✅ | PlcSync ✅
+
+---
+
+
+
+**Data**: 4 Maggio 2026
+
+### ✨ Nuove funzionalità
+- **MacchinaCodiceFiltro su ManutenzioneAttivita**: campo opzionale che limita un'attività a una sola macchina specifica
+  - "Scambiatore di Calore" impostato a `M011` (solo questa macchina la possiede)
+  - Tutte le altre macchine mostrano cella grigia `—` (N/A) per quell'attività
+  - Progress bar e conteggi escludono automaticamente le attività N/A per ogni macchina
+  - "✅ tutti" salta automaticamente le macchine per cui l'attività non è applicabile
+- **CSS `.mes-mant-cell-na`**: stile visivo dedicato per celle non applicabili (grigio, dash centrato)
+- **Migration DB**: `20260504072922_AddManutenzioneAttivitaMacchinaCodiceFiltro` applicata su MESManager_Prod
+
+
+
+**Data**: 4 Maggio 2026
+
+### ✨ Nuove funzionalità
+- **FixResetMenu su PLC Realtime**: sostituito il semplice pulsante "Reset" con il componente `FixResetMenu` (identico a ProgrammaMacchine, Cataloghi, CommesseAperte, PlcStorico)
+  - **Fix**: salva lo stato attuale delle colonne come stato di riferimento personale
+  - **Reset**: ripristina lo stato salvato con Fix (o default se non ancora fissato)
+  - **Imposta come Default per tutti** (solo Admin): salva lo stato corrente come default globale per tutti gli utenti
+- **plc-realtime-grid.js**: aggiunte funzioni `getState`, `setState`, `resetState` per supporto completo Fix/Reset
 
 ### 📁 File modificati
-- `MESManager.Web/Services/ChromiumPdfService.cs` — passaggio a `--headless=new`
-- `MESManager.Web/Components/Dialogs/Preventivi/ModuloClientePrintBuilder.cs` — rimosso padding dal `body`
-- `MESManager.Web/Constants/AppVersion.cs` — versione `1.65.63`
+- `MESManager.Web/Components/Pages/Produzione/PlcRealtime.razor` — FixResetMenu + handler Fix/Reset/SaveGlobal + IsAdmin cascading param
+- `MESManager.Web/wwwroot/lib/ag-grid/plc-realtime-grid.js` — aggiunto getState, setState, resetState
 
 ---
 

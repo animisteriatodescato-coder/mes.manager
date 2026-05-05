@@ -5,7 +5,6 @@
 @using MESManager.Web.Services
 @using MESManager.Web.Components.Dialogs.Cataloghi
 @using MudBlazor
-@using Microsoft.AspNetCore.Components
 @inject INonConformitaService NcService
 @inject IAnimeService AnimeService
 @inject ICommessaAppService CommessaAppService
@@ -337,11 +336,6 @@
     private List<string> _clienti = new();
     private string _searchText = string.Empty;
     private string _filtroStato = "Aperta";
-    private readonly SemaphoreSlim _loadLock = new(1, 1);
-    private string? _lastArticoloQuery;
-
-    [SupplyParameterFromQuery(Name = "articolo")]
-    public string? ArticoloQuery { get; set; }
 
     private TableGroupDefinition<NonConformitaDto> _groupDef = new()
     {
@@ -359,53 +353,26 @@
     private DateTime? _dataForm = DateTime.Today;
     private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
 
-    protected override async Task OnInitializedAsync()
-    {
-        ApplyQueryFilter();
-        await LoadData();
-    }
-
-    protected override Task OnParametersSetAsync()
-    {
-        ApplyQueryFilter();
-        return Task.CompletedTask;
-    }
-
-    private void ApplyQueryFilter()
-    {
-        if (string.Equals(_lastArticoloQuery, ArticoloQuery, StringComparison.OrdinalIgnoreCase))
-            return;
-
-        _lastArticoloQuery = ArticoloQuery;
-        if (!string.IsNullOrWhiteSpace(ArticoloQuery))
-            _searchText = ArticoloQuery.Trim();
-    }
+    protected override async Task OnInitializedAsync() => await LoadData();
 
     private async Task LoadData()
     {
-        await _loadLock.WaitAsync();
-        try
-        {
-            _loading = true;
+        _loading = true;
 
-            // Sequenziale per evitare overlap di operazioni con servizi EF nello stesso circuito
-            _nc = await NcService.GetAllAsync();
-            var anime = await AnimeService.GetAllAsync();
-            _articoliCodici = anime.Select(a => a.CodiceArticolo).OrderBy(c => c).ToList();
-            _articoliDescr  = anime
-                .Where(a => !string.IsNullOrWhiteSpace(a.DescrizioneArticolo))
-                .GroupBy(a => a.CodiceArticolo, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(g => g.Key, g => g.First().DescrizioneArticolo ?? "", StringComparer.OrdinalIgnoreCase);
-            var clientiList = await CommessaAppService.GetClienteNomiDistinctAsync();
-            _clienti = clientiList;
-            // Singleton - chiamata sincrona sicura
-            _tipologieNc = TabelleService.GetTipologiaNcList();
-        }
-        finally
-        {
-            _loading = false;
-            _loadLock.Release();
-        }
+        // Sequenziale (DbContext scoped)
+        _nc = await NcService.GetAllAsync();
+        var anime = await AnimeService.GetAllAsync();
+        _articoliCodici = anime.Select(a => a.CodiceArticolo).OrderBy(c => c).ToList();
+        _articoliDescr  = anime
+            .Where(a => !string.IsNullOrWhiteSpace(a.DescrizioneArticolo))
+            .GroupBy(a => a.CodiceArticolo, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().DescrizioneArticolo ?? "", StringComparer.OrdinalIgnoreCase);
+        var clientiList = await CommessaAppService.GetClienteNomiDistinctAsync();
+        _clienti = clientiList;
+        // Singleton - chiamata sincrona sicura
+        _tipologieNc = TabelleService.GetTipologiaNcList();
+
+        _loading = false;
     }
 
     private IEnumerable<NonConformitaDto> RigheVisibili => _nc.Where(nc =>
