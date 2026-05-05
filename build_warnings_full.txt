@@ -1,0 +1,16 @@
+  Individuazione dei progetti da ripristinare...
+  Tutti i progetti sono aggiornati per il ripristino.
+  MESManager.Domain -> C:\Dev\MESManager\MESManager.Domain\bin\Debug\net8.0\MESManager.Domain.dll
+  MESManager.Application -> C:\Dev\MESManager\MESManager.Application\bin\Debug\net8.0\MESManager.Application.dll
+  MESManager.Infrastructure -> C:\Dev\MESManager\MESManager.Infrastructure\bin\Debug\net8.0\MESManager.Infrastructure.dll
+  MESManager.PlcSync -> C:\Dev\MESManager\MESManager.PlcSync\bin\Debug\net8.0\MESManager.PlcSync.dll
+  MESManager.Sync -> C:\Dev\MESManager\MESManager.Sync\bin\Debug\net8.0\MESManager.Sync.dll
+  MESManager.Worker -> C:\Dev\MESManager\MESManager.Worker\bin\Debug\net8.0\MESManager.Worker.dll
+  MESManager.Web -> C:\Dev\MESManager\MESManager.Web\bin\Debug\net8.0\MESManager.Web.dll
+  MESManager.E2E -> C:\Dev\MESManager\tests\MESManager.E2E\bin\Debug\net8.0\MESManager.E2E.dll
+
+Compilazione completata.
+    Avvisi: 0
+    Errori: 0
+
+Tempo trascorso 00:00:02.32
