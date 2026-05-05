@@ -2,7 +2,7 @@
 
 > **Scopo**: Documenta errori reali risolti durante deploy in produzione  
 > **Obiettivo**: Evitare ripetizione degli stessi problemi  
-> **Ultima Modifica**: 19 Febbraio 2026
+> **Ultima Modifica**: Maggio 2026
 
 ---
 
@@ -17,6 +17,7 @@
 | **5** | Nomi Clienti Errati (Mostra Fornitori) | v1.30.11 | 🔴 CRITICO | ✅ RISOLTO |
 | **6** | Preferenze Utente Resettate | v1.30.11 | 🟡 MEDIO | ✅ RISOLTO |
 | **7** | Sync Automatica Fallisce (Worker vs Web DB Diversi) | Feb 2026 | 🔴 CRITICO | ✅ RISOLTO |
+| **8** | DbContext Concurrency Layout+Pagina → Crash Navigazione NC | v1.65.74 | 🔴 CRITICO | ✅ RISOLTO |
 
 ---
 
@@ -515,6 +516,103 @@ dotnet run --project MESManager/MESManager.Worker/MESManager.Worker.csproj --env
 
 ---
 
+## � PROBLEMA 8: DbContext Concurrency — Crash su Navigazione Pagina NC
+
+**Deploy**: v1.65.74 (Maggio 2026)
+
+### Sintomo
+Click su colonna NC in Commesse Aperte → naviga a `CatalogoNonConformita` → exception a runtime:
+
+```
+InvalidOperationException: A second operation was started on this context instance before 
+a previous operation completed. This is usually caused by different threads concurrently 
+using the same instance of DbContext.
+```
+
+Pagina crashava con errore HTTP 500. Nessun problema cliccando menu laterale direttamente.
+
+### Root Cause
+
+**`MesManagerDbContext` estende `IdentityDbContext<ApplicationUser>`** — è **un solo DbContext** per entità business E Identity, registrato come Scoped (un'istanza per circuito SignalR Blazor Server).
+
+**Sequenza che scatena la race condition**:
+1. Utente clicca link NC → Blazor naviga a `CatalogoNonConformita`
+2. `MainLayout.OnInitializedAsync()` si riinizia e chiama `UserManager.FindByIdAsync(userId)` → usa DbContext Identity
+3. Contemporaneamente, `CatalogoNonConformita.OnInitializedAsync()` chiama `NonConformitaService.GetAllAsync()` → usa stesso DbContext per query NC
+4. Due operazioni sullo stesso DbContext instance → **CRASH**
+
+**Complessità aggiuntiva**: il badge NC nel layout (`OnAfterRenderAsync`) chiamava `NonConformitaService.GetAperteAsync()` anch'esso sullo stesso context.
+
+### Soluzione a 3 Livelli (v1.65.74)
+
+**Fix 1 — `NonConformitaService` → `IDbContextFactory`** (ogni operazione context proprio):
+```csharp
+// ✅ CORRETTO — evita condivisione DbContext tra chiamate concorrenti
+public class NonConformitaService : INonConformitaService
+{
+    private readonly IDbContextFactory<MesManagerDbContext> _dbFactory;
+    public NonConformitaService(IDbContextFactory<MesManagerDbContext> dbFactory)
+        => _dbFactory = dbFactory;
+
+    public async Task<List<NonConformita>> GetAllAsync()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.NonConformita.ToListAsync();
+    }
+    // Stesso pattern per TUTTI i metodi
+}
+```
+
+**Fix 2 — `MainLayout` → `IServiceScopeFactory` per chiamate Identity**:
+```csharp
+// ✅ CORRETTO — UserManager in scope isolato non condivide DbContext con la pagina
+await using var userScope = ScopeFactory.CreateAsyncScope();
+var userManager = userScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+var appUser = await userManager.FindByIdAsync(userId);
+var roles = await userManager.GetRolesAsync(appUser);
+```
+
+**Fix 3 — `CatalogoNonConformita` → `SemaphoreSlim`** (serializza caricamenti):
+```csharp
+private readonly SemaphoreSlim _loadLock = new(1, 1);
+
+private async Task LoadData()
+{
+    await _loadLock.WaitAsync();
+    try { /* query */ }
+    finally { _loading = false; _loadLock.Release(); }
+}
+```
+
+**Fix 4 — Deep-link `?articolo=` via `SupplyParameterFromQuery`** (corretto routing da grid):
+```csharp
+[SupplyParameterFromQuery(Name = "articolo")]
+public string? ArticoloQuery { get; set; }
+```
+
+### Lezione Appresa
+
+- ✅ **Qualsiasi servizio chiamato da `MainLayout` DEVE usare `IDbContextFactory`** — non il DbContext Scoped
+- ✅ **`MesManagerDbContext` = Identity + Business** → una sola istanza scoped per circuito → FACILE race condition in Blazor Server
+- ✅ **`IServiceScopeFactory` obbligatorio in `MainLayout`** per chiamate Identity (`UserManager`, `RoleManager`)
+- ✅ Il pattern `IDbContextFactory<T>` è già documentato in `04-ARCHITETTURA.md` → usarlo per tutti i servizi "cross-cutting" (layout, signalR hub, badge, notifiche)
+- ✅ `SemaphoreSlim(1,1)` come guard in `LoadData()` previene re-entry su navigazione rapida
+- ⚠️ Il bug si manifesta SOLO alla navigazione (non su primo caricamento diretto), quindi sfugge ai test di smoke test su refresh
+
+### File Modificati
+- `MESManager.Infrastructure/Services/NonConformitaService.cs` → `IDbContextFactory`
+- `MESManager.Web/Components/Layout/MainLayout.razor.cs` → `IServiceScopeFactory` per UserManager
+- `MESManager.Web/Components/Pages/Cataloghi/CatalogoNonConformita.razor` → SemaphoreSlim + query param
+
+### Prevenzione Future
+
+Regola da aggiungere nelle code review:
+> **Ogni servizio Infrastructure iniettato in un Layout, Hub SignalR o componente "globale" DEVE usare `IDbContextFactory` al posto del DbContext Scoped diretto.**
+
+Documento di riferimento: [FIX-DBCONTEXT-CONCURRENCY-NC-20260505.md](FIX-DBCONTEXT-CONCURRENCY-NC-20260505.md)
+
+---
+
 ## 📚 RIFERIMENTI
 
 - [01-DEPLOY.md](../01-DEPLOY.md) - Procedura deploy completa
@@ -524,7 +622,7 @@ dotnet run --project MESManager/MESManager.Worker/MESManager.Worker.csproj --env
 
 ---
 
-**Versione**: 1.1  
+**Versione**: 1.2  
 **Data Creazione**: 11 Febbraio 2026  
-**Ultimo Aggiornamento**: 19 Febbraio 2026 - Aggiunto Problema 7 (Worker config)  
+**Ultimo Aggiornamento**: Maggio 2026 — Aggiunto Problema 8 (DbContext concurrency Layout+NC)  
 **Manutenzione**: Aggiungere nuove lezioni man mano che emergono

@@ -561,6 +561,9 @@ builder.Services.AddScoped<ICommessaAppService, CommessaAppService>();
 builder.Services.AddScoped<IMacchinaAppService, MacchinaAppService>();
 builder.Services.AddScoped<IPlcAppService, PlcAppService>();
 
+// Cataloghi (v1.65.74)
+builder.Services.AddScoped<INonConformitaService, NonConformitaService>();
+
 // Theme System (v1.55.12)
 builder.Services.AddSingleton<AppSettingsService>();      // impostazioni globali
 builder.Services.AddScoped<UserThemeService>();           // preferenze per-utente
@@ -577,6 +580,42 @@ builder.Services.AddMudServices();
 // SignalR
 builder.Services.AddSignalR();
 ```
+
+---
+
+### ⚠️ Regola Critica: DbContext Concurrency in Blazor Server
+
+**Problema**: `MesManagerDbContext` estende `IdentityDbContext<ApplicationUser>` → è un unico DbContext per entità business **e** Identity. In Blazor Server è `Scoped` per circuito SignalR. Se **Layout** e **pagina figlia** inizializzano in parallelo (`OnInitializedAsync`), condividono lo stesso DbContext → exception `"A second operation was started on this context instance"`.
+
+**Regola**: Ogni servizio che può essere chiamato da `MainLayout` (o da componenti che si inizializzano concorrentemente alle pagine figlie) **DEVE** usare `IDbContextFactory<MesManagerDbContext>`:
+
+```csharp
+// ✅ PATTERN CORRETTO — ogni operazione crea un context isolato
+public class NonConformitaService : INonConformitaService
+{
+    private readonly IDbContextFactory<MesManagerDbContext> _dbFactory;
+
+    public NonConformitaService(IDbContextFactory<MesManagerDbContext> dbFactory)
+        => _dbFactory = dbFactory;
+
+    public async Task<List<NonConformita>> GetAperteAsync()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.NonConformita.Where(n => n.Stato == "Aperta").ToListAsync();
+    }
+}
+```
+
+**Regola per `MainLayout`**: Le chiamate a `UserManager` (Identity) vanno in scope isolato tramite `IServiceScopeFactory`:
+
+```csharp
+// ✅ PATTERN CORRETTO — scope isolato per UserManager in MainLayout
+await using var userScope = ScopeFactory.CreateAsyncScope();
+var userManager = userScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+var appUser = await userManager.FindByIdAsync(userId);
+```
+
+Vedi storico: [FIX-DBCONTEXT-CONCURRENCY-NC-20260505.md](storico/FIX-DBCONTEXT-CONCURRENCY-NC-20260505.md)
 
 ---
 
