@@ -422,16 +422,26 @@
         {
             var allCommesse = await Http.GetFromJsonAsync<List<CommessaDto>>("api/Commesse") ?? new();
 
-            // Arricchisci con conteggio NC aperte per articolo
+            // Arricchisci con conteggio NC aperte E chiuse per articolo
             try
             {
-                var ncAperte = await NcService.GetAperteAsync();
-                var ncCounts = ncAperte
+                var tutteNc = await NcService.GetAllAsync();
+                var ncAperteCounts = tutteNc
+                    .Where(nc => nc.Stato != "Chiusa")
+                    .GroupBy(nc => nc.CodiceArticolo)
+                    .ToDictionary(g => g.Key, g => g.Count());
+                var ncChiuseCounts = tutteNc
+                    .Where(nc => nc.Stato == "Chiusa")
                     .GroupBy(nc => nc.CodiceArticolo)
                     .ToDictionary(g => g.Key, g => g.Count());
                 foreach (var c in allCommesse)
-                    if (!string.IsNullOrEmpty(c.ArticoloCodice) && ncCounts.TryGetValue(c.ArticoloCodice, out int cnt))
-                        c.NcAperteCount = cnt;
+                {
+                    if (!string.IsNullOrEmpty(c.ArticoloCodice))
+                    {
+                        if (ncAperteCounts.TryGetValue(c.ArticoloCodice, out int cnt)) c.NcAperteCount = cnt;
+                        if (ncChiuseCounts.TryGetValue(c.ArticoloCodice, out int cntC)) c.NcChiuseCount = cntC;
+                    }
+                }
             }
             catch { }
             

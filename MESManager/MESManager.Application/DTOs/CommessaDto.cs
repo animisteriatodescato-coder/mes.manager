@@ -128,7 +128,11 @@ public class CommessaDto
 
     /// <summary>
     /// NC aperte per l'articolo — campo calcolato lato Blazor, NON persistito su DB.
-    /// Popolato dopo il caricamento commesse via /api/NonConformita/count-per-articolo.
     /// </summary>
     public int NcAperteCount { get; set; }
+
+    /// <summary>
+    /// NC chiuse per l'articolo — campo calcolato lato Blazor, NON persistito su DB.
+    /// </summary>
+    public int NcChiuseCount { get; set; }
 }

@@ -79,14 +79,34 @@ window.commesseAperteGrid = (function() {
             filter: true,
             suppressMenu: false,
             cellRenderer: params => {
-                const count = params.value || 0;
-                if (count === 0) return '<span title="Nessuna NC aperta" style="color:gray;opacity:0.4;font-size:14px;">—</span>';
-                const color = count >= 2 ? '#d32f2f' : '#f57c00';
-                return `<button class="nc-alert-btn" style="border:none;background:transparent;cursor:pointer;font-weight:bold;color:${color};font-size:13px" title="${count} NC aperta/e — clicca per dettagli">⚠️ ${count}</button>`;
+                const aperte = params.value || 0;
+                const chiuse = params.data?.ncChiuseCount || 0;
+                if (aperte === 0 && chiuse === 0)
+                    return '<span title="Nessuna NC" style="color:gray;opacity:0.4;font-size:14px;">—</span>';
+                const parts = [];
+                if (aperte > 0) {
+                    const color = aperte >= 2 ? '#d32f2f' : '#f57c00';
+                    parts.push(`<button class="nc-alert-btn" style="border:none;background:transparent;cursor:pointer;font-weight:bold;color:${color};font-size:13px" title="${aperte} NC aperta/e — clicca per dettagli">⚠️ ${aperte}</button>`);
+                }
+                if (chiuse > 0) {
+                    parts.push(`<button class="nc-storico-btn" style="border:none;background:transparent;cursor:pointer;color:#9e9e9e;font-size:12px;margin-left:2px" title="${chiuse} NC chiusa/e — clicca per storico">📋 ${chiuse}</button>`);
+                }
+                return parts.join('');
             },
             onCellClicked: params => {
-                if ((params.value || 0) > 0 && dotNetHelper && params.data.articoloCodice) {
+                const target = params.event?.target;
+                if (!params.data?.articoloCodice) return;
+                // Click su icona storico (NC chiuse)
+                if (target?.classList?.contains('nc-storico-btn') || target?.closest?.('.nc-storico-btn')) {
+                    window.location.href = `/cataloghi/non-conformita?articolo=${encodeURIComponent(params.data.articoloCodice)}`;
+                    return;
+                }
+                // Click su avviso NC aperte
+                if ((params.value || 0) > 0 && dotNetHelper) {
                     dotNetHelper.invokeMethodAsync('OpenNcWarning', params.data.articoloCodice);
+                } else if ((params.data?.ncChiuseCount || 0) > 0) {
+                    // Solo chiuse: naviga direttamente allo storico
+                    window.location.href = `/cataloghi/non-conformita?articolo=${encodeURIComponent(params.data.articoloCodice)}`;
                 }
             }
         },
