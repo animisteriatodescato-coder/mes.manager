@@ -6,6 +6,7 @@
 @inject IPreventivoService PreventivoService
 @inject IAllegatoPreventivoService AllegatiPreventivoService
 @inject ICommessaAppService CommessaAppService
+@inject IAnimeService AnimeService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject HttpClient Http
@@ -988,6 +989,9 @@
     // Cache clienti per autocomplete
     private List<string> _clientiRagioni = new();
 
+    // Cache codici articolo dal catalogo anime
+    private List<string> _codiciAnimeCatalogo = new();
+
     // Archivio preventivi
     private List<PreventivoDto> _preventivi = new();
 
@@ -1025,6 +1029,13 @@
         _templates   = await PreventivoService.GetTemplatesAsync();
         var clienti  = await CommessaAppService.GetClienteNomiDistinctAsync();
         _clientiRagioni = clienti;
+        var anime = await AnimeService.GetAllAsync();
+        _codiciAnimeCatalogo = anime
+            .Select(a => a.CodiceArticolo)
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(c => c)
+            .ToList();
         _isLoading = false;
     }
 
@@ -1058,10 +1069,13 @@
 
     private Task<IEnumerable<string>> CercaCodiciArticolo(string? value, CancellationToken ct)
     {
-        var codici = _preventivi
+        // Unione tra codici già usati nei preventivi e codici dal catalogo anime
+        var codiciPreventivi = _preventivi
             .Select(p => p.CodiceArticolo)
-            .Where(c => !string.IsNullOrWhiteSpace(c))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(c => !string.IsNullOrWhiteSpace(c));
+
+        var codici = codiciPreventivi
+            .Union(_codiciAnimeCatalogo, StringComparer.OrdinalIgnoreCase)
             .OrderBy(c => c)
             .ToList();
 
