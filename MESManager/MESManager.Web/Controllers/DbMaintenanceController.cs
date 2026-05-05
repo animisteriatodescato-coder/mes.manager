@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +7,7 @@ using MESManager.Infrastructure.Data;
 namespace MESManager.Web.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Admin")]
 [Route("api/[controller]")]
 public class DbMaintenanceController : ControllerBase
 {

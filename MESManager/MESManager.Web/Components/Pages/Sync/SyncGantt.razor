@@ -167,7 +167,7 @@
 
         try
         {
-            var httpClient = HttpClientFactory.CreateClient();
+            var httpClient = HttpClientFactory.CreateClient("blazor-internal");
             var baseUri = new Uri(NavManager.BaseUri);
             var importUrl = new Uri(baseUri, "api/Anime/import-excel");
 
@@ -221,7 +221,7 @@
 
         try
         {
-            var httpClient = HttpClientFactory.CreateClient();
+            var httpClient = HttpClientFactory.CreateClient("blazor-internal");
             var baseUri = new Uri(NavManager.BaseUri);
             var importUrl = new Uri(baseUri, "api/Anime/import");
             

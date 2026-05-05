@@ -246,6 +246,13 @@ namespace MESManager.Application.Services
             {
                 // Converti path di rete se necessario
                 var localPath = ConvertNetworkPath(path);
+
+                // Protezione path traversal
+                if (!IsPathSafe(localPath))
+                {
+                    _logger.LogWarning("GetFileContentAsync: path traversal bloccato - Path={Path}", path);
+                    return null;
+                }
                 
                 if (!File.Exists(localPath))
                 {

@@ -211,6 +211,13 @@ public class AllegatoArticoloService : AllegatoFileServiceBase, IAllegatoArticol
         
         // Converti path di rete P:\Documenti -> C:\Dati\Documenti
         var localPath = ConvertNetworkPath(allegato.PathFile);
+
+        // Protezione path traversal
+        if (!IsPathSafe(localPath))
+        {
+            _logger.LogWarning("GetFileContentAsync: path traversal bloccato - Id={Id}, Path={Path}", id, allegato.PathFile);
+            return null;
+        }
         
         if (!File.Exists(localPath))
         {

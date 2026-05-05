@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MESManager.Web.Constants;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +15,7 @@ namespace MESManager.Web.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-// [Authorize] // Temporaneamente disabilitato per sviluppo - riabilitare in produzione
+[Authorize]
 public class PlcController : ControllerBase
 {
     private readonly IPlcAppService _service;

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MESManager.Domain.Constants;
 using MESManager.Web.Services;
@@ -7,7 +7,7 @@ namespace MESManager.Web.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    // [Authorize] // Temporaneamente disabilitato per sviluppo - riabilitare in produzione
+    [Authorize]
     public class TabelleController : ControllerBase
     {
         private readonly ITabelleService _tabelleService;

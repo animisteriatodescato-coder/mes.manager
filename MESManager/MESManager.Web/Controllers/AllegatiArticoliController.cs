@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
@@ -10,7 +10,7 @@ namespace MESManager.Web.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/allegati-articoli")]
-// [Authorize] // Temporaneamente disabilitato per sviluppo - riabilitare in produzione
+[Authorize]
 public class AllegatiArticoliController : ControllerBase
 {
     private readonly IAllegatoArticoloService _service;

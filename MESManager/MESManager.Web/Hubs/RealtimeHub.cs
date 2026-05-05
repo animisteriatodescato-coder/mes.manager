@@ -1,4 +1,5 @@
 using MESManager.Application.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace MESManager.Web.Hubs;
@@ -7,6 +8,7 @@ namespace MESManager.Web.Hubs;
 /// Hub SignalR per comunicazioni real-time dei dati PLC.
 /// Consente al server di pushare aggiornamenti ai client senza polling.
 /// </summary>
+[Authorize]
 public class RealtimeHub : Hub
 {
     private readonly ILogger<RealtimeHub> _logger;

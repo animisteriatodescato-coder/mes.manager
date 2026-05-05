@@ -1,3 +1,4 @@
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
@@ -6,7 +7,7 @@ namespace MESManager.Web.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-// [Authorize] // Temporaneamente disabilitato come tutti gli altri controller
+[Authorize]
 public class PreventiviController : ControllerBase
 {
     private readonly IPreventivoService _service;

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MESManager.Infrastructure.Data;
@@ -12,7 +12,7 @@ namespace MESManager.Web.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-// [Authorize] // Temporaneamente disabilitato per sviluppo - riabilitare in produzione
+[Authorize]
 public class PianificazioneController : ControllerBase
 {
     private readonly MesManagerDbContext _context;

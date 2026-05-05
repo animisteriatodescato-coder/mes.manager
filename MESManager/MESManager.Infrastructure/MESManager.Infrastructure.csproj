@@ -22,6 +22,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
     <PackageReference Include="QuestPDF" Version="2025.12.3" />
     <PackageReference Include="Sharp7" Version="1.1.84" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
   <PropertyGroup>

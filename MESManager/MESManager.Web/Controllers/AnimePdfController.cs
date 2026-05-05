@@ -1,3 +1,4 @@
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MESManager.Application.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -10,7 +11,7 @@ namespace MESManager.Web.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/anime")]
-// [Authorize] // Temporaneamente disabilitato per sviluppo - riabilitare in produzione
+[Authorize]
 public class AnimePdfController : ControllerBase
 {
     private readonly IAnimePdfService _pdfService;

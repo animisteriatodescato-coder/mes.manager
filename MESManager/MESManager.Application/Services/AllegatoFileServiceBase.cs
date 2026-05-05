@@ -63,6 +63,28 @@ public abstract class AllegatoFileServiceBase
         return converted;
     }
 
+    /// <summary>
+    /// Verifica che il path non contenga sequenze di path traversal (es. ../).
+    /// Restituisce false se il path è pericoloso; il chiamante deve gestire il caso con un 404/403.
+    /// </summary>
+    protected static bool IsPathSafe(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+            return false;
+
+        // Risolve il path canonico ed esclude sequenze ".."
+        try
+        {
+            var fullPath = Path.GetFullPath(path);
+            // Path deve essere assoluto e non contenere sequenze di traversal
+            return Path.IsPathRooted(fullPath) && !fullPath.Contains("..");
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     // ── Path mapping parsing ──────────────────────────────────────────────────
 
     /// <summary>

@@ -125,11 +125,24 @@ builder.Services.AddMudServices();
 // Syncfusion Blazor
 builder.Services.AddSyncfusionBlazor();
 
-// HttpClient per Blazor
-builder.Services.AddScoped(sp => new HttpClient
+// ============================================
+// HTTPCLIENT CON COOKIE FORWARDING (sicurezza)
+// ============================================
+// In Blazor Server, le chiamate HttpClient server-side non portano
+// automaticamente i cookie. CookieForwardingHandler li trasferisce
+// dalla sessione SignalR alle chiamate interne a localhost.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<CookieForwardingHandler>();
+
+// Client con nome "blazor-internal": usato da tutti i componenti Blazor
+builder.Services.AddHttpClient("blazor-internal", client =>
 {
-    BaseAddress = new Uri("http://localhost:5156/")
-});
+    client.BaseAddress = new Uri("http://localhost:5156/");
+}).AddHttpMessageHandler<CookieForwardingHandler>();
+
+// Registrazione scoped di HttpClient: inietta il named client per @inject HttpClient Http
+builder.Services.AddScoped(sp =>
+    sp.GetRequiredService<IHttpClientFactory>().CreateClient("blazor-internal"));
 
 // Custom Services
 builder.Services.AddScoped<PreferencesService>();
@@ -149,7 +162,7 @@ builder.Services.AddScoped<IManutenzioneCassaAllegatoService, ManutenzioneCassaA
 builder.Services.AddHttpClient<PlcDataService>(client =>
 {
     client.BaseAddress = new Uri("http://localhost:5156/");
-});
+}).AddHttpMessageHandler<CookieForwardingHandler>();
 builder.Services.AddScoped<IPlcSyncCoordinator, PlcSyncCoordinator>();
 builder.Services.AddScoped<IPlcStatusService, PlcStatusService>();
 builder.Services.AddSingleton<IPageToolbarService, PageToolbarService>();
@@ -218,7 +231,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.ExpireTimeSpan   = TimeSpan.FromHours(8);
     options.SlidingExpiration = true;
     options.Cookie.HttpOnly  = true;
-    options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SecurePolicy = builder.Environment.IsProduction()
+        ? Microsoft.AspNetCore.Http.CookieSecurePolicy.Always
+        : Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
     options.Cookie.SameSite  = Microsoft.AspNetCore.Http.SameSiteMode.Strict;
 });
 
@@ -283,6 +298,27 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+// ── Security Headers ─────────────────────────────────────────────────────────
+// Aggiunge header di sicurezza HTTP a tutte le risposte
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
+    context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    // CSP: permette risorse solo da stessa origine + CDN noti usati dall'app
+    context.Response.Headers["Content-Security-Policy"] =
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; " +
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; " +
+        "font-src 'self' https://fonts.gstatic.com; " +
+        "img-src 'self' data: blob:; " +
+        "connect-src 'self' ws: wss:; " +
+        "frame-ancestors 'none';";
+    await next();
+});
+
 app.UseAntiforgery();
 
 app.UseAuthentication();

@@ -1,4 +1,5 @@
 using MESManager.Application.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace MESManager.Web.Hubs;
@@ -7,6 +8,7 @@ namespace MESManager.Web.Hubs;
 /// Hub SignalR per sincronizzazione real-time della pianificazione.
 /// Gestisce eventi tra Gantt, Programma Macchine e altri client.
 /// </summary>
+[Authorize]
 public class PianificazioneHub : Hub
 {
     private readonly ILogger<PianificazioneHub> _logger;

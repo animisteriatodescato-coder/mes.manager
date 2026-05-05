@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +7,7 @@ namespace MESManager.Web.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-// [Authorize] // Temporaneamente disabilitato per sviluppo - riabilitare in produzione
+[Authorize]
 public class OperatoriController : ControllerBase
 {
     private readonly IOperatoreAppService _operatoreService;

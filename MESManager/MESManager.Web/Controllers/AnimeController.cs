@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MESManager.Application.Interfaces;
 using MESManager.Application.DTOs;
@@ -10,7 +10,7 @@ namespace MESManager.Web.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-// [Authorize] // Temporaneamente disabilitato per sviluppo - riabilitare in produzione
+[Authorize]
 public class AnimeController : ControllerBase
 {
     private readonly IAnimeService _service;
@@ -107,7 +107,14 @@ public class AnimeController : ControllerBase
                 !file.FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
                 return BadRequest(new { Error = "Il file deve essere in formato Excel (.xls o .xlsx)" });
 
+            // Validazione magic bytes: verifica firma del file indipendentemente dall'estensione
             using var stream = file.OpenReadStream();
+            var header = new byte[8];
+            var bytesRead = await stream.ReadAsync(header, 0, 8);
+            stream.Position = 0;
+            if (!IsValidExcelFile(header, bytesRead))
+                return BadRequest(new { Error = "Il file non è un file Excel valido" });
+
             var count = await _excelImportService.ImportFromExcelAsync(stream);
             return Ok(new { ImportedCount = count, Message = $"{count} anime importati da Excel" });
         }
@@ -153,5 +160,23 @@ public class AnimeController : ControllerBase
         if (!success)
             return NotFound();
         return NoContent();
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Verifica la firma (magic bytes) del file per determinare se è un file Excel valido.
+    /// .xlsx = ZIP (50 4B 03 04), .xls = OLE2 Compound Document (D0 CF 11 E0)
+    /// </summary>
+    private static bool IsValidExcelFile(byte[] header, int bytesRead)
+    {
+        if (bytesRead < 4) return false;
+        // .xlsx: ZIP signature PK\x03\x04
+        if (header[0] == 0x50 && header[1] == 0x4B && header[2] == 0x03 && header[3] == 0x04)
+            return true;
+        // .xls: OLE2 Compound Document signature D0 CF 11 E0
+        if (bytesRead >= 4 && header[0] == 0xD0 && header[1] == 0xCF && header[2] == 0x11 && header[3] == 0xE0)
+            return true;
+        return false;
     }
 }

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MESManager.Application.DTOs;
 using MESManager.Application.Services;
@@ -5,6 +6,7 @@ using MESManager.Application.Services;
 namespace MESManager.Web.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class RicetteArticoliController : ControllerBase
 {

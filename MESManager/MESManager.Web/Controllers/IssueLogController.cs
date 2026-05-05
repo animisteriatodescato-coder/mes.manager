@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MESManager.Application.Interfaces;
 using MESManager.Domain.Enums;
@@ -10,6 +11,7 @@ namespace MESManager.Web.Controllers;
 /// Riceve segnalazioni dal JavaScript error-interceptor e le salva come TechnicalIssue.
 /// </summary>
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class IssueLogController : ControllerBase
 {

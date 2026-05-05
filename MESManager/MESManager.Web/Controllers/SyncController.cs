@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MESManager.Sync.Services;
 
@@ -6,7 +6,7 @@ namespace MESManager.Web.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-// [Authorize] // Temporaneamente disabilitato per sviluppo - riabilitare in produzione
+[Authorize]
 public class SyncController : ControllerBase
 {
     private readonly ISyncCoordinator _syncCoordinator;
@@ -49,7 +49,7 @@ public class SyncController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Errore durante la sincronizzazione commesse");
-            return StatusCode(500, new { error = ex.Message, stackTrace = ex.StackTrace });
+            return StatusCode(500, new { error = "Errore durante la sincronizzazione commesse" });
         }
     }
 
