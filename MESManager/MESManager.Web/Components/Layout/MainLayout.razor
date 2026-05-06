@@ -403,7 +403,7 @@
                             <TitleContent>
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <span style="font-size: 16px; display: inline-flex; align-items: center;">&#128197;</span>
-                                    <span style="line-height: normal;">Programmazione</span>
+                                    <span style="line-height: normal;">Programma</span>
                                 </div>
                             </TitleContent>
                             <ChildContent>
@@ -537,7 +537,7 @@
                                 <MudNavLink Href="/cataloghi/non-conformita">
                                     <div style="display: flex; align-items: center; gap: 8px; width:100%">
                                         <span style="font-size: 13px;">&#9888;&#65039;</span>
-                                        <span>Non Conformit&#xE0;</span>
+                                        <span>Non Conf.</span>
                                         @if (_ncAperteCount > 0)
                                         {
                                             <span style="margin-left:auto;background:#d32f2f;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:bold;min-width:20px;text-align:center">@_ncAperteCount</span>
@@ -567,13 +567,13 @@
                             @if (_canManGriglia)
                             {
                                 <MudNavLink Href="/manutenzioni/griglia">
-                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9989;</span><span>Manutenzione Giornaliera</span></div>
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9989;</span><span>Macchine</span></div>
                                 </MudNavLink>
                             }
                             @if (_canManCasse)
                             {
                                 <MudNavLink Href="/manutenzioni/casse">
-                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128230;</span><span>Casse d'Anima</span></div>
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128230;</span><span>Casse An.</span></div>
                                 </MudNavLink>
                             }
                             @if (_canManAlert)
@@ -660,7 +660,7 @@
             <AuthorizeView Roles="Admin">
                 <MudNavGroup Title="Impostazioni" Icon="@Icons.Material.Filled.Settings" IconColor="Color.Dark" Expanded="@_expandedImp" ExpandedChanged="@(v => OnNavGroupToggled("imp", v))" Class="nav-sec-impostazioni">
                     <MudNavLink Href="/impostazioni/gantt">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9881;&#65039;</span><span>Gantt Macchine</span></div>
+                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9881;&#65039;</span><span>Gantt</span></div>
                     </MudNavLink>
                     <MudNavLink Href="/impostazioni/tabelle">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128202;</span><span>Tabelle</span></div>
@@ -675,7 +675,7 @@
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128295;</span><span>Generali</span></div>
                     </MudNavLink>
                     <MudNavLink Href="/impostazioni/accessi">
-                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128274;</span><span>Gestione Accessi</span></div>
+                        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128274;</span><span>Accessi</span></div>
                     </MudNavLink>
                     <MudNavLink Href="/impostazioni/issue-log">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128027;</span><span>Issue Log</span></div>

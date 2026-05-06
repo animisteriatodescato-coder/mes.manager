@@ -14,5 +14,5 @@ public static class AppVersion
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.74: security hardening — [Authorize] su tutti i controller/hub, CSP headers, MIME validation, path traversal fix, NuGet updates, rimozione credenziali da config
+    public const string Display = "v" + Current; // v1.65.74: menu laterale -30% (216→151px) + overflow-x hidden + abbreviazioni label
 }

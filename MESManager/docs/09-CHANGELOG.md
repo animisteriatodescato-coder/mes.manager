@@ -8,51 +8,31 @@
 
 ---
 
-## 🔖 v1.65.74 — Security Hardening completo
+## 🔖 v1.65.74 — Menu laterale -30% + abbreviazioni label
 
 **Data**: 6 Maggio 2026
 
-### 🔒 Security Fixes (ordinati per gravità)
+### 🎨 UI — Menu laterale compatto
 
-#### CRITICO — Autenticazione e autorizzazione
-- **[Authorize] su tutti i controller**: 14 controller avevano `[Authorize]` commentato, 4 ne erano privi. Tutti ora protetti. `DbMaintenanceController` e `DiagnosticsController` richiedono ruolo `Admin`
-- **CookieForwardingHandler**: nuovo handler che propaga il cookie di sessione dell'utente dalle chiamate Blazor Server verso i controller API interni (pattern necessario per Blazor Server)
-- **Named HttpClient `blazor-internal`**: registrato con `CookieForwardingHandler` per garantire che tutte le chiamate server-side portino l'autenticazione
-- **[Authorize] su SignalR hub**: `RealtimeHub` e `PianificazioneHub` ora richiedono autenticazione
+- **Larghezza drawer ridotta del 30%**: `216px` → `151px` via `--mud-drawer-width-left` in `app.css`
+- **No scroll orizzontale**: aggiunto `overflow-x: hidden !important` su `.mud-drawer-content` e `[data-testid="nav-menu"]`
+- **Rinomina label** (richiesta utente):
+  - "Programmazione" → **"Programma"** (titolo gruppo)
+  - "Manutenzione Giornaliera" → **"Macchine"**
+  - "Gantt Macchine" (Impostazioni) → **"Gantt"**
+  - "Gestione Accessi" → **"Accessi"**
+- **Abbreviazioni automatiche** (label troppo lunghe per 151px):
+  - "Non Conformità" → **"Non Conf."**
+  - "Casse d'Anima" → **"Casse An."**
 
-#### ALTO — Dati sensibili e configurazione
-- **Credenziali rimosse da `appsettings.Production.json`**: le connection string di produzione (FAB/password.123, Gantt/Gantt2019) erano in chiaro nel file versionato. Ora sono stringhe vuote; le credenziali devono essere in `appsettings.Secrets.json` sul server di produzione
-- **AllowedHosts ristretto**: da `"*"` a `"192.168.1.230;localhost"` in produzione
-- **Stack trace rimosso da risposte HTTP**: `SyncController` non include più `ex.StackTrace` nelle risposte di errore
-- **System.Text.Json aggiornato a 8.0.5**: fix vulnerabilità GHSA (CVE) su Web, Application e Infrastructure
-
-#### MEDIO — Sicurezza HTTP e upload
-- **CSP Headers**: aggiunto `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, `Referrer-Policy` a tutte le risposte HTTP
-- **Cookie SecurePolicy=Always in produzione**: i cookie di autenticazione vengono inviati solo su HTTPS in produzione
-- **Validazione magic bytes Excel**: `AnimeController` ora verifica la firma del file (PK per .xlsx, D0CF11E0 per .xls) oltre all'estensione, prevenendo upload di file mascherati
-- **Path traversal fix**: `AllegatiAnimaService` e `AllegatoArticoloService` ora validano i path con `IsPathSafe()` prima di leggere file dal filesystem
-
-### ⚠️ Note operative pre-deploy
-> **PRIMA del prossimo deploy in produzione**: aggiornare `C:\MESManager\Web\appsettings.Secrets.json` sul server `192.168.1.230` con le connection string di produzione (MESManagerDb, GanttDb, MagoDb). Senza questo passaggio l'app non si avvia.
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — larghezza 151px + overflow-x hidden
+- `MESManager.Web/Components/Layout/MainLayout.razor` — label menu aggiornate
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.73 → 1.65.74
 
 ---
 
-## 🔖 v1.65.73 — Fix definitivo DbContext concurrency su click NC
-
-**Data**: 5 Maggio 2026
-
-### 🐛 Bug Fix
-- **MainLayout Identity in scope isolato**: in `MainLayout.razor.cs` le chiamate a `UserManager.FindByIdAsync` / `GetRolesAsync` ora usano `IServiceScopeFactory.CreateAsyncScope()` per evitare condivisione dello stesso `MesManagerDbContext` con le pagine figlie
-- **NonConformitaService thread-safe**: `NonConformitaService` convertito da `MesManagerDbContext` scoped a `IDbContextFactory<MesManagerDbContext>` con creazione context per ogni metodo (`Get*`, `Create`, `Update`, `Delete`, `Chiudi`)
-- **CatalogoNonConformita anti-overlap**: aggiunto lock asincrono (`SemaphoreSlim`) in `LoadData()` con `try/finally`, prevenendo caricamenti concorrenti in caso di eventi multipli ravvicinati
-- **Filtro query articolo**: `CatalogoNonConformita` ora legge `?articolo=` via `SupplyParameterFromQuery` e applica subito il filtro testo, migliorando il deep-link dal click `📋`
-
-### ✅ Esito atteso
-- Nessun errore `A second operation was started on this context instance` quando si clicca la colonna NC da Commesse Aperte verso Catalogo NC
-
----
-
-## 🔖 v1.65.72 — NC Alert S3 + Fix layout NC page + Fix Autocomplete Preventivi
+## 🔖 v1.65.73 — (versione precedente)
 
 **Data**: 5 Maggio 2026
 

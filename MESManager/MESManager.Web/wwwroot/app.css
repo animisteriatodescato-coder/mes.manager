@@ -3,13 +3,21 @@ html, body {
 }
 
 /* ==========================================================================
-   Larghezza menu laterale — 216px (-10% rispetto al default MudBlazor 240px)
+   Larghezza menu laterale — 151px (-30% rispetto a 216px, era default 240px)
    Sovrascrive --mud-drawer-width-left usato da MudBlazor per AppBar margin e
    drawer width. UserColorIndicator.razor usa var(--mud-drawer-width-left,240px)
    e si aggiorna automaticamente.
    ========================================================================== */
 :root {
-    --mud-drawer-width-left: 216px;
+    --mud-drawer-width-left: 151px;
+}
+
+/* Previene scorrimento orizzontale nel menu laterale */
+.mud-drawer-content {
+    overflow-x: hidden !important;
+}
+.mud-drawer [data-testid="nav-menu"] {
+    overflow-x: hidden !important;
 }
 
 a, .btn-link {
