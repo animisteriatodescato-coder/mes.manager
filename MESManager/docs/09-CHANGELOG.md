@@ -4,6 +4,58 @@
 
 ---
 
+## 🔖 Versione Corrente: v1.65.77
+
+---
+
+## 🔖 v1.65.77 — Mini drawer (solo icone) + Schermo intero + fix freeze
+
+**Data**: 6 Maggio 2026
+
+### ✨ Nuove funzionalità
+
+- **Mini drawer (solo icone)**: pulsante toggle nel drawer header riduce il menu laterale a 52px mostrando solo le icone di navigazione. Stato persistito in `PreferencesService` (chiave `"mes-mini-drawer"`).
+  - Transizione CSS animata (`0.25s cubic-bezier`)
+  - ChevronLeft/Right come toggle
+  - CSS in `wwwroot/app.css` (no style inline)
+- **Pulsante Schermo Intero**: icona `Fullscreen`/`FullscreenExit` nell'AppBar con tooltip e `data-testid="fullscreen-btn"`. Supporta Fullscreen API standard + WebKit prefixed.
+
+### 🐛 Bug Fix
+
+- **Fix freeze fullscreen su PC**: `requestFullscreen()` restituisce una Promise; aspettarla con `await` + `InvokeAsync<bool>` bloccava il thread SignalR di Blazor (UI freeze + "Connection disconnected"). Fix: JS sincrono (no `async`/`await`), C# fire-and-forget con `_ = JS.InvokeVoidAsync(...)` e stato aggiornato ottimisticamente.
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor` — MudDrawer class binding + DrawerHeader toggle + fullscreen button AppBar
+- `MESManager.Web/Components/Layout/MainLayout.razor.cs` — `_miniDrawer`, `_isFullscreen`, `ToggleMiniDrawer`, `ToggleFullscreen`, `DrawerMiniClass`, load preferenza in `OnAfterRenderAsync`
+- `MESManager.Web/wwwroot/app.css` — CSS mini-drawer 52px + transizione + hide testo/frecce/collapse in mini mode
+- `MESManager.Web/wwwroot/js/preferences.js` — `window.mesFullscreen` (request sincrono, exit, isActive)
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.74 → 1.65.77
+
+---
+
+## 🔖 v1.65.76 — Menu laterale: rimozione header + stile standard + altezze uniformi
+
+**Data**: 6 Maggio 2026
+
+### 🎨 UI — Pulizia menu laterale
+
+- **Rimosso header "Menu"** dal drawer (MudDrawerHeader con testo "Menu" eliminato)
+- **"Programma" titolo + icona standard**: gruppo Programmazione usa icona e stile MudBlazor standard
+- **"Manutenz." rinominata** per coerenza con spazio disponibile a 185px
+- **Altezze nav uniformi**: tutti i MudNavLink hanno altezza consistente
+- **Frecce allineate**: expand icon allineata verticalmente in tutti i gruppi
+- **Drawer larghezza**: ripristinata a `Width="185px"` su `MudDrawer` (prop diretta, non CSS)
+- **Gap layout**: corretto gap tra drawer e contenuto principale
+- **`UserColorIndicator`**: spostato in `app.css` (da style inline)
+- **Gradient submenu**: esteso per coprire correttamente i link figli
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor` — rimozione header Menu + aggiustamenti nav
+- `MESManager.Web/wwwroot/app.css` — UserColorIndicator + gradient submenu
+- `MESManager.Web/Constants/AppVersion.cs` — → 1.65.76
+
+---
+
 ## 🔖 Versione Corrente: v1.65.74
 
 ---
