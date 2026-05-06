@@ -795,9 +795,13 @@ h1:focus {
    ========================================================================== */
 .mud-drawer .mud-nav-group > .mud-nav-link {
     font-weight: 700 !important;
-    margin: 4px 6px 2px 6px !important;
+    margin: 3px 6px 2px 6px !important;
     border-radius: 6px !important;
-    padding: 4px 8px !important;
+    padding: 0 8px 0 6px !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    display: flex !important;
+    align-items: center !important;
     text-transform: uppercase !important;
     letter-spacing: 0.07em !important;
     background: linear-gradient(180deg,
@@ -810,11 +814,36 @@ h1:focus {
         inset 0 -1px 0 rgba(0,0,0,0.18) !important;
     border: 1px solid rgba(0,0,0,0.20) !important;
 }
+/* Freccia espandi/collassa sempre a destra e allineata verticalmente */
+.mud-drawer .mud-nav-group > .mud-nav-link .mud-nav-link-expand-icon {
+    margin-left: auto !important;
+    display: flex !important;
+    align-items: center !important;
+}
+/* Icona MudIcon nel titolo gruppo — allineata verticalmente */
+.mud-drawer .mud-nav-group > .mud-nav-link .mud-icon-root {
+    display: flex !important;
+    align-items: center !important;
+    font-size: 18px !important;
+}
 .mud-drawer .mud-nav-group > .mud-nav-link > .mud-nav-link-text {
-    font-size: 13.5px !important;
+    font-size: 13px !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.07em !important;
+    letter-spacing: 0.05em !important;
+    display: flex !important;
+    align-items: center !important;
+    flex: 1 !important;
+}
+/* Home nav link: altezza uniforme con i gruppi */
+.mud-drawer .mud-navmenu > .mud-nav-link {
+    min-height: 34px !important;
+    height: 34px !important;
+    display: flex !important;
+    align-items: center !important;
+    margin: 3px 6px 2px 6px !important;
+    padding: 0 8px 0 6px !important;
+    border-radius: 6px !important;
 }
 
 /* ==========================================================================

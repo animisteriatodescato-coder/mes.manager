@@ -385,21 +385,18 @@
     }
     
     <MudDrawer @bind-Open="_drawerOpen" Elevation="2" Variant="DrawerVariant.Responsive" Width="185px" Class="@DrawerMiniClass">
-        <MudDrawerHeader Style="display: flex; justify-content: space-between; align-items: center; min-height: 48px;">
+        <MudDrawerHeader Style="display: flex; justify-content: space-between; align-items: center; min-height: 32px; padding: 2px 4px 2px 8px;">
             @if (!_miniDrawer)
             {
-                <MudText Typo="Typo.h6" Style="color: var(--mes-nav-text);">Menu</MudText>
-                <div style="display: flex; align-items: center; gap: 0;">
-                    <MudText Typo="Typo.caption" Style="font-family: monospace; color: var(--mes-nav-text); opacity: 0.7; font-size: 11px;">
-                        @AppVersion.Display
-                    </MudText>
-                    <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
-                                   Size="Size.Small"
-                                   Color="Color.Inherit"
-                                   Style="color: var(--mes-nav-text); opacity: 0.75;"
-                                   OnClick="ToggleMiniDrawer"
-                                   Title="Riduci menu" />
-                </div>
+                <MudText Typo="Typo.caption" Style="font-family: monospace; color: var(--mes-nav-text); opacity: 0.7; font-size: 11px;">
+                    @AppVersion.Display
+                </MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                               Size="Size.Small"
+                               Color="Color.Inherit"
+                               Style="color: var(--mes-nav-text); opacity: 0.75;"
+                               OnClick="ToggleMiniDrawer"
+                               Title="Riduci menu" />
             }
             else
             {
@@ -425,13 +422,7 @@
                     }
                     @if (_canProg || _canComm || _canGanttP)
                     {
-                        <MudNavGroup Expanded="@_expandedProg" ExpandedChanged="@(v => OnNavGroupToggled("prog", v))" Class="nav-sec-prog">
-                            <TitleContent>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="font-size: 16px; display: inline-flex; align-items: center;">&#128197;</span>
-                                    <span style="line-height: normal;" class="mes-nav-text">Programma</span>
-                                </div>
-                            </TitleContent>
+                        <MudNavGroup Title="Programma" Icon="@Icons.Material.Filled.CalendarMonth" IconColor="Color.Primary" Expanded="@_expandedProg" ExpandedChanged="@(v => OnNavGroupToggled("prog", v))" Class="nav-sec-prog">
                             <ChildContent>
                                 @if (_canProg)
                                 {
@@ -589,7 +580,7 @@
                     }
                     @if (_canManAlert || _canManCat || _canManGriglia || _canManCasse || _canManImpostazioni)
                     {
-                        <MudNavGroup Title="Manutenzioni" Icon="@Icons.Material.Filled.Build" IconColor="Color.Secondary" Expanded="@_expandedMan" ExpandedChanged="@(v => OnNavGroupToggled("man", v))" Class="nav-sec-manutenzioni">
+                        <MudNavGroup Title="Manutenz." Icon="@Icons.Material.Filled.Build" IconColor="Color.Secondary" Expanded="@_expandedMan" ExpandedChanged="@(v => OnNavGroupToggled("man", v))" Class="nav-sec-manutenzioni">
                             @if (_canManGriglia)
                             {
                                 <MudNavLink Href="/manutenzioni/griglia">
