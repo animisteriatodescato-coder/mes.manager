@@ -1569,3 +1569,15 @@ h1:focus {
     justify-content: center !important;
     min-height: 48px !important;
 }
+
+/* ── Pseudo-fullscreen CSS (fallback per iOS Safari e mobile senza Fullscreen API) ── */
+body.mes-pseudo-fullscreen header.mud-appbar,
+body.mes-pseudo-fullscreen .mud-appbar {
+    display: none !important;
+}
+body.mes-pseudo-fullscreen .mud-main-content {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+}

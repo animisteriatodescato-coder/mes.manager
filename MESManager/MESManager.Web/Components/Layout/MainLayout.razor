@@ -384,7 +384,7 @@
         </MudAppBar>
     }
     
-    <MudDrawer @bind-Open="_drawerOpen" Elevation="2" Variant="DrawerVariant.Responsive" Width="185px" Class="@DrawerMiniClass">
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="2" Variant="DrawerVariant.Responsive" Width="@(_miniDrawer ? "52px" : "185px")" Class="@DrawerMiniClass">
         <MudDrawerHeader Style="display: flex; justify-content: space-between; align-items: center; min-height: 32px; padding: 2px 4px 2px 8px;">
             @if (!_miniDrawer)
             {
