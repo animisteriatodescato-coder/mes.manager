@@ -12,10 +12,10 @@ window.preferencesInterop = {
 
 /* ── Fullscreen helpers — usati da MainLayout.razor.cs ── */
 window.mesFullscreen = {
-    request: async function () {
+    request: function () {
         try {
             if (document.documentElement.requestFullscreen) {
-                await document.documentElement.requestFullscreen();
+                document.documentElement.requestFullscreen();
                 return true;
             }
             if (document.documentElement.webkitRequestFullscreen) {
@@ -26,8 +26,10 @@ window.mesFullscreen = {
         return false;
     },
     exit: function () {
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        try {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        } catch (e) { }
     },
     isActive: function () {
         return !!(document.fullscreenElement || document.webkitFullscreenElement);

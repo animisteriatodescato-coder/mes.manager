@@ -131,16 +131,19 @@ public partial class MainLayout : IDisposable
 
     private async Task ToggleFullscreen()
     {
+        // Fire-and-forget: non aspettiamo la Promise del browser (evita freeze SignalR)
+        // Lo stato viene aggiornato ottimisticamente — l'icona cambia subito
         if (_isFullscreen)
         {
-            await JS.InvokeVoidAsync("mesFullscreen.exit");
+            _ = JS.InvokeVoidAsync("mesFullscreen.exit");
             _isFullscreen = false;
         }
         else
         {
-            var success = await JS.InvokeAsync<bool>("mesFullscreen.request");
-            _isFullscreen = success;
+            _ = JS.InvokeVoidAsync("mesFullscreen.request");
+            _isFullscreen = true;
         }
+        await Task.CompletedTask;
     }
 
     private ErrorBoundary? _errorBoundary;
