@@ -345,6 +345,12 @@
         <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" 
                        Color="Color.Inherit" 
                        OnClick="@ToggleTheme" />
+        <MudTooltip Text="@FullscreenTooltip" Arrow="true" Placement="Placement.Bottom">
+            <MudIconButton Icon="@FullscreenIcon"
+                           Color="Color.Inherit"
+                           OnClick="ToggleFullscreen"
+                           data-testid="fullscreen-btn" />
+        </MudTooltip>
         <AuthorizeView>
             <Authorized>
                 <MudTooltip Text="@context.User.Identity?.Name" Arrow="true">
@@ -378,12 +384,32 @@
         </MudAppBar>
     }
     
-    <MudDrawer @bind-Open="_drawerOpen" Elevation="2" Variant="DrawerVariant.Responsive">
-        <MudDrawerHeader Style="display: flex; justify-content: space-between; align-items: center;">
-            <MudText Typo="Typo.h6" Style="color: var(--mes-nav-text);">Menu</MudText>
-            <MudText Typo="Typo.caption" Style="font-family: monospace; color: var(--mes-nav-text); opacity: 0.7; font-size: 11px;">
-                @AppVersion.Display
-            </MudText>
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="2" Variant="DrawerVariant.Responsive" Width="185px" Class="@DrawerMiniClass">
+        <MudDrawerHeader Style="display: flex; justify-content: space-between; align-items: center; min-height: 48px;">
+            @if (!_miniDrawer)
+            {
+                <MudText Typo="Typo.h6" Style="color: var(--mes-nav-text);">Menu</MudText>
+                <div style="display: flex; align-items: center; gap: 0;">
+                    <MudText Typo="Typo.caption" Style="font-family: monospace; color: var(--mes-nav-text); opacity: 0.7; font-size: 11px;">
+                        @AppVersion.Display
+                    </MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                                   Size="Size.Small"
+                                   Color="Color.Inherit"
+                                   Style="color: var(--mes-nav-text); opacity: 0.75;"
+                                   OnClick="ToggleMiniDrawer"
+                                   Title="Riduci menu" />
+                </div>
+            }
+            else
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.ChevronRight"
+                               Size="Size.Small"
+                               Color="Color.Inherit"
+                               Style="color: var(--mes-nav-text); opacity: 0.75; margin: 0 auto;"
+                               OnClick="ToggleMiniDrawer"
+                               Title="Espandi menu" />
+            }
         </MudDrawerHeader>
         <MudNavMenu data-testid="nav-menu">
             <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary">Home</MudNavLink>
@@ -403,7 +429,7 @@
                             <TitleContent>
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <span style="font-size: 16px; display: inline-flex; align-items: center;">&#128197;</span>
-                                    <span style="line-height: normal;">Programma</span>
+                                    <span style="line-height: normal;" class="mes-nav-text">Programma</span>
                                 </div>
                             </TitleContent>
                             <ChildContent>

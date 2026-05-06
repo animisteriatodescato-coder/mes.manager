@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.74";
+    public const string Current = "1.65.75";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.74: menu laterale -30% (216→151px) + overflow-x hidden + abbreviazioni label
+    public const string Display = "v" + Current; // v1.65.75: mini drawer (solo icone) + pulsante schermo intero
 }

@@ -59,6 +59,12 @@ public partial class MainLayout : IDisposable
     private bool _isDarkMode = false;
     private bool _drawerOpen = false;
     private bool _aiPanelOpen = false;
+    private bool _miniDrawer = false;
+    private bool _isFullscreen = false;
+
+    private string FullscreenTooltip => _isFullscreen ? "Esci schermo intero" : "Schermo intero";
+    private string FullscreenIcon    => _isFullscreen ? Icons.Material.Filled.FullscreenExit : Icons.Material.Filled.Fullscreen;
+    private string DrawerMiniClass   => _miniDrawer ? "mes-mini-drawer" : string.Empty;
     private int _ncAperteCount = 0;
     /// <summary>True se l'utente ha SOLO ruolo Visualizzazione (nessun ruolo write). Propagato come CascadingValue alle pagine figlie.</summary>
     private bool _isReadOnly = false;
@@ -116,6 +122,27 @@ public partial class MainLayout : IDisposable
     }
 
     private void ToggleAiPanel() => _aiPanelOpen = !_aiPanelOpen;
+
+    private async Task ToggleMiniDrawer()
+    {
+        _miniDrawer = !_miniDrawer;
+        await PreferencesService.SetAsync("mes-mini-drawer", _miniDrawer);
+    }
+
+    private async Task ToggleFullscreen()
+    {
+        if (_isFullscreen)
+        {
+            await JS.InvokeVoidAsync("mesFullscreen.exit");
+            _isFullscreen = false;
+        }
+        else
+        {
+            var success = await JS.InvokeAsync<bool>("mesFullscreen.request");
+            _isFullscreen = success;
+        }
+    }
+
     private ErrorBoundary? _errorBoundary;
 
     // Tema dinamico — costruito dai colori in AppSettings.
@@ -222,6 +249,11 @@ public partial class MainLayout : IDisposable
                     await InvokeAsync(StateHasChanged);
             }
             catch { /* badge NC non bloccante */ }
+
+            // Carica preferenza mini drawer
+            _miniDrawer = await PreferencesService.GetAsync<bool>("mes-mini-drawer");
+            if (_miniDrawer)
+                await InvokeAsync(StateHasChanged);
         }
     }
 

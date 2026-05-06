@@ -18,22 +18,3 @@
         CurrentUser.OnUserChanged -= StateHasChanged;
     }
 }
-
-<style>
-    .user-color-indicator {
-        position: fixed;
-        top: var(--appbar-height, 35px); /* segue --appbar-height del layout, NON --mud-appbar-height di MudBlazor */
-        left: var(--mud-drawer-width-left, 240px);
-        right: 0;
-        height: 3px;
-        z-index: 1100; /* Sotto l'appbar e drawer, sopra il contenuto */
-        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-        transition: background-color 0.3s ease, left 0.3s ease;
-    }
-
-    /* Quando il drawer è chiuso, la linea parte da 0 */
-    .mud-drawer-closed ~ .mud-main-content .user-color-indicator,
-    .user-color-indicator.drawer-closed {
-        left: 0;
-    }
-</style>

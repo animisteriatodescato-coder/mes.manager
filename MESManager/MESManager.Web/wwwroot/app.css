@@ -3,21 +3,58 @@ html, body {
 }
 
 /* ==========================================================================
-   Larghezza menu laterale — 151px (-30% rispetto a 216px, era default 240px)
-   Sovrascrive --mud-drawer-width-left usato da MudBlazor per AppBar margin e
-   drawer width. UserColorIndicator.razor usa var(--mud-drawer-width-left,240px)
-   e si aggiorna automaticamente.
+   Larghezza menu laterale — 185px (-23% rispetto al default MudBlazor 240px)
+   MudBlazor usa Width="185px" sul componente MudDrawer (--mud-drawer-width inline)
+   + --mud-drawer-width-left su :root per AppBar margin e main content shift.
+   UserColorIndicator.razor usa var(--mud-drawer-width-left, 240px).
    ========================================================================== */
 :root {
-    --mud-drawer-width-left: 151px;
+    --mud-drawer-width-left: 185px;
+}
+/* Override diretto sui selettori esatti MudBlazor v8 (fallback se Width prop non bastasse) */
+.mud-drawer.mud-drawer-persistent.mud-drawer-pos-left,
+.mud-drawer.mud-drawer-responsive.mud-drawer-pos-left {
+    width: 185px !important;
+    min-width: 185px !important;
+    max-width: 185px !important;
 }
 
 /* Previene scorrimento orizzontale nel menu laterale */
 .mud-drawer-content {
     overflow-x: hidden !important;
+    width: 185px !important;
 }
 .mud-drawer [data-testid="nav-menu"] {
     overflow-x: hidden !important;
+}
+
+/* ==========================================================================
+   Barra colore utente — UserColorIndicator
+   Spostata qui da UserColorIndicator.razor (BIBBIA: CSS globali → app.css)
+   Usa classi MudBlazor sul layout root per open/closed:
+     .mud-drawer-open-responsive-*-left = drawer aperto
+     assenza della classe = drawer chiuso
+   ========================================================================== */
+.user-color-indicator {
+    position: fixed;
+    top: var(--appbar-height, 35px);
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 1100;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    transition: left 225ms cubic-bezier(0, 0, 0.2, 1) 0ms, background-color 0.3s ease;
+    pointer-events: none;
+}
+/* Drawer aperto (qualsiasi breakpoint responsive) */
+.mud-drawer-open-responsive-xs-left .user-color-indicator,
+.mud-drawer-open-responsive-sm-left .user-color-indicator,
+.mud-drawer-open-responsive-md-left .user-color-indicator,
+.mud-drawer-open-responsive-lg-left .user-color-indicator,
+.mud-drawer-open-responsive-xl-left .user-color-indicator,
+.mud-drawer-open-responsive-xxl-left .user-color-indicator,
+.mud-drawer-open-persistent-left .user-color-indicator {
+    left: var(--mud-drawer-width-left, 185px);
 }
 
 a, .btn-link {
@@ -865,13 +902,13 @@ h1:focus {
    Menu laterale — Banda colore sugli items figli (v1.65.3)
    Gradient sfumato anche sui link dentro ogni gruppo, come l'header.
    ========================================================================== */
-.mud-drawer .mud-nav-group.nav-sec-prog .mud-collapse-container .mud-nav-link         { border-left: 3px solid rgba(33,150,243,0.55) !important; background: linear-gradient(90deg, rgba(33,150,243,0.13) 0%, transparent 60%) !important; }
-.mud-drawer .mud-nav-group.nav-sec-produzione .mud-collapse-container .mud-nav-link   { border-left: 3px solid rgba(255,152,0,0.55) !important;   background: linear-gradient(90deg, rgba(255,152,0,0.13) 0%, transparent 60%) !important; }
-.mud-drawer .mud-nav-group.nav-sec-cataloghi .mud-collapse-container .mud-nav-link    { border-left: 3px solid rgba(0,188,212,0.55) !important;     background: linear-gradient(90deg, rgba(0,188,212,0.13) 0%, transparent 60%) !important; }
-.mud-drawer .mud-nav-group.nav-sec-manutenzioni .mud-collapse-container .mud-nav-link { border-left: 3px solid rgba(156,39,176,0.55) !important;   background: linear-gradient(90deg, rgba(156,39,176,0.13) 0%, transparent 60%) !important; }
-.mud-drawer .mud-nav-group.nav-sec-sync .mud-collapse-container .mud-nav-link         { border-left: 3px solid rgba(76,175,80,0.55) !important;     background: linear-gradient(90deg, rgba(76,175,80,0.13) 0%, transparent 60%) !important; }
-.mud-drawer .mud-nav-group.nav-sec-statistiche .mud-collapse-container .mud-nav-link  { border-left: 3px solid rgba(103,58,183,0.55) !important;   background: linear-gradient(90deg, rgba(103,58,183,0.13) 0%, transparent 60%) !important; }
-.mud-drawer .mud-nav-group.nav-sec-impostazioni .mud-collapse-container .mud-nav-link { border-left: 3px solid rgba(117,117,117,0.50) !important;  background: linear-gradient(90deg, rgba(117,117,117,0.11) 0%, transparent 60%) !important; }
+.mud-drawer .mud-nav-group.nav-sec-prog .mud-collapse-container .mud-nav-link         { background: linear-gradient(90deg, transparent 0px, transparent 22px, rgba(33,150,243,0.65) 22px, rgba(33,150,243,0.65) 25px, rgba(33,150,243,0.18) 25px, rgba(33,150,243,0.06) 80%, transparent 100%) !important; }
+.mud-drawer .mud-nav-group.nav-sec-produzione .mud-collapse-container .mud-nav-link   { background: linear-gradient(90deg, transparent 0px, transparent 22px, rgba(255,152,0,0.65) 22px, rgba(255,152,0,0.65) 25px, rgba(255,152,0,0.18) 25px, rgba(255,152,0,0.06) 80%, transparent 100%) !important; }
+.mud-drawer .mud-nav-group.nav-sec-cataloghi .mud-collapse-container .mud-nav-link    { background: linear-gradient(90deg, transparent 0px, transparent 22px, rgba(0,188,212,0.65) 22px, rgba(0,188,212,0.65) 25px, rgba(0,188,212,0.18) 25px, rgba(0,188,212,0.06) 80%, transparent 100%) !important; }
+.mud-drawer .mud-nav-group.nav-sec-manutenzioni .mud-collapse-container .mud-nav-link { background: linear-gradient(90deg, transparent 0px, transparent 22px, rgba(156,39,176,0.65) 22px, rgba(156,39,176,0.65) 25px, rgba(156,39,176,0.18) 25px, rgba(156,39,176,0.06) 80%, transparent 100%) !important; }
+.mud-drawer .mud-nav-group.nav-sec-sync .mud-collapse-container .mud-nav-link         { background: linear-gradient(90deg, transparent 0px, transparent 22px, rgba(76,175,80,0.65) 22px, rgba(76,175,80,0.65) 25px, rgba(76,175,80,0.18) 25px, rgba(76,175,80,0.06) 80%, transparent 100%) !important; }
+.mud-drawer .mud-nav-group.nav-sec-statistiche .mud-collapse-container .mud-nav-link  { background: linear-gradient(90deg, transparent 0px, transparent 22px, rgba(103,58,183,0.65) 22px, rgba(103,58,183,0.65) 25px, rgba(103,58,183,0.18) 25px, rgba(103,58,183,0.06) 80%, transparent 100%) !important; }
+.mud-drawer .mud-nav-group.nav-sec-impostazioni .mud-collapse-container .mud-nav-link { background: linear-gradient(90deg, transparent 0px, transparent 22px, rgba(117,117,117,0.60) 22px, rgba(117,117,117,0.60) 25px, rgba(117,117,117,0.15) 25px, rgba(117,117,117,0.05) 80%, transparent 100%) !important; }
 
 /* === AnimeEditDialog layout ottimizzato (v1.60.35) === */
 .anime-edit-dialog .mud-dialog-content { overflow-y: auto !important; max-height: calc(92vh - 120px) !important; }
@@ -1429,4 +1466,77 @@ h1:focus {
     .mud-dialog-actions, .mud-dialog-title { display: none; }
     .mud-dialog { box-shadow: none !important; }
     .modulo-cliente-print { display: block; }
+}
+
+/* ==========================================================================
+   MINI DRAWER — solo icone (v1.65.75)
+   Toggle via pulsante ChevronLeft/Right nell'header del drawer.
+   Preferenza salvata in PreferencesService (DB utente o localStorage).
+   Transizione fluida: width animated via CSS transition.
+   ========================================================================== */
+
+/* Transizione fluida larghezza drawer */
+.mud-drawer-left,
+.mud-drawer-start,
+.mud-drawer:not(.mud-drawer-right):not(.mud-drawer-end):not(.mud-drawer-bottom):not(.mud-drawer-top) {
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Override larghezza mini — specificita' > originale (aggiunge .mes-mini-drawer) */
+.mud-drawer-left.mes-mini-drawer,
+.mud-drawer-start.mes-mini-drawer,
+.mes-mini-drawer:not(.mud-drawer-right):not(.mud-drawer-end):not(.mud-drawer-bottom):not(.mud-drawer-top) {
+    width: 52px !important;
+    min-width: 52px !important;
+    max-width: 52px !important;
+}
+.mes-mini-drawer .mud-drawer-content {
+    width: 52px !important;
+    overflow: hidden !important;
+}
+
+/* Nascondi testo nav per gruppi con icona MUI (Title="..." Icon="...") */
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-link:has(.mud-nav-link-icon-wrapper) > .mud-nav-link-text {
+    display: none !important;
+}
+
+/* Nascondi testo nel gruppo Programmazione (classe .mes-nav-text nel TitleContent) */
+.mes-mini-drawer [data-testid="nav-menu"] .mes-nav-text {
+    display: none !important;
+}
+
+/* Nascondi figli espandibili */
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container {
+    display: none !important;
+}
+
+/* Nascondi freccia expand/collapse */
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-link-expand-icon,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-expand-icon {
+    display: none !important;
+}
+
+/* Centra i link nel drawer mini */
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-link {
+    justify-content: center !important;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+}
+
+/* Centra icona MUI (icon-wrapper) */
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-link-icon-wrapper {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+}
+
+/* Centra emoji div TitleContent (gruppo Programmazione) */
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-link-text div {
+    justify-content: center !important;
+}
+
+/* Header drawer mini: centra il pulsante toggle */
+.mes-mini-drawer .mud-drawer-header {
+    padding: 4px 0 !important;
+    justify-content: center !important;
+    min-height: 48px !important;
 }
