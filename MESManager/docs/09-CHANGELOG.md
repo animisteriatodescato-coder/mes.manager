@@ -4,7 +4,24 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.94
+## 🔖 Versione Corrente: v1.65.95
+
+---
+
+## 🔖 v1.65.95 — Pulizia CSS Gantt storico
+
+**Data**: 11 Maggio 2026
+
+### 🧱 Refactoring
+
+- **Fonte CSS unica per asse Vis-Timeline**: rimosse da `app.css` le regole duplicate del Gantt storico, lasciando il contrasto dell'asse temporale nel file corretto `gantt-macchine.css`, che è caricato dopo e vince la cascade.
+- **Cache busting app.css**: aggiornato `app.css` da `v=1595` a `v=1596`.
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — rimosse regole duplicate Gantt storico
+- `MESManager.Web/Components/App.razor` — cache busting app.css
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.94 → 1.65.95
+- `docs/09-CHANGELOG.md` — changelog v1.65.95
 
 ---
 

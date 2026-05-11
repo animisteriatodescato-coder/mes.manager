@@ -650,32 +650,6 @@ h1:focus {
     z-index: 9999;
 }
 
-.mud-theme-dark .gantt-storico-vis .vis-time-axis .vis-text,
-.mud-theme-dark .gantt-storico-vis .vis-time-axis .vis-text.vis-major,
-.mud-theme-dark .gantt-storico-vis .vis-time-axis .vis-text.vis-minor {
-    color: #ffffff !important;
-    opacity: 1 !important;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.9);
-}
-
-.mud-theme-dark .gantt-storico-vis .vis-panel.vis-top,
-.mud-theme-dark .gantt-storico-vis .vis-panel.vis-bottom,
-.mud-theme-dark .gantt-storico-vis .vis-time-axis {
-    background-color: rgba(10, 15, 28, 0.92) !important;
-}
-
-.mud-theme-dark .gantt-storico-vis .vis-panel.vis-center,
-.mud-theme-dark .gantt-storico-vis .vis-panel.vis-background,
-.mud-theme-dark .gantt-storico-vis .vis-content {
-    background-color: rgba(12, 17, 31, 0.82) !important;
-}
-
-.mud-theme-dark .gantt-storico-vis .vis-label,
-.mud-theme-dark .gantt-storico-vis .vis-labelset .vis-label {
-    color: #f3f6ff !important;
-    background-color: rgba(15, 22, 38, 0.96) !important;
-}
-
 /* ── KPI Cards: riga orizzontale scorrevole (una sola riga) ── */
 .kpi-scroll-row {
     display: flex;
