@@ -4,7 +4,25 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.95
+## 🔖 Versione Corrente: v1.65.96
+
+---
+
+## 🔖 v1.65.96 — Pulizia warning AG Grid PLC
+
+**Data**: 11 Maggio 2026
+
+### 🧱 Refactoring
+
+- **AG Grid PLC Community-safe**: rimossa l'opzione `enableRangeSelection` dalle griglie PLC realtime e storico, perché richiede AG Grid Enterprise non caricato e generava warning console senza abilitare una funzionalità effettiva.
+- **Cache busting script PLC**: aggiornate le versioni querystring dei due script AG Grid PLC.
+
+#### File modificati
+- `MESManager.Web/wwwroot/lib/ag-grid/plc-realtime-grid.js` — rimossa opzione Enterprise non usata
+- `MESManager.Web/wwwroot/lib/ag-grid/plc-storico-grid.js` — rimossa opzione Enterprise non usata
+- `MESManager.Web/Components/App.razor` — cache busting script PLC
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.95 → 1.65.96
+- `docs/09-CHANGELOG.md` — changelog v1.65.96
 
 ---
 

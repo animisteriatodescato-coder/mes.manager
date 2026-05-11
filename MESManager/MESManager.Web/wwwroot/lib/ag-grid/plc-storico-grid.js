@@ -234,7 +234,6 @@ window.plcStoricoGrid = (function () {
                 suppressMenu: true
             },
             suppressMenuHide: true,
-            enableRangeSelection: true,
             enableCellTextSelection: true,
             animateRows: true,
             pagination: true,

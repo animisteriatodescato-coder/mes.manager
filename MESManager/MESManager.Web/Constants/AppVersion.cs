@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.95";
+    public const string Current = "1.65.96";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.95: pulizia CSS Gantt storico
+    public const string Display = "v" + Current; // v1.65.96: pulizia warning AG Grid PLC
 }

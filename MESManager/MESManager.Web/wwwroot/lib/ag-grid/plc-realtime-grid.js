@@ -342,7 +342,6 @@ window.plcRealtimeGrid = (function () {
                 suppressMenu: true
             },
             getRowId: (params) => params.data.macchinaId, // Usa macchinaId come chiave univoca
-            enableRangeSelection: true,
             enableCellTextSelection: true,
             animateRows: true,
             pagination: false,
