@@ -376,7 +376,10 @@ window.plcRealtimeGrid = (function () {
             onFilterChanged: saveState
         };
 
-        new agGrid.Grid(container, gridOptions);
+        const api = agGrid.createGrid(container, gridOptions);
+        if (api) {
+            gridApi = api;
+        }
     }
 
     function updateData(rowData) {

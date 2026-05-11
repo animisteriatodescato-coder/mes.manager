@@ -4,7 +4,25 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.96
+## 🔖 Versione Corrente: v1.65.97
+
+---
+
+## 🔖 v1.65.97 — AG Grid PLC su createGrid
+
+**Data**: 11 Maggio 2026
+
+### 🧱 Refactoring
+
+- **API AG Grid corrente**: sostituite le due inizializzazioni PLC rimaste con `agGrid.createGrid(...)`, allineandole alla factory centralizzata e rimuovendo l'uso deprecato di `new agGrid.Grid(...)`.
+- **Cache busting script PLC**: aggiornate le versioni querystring dei due script AG Grid PLC.
+
+#### File modificati
+- `MESManager.Web/wwwroot/lib/ag-grid/plc-realtime-grid.js` — inizializzazione con `agGrid.createGrid`
+- `MESManager.Web/wwwroot/lib/ag-grid/plc-storico-grid.js` — inizializzazione con `agGrid.createGrid`
+- `MESManager.Web/Components/App.razor` — cache busting script PLC
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.96 → 1.65.97
+- `docs/09-CHANGELOG.md` — changelog v1.65.97
 
 ---
 
