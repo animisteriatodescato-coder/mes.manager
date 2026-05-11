@@ -13,11 +13,6 @@ public interface IPianificazioneEngineService
     Task<SpostaCommessaResponse> SpostaCommessaAsync(SpostaCommessaRequest request);
     
     /// <summary>
-    /// Ricalcola tutte le commesse di una macchina a cascata.
-    /// </summary>
-    Task RicalcolaAcqueMacchinaAsync(int? numeroMacchina);
-    
-    /// <summary>
     /// Ricalcola tutte le commesse di una macchina rispettando i blocchi.
     /// </summary>
     Task RicalcolaMacchinaConBlocchiAsync(int? numeroMacchina);

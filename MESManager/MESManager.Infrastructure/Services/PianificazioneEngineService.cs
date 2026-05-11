@@ -473,32 +473,6 @@ public class PianificazioneEngineService : IPianificazioneEngineService
     }
 
     /// <summary>
-    /// Ricalcola una macchina (versione pubblica).
-    /// </summary>
-    public async Task RicalcolaAcqueMacchinaAsync(int? numeroMacchina)
-    {
-        using var transaction = await _context.Database.BeginTransactionAsync();
-        
-        try
-        {
-            var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
-                ?? new ImpostazioniProduzione();
-            var calendario = await GetCalendarioLavoroDtoAsync();
-            var festivi = await GetFestiviSetAsync();
-            
-            await RicalcolaMacchinaConBlocchiAsync(numeroMacchina, impostazioni, calendario, festivi);
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
-        }
-        catch (Exception ex)
-        {
-            await transaction.RollbackAsync();
-            _logger.LogError(ex, "Errore ricalcolo macchina {NumeroMacchina}", numeroMacchina);
-            throw;
-        }
-    }
-
-    /// <summary>
     /// Ricalcola tutte le macchine.
     /// </summary>
     public async Task<List<CommessaGanttDto>> RicalcolaTutteCommesseAsync()

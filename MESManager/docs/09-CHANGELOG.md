@@ -4,7 +4,24 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.103
+## 🔖 Versione Corrente: v1.65.104
+
+---
+
+## 🔖 v1.65.104 — Ricalcolo engine morto rimosso
+
+**Data**: 11 Maggio 2026
+
+### 🧹 Cleanup
+
+- **Metodo non referenziato rimosso**: eliminato `RicalcolaAcqueMacchinaAsync` da `IPianificazioneEngineService` e `PianificazioneEngineService`.
+- **Comportamento invariato**: i chiamanti reali continuano a usare `RicalcolaMacchinaConBlocchiAsync` e `RicalcolaTutteCommesseAsync`.
+
+#### File modificati
+- `MESManager.Application/Interfaces/IPianificazioneEngineService.cs` — rimosso metodo non usato
+- `MESManager.Infrastructure/Services/PianificazioneEngineService.cs` — rimossa implementazione non usata
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.103 → 1.65.104
+- `docs/09-CHANGELOG.md` — changelog v1.65.104
 
 ---
 
