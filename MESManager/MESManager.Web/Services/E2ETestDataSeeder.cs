@@ -18,15 +18,6 @@ public static class E2ETestDataSeeder
             db.CalendarioLavoro.Add(new CalendarioLavoro
             {
                 Id = Guid.NewGuid(),
-                Lunedi = true,
-                Martedi = true,
-                Mercoledi = true,
-                Giovedi = true,
-                Venerdi = true,
-                Sabato = false,
-                Domenica = false,
-                OraInizio = new TimeOnly(8, 0),
-                OraFine = new TimeOnly(17, 0),
                 DataCreazione = now,
                 DataModifica = now
             });

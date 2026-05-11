@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.99";
+    public const string Current = "1.65.100";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.99: dark labels Gantt storico
+    public const string Display = "v" + Current; // v1.65.100: default calendario centralizzati
 }

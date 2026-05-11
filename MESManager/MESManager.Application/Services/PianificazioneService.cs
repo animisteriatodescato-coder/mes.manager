@@ -1,5 +1,6 @@
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
+using MESManager.Domain.Constants;
 using MESManager.Domain.Entities;
 
 namespace MESManager.Application.Services;
@@ -38,10 +39,14 @@ public class PianificazioneService : IPianificazioneService
         // Crea calendario fittizio per compatibilità
         var calendarioDefault = new CalendarioLavoroDto
         {
-            Lunedi = true, Martedi = true, Mercoledi = true, Giovedi = true, Venerdi = true,
+            Lunedi = CalendarioLavoroDefaults.Lunedi,
+            Martedi = CalendarioLavoroDefaults.Martedi,
+            Mercoledi = CalendarioLavoroDefaults.Mercoledi,
+            Giovedi = CalendarioLavoroDefaults.Giovedi,
+            Venerdi = CalendarioLavoroDefaults.Venerdi,
             Sabato = giorniLavorativiSettimanali > 5,
             Domenica = giorniLavorativiSettimanali > 6,
-            OraInizio = new TimeOnly(8, 0),
+            OraInizio = CalendarioLavoroDefaults.OraInizio,
             OraFine = new TimeOnly(8 + oreLavorativeGiornaliere, 0)
         };
         return CalcolaDataFinePrevistaConFestivi(dataInizio, durataMinuti, calendarioDefault, new HashSet<DateOnly>());
@@ -118,10 +123,14 @@ public class PianificazioneService : IPianificazioneService
         // Delega al metodo principale creando calendario fittizio
         var calendarioDefault = new CalendarioLavoroDto
         {
-            Lunedi = true, Martedi = true, Mercoledi = true, Giovedi = true, Venerdi = true,
+            Lunedi = CalendarioLavoroDefaults.Lunedi,
+            Martedi = CalendarioLavoroDefaults.Martedi,
+            Mercoledi = CalendarioLavoroDefaults.Mercoledi,
+            Giovedi = CalendarioLavoroDefaults.Giovedi,
+            Venerdi = CalendarioLavoroDefaults.Venerdi,
             Sabato = giorniLavorativiSettimanali > 5,
             Domenica = giorniLavorativiSettimanali > 6,
-            OraInizio = new TimeOnly(8, 0),
+            OraInizio = CalendarioLavoroDefaults.OraInizio,
             OraFine = new TimeOnly(8 + oreLavorativeGiornaliere, 0)
         };
         

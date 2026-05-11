@@ -4,7 +4,31 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.99
+## 🔖 Versione Corrente: v1.65.100
+
+---
+
+## 🔖 v1.65.100 — Default calendario lavoro centralizzati
+
+**Data**: 11 Maggio 2026
+
+### 🧱 Refactoring
+
+- **Fonte unica calendario lavoro**: introdotto `CalendarioLavoroDefaults` nel Domain per `lun-ven 08:00-17:00`.
+- **Riduzione duplicazione**: entity, DTO, engine, controller e seed E2E usano i default centralizzati invece di ripetere giorni e orari.
+- **Scheduling invariato**: nessuna modifica a rotte, DB, calcoli o logiche di business.
+
+#### File modificati
+- `MESManager.Domain/Constants/CalendarioLavoroDefaults.cs` — nuova fonte unica default calendario
+- `MESManager.Domain/Entities/CalendarioLavoro.cs` — default da costanti
+- `MESManager.Application/DTOs/CalendarioLavoroDto.cs` — default da costanti
+- `MESManager.Application/Services/PianificazioneService.cs` — ora inizio da costante
+- `MESManager.Infrastructure/Services/PianificazioneEngineService.cs` — fallback DTO centralizzato
+- `MESManager.Web/Controllers/PianificazioneController.cs` — fallback DTO centralizzato
+- `MESManager.Web/Services/E2ETestDataSeeder.cs` — seed calendario su entity default
+- `docs/04-ARCHITETTURA.md` — pattern centralizzato
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.99 → 1.65.100
+- `docs/09-CHANGELOG.md` — changelog v1.65.100
 
 ---
 

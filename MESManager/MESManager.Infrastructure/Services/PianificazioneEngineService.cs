@@ -679,18 +679,7 @@ public class PianificazioneEngineService : IPianificazioneEngineService
         if (calendario == null)
         {
             // Default: Lunedì-Venerdì 08:00-17:00
-            return new CalendarioLavoroDto
-            {
-                Lunedi = true,
-                Martedi = true,
-                Mercoledi = true,
-                Giovedi = true,
-                Venerdi = true,
-                Sabato = false,
-                Domenica = false,
-                OraInizio = new TimeOnly(8, 0),
-                OraFine = new TimeOnly(17, 0)
-            };
+            return new CalendarioLavoroDto();
         }
         
         return new CalendarioLavoroDto
