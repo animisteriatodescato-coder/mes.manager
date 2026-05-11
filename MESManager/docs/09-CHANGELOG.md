@@ -4,7 +4,34 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.91
+## 🔖 Versione Corrente: v1.65.92
+
+---
+
+## 🔖 v1.65.92 — Pulizia lookup e file morti certi
+
+**Data**: 11 Maggio 2026
+
+### 🧱 Refactoring
+
+- **Lookup vernici centralizzato**: `CommessaAppService` usa `LookupTables.Vernice` invece della copia privata `VerniceLookup`, allineandosi ad `AnimeService` e agli aggiornamenti runtime da `TabelleService`.
+
+### 🧹 Codice Morto
+
+- **Backup layout rimosso**: eliminato `MainLayout.razor.bak`, file non compilato e non referenziato.
+- **Repository fantasma rimosso**: eliminato `MESManager.Infrastructure/Repositories/IAnimeRepository.cs`, che conteneva solo un commento e non definiva tipi.
+
+### 🧭 Note operative
+
+- `SyncGoogle.razor` non è stato eliminato: è uno stub, ma ha rotta `/sync/google` e voce menu ancora attive, quindi resta da classificare manualmente prima di rimuoverlo.
+- Nessuna rotta, endpoint, tabella o logica business modificata.
+
+#### File modificati
+- `MESManager.Infrastructure/Services/CommessaAppService.cs` — rimosso lookup vernici duplicato
+- `MESManager.Infrastructure/Repositories/IAnimeRepository.cs` — file fantasma eliminato
+- `MESManager.Web/Components/Layout/MainLayout.razor.bak` — backup obsoleto eliminato
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.91 → 1.65.92
+- `docs/09-CHANGELOG.md` — changelog v1.65.92
 
 ---
 

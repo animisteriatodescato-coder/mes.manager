@@ -14,20 +14,7 @@ namespace MESManager.Infrastructure.Services;
 public class CommessaAppService : ICommessaAppService
 {
     private readonly MesManagerDbContext _context;
-    
-    // Lookup tables statiche (stesse di AnimeService)
-    private static readonly Dictionary<string, string> VerniceLookup = new()
-    {
-        { "-1", "" },
-        { "-2", "YELLOW COVER" },
-        { "-3", "CASTING COVER ZR" },
-        { "-4", "CASTING COVER RK" },
-        { "-5", "CASTINGCOVER 2001" },
-        { "-6", "ARCOPAL 9030" },
-        { "-7", "HYDRO COVER 22 Z" },
-        { "-8", "FGR 55" }
-    };
-    
+
     public CommessaAppService(MesManagerDbContext context)
     {
         _context = context;
@@ -284,7 +271,7 @@ LEFT JOIN Clienti cl ON cl.Id = c.ClienteId";
                 Sabbia = anime?.Sabbia,
                 SabbiaDescrizione = (anime != null && !string.IsNullOrEmpty(anime.Sabbia) && LookupTables.Sabbia.TryGetValue(anime.Sabbia, out var sabDesc)) ? sabDesc : anime?.Sabbia,
                 Vernice = anime?.Vernice,
-                VerniceDescrizione = (anime != null && !string.IsNullOrEmpty(anime.Vernice) && VerniceLookup.TryGetValue(anime.Vernice, out var vernDesc)) ? vernDesc : anime?.Vernice,
+                VerniceDescrizione = (anime != null && !string.IsNullOrEmpty(anime.Vernice) && LookupTables.Vernice.TryGetValue(anime.Vernice, out var vernDesc)) ? vernDesc : anime?.Vernice,
                 Colla = anime?.Colla,
                 CollaDescrizione = (anime != null && !string.IsNullOrEmpty(anime.Colla) && LookupTables.Colla.TryGetValue(anime.Colla, out var collaDesc)) ? collaDesc : anime?.Colla,
                 QuantitaPiano = anime?.QuantitaPiano,
