@@ -7,6 +7,8 @@ window.GanttStorico = (function () {
 
     var _timeline = null;
     var _segmenti = [];
+    var _items = null;
+    var _groups = null;
 
     // ─── Sanitizzazione HTML (OWASP XSS prevention) ──────────────────────────
     function _esc(str) {
@@ -166,7 +168,7 @@ window.GanttStorico = (function () {
         // ── initialize(elementId, segmenti) ──────────────────────────────────
         // Crea o ricrea la timeline Vis con i segmenti forniti.
         // Chiamato da GanttStoricoMacchine.razor via JS Interop.
-        initialize: function (elementId, segmenti) {
+        initialize: function (elementId, segmenti, preserveWindow) {
             var container = document.getElementById(elementId);
             if (!container) {
                 console.warn('[GanttStorico] Elemento non trovato:', elementId);
@@ -177,6 +179,8 @@ window.GanttStorico = (function () {
 
             if (!_segmenti.length) {
                 if (_timeline) { _timeline.destroy(); _timeline = null; }
+                _items = null;
+                _groups = null;
                 return;
             }
 
@@ -221,10 +225,29 @@ window.GanttStorico = (function () {
             };
 
             if (_timeline) {
-                _timeline.destroy();
+                var currentWindow = null;
+                try {
+                    currentWindow = preserveWindow ? _timeline.getWindow() : null;
+                } catch (e) {
+                    currentWindow = null;
+                }
+
+                _items = items;
+                _groups = groups;
+                _timeline.setGroups(_groups);
+                _timeline.setItems(_items);
+
+                if (currentWindow && currentWindow.start && currentWindow.end) {
+                    _timeline.setWindow(currentWindow.start, currentWindow.end, { animation: false });
+                } else {
+                    _timeline.fit({ animation: false });
+                }
+                return;
             }
 
-            _timeline = new vis.Timeline(container, items, groups, options);
+            _items = items;
+            _groups = groups;
+            _timeline = new vis.Timeline(container, _items, _groups, options);
 
             // Adatta la finestra temporale ai dati
             _timeline.fit({ animation: false });
@@ -277,6 +300,8 @@ window.GanttStorico = (function () {
                 _timeline.destroy();
                 _timeline = null;
             }
+            _items = null;
+            _groups = null;
             _segmenti = [];
         }
     };

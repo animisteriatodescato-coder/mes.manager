@@ -102,6 +102,17 @@ public class ProduzioneTests : PlaywrightTestBase
         await AssertNoConsoleErrors();
     }
 
+    [Fact(DisplayName = "Gantt Storico > Pagina visibile senza errori console")]
+    public async Task GanttStorico_PageLoads()
+    {
+        await Page.GotoAsync($"{BaseUrl}/produzione/gantt-storico");
+        await AssertVisibleByTestId("page-gantt-storico");
+        await AssertVisibleByTestId("gantt-storico-carica");
+        await Page.WaitForTimeoutAsync(1500);
+
+        await AssertNoConsoleErrors();
+    }
+
     [Fact(DisplayName = "Incollaggio > Pagina visibile")]
     public async Task Incollaggio_PageLoads()
     {

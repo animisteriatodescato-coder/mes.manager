@@ -4,7 +4,34 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.92
+## 🔖 Versione Corrente: v1.65.93
+
+---
+
+## 🔖 v1.65.93 — Refresh stabile Gantt storico
+
+**Data**: 11 Maggio 2026
+
+### 🐛 Bug Fix / UX
+
+- **Auto-refresh senza reset zoom**: il Gantt storico aggiorna i dataset Vis-Timeline preservando la finestra temporale visibile quando il refresh è automatico.
+- **Nessun blank durante refresh**: il grafico non viene più nascosto mentre carica in background, quindi non sparisce per un secondo ad ogni aggiornamento.
+- **Dark mode asse orario**: le etichette dell'asse temporale del Gantt storico sono bianche su sfondo scuro per restare leggibili.
+- **Copertura E2E Gantt storico**: aggiunto smoke test Produzione per aprire `/produzione/gantt-storico` e intercettare errori console/JS.
+
+### 🧭 Note operative
+
+- Il caricamento manuale dal pulsante `Carica` continua a rifittare la timeline sui dati del filtro selezionato.
+- Aggiornato cache busting statico per `app.css` e `gantt-storico.js`.
+
+#### File modificati
+- `MESManager.Web/Components/Pages/Produzione/GanttStoricoMacchine.razor` — refresh silenzioso e preservazione finestra
+- `MESManager.Web/wwwroot/js/gantt/gantt-storico.js` — update timeline senza destroy/fit durante refresh
+- `MESManager.Web/wwwroot/app.css` — contrasto dark mode asse temporale Gantt storico
+- `MESManager.Web/Components/App.razor` — cache busting CSS/JS
+- `tests/MESManager.E2E/Tests/ProduzioneTests.cs` — smoke test Gantt storico
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.92 → 1.65.93
+- `docs/09-CHANGELOG.md` — changelog v1.65.93
 
 ---
 

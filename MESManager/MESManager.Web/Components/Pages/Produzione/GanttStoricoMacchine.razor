@@ -171,7 +171,7 @@
         }
         <div id="gantt-storico-chart"
              class="gantt-storico-vis"
-             style="@(_loading || !_segmenti.Any() ? "display:none" : "display:block")"
+             style="@(!_segmenti.Any() ? "display:none" : "display:block")"
              data-testid="gantt-storico-chart">
         </div>
     </MudPaper>
@@ -272,6 +272,7 @@
     private bool _hasRendered;
     private bool _disposed;
     private bool _pendingGanttRender;
+    private bool _preserveGanttWindowForNextRender;
     private Timer? _refreshTimer;
 
     // ── Dati ─────────────────────────────────────────────────────────────────
@@ -318,15 +319,25 @@
         if (_pendingGanttRender)
         {
             _pendingGanttRender = false;
-            await RenderGantt();
+            await RenderGantt(_preserveGanttWindowForNextRender);
+            _preserveGanttWindowForNextRender = false;
         }
     }
 
     private async Task LoadData()
+        => await LoadData(showLoading: true, preserveGanttWindow: false);
+
+    private async Task RefreshDataPreservingGanttWindow()
+        => await LoadData(showLoading: false, preserveGanttWindow: true);
+
+    private async Task LoadData(bool showLoading, bool preserveGanttWindow)
     {
         if (_loading || _disposed) return;
         _loading = true;
-        StateHasChanged();
+        if (showLoading)
+        {
+            StateHasChanged();
+        }
 
         try
         {
@@ -344,6 +355,7 @@
 
             _segmenti = ganttTask.Result ?? new();
             _kpi      = kpiTask.Result   ?? new();
+            _preserveGanttWindowForNextRender = preserveGanttWindow;
         }
         catch (Exception ex)
         {
@@ -364,12 +376,12 @@
         UpdateRefreshTimer();
     }
 
-    private async Task RenderGantt()
+    private async Task RenderGantt(bool preserveWindow)
     {
         if (_disposed || !_segmenti.Any()) return;
         try
         {
-            await JS.InvokeVoidAsync("GanttStorico.initialize", "gantt-storico-chart", _segmenti);
+            await JS.InvokeVoidAsync("GanttStorico.initialize", "gantt-storico-chart", _segmenti, preserveWindow);
         }
         catch (Exception ex)
         {
@@ -399,7 +411,7 @@
             _refreshTimer = new Timer(async _ =>
             {
                 if (!_disposed)
-                    await InvokeAsync(LoadData);
+                    await InvokeAsync(RefreshDataPreservingGanttWindow);
             }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
         }
     }
@@ -411,7 +423,7 @@
 
         if (_autoRefresh && !_loading)
         {
-            await LoadData();
+            await RefreshDataPreservingGanttWindow();
         }
     }
 
