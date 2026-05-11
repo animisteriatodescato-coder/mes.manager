@@ -907,6 +907,7 @@ Parametri principali: `Label`, `Value`/`ValueChanged` (string hex), `Palette` (L
 |---|---|
 | Nuova griglia catalogo | `@inherits CatalogoGridBase` in `Components/Pages/Cataloghi/` |
 | Config JS griglia AG Grid | `wwwroot/js/ag-grid-factory.js` → `agGridFactory.setup({...})` |
+| Default impostazioni produzione | `Domain/Constants/ImpostazioniProduzioneDefaults.cs` → usare entity/DTO default, mai duplicare `90/8/5` |
 | Pannello impostazioni griglia | `<GridSettingsPanel @bind-Settings="settings" />` |
 | Servizio allegati per nuova entità | `: AllegatoFileServiceBase` in `Application/Services/` |
 | Path di rete / MIME type allegati | `ConvertNetworkPath()` / `GetMimeType()` dalla base |

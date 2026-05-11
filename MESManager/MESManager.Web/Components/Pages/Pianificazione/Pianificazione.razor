@@ -159,12 +159,7 @@ else
 
 @code {
     private List<CommessaGanttDto> commesseGantt = new();
-    private ImpostazioniProduzioneDto impostazioniDto = new() 
-    { 
-        TempoSetupMinuti = 90, 
-        OreLavorativeGiornaliere = 8, 
-        GiorniLavorativiSettimanali = 5 
-    };
+    private ImpostazioniProduzioneDto impostazioniDto = new();
 
     protected override async Task OnInitializedAsync()
     {

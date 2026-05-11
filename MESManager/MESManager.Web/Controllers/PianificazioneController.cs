@@ -49,7 +49,7 @@ public class PianificazioneController : ControllerBase
             
             // Ottieni le impostazioni di produzione (o usa valori di default)
             var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
-                ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
+                ?? new ImpostazioniProduzione();
 
             var commesse = await _context.Commesse
                 .Include(c => c.Articolo)
@@ -129,7 +129,7 @@ public class PianificazioneController : ControllerBase
             }
 
             var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
-                ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
+                ?? new ImpostazioniProduzione();
 
             // Carica calendario lavoro
             var calendario = await GetCalendarioLavoroDtoAsync();
@@ -184,9 +184,6 @@ public class PianificazioneController : ControllerBase
                 impostazioni = new ImpostazioniProduzione
                 {
                     Id = Guid.NewGuid(),
-                    TempoSetupMinuti = 90,
-                    OreLavorativeGiornaliere = 8,
-                    GiorniLavorativiSettimanali = 5,
                     UltimaModifica = DateTime.UtcNow
                 };
                 _context.ImpostazioniProduzione.Add(impostazioni);

@@ -93,7 +93,7 @@ public class PianificazioneEngineService : IPianificazioneEngineService
 
             // 4. Carica impostazioni, calendario e festivi
             var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
-                ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
+                ?? new ImpostazioniProduzione();
 
             var calendario = await GetCalendarioLavoroDtoAsync();
             var festivi = await GetFestiviSetAsync();
@@ -299,7 +299,7 @@ public class PianificazioneEngineService : IPianificazioneEngineService
     public async Task RicalcolaMacchinaConBlocchiAsync(int? numeroMacchina)
     {
         var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync() 
-            ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
+            ?? new ImpostazioniProduzione();
         var calendario = await GetCalendarioLavoroDtoAsync();
         var festivi = await GetFestiviSetAsync();
         await RicalcolaMacchinaConBlocchiAsync(numeroMacchina, impostazioni, calendario, festivi);
@@ -481,7 +481,7 @@ public class PianificazioneEngineService : IPianificazioneEngineService
         try
         {
             var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
-                ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
+                ?? new ImpostazioniProduzione();
             var calendario = await GetCalendarioLavoroDtoAsync();
             var festivi = await GetFestiviSetAsync();
             
@@ -507,7 +507,7 @@ public class PianificazioneEngineService : IPianificazioneEngineService
         try
         {
             var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
-                ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
+                ?? new ImpostazioniProduzione();
 
             var calendario = await GetCalendarioLavoroDtoAsync();
             var festivi = await GetFestiviSetAsync();
@@ -564,7 +564,7 @@ public class PianificazioneEngineService : IPianificazioneEngineService
             }
 
             var impostazioni = await _context.ImpostazioniProduzione.FirstOrDefaultAsync()
-                ?? new ImpostazioniProduzione { TempoSetupMinuti = 90, OreLavorativeGiornaliere = 8, GiorniLavorativiSettimanali = 5 };
+                ?? new ImpostazioniProduzione();
             
             var calendario = await GetCalendarioLavoroDtoAsync();
             var festivi = await GetFestiviSetAsync();

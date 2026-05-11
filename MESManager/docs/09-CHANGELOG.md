@@ -4,7 +4,30 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.97
+## 🔖 Versione Corrente: v1.65.98
+
+---
+
+## 🔖 v1.65.98 — Default pianificazione centralizzati
+
+**Data**: 11 Maggio 2026
+
+### 🧱 Refactoring
+
+- **Fonte unica default produzione**: introdotto `ImpostazioniProduzioneDefaults` nel Domain per i valori default `TempoSetupMinuti=90`, `OreLavorativeGiornaliere=8`, `GiorniLavorativiSettimanali=5`.
+- **Riduzione duplicazione Web/Infrastructure**: controller, engine e pagina pianificazione usano ora i default di entity/DTO invece di ripetere magic number.
+- **Documentazione architetturale**: aggiunto il pattern centralizzato in `docs/04-ARCHITETTURA.md`.
+
+#### File modificati
+- `MESManager.Domain/Constants/ImpostazioniProduzioneDefaults.cs` — nuova fonte unica default
+- `MESManager.Domain/Entities/ImpostazioniProduzione.cs` — default da costanti
+- `MESManager.Application/DTOs/ImpostazioniProduzioneDto.cs` — default da costanti
+- `MESManager.Infrastructure/Services/PianificazioneEngineService.cs` — rimossi default duplicati
+- `MESManager.Web/Controllers/PianificazioneController.cs` — rimossi default duplicati
+- `MESManager.Web/Components/Pages/Pianificazione/Pianificazione.razor` — inizializzazione DTO centralizzata
+- `docs/04-ARCHITETTURA.md` — pattern centralizzato
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.97 → 1.65.98
+- `docs/09-CHANGELOG.md` — changelog v1.65.98
 
 ---
 
