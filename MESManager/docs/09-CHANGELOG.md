@@ -4,7 +4,24 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.93
+## 🔖 Versione Corrente: v1.65.94
+
+---
+
+## 🔖 v1.65.94 — Contrasto asse Gantt storico
+
+**Data**: 11 Maggio 2026
+
+### 🐛 Bug Fix / UX
+
+- **Date e orari leggibili nel Gantt storico**: la regola effettiva delle label Vis-Timeline è stata spostata nel CSS caricato per ultimo (`gantt-macchine.css`), così non viene sovrascritta dalle regole globali della timeline.
+- **Cache busting CSS Gantt**: aggiornato `gantt-macchine.css` da `v=8` a `v=9`.
+
+#### File modificati
+- `MESManager.Web/wwwroot/css/gantt-macchine.css` — contrasto asse temporale Gantt storico
+- `MESManager.Web/Components/App.razor` — cache busting CSS Gantt
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.93 → 1.65.94
+- `docs/09-CHANGELOG.md` — changelog v1.65.94
 
 ---
 

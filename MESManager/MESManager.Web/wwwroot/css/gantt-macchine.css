@@ -267,6 +267,26 @@
     background-color: rgba(33, 150, 243, 0.05);
 }
 
+/* Gantt storico: le label dell'asse devono seguire il tema applicativo.
+   Questa regola vive qui perché gantt-macchine.css è caricato dopo app.css. */
+.gantt-storico-vis .vis-time-axis .vis-text,
+.gantt-storico-vis .vis-time-axis .vis-text.vis-major,
+.gantt-storico-vis .vis-time-axis .vis-text.vis-minor,
+.gantt-storico-vis .vis-panel.vis-top .vis-text,
+.gantt-storico-vis .vis-panel.vis-bottom .vis-text {
+    color: var(--mes-row-text, #1a1a1a) !important;
+    opacity: 1 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+}
+
+.mud-theme-dark .gantt-storico-vis .vis-time-axis .vis-text,
+.mud-theme-dark .gantt-storico-vis .vis-time-axis .vis-text.vis-major,
+.mud-theme-dark .gantt-storico-vis .vis-time-axis .vis-text.vis-minor,
+.mud-theme-dark .gantt-storico-vis .vis-panel.vis-top .vis-text,
+.mud-theme-dark .gantt-storico-vis .vis-panel.vis-bottom .vis-text {
+    color: #ffffff !important;
+}
+
 /* ==========================================
    CURRENT TIME INDICATOR
    ========================================== */
