@@ -972,6 +972,309 @@
             </MudGrid>
         </MudTabPanel>
 
+        <!-- ══════════════════════════════════════════════════
+             TAB 5 — Aggiornamento Prezzi
+        ══════════════════════════════════════════════════ -->
+        <MudTabPanel Text="Aggiornamento Prezzi"
+                     Icon="@Icons.Material.Filled.PriceChange"
+                     data-testid="tab-aggiornamento-prezzi">
+            <MudGrid Spacing="3">
+
+                <!-- ── COLONNA FORM ── -->
+                <MudItem xs="12" md="8">
+
+                    @if (_agShowCampiMancanti)
+                    {
+                        <MudAlert Severity="Severity.Warning" Class="mb-3" Dense="true"
+                                  Icon="@Icons.Material.Filled.Warning"
+                                  ShowCloseIcon="true"
+                                  CloseIconClicked="@(() => _agShowCampiMancanti = false)">
+                            <MudStack Row="false" Spacing="1">
+                                <MudText><strong>Dati mancanti nel catalogo per l'articolo selezionato:</strong></MudText>
+                                @foreach (var campo in _agCampiMancanti)
+                                {
+                                    <MudText>• @campo</MudText>
+                                }
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Puoi completare i dati manualmente prima di salvare.
+                                </MudText>
+                            </MudStack>
+                        </MudAlert>
+                    }
+
+                    <!-- ARTICOLO — TRIGGER AUTOMATICO -->
+                    <MudPaper Class="pa-4 mb-3" Elevation="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Color="Color.Primary" />
+                            <MudText Typo="Typo.subtitle1"><b>ARTICOLO — COMPILAZIONE AUTOMATICA</b></MudText>
+                        </MudStack>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="5">
+                                <MudAutocomplete T="string"
+                                                 Value="@_agDto.CodiceArticolo"
+                                                 ValueChanged="@(async (string v) => { _agDto.CodiceArticolo = v; await OnAgCodiceArticoloChanged(v); })"
+                                                 Label="Codice articolo *"
+                                                 SearchFunc="CercaCodiciArticolo"
+                                                 Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 MinCharacters="0"
+                                                 DebounceInterval="150"
+                                                 CoerceText="true"
+                                                 CoerceValue="true"
+                                                 Clearable="true"
+                                                 HelperText="Seleziona per auto-compilare i campi"
+                                                 AdornmentIcon="@Icons.Material.Filled.Search"
+                                                 data-testid="ag-input-codice" />
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudTextField @bind-Value="_agDto.Cliente"
+                                              Label="Cliente *"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              HelperText="Auto-compilato dal catalogo"
+                                              data-testid="ag-input-cliente" />
+                            </MudItem>
+                            <MudItem xs="12" sm="3">
+                                <MudDatePicker @bind-Date="_agDataCreazione" Label="Data"
+                                               Variant="Variant.Outlined" Margin="Margin.Dense"
+                                               data-testid="ag-input-data" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="_agDto.Descrizione"
+                                              Label="Descrizione articolo"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              HelperText="Auto-compilata dal catalogo"
+                                              data-testid="ag-input-descrizione" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="_agDto.NoteCliente"
+                                              Label="Note cliente"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Lines="2" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+
+                    <!-- SABBIA -->
+                    <MudPaper Class="pa-4 mb-3" Elevation="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                            <MudIcon Icon="@Icons.Material.Filled.Grain" Color="Color.Warning" />
+                            <MudText Typo="Typo.subtitle1"><b>TIPO SABBIA</b></MudText>
+                        </MudStack>
+                        @if (!_tipiSabbia.Any(s => s.Attivo))
+                        {
+                            <MudAlert Severity="Severity.Info" Dense="true">
+                                Nessun tipo sabbia configurato. Vai in <b>Impostazioni prezzi</b> per aggiungerne.
+                            </MudAlert>
+                        }
+                        else
+                        {
+                            <MudSelect T="PreventivoTipoSabbiaDto?"
+                                       Value="@_agTipoSabbiaSelezionata"
+                                       Label="Tipo sabbia"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense"
+                                       ToStringFunc="@(s => s?.Nome ?? "— nessuna —")"
+                                       ValueChanged="@((PreventivoTipoSabbiaDto? v) => { _agTipoSabbiaSelezionata = v; OnAgSabbiaSelezionata(); })">
+                                <MudSelectItem T="PreventivoTipoSabbiaDto?" Value="null">— nessuna —</MudSelectItem>
+                                @foreach (var s in _tipiSabbia.Where(s => s.Attivo).OrderBy(s => s.Ordine))
+                                {
+                                    <MudSelectItem T="PreventivoTipoSabbiaDto?" Value="s">@s.Nome</MudSelectItem>
+                                }
+                            </MudSelect>
+                        }
+                    </MudPaper>
+
+                    <!-- PARAMETRI PRODUZIONE -->
+                    <MudPaper Class="pa-4 mb-3" Elevation="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                            <MudIcon Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
+                            <MudText Typo="Typo.subtitle1"><b>PARAMETRI PRODUZIONE</b></MudText>
+                        </MudStack>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField @bind-Value="_agDto.Figure" Label="Figure *"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense" Min="1"
+                                                 OnBlur="@((e) => RicalcolaAg())"
+                                                 HelperText="Auto dal catalogo" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField @bind-Value="_agDto.PesoAnima" Label="Peso anima (kg) *"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 Format="N3" Min="0.001m"
+                                                 OnBlur="@((e) => RicalcolaAg())"
+                                                 HelperText="Auto dal catalogo" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField @bind-Value="_agDto.SpariOrari" Label="Spari/ora"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense" Min="1"
+                                                 OnBlur="@((e) => RicalcolaAg())"
+                                                 HelperText="Auto dalla sabbia" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField @bind-Value="_agDto.CostoAttrezzatura" Label="Costo attrezzatura"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 Format="C2" Min="0"
+                                                 OnBlur="@((e) => RicalcolaAg())" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+
+                    <!-- VERNICIATURA -->
+                    <MudPaper Class="pa-4 mb-3" Elevation="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                            <MudIcon Icon="@Icons.Material.Filled.FormatPaint" Color="Color.Info" />
+                            <MudText Typo="Typo.subtitle1"><b>VERNICIATURA</b></MudText>
+                        </MudStack>
+                        <MudCheckBox @bind-Value="_agDto.VerniciaturaRichiesta"
+                                     Label="Verniciatura richiesta"
+                                     Color="Color.Info" Class="mb-2" />
+                        @if (_agDto.VerniciaturaRichiesta)
+                        {
+                            @if (!_tipiVernice.Any(v => v.Attivo))
+                            {
+                                <MudAlert Severity="Severity.Info" Dense="true">
+                                    Nessun tipo vernice configurato.
+                                </MudAlert>
+                            }
+                            else
+                            {
+                                <MudSelect T="PreventivoTipoVerniceDto?"
+                                           Value="@_agTipoVerniceSelezionata"
+                                           Label="Tipo vernice"
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.Dense"
+                                           ToStringFunc="@(v => v?.Nome ?? "— nessuna —")"
+                                           ValueChanged="@((PreventivoTipoVerniceDto? v) => { _agTipoVerniceSelezionata = v; OnAgVerniceSelezionata(); })">
+                                    <MudSelectItem T="PreventivoTipoVerniceDto?" Value="null">— nessuna —</MudSelectItem>
+                                    @foreach (var v in _tipiVernice.Where(v => v.Attivo))
+                                    {
+                                        <MudSelectItem T="PreventivoTipoVerniceDto?" Value="v">@v.Nome</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            }
+                        }
+                    </MudPaper>
+
+                    <!-- LOTTI -->
+                    <MudPaper Class="pa-4 mb-3" Elevation="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                            <MudIcon Icon="@Icons.Material.Filled.Inventory" Color="Color.Secondary" />
+                            <MudText Typo="Typo.subtitle1"><b>LOTTI</b></MudText>
+                        </MudStack>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField @bind-Value="_agDto.Lotto" Label="Lotto 1 *"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense" Min="1"
+                                                 OnBlur="@((e) => RicalcolaAg())" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField @bind-Value="_agDto.Margine1" Label="Margine 1 (%)"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 Format="N1" Min="0"
+                                                 OnBlur="@((e) => RicalcolaAg())" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField @bind-Value="_agDto.Lotto2" Label="Lotto 2"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense" Min="0"
+                                                 OnBlur="@((e) => RicalcolaAg())" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField @bind-Value="_agDto.Margine2" Label="Margine 2 (%)"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 Format="N1" Min="0"
+                                                 OnBlur="@((e) => RicalcolaAg())" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField @bind-Value="_agDto.Lotto3" Label="Lotto 3"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense" Min="0"
+                                                 OnBlur="@((e) => RicalcolaAg())" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField @bind-Value="_agDto.Margine3" Label="Margine 3 (%)"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 Format="N1" Min="0"
+                                                 OnBlur="@((e) => RicalcolaAg())" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField @bind-Value="_agDto.Lotto4" Label="Lotto 4"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense" Min="0"
+                                                 OnBlur="@((e) => RicalcolaAg())" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField @bind-Value="_agDto.Margine4" Label="Margine 4 (%)"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 Format="N1" Min="0"
+                                                 OnBlur="@((e) => RicalcolaAg())" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+
+                </MudItem>
+
+                <!-- ── COLONNA RIEPILOGO ── -->
+                <MudItem xs="12" md="4">
+                    <MudPaper Class="pa-4" Elevation="3" Style="position: sticky; top: 16px;">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                            <MudIcon Icon="@Icons.Material.Filled.Calculate" Color="Color.Success" />
+                            <MudText Typo="Typo.subtitle1"><b>RIEPILOGO CALCOLO</b></MudText>
+                        </MudStack>
+
+                        @if (_agDto.Figure > 0 && _agDto.PesoAnima > 0 && _agDto.SpariOrari > 0 && _agDto.Lotto > 0)
+                        {
+                            <MudStack Spacing="1">
+                                @foreach (var (lotto, calc) in AgLottiCalcolati)
+                                {
+                                    <MudPaper Class="pa-3 mb-2" Elevation="1">
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">LOTTO @lotto pz</MudText>
+                                        <MudDivider Class="my-1" />
+                                        <MudGrid Spacing="1">
+                                            <MudItem xs="8"><MudText Typo="Typo.body2">Costo anima</MudText></MudItem>
+                                            <MudItem xs="4"><MudText Typo="Typo.body2" Align="Align.Right"><b>@calc.CostoAnima.ToString("C4")</b></MudText></MudItem>
+                                            @if (_agDto.VerniciaturaRichiesta && calc.VernTot > 0)
+                                            {
+                                                <MudItem xs="8"><MudText Typo="Typo.body2">Verniciatura</MudText></MudItem>
+                                                <MudItem xs="4"><MudText Typo="Typo.body2" Align="Align.Right">@calc.VernTot.ToString("C4")</MudText></MudItem>
+                                            }
+                                            <MudItem xs="8"><MudText Typo="Typo.subtitle2" Color="Color.Success">Prezzo vendita</MudText></MudItem>
+                                            <MudItem xs="4"><MudText Typo="Typo.subtitle2" Color="Color.Success" Align="Align.Right"><b>@calc.PrezzoVendita.ToString("C4")</b></MudText></MudItem>
+                                        </MudGrid>
+                                    </MudPaper>
+                                }
+                            </MudStack>
+                        }
+                        else
+                        {
+                            <MudAlert Severity="Severity.Info" Dense="true" Icon="@Icons.Material.Filled.Info">
+                                Seleziona un articolo dal catalogo per calcolare il preventivo.
+                            </MudAlert>
+                        }
+
+                        <MudDivider Class="my-3" />
+                        <MudStack Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Success"
+                                       FullWidth="true"
+                                       StartIcon="@Icons.Material.Filled.Save"
+                                       Disabled="@_agIsSaving"
+                                       OnClick="@SalvaAggiornamentoAsync"
+                                       data-testid="ag-btn-salva">
+                                @(_agIsSaving ? "Salvo..." : (_agEditingId.HasValue ? "Aggiorna preventivo" : "Crea preventivo"))
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Default"
+                                       FullWidth="true"
+                                       StartIcon="@Icons.Material.Filled.Clear"
+                                       OnClick="@NuovoAggiornamento">
+                                Nuovo
+                            </MudButton>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+
+            </MudGrid>
+        </MudTabPanel>
+
     </MudTabs>
 </div>
 
@@ -1411,4 +1714,200 @@
     // ── Tipi locali ───────────────────────────────────────────────────────
 
     private record TabellaItem(string Codice, string Descrizione);
+
+    // ── Tab 5 — Aggiornamento Prezzi ──────────────────────────────────────
+
+    private PreventivoDto _agDto = new();
+    private PreventivoCalcoloResult _agCalc = new();
+    private DateTime? _agDataCreazione = DateTime.Today;
+    private Guid? _agEditingId;
+    private PreventivoTipoSabbiaDto?  _agTipoSabbiaSelezionata;
+    private PreventivoTipoVerniceDto? _agTipoVerniceSelezionata;
+    private bool _agIsSaving;
+    private bool _agShowCampiMancanti;
+    private List<string> _agCampiMancanti = new();
+
+    private void RicalcolaAg()
+    {
+        _agDto.DataCreazione = _agDataCreazione ?? DateTime.Today;
+        _agCalc = PreventivoService.Calcola(_agDto);
+    }
+
+    private IEnumerable<(int Lotto, PreventivoCalcoloResult Calc)> AgLottiCalcolati
+    {
+        get
+        {
+            if (_agDto.Lotto > 0 && _agDto.Figure > 0 && _agDto.PesoAnima > 0 && _agDto.SpariOrari > 0)
+            {
+                yield return (_agDto.Lotto, PreventivoService.CalcolaConLotto(_agDto, _agDto.Lotto, _agDto.Margine1));
+                if (_agDto.Lotto2.HasValue && _agDto.Lotto2 > 0)
+                    yield return (_agDto.Lotto2.Value, PreventivoService.CalcolaConLotto(_agDto, _agDto.Lotto2.Value, _agDto.Margine2));
+                if (_agDto.Lotto3.HasValue && _agDto.Lotto3 > 0)
+                    yield return (_agDto.Lotto3.Value, PreventivoService.CalcolaConLotto(_agDto, _agDto.Lotto3.Value, _agDto.Margine3));
+                if (_agDto.Lotto4.HasValue && _agDto.Lotto4 > 0)
+                    yield return (_agDto.Lotto4.Value, PreventivoService.CalcolaConLotto(_agDto, _agDto.Lotto4.Value, _agDto.Margine4));
+            }
+        }
+    }
+
+    private void OnAgSabbiaSelezionata()
+    {
+        if (_agTipoSabbiaSelezionata == null) return;
+        _agDto.TipoSabbiaId   = _agTipoSabbiaSelezionata.Id;
+        _agDto.SabbiaSnapshot = _agTipoSabbiaSelezionata.Nome;
+        _agDto.EuroOraSabbia  = _agTipoSabbiaSelezionata.EuroOra;
+        _agDto.PrezzoSabbiaKg = _agTipoSabbiaSelezionata.PrezzoKg;
+        _agDto.SpariOrari     = _agTipoSabbiaSelezionata.SpariDefault;
+        RicalcolaAg();
+    }
+
+    private void OnAgVerniceSelezionata()
+    {
+        if (_agTipoVerniceSelezionata == null) return;
+        _agDto.TipoVerniceId      = _agTipoVerniceSelezionata.Id;
+        _agDto.VerniceSnapshot    = _agTipoVerniceSelezionata.Nome;
+        _agDto.CostoVerniceKg     = _agTipoVerniceSelezionata.PrezzoKg;
+        _agDto.PercentualeVernice = _agTipoVerniceSelezionata.PercentualeApplicazione;
+        RicalcolaAg();
+    }
+
+    private void NuovoAggiornamento()
+    {
+        _agDto = new PreventivoDto();
+        _agDataCreazione = DateTime.Today;
+        _agCalc = new PreventivoCalcoloResult();
+        _agEditingId = null;
+        _agTipoSabbiaSelezionata  = null;
+        _agTipoVerniceSelezionata = null;
+        _agCampiMancanti = new();
+        _agShowCampiMancanti = false;
+    }
+
+    private async Task OnAgCodiceArticoloChanged(string? codice)
+    {
+        if (string.IsNullOrWhiteSpace(codice)) return;
+
+        var anime = await AnimeService.GetByCodiceArticoloAsync(codice);
+        if (anime == null)
+        {
+            Snackbar.Add($"Articolo '{codice}' non trovato nel catalogo.", Severity.Warning);
+            return;
+        }
+
+        _agCampiMancanti = new();
+
+        // Descrizione
+        if (!string.IsNullOrWhiteSpace(anime.DescrizioneArticolo))
+            _agDto.Descrizione = anime.DescrizioneArticolo;
+
+        // Cliente
+        if (!string.IsNullOrWhiteSpace(anime.Cliente))
+            _agDto.Cliente = anime.Cliente;
+
+        // Figure (string → int)
+        if (!string.IsNullOrWhiteSpace(anime.Figure) &&
+            int.TryParse(anime.Figure.Trim(), out var figure) && figure > 0)
+            _agDto.Figure = figure;
+        else
+            _agCampiMancanti.Add("Figure (non impostato o non numerico nel catalogo)");
+
+        // Peso anima (string → decimal)
+        if (!string.IsNullOrWhiteSpace(anime.Peso))
+        {
+            var pesoStr = anime.Peso.Trim().Replace(",", ".");
+            if (decimal.TryParse(pesoStr, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out var peso) && peso > 0)
+                _agDto.PesoAnima = peso;
+            else
+                _agCampiMancanti.Add("Peso anima (valore non numerico nel catalogo)");
+        }
+        else
+            _agCampiMancanti.Add("Peso anima (non impostato nel catalogo)");
+
+        // Sabbia
+        if (!string.IsNullOrWhiteSpace(anime.Sabbia))
+        {
+            var matchSabbia = _tipiSabbia.FirstOrDefault(s =>
+                s.Attivo && (
+                    s.Nome.Contains(anime.Sabbia, StringComparison.OrdinalIgnoreCase) ||
+                    anime.Sabbia.Contains(s.Nome, StringComparison.OrdinalIgnoreCase) ||
+                    s.Codice.Equals(anime.Sabbia, StringComparison.OrdinalIgnoreCase)));
+            if (matchSabbia != null)
+            {
+                _agTipoSabbiaSelezionata = matchSabbia;
+                _agDto.TipoSabbiaId   = matchSabbia.Id;
+                _agDto.SabbiaSnapshot = matchSabbia.Nome;
+                _agDto.EuroOraSabbia  = matchSabbia.EuroOra;
+                _agDto.PrezzoSabbiaKg = matchSabbia.PrezzoKg;
+                _agDto.SpariOrari     = matchSabbia.SpariDefault;
+            }
+            else
+                _agCampiMancanti.Add($"Tipo sabbia '{anime.Sabbia}' non corrisponde a nessun tipo configurato");
+        }
+        else
+            _agCampiMancanti.Add("Tipo sabbia (non impostato nel catalogo)");
+
+        // Vernice
+        if (!string.IsNullOrWhiteSpace(anime.Vernice))
+        {
+            var matchVernice = _tipiVernice.FirstOrDefault(v =>
+                v.Attivo && (
+                    v.Nome.Contains(anime.Vernice, StringComparison.OrdinalIgnoreCase) ||
+                    anime.Vernice.Contains(v.Nome, StringComparison.OrdinalIgnoreCase) ||
+                    v.Codice.Equals(anime.Vernice, StringComparison.OrdinalIgnoreCase)));
+            if (matchVernice != null)
+            {
+                _agTipoVerniceSelezionata     = matchVernice;
+                _agDto.TipoVerniceId          = matchVernice.Id;
+                _agDto.VerniceSnapshot        = matchVernice.Nome;
+                _agDto.CostoVerniceKg         = matchVernice.PrezzoKg;
+                _agDto.PercentualeVernice     = matchVernice.PercentualeApplicazione;
+                _agDto.VerniciaturaRichiesta  = true;
+            }
+            else
+                _agCampiMancanti.Add($"Tipo vernice '{anime.Vernice}' non corrisponde a nessun tipo configurato");
+        }
+
+        RicalcolaAg();
+        if (_agCampiMancanti.Count > 0)
+            _agShowCampiMancanti = true;
+        StateHasChanged();
+    }
+
+    private async Task SalvaAggiornamentoAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_agDto.Cliente))
+        {
+            Snackbar.Add("Il campo Cliente è obbligatorio.", Severity.Warning);
+            return;
+        }
+        _agIsSaving = true;
+        _agDto.DataCreazione = _agDataCreazione ?? DateTime.Today;
+        var r = PreventivoService.Calcola(_agDto);
+        _agDto.CalcCostoAnima      = r.CostoAnima;
+        _agDto.CalcVerniciaturaTot = r.VernTot;
+        _agDto.CalcPrezzoVendita   = r.PrezzoVendita;
+        try
+        {
+            if (_agEditingId.HasValue)
+            {
+                _agDto.Id = _agEditingId.Value;
+                var updated = await PreventivoService.UpdateAsync(_agDto);
+                if (updated != null)
+                {
+                    Snackbar.Add("Preventivo aggiornato.", Severity.Success);
+                    _preventivi = await PreventivoService.GetAllAsync();
+                }
+            }
+            else
+            {
+                var created = await PreventivoService.CreateAsync(_agDto);
+                _agEditingId = created.Id;
+                _preventivi.Insert(0, created);
+                Snackbar.Add("Preventivo creato.", Severity.Success);
+            }
+        }
+        catch (Exception ex) { Snackbar.Add($"Errore: {ex.Message}", Severity.Error); }
+        finally { _agIsSaving = false; }
+    }
 }

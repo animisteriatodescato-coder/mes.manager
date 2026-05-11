@@ -135,4 +135,11 @@ public class CommessaDto
     /// NC chiuse per l'articolo — campo calcolato lato Blazor, NON persistito su DB.
     /// </summary>
     public int NcChiuseCount { get; set; }
+
+    /// <summary>
+    /// True se la quantità richiesta è inferiore al lotto minimo (Anime.Imballo).
+    /// Campo calcolato lato Blazor, NON persistito su DB.
+    /// </summary>
+    public bool SottolottoMinimo =>
+        Imballo.HasValue && Imballo > 0 && QuantitaRichiesta < Imballo.Value;
 }
