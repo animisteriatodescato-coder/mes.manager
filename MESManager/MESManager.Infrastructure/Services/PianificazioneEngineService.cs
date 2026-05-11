@@ -1,5 +1,6 @@
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
+using MESManager.Application.Utilities;
 using MESManager.Domain.Entities;
 using MESManager.Domain.Enums;
 using MESManager.Infrastructure.Data;
@@ -572,14 +573,14 @@ public class PianificazioneEngineService : IPianificazioneEngineService
             // Ottieni macchine candidate
             var macchineStringCandidate = request.NumeriMacchineCandidate != null && request.NumeriMacchineCandidate.Any()
                 ? request.NumeriMacchineCandidate
-                : await _context.Macchine
+                : (await _context.Macchine
                     .Where(m => m.AttivaInGantt)
-                    .Select(m => m.Codice.Replace("M0", "").Replace("M", "")) // Estrai numero
-                    .ToListAsync();
+                    .Select(m => m.Codice)
+                    .ToListAsync());
             
             // Converti in int?
             var macchineCandidate = macchineStringCandidate
-                .Select(s => int.TryParse(s, out var n) ? (int?)n : null)
+                .Select(MacchinaCodiceHelper.ExtractNumero)
                 .Where(m => m.HasValue)
                 .Select(m => m!.Value)
                 .ToList();
@@ -1011,10 +1012,7 @@ public class PianificazioneEngineService : IPianificazioneEngineService
                 
                 // Estrai numeri macchina dai codici (es. "M001" → 1, "M005" → 5)
                 var numeriMacchineAttive = macchineAttive
-                    .Select(m => {
-                        var numStr = m.Codice.Replace("M0", "").Replace("M", "");
-                        return int.TryParse(numStr, out var n) ? n : (int?)null;
-                    })
+                    .Select(m => MacchinaCodiceHelper.ExtractNumero(m.Codice))
                     .Where(n => n.HasValue)
                     .Select(n => n!.Value)
                     .ToList();

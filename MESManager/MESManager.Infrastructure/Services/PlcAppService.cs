@@ -1,5 +1,6 @@
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
+using MESManager.Application.Utilities;
 using MESManager.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using MESManager.Infrastructure.Data;
@@ -78,7 +79,7 @@ public class PlcAppService : IPlcAppService
             return new PlcRealtimeDto
             {
                 MacchinaId = p.MacchinaId,
-                MacchinaNumero = int.TryParse(p.Macchina.Codice.Replace("M", ""), out int num) ? num.ToString("D2") : p.Macchina.Codice,
+                MacchinaNumero = MacchinaCodiceHelper.FormatNumeroDueCifreOrCodice(p.Macchina.Codice),
                 MacchianaNome = p.Macchina.Codice,
                 IndirizzoPLC = p.Macchina.IndirizzoPLC,
                 IsConnessa = isConnessa,
@@ -181,7 +182,7 @@ public class PlcAppService : IPlcAppService
         {
             Id = e.Id,
             MacchinaId = e.MacchinaId,
-            MacchinaNumero = int.TryParse(e.Macchina.Codice.Replace("M", ""), out int num) ? num.ToString("D2") : e.Macchina.Codice,
+            MacchinaNumero = MacchinaCodiceHelper.FormatNumeroDueCifreOrCodice(e.Macchina.Codice),
             MacchianaNome = e.Macchina.Codice,
             
             Timestamp = e.DataOra,
@@ -426,7 +427,7 @@ public class PlcAppService : IPlcAppService
         {
             Id             = p.Id,
             MacchinaId     = p.MacchinaId,
-            MacchinaNumero = int.TryParse(p.Macchina.Codice.Replace("M", ""), out int num) ? num.ToString("D2") : p.Macchina.Codice,
+            MacchinaNumero = MacchinaCodiceHelper.FormatNumeroDueCifreOrCodice(p.Macchina.Codice),
             MacchianaNome  = p.Macchina.Codice,
 
             Timestamp     = p.DataOra,

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using MESManager.Infrastructure.Data;
 using MESManager.Application.DTOs;
 using MESManager.Application.Interfaces;
+using MESManager.Application.Utilities;
 using MESManager.Domain.Entities;
 using MESManager.Domain.Enums;
 using MESManager.Web.Hubs;
@@ -394,7 +395,7 @@ public class PianificazioneController : ControllerBase
                 {
                     Codice = m.Codice,
                     Nome = m.Nome,
-                    NumeroMacchina = ExtractNumeroMacchina(m.Codice)
+                    NumeroMacchina = MacchinaCodiceHelper.ExtractNumero(m.Codice)
                 })
                 .ToListAsync();
             
@@ -407,12 +408,6 @@ public class PianificazioneController : ControllerBase
         }
     }
     
-    private static int? ExtractNumeroMacchina(string codice)
-    {
-        var numStr = codice.Replace("M0", "").Replace("M", "");
-        return int.TryParse(numStr, out var n) ? n : null;
-    }
-
     /// <summary>
     /// 🚀 CARICA SUL GANTT - Auto-scheduler intelligente v1.31
     /// Assegna automaticamente una commessa alla macchina con minore carico
@@ -1084,11 +1079,11 @@ public class PianificazioneController : ControllerBase
             foreach (var row in plcRows)
             {
                 // Codice macchina es. "M01" → NumeroMacchina = 1
-                var codiceSenzaM = row.Macchina.Codice.Replace("M", "").Replace("m", "");
-                if (int.TryParse(codiceSenzaM, out var num))
+                var num = MacchinaCodiceHelper.ExtractNumero(row.Macchina.Codice);
+                if (num.HasValue)
                 {
-                    lookup[num] = (row.CicliFatti, row.QuantitaDaProdurre);
-                    _logger.LogDebug("PLC avanzamento Gantt: Macchina {Num} → {Fatti}/{Tot} cicli", num, row.CicliFatti, row.QuantitaDaProdurre);
+                    lookup[num.Value] = (row.CicliFatti, row.QuantitaDaProdurre);
+                    _logger.LogDebug("PLC avanzamento Gantt: Macchina {Num} → {Fatti}/{Tot} cicli", num.Value, row.CicliFatti, row.QuantitaDaProdurre);
                 }
                 else
                 {

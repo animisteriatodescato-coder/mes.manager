@@ -910,6 +910,7 @@ Parametri principali: `Label`, `Value`/`ValueChanged` (string hex), `Palette` (L
 | Default impostazioni produzione | `Domain/Constants/ImpostazioniProduzioneDefaults.cs` → usare entity/DTO default, mai duplicare `90/8/5` |
 | Default calendario lavoro | `Domain/Constants/CalendarioLavoroDefaults.cs` → usare entity/DTO default, mai duplicare `lun-ven 08:00-17:00` |
 | CRUD festivi produzione | `IFestiviAppService` / `FestiviAppService` → controller solo orchestration + ricalcolo, non mapping EF duplicato |
+| Parsing codici macchina C# | `Application/Utilities/MacchinaCodiceHelper.cs` → usare per `M001/M01/M1` ↔ numero, mai duplicare `Replace("M", "")` |
 | Pannello impostazioni griglia | `<GridSettingsPanel @bind-Settings="settings" />` |
 | Servizio allegati per nuova entità | `: AllegatoFileServiceBase` in `Application/Services/` |
 | Path di rete / MIME type allegati | `ConvertNetworkPath()` / `GetMimeType()` dalla base |

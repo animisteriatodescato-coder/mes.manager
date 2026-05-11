@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.102";
+    public const string Current = "1.65.103";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.102: rami morti festivi engine rimossi
+    public const string Display = "v" + Current; // v1.65.103: utility codici macchina centralizzata
 }

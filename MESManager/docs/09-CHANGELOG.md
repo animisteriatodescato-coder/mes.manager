@@ -4,7 +4,54 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.102
+## 🔖 Versione Corrente: v1.65.103
+
+---
+
+## 🔖 v1.65.103 — Utility codici macchina centralizzata
+
+**Data**: 11 Maggio 2026
+
+### 🧱 Refactoring
+
+- **Fonte unica parsing codici macchina C#**: introdotto `MacchinaCodiceHelper` per convertire formati `M001`, `M01`, `M1`, `001`, `1`.
+- **Duplicazioni rimosse**: `PianificazioneController` e `PlcAppService` non duplicano più `Replace("M", "")` / parsing manuale.
+- **Nessuna modifica funzionale**: output numerico e formato display a due cifre restano invariati.
+
+#### File modificati
+- `MESManager.Application/Utilities/MacchinaCodiceHelper.cs` — nuova utility centralizzata
+- `MESManager.Infrastructure/Services/PlcAppService.cs` — parsing/display macchina via helper
+- `MESManager.Web/Controllers/PianificazioneController.cs` — parsing macchina via helper
+- `docs/04-ARCHITETTURA.md` — pattern centralizzato
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.102 → 1.65.103
+- `docs/09-CHANGELOG.md` — changelog v1.65.103
+
+---
+
+## 🔖 v1.65.102 — Tab Aggiornamento Prezzi + Warning Lotto Minimo
+
+**Data**: 12 Maggio 2026
+
+### ✨ Nuove funzionalità
+
+#### Tab 5 "Aggiornamento Prezzi" in CatalogoPreventivi
+- Nuovo tab dedicato alla creazione rapida di preventivi partendo dal catalogo articoli
+- Il **codice articolo** è il campo master: selezionandolo, tutti i campi vengono auto-compilati dall'Anime catalog (descrizione, figure, peso anima, tipo sabbia, tipo vernice, cliente)
+- Matching tipo sabbia/vernice per nome o codice (case-insensitive)
+- Riepilogo calcolo in tempo reale con tutti i lotti
+- Alert inline sui dati mancanti nel catalogo (campo per campo), con possibilità di completarli manualmente
+- Bottone salva che crea/aggiorna il preventivo in archivio
+
+#### Warning Lotto Minimo in CommesseAperte
+- Banner di avviso arancione visualizzato quando esistono commesse con `QuantitaRichiesta < Imballo` (lotto minimo)
+- Bottone "Visualizza dettaglio" apre un dialog con tabella riepilogativa (commessa, articolo, q.tà richiesta vs lotto minimo)
+- Proprietà `SottolottoMinimo` aggiunta a `CommessaDto` come computed property lato Blazor
+
+#### File modificati
+- `MESManager.Application/DTOs/CommessaDto.cs` — +prop `SottolottoMinimo` (computed)
+- `MESManager.Web/Components/Pages/Programma/CommesseAperte.razor` — banner + dialog lotto minimo
+- `MESManager.Web/Components/Pages/Preventivi/CatalogoPreventivi.razor` — Tab 5 completo
+- `MESManager.Web/Constants/AppVersion.cs` — versione 1.65.102
 
 ---
 
