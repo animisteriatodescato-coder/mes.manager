@@ -749,6 +749,27 @@ h1:focus {
     border-color: #4a4a6a !important;
 }
 
+/* Dark mode: asse date/ore Vis-Timeline del Gantt storico.
+   Vis-Timeline CSS e' caricato dopo app.css: serve specificita' + !important. */
+.mud-theme-dark .gantt-storico-vis .vis-time-axis .vis-text,
+.mud-theme-dark .gantt-storico-vis .vis-time-axis .vis-text.vis-major,
+.mud-theme-dark .gantt-storico-vis .vis-time-axis .vis-text.vis-minor {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+}
+
+.mud-theme-dark .gantt-storico-vis .vis-panel.vis-top,
+.mud-theme-dark .gantt-storico-vis .vis-panel.vis-center,
+.mud-theme-dark .gantt-storico-vis .vis-panel.vis-left,
+.mud-theme-dark .gantt-storico-vis .vis-panel.vis-left.vis-top {
+    background-color: rgba(18, 20, 31, 0.92) !important;
+}
+
+.mud-theme-dark .gantt-storico-vis .vis-labelset .vis-label,
+.mud-theme-dark .gantt-storico-vis .vis-labelset .vis-label .vis-inner {
+    color: #ffffff !important;
+}
+
 /* Label print dialog — sempre bianco indipendente dal tema (BIBBIA: .mud-theme-dark) */
 .mud-theme-dark .label-card {
     background: white !important;

@@ -4,7 +4,24 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.98
+## 🔖 Versione Corrente: v1.65.99
+
+---
+
+## 🔖 v1.65.99 — Label Gantt storico leggibili in dark mode
+
+**Data**: 11 Maggio 2026
+
+### 🐛 Fix
+
+- **Gantt storico dark mode**: rese bianche le label di date, ore e macchine della timeline Vis-Timeline quando il tema scuro è attivo.
+- **Cache CSS**: aggiornato cache-bust di `app.css` per forzare il caricamento della correzione lato browser.
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — override dark mode per asse temporale Vis-Timeline
+- `MESManager.Web/Components/App.razor` — cache-bust `app.css`
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.98 → 1.65.99
+- `docs/09-CHANGELOG.md` — changelog v1.65.99
 
 ---
 
