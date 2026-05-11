@@ -31,27 +31,7 @@ public interface IPianificazioneEngineService
     /// Ottiene i festivi come HashSet per calcoli rapidi.
     /// </summary>
     Task<HashSet<DateOnly>> GetFestiviSetAsync();
-    
-    /// <summary>
-    /// Ottiene la lista dei festivi.
-    /// </summary>
-    Task<List<FestivoDto>> GetFestiviAsync();
-    
-    /// <summary>
-    /// Aggiunge un festivo.
-    /// </summary>
-    Task<FestivoDto> AddFestivoAsync(CreateFestivoRequest request);
-    
-    /// <summary>
-    /// Rimuove un festivo.
-    /// </summary>
-    Task<bool> DeleteFestivoAsync(int id);
-    
-    /// <summary>
-    /// Inizializza i festivi standard italiani per un anno.
-    /// </summary>
-    Task<List<FestivoDto>> InizializzaFestiviStandardAsync(int anno);
-    
+
     /// <summary>
     /// Suggerisce la macchina migliore per una commessa (earliest completion time).
     /// </summary>

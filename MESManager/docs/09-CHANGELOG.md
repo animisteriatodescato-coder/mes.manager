@@ -4,7 +4,25 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.101
+## 🔖 Versione Corrente: v1.65.102
+
+---
+
+## 🔖 v1.65.102 — Rami morti festivi rimossi dall'engine
+
+**Data**: 11 Maggio 2026
+
+### 🧹 Cleanup
+
+- **PianificazioneEngine più focalizzato**: rimossi i metodi CRUD festivi non referenziati da `IPianificazioneEngineService` e `PianificazioneEngineService`.
+- **Responsabilità unica**: la gestione dei festivi resta in `IFestiviAppService`; l'engine mantiene solo `GetFestiviSetAsync()` perché serve ai calcoli calendario.
+- **Nessun endpoint modificato**: le API pubbliche dei festivi restano quelle di `PianificazioneController`.
+
+#### File modificati
+- `MESManager.Application/Interfaces/IPianificazioneEngineService.cs` — rimossi metodi festivi non usati
+- `MESManager.Infrastructure/Services/PianificazioneEngineService.cs` — rimossi duplicati CRUD/init festivi e helper pasqua collegato
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.101 → 1.65.102
+- `docs/09-CHANGELOG.md` — changelog v1.65.102
 
 ---
 
