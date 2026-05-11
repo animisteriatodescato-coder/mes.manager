@@ -16,6 +16,7 @@ public class PlaywrightTestBase : IAsyncLifetime
     
     private readonly List<string> _consoleErrors = new();
     private readonly List<string> _pageErrors = new();
+    private readonly List<string> _httpErrors = new();
     private Process? _webAppProcess;
 
     private static readonly string[] IgnoredErrorSnippets =
@@ -127,6 +128,14 @@ public class PlaywrightTestBase : IAsyncLifetime
                 _pageErrors.Add($"Page Error: {exception}");
             }
         };
+
+        Page.Response += (_, response) =>
+        {
+            if (response.Status >= 400)
+            {
+                _httpErrors.Add($"HTTP {response.Status}: {response.Url}");
+            }
+        };
     }
 
     /// <summary>
@@ -154,11 +163,11 @@ public class PlaywrightTestBase : IAsyncLifetime
         // Cattura screenshot se ci sono errori
         var testName = GetCurrentTestName();
         
-        if (_consoleErrors.Count > 0 || _pageErrors.Count > 0)
+        if (_consoleErrors.Count > 0 || _pageErrors.Count > 0 || _httpErrors.Count > 0)
         {
             await CaptureFailureArtifacts(testName);
             
-            var allErrors = string.Join(Environment.NewLine, _consoleErrors.Concat(_pageErrors));
+            var allErrors = string.Join(Environment.NewLine, _consoleErrors.Concat(_pageErrors).Concat(_httpErrors));
             throw new Exception($"Test failed with console/page errors:{Environment.NewLine}{allErrors}");
         }
 
@@ -187,7 +196,7 @@ public class PlaywrightTestBase : IAsyncLifetime
 
         // Salva errori console in un file
         var errorsPath = Path.Combine(outputDir, "errors.txt");
-        var allErrors = string.Join(Environment.NewLine + "---" + Environment.NewLine, _consoleErrors.Concat(_pageErrors));
+        var allErrors = string.Join(Environment.NewLine + "---" + Environment.NewLine, _consoleErrors.Concat(_pageErrors).Concat(_httpErrors));
         await File.WriteAllTextAsync(errorsPath, allErrors);
 
         Console.WriteLine($"Artifacts saved to: {outputDir}");
@@ -202,9 +211,9 @@ public class PlaywrightTestBase : IAsyncLifetime
 
     protected Task AssertNoConsoleErrors()
     {
-        if (_consoleErrors.Count > 0)
+        if (_consoleErrors.Count > 0 || _httpErrors.Count > 0)
         {
-            throw new Exception($"Console errors detected: {string.Join(", ", _consoleErrors)}");
+            throw new Exception($"Console errors detected: {string.Join(", ", _consoleErrors.Concat(_httpErrors))}");
         }
         return Task.CompletedTask;
     }

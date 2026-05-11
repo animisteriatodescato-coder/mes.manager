@@ -16,15 +16,16 @@
     <MudPaper Class="settings-panel toolbar-sticky pa-2 mb-1" Elevation="1">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
             
-            <MudSelect T="string" Label="Colonna filtro" @bind-Value="selectedFilterColumn" 
-                      data-testid="select-plc-storico-colonna"
-                      Variant="Variant.Outlined" Margin="Margin.Dense" Style="width: 200px;">
-                <MudSelectItem T="string" Value="@("")">Nessun filtro</MudSelectItem>
-                <MudSelectItem T="string" Value="@("macchina")">Macchina</MudSelectItem>
-                <MudSelectItem T="string" Value="@("operatore")">Operatore</MudSelectItem>
-                <MudSelectItem T="string" Value="@("stato")">Stato</MudSelectItem>
-                <MudSelectItem T="string" Value="@("commessa")">Commessa</MudSelectItem>
-            </MudSelect>
+            <div data-testid="select-plc-storico-colonna" style="width: 200px;">
+                <MudSelect T="string" Label="Colonna filtro" @bind-Value="selectedFilterColumn"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Style="width: 200px;">
+                    <MudSelectItem T="string" Value="@("")">Nessun filtro</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("macchina")">Macchina</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("operatore")">Operatore</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("stato")">Stato</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("commessa")">Commessa</MudSelectItem>
+                </MudSelect>
+            </div>
             
             @if (!string.IsNullOrEmpty(selectedFilterColumn))
             {

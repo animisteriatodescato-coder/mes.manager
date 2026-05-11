@@ -11,6 +11,19 @@ namespace MESManager.Web.Controllers
     [Authorize]
     public class AllegatiAnimaController : ControllerBase
     {
+        private static readonly byte[] TransparentPreviewPng =
+        [
+            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+            0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+            0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+            0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
+            0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41,
+            0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
+            0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00,
+            0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
+            0x42, 0x60, 0x82
+        ];
+
         private readonly AllegatiAnimaService _allegatiService;
         private readonly IAllegatoArticoloService _allegatoArticoloService;
         private readonly ILogger<AllegatiAnimaController> _logger;
@@ -134,6 +147,7 @@ namespace MESManager.Web.Controllers
         public async Task<IActionResult> GetPreviewFoto(string codiceArticolo, [FromQuery] int n = 2)
         {
             _logger.LogDebug("GET /api/AllegatiAnima/preview-foto/{CodiceArticolo}?n={N} - START", codiceArticolo, n);
+            Response.Headers["Cache-Control"] = "no-store";
 
             try
             {
@@ -147,7 +161,7 @@ namespace MESManager.Web.Controllers
                     _logger.LogInformation(
                         "GET preview-foto/{CodiceArticolo}: nessuna foto con Priorita={N}",
                         codiceArticolo, n);
-                    return NotFound();
+                    return EmptyPreview();
                 }
 
                 _logger.LogDebug(
@@ -161,11 +175,9 @@ namespace MESManager.Web.Controllers
                     _logger.LogWarning(
                         "GET preview-foto/{CodiceArticolo}: file non trovato su disco per Id={Id}, Path={Path}",
                         codiceArticolo, foto.Id, foto.PathFile);
-                    return NotFound();
+                    return EmptyPreview();
                 }
 
-                // no-cache: il JS già usa _t=Date.now() come cache-buster -> non serve cache browser
-                Response.Headers["Cache-Control"] = "no-store";
                 return File(fileResult.Value.Content, fileResult.Value.ContentType, fileResult.Value.FileName);
             }
             catch (Exception ex)
@@ -174,6 +186,9 @@ namespace MESManager.Web.Controllers
                 return StatusCode(500);
             }
         }
+
+        private static FileContentResult EmptyPreview()
+            => new(TransparentPreviewPng, "image/png");
 
         /// <summary>
         /// Upload di un nuovo allegato

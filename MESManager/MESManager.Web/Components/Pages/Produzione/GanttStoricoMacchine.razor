@@ -48,7 +48,10 @@
                 Carica
             </MudButton>
 
-            <MudSwitch @bind-Value="_autoRefresh" Color="Color.Secondary"
+            <MudSwitch T="bool"
+                       Value="_autoRefresh"
+                       ValueChanged="OnAutoRefreshChanged"
+                       Color="Color.Secondary"
                        Label="Auto-refresh 30s"
                        data-testid="gantt-storico-autorefresh" />
 
@@ -390,6 +393,7 @@
     private void UpdateRefreshTimer()
     {
         _refreshTimer?.Dispose();
+        _refreshTimer = null;
         if (_autoRefresh && !_disposed)
         {
             _refreshTimer = new Timer(async _ =>
@@ -397,6 +401,17 @@
                 if (!_disposed)
                     await InvokeAsync(LoadData);
             }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+        }
+    }
+
+    private async Task OnAutoRefreshChanged(bool value)
+    {
+        _autoRefresh = value;
+        UpdateRefreshTimer();
+
+        if (_autoRefresh && !_loading)
+        {
+            await LoadData();
         }
     }
 

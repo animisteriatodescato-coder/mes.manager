@@ -4,7 +4,33 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.90
+## 🔖 Versione Corrente: v1.65.91
+
+---
+
+## 🔖 v1.65.91 — Fix Gantt storico auto-refresh e preview foto
+
+**Data**: 11 Maggio 2026
+
+### 🐛 Bug Fix / Hardening UI
+
+- **Auto-refresh Gantt storico**: lo switch avvia subito il timer e forza un primo caricamento quando viene attivato, senza attendere un caricamento manuale successivo.
+- **Preview foto articoli opzionali**: l'endpoint `preview-foto` restituisce un placeholder trasparente per foto mancanti o file non presenti su disco, evitando 404 ripetuti nella console browser.
+- **PLC storico E2E stabile**: il selettore test del filtro colonna è stato spostato su un wrapper visibile, evitando click Playwright sull'input hidden interno di MudBlazor.
+- **Diagnostica E2E HTTP**: gli errori HTTP >= 400 vengono salvati negli artifact Playwright con URL completo, così i futuri 404 non restano anonimi.
+
+### 🧭 Note operative
+
+- Nessuna rotta, tabella, endpoint pubblico o logica business modificata.
+- Il comportamento visivo resta invariato: quando una foto opzionale manca, la griglia continua a mostrare il fallback previsto dal client.
+
+#### File modificati
+- `MESManager.Web/Components/Pages/Produzione/GanttStoricoMacchine.razor` — gestione esplicita cambio switch auto-refresh
+- `MESManager.Web/Components/Pages/Produzione/PlcStorico.razor` — test id del filtro colonna su elemento visibile
+- `MESManager.Web/Controllers/AllegatiAnimaController.cs` — placeholder immagine per preview assenti
+- `tests/MESManager.E2E/PlaywrightTestBase.cs` — diagnostica URL per risposte HTTP di errore
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.90 → 1.65.91
+- `docs/09-CHANGELOG.md` — changelog v1.65.91
 
 ---
 

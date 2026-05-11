@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.90";
+    public const string Current = "1.65.91";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.90: centralizzazione config e DI lotto 2
+    public const string Display = "v" + Current; // v1.65.91: fix Gantt storico auto-refresh e preview foto
 }
