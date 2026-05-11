@@ -554,7 +554,7 @@ options.Lockout.MaxFailedAccessAttempts = 5;
 **Program.cs**:
 ```csharp
 // Infrastructure
-builder.Services.AddDbContextFactory<MesManagerDbContext>();
+builder.Services.AddInfrastructure(connectionString);
 
 // Application Services
 builder.Services.AddScoped<ICommessaAppService, CommessaAppService>();
@@ -580,6 +580,8 @@ builder.Services.AddMudServices();
 // SignalR
 builder.Services.AddSignalR();
 ```
+
+**Regola DbContext DI**: `MesManagerDbContext` deve essere registrato una sola volta tramite `AddInfrastructure(connectionString)`. `Program.cs` non deve aggiungere una seconda `AddDbContext<MesManagerDbContext>()`, altrimenti Web, worker e Identity possono divergere su lifetime/opzioni EF.
 
 ---
 
@@ -685,11 +687,13 @@ ITabelleService (singleton)
   └── TabelleService
         ├── Carica da: {ContentRootPath}/tabelle-config.json  [se esiste]
         ├── Fallback:  LookupTables default hardcoded
-        ├── Al salvataggio: scrive JSON + chiama LookupTables.Aggiorna()
+        ├── Al salvataggio: sotto lock scrive JSON + chiama LookupTables.Aggiorna()
         └── LookupTables static resta fonte di verità per AnimeService/CommessaAppService
 ```
 
 **Regola**: MAI leggere `LookupTables.Colla` direttamente nei Controller/Razor. Usare `ITabelleService.GetCollaList()` via DI o via `GET /api/Tabelle/colla`.
+
+**Regola di mutazione**: MAI modificare direttamente `LookupTables.Colla`, `Vernice`, `Sabbia`, `Imballo` o `TipologiaNc`. Le static restano solo compatibilità legacy; ogni aggiornamento deve passare da `TabelleService`, che serializza il salvataggio e sostituisce i dizionari in modo atomico.
 
 **API endpoints**:
 - `GET  /api/Tabelle/{colla|vernice|sabbia|imballo}` → lista lookup

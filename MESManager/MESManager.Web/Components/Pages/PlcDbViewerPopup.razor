@@ -192,10 +192,10 @@
     
     protected override async Task OnInitializedAsync()
     {
-        await Task.WhenAll(
-            CaricaDb55Async(),
-            CaricaDb56Async()
-        );
+        // PlcRecipeWriterService usa MesManagerDbContext scoped: caricare in sequenza evita
+        // operazioni EF parallele sullo stesso context in Blazor Server.
+        await CaricaDb55Async();
+        await CaricaDb56Async();
     }
     
     private async Task CaricaDb55Async()

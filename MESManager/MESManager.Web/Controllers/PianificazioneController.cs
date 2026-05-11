@@ -753,6 +753,7 @@ public class PianificazioneController : ControllerBase
     /// <summary>
     /// DEBUG: Verifica lo stato delle commesse
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpGet("debug-commesse")]
     public async Task<IActionResult> DebugCommesse()
     {
@@ -779,6 +780,7 @@ public class PianificazioneController : ControllerBase
     /// 🔍 DEBUG v1.30.8: Test FILTRO ESATTO usato da ProgrammaMacchine.razor
     /// Replica identico il WHERE client-side per verificare cosa passa
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpGet("test-filtro-programma")]
     public async Task<IActionResult> TestFiltroProgramma()
     {

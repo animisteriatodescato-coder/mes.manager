@@ -73,7 +73,6 @@ public static class PaginaPolicy
             new("cat-ricette",        "Ricette",         "/cataloghi/ricette",           CatRicette),
             new("cat-preventivi",     "Preventivi",      "/preventivi",                 CatPreventivi),
             new("cat-non-conformita", "Non Conformità",  "/cataloghi/non-conformita",   CatNonConformita),
-            new("cat-non-conformita", "Non Conformità",  "/cataloghi/non-conformita",       CatNonConformita),
         ]),
         new("Manutenzioni", ["Admin", "Manutenzione"],
         [

@@ -4,7 +4,38 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.88
+## 🔖 Versione Corrente: v1.65.89
+
+---
+
+## 🔖 v1.65.89 — Lotto 1 consolidamento architetturale
+
+**Data**: 11 Maggio 2026
+
+### 🧱 Architettura
+
+- **Solution completa**: aggiunto `MESManager.Sync` alla solution per evitare drift tra codice compilato localmente e progetti effettivamente mantenuti.
+- **DbContext centralizzato**: rimossa la registrazione duplicata di `MesManagerDbContext` da `Program.cs`; la configurazione passa da `AddInfrastructure(connectionString)`.
+- **Concurrency EF ridotta**: il popup PLC carica DB55/DB56 in sequenza perché i servizi coinvolti usano contesto scoped non thread-safe.
+- **Lookup tables più sicure**: salvataggio lookup serializzato, persistenza JSON sotto lock e aggiornamento statico tramite sostituzione atomica dei dizionari.
+
+### 🐛 Bug Fix / Hardening
+
+- **Policy duplicate**: rimossa voce duplicata `cat-non-conformita` da `PaginaPolicy`.
+- **CSS MudBlazor fragile**: sostituito selettore `.mud-nav-group-header` non valido con selettore compatibile con il markup reale MudBlazor.
+- **Endpoint diagnostici protetti**: endpoint debug/test di pianificazione e PLC ora richiedono ruolo `Admin`.
+
+#### File modificati
+- `MESManager.sln` — aggiunto `MESManager.Sync`
+- `MESManager.Web/Program.cs` — rimossa doppia registrazione DbContext
+- `MESManager.Web/Components/Pages/PlcDbViewerPopup.razor` — caricamento DB PLC sequenziale
+- `MESManager.Domain/Constants/LookupTables.cs` — aggiornamento lookup atomico
+- `MESManager.Web/Services/TabelleService.cs` — salvataggi lookup centralizzati sotto lock
+- `MESManager.Web/Constants/PaginaPolicy.cs` — rimozione policy duplicata
+- `MESManager.Web/Components/Layout/MainLayout.razor` — selettore MudBlazor aggiornato
+- `MESManager.Web/Controllers/PianificazioneController.cs` — endpoint diagnostici Admin-only
+- `MESManager.Web/Controllers/PlcController.cs` — endpoint test Admin-only
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.88 → 1.65.89
 
 ---
 

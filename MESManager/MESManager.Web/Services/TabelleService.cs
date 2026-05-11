@@ -51,41 +51,20 @@ public class TabelleService : ITabelleService
 
     // ─── Scrittura ─────────────────────────────────────────────────────────
 
-    public Task SalvaCollaAsync(List<LookupItem> items)
-    {
-        _colla = items.ToDictionary(i => i.Codice, i => i.Descrizione);
-        SincronizzaStatico();
-        return PersistiAsync();
-    }
+    public Task SalvaCollaAsync(List<LookupItem> items) =>
+        SalvaLookupAsync(items, next => _colla = next);
 
-    public Task SalvaVerniceAsync(List<LookupItem> items)
-    {
-        _vernice = items.ToDictionary(i => i.Codice, i => i.Descrizione);
-        SincronizzaStatico();
-        return PersistiAsync();
-    }
+    public Task SalvaVerniceAsync(List<LookupItem> items) =>
+        SalvaLookupAsync(items, next => _vernice = next);
 
-    public Task SalvaSabbiaAsync(List<LookupItem> items)
-    {
-        _sabbia = items.ToDictionary(i => i.Codice, i => i.Descrizione);
-        SincronizzaStatico();
-        return PersistiAsync();
-    }
+    public Task SalvaSabbiaAsync(List<LookupItem> items) =>
+        SalvaLookupAsync(items, next => _sabbia = next);
 
-    public Task SalvaImballoAsync(List<LookupItem> items)
-    {
-        _imballo = items.ToDictionary(i => i.Codice, i => i.Descrizione);
-        // Aggiorna anche ImballoInt (compatibilità legacy usata da AnimeService)
-        SincronizzaStatico();
-        return PersistiAsync();
-    }
+    public Task SalvaImballoAsync(List<LookupItem> items) =>
+        SalvaLookupAsync(items, next => _imballo = next);
 
-    public Task SalvaTipologiaNcAsync(List<LookupItem> items)
-    {
-        _tipologiaNc = items.ToDictionary(i => i.Codice, i => i.Descrizione);
-        SincronizzaStatico();
-        return PersistiAsync();
-    }
+    public Task SalvaTipologiaNcAsync(List<LookupItem> items) =>
+        SalvaLookupAsync(items, next => _tipologiaNc = next);
 
     // ─── Privati ────────────────────────────────────────────────────────────
 
@@ -134,27 +113,36 @@ public class TabelleService : ITabelleService
         LookupTables.Aggiorna(_colla, _vernice, _sabbia, _imballo, _tipologiaNc);
     }
 
-    private async Task PersistiAsync()
+    private async Task SalvaLookupAsync(List<LookupItem> items, Action<Dictionary<string, string>> assign)
     {
+        var next = items.ToDictionary(i => i.Codice, i => i.Descrizione);
+
         await _lock.WaitAsync();
         try
         {
-            var cfg = new TabelleConfig
-            {
-                Colla        = _colla,
-                Vernice      = _vernice,
-                Sabbia       = _sabbia,
-                Imballo      = _imballo,
-                TipologiaNc  = _tipologiaNc
-            };
-            var json = JsonSerializer.Serialize(cfg, _jsonOpts);
-            await File.WriteAllTextAsync(_filePath, json);
-            _logger.LogInformation("TabelleService: salvato su {File}", _filePath);
+            assign(next);
+            SincronizzaStatico();
+            await PersistiCoreAsync();
         }
         finally
         {
             _lock.Release();
         }
+    }
+
+    private async Task PersistiCoreAsync()
+    {
+        var cfg = new TabelleConfig
+        {
+            Colla        = _colla,
+            Vernice      = _vernice,
+            Sabbia       = _sabbia,
+            Imballo      = _imballo,
+            TipologiaNc  = _tipologiaNc
+        };
+        var json = JsonSerializer.Serialize(cfg, _jsonOpts);
+        await File.WriteAllTextAsync(_filePath, json);
+        _logger.LogInformation("TabelleService: salvato su {File}", _filePath);
     }
 
     private static List<LookupItem> ToDtoList(Dictionary<string, string> dict) =>

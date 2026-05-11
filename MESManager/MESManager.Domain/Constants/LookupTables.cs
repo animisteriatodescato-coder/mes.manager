@@ -8,6 +8,8 @@ namespace MESManager.Domain.Constants;
 /// </summary>
 public static class LookupTables
 {
+    private static readonly object SyncRoot = new();
+
     /// <summary>
     /// Aggiorna i dizionari in-memory con i valori caricati da TabelleService.
     /// Chiamato all'avvio e ad ogni salvataggio dall'utente.
@@ -19,30 +21,23 @@ public static class LookupTables
         Dictionary<string, string> imballo,
         Dictionary<string, string>? tipologiaNc = null)
     {
-        Colla.Clear();
-        foreach (var kv in colla)   Colla[kv.Key]   = kv.Value;
-
-        Vernice.Clear();
-        foreach (var kv in vernice)  Vernice[kv.Key]  = kv.Value;
-
-        Sabbia.Clear();
-        foreach (var kv in sabbia)   Sabbia[kv.Key]   = kv.Value;
-
-        Imballo.Clear();
-        foreach (var kv in imballo)  Imballo[kv.Key]  = kv.Value;
-
-        // Aggiorna anche ImballoInt (compatibilità legacy con AnimeService)
-        ImballoInt.Clear();
+        var nextImballoInt = new Dictionary<int, string>();
         foreach (var kv in imballo)
         {
             if (int.TryParse(kv.Key, out var k))
-                ImballoInt[k] = kv.Value;
+                nextImballoInt[k] = kv.Value;
         }
 
-        if (tipologiaNc != null)
+        lock (SyncRoot)
         {
-            TipologiaNc.Clear();
-            foreach (var kv in tipologiaNc) TipologiaNc[kv.Key] = kv.Value;
+            Colla = new Dictionary<string, string>(colla);
+            Vernice = new Dictionary<string, string>(vernice);
+            Sabbia = new Dictionary<string, string>(sabbia);
+            Imballo = new Dictionary<string, string>(imballo);
+            ImballoInt = nextImballoInt;
+
+            if (tipologiaNc != null)
+                TipologiaNc = new Dictionary<string, string>(tipologiaNc);
         }
     }
 
@@ -135,7 +130,7 @@ public static class LookupTables
     /// </summary>
     public static List<LookupItem> ToList(Dictionary<string, string> lookup)
     {
-        return lookup.Select(kv => new LookupItem { Codice = kv.Key, Descrizione = kv.Value }).ToList();
+        return lookup.ToArray().Select(kv => new LookupItem { Codice = kv.Key, Descrizione = kv.Value }).ToList();
     }
 }
 

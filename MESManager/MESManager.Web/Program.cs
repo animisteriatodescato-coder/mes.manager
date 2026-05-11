@@ -197,13 +197,6 @@ var backupPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "SyncB
 builder.Services.AddMagoSync(magoOptions, backupPath);
 
 // Identity
-builder.Services.AddDbContext<MesManagerDbContext>(options =>
-    options.UseSqlServer(connectionString, sqlOptions => 
-        sqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(30),
-            errorNumbersToAdd: null)));
-
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     // Policy password più sicura

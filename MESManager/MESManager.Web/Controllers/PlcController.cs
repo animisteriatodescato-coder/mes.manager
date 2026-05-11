@@ -304,6 +304,7 @@ public class PlcController : ControllerBase
     /// Utile per verificare che la generazione PDF funzioni indipendentemente dall'FTP.
     /// GET /api/plc/test-pdf/{codiceArticolo}
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpGet("test-pdf/{codiceArticolo}")]
     public async Task<IActionResult> TestPdfGeneration(string codiceArticolo)
     {
@@ -326,6 +327,7 @@ public class PlcController : ControllerBase
     /// POST /api/plc/test-ftp-upload
     /// Body: { macchinaId, codiceArticolo, saleOrdId }
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPost("test-ftp-upload")]
     public async Task<ActionResult<AnimeFtpResult>> TestFtpUpload([FromBody] TestFtpRequest request)
     {
