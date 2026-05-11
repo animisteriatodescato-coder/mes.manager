@@ -18,6 +18,7 @@ public class PianificazioneController : ControllerBase
     private readonly MesManagerDbContext _context;
     private readonly IPianificazioneService _pianificazioneService;
     private readonly IPianificazioneEngineService _engineService;
+    private readonly IFestiviAppService _festiviService;
     private readonly PianificazioneNotificationService _notificationService;
     private readonly ILogger<PianificazioneController> _logger;
 
@@ -25,12 +26,14 @@ public class PianificazioneController : ControllerBase
         MesManagerDbContext context,
         IPianificazioneService pianificazioneService,
         IPianificazioneEngineService engineService,
+        IFestiviAppService festiviService,
         PianificazioneNotificationService notificationService,
         ILogger<PianificazioneController> logger)
     {
         _context = context;
         _pianificazioneService = pianificazioneService;
         _engineService = engineService;
+        _festiviService = festiviService;
         _notificationService = notificationService;
         _logger = logger;
     }
@@ -495,19 +498,7 @@ public class PianificazioneController : ControllerBase
     {
         try
         {
-            var festivi = await _context.Festivi
-                .OrderBy(f => f.Data)
-                .Select(f => new FestivoDto
-                {
-                    Id = f.Id,
-                    Data = f.Data,
-                    Descrizione = f.Descrizione,
-                    Ricorrente = f.Ricorrente,
-                    Anno = f.Anno
-                })
-                .ToListAsync();
-
-            return Ok(festivi);
+            return Ok(await _festiviService.GetListaAsync());
         }
         catch (Exception ex)
         {
@@ -524,30 +515,12 @@ public class PianificazioneController : ControllerBase
     {
         try
         {
-            var festivo = new Festivo
-            {
-                Id = Guid.NewGuid(),
-                Data = request.Data,
-                Descrizione = request.Descrizione,
-                Ricorrente = request.Ricorrente,
-                Anno = request.Ricorrente ? null : request.Data.Year,
-                DataCreazione = DateTime.UtcNow
-            };
-
-            _context.Festivi.Add(festivo);
-            await _context.SaveChangesAsync();
+            var festivo = await _festiviService.CreaAsync(request);
 
             // Ricalcola tutte le commesse considerando il nuovo festivo
             await _engineService.RicalcolaTutteCommesseAsync();
 
-            return CreatedAtAction(nameof(GetFestivi), new FestivoDto
-            {
-                Id = festivo.Id,
-                Data = festivo.Data,
-                Descrizione = festivo.Descrizione,
-                Ricorrente = festivo.Ricorrente,
-                Anno = festivo.Anno
-            });
+            return CreatedAtAction(nameof(GetFestivi), festivo);
         }
         catch (Exception ex)
         {
@@ -564,14 +537,12 @@ public class PianificazioneController : ControllerBase
     {
         try
         {
-            var festivo = await _context.Festivi.FindAsync(id);
-            if (festivo == null)
+            if (await _festiviService.GetAsync(id) == null)
             {
                 return NotFound();
             }
 
-            _context.Festivi.Remove(festivo);
-            await _context.SaveChangesAsync();
+            await _festiviService.EliminaAsync(id);
 
             // Ricalcola tutte le commesse
             await _engineService.RicalcolaTutteCommesseAsync();
@@ -594,29 +565,14 @@ public class PianificazioneController : ControllerBase
         try
         {
             // Verifica se esistono già festivi
-            if (await _context.Festivi.AnyAsync())
+            if (await _festiviService.AnyAsync())
             {
                 return BadRequest(new { message = "Festivi già presenti. Eliminarli prima di reinizializzare." });
             }
 
-            var festiviItaliani = new List<Festivo>
-            {
-                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 1, 1), Descrizione = "Capodanno", Ricorrente = true },
-                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 1, 6), Descrizione = "Epifania", Ricorrente = true },
-                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 4, 25), Descrizione = "Festa della Liberazione", Ricorrente = true },
-                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 5, 1), Descrizione = "Festa del Lavoro", Ricorrente = true },
-                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 6, 2), Descrizione = "Festa della Repubblica", Ricorrente = true },
-                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 8, 15), Descrizione = "Ferragosto", Ricorrente = true },
-                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 11, 1), Descrizione = "Tutti i Santi", Ricorrente = true },
-                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 12, 8), Descrizione = "Immacolata Concezione", Ricorrente = true },
-                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 12, 25), Descrizione = "Natale", Ricorrente = true },
-                new() { Id = Guid.NewGuid(), Data = new DateOnly(2000, 12, 26), Descrizione = "Santo Stefano", Ricorrente = true },
-            };
+            var count = await _festiviService.InizializzaItalianiStandardRicorrentiAsync();
 
-            _context.Festivi.AddRange(festiviItaliani);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = $"Inizializzati {festiviItaliani.Count} festivi italiani standard" });
+            return Ok(new { message = $"Inizializzati {count} festivi italiani standard" });
         }
         catch (Exception ex)
         {

@@ -9,6 +9,19 @@ namespace MESManager.Infrastructure.Services;
 public class FestiviAppService : IFestiviAppService
 {
     private readonly MesManagerDbContext _context;
+    private static readonly (int Month, int Day, string Description)[] ItalianStandardRecurringHolidays =
+    [
+        (1, 1, "Capodanno"),
+        (1, 6, "Epifania"),
+        (4, 25, "Festa della Liberazione"),
+        (5, 1, "Festa del Lavoro"),
+        (6, 2, "Festa della Repubblica"),
+        (8, 15, "Ferragosto"),
+        (11, 1, "Tutti i Santi"),
+        (12, 8, "Immacolata Concezione"),
+        (12, 25, "Natale"),
+        (12, 26, "Santo Stefano")
+    ];
 
     public FestiviAppService(MesManagerDbContext context)
     {
@@ -35,14 +48,7 @@ public class FestiviAppService : IFestiviAppService
         var festivo = await _context.Festivi.FindAsync(id);
         if (festivo == null) return null;
 
-        return new FestivoDto
-        {
-            Id = festivo.Id,
-            Data = festivo.Data,
-            Descrizione = festivo.Descrizione,
-            Ricorrente = festivo.Ricorrente,
-            Anno = festivo.Anno
-        };
+        return MapToDto(festivo);
     }
 
     public async Task<FestivoDto> CreaAsync(CreateFestivoRequest request)
@@ -60,14 +66,7 @@ public class FestiviAppService : IFestiviAppService
         _context.Festivi.Add(festivo);
         await _context.SaveChangesAsync();
 
-        return new FestivoDto
-        {
-            Id = festivo.Id,
-            Data = festivo.Data,
-            Descrizione = festivo.Descrizione,
-            Ricorrente = festivo.Ricorrente,
-            Anno = festivo.Anno
-        };
+        return MapToDto(festivo);
     }
 
     public async Task AggiornaAsync(Guid id, CreateFestivoRequest request)
@@ -92,5 +91,40 @@ public class FestiviAppService : IFestiviAppService
 
         _context.Festivi.Remove(festivo);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> AnyAsync()
+    {
+        return await _context.Festivi.AnyAsync();
+    }
+
+    public async Task<int> InizializzaItalianiStandardRicorrentiAsync()
+    {
+        var festiviItaliani = ItalianStandardRecurringHolidays
+            .Select(f => new Festivo
+            {
+                Id = Guid.NewGuid(),
+                Data = new DateOnly(2000, f.Month, f.Day),
+                Descrizione = f.Description,
+                Ricorrente = true
+            })
+            .ToList();
+
+        _context.Festivi.AddRange(festiviItaliani);
+        await _context.SaveChangesAsync();
+
+        return festiviItaliani.Count;
+    }
+
+    private static FestivoDto MapToDto(Festivo festivo)
+    {
+        return new FestivoDto
+        {
+            Id = festivo.Id,
+            Data = festivo.Data,
+            Descrizione = festivo.Descrizione,
+            Ricorrente = festivo.Ricorrente,
+            Anno = festivo.Anno
+        };
     }
 }

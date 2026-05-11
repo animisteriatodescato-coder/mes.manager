@@ -4,7 +4,27 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.100
+## 🔖 Versione Corrente: v1.65.101
+
+---
+
+## 🔖 v1.65.101 — Festivi pianificazione centralizzati
+
+**Data**: 11 Maggio 2026
+
+### 🧱 Refactoring
+
+- **Controller più leggero**: `PianificazioneController` usa `IFestiviAppService` per lista, creazione, eliminazione e inizializzazione dei festivi.
+- **Mapping unico Festivo → DTO**: centralizzato in `FestiviAppService`.
+- **Endpoint invariati**: rotte, payload e ricalcolo scheduling post-modifica restano invariati.
+
+#### File modificati
+- `MESManager.Application/Interfaces/IFestiviAppService.cs` — aggiunti metodi per esistenza e init standard
+- `MESManager.Infrastructure/Services/FestiviAppService.cs` — mapping e init festivi standard centralizzati
+- `MESManager.Web/Controllers/PianificazioneController.cs` — orchestration via servizio applicativo
+- `docs/04-ARCHITETTURA.md` — pattern centralizzato
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.100 → 1.65.101
+- `docs/09-CHANGELOG.md` — changelog v1.65.101
 
 ---
 

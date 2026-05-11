@@ -9,4 +9,6 @@ public interface IFestiviAppService
     Task<FestivoDto> CreaAsync(CreateFestivoRequest request);
     Task AggiornaAsync(Guid id, CreateFestivoRequest request);
     Task EliminaAsync(Guid id);
+    Task<bool> AnyAsync();
+    Task<int> InizializzaItalianiStandardRicorrentiAsync();
 }
