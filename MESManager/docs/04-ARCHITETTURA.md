@@ -549,6 +549,17 @@ options.Lockout.MaxFailedAccessAttempts = 5;
 
 ## 📦 Dependency Injection
 
+### Bootstrap Configurazione Condivisa
+
+Web, Worker e PlcSync devono caricare secrets e connection string solo tramite:
+
+```csharp
+builder.Configuration.AddMesManagerSharedConfiguration(builder.Environment);
+builder.Services.ConfigureMesManagerDatabaseConfiguration(builder.Configuration);
+```
+
+Il metodo è in `MESManager.Infrastructure/Configuration/SharedConfigurationExtensions.cs` e mantiene un solo ordine di precedenza: encrypted secrets → secrets JSON → database legacy → override ambiente.
+
 ### Registrazione Servizi
 
 **Program.cs**:
@@ -582,6 +593,8 @@ builder.Services.AddSignalR();
 ```
 
 **Regola DbContext DI**: `MesManagerDbContext` deve essere registrato una sola volta tramite `AddInfrastructure(connectionString)`. `Program.cs` non deve aggiungere una seconda `AddDbContext<MesManagerDbContext>()`, altrimenti Web, worker e Identity possono divergere su lifetime/opzioni EF.
+
+**Regola PlcSync**: quando serve solo `IDbContextFactory<MesManagerDbContext>` usare `AddMesManagerDbContextFactory(connectionString)` invece di duplicare la configurazione SQL/retry nel processo.
 
 ---
 

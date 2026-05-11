@@ -6,17 +6,21 @@
 
 ## 🗄️ Database - Connection Strings
 
-### File Unico Centralizzato
+### Bootstrap Centralizzato
 
-**TUTTI i progetti leggono da**: `appsettings.Database.json` (root)
+**TUTTI i processi principali leggono la configurazione condivisa tramite**:
+`MESManager.Infrastructure.Configuration.SharedConfigurationExtensions.AddMesManagerSharedConfiguration()`
 
 **Prima** (❌ sbagliato):
 - Connection string in 4 file diversi
 - Ogni modifica = 4 file da aggiornare
 
 **Ora** (✅ corretto):
-- Un solo file: `appsettings.Database.json`
-- Tutti i progetti lo leggono automaticamente
+- Ordine di caricamento unico per Web, Worker e PlcSync
+- `appsettings.Secrets.encrypted` preferito quando presente
+- `appsettings.Secrets.json` come fallback/edit rapido
+- `appsettings.Database.json` resta fallback legacy
+- `appsettings.Database.{Environment}.json` resta override locale non production
 
 ---
 
@@ -66,26 +70,17 @@ sqlcmd -S localhost\SQLEXPRESS01 -d MESManager_Prod -U fab -P password.123 -Q "S
 
 ### Ordine di Caricamento Configurazione
 
-#### Web Application (MESManager.Web)
+#### Web / Worker / PlcSync
 
-L'applicazione Web carica le configurazioni in questo ordine (ultimo vince):
+Web, Worker e PlcSync caricano la configurazione condivisa con lo stesso helper e lo stesso ordine (ultimo vince):
 
 1. `appsettings.json` - Config base
 2. `appsettings.{Environment}.json` - Per ambiente (Development/Production)
 3. `appsettings.Secrets.encrypted` - **Credenziali cifrate DPAPI** (preferito su Windows)
 4. `appsettings.Secrets.json` - **Credenziali in chiaro** (fallback, non in git)
 5. `appsettings.Database.json` - Legacy (deprecato)
-6. Variabili d'ambiente - Per container/cloud
-
-#### Worker Service (MESManager.Worker)
-
-Il Worker carica le configurazioni in questo ordine:
-
-1. `appsettings.json` - Config base Worker
-2. `appsettings.Development.json` - Config Worker per ambiente
-3. **`appsettings.Secrets.json` (root)** - **Credenziali condivise con Web** ⭐ PREFERITO
-4. `appsettings.Database.json` (root) - Fallback legacy
-5. `appsettings.Database.{Environment}.json` - Override ambiente (opzionale)
+6. `appsettings.Database.{Environment}.json` - Override ambiente (solo non production, se presente)
+7. Variabili d'ambiente - Per container/cloud
 
 **⚠️ CRITICO**: Worker e Web **DEVONO** usare lo stesso database per ambiente!
 
@@ -101,7 +96,9 @@ Il Worker carica le configurazioni in questo ordine:
 
 **Errore comune**: Worker usa `appsettings.Database.json` (DB prod) mentre Web usa `appsettings.Secrets.json` (DB dev) → sincronizzazione manuale funziona, automatica fallisce!
 
-**Soluzione**: Worker ora usa stessa logica del Web (vedi [DEPLOY-LESSONS-LEARNED.md - Problema 7](storico/DEPLOY-LESSONS-LEARNED.md#-problema-7-sync-automatica-fallisce-worker-vs-web-database-diversi))
+**Soluzione**: Worker e PlcSync ora usano la stessa logica del Web (vedi [DEPLOY-LESSONS-LEARNED.md - Problema 7](storico/DEPLOY-LESSONS-LEARNED.md#-problema-7-sync-automatica-fallisce-worker-vs-web-database-diversi)).
+
+**Nota `GanttDb`**: è legacy ma ancora attiva per alcuni servizi di import/allegati. Non eliminarla finché `AnimeImportService`, `ArticoloCatalogoService` e `AllegatoArticoloService` non sono migrati o rimossi.
 
 ---
 

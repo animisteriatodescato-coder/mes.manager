@@ -1,35 +1,20 @@
 using MESManager.Application.Interfaces;
-using MESManager.Infrastructure.Data;
+using MESManager.Infrastructure;
+using MESManager.Infrastructure.Configuration;
 using MESManager.PlcSync;
 using MESManager.PlcSync.Services;
-using Microsoft.EntityFrameworkCore;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-// Carica configurazione database condivisa dalla root del progetto
-var solutionRoot = Directory.GetParent(builder.Environment.ContentRootPath)!.FullName;
-var dbConfigPath = Path.Combine(solutionRoot, "appsettings.Database.json");
-var dbConfigEnvPath = Path.Combine(solutionRoot, $"appsettings.Database.{builder.Environment.EnvironmentName}.json");
-
-builder.Configuration.AddJsonFile(dbConfigPath, optional: false, reloadOnChange: true);
-
-// Override locale per ambiente (solo se presente)
-if (!builder.Environment.IsProduction() && File.Exists(dbConfigEnvPath))
-{
-    builder.Configuration.AddJsonFile(dbConfigEnvPath, optional: false, reloadOnChange: true);
-}
+builder.Configuration.AddMesManagerSharedConfiguration(builder.Environment);
 
 // Bind PlcSync settings for options pattern
 builder.Services.Configure<MESManager.PlcSync.Configuration.PlcSyncSettings>(
     builder.Configuration.GetSection("PlcSync"));
 
 // DbContext con factory per supportare Singleton services
-builder.Services.AddDbContextFactory<MesManagerDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("MESManagerDb"), sqlOptions => 
-        sqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(30),
-            errorNumbersToAdd: null)));
+var connectionString = builder.Configuration.GetRequiredMesManagerConnectionString();
+builder.Services.AddMesManagerDbContextFactory(connectionString);
 
 // Servizi PLC - Singleton per Worker Service
 builder.Services.AddSingleton<PlcConnectionService>();

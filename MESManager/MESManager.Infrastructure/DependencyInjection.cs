@@ -10,23 +10,25 @@ namespace MESManager.Infrastructure;
 
 public static class DependencyInjection
 {
+    public static IServiceCollection AddMesManagerDbContextFactory(
+        this IServiceCollection services,
+        string connectionString,
+        ServiceLifetime lifetime = ServiceLifetime.Singleton)
+    {
+        services.AddDbContextFactory<MesManagerDbContext>(options =>
+            ConfigureMesManagerSqlServer(options, connectionString), lifetime);
+
+        return services;
+    }
+
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
     {
         // DbContext
         services.AddDbContext<MesManagerDbContext>(options =>
-            options.UseSqlServer(connectionString, sqlOptions => 
-                sqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: 5,
-                    maxRetryDelay: TimeSpan.FromSeconds(30),
-                    errorNumbersToAdd: null)));
+            ConfigureMesManagerSqlServer(options, connectionString));
 
         // DbContextFactory per operazioni thread-safe
-        services.AddDbContextFactory<MesManagerDbContext>(options =>
-            options.UseSqlServer(connectionString, sqlOptions => 
-                sqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: 5,
-                    maxRetryDelay: TimeSpan.FromSeconds(30),
-                    errorNumbersToAdd: null)), ServiceLifetime.Scoped);
+        services.AddMesManagerDbContextFactory(connectionString, ServiceLifetime.Scoped);
 
         // Repositories
         services.AddScoped<IAnimeRepository, AnimeRepository>();
@@ -76,6 +78,15 @@ public static class DependencyInjection
         // Aggiungi altri servizi qui quando implementati
 
         return services;
+    }
+
+    private static void ConfigureMesManagerSqlServer(DbContextOptionsBuilder options, string connectionString)
+    {
+        options.UseSqlServer(connectionString, sqlOptions =>
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorNumbersToAdd: null));
     }
 }
 

@@ -9,6 +9,7 @@ using MudBlazor.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using MESManager.Infrastructure.Configuration;
 using MESManager.Infrastructure.Data;
 using MESManager.Web.Hubs;
 using MESManager.Web.Services;
@@ -37,53 +38,10 @@ var builder = WebApplication.CreateBuilder(args);
 // 5. appsettings.Database.json (legacy)
 // 6. Variabili d'ambiente (per produzione/container)
 
-var solutionRoot = builder.Environment.IsProduction()
-    ? builder.Environment.ContentRootPath
-    : Directory.GetParent(builder.Environment.ContentRootPath)!.FullName;
-
-// Prima prova con file criptato (più sicuro)
-var encryptedSecretsPath = Path.Combine(solutionRoot, "appsettings.Secrets.encrypted");
-var secretsPath = Path.Combine(solutionRoot, "appsettings.Secrets.json");
-var dbConfigPath = Path.Combine(solutionRoot, "appsettings.Database.json");
-var dbConfigEnvPath = Path.Combine(solutionRoot, $"appsettings.Database.{builder.Environment.EnvironmentName}.json");
-
-if (File.Exists(encryptedSecretsPath))
-{
-    // Decripta e carica in memoria (nessun file temporaneo su disco)
-    // CA1416 ignorato: l'app è Windows-only, usa DPAPI per crittografia
-#pragma warning disable CA1416
-    builder.Configuration.AddEncryptedSecrets(encryptedSecretsPath);
-#pragma warning restore CA1416
-}
-
-// Carica sempre anche il JSON in chiaro (opzionale) — sovrascrive/integra l'encrypted.
-// Permette di aggiungere chiavi (es. OpenAI) senza ricreare il file criptato.
-if (File.Exists(secretsPath))
-{
-    builder.Configuration.AddJsonFile(secretsPath, optional: true, reloadOnChange: true);
-}
-
-if (!File.Exists(encryptedSecretsPath) && !File.Exists(secretsPath) && File.Exists(dbConfigPath))
-{
-    // Legacy fallback
-    builder.Configuration.AddJsonFile(dbConfigPath, optional: false, reloadOnChange: true);
-}
-
-// Override locale per ambiente (solo se presente)
-if (!builder.Environment.IsProduction() && File.Exists(dbConfigEnvPath))
-{
-    builder.Configuration.AddJsonFile(dbConfigEnvPath, optional: false, reloadOnChange: true);
-}
+builder.Configuration.AddMesManagerSharedConfiguration(builder.Environment);
 
 // Configura DatabaseConfiguration per la DI
-builder.Services.Configure<DatabaseConfiguration>(options =>
-{
-    options.MESManagerDb = builder.Configuration.GetConnectionString("MESManagerDb") ?? "";
-    options.MagoDb = builder.Configuration.GetConnectionString("MagoDb") 
-                     ?? builder.Configuration["Mago:ConnectionString"] ?? "";
-    options.AllegatiDb = builder.Configuration.GetConnectionString("AllegatiDb"); // Null se non configurato (fallback a MESManagerDb)
-    // GanttDb non più usato - dati migrati in MESManagerDb
-});
+builder.Services.ConfigureMesManagerDatabaseConfiguration(builder.Configuration);
 
 // Configura FileConfiguration per i percorsi allegati (con valori di default)
 builder.Services.Configure<FileConfiguration>(options =>
@@ -105,8 +63,7 @@ builder.Services.AddControllers()
 builder.Services.AddRazorPages();
 
 // Legge la connection string dal file condiviso
-var connectionString = builder.Configuration.GetConnectionString("MESManagerDb")
-    ?? throw new InvalidOperationException("Connection string 'MESManagerDb' not found. Please create appsettings.Secrets.json from template.");
+var connectionString = builder.Configuration.GetRequiredMesManagerConnectionString();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

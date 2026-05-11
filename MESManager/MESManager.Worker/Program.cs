@@ -1,6 +1,7 @@
 using MESManager.Worker;
 using MESManager.Worker.Workers;
 using MESManager.Infrastructure;
+using MESManager.Infrastructure.Configuration;
 using MESManager.Sync;
 using MESManager.Sync.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,33 +9,11 @@ using Microsoft.Extensions.Hosting;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-// Carica configurazione database condivisa dalla root del progetto
-// Usa stessa logica del Web: Secrets.json > Database.json (unificazione configurazione)
-var solutionRoot = Directory.GetParent(builder.Environment.ContentRootPath)!.FullName;
-var secretsPath = Path.Combine(solutionRoot, "appsettings.Secrets.json");
-var dbConfigPath = Path.Combine(solutionRoot, "appsettings.Database.json");
-var dbConfigEnvPath = Path.Combine(solutionRoot, $"appsettings.Database.{builder.Environment.EnvironmentName}.json");
-
-if (File.Exists(secretsPath))
-{
-    // Preferito: usa secrets condiviso con Web
-    builder.Configuration.AddJsonFile(secretsPath, optional: false, reloadOnChange: true);
-}
-else if (File.Exists(dbConfigPath))
-{
-    // Fallback legacy
-    builder.Configuration.AddJsonFile(dbConfigPath, optional: false, reloadOnChange: true);
-}
-
-// Override locale per ambiente (solo se presente)
-if (!builder.Environment.IsProduction() && File.Exists(dbConfigEnvPath))
-{
-    builder.Configuration.AddJsonFile(dbConfigEnvPath, optional: true, reloadOnChange: true);
-}
+builder.Configuration.AddMesManagerSharedConfiguration(builder.Environment);
+builder.Services.ConfigureMesManagerDatabaseConfiguration(builder.Configuration);
 
 // Configurazione Connection String dal file condiviso
-var connectionString = builder.Configuration.GetConnectionString("MESManagerDb")
-    ?? throw new InvalidOperationException("Connection string 'MESManagerDb' not found in configuration");
+var connectionString = builder.Configuration.GetRequiredMesManagerConnectionString();
 
 // Infrastructure e DbContext
 builder.Services.AddInfrastructure(connectionString);

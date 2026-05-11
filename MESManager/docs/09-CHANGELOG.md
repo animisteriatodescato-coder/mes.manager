@@ -4,7 +4,37 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.89
+## 🔖 Versione Corrente: v1.65.90
+
+---
+
+## 🔖 v1.65.90 — Lotto 2 centralizzazione config e DI
+
+**Data**: 11 Maggio 2026
+
+### 🧱 Architettura
+
+- **Bootstrap config condiviso**: Web, Worker e PlcSync usano `AddMesManagerSharedConfiguration()` per caricare secrets DPAPI, secrets JSON, fallback database legacy e override ambiente con lo stesso ordine.
+- **DatabaseConfiguration centralizzata**: mapping `MESManagerDb`, `MagoDb`, `GanttDb` e `AllegatiDb` spostato in `ConfigureMesManagerDatabaseConfiguration()`.
+- **EF retry policy riusata**: PlcSync usa `AddMesManagerDbContextFactory()` invece di duplicare la configurazione SQL Server/retry.
+- **Interfaccia PLC sync nel layer corretto**: `IPlcSyncCoordinator` e `PlcSyncResult` spostati in Application, lasciando l'implementazione in Infrastructure.
+
+### 🧭 Note operative
+
+- `GanttDb` resta configurazione legacy attiva: non viene rimossa perché è ancora letta da servizi import/allegati.
+- Nessuna rotta, tabella, endpoint o logica business modificata.
+
+#### File modificati
+- `MESManager.Infrastructure/Configuration/SharedConfigurationExtensions.cs` — nuovo helper condiviso config/secrets/database
+- `MESManager.Infrastructure/DependencyInjection.cs` — factory DbContext centralizzata
+- `MESManager.Application/Interfaces/IPlcSyncCoordinator.cs` — interfaccia e result nel layer Application
+- `MESManager.Infrastructure/Services/PlcSyncCoordinator.cs` — rimossa interfaccia locale
+- `MESManager.Web/Program.cs` — usa bootstrap config condiviso
+- `MESManager.Worker/Program.cs` — usa bootstrap config condiviso
+- `MESManager.PlcSync/Program.cs` — usa bootstrap config e factory DbContext condivisi
+- `MESManager.Web/Security/SecretsDecryptor.cs` — rimosso, logica DPAPI spostata nel bootstrap condiviso
+- `docs/03-CONFIGURAZIONE.md` / `docs/04-ARCHITETTURA.md` — regole aggiornate
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.89 → 1.65.90
 
 ---
 

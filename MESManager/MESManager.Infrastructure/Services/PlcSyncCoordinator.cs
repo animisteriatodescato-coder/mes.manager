@@ -1,15 +1,10 @@
+using MESManager.Application.Interfaces;
 using MESManager.Domain.Entities;
 using MESManager.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace MESManager.Infrastructure.Services;
-
-public interface IPlcSyncCoordinator
-{
-    Task<PlcSyncResult> SyncMacchinaAsync(Guid macchinaId);
-    Task<List<PlcSyncResult>> SyncTutteMacchineAsync();
-}
 
 /// <summary>
 /// Coordinatore per la sincronizzazione manuale dei dati PLC.
@@ -189,12 +184,3 @@ public class PlcSyncCoordinator : IPlcSyncCoordinator
     }
 }
 
-public class PlcSyncResult
-{
-    public Guid MacchinaId { get; set; }
-    public string MacchinaCodiceMacchina { get; set; } = string.Empty;
-    public bool Successo { get; set; }
-    public int RecordAggiornati { get; set; }
-    public string? MessaggioErrore { get; set; }
-    public DateTime DataOra { get; set; }
-}
