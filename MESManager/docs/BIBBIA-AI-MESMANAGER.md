@@ -138,6 +138,7 @@ Deploy:      Manuale controllato Windows Server
 | **PROD** | `192.168.1.230\SQLEXPRESS01` → `MESManager_Prod` | 192.168.1.230 | `appsettings.Production.json` |
 
 **⚠️ CRITICO**: Mai mescolare config dev/prod!
+**⚠️ PROD WEB ATTUALE**: `http://192.168.1.230:5156` e' HTTP interno. Non trattarlo come HTTPS finche' HTTPS non e' realmente attivo e verificato.
 
 ---
 
@@ -282,7 +283,7 @@ Ogni run deve riportare:
 5. **Frontend** - UX stabile | Preferenze persistenti | Cross-browser
 6. **Deploy** - MAI sovrascrivere secrets | Versione in AppVersion.cs | Ordine servizi: PlcSync→Worker→Web | **L'AI ESEGUE IN AUTONOMIA** — vedi sezione `DEPLOY AUTONOMO` | [01-DEPLOY.md](docs/01-DEPLOY.md)
 7. **PLC** - IP in DB | Offset in JSON | Graceful shutdown | [08-PLC-SYNC.md](docs/08-PLC-SYNC.md)
-8. **Sicurezza** - Secrets DPAPI | Parametrized queries | HTTPS prod
+8. **Sicurezza** - Secrets DPAPI | Parametrized queries | HTTPS dove reale | HTTP interno 230: cookie Identity `SameAsRequest`, MAI `SecurePolicy.Always`
 9. **Testing** - Script test | Log [START/SUCCESS/ERROR] | DB verificato | UI testata | [11-TESTING-FRAMEWORK.md](docs/11-TESTING-FRAMEWORK.md)
 
 ---
@@ -337,6 +338,24 @@ Pensa come se:
 ---
 
 ## ⚠️ REGOLE CRITICHE - LINK RAPIDI
+
+### Autenticazione Produzione: HTTP interno ≠ HTTPS
+
+**Problema gia' accaduto**: hardening sicurezza con `CookieSecurePolicy.Always` ha bloccato il login su `http://192.168.1.230:5156`, perche' il browser non mantiene/invia cookie `Secure` su HTTP.
+
+**Regola fissa**: finche' il server 230 resta esposto in HTTP interno, i cookie Identity devono usare:
+
+```csharp
+options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+```
+
+**Vietato**: impostare `CookieSecurePolicy.Always` in produzione senza avere prima abilitato e verificato HTTPS reale sull'URL usato dagli utenti.
+
+**Verifica post-deploy obbligatoria**: login reale + header `Set-Cookie` da `http://192.168.1.230:5156/Account/Login` senza flag `Secure` quando la richiesta e' HTTP.
+
+Dettagli: [01-DEPLOY.md](docs/01-DEPLOY.md) · [DEPLOY-LESSONS-LEARNED.md](docs/storico/DEPLOY-LESSONS-LEARNED.md)
+
+---
 
 ### CSS Globali e Blazor Server (⚠️ LESSON LEARNED v1.54.x)
 
@@ -626,8 +645,8 @@ SDI             : SUBM70N
 
 ## 📞 Supporto Documentazione
 
-**Versione**: 4.6  
-**Data**: 23 Aprile 2026  
-**Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`  
-**Manutenzione**: Aggiornare ad ogni scoperta significativa  
-**Ultimo aggiornamento**: v4.6 — Aggiunta sezione DATI AZIENDALI obbligatoria (regola: mai inventare dati, chiedere se mancanti)
+**Versione**: 4.7
+**Data**: 6 Maggio 2026
+**Path**: `C:\Dev\MESManager\docs\BIBBIA-AI-MESMANAGER.md`
+**Manutenzione**: Aggiornare ad ogni scoperta significativa
+**Ultimo aggiornamento**: v4.7 — Aggiunta regola auth produzione HTTP interno: cookie Identity `SameAsRequest`, mai `SecurePolicy.Always` finche' il 230 resta HTTP

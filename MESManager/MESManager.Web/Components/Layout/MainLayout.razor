@@ -345,12 +345,6 @@
         <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" 
                        Color="Color.Inherit" 
                        OnClick="@ToggleTheme" />
-        <MudTooltip Text="@FullscreenTooltip" Arrow="true" Placement="Placement.Bottom">
-            <MudIconButton Icon="@FullscreenIcon"
-                           Color="Color.Inherit"
-                           OnClick="ToggleFullscreen"
-                           data-testid="fullscreen-btn" />
-        </MudTooltip>
         <AuthorizeView>
             <Authorized>
                 <MudTooltip Text="@context.User.Identity?.Name" Arrow="true">

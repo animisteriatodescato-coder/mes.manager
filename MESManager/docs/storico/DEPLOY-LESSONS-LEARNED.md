@@ -18,6 +18,8 @@
 | **6** | Preferenze Utente Resettate | v1.30.11 | 🟡 MEDIO | ✅ RISOLTO |
 | **7** | Sync Automatica Fallisce (Worker vs Web DB Diversi) | Feb 2026 | 🔴 CRITICO | ✅ RISOLTO |
 | **8** | DbContext Concurrency Layout+Pagina → Crash Navigazione NC | v1.65.74 | 🔴 CRITICO | ✅ RISOLTO |
+| **9** | Cookie Identity `Secure` su HTTP interno → Login bloccato | v1.65.80/81 | 🔴 CRITICO | ✅ RISOLTO |
+| **10** | `AllowedHosts` troppo stretto → Accesso Tailscale/VPN 400 | v1.65.82 | 🔴 CRITICO | ✅ RISOLTO |
 
 ---
 
@@ -358,13 +360,15 @@ WHERE Chiave LIKE '%grid%'
 
 ## ✅ CHECKLIST PRE-DEPLOY AGGIORNATA
 
-Basata sulle 6 lezioni apprese:
+Basata sulle lezioni apprese:
 
 ```
 [ ] Build: dotnet build --nologo (0 errori)
 [ ] Versione: AppVersion.cs incrementata
 [ ] CHANGELOG: v1.X.Y aggiunto
 [ ] ⭐ BACKUP PREFERENZE: scripts\backup-preferenze-utente.ps1 (se deploy modifica grid/DTO)
+[ ] ⭐ AUTH COOKIE: se produzione resta HTTP interno, Identity CookieSecurePolicy = SameAsRequest
+[ ] ⭐ VPN/TAILSCALE: AllowedHosts include LAN, hostname server e *.ts.net
 [ ] DB Prod: Verifica dati base (ImpostazioniProduzione, CalendarioLavoro, Macchine)
 [ ] DB Prod: Almeno 1 macchina con AttivaInGantt = true
 [ ] DB Prod: Query sanity check (se deploy tocca dati cliente/Mago)
@@ -372,7 +376,8 @@ Basata sulle 6 lezioni apprese:
 [ ] Publish: dotnet publish Web/Worker/PlcSync
 [ ] Deploy: robocopy TUTTI i servizi (Web + Worker + PlcSync)
 [ ] Servizi: Stop PlcSync → Worker → Web, poi Start Web → Worker → PlcSync
-[ ] HTTP 200: https://192.168.1.230:5156 risponde
+[ ] HTTP 200: http://192.168.1.230:5156 risponde
+[ ] Cookie HTTP interno: Set-Cookie da /Account/Login NON contiene flag Secure
 [ ] Versione UI: Footer mostra v1.X.Y
 [ ] Smoke Test: Login, navigazione pagine principali
 [ ] Smoke Test: "Carica su Gantt" distribuisce su più macchine
@@ -613,6 +618,165 @@ Documento di riferimento: [FIX-DBCONTEXT-CONCURRENCY-NC-20260505.md](FIX-DBCONTE
 
 ---
 
+## 🔴 PROBLEMA 9: Cookie Identity `Secure` su HTTP interno → Login bloccato
+
+**Deploy**: v1.65.80 → v1.65.81 (6 Maggio 2026)
+
+### Sintomo
+
+Dopo hardening sicurezza e deploy sul server `192.168.1.230`:
+
+- login locale funzionante
+- login produzione bloccato sul server 230
+- dopo cambio password Fabio, nessuna utenza entrava correttamente
+- prima del blocco, tentando accesso con altri utenti sembrava rientrare sempre Fabio
+- Chrome mostrava anche messaggi console fuorvianti non direttamente collegati all'app
+
+### Root Cause
+
+L'hardening aveva impostato il cookie Identity in produzione con:
+
+```csharp
+options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+```
+
+Ma la produzione reale MESManager e' servita agli utenti da:
+
+```text
+http://192.168.1.230:5156
+```
+
+Quindi e' HTTP interno, non HTTPS. I browser non mantengono/inviano cookie con flag `Secure` su richieste HTTP. Risultato: il login puo' validare le credenziali ma la sessione non resta attiva.
+
+### Diagnosi Eseguita
+
+1. Verificato che il problema era solo su produzione 230, non locale.
+2. Verificato database Identity produzione:
+   - utenti presenti
+   - password hash presenti
+   - `AccessFailedCount = 0`
+   - `LockoutEnd = NULL`
+3. Confrontato modifiche dell'hardening sicurezza.
+4. Verificato header `Set-Cookie` dopo fix: nessun flag `Secure` su richiesta HTTP.
+
+### Soluzione
+
+In `MESManager.Web/Program.cs`:
+
+```csharp
+options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+```
+
+Questa policy:
+
+- funziona con HTTP interno attuale
+- resta compatibile con HTTPS futuro, perche' segue il protocollo effettivo della richiesta
+- evita di bloccare login/sessione quando gli utenti accedono da `http://192.168.1.230:5156`
+
+### Lezione Appresa
+
+- ✅ Non applicare policy HTTPS teoriche se l'URL reale usato dagli utenti e' HTTP.
+- ✅ Prima di cambiare cookie/auth/CSP/sessione, verificare protocollo reale di produzione.
+- ✅ `CookieSecurePolicy.Always` e' ammesso solo dopo HTTPS reale, certificato valido e test login da PC client.
+- ✅ Dopo ogni deploy che tocca sicurezza/auth, verificare header `Set-Cookie` e login reale.
+- ✅ Se login si comporta in modo incoerente dopo deploy, controllare cookie prima di cambiare password utenti.
+
+### Verifica Post-Deploy Obbligatoria
+
+```powershell
+$r = Invoke-WebRequest -UseBasicParsing "http://192.168.1.230:5156/Account/Login" -TimeoutSec 15
+$r.StatusCode
+if ($r.Content -match 'v[0-9]+\.[0-9]+\.[0-9]+') { $Matches[0] } else { "VERSION_NOT_FOUND" }
+($r.Headers["Set-Cookie"] -join "`n") -match '(?i);\s*secure'
+```
+
+Su HTTP interno l'ultimo risultato deve essere:
+
+```text
+False
+```
+
+### File Modificati
+
+- `MESManager.Web/Program.cs` — Identity cookie `SecurePolicy`
+- `MESManager.Web/Constants/AppVersion.cs` — v1.65.81
+- `docs/09-CHANGELOG.md` — nota fix produzione
+- `docs/01-DEPLOY.md` — guardrail e check post-deploy
+- `docs/BIBBIA-AI-MESMANAGER.md` — regola vincolante
+
+---
+
+## 🔴 PROBLEMA 10: `AllowedHosts` troppo stretto → Accesso Tailscale/VPN 400
+
+**Deploy**: v1.65.82 (7 Maggio 2026)
+
+### Sintomo
+
+Il gestionale funzionava in LAN su:
+
+```text
+http://192.168.1.230:5156
+```
+
+ma da remoto via Tailscale/VPN non era piu' raggiungibile correttamente.
+
+### Root Cause
+
+`appsettings.Production.json` aveva:
+
+```json
+"AllowedHosts": "192.168.1.230;localhost"
+```
+
+ASP.NET Core Host Filtering accetta solo gli host presenti in questa lista. Da Tailscale o hostname Windows, il browser invia un header `Host` diverso, per esempio:
+
+```text
+Srv2023:5156
+Srv2023.local:5156
+nome-host.tailnet.ts.net:5156
+```
+
+Questi host non erano ammessi, quindi l'app rispondeva:
+
+```text
+400 Bad Request
+```
+
+### Soluzione
+
+Esteso `AllowedHosts`:
+
+```json
+"AllowedHosts": "192.168.1.230;192.168.17.230;100.82.27.107;localhost;Srv2023;Srv2023.local;*.ts.net"
+```
+
+### Lezione Appresa
+
+- ✅ Ogni hardening su `AllowedHosts` deve includere tutti gli host reali usati dagli utenti.
+- ✅ Per Tailscale MagicDNS usare wildcard sottodominio `*.ts.net`.
+- ⚠️ Gli IP Tailscale diretti `100.x.y.z` non sono coperti da `*.ts.net`: se gli utenti usano l'IP diretto, aggiungere l'IP esatto o preferire MagicDNS.
+- ✅ Dopo deploy, testare con header `Host` diversi, non solo con `192.168.1.230`.
+
+### Verifica Post-Deploy
+
+```powershell
+foreach ($h in @('192.168.1.230:5156','Srv2023:5156','Srv2023.local:5156','srv2023.tailnet.ts.net:5156')) {
+    $r = Invoke-WebRequest -UseBasicParsing 'http://192.168.1.230:5156/Account/Login' -Headers @{ Host = $h } -TimeoutSec 15
+    "$h => $($r.StatusCode)"
+}
+```
+
+Risultato atteso: `200`.
+
+### File Modificati
+
+- `MESManager.Web/appsettings.Production.json` — host filtering produzione LAN/VPN
+- `MESManager.Web/Constants/AppVersion.cs` — v1.65.82
+- `docs/09-CHANGELOG.md` — nota fix
+- `docs/01-DEPLOY.md` — guardrail Tailscale
+
+---
+
 ## 📚 RIFERIMENTI
 
 - [01-DEPLOY.md](../01-DEPLOY.md) - Procedura deploy completa
@@ -622,7 +786,7 @@ Documento di riferimento: [FIX-DBCONTEXT-CONCURRENCY-NC-20260505.md](FIX-DBCONTE
 
 ---
 
-**Versione**: 1.2  
-**Data Creazione**: 11 Febbraio 2026  
-**Ultimo Aggiornamento**: Maggio 2026 — Aggiunto Problema 8 (DbContext concurrency Layout+NC)  
+**Versione**: 1.4
+**Data Creazione**: 11 Febbraio 2026
+**Ultimo Aggiornamento**: Maggio 2026 — Aggiunto Problema 10 (AllowedHosts Tailscale/VPN)
 **Manutenzione**: Aggiungere nuove lezioni man mano che emergono

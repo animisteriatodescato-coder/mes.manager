@@ -48,15 +48,91 @@ C:\MESManager\                          ← ROOT
 
 ---
 
+## 🔐 Guardrail Sicurezza/Auth — HTTP interno 230
+
+**Stato reale produzione attuale**:
+
+```
+URL utenti: http://192.168.1.230:5156
+Protocollo: HTTP interno, non HTTPS
+```
+
+### Regola obbligatoria
+
+Finche' il server resta esposto via HTTP interno, i cookie di autenticazione ASP.NET Identity devono restare compatibili con HTTP:
+
+```csharp
+options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+```
+
+### Anti-pattern bloccante
+
+```csharp
+// ❌ VIETATO su http://192.168.1.230:5156
+options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+```
+
+**Effetto del bug**: il browser scarta/non reinvia cookie marcati `Secure` su HTTP. Il login sembra riuscire ma non mantiene la sessione; possono comparire comportamenti incoerenti tra utenti o browser.
+
+### Quando si potra' usare `SecurePolicy.Always`
+
+Solo dopo avere completato tutti questi punti:
+
+- HTTPS realmente attivo sull'URL usato dagli utenti
+- redirect HTTP → HTTPS verificato
+- certificato valido o trusted dai PC client
+- test login eseguito da almeno un PC client reale
+- documentazione aggiornata in questo file e nel changelog
+
+---
+
+## 🌐 Guardrail Accesso Remoto — LAN + Tailscale
+
+La produzione puo' essere raggiunta da piu' host reali:
+
+- LAN ufficio: `http://192.168.1.230:5156`
+- rete PLC/server: `http://192.168.17.230:5156`
+- hostname Windows: `http://Srv2023:5156`, `http://Srv2023.local:5156`
+- Tailscale MagicDNS: `http://<nome-host>.<tailnet>.ts.net:5156`
+
+### Regola obbligatoria
+
+`appsettings.Production.json` deve includere tutti gli host reali in `AllowedHosts`.
+
+```json
+"AllowedHosts": "192.168.1.230;192.168.17.230;100.82.27.107;localhost;Srv2023;Srv2023.local;*.ts.net"
+```
+
+### Nota su IP Tailscale diretto
+
+`AllowedHosts` accetta hostname espliciti e wildcard di sottodominio, non CIDR tipo `100.64.0.0/10`.
+Se gli utenti accedono con IP Tailscale diretto (`100.x.y.z`), aggiungere l'IP esatto alla lista o preferire MagicDNS `*.ts.net`.
+
+### Verifica post-deploy
+
+```powershell
+foreach ($h in @('192.168.1.230:5156','Srv2023:5156','Srv2023.local:5156','nome-host.tailnet.ts.net:5156')) {
+    try {
+        $r = Invoke-WebRequest -UseBasicParsing 'http://192.168.1.230:5156/Account/Login' -Headers @{ Host = $h } -TimeoutSec 15
+        "$h => $($r.StatusCode)"
+    } catch {
+        "$h => ERRORE"
+    }
+}
+```
+
+Risultato atteso: `200` per tutti gli host realmente usati.
+
+---
+
 ## 🚀 Deploy Completo (Step-by-Step)
 
 ### STEP 0: Pre-requisiti
 
-1. **Incrementa versione** in `MESManager.Web/Components/Layout/MainLayout.razor`:
-```razor
-<div style="position: fixed; bottom: 10px; right: 15px;">
-    v1.24  <!-- Incrementa: v1.23 → v1.24 -->
-</div>
+1. **Incrementa versione** in `MESManager.Web/Constants/AppVersion.cs`:
+```csharp
+public const string Current = "1.65.82";
+public const string Display = "v" + Current;
 ```
 
 2. **Aggiorna CHANGELOG.md** con le modifiche
@@ -215,8 +291,26 @@ Invoke-Command -ComputerName 192.168.1.230 -Credential (Get-Credential) -ScriptB
 
 1. **Browser**: http://192.168.1.230:5156
 2. **Versione**: Controlla numero versione in basso a destra
-3. **Test login** con utente
-4. **Log**: Verifica `C:\MESManager\logs\` per errori
+3. **HTTP 200 + versione servita**:
+
+```powershell
+$r = Invoke-WebRequest -UseBasicParsing "http://192.168.1.230:5156/Account/Login" -TimeoutSec 15
+$r.StatusCode
+if ($r.Content -match 'v[0-9]+\.[0-9]+\.[0-9]+') { $Matches[0] } else { "VERSION_NOT_FOUND" }
+```
+
+4. **Cookie check su HTTP interno**:
+
+```powershell
+$cookies = ($r.Headers["Set-Cookie"] -join "`n")
+$cookies
+$cookies -match '(?i);\s*secure'
+```
+
+Su `http://192.168.1.230:5156` il risultato dell'ultimo comando deve essere `False`. Se e' `True`, il login puo' bloccarsi perche' Chrome non mantiene i cookie `Secure` su HTTP.
+
+5. **Test login** con utente reale
+6. **Log**: Verifica `C:\MESManager\logs\` per errori
 
 ---
 
@@ -371,12 +465,35 @@ taskkill /S 192.168.1.230 /U Administrator /P "A123456!" /F /IM MESManager.*
 
 ---
 
+### 7. "Login non resta attivo / utente bloccato dopo password"
+
+**Causa probabile**: cookie Identity marcato `Secure` mentre il server e' aperto in HTTP (`http://192.168.1.230:5156`).
+
+**Verifica rapida**:
+```powershell
+$r = Invoke-WebRequest -UseBasicParsing "http://192.168.1.230:5156/Account/Login" -TimeoutSec 15
+($r.Headers["Set-Cookie"] -join "`n") -match '(?i);\s*secure'
+```
+
+**Interpretazione**:
+- `False` → cookie compatibile con HTTP interno
+- `True` → correggere `Program.cs`: `CookieSecurePolicy.SameAsRequest`
+
+**Dopo la fix**:
+- deploy Web
+- far cancellare i cookie del sito `192.168.1.230` sui PC client che erano rimasti in stato incoerente
+- riprovare login con utente reale
+
+---
+
 ## ✅ Checklist Pre-Deploy
 
-- [ ] Versione incrementata in MainLayout.razor
+- [ ] Versione incrementata in `MESManager.Web/Constants/AppVersion.cs`
 - [ ] CHANGELOG.md aggiornato
 - [ ] Build locale completato senza errori
 - [ ] Commit Git eseguito
+- [ ] Se modifiche sicurezza/auth: verificato che produzione 230 e' HTTP interno e cookie Identity NON usano `SecurePolicy.Always`
+- [ ] Se accesso VPN/Tailscale: `AllowedHosts` include hostname LAN, hostname server e `*.ts.net`
 - [ ] Backup configurazione server (opzionale)
 - [ ] Utenti avvisati del deploy (se necessario)
 
@@ -452,6 +569,11 @@ Start-Sleep 8
 # 5. VERIFICA
 tasklist /S 192.168.1.230 /U Administrator /P "A123456!" | findstr MESManager
 # Atteso: MESManager.Web.exe + MESManager.Worker.exe + MESManager.PlcSync.exe
+
+$r = Invoke-WebRequest -UseBasicParsing "http://192.168.1.230:5156/Account/Login" -TimeoutSec 15
+if ($r.Content -match 'v[0-9]+\.[0-9]+\.[0-9]+') { $Matches[0] } else { "VERSION_NOT_FOUND" }
+($r.Headers["Set-Cookie"] -join "`n") -match '(?i);\s*secure'
+# Su HTTP interno deve essere False
 ```
 
 ### Regole critiche
@@ -462,4 +584,5 @@ tasklist /S 192.168.1.230 /U Administrator /P "A123456!" | findstr MESManager
 | ❌ MAI sovrascrivere `appsettings.Secrets.json` / `appsettings.Database.json` | `/XF` obbligatorio nel robocopy |
 | ❌ MAI fermare Worker/PlcSync se non modificati | Ordine CRITICO: PlcSync → Worker → Web |
 | ✅ SEMPRE verificare 3 processi attivi dopo riavvio | `tasklist \| findstr MESManager` |
+| ✅ SEMPRE verificare cookie auth su HTTP interno | `Set-Cookie` non deve avere `Secure` su `http://192.168.1.230:5156` |
 | ✅ SEMPRE riportare esito con exit code e servizi UP | Conferma concisa all'utente |

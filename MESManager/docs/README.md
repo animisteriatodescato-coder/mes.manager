@@ -55,10 +55,11 @@
 ## 🔥 Regole d'Oro
 
 ### Deploy
-1. **Incrementa SEMPRE la versione** in `MainLayout.razor` prima del build
+1. **Incrementa SEMPRE la versione** in `MESManager.Web/Constants/AppVersion.cs` prima del build
 2. **NON copiare MAI** `appsettings.Secrets.json` o `appsettings.Database.json` sul server
 3. **Ferma servizi in ordine**: PlcSync → Worker → Web
 4. **Avvia servizi in ordine**: Web → Worker → PlcSync
+5. **Produzione web attuale = HTTP interno**: su `http://192.168.1.230:5156` i cookie Identity devono usare `CookieSecurePolicy.SameAsRequest`, non `Always`
 
 ### Sviluppo
 1. **Build prima di commit**: `dotnet build MESManager.sln --nologo`

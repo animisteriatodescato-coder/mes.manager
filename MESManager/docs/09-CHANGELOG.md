@@ -4,7 +4,167 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.77
+## 🔖 Versione Corrente: v1.65.88
+
+---
+
+## 🔖 v1.65.88 — Rifinitura professionale drawer laterale
+
+**Data**: 7 Maggio 2026
+
+### ✨ Migliorie UI
+
+- **Mini drawer più pulito**: eliminati residui testuali del link Home, normalizzate dimensioni e centraggio dei riquadri icona.
+- **Sottomenù mini più discreti**: riquadri figli più piccoli, ombre ridotte, icone centrate e scrollbar più sottile.
+- **Drawer espanso meno rumoroso**: ridotto l'effetto 3D pesante dei gruppi, con riquadri più piatti e professionali.
+- **Gerarchia visiva migliorata**: gruppi principali, voci figlie e stato attivo hanno peso visivo più distinto.
+- **Watermark sezioni ridotti**: le grandi icone di sfondo nei gruppi espansi sono state rese molto più leggere per non disturbare la lettura.
+- **Hover e active state più chiari**: aggiunti hover discreti sui figli e stato pagina attiva più riconoscibile.
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — polish mini/expanded drawer, scrollbar, active state, hover e gerarchia voci
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.87 → 1.65.88
+
+---
+
+## 🔖 v1.65.87 — Allineamento visuale mini drawer
+
+**Data**: 7 Maggio 2026
+
+### 🐛 Bug Fix
+
+- **Home completamente nascosta in mini mode**: aggiunta una protezione CSS anche per eventuale testo renderizzato come nodo diretto del link, mantenendo visibile solo l'icona.
+- **Icone principali più leggibili**: riquadri principali con sfondo più presente e icone scurite del 30% in tema chiaro.
+- **Centraggio icone migliorato**: icone dei gruppi posizionate al centro del riquadro, con freccia di espansione separata sul lato destro.
+- **Sottomenù più compatti**: riquadri figli ridotti del 10%, icone centrate e sfondo leggero derivato dal colore della sezione.
+- **Header mini centrato**: pulsante/logo di espansione del drawer centrato dentro la testata da 52px.
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — centraggio mini drawer, contrasto icone, Home solo icona, sottomenù compatti e colorati
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.86 → 1.65.87
+
+---
+
+## 🔖 v1.65.86 — Rifinitura mini drawer icone e contrasto
+
+**Data**: 7 Maggio 2026
+
+### 🐛 Bug Fix
+
+- **Icone sottomenù leggibili**: rimossa in modalità mini la banda verticale centrale dei link figli, che nel drawer da 52px passava sopra le emoji/icona.
+- **Contrasto light mode migliorato**: icone e emoji del mini drawer usano una tinta più scura in tema chiaro, mantenendo il comportamento corrente in dark mode.
+- **Home solo icona**: corretto il selettore CSS del link Home, così in modalità mini viene nascosta anche la scritta `Home`.
+- **Riquadri arrotondati completi**: i pulsanti icona in mini drawer ora hanno bordo stondato su tutti i lati e non risultano tagliati ai bordi.
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — override mini drawer per testo Home, contrasto icone, sfondi figli e bordi arrotondati
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.85 → 1.65.86
+
+---
+
+## 🔖 v1.65.85 — Fix configurazione E2E CSP e asset locali
+
+**Data**: 7 Maggio 2026
+
+### 🐛 Bug Fix
+
+- **E2E non più bloccati da CSP non pertinente**: i test Playwright fallivano su `AssertNoConsoleErrors` per risorse bloccate dalla Content Security Policy prima ancora di validare lo scenario UI.
+- **Vis-Timeline locale**: sostituiti CSS/JS da `https://unpkg.com/...` con i file già presenti in `/lib/vis-timeline/`, eliminando dipendenze CDN non necessarie e warning CSP.
+- **Font runtime consentiti**: aggiunto `data:` a `font-src` perché alcune librerie UI generano font embedded durante il rendering headless.
+- **CSP più stretta**: rimosso `https://unpkg.com` da `script-src` perché non è più usato dall'app.
+
+#### File modificati
+- `MESManager.Web/Components/App.razor` — Vis-Timeline CSS/JS serviti da asset locali
+- `MESManager.Web/Program.cs` — CSP aggiornata: `font-src data:`, rimosso `unpkg` da `script-src`
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.84 → 1.65.85
+- `docs/12-QA-UI-TESTING.md` — troubleshooting CSP per E2E
+
+---
+
+## 🔖 v1.65.84 — Fix accesso Tailscale via IP diretto
+
+**Data**: 7 Maggio 2026
+
+### 🐛 Bug Fix
+
+- **Accesso Tailscale via IP diretto**: aggiunto `100.82.27.107` a `AllowedHosts` produzione.
+- **Causa**: MagicDNS Tailscale era gia' coperto da `*.ts.net`, ma l'accesso diretto via IP `100.82.27.107:5156` veniva ancora rifiutato da Host Filtering con `400 Bad Request`.
+
+#### File modificati
+- `MESManager.Web/appsettings.Production.json` — aggiunto host `100.82.27.107`
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.83 → 1.65.84
+
+---
+
+## 🔖 v1.65.83 — Fix mini drawer sottomenù a icone
+
+**Data**: 7 Maggio 2026
+
+### 🐛 Bug Fix
+
+- **Sottomenù mini drawer visibili**: in modalità menu compatto i gruppi laterali ora possono espandersi e mostrano le voci figlie come sole icone/emoji, senza testi.
+- **Causa**: il CSS del mini drawer forzava `display: none` su `.mud-collapse-container`, quindi il click sulla freccia aggiornava lo stato MudBlazor ma il contenuto restava sempre nascosto.
+- **Navigazione compatta scrollabile**: il drawer da 52px mantiene `overflow-x` nascosto ma abilita lo scroll verticale per menu lunghi.
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — mini drawer: collapse visibile, labels figli nascoste, watermark disattivato in compatto
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.82 → 1.65.83
+
+---
+
+## 🔖 v1.65.82 — Fix accesso remoto Tailscale/VPN
+
+**Data**: 7 Maggio 2026
+
+### 🐛 Bug Fix
+
+- **Accesso remoto Tailscale ripristinato**: esteso `AllowedHosts` produzione per consentire hostname reali LAN/VPN oltre a `192.168.1.230`.
+- **Host consentiti**: `192.168.1.230`, `192.168.17.230`, `localhost`, `Srv2023`, `Srv2023.local`, `*.ts.net`.
+- **Causa**: `AllowedHosts` limitato a `192.168.1.230;localhost` generava `400 Bad Request` quando l'app veniva aperta via hostname server o MagicDNS Tailscale.
+
+#### File modificati
+- `MESManager.Web/appsettings.Production.json` — host filtering produzione LAN/VPN
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.81 → 1.65.82
+- `docs/01-DEPLOY.md` — guardrail accesso remoto LAN/Tailscale
+- `docs/storico/DEPLOY-LESSONS-LEARNED.md` — Problema 10 documentato
+
+---
+
+## 🔖 v1.65.81 — Fix login produzione HTTP interno
+
+**Data**: 6 Maggio 2026
+
+### 🐛 Bug Fix
+
+- **Login produzione ripristinato**: corretto `CookieSecurePolicy.Always` introdotto dall'hardening sicurezza. Il server `192.168.1.230:5156` e' esposto via HTTP interno, quindi i cookie Identity marcati `Secure` non venivano mantenuti/inviati dal browser.
+- **Policy applicata**: `CookieSecurePolicy.SameAsRequest`, compatibile con HTTP interno e pronta per HTTPS quando la richiesta arrivera' via HTTPS.
+- **Docs anti-regressione**: aggiunta guardrail in Bibbia, deploy guide, README e lessons learned per impedire nuovi hardening auth incompatibili con HTTP interno.
+- **Versione UI**: corrette istruzioni obsolete che indicavano `MainLayout.razor`; la fonte corrente e' `MESManager.Web/Constants/AppVersion.cs`.
+
+#### File modificati
+- `MESManager.Web/Program.cs` — cookie Identity `SecurePolicy` compatibile con HTTP interno
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.80 → 1.65.81
+- `docs/BIBBIA-AI-MESMANAGER.md` — regola vincolante auth HTTP interno
+- `docs/01-DEPLOY.md` — verifica post-deploy `Set-Cookie` senza `Secure` su HTTP
+- `docs/storico/DEPLOY-LESSONS-LEARNED.md` — Problema 9 documentato
+- `docs/README.md` — regola rapida deploy
+
+---
+
+## 🔖 v1.65.80 — Rimozione temporanea pulsante fullscreen AppBar
+
+**Data**: 6 Maggio 2026
+
+### 🐛 Bug Fix
+
+- **Fullscreen disabilitato temporaneamente**: rimosso il pulsante "Schermo intero" dall'AppBar per isolare un possibile conflitto post-deploy su Chrome/Blazor Server.
+- **Runtime fullscreen rimosso**: eliminati anche stato/metodo C# e listener/helper JS associati, così nessuna chiamata alla Fullscreen API può partire dall'app.
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor` — rimosso pulsante AppBar `data-testid="fullscreen-btn"`
+- `MESManager.Web/Components/Layout/MainLayout.razor.cs` — rimossi stato/metodo fullscreen non più usati
+- `MESManager.Web/wwwroot/js/preferences.js` — rimossi listener/helper fullscreen
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.79 → 1.65.80
 
 ---
 

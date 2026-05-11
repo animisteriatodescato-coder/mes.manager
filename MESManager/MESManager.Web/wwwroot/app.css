@@ -1498,7 +1498,7 @@ h1:focus {
 }
 
 /* ==========================================================================
-   MINI DRAWER — solo icone (v1.65.75)
+   MINI DRAWER — solo icone (v1.65.87)
    Toggle via pulsante ChevronLeft/Right nell'header del drawer.
    Preferenza salvata in PreferencesService (DB utente o localStorage).
    Transizione fluida: width animated via CSS transition.
@@ -1521,12 +1521,22 @@ h1:focus {
 }
 .mes-mini-drawer .mud-drawer-content {
     width: 52px !important;
-    overflow: hidden !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+}
+.mes-mini-drawer [data-testid="nav-menu"] {
+    width: 52px !important;
+    overflow-x: hidden !important;
 }
 
-/* Nascondi testo nav per gruppi con icona MUI (Title="..." Icon="...") */
-.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-link:has(.mud-nav-link-icon-wrapper) > .mud-nav-link-text {
+/* Nascondi il testo dei link principali e dei titoli gruppo, lasciando MudCollapse libero di aprire i figli. */
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link .mud-nav-link-text,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link > .mud-nav-link-text {
     display: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    overflow: hidden !important;
 }
 
 /* Nascondi testo nel gruppo Programmazione (classe .mes-nav-text nel TitleContent) */
@@ -1534,33 +1544,178 @@ h1:focus {
     display: none !important;
 }
 
-/* Nascondi figli espandibili */
-.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container {
-    display: none !important;
-}
-
-/* Nascondi freccia expand/collapse */
-.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-link-expand-icon,
-.mes-mini-drawer [data-testid="nav-menu"] .mud-expand-icon {
-    display: none !important;
-}
-
 /* Centra i link nel drawer mini */
 .mes-mini-drawer [data-testid="nav-menu"] .mud-nav-link {
     justify-content: center !important;
+    width: calc(100% - 10px) !important;
+    min-width: 0 !important;
+    margin: 3px 5px !important;
     padding-left: 4px !important;
     padding-right: 4px !important;
+    border-radius: 8px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
 }
+
+/* In mini mode i riquadri devono restare capsule complete, non tagliate ai bordi. */
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link {
+    border-left-width: 0 !important;
+    box-shadow:
+        0 1px 3px rgba(0,0,0,0.24),
+        inset 0 1px 0 rgba(255,255,255,0.30) !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(255,255,255,0.50) !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+}
+
+.mud-theme-dark .mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link {
+    background: rgba(255,255,255,0.10) !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link {
+    position: relative !important;
+    background: rgba(255,255,255,0.52) !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-prog > .mud-nav-link         { background: rgba(33,150,243,0.22) !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-produzione > .mud-nav-link   { background: rgba(255,152,0,0.24) !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-cataloghi > .mud-nav-link    { background: rgba(0,188,212,0.22) !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-manutenzioni > .mud-nav-link { background: rgba(156,39,176,0.22) !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-sync > .mud-nav-link         { background: rgba(76,175,80,0.23) !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-statistiche > .mud-nav-link  { background: rgba(103,58,183,0.22) !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-impostazioni > .mud-nav-link { background: rgba(117,117,117,0.24) !important; }
 
 /* Centra icona MUI (icon-wrapper) */
 .mes-mini-drawer [data-testid="nav-menu"] .mud-nav-link-icon-wrapper {
-    margin-right: 0 !important;
-    margin-left: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    flex: 0 0 100% !important;
+    color: #1f2937 !important;
 }
 
-/* Centra emoji div TitleContent (gruppo Programmazione) */
-.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-link-text div {
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-nav-link-icon-wrapper {
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    width: auto !important;
+    flex: 0 0 auto !important;
+    transform: translate(-50%, -50%) !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-nav-link-expand-icon,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-expand-icon {
+    position: absolute !important;
+    right: 3px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+    opacity: 0.88 !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-icon-root,
+.mes-mini-drawer [data-testid="nav-menu"] svg {
+    color: inherit !important;
+    font-size: 24px !important;
+    filter: brightness(0.70) saturate(1.18);
+}
+
+.mud-theme-dark .mes-mini-drawer [data-testid="nav-menu"] .mud-nav-link-icon-wrapper {
+    color: inherit !important;
+}
+
+.mud-theme-dark .mes-mini-drawer [data-testid="nav-menu"] .mud-icon-root,
+.mud-theme-dark .mes-mini-drawer [data-testid="nav-menu"] svg {
+    filter: none;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text span:first-child {
+    color: #1f2937 !important;
+    font-size: 15px !important;
+    line-height: 1 !important;
+    text-shadow: 0 1px 1px rgba(255,255,255,0.45);
+    filter: brightness(0.70) saturate(1.18);
+}
+
+.mud-theme-dark .mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text span:first-child {
+    color: inherit !important;
+    text-shadow: none;
+    filter: none;
+}
+
+/* In un gruppo espanso mostra i figli come sole icone/emoji, senza etichette. */
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link {
+    min-height: 27px !important;
+    height: 27px !important;
+    width: 36px !important;
+    margin: 2px auto !important;
+    padding: 0 !important;
+    border-radius: 7px !important;
+}
+
+/* Rimuove la linea colorata centrale dei figli: a 52px cade sopra l'icona. */
+.mes-mini-drawer .mud-nav-group.nav-sec-prog .mud-collapse-container .mud-nav-link,
+.mes-mini-drawer .mud-nav-group.nav-sec-produzione .mud-collapse-container .mud-nav-link,
+.mes-mini-drawer .mud-nav-group.nav-sec-cataloghi .mud-collapse-container .mud-nav-link,
+.mes-mini-drawer .mud-nav-group.nav-sec-manutenzioni .mud-collapse-container .mud-nav-link,
+.mes-mini-drawer .mud-nav-group.nav-sec-sync .mud-collapse-container .mud-nav-link,
+.mes-mini-drawer .mud-nav-group.nav-sec-statistiche .mud-collapse-container .mud-nav-link,
+.mes-mini-drawer .mud-nav-group.nav-sec-impostazioni .mud-collapse-container .mud-nav-link {
+    background: rgba(255,255,255,0.42) !important;
+}
+
+.mes-mini-drawer .mud-nav-group.nav-sec-prog .mud-collapse-container .mud-nav-link         { background: rgba(33,150,243,0.14) !important; }
+.mes-mini-drawer .mud-nav-group.nav-sec-produzione .mud-collapse-container .mud-nav-link   { background: rgba(255,152,0,0.16) !important; }
+.mes-mini-drawer .mud-nav-group.nav-sec-cataloghi .mud-collapse-container .mud-nav-link    { background: rgba(0,188,212,0.14) !important; }
+.mes-mini-drawer .mud-nav-group.nav-sec-manutenzioni .mud-collapse-container .mud-nav-link { background: rgba(156,39,176,0.14) !important; }
+.mes-mini-drawer .mud-nav-group.nav-sec-sync .mud-collapse-container .mud-nav-link         { background: rgba(76,175,80,0.15) !important; }
+.mes-mini-drawer .mud-nav-group.nav-sec-statistiche .mud-collapse-container .mud-nav-link  { background: rgba(103,58,183,0.14) !important; }
+.mes-mini-drawer .mud-nav-group.nav-sec-impostazioni .mud-collapse-container .mud-nav-link { background: rgba(117,117,117,0.15) !important; }
+
+.mud-theme-dark .mes-mini-drawer .mud-nav-group.nav-sec-prog .mud-collapse-container .mud-nav-link,
+.mud-theme-dark .mes-mini-drawer .mud-nav-group.nav-sec-produzione .mud-collapse-container .mud-nav-link,
+.mud-theme-dark .mes-mini-drawer .mud-nav-group.nav-sec-cataloghi .mud-collapse-container .mud-nav-link,
+.mud-theme-dark .mes-mini-drawer .mud-nav-group.nav-sec-manutenzioni .mud-collapse-container .mud-nav-link,
+.mud-theme-dark .mes-mini-drawer .mud-nav-group.nav-sec-sync .mud-collapse-container .mud-nav-link,
+.mud-theme-dark .mes-mini-drawer .mud-nav-group.nav-sec-statistiche .mud-collapse-container .mud-nav-link,
+.mud-theme-dark .mes-mini-drawer .mud-nav-group.nav-sec-impostazioni .mud-collapse-container .mud-nav-link {
+    background: rgba(255,255,255,0.08) !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text {
+    display: flex !important;
+    align-items: center !important;
     justify-content: center !important;
+    width: 100% !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text > div {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text span:not(:first-child) {
+    display: none !important;
+}
+
+/* Il watermark grande dei gruppi pieni crea rumore nel drawer da 52px. */
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container::after {
+    display: none !important;
 }
 
 /* Header drawer mini: centra il pulsante toggle */
@@ -1568,6 +1723,240 @@ h1:focus {
     padding: 4px 0 !important;
     justify-content: center !important;
     min-height: 48px !important;
+}
+
+.mes-mini-drawer .mud-drawer-header .mud-icon-button {
+    margin: 0 auto !important;
+}
+
+/* ==========================================================================
+   DRAWER POLISH — mini + espanso (v1.65.88)
+   Rifinitura visiva finale del menu: meno rumore, gerarchia chiara,
+   scrollbar discreta e stato attivo piu' leggibile.
+   ========================================================================== */
+
+.mud-drawer .mud-drawer-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(90,90,90,0.28) transparent;
+}
+
+.mud-drawer .mud-drawer-content::-webkit-scrollbar {
+    width: 5px;
+}
+
+.mud-drawer .mud-drawer-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.mud-drawer .mud-drawer-content::-webkit-scrollbar-thumb {
+    background: rgba(90,90,90,0.24);
+    border-radius: 999px;
+}
+
+.mud-drawer .mud-drawer-content:hover::-webkit-scrollbar-thumb {
+    background: rgba(90,90,90,0.42);
+}
+
+.mes-mini-drawer .mud-drawer-content::-webkit-scrollbar {
+    width: 3px;
+}
+
+.mud-theme-dark .mud-drawer .mud-drawer-content {
+    scrollbar-color: rgba(255,255,255,0.22) transparent;
+}
+
+/* Espanso: rimuove effetto 3D pesante e normalizza i riquadri gruppo. */
+.mud-drawer:not(.mes-mini-drawer) [data-testid="nav-menu"] {
+    padding: 2px 3px 8px 3px !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-navmenu > .mud-nav-link,
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group > .mud-nav-link {
+    min-height: 33px !important;
+    height: 33px !important;
+    margin: 4px 7px 3px 7px !important;
+    padding: 0 9px 0 8px !important;
+    border-radius: 7px !important;
+    border: 1px solid rgba(20,28,45,0.12) !important;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.14) !important;
+    background: rgba(255,255,255,0.46) !important;
+}
+
+.mud-theme-dark .mud-drawer:not(.mes-mini-drawer) .mud-navmenu > .mud-nav-link,
+.mud-theme-dark .mud-drawer:not(.mes-mini-drawer) .mud-nav-group > .mud-nav-link {
+    border-color: rgba(255,255,255,0.10) !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.32) !important;
+    background: rgba(255,255,255,0.07) !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-prog > .mud-nav-link         { border-left: 3px solid rgba(33,150,243,0.82) !important; background: rgba(33,150,243,0.11) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-produzione > .mud-nav-link   { border-left: 3px solid rgba(255,152,0,0.84) !important; background: rgba(255,152,0,0.12) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-cataloghi > .mud-nav-link    { border-left: 3px solid rgba(0,188,212,0.82) !important; background: rgba(0,188,212,0.11) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-manutenzioni > .mud-nav-link { border-left: 3px solid rgba(156,39,176,0.82) !important; background: rgba(156,39,176,0.11) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-sync > .mud-nav-link         { border-left: 3px solid rgba(76,175,80,0.82) !important; background: rgba(76,175,80,0.11) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-statistiche > .mud-nav-link  { border-left: 3px solid rgba(103,58,183,0.82) !important; background: rgba(103,58,183,0.10) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-impostazioni > .mud-nav-link { border-left: 3px solid rgba(117,117,117,0.82) !important; background: rgba(117,117,117,0.11) !important; }
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group > .mud-nav-link > .mud-nav-link-text {
+    font-size: 12.5px !important;
+    letter-spacing: 0.045em !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group > .mud-nav-link .mud-icon-root {
+    font-size: 17px !important;
+    margin-right: 2px !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group > .mud-nav-link .mud-nav-link-expand-icon {
+    opacity: 0.72 !important;
+    transform: scale(0.86);
+}
+
+/* Espanso: figli piu' puliti, senza banda centrale pesante e senza watermark invadenti. */
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container {
+    margin: 0 8px 4px 17px !important;
+    padding: 3px 0 4px 9px !important;
+    border-left: 2px solid rgba(30,41,59,0.12) !important;
+    background: rgba(255,255,255,0.18) !important;
+    border-radius: 0 0 7px 7px !important;
+    overflow: hidden !important;
+}
+
+.mud-theme-dark .mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container {
+    border-left-color: rgba(255,255,255,0.14) !important;
+    background: rgba(255,255,255,0.035) !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container::after {
+    opacity: 0.045 !important;
+    font-size: 92px !important;
+    justify-content: flex-end !important;
+    padding-right: 4px !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link {
+    min-height: 31px !important;
+    height: 31px !important;
+    margin: 1px 2px !important;
+    padding: 0 8px !important;
+    border-radius: 6px !important;
+    border-left: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link:hover {
+    background: rgba(255,255,255,0.34) !important;
+}
+
+.mud-theme-dark .mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link:hover {
+    background: rgba(255,255,255,0.08) !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text {
+    font-size: 13.5px !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text > div {
+    width: 100% !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text span:first-child {
+    min-width: 22px !important;
+    width: 22px !important;
+    height: 22px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 6px !important;
+    background: rgba(255,255,255,0.30) !important;
+    filter: grayscale(0.20) saturate(0.92);
+}
+
+.mud-theme-dark .mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text span:first-child {
+    background: rgba(255,255,255,0.08) !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-link.active,
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-link[aria-current="page"] {
+    background: rgba(25,118,210,0.16) !important;
+    border-color: rgba(25,118,210,0.28) !important;
+    box-shadow: inset 3px 0 0 rgba(25,118,210,0.88) !important;
+}
+
+/* Mini: nasconde ogni residuo testuale e rende le icone piu' coerenti. */
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link {
+    color: transparent !important;
+    text-shadow: none !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link > .mud-nav-link-text,
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link .mud-nav-link-text,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link > .mud-nav-link-text {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link .mud-nav-link-icon-wrapper,
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link .mud-icon-root {
+    color: #111827 !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-link {
+    border-radius: 9px !important;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.18) !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link {
+    min-height: 34px !important;
+    height: 34px !important;
+    width: 38px !important;
+    margin: 4px auto !important;
+    padding: 0 !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-nav-link-expand-icon,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-expand-icon {
+    right: 1px !important;
+    opacity: 0.54 !important;
+    transform: translateY(-50%) scale(0.74) !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container {
+    margin: 0 !important;
+    padding: 1px 0 2px 0 !important;
+    border-left: 0 !important;
+    background: transparent !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link {
+    width: 31px !important;
+    min-height: 25px !important;
+    height: 25px !important;
+    margin: 2px auto !important;
+    border-radius: 7px !important;
+    box-shadow: 0 1px 1px rgba(15,23,42,0.12) !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text span:first-child {
+    font-size: 13px !important;
+    text-shadow: none !important;
+    filter: grayscale(0.10) brightness(0.78) saturate(1.05);
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-link.active,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-link[aria-current="page"] {
+    outline: 2px solid rgba(25,118,210,0.46) !important;
+    outline-offset: 1px !important;
 }
 
 /* ── Pseudo-fullscreen CSS (fallback per iOS Safari e mobile senza Fullscreen API) ── */

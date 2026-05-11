@@ -451,6 +451,23 @@ Page.Console += (_, msg) =>
 };
 ```
 
+### Errori console CSP su risorse statiche
+
+**Causa**: la pagina carica un asset esterno o un font runtime non ammesso dalla `Content-Security-Policy`; i test falliscono in `AssertNoConsoleErrors` anche se lo scenario UI è corretto.
+
+**Fix**:
+1. Preferire asset locali in `wwwroot/lib/...` rispetto a CDN esterni.
+2. Se una libreria genera font embedded, consentire `data:` solo in `font-src`.
+3. Aggiornare `Program.cs` e rilanciare almeno un test smoke (`HomeTests.Home_AppBarIsVisible`) con `E2E_USE_EXISTING_SERVER=1`.
+
+**Esempio corretto**:
+
+```csharp
+"font-src 'self' data: https://fonts.gstatic.com; "
+```
+
+Non filtrare questi errori in `IgnoredErrorSnippets`: se la CSP blocca un asset reale, la pagina può essere visivamente o funzionalmente diversa.
+
 ---
 
 ## ✅ Best Practices

@@ -231,9 +231,10 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.ExpireTimeSpan   = TimeSpan.FromHours(8);
     options.SlidingExpiration = true;
     options.Cookie.HttpOnly  = true;
-    options.Cookie.SecurePolicy = builder.Environment.IsProduction()
-        ? Microsoft.AspNetCore.Http.CookieSecurePolicy.Always
-        : Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+    // Il server MESManager di produzione e' esposto su HTTP interno (:5156).
+    // CookieSecurePolicy.Always richiede HTTPS e impedisce al browser di mantenere
+    // la sessione di login su http://192.168.1.230:5156.
+    options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
     options.Cookie.SameSite  = Microsoft.AspNetCore.Http.SameSiteMode.Strict;
 });
 
@@ -307,12 +308,13 @@ app.Use(async (context, next) =>
     context.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
     context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-    // CSP: permette risorse solo da stessa origine + CDN noti usati dall'app
+    // CSP: permette risorse solo da stessa origine + CDN noti usati dall'app.
+    // Font data: necessario per font runtime generati da librerie UI durante E2E/headless.
     context.Response.Headers["Content-Security-Policy"] =
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; " +
         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; " +
-        "font-src 'self' https://fonts.gstatic.com; " +
+        "font-src 'self' data: https://fonts.gstatic.com; " +
         "img-src 'self' data: blob:; " +
         "connect-src 'self' ws: wss:; " +
         "frame-ancestors 'none';";

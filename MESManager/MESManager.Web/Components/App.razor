@@ -24,8 +24,8 @@
     <link href="app.css?v=1594" rel="stylesheet" />
     <link href="css/layout-config.css?v=3" rel="stylesheet" />
     
-    <!-- Vis-Timeline CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" />
+    <!-- Vis-Timeline CSS: locale per evitare dipendenze CDN e violazioni CSP nei test E2E -->
+    <link rel="stylesheet" href="/lib/vis-timeline/vis-timeline-graph2d.min.css?v=1" />
     <link rel="stylesheet" href="/css/gantt-macchine.css?v=8" />
     <link rel="stylesheet" href="MESManager.Web.styles.css" />
     
@@ -49,8 +49,8 @@
     <!-- AG Grid Community JS -->
     <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/dist/ag-grid-community.min.js"></script>
     
-    <!-- Vis-Timeline JS -->
-    <script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
+    <!-- Vis-Timeline JS: locale per evitare dipendenze CDN e violazioni CSP nei test E2E -->
+    <script src="/lib/vis-timeline/vis-timeline-graph2d.min.js?v=1"></script>
     
     <!-- Custom Grid Scripts -->
     <!-- Shared components (MUST load first) -->

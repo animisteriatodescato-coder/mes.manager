@@ -1,6 +1,6 @@
 # Istruzioni Codex - MESManager
 
-Prima di rispondere a qualunque domanda o svolgere qualunque attivita in questo repository, devi leggere e applicare integralmente:
+Prima di rispondere a qualunque domanda o svolgere qualunque attivita in questo repository, in ogni nuova chat e per ogni nuova richiesta MESManager, devi leggere e applicare integralmente:
 
 `docs/BIBBIA-AI-MESMANAGER.md`
 
@@ -13,4 +13,4 @@ Regole operative:
 - Non fare deploy se l'utente non lo chiede esplicitamente con una formula chiara come "fai il deploy", "deploya" o "metti in produzione".
 - Per dati aziendali, usare solo quelli presenti nella Bibbia; se mancano, chiedere all'utente.
 
-Queste istruzioni servono come aggancio permanente: la Bibbia resta il documento completo, questo file serve solo a obbligarne la consultazione.
+Queste istruzioni servono come aggancio permanente per Codex: la Bibbia resta il documento completo, questo file serve solo a obbligarne la consultazione.

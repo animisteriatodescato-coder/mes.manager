@@ -60,10 +60,7 @@ public partial class MainLayout : IDisposable
     private bool _drawerOpen = false;
     private bool _aiPanelOpen = false;
     private bool _miniDrawer = false;
-    private bool _isFullscreen = false;
 
-    private string FullscreenTooltip => _isFullscreen ? "Esci schermo intero" : "Schermo intero";
-    private string FullscreenIcon    => _isFullscreen ? Icons.Material.Filled.FullscreenExit : Icons.Material.Filled.Fullscreen;
     private string DrawerMiniClass   => _miniDrawer ? "mes-mini-drawer" : string.Empty;
     private int _ncAperteCount = 0;
     /// <summary>True se l'utente ha SOLO ruolo Visualizzazione (nessun ruolo write). Propagato come CascadingValue alle pagine figlie.</summary>
@@ -127,23 +124,6 @@ public partial class MainLayout : IDisposable
     {
         _miniDrawer = !_miniDrawer;
         await PreferencesService.SetAsync("mes-mini-drawer", _miniDrawer);
-    }
-
-    private async Task ToggleFullscreen()
-    {
-        // Fire-and-forget: non aspettiamo la Promise del browser (evita freeze SignalR)
-        // Lo stato viene aggiornato ottimisticamente — l'icona cambia subito
-        if (_isFullscreen)
-        {
-            _ = JS.InvokeVoidAsync("mesFullscreen.exit");
-            _isFullscreen = false;
-        }
-        else
-        {
-            _ = JS.InvokeVoidAsync("mesFullscreen.request");
-            _isFullscreen = true;
-        }
-        await Task.CompletedTask;
     }
 
     private ErrorBoundary? _errorBoundary;
