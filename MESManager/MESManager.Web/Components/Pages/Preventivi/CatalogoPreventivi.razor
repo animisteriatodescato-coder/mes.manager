@@ -1166,10 +1166,10 @@
                         </MudStack>
                         <MudGrid Spacing="2">
                             <MudItem xs="6" sm="3">
-                                <MudNumericField @bind-Value="_agDto.Lotto" Label="Lotto 1 *"
+                                <MudNumericField @bind-Value="_agDto.Lotto" Label="Lotto min *"
                                                  Variant="Variant.Outlined" Margin="Margin.Dense" Min="1"
                                                  OnBlur="@((e) => RicalcolaAg())"
-                                                 HelperText="Auto = lotto minimo (Imballo)" />
+                                                 HelperText="Quantità minima di ordine (Imballo)" />
                             </MudItem>
                             <MudItem xs="6" sm="3">
                                 <MudNumericField @bind-Value="_agDto.Margine1" Label="Margine 1 (%)"
@@ -1225,6 +1225,34 @@
 
                         @if (_agDto.Figure > 0 && _agDto.PesoAnima > 0 && _agDto.SpariOrari > 0 && _agDto.Lotto > 0)
                         {
+                            @* Confronto vecchio / nuovo prezzo *@
+                            @if (_agPrevioRecord != null)
+                            {
+                                var prevCalc = PreventivoService.CalcolaConLotto(_agPrevioRecord, _agPrevioRecord.Lotto, _agPrevioRecord.Margine1);
+                                var nuovoCalc = PreventivoService.CalcolaConLotto(_agDto, _agDto.Lotto, _agDto.Margine1);
+                                var delta = nuovoCalc.PrezzoVendita - prevCalc.PrezzoVendita;
+                                var deltaColor = delta > 0 ? Color.Error : delta < 0 ? Color.Success : Color.Default;
+                                var deltaIcon  = delta > 0 ? Icons.Material.Filled.TrendingUp : delta < 0 ? Icons.Material.Filled.TrendingDown : Icons.Material.Filled.TrendingFlat;
+                                <MudPaper Class="pa-3 mb-3" Elevation="1" Style="border-left: 4px solid var(--mud-palette-warning);">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">CONFRONTO PREZZI (lotto min)</MudText>
+                                    <MudGrid Spacing="1">
+                                        <MudItem xs="6"><MudText Typo="Typo.body2" Color="Color.Secondary">Prezzo attuale</MudText></MudItem>
+                                        <MudItem xs="6"><MudText Typo="Typo.body2" Align="Align.Right">@prevCalc.PrezzoVendita.ToString("C4")</MudText></MudItem>
+                                        <MudItem xs="6"><MudText Typo="Typo.body2" Color="Color.Primary"><b>Nuovo prezzo</b></MudText></MudItem>
+                                        <MudItem xs="6"><MudText Typo="Typo.body2" Color="Color.Primary" Align="Align.Right"><b>@nuovoCalc.PrezzoVendita.ToString("C4")</b></MudText></MudItem>
+                                        <MudItem xs="6"><MudText Typo="Typo.body2">Variazione</MudText></MudItem>
+                                        <MudItem xs="6">
+                                            <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Spacing="0">
+                                                <MudIcon Icon="@deltaIcon" Color="@deltaColor" Size="Size.Small" />
+                                                <MudText Typo="Typo.body2" Color="@deltaColor" Align="Align.Right">
+                                                    @(delta >= 0 ? "+" : "")@delta.ToString("C4")
+                                                </MudText>
+                                            </MudStack>
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudPaper>
+                            }
+
                             <MudStack Spacing="1">
                                 @foreach (var (lotto, calc) in AgLottiCalcolati)
                                 {
@@ -1239,7 +1267,7 @@
                                                 <MudItem xs="8"><MudText Typo="Typo.body2">Verniciatura</MudText></MudItem>
                                                 <MudItem xs="4"><MudText Typo="Typo.body2" Align="Align.Right">@calc.VernTot.ToString("C4")</MudText></MudItem>
                                             }
-                                            <MudItem xs="8"><MudText Typo="Typo.subtitle2" Color="Color.Success">Prezzo vendita</MudText></MudItem>
+                                            <MudItem xs="8"><MudText Typo="Typo.subtitle2" Color="Color.Success">Nuovo prezzo</MudText></MudItem>
                                             <MudItem xs="4"><MudText Typo="Typo.subtitle2" Color="Color.Success" Align="Align.Right"><b>@calc.PrezzoVendita.ToString("C4")</b></MudText></MudItem>
                                         </MudGrid>
                                     </MudPaper>
@@ -1249,7 +1277,7 @@
                         else
                         {
                             <MudAlert Severity="Severity.Info" Dense="true" Icon="@Icons.Material.Filled.Info">
-                                Seleziona un articolo dal catalogo per calcolare il preventivo.
+                                Seleziona un articolo dal catalogo per calcolare l'aggiornamento prezzi.
                             </MudAlert>
                         }
 
@@ -1261,7 +1289,7 @@
                                        Disabled="@_agIsSaving"
                                        OnClick="@SalvaAggiornamentoAsync"
                                        data-testid="ag-btn-salva">
-                                @(_agIsSaving ? "Salvo..." : (_agEditingId.HasValue ? "Aggiorna preventivo" : "Crea preventivo"))
+                                @(_agIsSaving ? "Salvo..." : (_agEditingId.HasValue ? "Aggiorna aggiornamento" : "Crea aggiornamento"))
                             </MudButton>
                             <MudButton Variant="Variant.Outlined" Color="Color.Default"
                                        FullWidth="true"
@@ -1890,6 +1918,7 @@
     private bool _agIsSaving;
     private bool _agShowCampiMancanti;
     private List<string> _agCampiMancanti = new();
+    private PreventivoDto? _agPrevioRecord; // ultimo aggiornamento/preventivo salvato per questo articolo
 
     private void RicalcolaAg()
     {
@@ -1945,6 +1974,7 @@
         _agTipoVerniceSelezionata = null;
         _agCampiMancanti = new();
         _agShowCampiMancanti = false;
+        _agPrevioRecord = null;
     }
 
     private async Task OnAgCodiceArticoloChanged(string? codice)
@@ -2049,6 +2079,14 @@
             else
                 _agCampiMancanti.Add($"Tipo vernice '{anime.Vernice}' non corrisponde a nessun tipo configurato");
         }
+
+        // Prezzo precedente per confronto
+        _agPrevioRecord = _preventivi
+            .Where(p => !string.IsNullOrWhiteSpace(p.CodiceArticolo) &&
+                        p.CodiceArticolo.Equals(codice, StringComparison.OrdinalIgnoreCase) &&
+                        (_agEditingId == null || p.Id != _agEditingId.Value))
+            .OrderByDescending(p => p.DataCreazione)
+            .FirstOrDefault();
 
         RicalcolaAg();
         if (_agCampiMancanti.Count > 0)
