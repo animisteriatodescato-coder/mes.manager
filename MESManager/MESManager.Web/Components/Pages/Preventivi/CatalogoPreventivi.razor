@@ -1997,32 +1997,20 @@
         if (!string.IsNullOrWhiteSpace(anime.Cliente))
             _agDto.Cliente = anime.Cliente;
 
-        // Lotto minimo: leggi da UnitaMisura (campo "Lotto min" nel catalogo anime)
+        // Lotto minimo: 3600 / Ciclo (secondi) — arrotondato all'intero
         bool lottoImpostato = false;
-        if (!string.IsNullOrWhiteSpace(anime.UnitaMisura))
+        if (!string.IsNullOrWhiteSpace(anime.Ciclo))
         {
-            var lottoStr = anime.UnitaMisura.Trim().Replace(",", ".");
-            if (decimal.TryParse(lottoStr, System.Globalization.NumberStyles.Any,
-                    System.Globalization.CultureInfo.InvariantCulture, out var lottoVal) && lottoVal > 0)
+            var cicloStr = anime.Ciclo.Trim().Replace(",", ".");
+            if (decimal.TryParse(cicloStr, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out var cicloVal) && cicloVal > 0)
             {
-                _agDto.Lotto = (int)lottoVal;
+                _agDto.Lotto = (int)Math.Round(3600m / cicloVal, MidpointRounding.AwayFromZero);
                 lottoImpostato = true;
             }
         }
         if (!lottoImpostato)
-        {
-            // Fallback: prendi il lotto dall'ultimo preventivo esistente per questo articolo
-            var prevEsistente = _preventivi
-                .Where(p => !string.IsNullOrWhiteSpace(p.CodiceArticolo) &&
-                            p.CodiceArticolo.Equals(codice, StringComparison.OrdinalIgnoreCase) &&
-                            p.Lotto > 0)
-                .OrderByDescending(p => p.DataCreazione)
-                .FirstOrDefault();
-            if (prevEsistente != null)
-                _agDto.Lotto = prevEsistente.Lotto;
-            else
-                _agCampiMancanti.Add("Lotto minimo (non impostato nel catalogo anime — impostalo manualmente)");
-        }
+            _agCampiMancanti.Add("Lotto minimo (Ciclo non impostato nel catalogo anime — impostalo manualmente)");
 
         // Figure (string → int)
         if (!string.IsNullOrWhiteSpace(anime.Figure) &&
