@@ -46,11 +46,23 @@
                 <MudItem xs="3">
                     <MudTextField Value="@Anime.CodiceArticolo" Label="Codice" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
                 </MudItem>
-                <MudItem xs="4">
+                <MudItem xs="3">
                     <MudTextField Value="@Anime.DescrizioneArticolo" Label="Descrizione" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
                 </MudItem>
-                <MudItem xs="4">
+                <MudItem xs="3">
                     <MudTextField Value="@Anime.Cliente" Label="Cliente" ReadOnly="true" Variant="Variant.Filled" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="2">
+                    <MudNumericField @bind-Value="Anime.Prezzo"
+                                     Label="Prezzo catalogo"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense"
+                                     Min="0"
+                                     Format="N4"
+                                     Adornment="Adornment.Start"
+                                     AdornmentText="€"
+                                     ReadOnly="@IsReadOnly"
+                                     data-testid="input-anime-prezzo" />
                 </MudItem>
             </MudGrid>
             <MudGrid Spacing="1">

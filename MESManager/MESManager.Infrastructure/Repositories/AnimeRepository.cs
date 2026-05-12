@@ -59,6 +59,22 @@ namespace MESManager.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task UpdatePrezzoArticoloAsync(string codiceArticolo, decimal? prezzo)
+        {
+            var articolo = await _context.Articoli
+                .FirstOrDefaultAsync(a => a.Codice == codiceArticolo);
+
+            if (articolo == null)
+            {
+                _logger.LogWarning("UpdatePrezzoArticoloAsync: articolo {CodiceArticolo} non trovato", codiceArticolo);
+                return;
+            }
+
+            articolo.Prezzo = prezzo ?? 0m;
+            articolo.UltimaModifica = DateTime.Now;
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<bool> DeleteAsync(int id)
         {
             var entity = await _context.Anime.FindAsync(id);

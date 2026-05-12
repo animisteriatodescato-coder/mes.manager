@@ -133,6 +133,7 @@ namespace MESManager.Application.Services
             entity.UtenteUltimaModificaLocale = dto.UtenteUltimaModificaLocale;
             
             await _repo.UpdateAsync(entity);
+            await _repo.UpdatePrezzoArticoloAsync(entity.CodiceArticolo, dto.Prezzo);
             return MapToDto(entity);
         }
 

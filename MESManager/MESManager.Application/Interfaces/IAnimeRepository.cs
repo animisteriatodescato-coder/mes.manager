@@ -11,6 +11,7 @@ namespace MESManager.Application.Interfaces
         Task<Anime?> GetByCodiceArticoloAsync(string codiceArticolo);
         Task AddAsync(Anime entity);
         Task UpdateAsync(Anime entity);
+        Task UpdatePrezzoArticoloAsync(string codiceArticolo, decimal? prezzo);
         Task<bool> DeleteAsync(int id);
         
         // Nuovo metodo per informazioni ricetta aggregate

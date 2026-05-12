@@ -1458,6 +1458,8 @@
     // UI state
     private bool _isLoading;
     private bool _isSaving;
+    private bool _initialLoadComplete;
+    private bool _articoloParamHandled;
     private string _searchText = string.Empty;
 
     // ── Inizializzazione ────────────────────────────────────────────────
@@ -1486,12 +1488,14 @@
             .OrderBy(c => c)
             .ToList();
         _isLoading = false;
+        _initialLoadComplete = true;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && !string.IsNullOrWhiteSpace(ArticoloParam))
+        if (!_articoloParamHandled && _initialLoadComplete && !string.IsNullOrWhiteSpace(ArticoloParam))
         {
+            _articoloParamHandled = true;
             // Attiva il tab "Aggiornamento Prezzi" (indice 4)
             if (_tabs != null)
                 await _tabs.ActivatePanelAsync(4);

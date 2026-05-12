@@ -782,6 +782,8 @@ Per il filtro "Analizza commesse aperte" gli stati validi sono:
 
 Il report commesse aperte deve restare ordinato per data consegna, macchina, sequenza e codice commessa, e deve segnalare in modo esplicito cosa manca: codice articolo, prezzo/articolo catalogo o preventivo.
 
+Quando dal report manca il prezzo catalogo, l'azione deve aprire `AnimeEditDialog`: il campo `AnimeDto.Prezzo` è il valore di `Articoli.Prezzo` e viene persistito tramite `IAnimeRepository.UpdatePrezzoArticoloAsync`.
+
 Non duplicare query dirette su `Commesse` nella pagina Blazor: riusare il servizio applicativo e confrontare gli stati tramite `nameof(StatoCommessa.X)` o enum, non stringhe libere.
 
 ---

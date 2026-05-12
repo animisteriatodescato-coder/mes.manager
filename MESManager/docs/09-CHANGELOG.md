@@ -4,7 +4,35 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.115
+## 🔖 Versione Corrente: v1.65.116
+
+---
+
+## 🔖 v1.65.116 — Scheda Anima da Analisi Prezzi
+
+**Data**: 2026-05-12
+
+### 🐛 Fix
+
+- **Crash su `/preventivi?articolo=...`**: serializzata la gestione del query param articolo in `CatalogoPreventivi.razor` dopo il caricamento iniziale, evitando operazioni concorrenti sullo stesso `DbContext`.
+
+### ✨ Nuove Funzionalità
+
+- **Pagina `/analisi-prezzi`**:
+  - Doppio click sul codice articolo apre `AnimeEditDialog`.
+  - Nel report commesse aperte, quando mancano dati catalogo/prezzo, il pulsante azione apre direttamente la scheda anima invece di navigare ai preventivi.
+  - Dopo il salvataggio della scheda anima, l'analisi viene ricaricata.
+- **Scheda modifica anima**: aggiunto campo modificabile `Prezzo catalogo`, persistito su `Articoli.Prezzo`.
+
+#### File modificati
+- `MESManager.Web/Components/Pages/Preventivi/AnalisiPrezzi.razor` — doppio click articolo + apertura scheda anima.
+- `MESManager.Web/Components/Pages/Preventivi/CatalogoPreventivi.razor` — fix concorrenza query param articolo.
+- `MESManager.Web/Components/Dialogs/AnimeEditDialog.razor` — campo prezzo catalogo.
+- `MESManager.Application/Services/AnimeService.cs` — salvataggio prezzo catalogo.
+- `MESManager.Application/Interfaces/IAnimeRepository.cs` — metodo update prezzo articolo.
+- `MESManager.Infrastructure/Repositories/AnimeRepository.cs` — update `Articoli.Prezzo`.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.115 → 1.65.116.
+- `docs/09-CHANGELOG.md` — changelog v1.65.116.
 
 ---
 

@@ -3,9 +3,12 @@
 @using MESManager.Application.DTOs
 @using MESManager.Application.Interfaces
 @using MESManager.Domain.Enums
+@using MESManager.Web.Components.Dialogs
 @inject IPreventivoService PreventivoService
 @inject ICommessaAppService CommessaAppService
+@inject IAnimeService AnimeService
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Analisi Prezzi</PageTitle>
@@ -124,7 +127,13 @@
                         <MudText Typo="Typo.caption">@(context.NumeroMacchina.HasValue ? $"M{context.NumeroMacchina:000}" : "—")</MudText>
                     </MudTd>
                     <MudTd>
-                        <MudText Typo="Typo.caption"><b>@(context.CodiceArticolo ?? "—")</b></MudText>
+                        <MudTooltip Text="Doppio click per aprire la scheda anima">
+                            <MudText Typo="Typo.caption"
+                                     Style="@GetArticoloCellStyle(context.CodiceArticolo)"
+                                     @ondblclick="@(() => ApriSchedaAnimaAsync(context.CodiceArticolo))">
+                                <b>@(context.CodiceArticolo ?? "—")</b>
+                            </MudText>
+                        </MudTooltip>
                     </MudTd>
                     <MudTd>
                         <MudText Typo="Typo.caption">@context.Cliente</MudText>
@@ -154,10 +163,10 @@
                         <MudButton Variant="Variant.Outlined"
                                    Color="Color.Warning"
                                    Size="Size.Small"
-                                   StartIcon="@Icons.Material.Filled.PriceChange"
+                                   StartIcon="@GetReportActionIcon(context)"
                                    Disabled="@string.IsNullOrWhiteSpace(context.CodiceArticolo)"
-                                   OnClick="@(() => CreaAggiornamento(context.CodiceArticolo!))">
-                            Aggiorna
+                                   OnClick="@(() => EseguiAzioneReportAsync(context))">
+                            @GetReportActionText(context)
                         </MudButton>
                     </MudTd>
                 </RowTemplate>
@@ -200,7 +209,13 @@
             </HeaderContent>
             <RowTemplate>
                 <MudTd>
-                    <MudText Typo="Typo.caption"><b>@context.CodiceArticolo</b></MudText>
+                    <MudTooltip Text="Doppio click per aprire la scheda anima">
+                        <MudText Typo="Typo.caption"
+                                 Style="@GetArticoloCellStyle(context.CodiceArticolo)"
+                                 @ondblclick="@(() => ApriSchedaAnimaAsync(context.CodiceArticolo))">
+                            <b>@context.CodiceArticolo</b>
+                        </MudText>
+                    </MudTooltip>
                     @if (IsArticoloInCommessaAperta(context.CodiceArticolo))
                     {
                         <MudChip T="string"
@@ -460,6 +475,84 @@
 
     private static Color GetDeltaColor(decimal delta) =>
         Math.Abs(delta) > 10 ? Color.Error : Math.Abs(delta) > 5 ? Color.Warning : Color.Success;
+
+    private static string GetArticoloCellStyle(string? codiceArticolo) =>
+        string.IsNullOrWhiteSpace(codiceArticolo)
+            ? string.Empty
+            : "cursor:pointer;text-decoration:underline;text-underline-offset:2px";
+
+    private static bool ReportRichiedeSchedaAnima(AnalisiCommessaApertaReport report) =>
+        !report.AnalisiCompleta
+        && !string.IsNullOrWhiteSpace(report.CodiceArticolo)
+        && !report.Dettaglio.Contains("preventivo", StringComparison.OrdinalIgnoreCase)
+        && !report.Dettaglio.Contains("aggiornamento prezzi", StringComparison.OrdinalIgnoreCase);
+
+    private static string GetReportActionText(AnalisiCommessaApertaReport report) =>
+        ReportRichiedeSchedaAnima(report) ? "Scheda anima" : "Aggiorna";
+
+    private static string GetReportActionIcon(AnalisiCommessaApertaReport report) =>
+        ReportRichiedeSchedaAnima(report) ? Icons.Material.Filled.Edit : Icons.Material.Filled.PriceChange;
+
+    private async Task EseguiAzioneReportAsync(AnalisiCommessaApertaReport report)
+    {
+        if (string.IsNullOrWhiteSpace(report.CodiceArticolo))
+        {
+            return;
+        }
+
+        if (ReportRichiedeSchedaAnima(report))
+        {
+            await ApriSchedaAnimaAsync(report.CodiceArticolo);
+            return;
+        }
+
+        CreaAggiornamento(report.CodiceArticolo);
+    }
+
+    private async Task ApriSchedaAnimaAsync(string? codiceArticolo)
+    {
+        if (string.IsNullOrWhiteSpace(codiceArticolo))
+        {
+            Snackbar.Add("Codice articolo mancante.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var anime = await AnimeService.GetByCodiceArticoloAsync(codiceArticolo.Trim());
+            if (anime == null)
+            {
+                Snackbar.Add($"Anima con codice {codiceArticolo} non trovata.", Severity.Warning);
+                return;
+            }
+
+            var parameters = new DialogParameters<AnimeEditDialog>
+            {
+                { x => x.Anime, anime }
+            };
+            var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Large,
+                FullWidth = true,
+                CloseButton = true,
+                CloseOnEscapeKey = true
+            };
+
+            var dialog = await DialogService.ShowAsync<AnimeEditDialog>("Modifica Anima", parameters, options);
+            var result = await dialog.Result;
+
+            if (result != null && !result.Canceled)
+            {
+                Snackbar.Add("Anima aggiornata. Ricarico l'analisi prezzi.", Severity.Success);
+                await CaricaAsync();
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore apertura scheda anima: {ex.Message}", Severity.Error);
+        }
+    }
 
     private void CreaAggiornamento(string codiceArticolo)
     {
