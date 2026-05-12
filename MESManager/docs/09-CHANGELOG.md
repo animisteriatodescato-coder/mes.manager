@@ -4,7 +4,34 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.104
+## 🔖 Versione Corrente: v1.65.113
+
+---
+
+## 🔖 v1.65.113 — Pagina Analisi Prezzi
+
+**Data**: 2026-01-09
+
+### ✨ Nuove Funzionalità
+
+- **Pagina `/analisi-prezzi`**: nuova pagina dedicata all'analisi dei prezzi preventivi vs catalogo.
+  - Raggruppa i preventivi per codice articolo; per ogni articolo mostra l'ultimo preventivo e il prezzo corrente dal catalogo (tabella `Articoli.Prezzo`).
+  - Colonna delta % con color-coding: verde (<5%), arancione (5-10%), rosso (>10%).
+  - Filtro per soglia % (mostra solo articoli con |Δ| > X%) e ricerca testo libero su codice/descrizione/cliente.
+  - Pulsante "Aggiorna" per ogni riga → naviga a `/preventivi?articolo=XXX` con tab Aggiornamento Prezzi pre-selezionato e articolo pre-compilato.
+- **NavMenu**: aggiunta voce "Analisi Prezzi" sotto "Preventivi" nella barra laterale.
+- **`CatalogoPreventivi.razor`**: aggiunto `[SupplyParameterFromQuery] ArticoloParam` e `OnAfterRenderAsync` per gestire navigazione da Analisi Prezzi con pre-selezione articolo nel tab Aggiornamento Prezzi.
+
+#### File creati
+- `MESManager.Application/DTOs/AnalisiPrezziRigaDto.cs`
+- `MESManager.Web/Components/Pages/Preventivi/AnalisiPrezzi.razor`
+
+#### File modificati
+- `MESManager.Application/Interfaces/IPreventivoService.cs` — aggiunto `GetAnalisiPrezziAsync()`
+- `MESManager.Infrastructure/Services/PreventivoService.cs` — implementazione del metodo (join Preventivi × Articoli)
+- `MESManager.Web/Components/Pages/Preventivi/CatalogoPreventivi.razor` — gestione query param `articolo`
+- `MESManager.Web/Components/Layout/NavMenu.razor` — voce "Analisi Prezzi"
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.112 → 1.65.113
 
 ---
 
