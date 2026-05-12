@@ -35,7 +35,7 @@
         { field: 'ubicazione', headerName: 'Ubicazione', sortable: true, filter: true, width: 150, editable: true },
         { field: 'codiceCassa', headerName: 'Codice Cassa', sortable: true, filter: true, width: 120, editable: true },
         { field: 'codiceAnime', headerName: 'Codice Anima', sortable: true, filter: true, width: 120, editable: true },
-        { field: 'unitaMisura', headerName: 'Unità Misura', sortable: true, filter: true, width: 100, editable: true },
+        { field: 'unitaMisura', headerName: 'Lotto min', sortable: true, filter: true, width: 100, editable: true },
         
         // Imballo - mostra descrizione
         { field: 'imballoDescrizione', headerName: 'Imballo', sortable: true, filter: true, width: 150, editable: false },

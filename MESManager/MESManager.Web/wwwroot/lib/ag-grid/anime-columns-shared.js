@@ -19,7 +19,7 @@ window.animeColumnsShared = (function() {
         { field: 'ubicazione', headerName: 'Ubicazione', sortable: true, filter: true, width: 150, hide: true },
         { field: 'codiceCassa', headerName: 'Codice Cassa', sortable: true, filter: true, width: 120, hide: true },
         { field: 'codiceAnime', headerName: 'Codice Anime', sortable: true, filter: true, width: 120, hide: true },
-        { field: 'unitaMisura', headerName: 'U.M. Anime', sortable: true, filter: true, width: 100, hide: true },
+        { field: 'unitaMisura', headerName: 'Lotto min', sortable: true, filter: true, width: 100, hide: true },
         
         // Imballo - IMPORTANTE: usa descrizione, non numero!
         { field: 'imballoDescrizione', headerName: 'Imballo', sortable: true, filter: true, width: 150, hide: true },

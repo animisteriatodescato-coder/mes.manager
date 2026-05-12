@@ -1225,21 +1225,20 @@
 
                         @if (_agDto.Figure > 0 && _agDto.PesoAnima > 0 && _agDto.SpariOrari > 0 && _agDto.Lotto > 0)
                         {
-                            @* Confronto vecchio / nuovo prezzo *@
-                            @if (_agPrevioRecord != null)
+                            @* Confronto prezzo catalogo / nuovo prezzo calcolato *@
+                            @if (_agPrezzoAttuale.HasValue)
                             {
-                                var prevCalc = PreventivoService.CalcolaConLotto(_agPrevioRecord, _agPrevioRecord.Lotto, _agPrevioRecord.Margine1);
-                                var nuovoCalc = PreventivoService.CalcolaConLotto(_agDto, _agDto.Lotto, _agDto.Margine1);
-                                var delta = nuovoCalc.PrezzoVendita - prevCalc.PrezzoVendita;
+                                var nuovoCalcConfr = PreventivoService.CalcolaConLotto(_agDto, _agDto.Lotto, _agDto.Margine1);
+                                var delta = nuovoCalcConfr.PrezzoVendita - _agPrezzoAttuale.Value;
                                 var deltaColor = delta > 0 ? Color.Error : delta < 0 ? Color.Success : Color.Default;
                                 var deltaIcon  = delta > 0 ? Icons.Material.Filled.TrendingUp : delta < 0 ? Icons.Material.Filled.TrendingDown : Icons.Material.Filled.TrendingFlat;
                                 <MudPaper Class="pa-3 mb-3" Elevation="1" Style="border-left: 4px solid var(--mud-palette-warning);">
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">CONFRONTO PREZZI (lotto min)</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">CONFRONTO PREZZI (catalogo vs calcolo)</MudText>
                                     <MudGrid Spacing="1">
-                                        <MudItem xs="6"><MudText Typo="Typo.body2" Color="Color.Secondary">Prezzo attuale</MudText></MudItem>
-                                        <MudItem xs="6"><MudText Typo="Typo.body2" Align="Align.Right">@prevCalc.PrezzoVendita.ToString("C4")</MudText></MudItem>
+                                        <MudItem xs="6"><MudText Typo="Typo.body2" Color="Color.Secondary">Prezzo catalogo</MudText></MudItem>
+                                        <MudItem xs="6"><MudText Typo="Typo.body2" Align="Align.Right">@_agPrezzoAttuale.Value.ToString("C4")</MudText></MudItem>
                                         <MudItem xs="6"><MudText Typo="Typo.body2" Color="Color.Primary"><b>Nuovo prezzo</b></MudText></MudItem>
-                                        <MudItem xs="6"><MudText Typo="Typo.body2" Color="Color.Primary" Align="Align.Right"><b>@nuovoCalc.PrezzoVendita.ToString("C4")</b></MudText></MudItem>
+                                        <MudItem xs="6"><MudText Typo="Typo.body2" Color="Color.Primary" Align="Align.Right"><b>@nuovoCalcConfr.PrezzoVendita.ToString("C4")</b></MudText></MudItem>
                                         <MudItem xs="6"><MudText Typo="Typo.body2">Variazione</MudText></MudItem>
                                         <MudItem xs="6">
                                             <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Spacing="0">
@@ -1918,7 +1917,7 @@
     private bool _agIsSaving;
     private bool _agShowCampiMancanti;
     private List<string> _agCampiMancanti = new();
-    private PreventivoDto? _agPrevioRecord; // ultimo aggiornamento/preventivo salvato per questo articolo
+    private decimal? _agPrezzoAttuale; // prezzo corrente dal catalogo anime (Articoli.Prezzo)
 
     private void RicalcolaAg()
     {
@@ -1974,7 +1973,7 @@
         _agTipoVerniceSelezionata = null;
         _agCampiMancanti = new();
         _agShowCampiMancanti = false;
-        _agPrevioRecord = null;
+        _agPrezzoAttuale = null;
     }
 
     private async Task OnAgCodiceArticoloChanged(string? codice)
@@ -2080,13 +2079,8 @@
                 _agCampiMancanti.Add($"Tipo vernice '{anime.Vernice}' non corrisponde a nessun tipo configurato");
         }
 
-        // Prezzo precedente per confronto
-        _agPrevioRecord = _preventivi
-            .Where(p => !string.IsNullOrWhiteSpace(p.CodiceArticolo) &&
-                        p.CodiceArticolo.Equals(codice, StringComparison.OrdinalIgnoreCase) &&
-                        (_agEditingId == null || p.Id != _agEditingId.Value))
-            .OrderByDescending(p => p.DataCreazione)
-            .FirstOrDefault();
+        // Prezzo dal catalogo anime per confronto
+        _agPrezzoAttuale = anime.Prezzo;
 
         RicalcolaAg();
         if (_agCampiMancanti.Count > 0)
