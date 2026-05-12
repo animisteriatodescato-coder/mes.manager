@@ -432,6 +432,7 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
             b.Property(x => x.Sconto).HasPrecision(5, 2).HasDefaultValue(0m);
             b.Property(x => x.NoteInterne).HasMaxLength(2000);
             b.Property(x => x.EmailDestinatario).HasMaxLength(300);
+            b.Property(x => x.TipoDocumento).HasMaxLength(50);
             b.Property(x => x.Margine1).HasPrecision(5, 2);
             b.Property(x => x.Margine2).HasPrecision(5, 2);
             b.Property(x => x.Margine3).HasPrecision(5, 2);

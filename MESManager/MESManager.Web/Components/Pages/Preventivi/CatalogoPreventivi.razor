@@ -540,7 +540,7 @@
             <TabContent>
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                     <MudText>Archivio</MudText>
-                    <MudBadge Content="@_preventivi.Count" Color="Color.Primary" Overlap="false" />
+                    <MudBadge Content="@PreventiviClassiciCount" Color="Color.Primary" Overlap="false" />
                 </MudStack>
             </TabContent>
             <ChildContent>
@@ -1276,6 +1276,99 @@
             </MudGrid>
         </MudTabPanel>
 
+        <!-- ══════════════════════════════════════════════════
+             TAB 6 — Archivio Aggiornamenti Prezzi
+        ══════════════════════════════════════════════════ -->
+        <MudTabPanel Icon="@Icons.Material.Filled.PriceChange" data-testid="tab-archivio-aggiornamenti">
+            <TabContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText>Archivio Aggiornamenti</MudText>
+                    <MudBadge Content="@AggiornamentoPrezziCount" Color="Color.Secondary" Overlap="false" />
+                </MudStack>
+            </TabContent>
+            <ChildContent>
+                <MudPaper Class="pa-3 mb-3" Elevation="1">
+                    <MudTextField @bind-Value="_searchAgText"
+                                  Placeholder="Cerca per cliente, codice, sabbia..."
+                                  Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                                  DebounceInterval="300" OnDebounceIntervalElapsed="@(s => { _searchAgText = s; StateHasChanged(); })"
+                                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Style="max-width:400px"
+                                  data-testid="input-archivio-ag-search" />
+                </MudPaper>
+
+                @if (_isLoading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else
+                {
+                    <MudTable Items="@AggiornamentiFiltrati" Dense="true" Hover="true"
+                              data-testid="table-archivio-aggiornamenti">
+                        <HeaderContent>
+                            <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => x.NumeroPreventivo)">N°</MudTableSortLabel></MudTh>
+                            <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => x.DataCreazione)">Data</MudTableSortLabel></MudTh>
+                            <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => x.Cliente)">Cliente</MudTableSortLabel></MudTh>
+                            <MudTh>Codice</MudTh>
+                            <MudTh>Sabbia</MudTh>
+                            <MudTh>Vernice</MudTh>
+                            <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => x.CalcPrezzoVendita)">Prezzo</MudTableSortLabel></MudTh>
+                            <MudTh>Stato</MudTh>
+                            <MudTh>Azioni</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd><MudText Typo="Typo.caption" Color="Color.Info"><b>@(context.NumeroPreventivo > 0 ? context.NumeroPreventivo.ToString() : "—")</b></MudText></MudTd>
+                            <MudTd>@context.DataCreazione.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                            <MudTd>@context.Cliente</MudTd>
+                            <MudTd><MudText Typo="Typo.caption">@context.CodiceArticolo</MudText></MudTd>
+                            <MudTd><MudText Typo="Typo.caption">@context.SabbiaSnapshot</MudText></MudTd>
+                            <MudTd><MudText Typo="Typo.caption">@(context.VerniciaturaRichiesta ? context.VerniceSnapshot : "—")</MudText></MudTd>
+                            <MudTd><MudText Color="Color.Success"><b>€@context.CalcPrezzoVendita.ToString("N4")</b></MudText></MudTd>
+                            <MudTd>
+                                <MudSelect T="string" Value="@context.Stato"
+                                           ValueChanged="@(s => CambiaStatoAsync(context, s))"
+                                           Variant="Variant.Text" Margin="Margin.Dense"
+                                           data-testid="@($"select-stato-ag-{context.Id}")">
+                                    <MudSelectItem Value="@("Bozza")">Bozza</MudSelectItem>
+                                    <MudSelectItem Value="@("InAttesa")">In attesa</MudSelectItem>
+                                    <MudSelectItem Value="@("Approvato")">Approvato</MudSelectItem>
+                                    <MudSelectItem Value="@("Rifiutato")">Rifiutato</MudSelectItem>
+                                </MudSelect>
+                            </MudTd>
+                            <MudTd>
+                                <MudStack Row="true" Spacing="0">
+                                    <MudTooltip Text="Modifica">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                       OnClick="@(() => CaricaAggiornamentoInModifica(context))"
+                                                       data-testid="@($"btn-modifica-ag-{context.Id}")" />
+                                    </MudTooltip>
+                                    <MudTooltip Text="Modulo cliente">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Print" Size="Size.Small"
+                                                       Color="Color.Secondary"
+                                                       OnClick="@(() => ApriModuloClienteConDto(context))"
+                                                       data-testid="@($"btn-modulo-ag-{context.Id}")" />
+                                    </MudTooltip>
+                                    <MudTooltip Text="Duplica">
+                                        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small"
+                                                       Color="Color.Info"
+                                                       OnClick="@(() => DuplicaAsync(context))"
+                                                       data-testid="@($"btn-duplica-ag-{context.Id}")" />
+                                    </MudTooltip>
+                                    <MudTooltip Text="Elimina">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                       Color="Color.Error"
+                                                       OnClick="@(() => EliminaAsync(context))"
+                                                       data-testid="@($"btn-elimina-ag-{context.Id}")" />
+                                    </MudTooltip>
+                                </MudStack>
+                            </MudTd>
+                        </RowTemplate>
+                        <NoRecordsContent><MudText>Nessun aggiornamento prezzi trovato.</MudText></NoRecordsContent>
+                    </MudTable>
+                }
+            </ChildContent>
+        </MudTabPanel>
+
     </MudTabs>
 </div>
 
@@ -1522,14 +1615,84 @@
 
     // ── Archivio ─────────────────────────────────────────────────────────
 
+    private string? _searchAgText;
+
+    private int PreventiviClassiciCount => _preventivi.Count(p => p.TipoDocumento == null || p.TipoDocumento == "Preventivo");
+    private int AggiornamentoPrezziCount => _preventivi.Count(p => p.TipoDocumento == "AggiornamentoPrezzi");
+
     private IEnumerable<PreventivoDto> PreventiviFiltrati =>
-        string.IsNullOrWhiteSpace(_searchText)
-            ? _preventivi
-            : _preventivi.Where(p =>
+        _preventivi
+            .Where(p => p.TipoDocumento == null || p.TipoDocumento == "Preventivo")
+            .Where(p => string.IsNullOrWhiteSpace(_searchText) ||
                 p.Cliente.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
                 p.CodiceArticolo.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
                 p.SabbiaSnapshot.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
                 (p.VerniceSnapshot ?? "").Contains(_searchText, StringComparison.OrdinalIgnoreCase));
+
+    private IEnumerable<PreventivoDto> AggiornamentiFiltrati =>
+        _preventivi
+            .Where(p => p.TipoDocumento == "AggiornamentoPrezzi")
+            .Where(p => string.IsNullOrWhiteSpace(_searchAgText) ||
+                p.Cliente.Contains(_searchAgText, StringComparison.OrdinalIgnoreCase) ||
+                p.CodiceArticolo.Contains(_searchAgText, StringComparison.OrdinalIgnoreCase) ||
+                p.SabbiaSnapshot.Contains(_searchAgText, StringComparison.OrdinalIgnoreCase) ||
+                (p.VerniceSnapshot ?? "").Contains(_searchAgText, StringComparison.OrdinalIgnoreCase));
+
+    private void CaricaAggiornamentoInModifica(PreventivoDto p)
+    {
+        _agDto = new PreventivoDto
+        {
+            Id                    = p.Id,
+            Cliente               = p.Cliente,
+            CodiceArticolo        = p.CodiceArticolo,
+            Descrizione           = p.Descrizione,
+            NoteCliente           = p.NoteCliente,
+            TipoSabbiaId          = p.TipoSabbiaId,
+            SabbiaSnapshot        = p.SabbiaSnapshot,
+            EuroOraSabbia         = p.EuroOraSabbia,
+            PrezzoSabbiaKg        = p.PrezzoSabbiaKg,
+            Figure                = p.Figure,
+            PesoAnima             = p.PesoAnima,
+            Lotto                 = p.Lotto,
+            Lotto2                = p.Lotto2,
+            Lotto3                = p.Lotto3,
+            Lotto4                = p.Lotto4,
+            SpariOrari            = p.SpariOrari,
+            CostoAttrezzatura     = p.CostoAttrezzatura,
+            Margine1              = p.Margine1,
+            Margine2              = p.Margine2,
+            Margine3              = p.Margine3,
+            Margine4              = p.Margine4,
+            VerniciaturaRichiesta = p.VerniciaturaRichiesta,
+            TipoVerniceId         = p.TipoVerniceId,
+            VerniceSnapshot       = p.VerniceSnapshot,
+            CostoVerniceKg        = p.CostoVerniceKg,
+            PercentualeVernice    = p.PercentualeVernice,
+            VerniciaturaPzOra     = p.VerniciaturaPzOra,
+            EuroOraVerniciatura   = p.EuroOraVerniciatura,
+            IncollaggioRichiesto  = p.IncollaggioRichiesto,
+            EuroOraIncollaggio    = p.EuroOraIncollaggio,
+            IncollaggioPzOra      = p.IncollaggioPzOra,
+            ImballaggioRichiesto  = p.ImballaggioRichiesto,
+            EuroOraImballaggio    = p.EuroOraImballaggio,
+            ImballaggioPzOra      = p.ImballaggioPzOra,
+            Stato                 = p.Stato,
+            NoteInterne           = p.NoteInterne,
+            Sconto                = p.Sconto,
+            CommessaId            = p.CommessaId,
+            TipoDocumento         = p.TipoDocumento
+        };
+        _agEditingId      = p.Id;
+        _agDataCreazione  = p.DataCreazione;
+        _agCalc           = PreventivoService.Calcola(_agDto);
+        // Seleziona tipo sabbia/vernice per i select
+        _agTipoSabbiaSelezionata  = _tipiSabbia.FirstOrDefault(s => s.Id == p.TipoSabbiaId);
+        _agTipoVerniceSelezionata = _tipiVernice.FirstOrDefault(v => v.Id == p.TipoVerniceId);
+        _agCampiMancanti          = new();
+        _agShowCampiMancanti      = false;
+        // Salta al Tab 5
+        _tabs?.ActivatePanel(4);
+    }
 
     private async Task EliminaAsync(PreventivoDto p)
     {
@@ -1888,6 +2051,9 @@
         }
         _agIsSaving = true;
         _agDto.DataCreazione = _agDataCreazione ?? DateTime.Today;
+        _agDto.TipoDocumento = "AggiornamentoPrezzi";
+        if (string.IsNullOrWhiteSpace(_agDto.Stato))
+            _agDto.Stato = "Bozza";
         var r = PreventivoService.Calcola(_agDto);
         _agDto.CalcCostoAnima      = r.CostoAnima;
         _agDto.CalcVerniciaturaTot = r.VernTot;
@@ -1900,7 +2066,7 @@
                 var updated = await PreventivoService.UpdateAsync(_agDto);
                 if (updated != null)
                 {
-                    Snackbar.Add("Preventivo aggiornato.", Severity.Success);
+                    Snackbar.Add("Aggiornamento prezzi salvato.", Severity.Success);
                     _preventivi = await PreventivoService.GetAllAsync();
                 }
             }
@@ -1909,7 +2075,7 @@
                 var created = await PreventivoService.CreateAsync(_agDto);
                 _agEditingId = created.Id;
                 _preventivi.Insert(0, created);
-                Snackbar.Add("Preventivo creato.", Severity.Success);
+                Snackbar.Add("Aggiornamento prezzi creato.", Severity.Success);
             }
         }
         catch (Exception ex) { Snackbar.Add($"Errore: {ex.Message}", Severity.Error); }

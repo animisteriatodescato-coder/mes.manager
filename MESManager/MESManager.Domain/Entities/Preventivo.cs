@@ -71,8 +71,15 @@ public class Preventivo
     public decimal CalcVerniciaturaTot { get; set; }
     public decimal CalcPrezzoVendita { get; set; }
 
+    // ── Tipo documento ──────────────────────────────────────────────────
+    /// <summary>null/"Preventivo" = preventivo classico | "AggiornamentoPrezzi" = aggiornamento prezzi da catalogo</summary>
+    public string? TipoDocumento { get; set; }
+
     // ── Stato ───────────────────────────────────────────────────────────
-    /// <summary>InAttesa | Inviato | Approvato | Rifiutato</summary>
+    /// <summary>
+    /// Preventivo classico: InAttesa | Inviato | Approvato | Rifiutato
+    /// Aggiornamento prezzi: Richiesta | DaInviare | Inviato | Approvato
+    /// </summary>
     public string Stato { get; set; } = "InAttesa";
 
     // ── Feature v1.65.7 ─────────────────────────────────────────────────

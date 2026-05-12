@@ -87,6 +87,9 @@ public class PreventivoDto
     public Guid? CommessaId { get; set; }
     public string? EmailDestinatario { get; set; }
     public DateTime? EmailInviatoIl { get; set; }
+
+    /// <summary>null/"Preventivo" = preventivo classico | "AggiornamentoPrezzi" = aggiornamento da catalogo</summary>
+    public string? TipoDocumento { get; set; }
 }
 
 /// <summary>

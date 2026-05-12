@@ -334,7 +334,8 @@ public class PreventivoService : IPreventivoService
         Sconto = p.Sconto,
         CommessaId = p.CommessaId,
         EmailDestinatario = p.EmailDestinatario,
-        EmailInviatoIl = p.EmailInviatoIl
+        EmailInviatoIl = p.EmailInviatoIl,
+        TipoDocumento = p.TipoDocumento
     };
 
     private static Preventivo MapToEntity(PreventivoDto dto) => new()
@@ -381,7 +382,8 @@ public class PreventivoService : IPreventivoService
         Sconto = dto.Sconto,
         CommessaId = dto.CommessaId,
         EmailDestinatario = dto.EmailDestinatario,
-        EmailInviatoIl = dto.EmailInviatoIl
+        EmailInviatoIl = dto.EmailInviatoIl,
+        TipoDocumento = dto.TipoDocumento
     };
 
     private static void AggiornaDaDto(Preventivo entity, PreventivoDto dto)
@@ -429,6 +431,7 @@ public class PreventivoService : IPreventivoService
         entity.CommessaId = dto.CommessaId;
         entity.EmailDestinatario = dto.EmailDestinatario;
         entity.EmailInviatoIl = dto.EmailInviatoIl;
+        entity.TipoDocumento = dto.TipoDocumento;
     }
 
     // ── Feature v1.65.7: nuovi metodi ─────────────────────────────────────
