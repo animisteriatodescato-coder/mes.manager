@@ -2,7 +2,9 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.CatPreventivi)]
 @using MESManager.Application.DTOs
 @using MESManager.Application.Interfaces
+@using MESManager.Domain.Enums
 @inject IPreventivoService PreventivoService
+@inject ICommessaAppService CommessaAppService
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 
@@ -54,7 +56,24 @@
                     @(_isLoading ? "Caricamento..." : "Aggiorna")
                 </MudButton>
             </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudButton Variant="@(_filtraCommesseAperte ? Variant.Filled : Variant.Outlined)"
+                           Color="@(_filtraCommesseAperte ? Color.Warning : Color.Secondary)"
+                           StartIcon="@(_filtraCommesseAperte ? Icons.Material.Filled.FilterAltOff : Icons.Material.Filled.WorkHistory)"
+                           OnClick="ToggleFiltroCommesseAperteAsync"
+                           Disabled="@(_isLoading || _isLoadingCommesse)"
+                           FullWidth="true"
+                           data-testid="btn-analizza-commesse-aperte">
+                    @TestoPulsanteCommesseAperte
+                </MudButton>
+            </MudItem>
         </MudGrid>
+        @if (_filtraCommesseAperte)
+        {
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mt-3" data-testid="alert-filtro-commesse-aperte">
+                Analisi limitata a @_codiciArticoliCommesseAperte.Count articoli presenti in commesse aperte o in lavorazione.
+            </MudAlert>
+        }
     </MudPaper>
 
     @if (_isLoading)
@@ -70,7 +89,7 @@
     else
     {
         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
-            @RigheFiltrate.Count() articoli su @_righe.Count totali (soglia: |Δ| > @_soglia.ToString("N1")%)
+            @RigheFiltrate.Count() articoli su @_righe.Count totali (soglia: |Δ| > @_soglia.ToString("N1")%@(_filtraCommesseAperte ? ", solo commesse aperte" : ""))
         </MudText>
 
         <MudTable Items="@RigheFiltrate"
@@ -93,6 +112,18 @@
             <RowTemplate>
                 <MudTd>
                     <MudText Typo="Typo.caption"><b>@context.CodiceArticolo</b></MudText>
+                    @if (IsArticoloInCommessaAperta(context.CodiceArticolo))
+                    {
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Color="Color.Warning"
+                                 Icon="@Icons.Material.Filled.WorkHistory"
+                                 Class="mt-1"
+                                 Style="height:18px;font-size:0.62rem"
+                                 data-testid="@($"badge-commessa-aperta-{context.CodiceArticolo}")">
+                            Commessa aperta
+                        </MudChip>
+                    }
                 </MudTd>
                 <MudTd>
                     <MudText Typo="Typo.caption">@(context.Descrizione ?? "—")</MudText>
@@ -153,16 +184,27 @@
 
 @code {
     private List<AnalisiPrezziRigaDto> _righe = new();
+    private HashSet<string> _codiciArticoliCommesseAperte = new(StringComparer.OrdinalIgnoreCase);
     private bool _isLoading = false;
+    private bool _isLoadingCommesse = false;
+    private bool _filtraCommesseAperte = false;
     private decimal _soglia = 0;
     private string _filterText = "";
 
     private IEnumerable<AnalisiPrezziRigaDto> RigheFiltrate => _righe
         .Where(r => Math.Abs(r.DeltaPercentuale) > _soglia || _soglia == 0)
+        .Where(r => !_filtraCommesseAperte || IsArticoloInCommessaAperta(r.CodiceArticolo))
         .Where(r => string.IsNullOrWhiteSpace(_filterText)
                     || (r.CodiceArticolo?.Contains(_filterText, StringComparison.OrdinalIgnoreCase) ?? false)
                     || (r.Descrizione?.Contains(_filterText, StringComparison.OrdinalIgnoreCase) ?? false)
                     || (r.Cliente?.Contains(_filterText, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    private string TestoPulsanteCommesseAperte =>
+        _isLoadingCommesse
+            ? "Analisi..."
+            : _filtraCommesseAperte
+                ? "Mostra tutti gli articoli"
+                : "Analizza commesse aperte";
 
     protected override async Task OnInitializedAsync()
     {
@@ -184,6 +226,71 @@
         {
             _isLoading = false;
         }
+    }
+
+    private async Task ToggleFiltroCommesseAperteAsync()
+    {
+        if (_filtraCommesseAperte)
+        {
+            _filtraCommesseAperte = false;
+            return;
+        }
+
+        if (!await CaricaCodiciCommesseAperteAsync())
+        {
+            return;
+        }
+
+        _filtraCommesseAperte = true;
+
+        if (_codiciArticoliCommesseAperte.Count == 0)
+        {
+            Snackbar.Add("Nessuna commessa aperta o in lavorazione con articolo associato.", Severity.Info);
+        }
+        else
+        {
+            Snackbar.Add($"Analisi limitata a {_codiciArticoliCommesseAperte.Count} articoli in commesse aperte.", Severity.Success);
+        }
+    }
+
+    private async Task<bool> CaricaCodiciCommesseAperteAsync()
+    {
+        _isLoadingCommesse = true;
+        try
+        {
+            var commesse = await CommessaAppService.GetListaAsync();
+            _codiciArticoliCommesseAperte = commesse
+                .Where(IsCommessaAperta)
+                .Select(c => c.ArticoloCodice?.Trim())
+                .Where(codice => !string.IsNullOrWhiteSpace(codice))
+                .Select(codice => codice!)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _codiciArticoliCommesseAperte.Clear();
+            _filtraCommesseAperte = false;
+            Snackbar.Add($"Errore nel caricamento commesse aperte: {ex.Message}", Severity.Error);
+            return false;
+        }
+        finally
+        {
+            _isLoadingCommesse = false;
+        }
+    }
+
+    private static bool IsCommessaAperta(CommessaDto commessa)
+    {
+        return string.Equals(commessa.Stato, nameof(StatoCommessa.Aperta), StringComparison.OrdinalIgnoreCase)
+            || string.Equals(commessa.Stato, nameof(StatoCommessa.InLavorazione), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool IsArticoloInCommessaAperta(string? codiceArticolo)
+    {
+        return !string.IsNullOrWhiteSpace(codiceArticolo)
+            && _codiciArticoliCommesseAperte.Contains(codiceArticolo.Trim());
     }
 
     private void CreaAggiornamento(string codiceArticolo)

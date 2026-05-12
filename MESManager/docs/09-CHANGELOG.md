@@ -4,7 +4,27 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.113
+## 🔖 Versione Corrente: v1.65.114
+
+---
+
+## 🔖 v1.65.114 — Analisi Prezzi su Commesse Aperte
+
+**Data**: 2026-05-12
+
+### ✨ Nuove Funzionalità
+
+- **Pagina `/analisi-prezzi`**: aggiunto pulsante "Analizza commesse aperte".
+  - Carica le commesse tramite `ICommessaAppService.GetListaAsync()`.
+  - Considera aperte le commesse con stato `Aperta` o `InLavorazione`.
+  - Filtra la tabella mostrando solo gli articoli presenti in commesse aperte/in lavorazione.
+  - Evidenzia le righe coinvolte con badge "Commessa aperta".
+  - Il pulsante passa a "Mostra tutti gli articoli" quando il filtro è attivo.
+
+#### File modificati
+- `MESManager.Web/Components/Pages/Preventivi/AnalisiPrezzi.razor` — filtro commesse aperte + badge evidenza.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.113 → 1.65.114.
+- `docs/09-CHANGELOG.md` — changelog v1.65.114.
 
 ---
 

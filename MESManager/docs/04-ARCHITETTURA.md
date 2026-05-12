@@ -772,6 +772,16 @@ agGridFactory.setup({
 | `Models/GridStats.cs` | DTO stats griglia (Total/Filtered/Selected) |
 | `Models/GridUiSettings.cs` | Settings UI griglia + `GetDensityPadding()` |
 
+### Analisi Prezzi e Commesse Aperte
+
+La pagina `/analisi-prezzi` usa `IPreventivoService.GetAnalisiPrezziAsync()` come fonte della tabella preventivi vs catalogo e `ICommessaAppService.GetListaAsync()` per limitare l'analisi agli articoli presenti in commesse attive.
+
+Per il filtro "Analizza commesse aperte" gli stati validi sono:
+- `StatoCommessa.Aperta`
+- `StatoCommessa.InLavorazione`
+
+Non duplicare query dirette su `Commesse` nella pagina Blazor: riusare il servizio applicativo e confrontare gli stati tramite `nameof(StatoCommessa.X)` o enum, non stringhe libere.
+
 ---
 
 ## 🎨 Sistema Tema (v1.60.2+)
