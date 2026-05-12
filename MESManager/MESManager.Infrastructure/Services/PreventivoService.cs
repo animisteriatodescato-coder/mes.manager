@@ -547,4 +547,61 @@ public class PreventivoService : IPreventivoService
         await _db.SaveChangesAsync();
         return MapPreventivo(entity);
     }
+
+    // ── Analisi Prezzi ─────────────────────────────────────────────────────
+    public async Task<List<AnalisiPrezziRigaDto>> GetAnalisiPrezziAsync(decimal sogliaDeltaPerc = 0)
+    {
+        // Recupera tutti i preventivi con CodiceArticolo valorizzato
+        var preventivi = await _db.Preventivi
+            .Where(p => p.CodiceArticolo != null && p.CodiceArticolo != "")
+            .OrderByDescending(p => p.DataCreazione)
+            .ToListAsync();
+
+        // Raggruppa per CodiceArticolo
+        var gruppi = preventivi
+            .GroupBy(p => p.CodiceArticolo!)
+            .ToList();
+
+        // Recupera i prezzi catalogo per tutti gli articoli in un solo round-trip
+        var codici = gruppi.Select(g => g.Key).ToList();
+        var articoli = await _db.Articoli
+            .Where(a => codici.Contains(a.Codice))
+            .Select(a => new { a.Codice, a.Prezzo, a.Descrizione })
+            .AsNoTracking()
+            .ToListAsync();
+        var catalogoDict = articoli.ToDictionary(a => a.Codice);
+
+        var risultati = new List<AnalisiPrezziRigaDto>();
+        foreach (var gruppo in gruppi)
+        {
+            var ultimo = gruppo.First(); // già ordinati per DataCreazione DESC
+            if (!catalogoDict.TryGetValue(gruppo.Key, out var catalogo))
+                continue; // articolo non presente in catalogo — skippa
+
+            var prezzo = catalogo.Prezzo;
+            if (prezzo == 0m)
+                continue; // prezzo catalogo non definito — skippa
+
+            var delta = (ultimo.CalcPrezzoVendita - prezzo) / prezzo * 100m;
+
+            var riga = new AnalisiPrezziRigaDto
+            {
+                CodiceArticolo = gruppo.Key,
+                Descrizione = !string.IsNullOrWhiteSpace(ultimo.Descrizione) ? ultimo.Descrizione : catalogo.Descrizione,
+                Cliente = ultimo.Cliente,
+                DataUltimoPreventivo = ultimo.DataCreazione.ToLocalTime(),
+                PrezzoUltimoPreventivo = ultimo.CalcPrezzoVendita,
+                PrezzoCatalogoAttuale = prezzo,
+                DeltaPercentuale = Math.Round(delta, 2),
+                NumeroPreventiviTotali = gruppo.Count(),
+                AlertSoglia = Math.Abs(delta) > sogliaDeltaPerc,
+                TipoUltimoDocumento = ultimo.TipoDocumento
+            };
+            risultati.Add(riga);
+        }
+
+        return risultati
+            .OrderByDescending(r => Math.Abs(r.DeltaPercentuale))
+            .ToList();
+    }
 }

@@ -10,6 +10,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject HttpClient Http
+@inject NavigationManager NavigationManager
 
 <PageTitle>Preventivi</PageTitle>
 
@@ -1409,6 +1410,10 @@
 @code {
     private MudTabs? _tabs;
 
+    // Query param per pre-selezione articolo da AnalisiPrezzi
+    [SupplyParameterFromQuery(Name = "articolo")]
+    public string? ArticoloParam { get; set; }
+
     // Pricing configurati nel DB
     private List<PreventivoTipoSabbiaDto> _tipiSabbia  = new();
     private List<PreventivoTipoVerniceDto> _tipiVernice = new();
@@ -1468,6 +1473,19 @@
             .OrderBy(c => c)
             .ToList();
         _isLoading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !string.IsNullOrWhiteSpace(ArticoloParam))
+        {
+            // Attiva il tab "Aggiornamento Prezzi" (indice 4)
+            if (_tabs != null)
+                await _tabs.ActivatePanelAsync(4);
+            _agDto.CodiceArticolo = ArticoloParam;
+            await OnAgCodiceArticoloChanged(ArticoloParam);
+            StateHasChanged();
+        }
     }
 
     // ── Calcolo ─────────────────────────────────────────────────────────

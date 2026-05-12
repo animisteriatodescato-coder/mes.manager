@@ -53,4 +53,8 @@ public interface IPreventivoService
 
     /// <summary>Registra l'invio email sul preventivo.</summary>
     Task<PreventivoDto?> RegistraInvioEmailAsync(Guid id, string destinatario);
+
+    // ── Analisi Prezzi ─────────────────────────────────────────────────
+    /// <summary>Raggruppa i preventivi per articolo e confronta il prezzo dell'ultimo preventivo con il prezzo catalogo attuale.</summary>
+    Task<List<AnalisiPrezziRigaDto>> GetAnalisiPrezziAsync(decimal sogliaDeltaPerc = 0);
 }

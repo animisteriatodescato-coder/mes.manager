@@ -1,0 +1,193 @@
+@page "/analisi-prezzi"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.CatPreventivi)]
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@inject IPreventivoService PreventivoService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<PageTitle>Analisi Prezzi</PageTitle>
+
+<div class="pa-4" data-testid="page-analisi-prezzi">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Spacing="3">
+        <MudIcon Icon="@Icons.Material.Filled.Analytics" Color="Color.Primary" Size="Size.Large" />
+        <MudText Typo="Typo.h5"><b>Analisi Prezzi Preventivi</b></MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Default"
+                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                   OnClick="@(() => NavigationManager.NavigateTo("/preventivi"))">
+            Preventivi
+        </MudButton>
+    </MudStack>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+            <MudItem xs="12" sm="4" md="3">
+                <MudNumericField T="decimal"
+                                 @bind-Value="_soglia"
+                                 Label="Soglia delta % (|Δ| >)"
+                                 Variant="Variant.Outlined"
+                                 Margin="Margin.Dense"
+                                 Min="0" Max="200" Format="N1"
+                                 Adornment="Adornment.End" AdornmentText="%"
+                                 HelperText="0 = mostra tutto"
+                                 data-testid="input-soglia" />
+            </MudItem>
+            <MudItem xs="12" sm="4" md="3">
+                <MudTextField @bind-Value="_filterText"
+                              Label="Cerca codice / cliente / descrizione"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Immediate="true"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              data-testid="input-filter" />
+            </MudItem>
+            <MudItem xs="6" sm="2">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           OnClick="CaricaAsync"
+                           Disabled="_isLoading"
+                           FullWidth="true">
+                    @(_isLoading ? "Caricamento..." : "Aggiorna")
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    @if (_isLoading)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-3" />
+    }
+    else if (_righe.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">
+            Nessun dato disponibile. Assicurarsi che esistano preventivi con codice articolo associato al catalogo anime.
+        </MudAlert>
+    }
+    else
+    {
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+            @RigheFiltrate.Count() articoli su @_righe.Count totali (soglia: |Δ| > @_soglia.ToString("N1")%)
+        </MudText>
+
+        <MudTable Items="@RigheFiltrate"
+                  Dense="true"
+                  Hover="true"
+                  Striped="true"
+                  SortLabel="Ordina per"
+                  data-testid="table-analisi-prezzi">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.CodiceArticolo)">Codice</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.Descrizione ?? string.Empty)">Descrizione</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.Cliente ?? string.Empty)">Cliente (ultimo prev.)</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.DataUltimoPreventivo ?? DateTime.MinValue)">Data ultimo prev.</MudTableSortLabel></MudTh>
+                <MudTh Class="text-right"><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.PrezzoUltimoPreventivo)">Prezzo prev.</MudTableSortLabel></MudTh>
+                <MudTh Class="text-right"><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.PrezzoCatalogoAttuale)">Prezzo catalogo</MudTableSortLabel></MudTh>
+                <MudTh Class="text-right"><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.DeltaPercentuale)" InitialDirection="SortDirection.Descending">Δ %</MudTableSortLabel></MudTh>
+                <MudTh Class="text-center"><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.NumeroPreventiviTotali)">N° prev.</MudTableSortLabel></MudTh>
+                <MudTh>Azioni</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>
+                    <MudText Typo="Typo.caption"><b>@context.CodiceArticolo</b></MudText>
+                </MudTd>
+                <MudTd>
+                    <MudText Typo="Typo.caption">@(context.Descrizione ?? "—")</MudText>
+                </MudTd>
+                <MudTd>
+                    <MudText Typo="Typo.caption">@(context.Cliente ?? "—")</MudText>
+                </MudTd>
+                <MudTd>
+                    <MudText Typo="Typo.caption">
+                        @(context.DataUltimoPreventivo.HasValue ? context.DataUltimoPreventivo.Value.ToString("dd/MM/yyyy") : "—")
+                    </MudText>
+                    @if (context.TipoUltimoDocumento == "AggiornamentoPrezzi")
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Class="ml-1" Style="height:16px;font-size:0.6rem">AGG</MudChip>
+                    }
+                </MudTd>
+                <MudTd Class="text-right">
+                    <MudText Typo="Typo.body2">€@context.PrezzoUltimoPreventivo.ToString("N4")</MudText>
+                </MudTd>
+                <MudTd Class="text-right">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">€@context.PrezzoCatalogoAttuale.ToString("N4")</MudText>
+                </MudTd>
+                <MudTd Class="text-right">
+                    @{
+                        var delta = context.DeltaPercentuale;
+                        var deltaColor = Math.Abs(delta) > 10 ? Color.Error : Math.Abs(delta) > 5 ? Color.Warning : Color.Success;
+                        var deltaIcon = delta > 0 ? Icons.Material.Filled.TrendingUp : delta < 0 ? Icons.Material.Filled.TrendingDown : Icons.Material.Filled.TrendingFlat;
+                    }
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexEnd" Spacing="0">
+                        <MudIcon Icon="@deltaIcon" Color="@deltaColor" Size="Size.Small" />
+                        <MudText Typo="Typo.body2" Color="@deltaColor">
+                            <b>@(delta >= 0 ? "+" : "")@delta.ToString("N1")%</b>
+                        </MudText>
+                    </MudStack>
+                </MudTd>
+                <MudTd Class="text-center">
+                    <MudText Typo="Typo.caption">@context.NumeroPreventiviTotali</MudText>
+                </MudTd>
+                <MudTd>
+                    <MudTooltip Text="Crea Aggiornamento Prezzi per questo articolo">
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Warning"
+                                   Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.PriceChange"
+                                   OnClick="@(() => CreaAggiornamento(context.CodiceArticolo))"
+                                   data-testid="@($"btn-crea-ag-{context.CodiceArticolo}")">
+                            Aggiorna
+                        </MudButton>
+                    </MudTooltip>
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText>Nessun articolo corrisponde ai filtri impostati.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    }
+</div>
+
+@code {
+    private List<AnalisiPrezziRigaDto> _righe = new();
+    private bool _isLoading = false;
+    private decimal _soglia = 0;
+    private string _filterText = "";
+
+    private IEnumerable<AnalisiPrezziRigaDto> RigheFiltrate => _righe
+        .Where(r => Math.Abs(r.DeltaPercentuale) > _soglia || _soglia == 0)
+        .Where(r => string.IsNullOrWhiteSpace(_filterText)
+                    || (r.CodiceArticolo?.Contains(_filterText, StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (r.Descrizione?.Contains(_filterText, StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (r.Cliente?.Contains(_filterText, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CaricaAsync();
+    }
+
+    private async Task CaricaAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            _righe = await PreventivoService.GetAnalisiPrezziAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore nel caricamento analisi prezzi: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void CreaAggiornamento(string codiceArticolo)
+    {
+        NavigationManager.NavigateTo($"/preventivi?articolo={Uri.EscapeDataString(codiceArticolo)}");
+    }
+}
