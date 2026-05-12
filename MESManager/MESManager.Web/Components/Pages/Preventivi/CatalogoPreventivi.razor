@@ -1997,10 +1997,19 @@
         if (!string.IsNullOrWhiteSpace(anime.Cliente))
             _agDto.Cliente = anime.Cliente;
 
-        // Lotto 1 = lotto minimo (Imballo) dal catalogo
-        if (anime.Imballo.HasValue && anime.Imballo > 0)
-            _agDto.Lotto = anime.Imballo.Value;
-        else
+        // Lotto minimo: leggi da UnitaMisura (campo "Lotto min" nel catalogo anime)
+        bool lottoImpostato = false;
+        if (!string.IsNullOrWhiteSpace(anime.UnitaMisura))
+        {
+            var lottoStr = anime.UnitaMisura.Trim().Replace(",", ".");
+            if (decimal.TryParse(lottoStr, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out var lottoVal) && lottoVal > 0)
+            {
+                _agDto.Lotto = (int)lottoVal;
+                lottoImpostato = true;
+            }
+        }
+        if (!lottoImpostato)
         {
             // Fallback: prendi il lotto dall'ultimo preventivo esistente per questo articolo
             var prevEsistente = _preventivi
@@ -2012,7 +2021,7 @@
             if (prevEsistente != null)
                 _agDto.Lotto = prevEsistente.Lotto;
             else
-                _agCampiMancanti.Add("Lotto minimo (Imballo non impostato nel catalogo — impostalo manualmente)");
+                _agCampiMancanti.Add("Lotto minimo (non impostato nel catalogo anime — impostalo manualmente)");
         }
 
         // Figure (string → int)
