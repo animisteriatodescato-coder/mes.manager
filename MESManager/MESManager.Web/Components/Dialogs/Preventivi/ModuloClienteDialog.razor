@@ -195,6 +195,9 @@
     [Parameter]
     public PreventivoDto? Dto { get; set; }
 
+    [Parameter]
+    public decimal? PrezzoVecchio { get; set; }
+
     private string _emailDestinatario = string.Empty;
     private bool _isInvioEmail;
     private bool _isScaricaPdf;
@@ -235,7 +238,7 @@
             _fontSize.ToString(System.Globalization.CultureInfo.InvariantCulture));
         var baseUri = Nav.BaseUri.TrimEnd('/');
         var logo = LeggiLogoInline();
-        var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna, _fontSize, logo, _includiCondizioni ? _condizioni : null);
+        var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna, _fontSize, logo, _includiCondizioni ? _condizioni : null, PrezzoVecchio);
         await JS.InvokeVoidAsync("mesPreventivoPrint", html);
     }
 
@@ -277,7 +280,7 @@
                 _fontSize.ToString(System.Globalization.CultureInfo.InvariantCulture));
             var baseUri = Nav.BaseUri.TrimEnd('/');
             var logo = LeggiLogoInline();
-            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna: false, _fontSize, logo, _includiCondizioni ? _condizioni : null);
+            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna: false, _fontSize, logo, _includiCondizioni ? _condizioni : null, PrezzoVecchio);
             var clienteSafe = System.Text.RegularExpressions.Regex.Replace(Dto.Cliente ?? "Cliente", @"[^\w]", "");
             var numStr = Dto.NumeroPreventivo > 0 ? $"N{Dto.NumeroPreventivo}" : $"ID{Dto.Id}";
             var fileName = $"Preventivo_{numStr}_{clienteSafe}_{DateTime.Today:yyyyMMdd}.pdf";
@@ -333,7 +336,7 @@
         {
             var baseUri = Nav.BaseUri.TrimEnd('/');
             var logo = LeggiLogoInline();
-            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna: false, _fontSize, logo, _includiCondizioni ? _condizioni : null);
+            var html = ModuloClientePrintBuilder.Build(Dto, baseUri, PreventivoService, interna: false, _fontSize, logo, _includiCondizioni ? _condizioni : null, PrezzoVecchio);
             var ok = await EmailService.InviaPreventivoPdfAsync(
                 _emailDestinatario, html, Dto.Cliente, Dto.NumeroPreventivo);
             if (ok)

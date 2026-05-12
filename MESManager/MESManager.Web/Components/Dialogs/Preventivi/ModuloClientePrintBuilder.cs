@@ -14,7 +14,7 @@ public static class ModuloClientePrintBuilder
     /// <param name="logoInlineHtml">HTML/SVG del logo da incorporare; se null non viene mostrato</param>
     public static string Build(PreventivoDto dto, string baseUri, IPreventivoService preventivoService,
         bool interna = false, decimal fontSize = 10.5m, string? logoInlineHtml = null,
-        List<string>? condizioni = null)
+        List<string>? condizioni = null, decimal? prezzoVecchio = null)
     {
         var fs = fontSize.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
         var fsSmall  = (fontSize - 1.5m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
@@ -106,7 +106,9 @@ public static class ModuloClientePrintBuilder
             ? $"  <div class=\"hdr-logo\">{logoInlineHtml}</div>\n"
             : "  <div class=\"hdr-logo\"></div>\n";
 
-        return "<!DOCTYPE html>\n" +
+        var titoloH1 = dto.TipoDocumento == "AggiornamentoPrezzi" ? "AGGIORNAMENTO ANIME" : "PREVENTIVO FORNITURA ANIME";
+
+        var htmlPart1 = "<!DOCTYPE html>\n" +
                "<html lang=\"it\">\n" +
                "<head>\n" +
                "  <meta charset=\"utf-8\" />\n" +
@@ -168,7 +170,7 @@ public static class ModuloClientePrintBuilder
                "      P.I.: 03200610248 &bull; SDI: SUBM70N\n" +
                "    </div>\n" +
                "  </div>\n" +
-               "  <h1>PREVENTIVO FORNITURA ANIME</h1>\n" +
+               $"  <h1>{titoloH1}</h1>\n" +
                $"  <div class=\"meta\">{emissioneRow}</div>\n\n" +
                "  <div class=\"section-title\">Dati Cliente</div>\n" +
                "  <dl>\n" +
@@ -186,15 +188,24 @@ public static class ModuloClientePrintBuilder
                "  </dl>\n\n" +
                $"  {note}\n" +
                $"  {noteInterne}\n\n" +
-               "  <div class=\"section-title\">Prezzi per Lotto</div>\n" +
-               "  <table class=\"prezzi\">\n" +
-               $"    <thead>{theadPrezzi}</thead>\n" +
-               $"    <tbody>{righi}</tbody>\n" +
-               "  </table>\n\n" +
-               $"  <div class=\"doc-footer\">{footerDateRow}</div>\n" +
-               BuildCondizioniHtml(condizioni) +
-               "</body>\n" +
-               "</html>";
+               "  <div class=\"section-title\">Prezzi per Lotto</div>\n";
+
+        var confrontoHtml = (prezzoVecchio.HasValue && dto.TipoDocumento == "AggiornamentoPrezzi")
+            ? BuildConfronto(prezzoVecchio.Value, GetLottiPrezziConMargine(dto, preventivoService).FirstOrDefault().Prezzo, fontSize)
+            : "";
+
+        var sbFull = new System.Text.StringBuilder();
+        sbFull.Append(htmlPart1);
+        sbFull.Append(confrontoHtml);
+        sbFull.Append("  <table class=\"prezzi\">\n");
+        sbFull.Append($"    <thead>{theadPrezzi}</thead>\n");
+        sbFull.Append($"    <tbody>{righi}</tbody>\n");
+        sbFull.Append("  </table>\n\n");
+        sbFull.Append($"  <div class=\"doc-footer\">{footerDateRow}</div>\n");
+        sbFull.Append(BuildCondizioniHtml(condizioni));
+        sbFull.Append("</body>\n");
+        sbFull.Append("</html>");
+        return sbFull.ToString();
     }
 
     private static readonly List<string> _defaultCondizioni = new()
@@ -204,6 +215,24 @@ public static class ModuloClientePrintBuilder
         "Prezzi IVA esclusa. L'imposta sarà applicata secondo l'aliquota vigente al momento della fatturazione.",
         "Pagamento: secondo accordi commerciali in essere."
     };
+
+    private static string BuildConfronto(decimal prezzoVecchio, decimal prezzoNuovo, decimal fontSize)
+    {
+        var delta = prezzoNuovo - prezzoVecchio;
+        var deltaStr = (delta >= 0 ? "+" : "") + delta.ToString("N4");
+        var deltaColor = delta > 0 ? "#c62828" : delta < 0 ? "#2e7d32" : "#555";
+        var arrow = delta > 0 ? "&#x2191;" : delta < 0 ? "&#x2193;" : "&#x2194;";
+        var fsTiny = (fontSize - 2.0m).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+        return
+            "  <table style=\"width:100%;border-collapse:collapse;margin-bottom:6px;border:1px solid #e0a800;\">\n" +
+            $"    <thead><tr><th colspan=\"2\" style=\"background:#fff8e1;padding:4px 8px;font-size:{fsTiny}pt;color:#795548;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;\">CONFRONTO PREZZI (catalogo vs aggiornamento)</th></tr></thead>\n" +
+            "    <tbody>\n" +
+            $"      <tr><td style=\"padding:3px 8px;font-size:{fsTiny}pt;color:#555\">Prezzo catalogo</td><td style=\"padding:3px 8px;text-align:right;font-size:{fsTiny}pt\">&euro;{prezzoVecchio:N4}</td></tr>\n" +
+            $"      <tr><td style=\"padding:3px 8px;font-size:{fsTiny}pt;font-weight:bold\">Nuovo prezzo</td><td style=\"padding:3px 8px;text-align:right;font-size:{fsTiny}pt;font-weight:bold;color:#1a5c1a\">&euro;{prezzoNuovo:N4}</td></tr>\n" +
+            $"      <tr><td style=\"padding:3px 8px;font-size:{fsTiny}pt\">Variazione</td><td style=\"padding:3px 8px;text-align:right;font-size:{fsTiny}pt;font-weight:bold;color:{deltaColor}\">{arrow} {deltaStr}</td></tr>\n" +
+            "    </tbody>\n" +
+            "  </table>\n";
+    }
 
     private static string BuildCondizioniHtml(List<string>? condizioni)
     {
