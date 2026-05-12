@@ -161,7 +161,7 @@
                             </MudItem>
                             <MudItem xs="6" sm="4" md="3">
                                 <MudNumericField @bind-Value="_dto.CostoAttrezzatura" @bind-Value:after="Ricalcola"
-                                                 Label="Attrezzatura (€)" Min="0" Format="N2"
+                                                 Label="Attrezzaggio" Min="0" Format="N2"
                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  data-testid="input-costo-attrezzatura" />
                             </MudItem>
@@ -1114,10 +1114,17 @@
                                                  HelperText="Auto dalla sabbia" />
                             </MudItem>
                             <MudItem xs="6" sm="3">
-                                <MudNumericField @bind-Value="_agDto.CostoAttrezzatura" Label="Costo attrezzatura"
+                                <MudNumericField @bind-Value="_agDto.CostoAttrezzatura" Label="Attrezzaggio"
                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
                                                  Format="C2" Min="0"
                                                  OnBlur="@((e) => RicalcolaAg())" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudNumericField @bind-Value="_agDto.EuroOraSabbia" Label="€/h sabbia"
+                                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                 Format="N2" Min="0"
+                                                 OnBlur="@((e) => RicalcolaAg())"
+                                                 HelperText="Auto dalla sabbia" />
                             </MudItem>
                         </MudGrid>
                     </MudPaper>
