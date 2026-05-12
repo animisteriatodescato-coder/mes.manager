@@ -1168,7 +1168,8 @@
                             <MudItem xs="6" sm="3">
                                 <MudNumericField @bind-Value="_agDto.Lotto" Label="Lotto 1 *"
                                                  Variant="Variant.Outlined" Margin="Margin.Dense" Min="1"
-                                                 OnBlur="@((e) => RicalcolaAg())" />
+                                                 OnBlur="@((e) => RicalcolaAg())"
+                                                 HelperText="Auto = lotto minimo (Imballo)" />
                             </MudItem>
                             <MudItem xs="6" sm="3">
                                 <MudNumericField @bind-Value="_agDto.Margine1" Label="Margine 1 (%)"
@@ -1803,6 +1804,10 @@
         // Cliente
         if (!string.IsNullOrWhiteSpace(anime.Cliente))
             _agDto.Cliente = anime.Cliente;
+
+        // Lotto 1 = lotto minimo (Imballo) dal catalogo
+        if (anime.Imballo.HasValue && anime.Imballo > 0)
+            _agDto.Lotto = anime.Imballo.Value;
 
         // Figure (string → int)
         if (!string.IsNullOrWhiteSpace(anime.Figure) &&
