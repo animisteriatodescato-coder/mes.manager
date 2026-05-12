@@ -15,6 +15,19 @@
 <PageTitle>Preventivi</PageTitle>
 
 <div data-testid="page-preventivi" class="pa-4">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Spacing="2">
+        <MudIcon Icon="@Icons.Material.Filled.ReceiptLong" Color="Color.Primary" Size="Size.Large" />
+        <MudText Typo="Typo.h5"><b>Preventivi</b></MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Info"
+                   StartIcon="@Icons.Material.Filled.Analytics"
+                   OnClick="@(() => NavigationManager.NavigateTo("/analisi-prezzi"))"
+                   data-testid="btn-vai-analisi-prezzi">
+            Analisi Prezzi
+        </MudButton>
+    </MudStack>
+
     <MudTabs @ref="_tabs" PanelClass="pt-4" data-testid="tabs-preventivi">
 
         <!-- ══════════════════════════════════════════════════

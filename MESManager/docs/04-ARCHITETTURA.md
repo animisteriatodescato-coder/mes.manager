@@ -774,11 +774,13 @@ agGridFactory.setup({
 
 ### Analisi Prezzi e Commesse Aperte
 
-La pagina `/analisi-prezzi` usa `IPreventivoService.GetAnalisiPrezziAsync()` come fonte della tabella preventivi vs catalogo e `ICommessaAppService.GetListaAsync()` per limitare l'analisi agli articoli presenti in commesse attive.
+La pagina `/analisi-prezzi` usa `IPreventivoService.GetAnalisiPrezziAsync()` come fonte della tabella preventivi vs catalogo e `ICommessaAppService.GetListaAsync()` per limitare l'analisi agli articoli presenti in commesse attive e generare il report operativo.
 
 Per il filtro "Analizza commesse aperte" gli stati validi sono:
 - `StatoCommessa.Aperta`
 - `StatoCommessa.InLavorazione`
+
+Il report commesse aperte deve restare ordinato per data consegna, macchina, sequenza e codice commessa, e deve segnalare in modo esplicito cosa manca: codice articolo, prezzo/articolo catalogo o preventivo.
 
 Non duplicare query dirette su `Commesse` nella pagina Blazor: riusare il servizio applicativo e confrontare gli stati tramite `nameof(StatoCommessa.X)` o enum, non stringhe libere.
 

@@ -4,7 +4,29 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.114
+## 🔖 Versione Corrente: v1.65.115
+
+---
+
+## 🔖 v1.65.115 — Report Commesse Aperte in Analisi Prezzi
+
+**Data**: 2026-05-12
+
+### ✨ Nuove Funzionalità
+
+- **Pagina `/analisi-prezzi`**: il pulsante "Analizza commesse aperte" ora genera un report ordinato delle commesse `Aperta`/`InLavorazione`.
+  - Ordinamento operativo per data consegna, macchina, sequenza e codice commessa.
+  - Per ogni commessa mostra articolo, cliente, stato analisi, delta % quando disponibile e azione "Aggiorna".
+  - Segnala dati mancanti quando non c'è codice articolo, prezzo catalogo/articolo catalogo o preventivo/aggiornamento prezzi.
+  - Mantiene anche il filtro tabella sugli articoli delle commesse aperte.
+- **Navigazione**: aggiunto ingresso visibile ad "Analisi Prezzi" nel menu laterale reale (`MainLayout`) e nella testata della pagina `/preventivi`.
+
+#### File modificati
+- `MESManager.Web/Components/Pages/Preventivi/AnalisiPrezzi.razor` — report commesse aperte ordinato + segnalazioni dati mancanti.
+- `MESManager.Web/Components/Pages/Preventivi/CatalogoPreventivi.razor` — pulsante "Analisi Prezzi".
+- `MESManager.Web/Components/Layout/MainLayout.razor` — voce "Analisi Prezzi" sotto Preventivi.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.114 → 1.65.115.
+- `docs/09-CHANGELOG.md` — changelog v1.65.115.
 
 ---
 
