@@ -1691,7 +1691,7 @@
         _agCampiMancanti          = new();
         _agShowCampiMancanti      = false;
         // Salta al Tab 5
-        _tabs?.ActivatePanel(4);
+        _tabs?.ActivatePanelAsync(4);
     }
 
     private async Task EliminaAsync(PreventivoDto p)
@@ -1971,6 +1971,20 @@
         // Lotto 1 = lotto minimo (Imballo) dal catalogo
         if (anime.Imballo.HasValue && anime.Imballo > 0)
             _agDto.Lotto = anime.Imballo.Value;
+        else
+        {
+            // Fallback: prendi il lotto dall'ultimo preventivo esistente per questo articolo
+            var prevEsistente = _preventivi
+                .Where(p => !string.IsNullOrWhiteSpace(p.CodiceArticolo) &&
+                            p.CodiceArticolo.Equals(codice, StringComparison.OrdinalIgnoreCase) &&
+                            p.Lotto > 0)
+                .OrderByDescending(p => p.DataCreazione)
+                .FirstOrDefault();
+            if (prevEsistente != null)
+                _agDto.Lotto = prevEsistente.Lotto;
+            else
+                _agCampiMancanti.Add("Lotto minimo (Imballo non impostato nel catalogo — impostalo manualmente)");
+        }
 
         // Figure (string → int)
         if (!string.IsNullOrWhiteSpace(anime.Figure) &&

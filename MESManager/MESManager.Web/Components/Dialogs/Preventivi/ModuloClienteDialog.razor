@@ -158,6 +158,15 @@
                    data-testid="btn-stampa-interna">
             Interna
         </MudButton>
+        <MudTooltip Text="Stampa versione cliente via browser (Ctrl+P)">
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Default"
+                       StartIcon="@Icons.Material.Filled.Print"
+                       OnClick="@(() => StampaAsync(false))"
+                       data-testid="btn-stampa-browser">
+                Stampa
+            </MudButton>
+        </MudTooltip>
         <MudTooltip Text="Genera PDF pulito (server-side): niente intestazioni/piè di pagina del browser.">
             <MudButton Variant="Variant.Filled"
                        Color="Color.Success"
