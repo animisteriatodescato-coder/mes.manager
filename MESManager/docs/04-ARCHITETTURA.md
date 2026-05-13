@@ -774,7 +774,19 @@ agGridFactory.setup({
 
 ### Analisi Prezzi e Commesse Aperte
 
-La pagina `/analisi-prezzi` usa `IPreventivoService.GetAnalisiPrezziAsync()` come fonte della tabella preventivi vs catalogo e `ICommessaAppService.GetListaAsync()` per limitare l'analisi agli articoli presenti in commesse attive e generare il report operativo.
+La pagina `/analisi-prezzi` usa `IPreventivoService.GetAnalisiPrezziAsync()` come fonte della tabella preventivi vs catalogo e `ICommessaAppService.GetListaAsync()` per limitare l'analisi agli articoli presenti in commesse attive.
+
+La costruzione del report operativo commesse aperte e' centralizzata in `IAnalisiPrezziReportService` / `AnalisiPrezziReportService`. La pagina Razor non deve duplicare stati, messaggi di esito o regole di scelta dell'azione.
+
+La UI della pagina deve restare orchestrazione sottile:
+- `AnalisiPrezziReportTable.razor` mostra il report commesse aperte.
+- `AnalisiPrezziResultsTable.razor` mostra la tabella preventivi/catalogo.
+
+I reload della pagina sono serializzati con `SemaphoreSlim` per evitare operazioni concorrenti quando l'utente aggiorna dati, attiva il filtro commesse aperte o salva la scheda anima.
+
+La query `IPreventivoService.GetAnalisiPrezziAsync()` deve usare `IDbContextFactory<MesManagerDbContext>` e `AsNoTracking()`: e' chiamata da Blazor Server e puo' diventare costosa con molti preventivi.
+
+La copertura E2E del modulo e' in `tests/MESManager.E2E/Tests/PreventiviTests.cs` con feature `Preventivi`.
 
 Per il filtro "Analizza commesse aperte" gli stati validi sono:
 - `StatoCommessa.Aperta`
@@ -784,7 +796,7 @@ Il report commesse aperte deve restare ordinato per data consegna, macchina, seq
 
 Quando dal report manca il prezzo catalogo, l'azione deve aprire `AnimeEditDialog`: il campo `AnimeDto.Prezzo` è il valore di `Articoli.Prezzo` e viene persistito tramite `IAnimeRepository.UpdatePrezzoArticoloAsync`.
 
-Non duplicare query dirette su `Commesse` nella pagina Blazor: riusare il servizio applicativo e confrontare gli stati tramite `nameof(StatoCommessa.X)` o enum, non stringhe libere.
+Non duplicare query dirette su `Commesse` nella pagina Blazor: riusare il servizio applicativo e confrontare gli stati tramite `IAnalisiPrezziReportService`, non stringhe libere.
 
 ---
 

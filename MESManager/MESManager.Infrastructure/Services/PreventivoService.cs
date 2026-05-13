@@ -11,11 +11,16 @@ namespace MESManager.Infrastructure.Services;
 public class PreventivoService : IPreventivoService
 {
     private readonly MesManagerDbContext _db;
+    private readonly IDbContextFactory<MesManagerDbContext> _dbFactory;
     private readonly ILogger<PreventivoService> _logger;
 
-    public PreventivoService(MesManagerDbContext db, ILogger<PreventivoService> logger)
+    public PreventivoService(
+        MesManagerDbContext db,
+        IDbContextFactory<MesManagerDbContext> dbFactory,
+        ILogger<PreventivoService> logger)
     {
         _db = db;
+        _dbFactory = dbFactory;
         _logger = logger;
     }
 
@@ -551,20 +556,35 @@ public class PreventivoService : IPreventivoService
     // ── Analisi Prezzi ─────────────────────────────────────────────────────
     public async Task<List<AnalisiPrezziRigaDto>> GetAnalisiPrezziAsync(decimal sogliaDeltaPerc = 0)
     {
-        // Recupera tutti i preventivi con CodiceArticolo valorizzato
-        var preventivi = await _db.Preventivi
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var preventiviPerArticolo = await db.Preventivi
+            .AsNoTracking()
             .Where(p => p.CodiceArticolo != null && p.CodiceArticolo != "")
-            .OrderByDescending(p => p.DataCreazione)
+            .GroupBy(p => p.CodiceArticolo!)
+            .Select(g => new
+            {
+                CodiceArticolo = g.Key,
+                NumeroPreventiviTotali = g.Count(),
+                Ultimo = g
+                    .OrderByDescending(p => p.DataCreazione)
+                    .ThenByDescending(p => p.Id)
+                    .Select(p => new
+                    {
+                        p.Descrizione,
+                        p.Cliente,
+                        p.DataCreazione,
+                        p.CalcPrezzoVendita,
+                        p.TipoDocumento
+                    })
+                    .FirstOrDefault()
+            })
             .ToListAsync();
 
-        // Raggruppa per CodiceArticolo
-        var gruppi = preventivi
-            .GroupBy(p => p.CodiceArticolo!)
+        var codici = preventiviPerArticolo
+            .Select(p => p.CodiceArticolo)
             .ToList();
-
-        // Recupera i prezzi catalogo per tutti gli articoli in un solo round-trip
-        var codici = gruppi.Select(g => g.Key).ToList();
-        var articoli = await _db.Articoli
+        var articoli = await db.Articoli
             .Where(a => codici.Contains(a.Codice))
             .Select(a => new { a.Codice, a.Prezzo, a.Descrizione })
             .AsNoTracking()
@@ -572,10 +592,13 @@ public class PreventivoService : IPreventivoService
         var catalogoDict = articoli.ToDictionary(a => a.Codice);
 
         var risultati = new List<AnalisiPrezziRigaDto>();
-        foreach (var gruppo in gruppi)
+        foreach (var gruppo in preventiviPerArticolo)
         {
-            var ultimo = gruppo.First(); // già ordinati per DataCreazione DESC
-            if (!catalogoDict.TryGetValue(gruppo.Key, out var catalogo))
+            var ultimo = gruppo.Ultimo;
+            if (ultimo == null)
+                continue;
+
+            if (!catalogoDict.TryGetValue(gruppo.CodiceArticolo, out var catalogo))
                 continue; // articolo non presente in catalogo — skippa
 
             var prezzo = catalogo.Prezzo;
@@ -586,14 +609,14 @@ public class PreventivoService : IPreventivoService
 
             var riga = new AnalisiPrezziRigaDto
             {
-                CodiceArticolo = gruppo.Key,
+                CodiceArticolo = gruppo.CodiceArticolo,
                 Descrizione = !string.IsNullOrWhiteSpace(ultimo.Descrizione) ? ultimo.Descrizione : catalogo.Descrizione,
                 Cliente = ultimo.Cliente,
                 DataUltimoPreventivo = ultimo.DataCreazione.ToLocalTime(),
                 PrezzoUltimoPreventivo = ultimo.CalcPrezzoVendita,
                 PrezzoCatalogoAttuale = prezzo,
                 DeltaPercentuale = Math.Round(delta, 2),
-                NumeroPreventiviTotali = gruppo.Count(),
+                NumeroPreventiviTotali = gruppo.NumeroPreventiviTotali,
                 AlertSoglia = Math.Abs(delta) > sogliaDeltaPerc,
                 TipoUltimoDocumento = ultimo.TipoDocumento
             };

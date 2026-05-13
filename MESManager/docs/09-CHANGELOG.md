@@ -4,7 +4,39 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.116
+## 🔖 Versione Corrente: v1.65.117
+
+---
+
+## 🔖 v1.65.117 — Refactor Scalabilità Analisi Prezzi
+
+**Data**: 2026-05-13
+
+### ♻️ Refactoring
+
+- **Analisi Prezzi**: centralizzata la creazione del report commesse aperte in `IAnalisiPrezziReportService`, rimuovendo logica business dalla pagina Razor.
+- **UI Analisi Prezzi**: estratte le due tabelle in componenti dedicati `AnalisiPrezziReportTable` e `AnalisiPrezziResultsTable`.
+- **Blazor Server**: serializzati i caricamenti della pagina Analisi Prezzi con `SemaphoreSlim` per evitare reload concorrenti sul circuito utente.
+- **Test E2E**: aggiunta copertura dedicata per `/preventivi` e `/analisi-prezzi`.
+- **Query preventivi**: `GetAnalisiPrezziAsync()` ora recupera un solo ultimo preventivo per articolo invece di caricare tutti i preventivi completi in memoria.
+- **DbContext safety**: `GetAnalisiPrezziAsync()` usa `IDbContextFactory` con context isolato per chiamata.
+- **Sicurezza upload Excel**: aggiunto limite esplicito di 10 MB all'import Excel anime.
+- **Igiene repository**: esteso `.gitignore` per impedire nuovi commit accidentali di backup, output, SyncBackups, file database/segreti locali e fogli Excel operativi.
+
+#### File modificati
+- `MESManager.Application/DTOs/AnalisiCommessaApertaReportDto.cs` — DTO report centralizzato.
+- `MESManager.Application/Interfaces/IAnalisiPrezziReportService.cs` — interfaccia servizio report.
+- `MESManager.Application/Services/AnalisiPrezziReportService.cs` — logica report commesse aperte.
+- `MESManager.Infrastructure/Services/PreventivoService.cs` — query Analisi Prezzi piu' scalabile.
+- `MESManager.Web/Components/Pages/Preventivi/AnalisiPrezzi.razor` — pagina alleggerita, usa servizio report.
+- `MESManager.Web/Components/Pages/Preventivi/AnalisiPrezziReportTable.razor` — componente report commesse aperte.
+- `MESManager.Web/Components/Pages/Preventivi/AnalisiPrezziResultsTable.razor` — componente tabella risultati.
+- `MESManager.Web/Controllers/AnimeController.cs` — limite dimensione import Excel.
+- `.gitignore` — esclusioni future per segreti/artefatti.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.116 → 1.65.117.
+- `tests/MESManager.E2E/Tests/PreventiviTests.cs` — test E2E preventivi/analisi prezzi.
+- `docs/04-ARCHITETTURA.md` — aggiornamento pattern Analisi Prezzi.
+- `docs/09-CHANGELOG.md` — changelog v1.65.117.
 
 ---
 

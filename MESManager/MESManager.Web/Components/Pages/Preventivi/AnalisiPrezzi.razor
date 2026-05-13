@@ -1,12 +1,13 @@
 @page "/analisi-prezzi"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.CatPreventivi)]
+@implements IDisposable
 @using MESManager.Application.DTOs
 @using MESManager.Application.Interfaces
-@using MESManager.Domain.Enums
 @using MESManager.Web.Components.Dialogs
 @inject IPreventivoService PreventivoService
 @inject ICommessaAppService CommessaAppService
 @inject IAnimeService AnimeService
+@inject IAnalisiPrezziReportService ReportService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject NavigationManager NavigationManager
@@ -79,100 +80,9 @@
         }
     </MudPaper>
 
-    @if (_reportCommesseAperte.Count > 0)
-    {
-        <MudPaper Class="pa-4 mb-4" Elevation="1" data-testid="report-commesse-aperte">
-            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
-                <MudIcon Icon="@Icons.Material.Filled.Assessment" Color="Color.Warning" />
-                <MudText Typo="Typo.subtitle1"><b>Report analisi commesse aperte</b></MudText>
-                <MudSpacer />
-                <MudChip T="string" Color="Color.Default" Size="Size.Small">@_reportCommesseAperte.Count commesse</MudChip>
-                <MudChip T="string" Color="Color.Success" Size="Size.Small">@ReportOkCount complete</MudChip>
-                <MudChip T="string" Color="Color.Error" Size="Size.Small">@ReportMancantiCount con dati mancanti</MudChip>
-            </MudStack>
-
-            @if (ReportMancantiCount > 0)
-            {
-                <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3">
-                    Alcune commesse non possono essere analizzate completamente: correggere i dati indicati nella colonna "Esito".
-                </MudAlert>
-            }
-
-            <MudTable Items="@_reportCommesseAperte"
-                      Dense="true"
-                      Hover="true"
-                      Striped="true"
-                      data-testid="table-report-commesse-aperte">
-                <HeaderContent>
-                    <MudTh>#</MudTh>
-                    <MudTh>Commessa</MudTh>
-                    <MudTh>Consegna</MudTh>
-                    <MudTh>Macchina</MudTh>
-                    <MudTh>Articolo</MudTh>
-                    <MudTh>Cliente</MudTh>
-                    <MudTh>Esito</MudTh>
-                    <MudTh Class="text-right">Δ %</MudTh>
-                    <MudTh>Azioni</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd><MudText Typo="Typo.caption">@context.Ordine</MudText></MudTd>
-                    <MudTd>
-                        <MudText Typo="Typo.caption"><b>@context.CodiceCommessa</b></MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Stato</MudText>
-                    </MudTd>
-                    <MudTd>
-                        <MudText Typo="Typo.caption">@(context.DataConsegna.HasValue ? context.DataConsegna.Value.ToString("dd/MM/yyyy") : "—")</MudText>
-                    </MudTd>
-                    <MudTd>
-                        <MudText Typo="Typo.caption">@(context.NumeroMacchina.HasValue ? $"M{context.NumeroMacchina:000}" : "—")</MudText>
-                    </MudTd>
-                    <MudTd>
-                        <MudTooltip Text="Doppio click per aprire la scheda anima">
-                            <MudText Typo="Typo.caption"
-                                     Style="@GetArticoloCellStyle(context.CodiceArticolo)"
-                                     @ondblclick="@(() => ApriSchedaAnimaAsync(context.CodiceArticolo))">
-                                <b>@(context.CodiceArticolo ?? "—")</b>
-                            </MudText>
-                        </MudTooltip>
-                    </MudTd>
-                    <MudTd>
-                        <MudText Typo="Typo.caption">@context.Cliente</MudText>
-                    </MudTd>
-                    <MudTd>
-                        <MudChip T="string"
-                                 Size="Size.Small"
-                                 Color="@GetReportColor(context)"
-                                 Icon="@GetReportIcon(context)">
-                            @context.Esito
-                        </MudChip>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">@context.Dettaglio</MudText>
-                    </MudTd>
-                    <MudTd Class="text-right">
-                        @if (context.Analisi != null)
-                        {
-                            <MudText Typo="Typo.caption" Color="@GetDeltaColor(context.Analisi.DeltaPercentuale)">
-                                <b>@(context.Analisi.DeltaPercentuale >= 0 ? "+" : "")@context.Analisi.DeltaPercentuale.ToString("N1")%</b>
-                            </MudText>
-                        }
-                        else
-                        {
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">—</MudText>
-                        }
-                    </MudTd>
-                    <MudTd>
-                        <MudButton Variant="Variant.Outlined"
-                                   Color="Color.Warning"
-                                   Size="Size.Small"
-                                   StartIcon="@GetReportActionIcon(context)"
-                                   Disabled="@string.IsNullOrWhiteSpace(context.CodiceArticolo)"
-                                   OnClick="@(() => EseguiAzioneReportAsync(context))">
-                            @GetReportActionText(context)
-                        </MudButton>
-                    </MudTd>
-                </RowTemplate>
-            </MudTable>
-        </MudPaper>
-    }
+    <AnalisiPrezziReportTable Items="@_reportCommesseAperte"
+                              ApriSchedaAnima="ApriSchedaAnimaAsync"
+                              EseguiAzione="EseguiAzioneReportAsync" />
 
     @if (_isLoading)
     {
@@ -180,7 +90,7 @@
     }
     else if (_righe.Count == 0)
     {
-        <MudAlert Severity="Severity.Info">
+        <MudAlert Severity="Severity.Info" data-testid="alert-analisi-prezzi-empty">
             Nessun dato disponibile. Assicurarsi che esistano preventivi con codice articolo associato al catalogo anime.
         </MudAlert>
     }
@@ -190,114 +100,23 @@
             @RigheFiltrate.Count() articoli su @_righe.Count totali (soglia: |Δ| > @_soglia.ToString("N1")%@(_filtraCommesseAperte ? ", solo commesse aperte" : ""))
         </MudText>
 
-        <MudTable Items="@RigheFiltrate"
-                  Dense="true"
-                  Hover="true"
-                  Striped="true"
-                  SortLabel="Ordina per"
-                  data-testid="table-analisi-prezzi">
-            <HeaderContent>
-                <MudTh><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.CodiceArticolo)">Codice</MudTableSortLabel></MudTh>
-                <MudTh><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.Descrizione ?? string.Empty)">Descrizione</MudTableSortLabel></MudTh>
-                <MudTh><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.Cliente ?? string.Empty)">Cliente (ultimo prev.)</MudTableSortLabel></MudTh>
-                <MudTh><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.DataUltimoPreventivo ?? DateTime.MinValue)">Data ultimo prev.</MudTableSortLabel></MudTh>
-                <MudTh Class="text-right"><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.PrezzoUltimoPreventivo)">Prezzo prev.</MudTableSortLabel></MudTh>
-                <MudTh Class="text-right"><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.PrezzoCatalogoAttuale)">Prezzo catalogo</MudTableSortLabel></MudTh>
-                <MudTh Class="text-right"><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.DeltaPercentuale)" InitialDirection="SortDirection.Descending">Δ %</MudTableSortLabel></MudTh>
-                <MudTh Class="text-center"><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.NumeroPreventiviTotali)">N° prev.</MudTableSortLabel></MudTh>
-                <MudTh>Azioni</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd>
-                    <MudTooltip Text="Doppio click per aprire la scheda anima">
-                        <MudText Typo="Typo.caption"
-                                 Style="@GetArticoloCellStyle(context.CodiceArticolo)"
-                                 @ondblclick="@(() => ApriSchedaAnimaAsync(context.CodiceArticolo))">
-                            <b>@context.CodiceArticolo</b>
-                        </MudText>
-                    </MudTooltip>
-                    @if (IsArticoloInCommessaAperta(context.CodiceArticolo))
-                    {
-                        <MudChip T="string"
-                                 Size="Size.Small"
-                                 Color="Color.Warning"
-                                 Icon="@Icons.Material.Filled.WorkHistory"
-                                 Class="mt-1"
-                                 Style="height:18px;font-size:0.62rem"
-                                 data-testid="@($"badge-commessa-aperta-{context.CodiceArticolo}")">
-                            Commessa aperta
-                        </MudChip>
-                    }
-                </MudTd>
-                <MudTd>
-                    <MudText Typo="Typo.caption">@(context.Descrizione ?? "—")</MudText>
-                </MudTd>
-                <MudTd>
-                    <MudText Typo="Typo.caption">@(context.Cliente ?? "—")</MudText>
-                </MudTd>
-                <MudTd>
-                    <MudText Typo="Typo.caption">
-                        @(context.DataUltimoPreventivo.HasValue ? context.DataUltimoPreventivo.Value.ToString("dd/MM/yyyy") : "—")
-                    </MudText>
-                    @if (context.TipoUltimoDocumento == "AggiornamentoPrezzi")
-                    {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Class="ml-1" Style="height:16px;font-size:0.6rem">AGG</MudChip>
-                    }
-                </MudTd>
-                <MudTd Class="text-right">
-                    <MudText Typo="Typo.body2">€@context.PrezzoUltimoPreventivo.ToString("N4")</MudText>
-                </MudTd>
-                <MudTd Class="text-right">
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">€@context.PrezzoCatalogoAttuale.ToString("N4")</MudText>
-                </MudTd>
-                <MudTd Class="text-right">
-                    @{
-                        var delta = context.DeltaPercentuale;
-                        var deltaColor = Math.Abs(delta) > 10 ? Color.Error : Math.Abs(delta) > 5 ? Color.Warning : Color.Success;
-                        var deltaIcon = delta > 0 ? Icons.Material.Filled.TrendingUp : delta < 0 ? Icons.Material.Filled.TrendingDown : Icons.Material.Filled.TrendingFlat;
-                    }
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexEnd" Spacing="0">
-                        <MudIcon Icon="@deltaIcon" Color="@deltaColor" Size="Size.Small" />
-                        <MudText Typo="Typo.body2" Color="@deltaColor">
-                            <b>@(delta >= 0 ? "+" : "")@delta.ToString("N1")%</b>
-                        </MudText>
-                    </MudStack>
-                </MudTd>
-                <MudTd Class="text-center">
-                    <MudText Typo="Typo.caption">@context.NumeroPreventiviTotali</MudText>
-                </MudTd>
-                <MudTd>
-                    <MudTooltip Text="Crea Aggiornamento Prezzi per questo articolo">
-                        <MudButton Variant="Variant.Outlined"
-                                   Color="Color.Warning"
-                                   Size="Size.Small"
-                                   StartIcon="@Icons.Material.Filled.PriceChange"
-                                   OnClick="@(() => CreaAggiornamento(context.CodiceArticolo))"
-                                   data-testid="@($"btn-crea-ag-{context.CodiceArticolo}")">
-                            Aggiorna
-                        </MudButton>
-                    </MudTooltip>
-                </MudTd>
-            </RowTemplate>
-            <NoRecordsContent>
-                <MudText>Nessun articolo corrisponde ai filtri impostati.</MudText>
-            </NoRecordsContent>
-        </MudTable>
+        <AnalisiPrezziResultsTable Items="@RigheFiltrate"
+                                   CodiciArticoliCommesseAperte="@_codiciArticoliCommesseAperte"
+                                   ApriSchedaAnima="ApriSchedaAnimaAsync"
+                                   CreaAggiornamento="CreaAggiornamento" />
     }
 </div>
 
 @code {
     private List<AnalisiPrezziRigaDto> _righe = new();
     private HashSet<string> _codiciArticoliCommesseAperte = new(StringComparer.OrdinalIgnoreCase);
-    private List<AnalisiCommessaApertaReport> _reportCommesseAperte = new();
+    private List<AnalisiCommessaApertaReportDto> _reportCommesseAperte = new();
     private bool _isLoading = false;
     private bool _isLoadingCommesse = false;
     private bool _filtraCommesseAperte = false;
     private decimal _soglia = 0;
     private string _filterText = "";
-
-    private int ReportOkCount => _reportCommesseAperte.Count(r => r.AnalisiCompleta);
-    private int ReportMancantiCount => _reportCommesseAperte.Count(r => !r.AnalisiCompleta);
+    private readonly SemaphoreSlim _operationLock = new(1, 1);
 
     private IEnumerable<AnalisiPrezziRigaDto> RigheFiltrate => _righe
         .Where(r => Math.Abs(r.DeltaPercentuale) > _soglia || _soglia == 0)
@@ -321,6 +140,19 @@
 
     private async Task CaricaAsync()
     {
+        await _operationLock.WaitAsync();
+        try
+        {
+            await CaricaCoreAsync();
+        }
+        finally
+        {
+            _operationLock.Release();
+        }
+    }
+
+    private async Task CaricaCoreAsync()
+    {
         _isLoading = true;
         try
         {
@@ -342,27 +174,35 @@
 
     private async Task ToggleFiltroCommesseAperteAsync()
     {
-        if (_filtraCommesseAperte)
+        await _operationLock.WaitAsync();
+        try
         {
-            _filtraCommesseAperte = false;
-            _reportCommesseAperte.Clear();
-            return;
-        }
+            if (_filtraCommesseAperte)
+            {
+                _filtraCommesseAperte = false;
+                _reportCommesseAperte.Clear();
+                return;
+            }
 
-        if (!await CaricaCodiciCommesseAperteAsync())
-        {
-            return;
-        }
+            if (!await CaricaCodiciCommesseAperteAsync())
+            {
+                return;
+            }
 
-        _filtraCommesseAperte = true;
+            _filtraCommesseAperte = true;
 
-        if (_codiciArticoliCommesseAperte.Count == 0)
-        {
-            Snackbar.Add("Nessuna commessa aperta o in lavorazione con articolo associato.", Severity.Info);
+            if (_codiciArticoliCommesseAperte.Count == 0)
+            {
+                Snackbar.Add("Nessuna commessa aperta o in lavorazione con articolo associato.", Severity.Info);
+            }
+            else
+            {
+                Snackbar.Add($"Analisi limitata a {_codiciArticoliCommesseAperte.Count} articoli in commesse aperte.", Severity.Success);
+            }
         }
-        else
+        finally
         {
-            Snackbar.Add($"Analisi limitata a {_codiciArticoliCommesseAperte.Count} articoli in commesse aperte.", Severity.Success);
+            _operationLock.Release();
         }
     }
 
@@ -373,7 +213,7 @@
         {
             var commesse = await CommessaAppService.GetListaAsync();
             var commesseAperte = commesse
-                .Where(IsCommessaAperta)
+                .Where(ReportService.IsCommessaAperta)
                 .OrderBy(c => c.DataConsegna ?? DateTime.MaxValue)
                 .ThenBy(c => c.NumeroMacchina ?? int.MaxValue)
                 .ThenBy(c => c.OrdineSequenza)
@@ -385,7 +225,7 @@
                 .Where(codice => !string.IsNullOrWhiteSpace(codice))
                 .Select(codice => codice!)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            _reportCommesseAperte = CreaReportCommesseAperte(commesseAperte);
+            _reportCommesseAperte = ReportService.CreaReportCommesseAperte(commesseAperte, _righe);
 
             return true;
         }
@@ -403,104 +243,19 @@
         }
     }
 
-    private static bool IsCommessaAperta(CommessaDto commessa)
-    {
-        return string.Equals(commessa.Stato, nameof(StatoCommessa.Aperta), StringComparison.OrdinalIgnoreCase)
-            || string.Equals(commessa.Stato, nameof(StatoCommessa.InLavorazione), StringComparison.OrdinalIgnoreCase);
-    }
-
     private bool IsArticoloInCommessaAperta(string? codiceArticolo)
     {
-        return !string.IsNullOrWhiteSpace(codiceArticolo)
-            && _codiciArticoliCommesseAperte.Contains(codiceArticolo.Trim());
+        return ReportService.IsArticoloInCommessaAperta(codiceArticolo, _codiciArticoliCommesseAperte);
     }
 
-    private List<AnalisiCommessaApertaReport> CreaReportCommesseAperte(List<CommessaDto> commesseAperte)
-    {
-        var analisiByCodice = _righe
-            .Where(r => !string.IsNullOrWhiteSpace(r.CodiceArticolo))
-            .GroupBy(r => r.CodiceArticolo.Trim(), StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
-
-        return commesseAperte
-            .Select((commessa, index) => CreaReportCommessa(commessa, index + 1, analisiByCodice))
-            .ToList();
-    }
-
-    private static AnalisiCommessaApertaReport CreaReportCommessa(
-        CommessaDto commessa,
-        int ordine,
-        Dictionary<string, AnalisiPrezziRigaDto> analisiByCodice)
-    {
-        var codiceArticolo = commessa.ArticoloCodice?.Trim();
-        var report = new AnalisiCommessaApertaReport
-        {
-            Ordine = ordine,
-            CodiceCommessa = commessa.Codice,
-            Stato = commessa.Stato ?? "—",
-            DataConsegna = commessa.DataConsegna,
-            NumeroMacchina = commessa.NumeroMacchina,
-            CodiceArticolo = codiceArticolo,
-            Cliente = commessa.ClienteDisplay
-        };
-
-        if (string.IsNullOrWhiteSpace(codiceArticolo))
-        {
-            report.Esito = "Dati mancanti";
-            report.Dettaglio = "Manca il codice articolo sulla commessa.";
-            return report;
-        }
-
-        if (analisiByCodice.TryGetValue(codiceArticolo, out var analisi))
-        {
-            report.Analisi = analisi;
-            report.AnalisiCompleta = true;
-            report.Esito = "Analizzata";
-            report.Dettaglio = $"Preventivi: {analisi.NumeroPreventiviTotali}, prezzo catalogo €{analisi.PrezzoCatalogoAttuale:N4}.";
-            return report;
-        }
-
-        report.Esito = "Dati mancanti";
-        report.Dettaglio = !commessa.ArticoloPrezzo.HasValue || commessa.ArticoloPrezzo.Value <= 0
-            ? "Manca il prezzo catalogo o l'articolo non è presente nel catalogo prezzi."
-            : "Manca un preventivo o aggiornamento prezzi per questo articolo.";
-        return report;
-    }
-
-    private static Color GetReportColor(AnalisiCommessaApertaReport report) =>
-        report.AnalisiCompleta ? Color.Success : Color.Error;
-
-    private static string GetReportIcon(AnalisiCommessaApertaReport report) =>
-        report.AnalisiCompleta ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.ReportProblem;
-
-    private static Color GetDeltaColor(decimal delta) =>
-        Math.Abs(delta) > 10 ? Color.Error : Math.Abs(delta) > 5 ? Color.Warning : Color.Success;
-
-    private static string GetArticoloCellStyle(string? codiceArticolo) =>
-        string.IsNullOrWhiteSpace(codiceArticolo)
-            ? string.Empty
-            : "cursor:pointer;text-decoration:underline;text-underline-offset:2px";
-
-    private static bool ReportRichiedeSchedaAnima(AnalisiCommessaApertaReport report) =>
-        !report.AnalisiCompleta
-        && !string.IsNullOrWhiteSpace(report.CodiceArticolo)
-        && !report.Dettaglio.Contains("preventivo", StringComparison.OrdinalIgnoreCase)
-        && !report.Dettaglio.Contains("aggiornamento prezzi", StringComparison.OrdinalIgnoreCase);
-
-    private static string GetReportActionText(AnalisiCommessaApertaReport report) =>
-        ReportRichiedeSchedaAnima(report) ? "Scheda anima" : "Aggiorna";
-
-    private static string GetReportActionIcon(AnalisiCommessaApertaReport report) =>
-        ReportRichiedeSchedaAnima(report) ? Icons.Material.Filled.Edit : Icons.Material.Filled.PriceChange;
-
-    private async Task EseguiAzioneReportAsync(AnalisiCommessaApertaReport report)
+    private async Task EseguiAzioneReportAsync(AnalisiCommessaApertaReportDto report)
     {
         if (string.IsNullOrWhiteSpace(report.CodiceArticolo))
         {
             return;
         }
 
-        if (ReportRichiedeSchedaAnima(report))
+        if (ReportService.ReportRichiedeSchedaAnima(report))
         {
             await ApriSchedaAnimaAsync(report.CodiceArticolo);
             return;
@@ -559,18 +314,8 @@
         NavigationManager.NavigateTo($"/preventivi?articolo={Uri.EscapeDataString(codiceArticolo)}");
     }
 
-    private sealed class AnalisiCommessaApertaReport
+    public void Dispose()
     {
-        public int Ordine { get; set; }
-        public string CodiceCommessa { get; set; } = "";
-        public string Stato { get; set; } = "";
-        public DateTime? DataConsegna { get; set; }
-        public int? NumeroMacchina { get; set; }
-        public string? CodiceArticolo { get; set; }
-        public string Cliente { get; set; } = "";
-        public string Esito { get; set; } = "";
-        public string Dettaglio { get; set; } = "";
-        public bool AnalisiCompleta { get; set; }
-        public AnalisiPrezziRigaDto? Analisi { get; set; }
+        _operationLock.Dispose();
     }
 }

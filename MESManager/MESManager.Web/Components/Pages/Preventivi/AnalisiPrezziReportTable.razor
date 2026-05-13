@@ -1,0 +1,127 @@
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@inject IAnalisiPrezziReportService ReportService
+
+@if (Items.Count > 0)
+{
+    <MudPaper Class="pa-4 mb-4" Elevation="1" data-testid="report-commesse-aperte">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.Assessment" Color="Color.Warning" />
+            <MudText Typo="Typo.subtitle1"><b>Report analisi commesse aperte</b></MudText>
+            <MudSpacer />
+            <MudChip T="string" Color="Color.Default" Size="Size.Small">@Items.Count commesse</MudChip>
+            <MudChip T="string" Color="Color.Success" Size="Size.Small">@ReportOkCount complete</MudChip>
+            <MudChip T="string" Color="Color.Error" Size="Size.Small">@ReportMancantiCount con dati mancanti</MudChip>
+        </MudStack>
+
+        @if (ReportMancantiCount > 0)
+        {
+            <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3">
+                Alcune commesse non possono essere analizzate completamente: correggere i dati indicati nella colonna "Esito".
+            </MudAlert>
+        }
+
+        <MudTable Items="@Items"
+                  Dense="true"
+                  Hover="true"
+                  Striped="true"
+                  data-testid="table-report-commesse-aperte">
+            <HeaderContent>
+                <MudTh>#</MudTh>
+                <MudTh>Commessa</MudTh>
+                <MudTh>Consegna</MudTh>
+                <MudTh>Macchina</MudTh>
+                <MudTh>Articolo</MudTh>
+                <MudTh>Cliente</MudTh>
+                <MudTh>Esito</MudTh>
+                <MudTh Class="text-right">Delta %</MudTh>
+                <MudTh>Azioni</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd><MudText Typo="Typo.caption">@context.Ordine</MudText></MudTd>
+                <MudTd>
+                    <MudText Typo="Typo.caption"><b>@context.CodiceCommessa</b></MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Stato</MudText>
+                </MudTd>
+                <MudTd>
+                    <MudText Typo="Typo.caption">@(context.DataConsegna.HasValue ? context.DataConsegna.Value.ToString("dd/MM/yyyy") : "-")</MudText>
+                </MudTd>
+                <MudTd>
+                    <MudText Typo="Typo.caption">@(context.NumeroMacchina.HasValue ? $"M{context.NumeroMacchina:000}" : "-")</MudText>
+                </MudTd>
+                <MudTd>
+                    <MudTooltip Text="Doppio click per aprire la scheda anima">
+                        <MudText Typo="Typo.caption"
+                                 Style="@GetArticoloCellStyle(context.CodiceArticolo)"
+                                 @ondblclick="@(async () => await ApriSchedaAnima.InvokeAsync(context.CodiceArticolo))">
+                            <b>@(context.CodiceArticolo ?? "-")</b>
+                        </MudText>
+                    </MudTooltip>
+                </MudTd>
+                <MudTd>
+                    <MudText Typo="Typo.caption">@context.Cliente</MudText>
+                </MudTd>
+                <MudTd>
+                    <MudChip T="string"
+                             Size="Size.Small"
+                             Color="@GetReportColor(context)"
+                             Icon="@GetReportIcon(context)">
+                        @context.Esito
+                    </MudChip>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">@context.Dettaglio</MudText>
+                </MudTd>
+                <MudTd Class="text-right">
+                    @if (context.Analisi != null)
+                    {
+                        <MudText Typo="Typo.caption" Color="@GetDeltaColor(context.Analisi.DeltaPercentuale)">
+                            <b>@(context.Analisi.DeltaPercentuale >= 0 ? "+" : "")@context.Analisi.DeltaPercentuale.ToString("N1")%</b>
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">-</MudText>
+                    }
+                </MudTd>
+                <MudTd>
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Warning"
+                               Size="Size.Small"
+                               StartIcon="@GetReportActionIcon(context)"
+                               Disabled="@string.IsNullOrWhiteSpace(context.CodiceArticolo)"
+                               OnClick="@(async () => await EseguiAzione.InvokeAsync(context))">
+                        @GetReportActionText(context)
+                    </MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<AnalisiCommessaApertaReportDto> Items { get; set; } = [];
+    [Parameter] public EventCallback<string?> ApriSchedaAnima { get; set; }
+    [Parameter] public EventCallback<AnalisiCommessaApertaReportDto> EseguiAzione { get; set; }
+
+    private int ReportOkCount => Items.Count(r => r.AnalisiCompleta);
+    private int ReportMancantiCount => Items.Count(r => !r.AnalisiCompleta);
+
+    private static Color GetReportColor(AnalisiCommessaApertaReportDto report) =>
+        report.AnalisiCompleta ? Color.Success : Color.Error;
+
+    private static string GetReportIcon(AnalisiCommessaApertaReportDto report) =>
+        report.AnalisiCompleta ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.ReportProblem;
+
+    private static Color GetDeltaColor(decimal delta) =>
+        Math.Abs(delta) > 10 ? Color.Error : Math.Abs(delta) > 5 ? Color.Warning : Color.Success;
+
+    private static string GetArticoloCellStyle(string? codiceArticolo) =>
+        string.IsNullOrWhiteSpace(codiceArticolo)
+            ? string.Empty
+            : "cursor:pointer;text-decoration:underline;text-underline-offset:2px";
+
+    private string GetReportActionText(AnalisiCommessaApertaReportDto report) =>
+        ReportService.ReportRichiedeSchedaAnima(report) ? "Scheda anima" : "Aggiorna";
+
+    private string GetReportActionIcon(AnalisiCommessaApertaReportDto report) =>
+        ReportService.ReportRichiedeSchedaAnima(report) ? Icons.Material.Filled.Edit : Icons.Material.Filled.PriceChange;
+}

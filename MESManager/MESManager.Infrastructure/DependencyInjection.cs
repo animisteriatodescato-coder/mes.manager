@@ -41,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<IRicettaAppService, RicettaAppService>();
         services.AddScoped<IClienteAppService, ClienteAppService>();
         services.AddScoped<IAnimeService, AnimeService>();
+        services.AddScoped<IAnalisiPrezziReportService, AnalisiPrezziReportService>();
         services.AddScoped<IPlcAppService, PlcAppService>();
         services.AddScoped<IOperatoreAppService, OperatoreAppService>();
         services.AddScoped<ICalendarioLavoroAppService, CalendarioLavoroAppService>();

@@ -16,6 +16,9 @@ secrets/
 # File di configurazione locali con credenziali
 appsettings.Local.json
 appsettings.*.Local.json
+appsettings.Database.json
+appsettings.Database.*.json
+.credentials.local
 
 # Log files (potrebbero contenere info sensibili)
 *.log
@@ -36,6 +39,10 @@ bin/
 obj/
 publish/
 out/
+backups/
+docs2/
+MESManager.Web/wwwroot/SyncBackups/
+wwwroot/SyncBackups/
 
 # IDE
 .vs/
@@ -87,6 +94,8 @@ coverage/
 # Excel temp files
 ~$*.xlsx
 ~$*.xls
+*.xlsx
+*.xls
 
 # Risultati temporanei
 risultato-*.txt

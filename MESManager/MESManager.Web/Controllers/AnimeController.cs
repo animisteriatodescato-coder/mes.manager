@@ -13,6 +13,8 @@ namespace MESManager.Web.Controllers;
 [Authorize]
 public class AnimeController : ControllerBase
 {
+    private const long MaxExcelImportBytes = 10 * 1024 * 1024;
+
     private readonly IAnimeService _service;
     private readonly AnimeImportService _importService;
     private readonly AnimeExcelImportService _excelImportService;
@@ -106,6 +108,9 @@ public class AnimeController : ControllerBase
             if (!file.FileName.EndsWith(".xls", StringComparison.OrdinalIgnoreCase) && 
                 !file.FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
                 return BadRequest(new { Error = "Il file deve essere in formato Excel (.xls o .xlsx)" });
+
+            if (file.Length > MaxExcelImportBytes)
+                return BadRequest(new { Error = "Il file Excel supera la dimensione massima consentita di 10 MB" });
 
             // Validazione magic bytes: verifica firma del file indipendentemente dall'estensione
             using var stream = file.OpenReadStream();

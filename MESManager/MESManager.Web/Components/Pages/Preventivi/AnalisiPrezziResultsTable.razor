@@ -1,0 +1,113 @@
+@using MESManager.Application.DTOs
+
+<MudTable Items="@Items"
+          Dense="true"
+          Hover="true"
+          Striped="true"
+          SortLabel="Ordina per"
+          data-testid="table-analisi-prezzi">
+    <HeaderContent>
+        <MudTh><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.CodiceArticolo)">Codice</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.Descrizione ?? string.Empty)">Descrizione</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.Cliente ?? string.Empty)">Cliente (ultimo prev.)</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.DataUltimoPreventivo ?? DateTime.MinValue)">Data ultimo prev.</MudTableSortLabel></MudTh>
+        <MudTh Class="text-right"><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.PrezzoUltimoPreventivo)">Prezzo prev.</MudTableSortLabel></MudTh>
+        <MudTh Class="text-right"><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.PrezzoCatalogoAttuale)">Prezzo catalogo</MudTableSortLabel></MudTh>
+        <MudTh Class="text-right"><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.DeltaPercentuale)" InitialDirection="SortDirection.Descending">Delta %</MudTableSortLabel></MudTh>
+        <MudTh Class="text-center"><MudTableSortLabel SortBy="new Func<AnalisiPrezziRigaDto, object>(x => x.NumeroPreventiviTotali)">N. prev.</MudTableSortLabel></MudTh>
+        <MudTh>Azioni</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>
+            <MudTooltip Text="Doppio click per aprire la scheda anima">
+                <MudText Typo="Typo.caption"
+                         Style="@GetArticoloCellStyle(context.CodiceArticolo)"
+                         @ondblclick="@(async () => await ApriSchedaAnima.InvokeAsync(context.CodiceArticolo))">
+                    <b>@context.CodiceArticolo</b>
+                </MudText>
+            </MudTooltip>
+            @if (IsArticoloInCommessaAperta(context.CodiceArticolo))
+            {
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Color="Color.Warning"
+                         Icon="@Icons.Material.Filled.WorkHistory"
+                         Class="mt-1"
+                         Style="height:18px;font-size:0.62rem"
+                         data-testid="@($"badge-commessa-aperta-{context.CodiceArticolo}")">
+                    Commessa aperta
+                </MudChip>
+            }
+        </MudTd>
+        <MudTd>
+            <MudText Typo="Typo.caption">@(context.Descrizione ?? "-")</MudText>
+        </MudTd>
+        <MudTd>
+            <MudText Typo="Typo.caption">@(context.Cliente ?? "-")</MudText>
+        </MudTd>
+        <MudTd>
+            <MudText Typo="Typo.caption">
+                @(context.DataUltimoPreventivo.HasValue ? context.DataUltimoPreventivo.Value.ToString("dd/MM/yyyy") : "-")
+            </MudText>
+            @if (context.TipoUltimoDocumento == "AggiornamentoPrezzi")
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Info" Class="ml-1" Style="height:16px;font-size:0.6rem">AGG</MudChip>
+            }
+        </MudTd>
+        <MudTd Class="text-right">
+            <MudText Typo="Typo.body2">€@context.PrezzoUltimoPreventivo.ToString("N4")</MudText>
+        </MudTd>
+        <MudTd Class="text-right">
+            <MudText Typo="Typo.body2" Color="Color.Secondary">€@context.PrezzoCatalogoAttuale.ToString("N4")</MudText>
+        </MudTd>
+        <MudTd Class="text-right">
+            @{
+                var delta = context.DeltaPercentuale;
+                var deltaColor = Math.Abs(delta) > 10 ? Color.Error : Math.Abs(delta) > 5 ? Color.Warning : Color.Success;
+                var deltaIcon = delta > 0 ? Icons.Material.Filled.TrendingUp : delta < 0 ? Icons.Material.Filled.TrendingDown : Icons.Material.Filled.TrendingFlat;
+            }
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexEnd" Spacing="0">
+                <MudIcon Icon="@deltaIcon" Color="@deltaColor" Size="Size.Small" />
+                <MudText Typo="Typo.body2" Color="@deltaColor">
+                    <b>@(delta >= 0 ? "+" : "")@delta.ToString("N1")%</b>
+                </MudText>
+            </MudStack>
+        </MudTd>
+        <MudTd Class="text-center">
+            <MudText Typo="Typo.caption">@context.NumeroPreventiviTotali</MudText>
+        </MudTd>
+        <MudTd>
+            <MudTooltip Text="Crea Aggiornamento Prezzi per questo articolo">
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Warning"
+                           Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.PriceChange"
+                           OnClick="@(async () => await CreaAggiornamento.InvokeAsync(context.CodiceArticolo))"
+                           data-testid="@($"btn-crea-ag-{context.CodiceArticolo}")">
+                    Aggiorna
+                </MudButton>
+            </MudTooltip>
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>Nessun articolo corrisponde ai filtri impostati.</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+@code {
+    [Parameter] public IEnumerable<AnalisiPrezziRigaDto> Items { get; set; } = [];
+    [Parameter] public IReadOnlySet<string> CodiciArticoliCommesseAperte { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    [Parameter] public EventCallback<string?> ApriSchedaAnima { get; set; }
+    [Parameter] public EventCallback<string> CreaAggiornamento { get; set; }
+
+    private bool IsArticoloInCommessaAperta(string? codiceArticolo)
+    {
+        return !string.IsNullOrWhiteSpace(codiceArticolo)
+            && CodiciArticoliCommesseAperte.Contains(codiceArticolo.Trim());
+    }
+
+    private static string GetArticoloCellStyle(string? codiceArticolo) =>
+        string.IsNullOrWhiteSpace(codiceArticolo)
+            ? string.Empty
+            : "cursor:pointer;text-decoration:underline;text-underline-offset:2px";
+}
