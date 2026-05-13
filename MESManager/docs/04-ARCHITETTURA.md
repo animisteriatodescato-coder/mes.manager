@@ -359,6 +359,12 @@ Scrive in MESManagerDb (locale)
 - PLC Realtime
 - Gantt Macchine (auto-refresh)
 
+**Regola `RealtimeStateService` (v1.65.118)**:
+- Il servizio e' singleton e puo' ricevere refresh dal timer e dalla UI: ogni caricamento deve passare da un gate (`SemaphoreSlim`) per evitare query sovrapposte e notifiche fuori ordine.
+- `CurrentData` deve restituire una copia dello snapshot corrente, non la lista interna mutabile condivisa.
+- La notifica dei subscriber Blazor deve isolare le eccezioni per singolo handler: un componente disconnesso o difettoso non deve bloccare gli altri subscriber o SignalR.
+- L'accesso dati deve continuare a passare da scope isolato/servizi application, mai da un `DbContext` singleton o condiviso.
+
 ---
 
 ## 🗄️ Database Schema

@@ -100,3 +100,9 @@ coverage/
 # Risultati temporanei
 risultato-*.txt
 api-result.txt
+api-check.txt
+final-fix.txt
+fix-result.txt
+fk-check.txt
+insert-test.txt
+plc-fix-success.txt

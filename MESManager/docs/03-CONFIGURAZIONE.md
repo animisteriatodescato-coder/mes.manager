@@ -173,6 +173,22 @@ Per produzione, usa `appsettings.Secrets.encrypted` con DPAPI:
 
 ---
 
+### Igiene Repository
+
+**Regola**: il repository deve contenere codice, template e documentazione; non deve tracciare configurazioni locali, credenziali, backup di produzione, export operativi o output diagnostici.
+
+File/directory da mantenere fuori Git:
+- `.credentials.local`
+- `appsettings.Secrets.json`, `appsettings.Secrets.encrypted`
+- `appsettings.Database.json`, `appsettings.Database.*.json`
+- `MESManager.Web/wwwroot/SyncBackups/`
+- `backups/`, `docs2/`, `publish/`, log e file diagnostici temporanei
+- Fogli Excel operativi (`*.xlsx`, `*.xls`) salvo richiesta esplicita e motivata
+
+Se un file locale e' gia' stato committato per errore, rimuoverlo solo dall'indice Git con `git rm --cached`, senza cancellarlo dal disco. Per credenziali gia' finite nello storico Git, ruotare le password/token interessati: la sola rimozione dal commit corrente non elimina il rischio storico.
+
+---
+
 ## 📦 Archivio Dati Allegati
 
 ### Strategia Implementata

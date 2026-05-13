@@ -4,7 +4,29 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.117
+## 🔖 Versione Corrente: v1.65.118
+
+---
+
+## 🔖 v1.65.118 — Sicurezza Repository e Realtime PLC
+
+**Data**: 2026-05-13
+
+### ♻️ Refactoring
+
+- **Realtime PLC**: `RealtimeStateService` ora serializza i refresh con `SemaphoreSlim`, evitando caricamenti sovrapposti tra timer e refresh manuali.
+- **Realtime PLC**: i dati correnti vengono esposti come copia difensiva, riducendo il rischio che componenti UI modifichino lo stato singleton condiviso.
+- **Realtime PLC**: gli errori di un singolo subscriber Blazor vengono loggati e isolati, senza bloccare gli altri subscriber o la notifica SignalR.
+- **Igiene repository**: rimossi dall'indice Git file locali sensibili/operativi e artifact (`appsettings.Database*.json`, `.credentials.local`, `SyncBackups`, `backups`, `docs2`, Excel operativi e log diagnostici), lasciandoli presenti sul disco locale.
+
+#### File modificati
+- `MESManager.Web/Services/RealtimeStateService.cs` — refresh serializzato, snapshot stato e notifica subscriber resiliente.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.117 → 1.65.118.
+- `docs/03-CONFIGURAZIONE.md` — regola repository per secrets, backup e artifact.
+- `docs/04-ARCHITETTURA.md` — pattern realtime PLC singleton.
+- `docs/09-CHANGELOG.md` — changelog v1.65.118.
+- `.gitignore` — esclusione output diagnostici testuali.
+- Indice Git — rimossi dal tracciamento file locali/artifact gia' esclusi da `.gitignore`.
 
 ---
 

@@ -14,11 +14,14 @@ public class RealtimeStateService : IDisposable
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IHubContext<RealtimeHub> _hubContext;
     private readonly ILogger<RealtimeStateService> _logger;
+    private readonly SemaphoreSlim _loadLock = new(1, 1);
+    private readonly object _stateLock = new();
     
     private PeriodicTimer? _timer;
     private CancellationTokenSource? _cts;
     private int _intervalSeconds = 4;
     private bool _isRunning = false;
+    private List<PlcRealtimeDto>? _currentData;
     
     /// <summary>
     /// Evento scatenato quando i dati vengono aggiornati.
@@ -28,7 +31,16 @@ public class RealtimeStateService : IDisposable
     /// <summary>
     /// Dati correnti delle macchine PLC.
     /// </summary>
-    public List<PlcRealtimeDto>? CurrentData { get; private set; }
+    public List<PlcRealtimeDto>? CurrentData
+    {
+        get
+        {
+            lock (_stateLock)
+            {
+                return _currentData?.ToList();
+            }
+        }
+    }
     
     /// <summary>
     /// Timestamp dell'ultimo aggiornamento.
@@ -139,18 +151,27 @@ public class RealtimeStateService : IDisposable
 
     private async Task LoadDataAsync()
     {
+        if (!await _loadLock.WaitAsync(0))
+        {
+            _logger.LogTrace("RealtimeStateService: aggiornamento PLC saltato per caricamento gia in corso");
+            return;
+        }
+
         try
         {
             using var scope = _scopeFactory.CreateScope();
             var plcService = scope.ServiceProvider.GetRequiredService<IPlcAppService>();
             
-            var data = await plcService.GetRealtimeDataAsync();
-            
-            CurrentData = data;
-            LastUpdate = DateTime.Now;
+            var data = (await plcService.GetRealtimeDataAsync()).ToList();
+
+            lock (_stateLock)
+            {
+                _currentData = data;
+                LastUpdate = DateTime.Now;
+            }
             
             // Notifica i subscriber locali (componenti Blazor)
-            OnDataUpdated?.Invoke(data);
+            NotifyLocalSubscribers(data);
             
             // Notifica i client SignalR
             await _hubContext.Clients.All.SendAsync("PlcDataUpdated", data);
@@ -160,6 +181,31 @@ public class RealtimeStateService : IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "Errore caricamento dati PLC in RealtimeStateService");
+        }
+        finally
+        {
+            _loadLock.Release();
+        }
+    }
+
+    private void NotifyLocalSubscribers(List<PlcRealtimeDto> data)
+    {
+        var handlers = OnDataUpdated;
+        if (handlers == null)
+        {
+            return;
+        }
+
+        foreach (Action<List<PlcRealtimeDto>> handler in handlers.GetInvocationList())
+        {
+            try
+            {
+                handler(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Subscriber realtime PLC non notificato correttamente");
+            }
         }
     }
 
