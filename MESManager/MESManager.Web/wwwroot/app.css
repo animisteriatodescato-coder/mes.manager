@@ -1624,6 +1624,7 @@ body.ai-drawer-resizing * {
     width: 52px !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
+    scrollbar-width: none !important; /* Fix 1: nasconde scrollbar che sforma layout a 52px */
 }
 .mes-mini-drawer [data-testid="nav-menu"] {
     width: 52px !important;
@@ -1669,6 +1670,7 @@ body.ai-drawer-resizing * {
 }
 
 .mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link {
+    position: relative !important; /* Fix 2: richiesto per absolute centering icona Home */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -1706,7 +1708,9 @@ body.ai-drawer-resizing * {
     color: #1f2937 !important;
 }
 
-.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-nav-link-icon-wrapper {
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-nav-link-icon-wrapper,
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link .mud-nav-link-icon-wrapper {
+    /* Fix 2: centra icona Home e icone gruppi con absolute positioning (identico alla tecnica dei gruppi) */
     position: absolute !important;
     left: 50% !important;
     top: 50% !important;
@@ -1819,15 +1823,25 @@ body.ai-drawer-resizing * {
     display: none !important;
 }
 
-/* Header drawer mini: centra il pulsante toggle */
+/* Header drawer mini: centra il pulsante toggle (Fix 4: display flex esplicito e overflow visible) */
 .mes-mini-drawer .mud-drawer-header {
-    padding: 4px 0 !important;
+    display: flex !important;
+    align-items: center !important;
     justify-content: center !important;
+    overflow: visible !important;
+    padding: 4px 0 !important;
     min-height: 48px !important;
+    width: 52px !important;
+    box-sizing: border-box !important;
 }
 
 .mes-mini-drawer .mud-drawer-header .mud-icon-button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     margin: 0 auto !important;
+    visibility: visible !important;
+    opacity: 0.85 !important;
 }
 
 /* ==========================================================================
@@ -1859,7 +1873,8 @@ body.ai-drawer-resizing * {
 }
 
 .mes-mini-drawer .mud-drawer-content::-webkit-scrollbar {
-    width: 3px;
+    display: none !important; /* Fix 1: nasconde scrollbar webkit */
+    width: 0 !important;
 }
 
 .mud-theme-dark .mud-drawer .mud-drawer-content {

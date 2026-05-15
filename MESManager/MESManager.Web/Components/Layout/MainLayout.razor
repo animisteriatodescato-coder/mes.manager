@@ -405,7 +405,7 @@
         <MudNavMenu data-testid="nav-menu">
             @if (_miniDrawer)
             {
-                <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary">
+                <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary" title="Home">
                     <span class="mes-mini-only-label">Home</span>
                 </MudNavLink>
             }
@@ -425,6 +425,7 @@
                     }
                     @if (_canProg || _canComm || _canGanttP)
                     {
+                        <MudTooltip Text="Programma" Placement="Placement.Right" Disabled="@(!_miniDrawer)">
                         <MudNavGroup Title="Programma" Icon="@Icons.Material.Filled.CalendarMonth" IconColor="Color.Primary" Expanded="@_expandedProg" ExpandedChanged="@(v => OnNavGroupToggled("prog", v))" Class="nav-sec-prog">
                             <ChildContent>
                                 @if (_canProg)
@@ -447,6 +448,7 @@
                                 }
                             </ChildContent>
                         </MudNavGroup>
+                        </MudTooltip>
                     }
                 </Authorized>
             </AuthorizeView>
@@ -464,6 +466,7 @@
                     }
                     @if (_canDash || _canPlcRT || _canPlcSt || _canGantt || _canIncoll)
                     {
+                        <MudTooltip Text="Produzione" Placement="Placement.Right" Disabled="@(!_miniDrawer)">
                         <MudNavGroup Title="Produzione" Icon="@Icons.Material.Filled.Factory" IconColor="Color.Warning" Expanded="@_expandedProd" ExpandedChanged="@(v => OnNavGroupToggled("prod", v))" Class="nav-sec-produzione">
                             @if (_canDash)
                             {
@@ -496,6 +499,7 @@
                                 </MudNavLink>
                             }
                         </MudNavGroup>
+                        </MudTooltip>
                     }
                 </Authorized>
             </AuthorizeView>
@@ -515,6 +519,7 @@
                     }
                     @if (_canCatComm || _canCatAnim || _canCatArt || _canCatCli || _canCatRic || _canCatPrev || _canCatNc)
                     {
+                        <MudTooltip Text="Cataloghi" Placement="Placement.Right" Disabled="@(!_miniDrawer)">
                         <MudNavGroup Title="Cataloghi" Icon="@Icons.Material.Filled.LibraryBooks" IconColor="Color.Info" Expanded="@_expandedCat" ExpandedChanged="@(v => OnNavGroupToggled("cat", v))" Class="nav-sec-cataloghi">
                             @if (_canCatComm)
                             {
@@ -569,6 +574,7 @@
                                 </MudNavLink>
                             }
                         </MudNavGroup>
+                        </MudTooltip>
                     }
                 </Authorized>
             </AuthorizeView>
@@ -586,6 +592,7 @@
                     }
                     @if (_canManAlert || _canManCat || _canManGriglia || _canManCasse || _canManImpostazioni)
                     {
+                        <MudTooltip Text="Manutenzioni" Placement="Placement.Right" Disabled="@(!_miniDrawer)">
                         <MudNavGroup Title="Manutenz." Icon="@Icons.Material.Filled.Build" IconColor="Color.Secondary" Expanded="@_expandedMan" ExpandedChanged="@(v => OnNavGroupToggled("man", v))" Class="nav-sec-manutenzioni">
                             @if (_canManGriglia)
                             {
@@ -618,12 +625,14 @@
                                 </MudNavLink>
                             }
                         </MudNavGroup>
+                        </MudTooltip>
                     }
                 </Authorized>
             </AuthorizeView>
 
             @* Sync - solo Admin *@
             <AuthorizeView Roles="Admin">
+                <MudTooltip Text="Sync" Placement="Placement.Right" Disabled="@(!_miniDrawer)">
                 <MudNavGroup Title="Sync" Icon="@Icons.Material.Filled.Sync" IconColor="Color.Success" Expanded="@_expandedSync" ExpandedChanged="@(v => OnNavGroupToggled("sync", v))" Class="nav-sec-sync">
                     <MudNavLink Href="/sync/gantt">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128260;</span><span>Gantt</span></div>
@@ -635,6 +644,7 @@
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#129302;</span><span>Macchine</span></div>
                     </MudNavLink>
                 </MudNavGroup>
+                </MudTooltip>
             </AuthorizeView>
 
             @* Statistiche - claim-aware per Visualizzazione *@
@@ -649,6 +659,7 @@
                     }
                     @if (_canStatProd || _canStatOrd || _canStatPLC || _canStatOp)
                     {
+                        <MudTooltip Text="Statistiche" Placement="Placement.Right" Disabled="@(!_miniDrawer)">
                         <MudNavGroup Title="Statistiche" Icon="@Icons.Material.Filled.BarChart" IconColor="Color.Tertiary" Expanded="@_expandedStat" ExpandedChanged="@(v => OnNavGroupToggled("stat", v))" Class="nav-sec-statistiche">
                             @if (_canStatProd)
                             {
@@ -675,12 +686,14 @@
                                 </MudNavLink>
                             }
                         </MudNavGroup>
+                        </MudTooltip>
                     }
                 </Authorized>
             </AuthorizeView>
 
             @* Impostazioni - solo Admin *@
             <AuthorizeView Roles="Admin">
+                <MudTooltip Text="Impostazioni" Placement="Placement.Right" Disabled="@(!_miniDrawer)">
                 <MudNavGroup Title="Impostazioni" Icon="@Icons.Material.Filled.Settings" IconColor="Color.Dark" Expanded="@_expandedImp" ExpandedChanged="@(v => OnNavGroupToggled("imp", v))" Class="nav-sec-impostazioni">
                     <MudNavLink Href="/impostazioni/gantt">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9881;&#65039;</span><span>Gantt</span></div>
@@ -704,6 +717,7 @@
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128027;</span><span>Issue Log</span></div>
                     </MudNavLink>
                 </MudNavGroup>
+                </MudTooltip>
             </AuthorizeView>
         </MudNavMenu>
     </MudDrawer>
