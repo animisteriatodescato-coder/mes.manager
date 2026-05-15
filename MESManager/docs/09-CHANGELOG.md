@@ -4,7 +4,24 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.118
+## 🔖 Versione Corrente: v1.65.119
+
+---
+
+## 🔖 v1.65.119 — Preventivi: Aggiornamento Prezzi Completo
+
+**Data**: 2026-05-15
+
+### 🐛 Fix
+
+- **Aggiornamento Prezzi**: aggiunto pulsante incolla nel campo codice articolo per velocizzare l'inserimento da appunti quando il menu contestuale del browser non è comodo/usabile.
+- **Aggiornamento Prezzi / Verniciatura**: la sezione mostra ora gli stessi costi modificabili del nuovo preventivo (`€/kg`, `% applicazione`, `pz/h`, `€/h`) e il riepilogo espone materiale, manodopera e totale verniciatura.
+- **Archivio Aggiornamenti**: aggiunte le colonne `Foto`, `Prezzo vecchio` e `Prezzo aggiornato`, con il prezzo vecchio letto dal catalogo anime/articoli già caricato in pagina.
+
+#### File modificati
+- `MESManager.Web/Components/Pages/Preventivi/CatalogoPreventivi.razor` — UI aggiornamento prezzi, archivio aggiornamenti e apertura scheda anime/foto.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.118 → 1.65.119.
+- `docs/09-CHANGELOG.md` — changelog v1.65.119.
 
 ---
 

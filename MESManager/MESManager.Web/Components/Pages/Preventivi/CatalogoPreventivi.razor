@@ -2,6 +2,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.CatPreventivi)]
 @using MESManager.Application.DTOs
 @using MESManager.Application.Interfaces
+@using MESManager.Web.Components.Dialogs
 @using MESManager.Web.Components.Dialogs.Preventivi
 @inject IPreventivoService PreventivoService
 @inject IAllegatoPreventivoService AllegatiPreventivoService
@@ -10,6 +11,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject HttpClient Http
+@inject IJSRuntime JS
 @inject NavigationManager NavigationManager
 
 <PageTitle>Preventivi</PageTitle>
@@ -1024,21 +1026,32 @@
                         </MudStack>
                         <MudGrid Spacing="2">
                             <MudItem xs="12" sm="5">
-                                <MudAutocomplete T="string"
-                                                 Value="@_agDto.CodiceArticolo"
-                                                 ValueChanged="@(async (string v) => { _agDto.CodiceArticolo = v; await OnAgCodiceArticoloChanged(v); })"
-                                                 Label="Codice articolo *"
-                                                 SearchFunc="CercaCodiciArticolo"
-                                                 Variant="Variant.Outlined"
-                                                 Margin="Margin.Dense"
-                                                 MinCharacters="0"
-                                                 DebounceInterval="150"
-                                                 CoerceText="true"
-                                                 CoerceValue="true"
-                                                 Clearable="true"
-                                                 HelperText="Seleziona per auto-compilare i campi"
-                                                 AdornmentIcon="@Icons.Material.Filled.Search"
-                                                 data-testid="ag-input-codice" />
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudAutocomplete T="string"
+                                                     Value="@_agDto.CodiceArticolo"
+                                                     ValueChanged="@(async (string v) => { _agDto.CodiceArticolo = v; await OnAgCodiceArticoloChanged(v); })"
+                                                     Label="Codice articolo *"
+                                                     SearchFunc="CercaCodiciArticolo"
+                                                     Variant="Variant.Outlined"
+                                                     Margin="Margin.Dense"
+                                                     MinCharacters="0"
+                                                     DebounceInterval="150"
+                                                     CoerceText="true"
+                                                     CoerceValue="true"
+                                                     Clearable="true"
+                                                     HelperText="Seleziona, scrivi o incolla il codice"
+                                                     AdornmentIcon="@Icons.Material.Filled.Search"
+                                                     data-testid="ag-input-codice"
+                                                     Style="flex:1" />
+                                    <MudTooltip Text="Incolla codice dagli appunti">
+                                        <MudIconButton Icon="@Icons.Material.Filled.ContentPaste"
+                                                       Color="Color.Primary"
+                                                       Variant="Variant.Outlined"
+                                                       Size="Size.Medium"
+                                                       OnClick="IncollaCodiceAggiornamentoAsync"
+                                                       data-testid="ag-btn-incolla-codice" />
+                                    </MudTooltip>
+                                </MudStack>
                             </MudItem>
                             <MudItem xs="12" sm="4">
                                 <MudTextField @bind-Value="_agDto.Cliente"
@@ -1150,6 +1163,7 @@
                             <MudText Typo="Typo.subtitle1"><b>VERNICIATURA</b></MudText>
                         </MudStack>
                         <MudCheckBox @bind-Value="_agDto.VerniciaturaRichiesta"
+                                     @bind-Value:after="RicalcolaAg"
                                      Label="Verniciatura richiesta"
                                      Color="Color.Info" Class="mb-2" />
                         @if (_agDto.VerniciaturaRichiesta)
@@ -1176,6 +1190,32 @@
                                     }
                                 </MudSelect>
                             }
+                            <MudGrid Spacing="2" Class="mt-2">
+                                <MudItem xs="6" sm="3">
+                                    <MudNumericField @bind-Value="_agDto.CostoVerniceKg" @bind-Value:after="RicalcolaAg"
+                                                     Label="€/kg vernice" Min="0" Format="N2"
+                                                     Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                     data-testid="ag-input-costo-vernice-kg" />
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <MudNumericField @bind-Value="_agDto.PercentualeVernice" @bind-Value:after="RicalcolaAg"
+                                                     Label="% applicazione" Min="0" Max="100" Format="N1"
+                                                     Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                     data-testid="ag-input-perc-vernice" />
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <MudNumericField @bind-Value="_agDto.VerniciaturaPzOra" @bind-Value:after="RicalcolaAg"
+                                                     Label="Pz/h verniciatura" Min="0"
+                                                     Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                     data-testid="ag-input-verniciatura-pz-ora" />
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <MudNumericField @bind-Value="_agDto.EuroOraVerniciatura" @bind-Value:after="RicalcolaAg"
+                                                     Label="€/h verniciatura" Min="0" Format="N2"
+                                                     Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                     data-testid="ag-input-euro-ora-verniciatura" />
+                                </MudItem>
+                            </MudGrid>
                         }
                     </MudPaper>
 
@@ -1284,8 +1324,12 @@
                                             <MudItem xs="4"><MudText Typo="Typo.body2" Align="Align.Right"><b>@calc.CostoAnima.ToString("C4")</b></MudText></MudItem>
                                             @if (_agDto.VerniciaturaRichiesta && calc.VernTot > 0)
                                             {
-                                                <MudItem xs="8"><MudText Typo="Typo.body2">Verniciatura</MudText></MudItem>
-                                                <MudItem xs="4"><MudText Typo="Typo.body2" Align="Align.Right">@calc.VernTot.ToString("C4")</MudText></MudItem>
+                                                <MudItem xs="8"><MudText Typo="Typo.body2">Vern. materiale</MudText></MudItem>
+                                                <MudItem xs="4"><MudText Typo="Typo.body2" Align="Align.Right">@calc.VernMateriale.ToString("C4")</MudText></MudItem>
+                                                <MudItem xs="8"><MudText Typo="Typo.body2">Vern. manodopera</MudText></MudItem>
+                                                <MudItem xs="4"><MudText Typo="Typo.body2" Align="Align.Right">@calc.VernManodopera.ToString("C4")</MudText></MudItem>
+                                                <MudItem xs="8"><MudText Typo="Typo.body2"><b>Verniciatura totale</b></MudText></MudItem>
+                                                <MudItem xs="4"><MudText Typo="Typo.body2" Align="Align.Right"><b>@calc.VernTot.ToString("C4")</b></MudText></MudItem>
                                             }
                                             <MudItem xs="8"><MudText Typo="Typo.subtitle2" Color="Color.Success">Nuovo prezzo</MudText></MudItem>
                                             <MudItem xs="4"><MudText Typo="Typo.subtitle2" Color="Color.Success" Align="Align.Right"><b>@calc.PrezzoVendita.ToString("C4")</b></MudText></MudItem>
@@ -1358,19 +1402,47 @@
                             <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => x.DataCreazione)">Data</MudTableSortLabel></MudTh>
                             <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => x.Cliente)">Cliente</MudTableSortLabel></MudTh>
                             <MudTh>Codice</MudTh>
+                            <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => GetNumeroFotoArticolo(x.CodiceArticolo))">Foto</MudTableSortLabel></MudTh>
                             <MudTh>Sabbia</MudTh>
                             <MudTh>Vernice</MudTh>
-                            <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => x.CalcPrezzoVendita)">Prezzo</MudTableSortLabel></MudTh>
+                            <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => GetPrezzoVecchioArticolo(x.CodiceArticolo) ?? 0m)">Prezzo vecchio</MudTableSortLabel></MudTh>
+                            <MudTh><MudTableSortLabel SortBy="new Func<PreventivoDto, object>(x => x.CalcPrezzoVendita)">Prezzo aggiornato</MudTableSortLabel></MudTh>
                             <MudTh>Stato</MudTh>
                             <MudTh>Azioni</MudTh>
                         </HeaderContent>
                         <RowTemplate>
+                            @{
+                                var prezzoVecchio = GetPrezzoVecchioArticolo(context.CodiceArticolo);
+                                var numeroFoto = GetNumeroFotoArticolo(context.CodiceArticolo);
+                            }
                             <MudTd><MudText Typo="Typo.caption" Color="Color.Info"><b>@(context.NumeroPreventivo > 0 ? context.NumeroPreventivo.ToString() : "—")</b></MudText></MudTd>
                             <MudTd>@context.DataCreazione.ToString("dd/MM/yyyy HH:mm")</MudTd>
                             <MudTd>@context.Cliente</MudTd>
                             <MudTd><MudText Typo="Typo.caption">@context.CodiceArticolo</MudText></MudTd>
+                            <MudTd>
+                                <MudTooltip Text="Apri scheda articolo e foto">
+                                    <MudButton Variant="Variant.Text"
+                                               Color="@(numeroFoto > 0 ? Color.Primary : Color.Default)"
+                                               Size="Size.Small"
+                                               StartIcon="@Icons.Material.Filled.PhotoLibrary"
+                                               OnClick="@(() => ApriSchedaAnimaAsync(context.CodiceArticolo))"
+                                               data-testid="@($"btn-foto-ag-{context.Id}")">
+                                        @numeroFoto
+                                    </MudButton>
+                                </MudTooltip>
+                            </MudTd>
                             <MudTd><MudText Typo="Typo.caption">@context.SabbiaSnapshot</MudText></MudTd>
                             <MudTd><MudText Typo="Typo.caption">@(context.VerniciaturaRichiesta ? context.VerniceSnapshot : "—")</MudText></MudTd>
+                            <MudTd>
+                                @if (prezzoVecchio.HasValue)
+                                {
+                                    <MudText Color="Color.Warning"><b>€@prezzoVecchio.Value.ToString("N4")</b></MudText>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">—</MudText>
+                                }
+                            </MudTd>
                             <MudTd><MudText Color="Color.Success"><b>€@context.CalcPrezzoVendita.ToString("N4")</b></MudText></MudTd>
                             <MudTd>
                                 <MudSelect T="string" Value="@context.Stato"
@@ -1440,6 +1512,7 @@
 
     // Cache codici articolo dal catalogo anime
     private List<string> _codiciAnimeCatalogo = new();
+    private readonly Dictionary<string, AnimeDto> _animeByCodice = new(StringComparer.OrdinalIgnoreCase);
 
     // Archivio preventivi
     private List<PreventivoDto> _preventivi = new();
@@ -1481,6 +1554,7 @@
         var clienti  = await CommessaAppService.GetClienteNomiDistinctAsync();
         _clientiRagioni = clienti;
         var anime = await AnimeService.GetAllAsync();
+        AggiornaCacheAnime(anime);
         _codiciAnimeCatalogo = anime
             .Select(a => a.CodiceArticolo)
             .Where(c => !string.IsNullOrWhiteSpace(c))
@@ -1489,6 +1563,15 @@
             .ToList();
         _isLoading = false;
         _initialLoadComplete = true;
+    }
+
+    private void AggiornaCacheAnime(IEnumerable<AnimeDto> anime)
+    {
+        _animeByCodice.Clear();
+        foreach (var item in anime.Where(a => !string.IsNullOrWhiteSpace(a.CodiceArticolo)))
+        {
+            _animeByCodice[item.CodiceArticolo] = item;
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -1550,6 +1633,26 @@
 
         return Task.FromResult(
             codici.Where(c => c!.Contains(value, StringComparison.OrdinalIgnoreCase)).Take(20).AsEnumerable()!);
+    }
+
+    private decimal? GetPrezzoVecchioArticolo(string? codiceArticolo)
+    {
+        if (string.IsNullOrWhiteSpace(codiceArticolo))
+            return null;
+
+        return _animeByCodice.TryGetValue(codiceArticolo.Trim(), out var anime)
+            ? anime.Prezzo
+            : null;
+    }
+
+    private int GetNumeroFotoArticolo(string? codiceArticolo)
+    {
+        if (string.IsNullOrWhiteSpace(codiceArticolo))
+            return 0;
+
+        return _animeByCodice.TryGetValue(codiceArticolo.Trim(), out var anime)
+            ? anime.NumeroFoto
+            : 0;
     }
 
     // ── Autocomplete clienti ─────────────────────────────────────────────
@@ -1759,8 +1862,54 @@
         _agTipoVerniceSelezionata = _tipiVernice.FirstOrDefault(v => v.Id == p.TipoVerniceId);
         _agCampiMancanti          = new();
         _agShowCampiMancanti      = false;
+        _agPrezzoAttuale          = GetPrezzoVecchioArticolo(p.CodiceArticolo);
         // Salta al Tab 5
         _tabs?.ActivatePanelAsync(4);
+    }
+
+    private async Task ApriSchedaAnimaAsync(string? codiceArticolo)
+    {
+        if (string.IsNullOrWhiteSpace(codiceArticolo))
+        {
+            Snackbar.Add("Codice articolo mancante.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var codice = codiceArticolo.Trim();
+            var anime = await AnimeService.GetByCodiceArticoloAsync(codice);
+            if (anime == null)
+            {
+                Snackbar.Add($"Anima con codice {codice} non trovata.", Severity.Warning);
+                return;
+            }
+
+            var parameters = new DialogParameters<AnimeEditDialog>
+            {
+                { x => x.Anime, anime }
+            };
+            var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Large,
+                FullWidth = true,
+                CloseButton = true,
+                CloseOnEscapeKey = true
+            };
+
+            var dialog = await DialogService.ShowAsync<AnimeEditDialog>("Modifica Anima", parameters, options);
+            var result = await dialog.Result;
+            if (result != null && !result.Canceled && result.Data is AnimeDto updated)
+            {
+                _animeByCodice[updated.CodiceArticolo] = updated;
+                Snackbar.Add("Scheda articolo aggiornata.", Severity.Success);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore apertura scheda anima: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task EliminaAsync(PreventivoDto p)
@@ -2012,6 +2161,8 @@
         _agDto.VerniceSnapshot    = _agTipoVerniceSelezionata.Nome;
         _agDto.CostoVerniceKg     = _agTipoVerniceSelezionata.PrezzoKg;
         _agDto.PercentualeVernice = _agTipoVerniceSelezionata.PercentualeApplicazione;
+        if (_agDto.EuroOraVerniciatura <= 0)
+            _agDto.EuroOraVerniciatura = 40;
         RicalcolaAg();
     }
 
@@ -2028,6 +2179,26 @@
         _agPrezzoAttuale = null;
     }
 
+    private async Task IncollaCodiceAggiornamentoAsync()
+    {
+        try
+        {
+            var codice = (await JS.InvokeAsync<string>("navigator.clipboard.readText"))?.Trim();
+            if (string.IsNullOrWhiteSpace(codice))
+            {
+                Snackbar.Add("Appunti vuoti: nessun codice da incollare.", Severity.Info);
+                return;
+            }
+
+            _agDto.CodiceArticolo = codice;
+            await OnAgCodiceArticoloChanged(codice);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Non riesco a leggere gli appunti: {ex.Message}. Puoi usare Ctrl+V nel campo codice.", Severity.Warning);
+        }
+    }
+
     private async Task OnAgCodiceArticoloChanged(string? codice)
     {
         if (string.IsNullOrWhiteSpace(codice)) return;
@@ -2040,6 +2211,7 @@
         }
 
         _agCampiMancanti = new();
+        _animeByCodice[anime.CodiceArticolo] = anime;
 
         // Descrizione
         if (!string.IsNullOrWhiteSpace(anime.DescrizioneArticolo))
@@ -2123,6 +2295,8 @@
                 _agDto.CostoVerniceKg         = matchVernice.PrezzoKg;
                 _agDto.PercentualeVernice     = matchVernice.PercentualeApplicazione;
                 _agDto.VerniciaturaRichiesta  = true;
+                if (_agDto.EuroOraVerniciatura <= 0)
+                    _agDto.EuroOraVerniciatura = 40;
             }
             else
                 _agCampiMancanti.Add($"Tipo vernice '{anime.Vernice}' non corrisponde a nessun tipo configurato");
