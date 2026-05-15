@@ -1980,6 +1980,157 @@ h1:focus {
     outline-offset: 1px !important;
 }
 
+/* ==========================================================================
+   DRAWER POLISH FIX — allineamento mini + palette arcobaleno (v1.65.89)
+   Corregge sovrapposizione freccia/icona, centraggio figli, colori light mode
+   e rail colorata dei sottomenù espansi.
+   ========================================================================== */
+
+/* Mini: sfondi in ordine arcobaleno verticale. */
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link {
+    background: rgba(239,68,68,0.16) !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-prog > .mud-nav-link         { background: rgba(239,68,68,0.18) !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-produzione > .mud-nav-link   { background: rgba(249,115,22,0.19) !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-cataloghi > .mud-nav-link    { background: rgba(234,179,8,0.21) !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-manutenzioni > .mud-nav-link { background: rgba(34,197,94,0.18) !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-sync > .mud-nav-link         { background: rgba(6,182,212,0.18) !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-statistiche > .mud-nav-link  { background: rgba(59,130,246,0.18) !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-impostazioni > .mud-nav-link { background: rgba(139,92,246,0.18) !important; }
+
+/* Mini: icone intense ma non nere. */
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link .mud-nav-link-icon-wrapper,
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link .mud-icon-root {
+    color: #15803d !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-prog > .mud-nav-link .mud-nav-link-icon-wrapper,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-prog > .mud-nav-link .mud-icon-root { color: #dc2626 !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-produzione > .mud-nav-link .mud-nav-link-icon-wrapper,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-produzione > .mud-nav-link .mud-icon-root { color: #ea580c !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-cataloghi > .mud-nav-link .mud-nav-link-icon-wrapper,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-cataloghi > .mud-nav-link .mud-icon-root { color: #ca8a04 !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-manutenzioni > .mud-nav-link .mud-nav-link-icon-wrapper,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-manutenzioni > .mud-nav-link .mud-icon-root { color: #16a34a !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-sync > .mud-nav-link .mud-nav-link-icon-wrapper,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-sync > .mud-nav-link .mud-icon-root { color: #0891b2 !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-statistiche > .mud-nav-link .mud-nav-link-icon-wrapper,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-statistiche > .mud-nav-link .mud-icon-root { color: #2563eb !important; }
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-impostazioni > .mud-nav-link .mud-nav-link-icon-wrapper,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-impostazioni > .mud-nav-link .mud-icon-root { color: #7c3aed !important; }
+
+/* Mini: la freccia non occupa il centro dell'icona grande. */
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link {
+    width: 48px !important;
+    margin: 4px 2px !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-nav-link-icon-wrapper {
+    left: 19px !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-nav-link-expand-icon,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-expand-icon {
+    right: 2px !important;
+    width: 11px !important;
+    min-width: 11px !important;
+    max-width: 11px !important;
+    opacity: 0.68 !important;
+    color: rgba(71,85,105,0.92) !important;
+    transform: translateY(-50%) scale(0.68) !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-nav-link-expand-icon .mud-icon-root,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-expand-icon .mud-icon-root {
+    font-size: 14px !important;
+}
+
+/* Mini: icone figli centrate e +10% circa. */
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 34px !important;
+    min-height: 28px !important;
+    height: 28px !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text > div {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text span:first-child {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    margin: 0 !important;
+    font-size: 14.5px !important;
+    filter: brightness(0.86) saturate(1.18) !important;
+}
+
+.mes-mini-drawer .mud-nav-group.nav-sec-prog .mud-collapse-container .mud-nav-link         { background: rgba(239,68,68,0.13) !important; }
+.mes-mini-drawer .mud-nav-group.nav-sec-produzione .mud-collapse-container .mud-nav-link   { background: rgba(249,115,22,0.14) !important; }
+.mes-mini-drawer .mud-nav-group.nav-sec-cataloghi .mud-collapse-container .mud-nav-link    { background: rgba(234,179,8,0.16) !important; }
+.mes-mini-drawer .mud-nav-group.nav-sec-manutenzioni .mud-collapse-container .mud-nav-link { background: rgba(34,197,94,0.13) !important; }
+.mes-mini-drawer .mud-nav-group.nav-sec-sync .mud-collapse-container .mud-nav-link         { background: rgba(6,182,212,0.13) !important; }
+.mes-mini-drawer .mud-nav-group.nav-sec-statistiche .mud-collapse-container .mud-nav-link  { background: rgba(59,130,246,0.13) !important; }
+.mes-mini-drawer .mud-nav-group.nav-sec-impostazioni .mud-collapse-container .mud-nav-link { background: rgba(139,92,246,0.13) !important; }
+
+/* Espanso: palette arcobaleno coerente e rail sottomenù ricolorata. */
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-prog > .mud-nav-link         { border-left-color: rgba(239,68,68,0.88) !important; background: rgba(239,68,68,0.12) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-produzione > .mud-nav-link   { border-left-color: rgba(249,115,22,0.88) !important; background: rgba(249,115,22,0.13) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-cataloghi > .mud-nav-link    { border-left-color: rgba(234,179,8,0.92) !important; background: rgba(234,179,8,0.14) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-manutenzioni > .mud-nav-link { border-left-color: rgba(34,197,94,0.88) !important; background: rgba(34,197,94,0.12) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-sync > .mud-nav-link         { border-left-color: rgba(6,182,212,0.88) !important; background: rgba(6,182,212,0.12) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-statistiche > .mud-nav-link  { border-left-color: rgba(59,130,246,0.88) !important; background: rgba(59,130,246,0.12) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-impostazioni > .mud-nav-link { border-left-color: rgba(139,92,246,0.88) !important; background: rgba(139,92,246,0.12) !important; }
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container {
+    margin: 0 6px 4px 5px !important;
+    padding: 3px 0 4px 5px !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-prog .mud-collapse-container         { border-left-color: rgba(239,68,68,0.78) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-produzione .mud-collapse-container   { border-left-color: rgba(249,115,22,0.78) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-cataloghi .mud-collapse-container    { border-left-color: rgba(234,179,8,0.82) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-manutenzioni .mud-collapse-container { border-left-color: rgba(34,197,94,0.78) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-sync .mud-collapse-container         { border-left-color: rgba(6,182,212,0.78) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-statistiche .mud-collapse-container  { border-left-color: rgba(59,130,246,0.78) !important; }
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-impostazioni .mud-collapse-container { border-left-color: rgba(139,92,246,0.78) !important; }
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link {
+    padding: 0 4px !important;
+    margin: 1px 1px !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text {
+    font-size: 12.5px !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) [data-testid="nav-menu"] .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text span:not(:first-child) {
+    font-size: 12.5px !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text > div {
+    gap: 5px !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text span:first-child {
+    min-width: 19px !important;
+    width: 19px !important;
+    height: 19px !important;
+    font-size: 12.5px !important;
+}
+
 /* ── Pseudo-fullscreen CSS (fallback per iOS Safari e mobile senza Fullscreen API) ── */
 body.mes-pseudo-fullscreen header.mud-appbar,
 body.mes-pseudo-fullscreen .mud-appbar {

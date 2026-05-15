@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.119";
+    public const string Current = "1.65.120";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.104: rimosso ricalcolo engine morto
+    public const string Display = "v" + Current; // v1.65.120: fix mini drawer alignment and rainbow palette
 }

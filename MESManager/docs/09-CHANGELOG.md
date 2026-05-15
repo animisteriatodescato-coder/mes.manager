@@ -4,7 +4,26 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.119
+## 🔖 Versione Corrente: v1.65.120
+
+---
+
+## 🔖 v1.65.120 — Mini drawer: allineamento e palette arcobaleno
+
+**Data**: 2026-05-15
+
+### 🐛 Fix
+
+- **Mini drawer**: separata la freccia di espansione dall'icona principale, evitando la sovrapposizione nel riquadro da 52px.
+- **Sottomenù mini**: icone figlie ricentrate e aumentate di circa il 10%.
+- **Palette arcobaleno**: sfondi di gruppi e sottomenù riordinati verticalmente con sequenza rosso/arancio/giallo/verde/ciano/blu/viola.
+- **Light mode**: icone principali colorate con tinte più intense ma non nere.
+- **Menu espanso**: ripristinata la rail laterale colorata dei sottomenù, avvicinate icone e scritte al bordo e ridotto il testo dei figli di 1px.
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — override drawer mini/espanso, frecce, icone, rail e palette.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.119 → 1.65.120.
+- `docs/09-CHANGELOG.md` — changelog v1.65.120.
 
 ---
 
