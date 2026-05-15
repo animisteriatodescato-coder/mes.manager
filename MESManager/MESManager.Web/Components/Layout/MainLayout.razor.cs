@@ -118,7 +118,11 @@ public partial class MainLayout : IDisposable
         }
     }
 
-    private void ToggleAiPanel() => _aiPanelOpen = !_aiPanelOpen;
+    private async Task ToggleAiPanel()
+    {
+        _aiPanelOpen = !_aiPanelOpen;
+        await InvokeAsync(StateHasChanged);
+    }
 
     private async Task ToggleMiniDrawer()
     {

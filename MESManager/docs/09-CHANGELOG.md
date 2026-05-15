@@ -4,7 +4,27 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.122
+## 🔖 Versione Corrente: v1.65.123
+
+---
+
+## 🔖 v1.65.123 — Assistente AI: drawer ancorato e chiudibile
+
+**Data**: 2026-05-15
+
+### 🐛 Fix
+
+- **Assistente AI**: rimosso l'override `position: relative` dal root del `MudDrawer`, che impediva al drawer temporaneo MudBlazor di restare ancorato a destra e di chiudersi correttamente.
+- **Resize AI**: mantenuto il riferimento `position: relative` solo sul contenuto interno del drawer, così il bordo trascinabile continua a funzionare senza rompere il comportamento nativo del drawer.
+- **Test E2E AI**: esteso il test per verificare larghezza, resize, ancoraggio a destra e chiusura del pannello.
+- **Cache busting**: aggiornata la versione di `app.css`.
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — rimosso override di posizione dal root drawer AI.
+- `MESManager.Web/Components/App.razor` — cache busting `app.css`.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.122 → 1.65.123.
+- `tests/MESManager.E2E/Tests/HomeTests.cs` — test AI esteso a chiusura e ancoraggio.
+- `docs/09-CHANGELOG.md` — changelog v1.65.123.
 
 ---
 

@@ -33,7 +33,8 @@ public class HomeTests : PlaywrightTestBase
     [Trait("Feature", "AI")]
     public async Task Home_AiAssistantDrawerIsWideAndResizable()
     {
-        await Page.GotoAsync(BaseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        var homePage = new HomePage(Page, BaseUrl);
+        await homePage.NavigateAsync();
         await Page.EvaluateAsync("localStorage.removeItem('mes-ai-assistant-width')");
 
         var aiButton = Page.GetByTestId("ai-assistant-btn");
@@ -48,6 +49,11 @@ public class HomeTests : PlaywrightTestBase
 
         var initialWidth = await drawer.EvaluateAsync<float>("el => el.getBoundingClientRect().width");
         Assert.True(initialWidth > 400, $"Il drawer AI dovrebbe essere largo oltre 400px, trovato {initialWidth}px");
+        var viewportWidth = await Page.EvaluateAsync<float>("() => window.innerWidth");
+        var initialBox = await drawer.BoundingBoxAsync();
+        Assert.NotNull(initialBox);
+        Assert.True(Math.Abs((initialBox!.X + initialBox.Width) - viewportWidth) < 8,
+            $"Il drawer AI deve restare ancorato a destra. Right={initialBox.X + initialBox.Width}px, viewport={viewportWidth}px");
 
         var handle = Page.Locator(".ai-drawer-resize-handle");
         var box = await handle.BoundingBoxAsync();
@@ -62,6 +68,11 @@ public class HomeTests : PlaywrightTestBase
         var resizedWidth = await drawer.EvaluateAsync<float>("el => el.getBoundingClientRect().width");
         Assert.True(resizedWidth > initialWidth + 10,
             $"Il drag del bordo dovrebbe allargare il drawer AI. Prima: {initialWidth}px, dopo: {resizedWidth}px");
+
+        await drawer.Locator("button[title='Chiudi']").ClickAsync();
+        await Page.WaitForFunctionAsync(
+            "() => !document.querySelector('[data-testid=\"ai-assistant-drawer\"]')?.checkVisibility?.()",
+            new PageWaitForFunctionOptions { Timeout = 10000 });
 
         await AssertNoConsoleErrors();
     }

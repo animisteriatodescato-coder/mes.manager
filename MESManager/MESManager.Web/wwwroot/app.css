@@ -1341,10 +1341,19 @@ h1:focus {
 
 .ai-assistant-drawer,
 [data-testid="ai-assistant-drawer"] {
-    position: relative !important;
+    position: fixed !important;
+    top: var(--appbar-height, 48px) !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 1300 !important;
     width: min(var(--ai-assistant-drawer-width, 520px), calc(100vw - 72px)) !important;
     min-width: min(360px, calc(100vw - 32px)) !important;
     max-width: calc(100vw - 72px) !important;
+    background: var(--mud-palette-surface) !important;
+    box-shadow: -4px 0 18px rgba(0,0,0,0.28) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
 .ai-assistant-drawer .mud-drawer-content,

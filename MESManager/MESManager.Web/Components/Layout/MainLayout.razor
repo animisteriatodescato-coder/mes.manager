@@ -700,18 +700,15 @@
     </MudDrawer>
 
     @* ── AI Assistant Drawer (solo Admin) ────────────────────────────────── *@
-    @if (_isAdmin)
+    @if (_isAdmin && _aiPanelOpen)
     {
-        <MudDrawer @bind-Open="_aiPanelOpen"
-                   Anchor="Anchor.End"
-                   Variant="DrawerVariant.Temporary"
-                   Width="520px"
-                   Class="ai-assistant-drawer"
-                   Elevation="4"
-                   data-testid="ai-assistant-drawer">
+        <div class="ai-assistant-drawer"
+             data-testid="ai-assistant-drawer"
+             role="complementary"
+             aria-label="Assistente AI">
             <div class="ai-drawer-resize-handle" title="Ridimensiona assistente AI"></div>
             <AiAssistantPanel OnClose="@(() => _aiPanelOpen = false)" />
-        </MudDrawer>
+        </div>
     }
 
     <CascadingValue Value="@_isReadOnly" Name="IsReadOnly">
