@@ -202,6 +202,11 @@ public partial class MainLayout : IDisposable
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (_aiPanelOpen && _isAdmin)
+        {
+            await JS.InvokeVoidAsync("AiAssistant.initResizableDrawer");
+        }
+
         if (firstRender)
         {
             // Applica subito le CSS vars via JS (live update da primo render)

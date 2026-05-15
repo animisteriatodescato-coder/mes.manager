@@ -29,6 +29,43 @@ public class HomeTests : PlaywrightTestBase
         await AssertNoConsoleErrors();
     }
 
+    [Fact(DisplayName = "Home > Assistente AI visibile e ridimensionabile")]
+    [Trait("Feature", "AI")]
+    public async Task Home_AiAssistantDrawerIsWideAndResizable()
+    {
+        await Page.GotoAsync(BaseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await Page.EvaluateAsync("localStorage.removeItem('mes-ai-assistant-width')");
+
+        var aiButton = Page.GetByTestId("ai-assistant-btn");
+        await aiButton.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
+        await aiButton.ClickAsync();
+
+        var drawer = Page.GetByTestId("ai-assistant-drawer");
+        await drawer.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
+        await Page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-testid=\"ai-assistant-drawer\"]')?.getBoundingClientRect().width > 400",
+            new PageWaitForFunctionOptions { Timeout = 10000 });
+
+        var initialWidth = await drawer.EvaluateAsync<float>("el => el.getBoundingClientRect().width");
+        Assert.True(initialWidth > 400, $"Il drawer AI dovrebbe essere largo oltre 400px, trovato {initialWidth}px");
+
+        var handle = Page.Locator(".ai-drawer-resize-handle");
+        var box = await handle.BoundingBoxAsync();
+        Assert.NotNull(box);
+
+        var dragY = box!.Y + box.Height / 2;
+        await Page.Mouse.MoveAsync(box.X + box.Width / 2, dragY);
+        await Page.Mouse.DownAsync();
+        await Page.Mouse.MoveAsync(box.X - 120, dragY, new() { Steps = 6 });
+        await Page.Mouse.UpAsync();
+
+        var resizedWidth = await drawer.EvaluateAsync<float>("el => el.getBoundingClientRect().width");
+        Assert.True(resizedWidth > initialWidth + 10,
+            $"Il drag del bordo dovrebbe allargare il drawer AI. Prima: {initialWidth}px, dopo: {resizedWidth}px");
+
+        await AssertNoConsoleErrors();
+    }
+
     [Fact(DisplayName = "Home > Navigazione a Pianificazione funzionante")]
     public async Task Home_NavigateToPianificazione()
     {

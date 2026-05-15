@@ -4,7 +4,49 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.120
+## 🔖 Versione Corrente: v1.65.122
+
+---
+
+## 🔖 v1.65.122 — Drawer: rail interna e icone mini centrate
+
+**Data**: 2026-05-15
+
+### 🐛 Fix
+
+- **Menu espanso**: linee colorate dei sottomenù rese più spesse, spostate verso il centro del drawer e abbinate a uno sfondo sfumato leggero per sezione.
+- **Mini drawer Home**: rimossa la scritta Home a livello markup quando il drawer è compatto, lasciando solo l'icona.
+- **Mini drawer sottomenù**: pulsanti figli resi quadrati e icone centrate con `grid/place-items`.
+- **Icone sottomenù**: rimosso il filtro che faceva sembrare le emoji contaminate dal colore di sfondo; ora restano in primo piano.
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor` — link Home condizionale in mini mode.
+- `MESManager.Web/wwwroot/app.css` — rail interna, sfumature sottomenù, pulsanti figli mini quadrati e icone foreground.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.121 → 1.65.122.
+- `docs/09-CHANGELOG.md` — changelog v1.65.122.
+
+---
+
+## 🔖 v1.65.121 — Assistente AI: drawer pieno e ridimensionabile
+
+**Data**: 2026-05-15
+
+### 🐛 Fix
+
+- **Assistente AI**: rimosso il taglio a 185px causato dalla regola globale del menu laterale sinistro su `.mud-drawer-content`.
+- **Drawer AI**: larghezza iniziale aumentata a 520px, con contenuto a piena larghezza.
+- **Ridimensionamento**: aggiunto bordo sinistro trascinabile; la larghezza scelta viene salvata in `localStorage` e ripristinata alla riapertura.
+- **Cache busting**: aggiornate versioni statiche di `app.css` e `ai-assistant.js`.
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor` — classe drawer AI, larghezza default e handle di resize.
+- `MESManager.Web/Components/Layout/MainLayout.razor.cs` — inizializzazione JS del resize quando il drawer è aperto.
+- `MESManager.Web/Components/Shared/AiAssistantPanel.razor` — header compatibile con larghezza variabile.
+- `MESManager.Web/wwwroot/app.css` — scope corretto per drawer sinistro e stili drawer AI.
+- `MESManager.Web/wwwroot/js/ai-assistant.js` — resize drag + persistenza locale.
+- `MESManager.Web/Components/App.razor` — cache busting CSS/JS.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.120 → 1.65.121.
+- `docs/09-CHANGELOG.md` — changelog v1.65.121.
 
 ---
 
