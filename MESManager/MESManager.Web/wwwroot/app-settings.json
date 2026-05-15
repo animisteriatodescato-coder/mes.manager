@@ -29,7 +29,7 @@
   "ThemeButtonTextColor": "#FFFFFF",
   "ThemeAppBarBgColorDark": "#1c1c1cff",
   "ThemeDrawerBgColorDark": "#010101ff",
-  "AiProviderType": "Ollama",
+  "AiProviderType": "Gemini",
   "OllamaBaseUrl": "http://localhost:11434",
   "OllamaModel": "llama3.1:8b",
   "OpenAiModel": "gpt-4o-mini",

@@ -403,7 +403,16 @@
             }
         </MudDrawerHeader>
         <MudNavMenu data-testid="nav-menu">
-            <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary">Home</MudNavLink>
+            @if (_miniDrawer)
+            {
+                <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary">
+                    <span class="mes-mini-only-label">Home</span>
+                </MudNavLink>
+            }
+            else
+            {
+                <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary">Home</MudNavLink>
+            }
 
             @* Programma - claim-aware per Visualizzazione *@
             <AuthorizeView Roles="Admin,Produzione,Ufficio,Manutenzione,Visualizzazione">
