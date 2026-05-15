@@ -4,7 +4,27 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.123
+## 🔖 Versione Corrente: v1.65.124
+
+---
+
+## 🔖 v1.65.124 — Fix CaricaSuGantt: forceReassign e auto-detect commesse fantasma
+
+**Data**: 2026-05-15
+
+### 🐛 Fix
+
+- **Bug CaricaSuGantt**: il frontend di CommesseAperte mostrava il dialog "Vuoi ri-caricarla sul Gantt?" ma il backend bloccava comunque l'operazione con `NumeroMacchina.HasValue`. Ora il flag `ForceReassign=true` viene passato all'API dopo la conferma utente e il backend esegue il re-assign.
+- **Commesse fantasma**: se una commessa ha `NumeroMacchina` impostato ma `StatoProgramma` è `Completata` o `Archiviata` (invisibile in Programma Macchine per via dei filtri), il re-assign viene ora permesso automaticamente senza richiedere `forceReassign`. Viene azzera l'assegnazione precedente e la commessa viene re-schedulata.
+- **Messaggio errore migliorato**: in caso di blocco legittimo, il messaggio ora include anche il `StatoProgramma` corrente per facilitare il debug.
+
+#### File modificati
+- `MESManager.Application/DTOs/PianificazioneDto.cs` — `CaricaSuGanttRequest`: aggiunto campo `ForceReassign` (bool).
+- `MESManager.Application/Interfaces/IPianificazioneEngineService.cs` — firma `CaricaSuGanttAsync` aggiornata con `forceReassign = false`.
+- `MESManager.Infrastructure/Services/PianificazioneEngineService.cs` — logica re-assign: permesso se `forceReassign=true` o stato terminale; azzeramento assegnazione prima del re-scheduling.
+- `MESManager.Web/Controllers/PianificazioneController.cs` — passa `ForceReassign` dal body al service.
+- `MESManager.Web/Components/Pages/Programma/CommesseAperte.razor` — dopo conferma utente imposta `ForceReassign=true` nel body della chiamata API.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.123 → 1.65.124.
 
 ---
 
