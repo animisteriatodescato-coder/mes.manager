@@ -419,6 +419,7 @@ public class PianificazioneController : ControllerBase
         try
         {
             var numeroMacchinaManuale = request?.NumeroMacchina;
+            var forceReassign = request?.ForceReassign ?? false;
             
             if (numeroMacchinaManuale.HasValue)
             {
@@ -429,7 +430,7 @@ public class PianificazioneController : ControllerBase
                 _logger.LogInformation("🚀 [CARICA GANTT] Request per commessa {CommessaId} (auto-scheduler)", commessaId);
             }
             
-            var result = await _engineService.CaricaSuGanttAsync(commessaId, numeroMacchinaManuale);
+            var result = await _engineService.CaricaSuGanttAsync(commessaId, numeroMacchinaManuale, forceReassign);
             
             if (!result.Success)
             {

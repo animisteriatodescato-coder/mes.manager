@@ -38,5 +38,6 @@ public interface IPianificazioneEngineService
     /// </summary>
     /// <param name="commessaId">ID della commessa da caricare</param>
     /// <param name="numeroMacchinaManuale">Se specificato, forza il caricamento su questa macchina (bypass auto-scheduler)</param>
-    Task<CaricaSuGanttResponse> CaricaSuGanttAsync(Guid commessaId, int? numeroMacchinaManuale = null);
+    /// <param name="forceReassign">Se true, permette il re-assign anche se già assegnata (richiede conferma utente nel frontend)</param>
+    Task<CaricaSuGanttResponse> CaricaSuGanttAsync(Guid commessaId, int? numeroMacchinaManuale = null, bool forceReassign = false);
 }

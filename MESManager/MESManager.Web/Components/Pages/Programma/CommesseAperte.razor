@@ -322,6 +322,9 @@
                 }
             }
             
+            // Traccia se l'utente ha confermato il re-assign di una commessa già assegnata
+            bool forceReassign = commessa.NumeroMacchina.HasValue;
+            
             // 🎯 Carica macchine disponibili per questa commessa
             List<MacchinaDisponibileDto>? macchineDisponibili = null;
             try
@@ -366,10 +369,12 @@
             
             Snackbar.Add("🚀 Caricamento in corso...", Severity.Info);
             
-            // Chiamata API con macchina selezionata (o null per auto-scheduler)
-            var requestBody = macchinaSelezionata.HasValue 
-                ? new { NumeroMacchina = macchinaSelezionata.Value } 
-                : null;
+            // Chiamata API con macchina selezionata e flag forceReassign se confermato dall'utente
+            var requestBody = new 
+            { 
+                NumeroMacchina = macchinaSelezionata,
+                ForceReassign = forceReassign
+            };
             
             var response = await Http.PostAsJsonAsync($"api/pianificazione/carica-su-gantt/{commessa.Id}", requestBody);
             

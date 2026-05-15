@@ -898,7 +898,8 @@ public class PianificazioneEngineService : IPianificazioneEngineService
     /// </summary>
     /// <param name="commessaId">ID della commessa da caricare</param>
     /// <param name="numeroMacchinaManuale">Se specificato, forza il caricamento su questa macchina (bypass auto-scheduler)</param>
-    public async Task<CaricaSuGanttResponse> CaricaSuGanttAsync(Guid commessaId, int? numeroMacchinaManuale = null)
+    /// <param name="forceReassign">Se true, permette il re-assign anche se già assegnata (richiede conferma utente nel frontend)</param>
+    public async Task<CaricaSuGanttResponse> CaricaSuGanttAsync(Guid commessaId, int? numeroMacchinaManuale = null, bool forceReassign = false)
     {
         var updateVersion = DateTime.UtcNow.Ticks;
         
@@ -931,12 +932,30 @@ public class PianificazioneEngineService : IPianificazioneEngineService
             // 2. Verifica se già assegnata a una macchina
             if (commessa.NumeroMacchina.HasValue)
             {
-                return new CaricaSuGanttResponse
+                // Auto-consenti il re-assign se lo stato è terminale (Completata/Archiviata):
+                // la commessa è "fantasma" — ha NumeroMacchina ma non è visibile in Programma Macchine.
+                bool isTerminal = commessa.StatoProgramma is StatoProgramma.Completata or StatoProgramma.Archiviata;
+
+                if (!forceReassign && !isTerminal)
                 {
-                    Success = false,
-                    ErrorMessage = $"Commessa già assegnata a macchina {commessa.NumeroMacchina}. Usare il Gantt per spostarla.",
-                    UpdateVersion = updateVersion
-                };
+                    _logger.LogWarning("⚠️ Commessa {Codice} già assegnata a macchina {Macchina} (StatoProgramma={Stato}). Usare Gantt o confermare force.", 
+                        commessa.Codice, commessa.NumeroMacchina, commessa.StatoProgramma);
+                    return new CaricaSuGanttResponse
+                    {
+                        Success = false,
+                        ErrorMessage = $"Commessa già assegnata a macchina {commessa.NumeroMacchina} (stato: {commessa.StatoProgramma}). Usa il Gantt per spostarla.",
+                        UpdateVersion = updateVersion
+                    };
+                }
+
+                _logger.LogInformation("🔄 Re-assign commessa {Codice} da macchina {OldMacchina} (StatoProgramma={Stato}, forceReassign={Force})",
+                    commessa.Codice, commessa.NumeroMacchina, commessa.StatoProgramma, forceReassign);
+
+                // Azzera l'assegnazione precedente prima di procedere con il nuovo scheduling
+                commessa.NumeroMacchina = null;
+                commessa.DataInizioPrevisione = null;
+                commessa.DataFinePrevisione = null;
+                commessa.StatoProgramma = StatoProgramma.NonProgrammata;
             }
             
             // 3. Carica impostazioni, calendario, festivi

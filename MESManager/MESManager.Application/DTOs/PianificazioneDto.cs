@@ -86,6 +86,12 @@ public class CaricaSuGanttRequest
     /// Numero macchina manuale (se null, usa auto-scheduler)
     /// </summary>
     public int? NumeroMacchina { get; set; }
+
+    /// <summary>
+    /// Se true, forza il re-assign anche se la commessa è già assegnata a una macchina.
+    /// Deve essere passato dal frontend solo dopo conferma esplicita dell'utente.
+    /// </summary>
+    public bool ForceReassign { get; set; }
 }
 
 /// <summary>
