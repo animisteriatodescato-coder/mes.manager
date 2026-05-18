@@ -4,7 +4,28 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.128
+## 🔖 Versione Corrente: v1.65.129
+
+---
+
+## 🔖 v1.65.129 — Drawer: sottomenu più leggibili e label abbreviate
+
+**Data**: 2026-05-18
+
+### 🐛 Fix
+
+- **Rail sottomenu più sottile**: portata la variabile `--mes-drawer-rail-width` da 6px a 4px, così barra dei gruppi e barra dei sottomenu hanno lo stesso spessore visivo.
+- **Testo sottomenu nero**: le label dei link figlio nel drawer espanso ora usano `#111827`, più leggibile sulle card chiare.
+- **Pulsanti sottomenu più chiari**: sfondo child link portato a `rgba(255,255,255,0.70)` e hover a `0.86`, rendendo più chiara l’area evidenziata nel feedback.
+- **Label abbreviate per evitare tagli**: accorciate le voci più lunghe (`Dashboard` → `Dash`, `PLC Realtime` → `PLC RT`, `PLC Storico` → `PLC Stor.`, `Gantt Storico` → `Gantt St.`, `Incollaggio` → `Incoll.`, `Analisi Prezzi` → `Analisi`, `Impostazioni` → `Imp.` dove necessario).
+- **Cache CSS**: aggiornato `app.css?v=1603` per forzare il refresh lato browser.
+
+#### File modificati
+- `MESManager.Web/Components/Layout/MainLayout.razor` — label menu abbreviate.
+- `MESManager.Web/wwwroot/app.css` — rail 4px, testo nero, child button più chiari.
+- `MESManager.Web/Components/App.razor` — cache bust `app.css?v=1603`.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.128 → 1.65.129.
+- `docs/09-CHANGELOG.md` — nuova voce v1.65.129.
 
 ---
 

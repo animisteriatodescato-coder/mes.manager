@@ -469,31 +469,31 @@
                             @if (_canDash)
                             {
                                 <MudNavLink Href="/produzione/dashboard" title="Dashboard">
-                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128200;</span><span>Dashboard</span></div>
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128200;</span><span>Dash</span></div>
                                 </MudNavLink>
                             }
                             @if (_canPlcRT)
                             {
                                 <MudNavLink Href="/produzione/plc-realtime" title="PLC Realtime">
-                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9889;</span><span>PLC Realtime</span></div>
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9889;</span><span>PLC RT</span></div>
                                 </MudNavLink>
                             }
                             @if (_canPlcSt)
                             {
                                 <MudNavLink Href="/produzione/plc-storico" title="PLC Storico">
-                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128220;</span><span>PLC Storico</span></div>
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128220;</span><span>PLC Stor.</span></div>
                                 </MudNavLink>
                             }
                             @if (_canGantt)
                             {
                                 <MudNavLink Href="/produzione/gantt-storico" title="Gantt Storico">
-                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128202;</span><span>Gantt Storico</span></div>
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128202;</span><span>Gantt St.</span></div>
                                 </MudNavLink>
                             }
                             @if (_canIncoll)
                             {
                                 <MudNavLink Href="/produzione/incollaggio" title="Incollaggio">
-                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128279;</span><span>Incollaggio</span></div>
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128279;</span><span>Incoll.</span></div>
                                 </MudNavLink>
                             }
                         </MudNavGroup>
@@ -555,7 +555,7 @@
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#129534;</span><span>Preventivi</span></div>
                                 </MudNavLink>
                                 <MudNavLink Href="/analisi-prezzi" title="Analisi Prezzi">
-                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128200;</span><span>Analisi Prezzi</span></div>
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128200;</span><span>Analisi</span></div>
                                 </MudNavLink>
                             }
                             @if (_canCatNc)
@@ -619,7 +619,7 @@
                             @if (_canManImpostazioni)
                             {
                                 <MudNavLink Href="/manutenzioni/impostazioni" title="Impostazioni">
-                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9881;&#65039;</span><span>Impostazioni</span></div>
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9881;&#65039;</span><span>Imp.</span></div>
                                 </MudNavLink>
                             }
                         </MudNavGroup>
@@ -674,7 +674,7 @@
                             @if (_canStatPLC)
                             {
                                 <MudNavLink Href="/statistiche/plc-storico" title="PLC Storico">
-                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128225;</span><span>PLC Storico</span></div>
+                                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128225;</span><span>PLC Stor.</span></div>
                                 </MudNavLink>
                             }
                             @if (_canStatOp)
@@ -692,7 +692,7 @@
             @* Impostazioni - solo Admin *@
             <AuthorizeView Roles="Admin">
                 <MudTooltip Text="Impostazioni" Placement="Placement.Right" Disabled="@(!_miniDrawer)">
-                <MudNavGroup Title="Impostazioni" Icon="@Icons.Material.Filled.Settings" IconColor="Color.Dark" Expanded="@_expandedImp" ExpandedChanged="@(v => OnNavGroupToggled("imp", v))" Class="nav-sec-impostazioni">
+                <MudNavGroup Title="Impost." Icon="@Icons.Material.Filled.Settings" IconColor="Color.Dark" Expanded="@_expandedImp" ExpandedChanged="@(v => OnNavGroupToggled("imp", v))" Class="nav-sec-impostazioni">
                     <MudNavLink Href="/impostazioni/gantt" title="Gantt">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9881;&#65039;</span><span>Gantt</span></div>
                     </MudNavLink>

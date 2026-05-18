@@ -2510,7 +2510,7 @@ body.mes-pseudo-fullscreen .mud-main-content {
    ========================================================================== */
 
 :root {
-    --mes-drawer-rail-width: 6px;
+    --mes-drawer-rail-width: 4px;
 }
 
 .mud-drawer:not(.mes-mini-drawer) [data-testid="nav-menu"] {
@@ -2575,21 +2575,24 @@ body.mes-pseudo-fullscreen .mud-main-content {
     margin: 2px 3px 2px 0 !important;
     padding: 0 6px !important;
     border-radius: 7px !important;
-    background: rgba(255,255,255,0.045) !important;
-    border: 1px solid rgba(255,255,255,0.045) !important;
+    background: rgba(255,255,255,0.70) !important;
+    border: 1px solid rgba(255,255,255,0.62) !important;
 }
 
 .mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link:hover {
-    background: rgba(255,255,255,0.11) !important;
-    border-color: rgba(255,255,255,0.12) !important;
+    background: rgba(255,255,255,0.86) !important;
+    border-color: rgba(255,255,255,0.82) !important;
 }
 
 .mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text,
 .mud-drawer:not(.mes-mini-drawer) [data-testid="nav-menu"] .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text span:not(:first-child) {
-    color: #f1f5f9 !important;
+    color: #111827 !important;
     font-size: 12px !important;
     font-weight: 760 !important;
     letter-spacing: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 
 .mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text span:first-child {
@@ -2597,8 +2600,8 @@ body.mes-pseudo-fullscreen .mud-main-content {
     width: 24px !important;
     height: 24px !important;
     border-radius: 7px !important;
-    background: rgba(255,255,255,0.14) !important;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12) !important;
+    background: rgba(255,255,255,0.76) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.42) !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -2607,31 +2610,31 @@ body.mes-pseudo-fullscreen .mud-main-content {
 
 .mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-prog .mud-collapse-container {
     border-left-color: #ef4444 !important;
-    background: linear-gradient(90deg, rgba(239,68,68,0.24) 0%, rgba(127,29,29,0.22) 42%, rgba(15,23,42,0.24) 100%) !important;
+    background: linear-gradient(90deg, rgba(239,68,68,0.18) 0%, rgba(239,68,68,0.09) 48%, rgba(255,255,255,0.18) 100%) !important;
 }
 .mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-produzione .mud-collapse-container {
     border-left-color: #f97316 !important;
-    background: linear-gradient(90deg, rgba(249,115,22,0.25) 0%, rgba(124,45,18,0.22) 42%, rgba(15,23,42,0.24) 100%) !important;
+    background: linear-gradient(90deg, rgba(249,115,22,0.18) 0%, rgba(249,115,22,0.09) 48%, rgba(255,255,255,0.18) 100%) !important;
 }
 .mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-cataloghi .mud-collapse-container {
     border-left-color: #eab308 !important;
-    background: linear-gradient(90deg, rgba(234,179,8,0.25) 0%, rgba(113,63,18,0.22) 42%, rgba(15,23,42,0.24) 100%) !important;
+    background: linear-gradient(90deg, rgba(234,179,8,0.18) 0%, rgba(234,179,8,0.09) 48%, rgba(255,255,255,0.18) 100%) !important;
 }
 .mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-manutenzioni .mud-collapse-container {
     border-left-color: #22c55e !important;
-    background: linear-gradient(90deg, rgba(34,197,94,0.24) 0%, rgba(20,83,45,0.22) 42%, rgba(15,23,42,0.24) 100%) !important;
+    background: linear-gradient(90deg, rgba(34,197,94,0.18) 0%, rgba(34,197,94,0.09) 48%, rgba(255,255,255,0.18) 100%) !important;
 }
 .mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-sync .mud-collapse-container {
     border-left-color: #06b6d4 !important;
-    background: linear-gradient(90deg, rgba(6,182,212,0.24) 0%, rgba(22,78,99,0.22) 42%, rgba(15,23,42,0.24) 100%) !important;
+    background: linear-gradient(90deg, rgba(6,182,212,0.18) 0%, rgba(6,182,212,0.09) 48%, rgba(255,255,255,0.18) 100%) !important;
 }
 .mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-statistiche .mud-collapse-container {
     border-left-color: #3b82f6 !important;
-    background: linear-gradient(90deg, rgba(59,130,246,0.24) 0%, rgba(30,64,175,0.22) 42%, rgba(15,23,42,0.24) 100%) !important;
+    background: linear-gradient(90deg, rgba(59,130,246,0.18) 0%, rgba(59,130,246,0.09) 48%, rgba(255,255,255,0.18) 100%) !important;
 }
 .mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-impostazioni .mud-collapse-container {
     border-left-color: #8b5cf6 !important;
-    background: linear-gradient(90deg, rgba(139,92,246,0.24) 0%, rgba(76,29,149,0.22) 42%, rgba(15,23,42,0.24) 100%) !important;
+    background: linear-gradient(90deg, rgba(139,92,246,0.18) 0%, rgba(139,92,246,0.09) 48%, rgba(255,255,255,0.18) 100%) !important;
 }
 
 /* Mini: forma più pulita, frecce nascoste, icone davvero al centro. */
