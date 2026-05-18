@@ -4,7 +4,25 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.124
+## 🔖 Versione Corrente: v1.65.125
+
+---
+
+## 🔖 v1.65.125 — Fix sidebar menu mini drawer: scrollbar, icona Home, tooltip, freccia espandi
+
+**Data**: 2026-05-15
+
+### 🐛 Fix
+
+- **Fix 1 — Scrollbar mini drawer**: la barra di scorrimento verticale nel menu mini (52px) consumava spazio orizzontale deformando il layout. Ora nascosta completamente (`scrollbar-width: none` Firefox, `display: none` WebKit) pur mantenendo lo scroll funzionante.
+- **Fix 2 — Icona Home centrata**: l'icona Home nel mini drawer non era centrata come le icone dei gruppi. Aggiunto `position: relative` al link e applicata la stessa tecnica di absolute centering (`left:50%; top:50%; transform: translate(-50%,-50%)`) già usata per i gruppi.
+- **Fix 3 — Tooltip sui loghi mini drawer**: passando il mouse sulle icone nel mini drawer ora compare un tooltip con il nome del gruppo (`MudTooltip` con `Placement.Right`, disabilitato in modalità menu largo). Home usa `title="Home"` nativo HTML.
+- **Fix 4 — Freccia espandi sempre visibile**: la freccia ChevronRight per espandere il menu da mini a largo spariva a volte. Aggiunto `display: flex !important; align-items: center !important; overflow: visible !important; width: 52px` al `.mes-mini-drawer .mud-drawer-header`.
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — CSS mini drawer: scrollbar, Home icon centering, drawer header.
+- `MESManager.Web/Components/Layout/MainLayout.razor` — tooltip MudNavGroup + title="Home".
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.124 → 1.65.125.
 
 ---
 
