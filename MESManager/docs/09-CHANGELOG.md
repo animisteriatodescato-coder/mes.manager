@@ -4,7 +4,51 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.126
+## 🔖 Versione Corrente: v1.65.128
+
+---
+
+## 🔖 v1.65.128 — Drawer: contrasto reale dark mode e cache busting CSS
+
+**Data**: 2026-05-18
+
+### 🐛 Fix
+
+- **Drawer dark mode più leggibile**: aumentato il contrasto reale di Home, gruppi e sottomenu perché i gradient precedenti risultavano quasi invisibili su sfondo nero.
+- **Home espansa più pulsante**: aggiunto border-left blu, bordo luminoso, ombra 3D più marcata e stato active coerente.
+- **Sottomenu espanso più professionale**: rail laterale portata a 6px, sfondi sfumati più visibili per sezione, righe child più compatte e icone in quadrati da 24px.
+- **Mini drawer più pulito**: nascoste le chevron sui gruppi mini, icone principali centrate e aumentate a 23px, sottomenu mini portati a 36x36 con icone 17px.
+- **Cache CSS**: aggiornato `app.css?v=1602` in `App.razor` per forzare il browser a scaricare l’ultimo CSS.
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — pass visuale dark mode + mini drawer.
+- `MESManager.Web/Components/App.razor` — cache bust `app.css?v=1602`.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.127 → 1.65.128.
+- `docs/09-CHANGELOG.md` — nuova voce v1.65.128.
+
+---
+
+## 🔖 v1.65.127 — Drawer final polish: Home 3D, mini icone centrate, rail uniformi
+
+**Data**: 2026-05-18
+
+### 🐛 Fix
+
+- **Mini submenu senza scrollbar interna**: disattivato lo scroll visuale su root mini nav e wrapper collapse (`scrollbar-width: none`, `::-webkit-scrollbar` hidden) per eliminare la barra verticale che deformava i pulsanti icona.
+- **Home mini ed espansa rifinite**:
+  - mini: bottone quadrato (40x40), icona centrata, testo sempre nascosto;
+  - espansa: stile pulsante stondato/3D con gradient e shadow, più leggibile come azione primaria.
+- **Freccia gruppi mini non sovrapposta**: riposizionata la chevron di espansione sul bordo destro del bottone gruppo; icona principale centrata geometrica.
+- **Sottomenu mini +10% e centrati**: pulsanti figli resi quadrati 35x35, contenuto centrato con `grid/place-items`, icone portate a 16px e senza filtri che ne alteravano la resa.
+- **Icone in primo piano**: rimosso blending/tinting indesiderato impostando `mix-blend-mode: normal`, `isolation: isolate`, `filter: none` sulle icone del mini drawer.
+- **Rail colorate uniformi**: unificata la larghezza delle barre laterali tra header menu e container sottomenu tramite variabile `--mes-drawer-rail-width` (5px).
+- **Tooltip hover su loghi/menu**: mantenuti e completati i `title` sui link nav; rimossi i `title` dai `MudNavGroup` per evitare conflitto Razor con il parametro `Title`.
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — override finali per mini/expanded drawer.
+- `MESManager.Web/Components/Layout/MainLayout.razor` — cleanup attributi `title` sui `MudNavGroup`.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.126 → 1.65.127.
+- `docs/09-CHANGELOG.md` — nuova voce v1.65.127.
 
 ---
 

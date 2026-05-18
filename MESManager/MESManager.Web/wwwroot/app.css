@@ -2353,3 +2353,357 @@ body.mes-pseudo-fullscreen .mud-main-content {
     height: 100dvh !important;
     max-height: 100dvh !important;
 }
+
+/* ==========================================================================
+   DRAWER FINAL OVERRIDE — fix richiesti utente (v1.65.123)
+   ========================================================================== */
+
+:root {
+    --mes-drawer-rail-width: 5px;
+}
+
+/* 1) Mini submenu: nessuna scrollbar interna */
+.mes-mini-drawer .mud-navmenu,
+.mes-mini-drawer [data-testid="nav-menu"],
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group .mud-collapse-container,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group .mud-collapse-wrapper,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group .mud-collapse-wrapper-inner {
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.mes-mini-drawer .mud-navmenu::-webkit-scrollbar,
+.mes-mini-drawer [data-testid="nav-menu"]::-webkit-scrollbar,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group .mud-collapse-container::-webkit-scrollbar,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group .mud-collapse-wrapper::-webkit-scrollbar,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group .mud-collapse-wrapper-inner::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+    display: none !important;
+}
+
+/* 2) Home mini: quadrata con icona centrata e senza testo */
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link:first-child {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    margin: 4px auto 6px auto !important;
+    padding: 0 !important;
+    border-radius: 10px !important;
+    display: grid !important;
+    place-items: center !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.40), 0 2px 4px rgba(15,23,42,0.24) !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link:first-child .mud-nav-link-text {
+    display: none !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link:first-child .mud-nav-link-icon-wrapper {
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+}
+
+/* 3) Home espansa: aspetto pulsante stondato/3D */
+.mud-drawer:not(.mes-mini-drawer) [data-testid="nav-menu"] > .mud-nav-link:first-child {
+    min-height: 42px !important;
+    border-radius: 12px !important;
+    margin: 6px 8px 8px 10px !important;
+    padding: 0 10px !important;
+    border: 1px solid rgba(25,118,210,0.30) !important;
+    background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(232,240,252,0.86) 100%) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.75), 0 2px 6px rgba(15,23,42,0.16) !important;
+}
+
+.mud-theme-dark .mud-drawer:not(.mes-mini-drawer) [data-testid="nav-menu"] > .mud-nav-link:first-child {
+    border-color: rgba(99,179,237,0.42) !important;
+    background: linear-gradient(180deg, rgba(46,70,110,0.68) 0%, rgba(31,47,78,0.76) 100%) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 2px 6px rgba(0,0,0,0.38) !important;
+}
+
+/* 4) Mini gruppi: freccia non sovrapposta all'icona */
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link {
+    position: relative !important;
+    width: 48px !important;
+    min-height: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-nav-link-icon-wrapper {
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-nav-link-expand-icon,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-expand-icon {
+    right: -4px !important;
+    top: 50% !important;
+    transform: translateY(-50%) scale(0.66) !important;
+    opacity: 0.72 !important;
+}
+
+/* 5) Mini sottomenu: bottoni quadrati, centrati, +10% */
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link {
+    width: 35px !important;
+    min-width: 35px !important;
+    max-width: 35px !important;
+    height: 35px !important;
+    min-height: 35px !important;
+    max-height: 35px !important;
+    margin: 2px auto !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    display: grid !important;
+    place-items: center !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text > div,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text span:first-child {
+    width: 35px !important;
+    height: 35px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    font-size: 16px !important;
+    line-height: 1 !important;
+    filter: none !important;
+}
+
+/* 6) Icone sempre in primo piano, senza effetto "tinta da sfondo" */
+.mes-mini-drawer [data-testid="nav-menu"] .mud-icon-root,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-link-icon-wrapper,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text span:first-child {
+    position: relative !important;
+    z-index: 3 !important;
+    mix-blend-mode: normal !important;
+    isolation: isolate !important;
+    filter: none !important;
+}
+
+/* 7) Rail laterali uguali tra menu e sottomenu (espanso) */
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group > .mud-nav-link {
+    border-left-width: var(--mes-drawer-rail-width) !important;
+    border-left-style: solid !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container {
+    border-left-width: var(--mes-drawer-rail-width) !important;
+    border-left-style: solid !important;
+    margin-left: 16px !important;
+    padding-left: 7px !important;
+}
+
+/* ==========================================================================
+   DRAWER FINAL VISUAL PASS — contrasto reale su dark mode (v1.65.128)
+   ========================================================================== */
+
+:root {
+    --mes-drawer-rail-width: 6px;
+}
+
+.mud-drawer:not(.mes-mini-drawer) [data-testid="nav-menu"] {
+    padding: 4px 7px 8px 7px !important;
+}
+
+/* Home espansa: deve leggersi come pulsante, non come riga piatta. */
+.mud-drawer:not(.mes-mini-drawer) [data-testid="nav-menu"] > .mud-nav-link:first-child,
+.mud-drawer:not(.mes-mini-drawer) [data-testid="nav-menu"] > .mud-nav-link:first-child.active,
+.mud-drawer:not(.mes-mini-drawer) [data-testid="nav-menu"] > .mud-nav-link:first-child[aria-current="page"] {
+    min-height: 44px !important;
+    height: 44px !important;
+    margin: 6px 4px 10px 4px !important;
+    padding: 0 12px !important;
+    border-radius: 11px !important;
+    border: 1px solid rgba(56,189,248,0.58) !important;
+    border-left: var(--mes-drawer-rail-width) solid rgba(14,165,233,0.98) !important;
+    background: linear-gradient(180deg, rgba(15,55,92,0.98) 0%, rgba(8,31,56,0.98) 100%) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.16),
+        inset 0 -2px 0 rgba(0,0,0,0.30),
+        0 3px 8px rgba(0,0,0,0.42) !important;
+    color: #f8fafc !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) [data-testid="nav-menu"] > .mud-nav-link:first-child .mud-icon-root,
+.mud-drawer:not(.mes-mini-drawer) [data-testid="nav-menu"] > .mud-nav-link:first-child .mud-nav-link-icon-wrapper,
+.mud-drawer:not(.mes-mini-drawer) [data-testid="nav-menu"] > .mud-nav-link:first-child .mud-nav-link-text {
+    color: #22c55e !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) [data-testid="nav-menu"] > .mud-nav-link:first-child .mud-nav-link-text {
+    color: #f8fafc !important;
+    font-weight: 800 !important;
+}
+
+/* Gruppi espansi: maggiore separazione e rilievo. */
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group > .mud-nav-link {
+    min-height: 38px !important;
+    height: 38px !important;
+    margin: 4px 0 0 0 !important;
+    border-radius: 8px !important;
+    border-left-width: var(--mes-drawer-rail-width) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.13),
+        inset 0 -2px 0 rgba(0,0,0,0.28),
+        0 2px 5px rgba(0,0,0,0.38) !important;
+}
+
+/* Sottomenu espanso: meno blocco nero, rail evidente, testo compatto. */
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container {
+    margin: 0 2px 6px 14px !important;
+    padding: 6px 0 7px 8px !important;
+    border-left-width: var(--mes-drawer-rail-width) !important;
+    border-radius: 0 0 9px 9px !important;
+    box-shadow: inset 1px 0 0 rgba(255,255,255,0.08) !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link {
+    min-height: 31px !important;
+    height: 31px !important;
+    margin: 2px 3px 2px 0 !important;
+    padding: 0 6px !important;
+    border-radius: 7px !important;
+    background: rgba(255,255,255,0.045) !important;
+    border: 1px solid rgba(255,255,255,0.045) !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link:hover {
+    background: rgba(255,255,255,0.11) !important;
+    border-color: rgba(255,255,255,0.12) !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text,
+.mud-drawer:not(.mes-mini-drawer) [data-testid="nav-menu"] .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text span:not(:first-child) {
+    color: #f1f5f9 !important;
+    font-size: 12px !important;
+    font-weight: 760 !important;
+    letter-spacing: 0 !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text span:first-child {
+    min-width: 24px !important;
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 7px !important;
+    background: rgba(255,255,255,0.14) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 15px !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-prog .mud-collapse-container {
+    border-left-color: #ef4444 !important;
+    background: linear-gradient(90deg, rgba(239,68,68,0.24) 0%, rgba(127,29,29,0.22) 42%, rgba(15,23,42,0.24) 100%) !important;
+}
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-produzione .mud-collapse-container {
+    border-left-color: #f97316 !important;
+    background: linear-gradient(90deg, rgba(249,115,22,0.25) 0%, rgba(124,45,18,0.22) 42%, rgba(15,23,42,0.24) 100%) !important;
+}
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-cataloghi .mud-collapse-container {
+    border-left-color: #eab308 !important;
+    background: linear-gradient(90deg, rgba(234,179,8,0.25) 0%, rgba(113,63,18,0.22) 42%, rgba(15,23,42,0.24) 100%) !important;
+}
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-manutenzioni .mud-collapse-container {
+    border-left-color: #22c55e !important;
+    background: linear-gradient(90deg, rgba(34,197,94,0.24) 0%, rgba(20,83,45,0.22) 42%, rgba(15,23,42,0.24) 100%) !important;
+}
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-sync .mud-collapse-container {
+    border-left-color: #06b6d4 !important;
+    background: linear-gradient(90deg, rgba(6,182,212,0.24) 0%, rgba(22,78,99,0.22) 42%, rgba(15,23,42,0.24) 100%) !important;
+}
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-statistiche .mud-collapse-container {
+    border-left-color: #3b82f6 !important;
+    background: linear-gradient(90deg, rgba(59,130,246,0.24) 0%, rgba(30,64,175,0.22) 42%, rgba(15,23,42,0.24) 100%) !important;
+}
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group.nav-sec-impostazioni .mud-collapse-container {
+    border-left-color: #8b5cf6 !important;
+    background: linear-gradient(90deg, rgba(139,92,246,0.24) 0%, rgba(76,29,149,0.22) 42%, rgba(15,23,42,0.24) 100%) !important;
+}
+
+/* Mini: forma più pulita, frecce nascoste, icone davvero al centro. */
+.mes-mini-drawer [data-testid="nav-menu"] {
+    padding: 4px 0 8px 0 !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link:first-child,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link {
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    margin: 4px auto !important;
+    border-radius: 9px !important;
+    display: grid !important;
+    place-items: center !important;
+    overflow: visible !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.16),
+        inset 0 -2px 0 rgba(0,0,0,0.26),
+        0 2px 5px rgba(0,0,0,0.35) !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-nav-link-expand-icon,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-expand-icon {
+    display: none !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link:first-child .mud-nav-link-icon-wrapper,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-nav-link-icon-wrapper {
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link:first-child .mud-icon-root,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link .mud-icon-root {
+    font-size: 23px !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container {
+    width: 52px !important;
+    margin: 0 !important;
+    padding: 2px 0 4px 0 !important;
+    border-left: 0 !important;
+    background: transparent !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link {
+    width: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    margin: 3px auto !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    display: grid !important;
+    place-items: center !important;
+}
+
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text > div,
+.mes-mini-drawer [data-testid="nav-menu"] .mud-collapse-container .mud-nav-link .mud-nav-link-text span:first-child {
+    width: 36px !important;
+    height: 36px !important;
+    display: grid !important;
+    place-items: center !important;
+    font-size: 17px !important;
+    line-height: 1 !important;
+}

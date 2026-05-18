@@ -405,13 +405,11 @@
         <MudNavMenu data-testid="nav-menu">
             @if (_miniDrawer)
             {
-                <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary" title="Home">
-                    <span class="mes-mini-only-label">Home</span>
-                </MudNavLink>
+                <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary" title="Home" />
             }
             else
             {
-                <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary">Home</MudNavLink>
+                <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary" title="Home">Home</MudNavLink>
             }
 
             @* Programma - claim-aware per Visualizzazione *@
@@ -430,19 +428,19 @@
                             <ChildContent>
                                 @if (_canProg)
                                 {
-                                    <MudNavLink Href="/programma/programma-macchine">
+                                    <MudNavLink Href="/programma/programma-macchine" title="Programma">
                                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128295;</span><span>Programma</span></div>
                                     </MudNavLink>
                                 }
                                 @if (_canComm)
                                 {
-                                    <MudNavLink Href="/programma/commesse-aperte">
+                                    <MudNavLink Href="/programma/commesse-aperte" title="Commesse">
                                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128203;</span><span>Commesse</span></div>
                                     </MudNavLink>
                                 }
                                 @if (_canGanttP)
                                 {
-                                    <MudNavLink Href="/programma/gantt-macchine">
+                                    <MudNavLink Href="/programma/gantt-macchine" title="Gantt">
                                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128202;</span><span>Gantt</span></div>
                                     </MudNavLink>
                                 }
@@ -470,31 +468,31 @@
                         <MudNavGroup Title="Produzione" Icon="@Icons.Material.Filled.Factory" IconColor="Color.Warning" Expanded="@_expandedProd" ExpandedChanged="@(v => OnNavGroupToggled("prod", v))" Class="nav-sec-produzione">
                             @if (_canDash)
                             {
-                                <MudNavLink Href="/produzione/dashboard">
+                                <MudNavLink Href="/produzione/dashboard" title="Dashboard">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128200;</span><span>Dashboard</span></div>
                                 </MudNavLink>
                             }
                             @if (_canPlcRT)
                             {
-                                <MudNavLink Href="/produzione/plc-realtime">
+                                <MudNavLink Href="/produzione/plc-realtime" title="PLC Realtime">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9889;</span><span>PLC Realtime</span></div>
                                 </MudNavLink>
                             }
                             @if (_canPlcSt)
                             {
-                                <MudNavLink Href="/produzione/plc-storico">
+                                <MudNavLink Href="/produzione/plc-storico" title="PLC Storico">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128220;</span><span>PLC Storico</span></div>
                                 </MudNavLink>
                             }
                             @if (_canGantt)
                             {
-                                <MudNavLink Href="/produzione/gantt-storico">
+                                <MudNavLink Href="/produzione/gantt-storico" title="Gantt Storico">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128202;</span><span>Gantt Storico</span></div>
                                 </MudNavLink>
                             }
                             @if (_canIncoll)
                             {
-                                <MudNavLink Href="/produzione/incollaggio">
+                                <MudNavLink Href="/produzione/incollaggio" title="Incollaggio">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128279;</span><span>Incollaggio</span></div>
                                 </MudNavLink>
                             }
@@ -523,46 +521,46 @@
                         <MudNavGroup Title="Cataloghi" Icon="@Icons.Material.Filled.LibraryBooks" IconColor="Color.Info" Expanded="@_expandedCat" ExpandedChanged="@(v => OnNavGroupToggled("cat", v))" Class="nav-sec-cataloghi">
                             @if (_canCatComm)
                             {
-                                <MudNavLink Href="/cataloghi/commesse">
+                                <MudNavLink Href="/cataloghi/commesse" title="Commesse">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128230;</span><span>Commesse</span></div>
                                 </MudNavLink>
                             }
                             @if (_canCatAnim)
                             {
-                                <MudNavLink Href="/cataloghi/anime">
+                                <MudNavLink Href="/cataloghi/anime" title="Anime">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#127919;</span><span>Anime</span></div>
                                 </MudNavLink>
                             }
                             @if (_canCatArt)
                             {
-                                <MudNavLink Href="/cataloghi/articoli">
+                                <MudNavLink Href="/cataloghi/articoli" title="Articoli">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128193;</span><span>Articoli</span></div>
                                 </MudNavLink>
                             }
                             @if (_canCatCli)
                             {
-                                <MudNavLink Href="/cataloghi/clienti">
+                                <MudNavLink Href="/cataloghi/clienti" title="Clienti">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128101;</span><span>Clienti</span></div>
                                 </MudNavLink>
                             }
                             @if (_canCatRic)
                             {
-                                <MudNavLink Href="/cataloghi/ricette">
+                                <MudNavLink Href="/cataloghi/ricette" title="Ricette">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128221;</span><span>Ricette</span></div>
                                 </MudNavLink>
                             }
                             @if (_canCatPrev)
                             {
-                                <MudNavLink Href="/preventivi">
+                                <MudNavLink Href="/preventivi" title="Preventivi">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#129534;</span><span>Preventivi</span></div>
                                 </MudNavLink>
-                                <MudNavLink Href="/analisi-prezzi">
+                                <MudNavLink Href="/analisi-prezzi" title="Analisi Prezzi">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128200;</span><span>Analisi Prezzi</span></div>
                                 </MudNavLink>
                             }
                             @if (_canCatNc)
                             {
-                                <MudNavLink Href="/cataloghi/non-conformita">
+                                <MudNavLink Href="/cataloghi/non-conformita" title="Non Conformità">
                                     <div style="display: flex; align-items: center; gap: 8px; width:100%">
                                         <span style="font-size: 13px;">&#9888;&#65039;</span>
                                         <span>Non Conf.</span>
@@ -596,31 +594,31 @@
                         <MudNavGroup Title="Manutenz." Icon="@Icons.Material.Filled.Build" IconColor="Color.Secondary" Expanded="@_expandedMan" ExpandedChanged="@(v => OnNavGroupToggled("man", v))" Class="nav-sec-manutenzioni">
                             @if (_canManGriglia)
                             {
-                                <MudNavLink Href="/manutenzioni/griglia">
+                                <MudNavLink Href="/manutenzioni/griglia" title="Macchine">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9989;</span><span>Macchine</span></div>
                                 </MudNavLink>
                             }
                             @if (_canManCasse)
                             {
-                                <MudNavLink Href="/manutenzioni/casse">
+                                <MudNavLink Href="/manutenzioni/casse" title="Casse An.">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128230;</span><span>Casse An.</span></div>
                                 </MudNavLink>
                             }
                             @if (_canManAlert)
                             {
-                                <MudNavLink Href="/manutenzioni/alert">
+                                <MudNavLink Href="/manutenzioni/alert" title="Alert">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9888;&#65039;</span><span>Alert</span></div>
                                 </MudNavLink>
                             }
                             @if (_canManCat)
                             {
-                                <MudNavLink Href="/manutenzioni/catalogo">
+                                <MudNavLink Href="/manutenzioni/catalogo" title="Catalogo">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128297;</span><span>Catalogo</span></div>
                                 </MudNavLink>
                             }
                             @if (_canManImpostazioni)
                             {
-                                <MudNavLink Href="/manutenzioni/impostazioni">
+                                <MudNavLink Href="/manutenzioni/impostazioni" title="Impostazioni">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9881;&#65039;</span><span>Impostazioni</span></div>
                                 </MudNavLink>
                             }
@@ -634,13 +632,13 @@
             <AuthorizeView Roles="Admin">
                 <MudTooltip Text="Sync" Placement="Placement.Right" Disabled="@(!_miniDrawer)">
                 <MudNavGroup Title="Sync" Icon="@Icons.Material.Filled.Sync" IconColor="Color.Success" Expanded="@_expandedSync" ExpandedChanged="@(v => OnNavGroupToggled("sync", v))" Class="nav-sec-sync">
-                    <MudNavLink Href="/sync/gantt">
+                    <MudNavLink Href="/sync/gantt" title="Sync Gantt">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128260;</span><span>Gantt</span></div>
                     </MudNavLink>
-                    <MudNavLink Href="/sync/mago">
+                    <MudNavLink Href="/sync/mago" title="Sync Mago">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#129497;</span><span>Mago</span></div>
                     </MudNavLink>
-                    <MudNavLink Href="/sync/macchine">
+                    <MudNavLink Href="/sync/macchine" title="Sync Macchine">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#129302;</span><span>Macchine</span></div>
                     </MudNavLink>
                 </MudNavGroup>
@@ -663,25 +661,25 @@
                         <MudNavGroup Title="Statistiche" Icon="@Icons.Material.Filled.BarChart" IconColor="Color.Tertiary" Expanded="@_expandedStat" ExpandedChanged="@(v => OnNavGroupToggled("stat", v))" Class="nav-sec-statistiche">
                             @if (_canStatProd)
                             {
-                                <MudNavLink Href="/statistiche/produzione">
+                                <MudNavLink Href="/statistiche/produzione" title="Produzione">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128201;</span><span>Produzione</span></div>
                                 </MudNavLink>
                             }
                             @if (_canStatOrd)
                             {
-                                <MudNavLink Href="/statistiche/ordini">
+                                <MudNavLink Href="/statistiche/ordini" title="Ordini">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128202;</span><span>Ordini</span></div>
                                 </MudNavLink>
                             }
                             @if (_canStatPLC)
                             {
-                                <MudNavLink Href="/statistiche/plc-storico">
+                                <MudNavLink Href="/statistiche/plc-storico" title="PLC Storico">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128225;</span><span>PLC Storico</span></div>
                                 </MudNavLink>
                             }
                             @if (_canStatOp)
                             {
-                                <MudNavLink Href="/statistiche/operatori">
+                                <MudNavLink Href="/statistiche/operatori" title="Operatori">
                                     <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#127942;</span><span>Operatori</span></div>
                                 </MudNavLink>
                             }
@@ -695,25 +693,25 @@
             <AuthorizeView Roles="Admin">
                 <MudTooltip Text="Impostazioni" Placement="Placement.Right" Disabled="@(!_miniDrawer)">
                 <MudNavGroup Title="Impostazioni" Icon="@Icons.Material.Filled.Settings" IconColor="Color.Dark" Expanded="@_expandedImp" ExpandedChanged="@(v => OnNavGroupToggled("imp", v))" Class="nav-sec-impostazioni">
-                    <MudNavLink Href="/impostazioni/gantt">
+                    <MudNavLink Href="/impostazioni/gantt" title="Gantt">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#9881;&#65039;</span><span>Gantt</span></div>
                     </MudNavLink>
-                    <MudNavLink Href="/impostazioni/tabelle">
+                    <MudNavLink Href="/impostazioni/tabelle" title="Tabelle">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128202;</span><span>Tabelle</span></div>
                     </MudNavLink>
-                    <MudNavLink Href="/impostazioni/utenti">
+                    <MudNavLink Href="/impostazioni/utenti" title="Utenti">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128100;</span><span>Utenti</span></div>
                     </MudNavLink>
-                    <MudNavLink Href="/impostazioni/operatori">
+                    <MudNavLink Href="/impostazioni/operatori" title="Operatori">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128119;</span><span>Operatori</span></div>
                     </MudNavLink>
-                    <MudNavLink Href="/impostazioni/generali">
+                    <MudNavLink Href="/impostazioni/generali" title="Generali">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128295;</span><span>Generali</span></div>
                     </MudNavLink>
-                    <MudNavLink Href="/impostazioni/accessi">
+                    <MudNavLink Href="/impostazioni/accessi" title="Accessi">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128274;</span><span>Accessi</span></div>
                     </MudNavLink>
-                    <MudNavLink Href="/impostazioni/issue-log">
+                    <MudNavLink Href="/impostazioni/issue-log" title="Issue Log">
                         <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">&#128027;</span><span>Issue Log</span></div>
                     </MudNavLink>
                 </MudNavGroup>
