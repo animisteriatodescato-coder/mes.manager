@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.125";
+    public const string Current = "1.65.126";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.125: fix sidebar mini drawer - scrollbar, icona home, tooltip, freccia espandi
+    public const string Display = "v" + Current; // v1.65.126: fix mini drawer - scrollbar root, home icon blu/48px, linee sottomenu 3px
 }

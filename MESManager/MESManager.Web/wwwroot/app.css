@@ -1877,6 +1877,15 @@ body.ai-drawer-resizing * {
     width: 0 !important;
 }
 
+/* Fix 2: nasconde scrollbar anche sul root .mud-drawer (overflow-y:auto di MudBlazor) */
+.mes-mini-drawer {
+    scrollbar-width: none !important;
+}
+.mes-mini-drawer::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+}
+
 .mud-theme-dark .mud-drawer .mud-drawer-content {
     scrollbar-color: rgba(255,255,255,0.22) transparent;
 }
@@ -1932,7 +1941,7 @@ body.ai-drawer-resizing * {
 .mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container {
     margin: 0 8px 4px 17px !important;
     padding: 3px 0 4px 9px !important;
-    border-left: 2px solid rgba(30,41,59,0.12) !important;
+    border-left: 3px solid rgba(30,41,59,0.12) !important; /* 3px = uguale ai pulsanti gruppo */
     background: rgba(255,255,255,0.18) !important;
     border-radius: 0 0 7px 7px !important;
     overflow: hidden !important;
@@ -2035,7 +2044,7 @@ body.ai-drawer-resizing * {
 .mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group > .mud-nav-link {
     min-height: 34px !important;
     height: 34px !important;
-    width: 38px !important;
+    width: 48px !important; /* uguale ai gruppi */
     margin: 4px auto !important;
     padding: 0 !important;
 }
@@ -2081,9 +2090,9 @@ body.ai-drawer-resizing * {
    e rail colorata dei sottomenù espansi.
    ========================================================================== */
 
-/* Mini: sfondi in ordine arcobaleno verticale. */
+/* Mini: sfondi in ordine arcobaleno verticale. Home usa blu primario. */
 .mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link {
-    background: rgba(239,68,68,0.16) !important;
+    background: rgba(25,118,210,0.17) !important;
 }
 
 .mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-prog > .mud-nav-link         { background: rgba(239,68,68,0.18) !important; }
@@ -2097,7 +2106,7 @@ body.ai-drawer-resizing * {
 /* Mini: icone intense ma non nere. */
 .mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link .mud-nav-link-icon-wrapper,
 .mes-mini-drawer [data-testid="nav-menu"] > .mud-nav-link .mud-icon-root {
-    color: #15803d !important;
+    color: #1565c0 !important; /* primary blue, coerente con IconColor.Primary */
 }
 
 .mes-mini-drawer [data-testid="nav-menu"] .mud-nav-group.nav-sec-prog > .mud-nav-link .mud-nav-link-icon-wrapper,
