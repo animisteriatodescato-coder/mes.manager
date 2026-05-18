@@ -4,7 +4,24 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.130
+## 🔖 Versione Corrente: v1.65.131
+
+---
+
+## 🔖 v1.65.131 — Dashboard Produzione più compatta
+
+**Data**: 2026-05-18
+
+### 🐛 Fix
+
+- **Card dashboard ridotte del 15% circa**: altezza stabile portata da `292px` a `248px`, così la griglia 4x2 resta visibile in una schermata senza tagliare la seconda riga.
+- **Spaziature interne compattate**: ridotti padding, font secondari, barra progresso, metriche e pulsanti azione per mantenere leggibile il contenuto nella card più bassa.
+- **Hover meno invasivo**: ridotto lo spostamento in hover per evitare che le card escano visivamente dalla griglia compatta.
+
+#### File modificati
+- `MESManager.Web/Components/Pages/Produzione/DashboardProduzione.razor` — altezza card e spaziature compatte.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.130 → 1.65.131.
+- `docs/09-CHANGELOG.md` — nuova voce v1.65.131.
 
 ---
 
