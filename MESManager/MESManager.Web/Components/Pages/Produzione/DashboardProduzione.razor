@@ -10,10 +10,10 @@
 <PageTitle>Dashboard Produzione</PageTitle>
 
 <div class="dashboard-container" data-testid="page-dashboard-produzione" style="display: flex; flex-direction: column; height: calc(100vh - 52px); overflow: hidden;">
-    <MudGrid Spacing="2" Style="flex: 1; overflow: hidden; min-height: 0; margin: 0; padding: 0 0.25rem; align-content: flex-start;">
+    <MudGrid Spacing="2" Style="flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; margin: 0; padding: 0 0.25rem 0.5rem 0.25rem; align-content: flex-start;">
         @foreach (var machine in _data.OrderBy(m => m.MacchinaNumero))
         {
-            <MudItem xs="12" sm="6" md="4" lg="3" Style="display:flex;">
+            <MudItem xs="12" sm="6" md="4" lg="3" Style="display:flex; align-items:flex-start;">
                 <MudCard Elevation="3" Class="@($"machine-card {GetMachineCardClass(machine.StatoMacchina)}")"
                          @ondblclick="@(() => ApriDbViewerAsync(machine.MacchinaId, machine.MacchinaNumero))"
                          Style="cursor: pointer;">
@@ -202,7 +202,10 @@
     }
 
     .machine-card {
-        height: 100%;
+        height: 292px;
+        min-height: 292px;
+        max-height: 292px;
+        width: 100%;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         border-radius: 12px !important;
         overflow: hidden;

@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.65.129";
+    public const string Current = "1.65.130";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.65.129: drawer submenu rail thinner, black labels, lighter child buttons, abbreviated labels
+    public const string Display = "v" + Current; // v1.65.130: fix dashboard card stretch and mini drawer scroll
 }

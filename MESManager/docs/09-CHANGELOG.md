@@ -4,7 +4,27 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.129
+## 🔖 Versione Corrente: v1.65.130
+
+---
+
+## 🔖 v1.65.130 — Fix dashboard card stretch e scroll mini drawer
+
+**Data**: 2026-05-18
+
+### 🐛 Fix
+
+- **Dashboard Produzione**: le card delle righe basse si deformavano perché avevano `height: 100%` dentro una griglia flex; ora hanno altezza stabile (`292px`) e larghezza piena, evitando stretch verticali irregolari.
+- **Dashboard scroll interno**: la griglia dashboard usa `overflow-y: auto` e padding inferiore, così le card non finiscono sotto il footer fisso.
+- **Mini drawer scrollabile**: ripristinato lo scroll verticale su root drawer, contenuto e nav menu in modalità mini, mantenendo la scrollbar nascosta. Ora le icone basse sono raggiungibili come nel menu grande.
+- **Cache CSS**: aggiornato `app.css?v=1604`.
+
+#### File modificati
+- `MESManager.Web/Components/Pages/Produzione/DashboardProduzione.razor` — card height stabile e grid scrollabile.
+- `MESManager.Web/wwwroot/app.css` — mini drawer scroll verticale con scrollbar nascosta.
+- `MESManager.Web/Components/App.razor` — cache bust `app.css?v=1604`.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.129 → 1.65.130.
+- `docs/09-CHANGELOG.md` — nuova voce v1.65.130.
 
 ---
 

@@ -2710,3 +2710,23 @@ body.mes-pseudo-fullscreen .mud-main-content {
     font-size: 17px !important;
     line-height: 1 !important;
 }
+
+/* Mini drawer: scroll verticale come nel drawer grande, ma senza barra visibile. */
+.mes-mini-drawer,
+.mes-mini-drawer .mud-drawer-content,
+.mes-mini-drawer .mud-navmenu,
+.mes-mini-drawer [data-testid="nav-menu"] {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.mes-mini-drawer::-webkit-scrollbar,
+.mes-mini-drawer .mud-drawer-content::-webkit-scrollbar,
+.mes-mini-drawer .mud-navmenu::-webkit-scrollbar,
+.mes-mini-drawer [data-testid="nav-menu"]::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+    display: none !important;
+}
