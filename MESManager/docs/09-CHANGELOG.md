@@ -4,7 +4,23 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.125
+## 🔖 Versione Corrente: v1.65.126
+
+---
+
+## 🔖 v1.65.126 — Fix mini drawer: scrollbar root, Home button blu/48px, linee sottomenu 3px
+
+**Data**: 2026-05-18
+
+### 🐛 Fix
+
+- **Scrollbar residua su root drawer**: MudBlazor applica `overflow-y: auto` al root `.mud-drawer`. Aggiunto `scrollbar-width: none` e `::-webkit-scrollbar { display: none }` direttamente su `.mes-mini-drawer` (root del drawer), eliminando la barra anche quando i sotto-menu sono espansi.
+- **Home button simile ai gruppi**: larghezza portata da 38px a 48px (uguale ai pulsanti gruppo); sfondo cambiato da rosso a blu primario `rgba(25,118,210,0.17)`; colore icona da verde `#15803d` a blu `#1565c0`.
+- **Linee sottomenu stessa larghezza**: `border-left` del `.mud-collapse-container` portato da 2px a 3px per eguagliare il border dei pulsanti gruppo.
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — scrollbar root, home width/color, collapse border.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.125 → 1.65.126.
 
 ---
 
