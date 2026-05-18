@@ -4,7 +4,22 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.65.131
+## 🔖 Versione Corrente: v1.66.00
+
+---
+
+## 🔖 v1.66.00 — Formato versione a due cifre finali
+
+**Data**: 2026-05-18
+
+### 🔧 Manutenzione
+
+- **Versione normalizzata**: portato il numero versione al formato `0.00.00`, evitando il terzo gruppo a tre cifre (`v1.65.131`).
+- **Nuova base di rilascio**: usata `v1.66.00` per non retrocedere semanticamente rispetto alla versione precedente e mantenere da ora patch a due cifre.
+
+#### File modificati
+- `MESManager.Web/Constants/AppVersion.cs` — 1.65.131 → 1.66.00.
+- `docs/09-CHANGELOG.md` — nuova voce v1.66.00.
 
 ---
 
