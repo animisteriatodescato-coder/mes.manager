@@ -2,7 +2,7 @@
   "MachineId": "53A810FA-75D4-4D82-C583-08DE58C59F6F",
   "Numero": 9,
   "Nome": "09",
-  "PlcIp": "192.168.17.29",
+  "PlcIp": "192.168.17.20",
   "Enabled": true,
   "Offsets": {
     "InizioSetup": 8,
