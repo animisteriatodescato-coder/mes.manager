@@ -4,7 +4,28 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.66.04
+## 🔖 Versione Corrente: v1.66.05
+
+---
+
+## 🔖 v1.66.05 — Assistente AI: scarti e media produzione da storico PLC
+
+**Data**: 2026-05-19
+
+### 🐛 Fix
+
+- **Tool produzione più completo**: `get_production_interval` ora calcola cicli prodotti, pezzi prodotti, scarti, media pezzi/ora, media cicli/ora e tempo ciclo medio rilevato dai contatori nel JSON `PLCStorico.Dati`.
+- **Delta contatori robusti**: il calcolo usa i delta positivi ordinati per timestamp e gestisce cambio barcode/reset contatore ripartendo dal nuovo valore.
+- **Prompt AI corretto**: il system prompt istruisce il modello a calcolare dati derivabili dai tool invece di rispondere che non sono disponibili.
+- **Parser centralizzato**: aggiunto `PlcStoricoSnapshotParser` e riusato da `PlcAppService`, evitando duplicazione del parsing JSON storico PLC.
+
+#### File modificati
+- `MESManager.Infrastructure/Services/AiAssistantService.cs` — calcolo produzione/scarti/media nel tool AI.
+- `MESManager.Infrastructure/Services/PlcStoricoSnapshotParser.cs` — parser unico dei campi JSON `PLCStorico.Dati`.
+- `MESManager.Infrastructure/Services/PlcAppService.cs` — riuso parser centralizzato.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.66.04 → 1.66.05.
+- `docs/04-ARCHITETTURA.md` — documentata regola delta contatori AI.
+- `docs/09-CHANGELOG.md` — nuova voce v1.66.05.
 
 ---
 

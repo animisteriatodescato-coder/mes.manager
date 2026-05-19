@@ -405,14 +405,7 @@ public class PlcAppService : IPlcAppService
     /// <summary>Parsing veloce solo di CicliFatti dal blob JSON — evita di istanziare tutti gli out param.</summary>
     private static int ParseCicliFattiOnly(string? dati)
     {
-        if (string.IsNullOrWhiteSpace(dati)) return 0;
-        try
-        {
-            using var doc = System.Text.Json.JsonDocument.Parse(dati);
-            if (doc.RootElement.TryGetProperty("CicliFatti", out var cf)) return cf.GetInt32();
-        }
-        catch { }
-        return 0;
+        return PlcStoricoSnapshotParser.Parse(dati).CicliFatti;
     }
 
     /// <summary>Mappa un entity PLCStorico a PlcStoricoDto — unica fonte di verità, evita duplicazione.</summary>
@@ -462,36 +455,18 @@ public class PlcAppService : IPlcAppService
         out int tempoMedioRil, out int tempoMedio, out int figure, out int barcode,
         out string? nuovaProdTs, out string? inizioSetupTs, out string? fineSetupTs, out string? inProduzioneTs)
     {
-        cicliFatti = qtaDaProd = cicliScarti = tempoMedioRil = tempoMedio = figure = barcode = 0;
-        nuovaProdTs = inizioSetupTs = fineSetupTs = inProduzioneTs = null;
-
-        if (string.IsNullOrWhiteSpace(dati)) return;
-
-        try
-        {
-            using var doc = System.Text.Json.JsonDocument.Parse(dati);
-            var root = doc.RootElement;
-            if (root.TryGetProperty("CicliFatti",         out var cf))  cicliFatti    = cf.GetInt32();
-            if (root.TryGetProperty("QuantitaDaProdurre", out var qdp)) qtaDaProd     = qdp.GetInt32();
-            if (root.TryGetProperty("CicliScarti",        out var cs))  cicliScarti   = cs.GetInt32();
-            if (root.TryGetProperty("TempoMedioRilevato", out var tmr)) tempoMedioRil = tmr.GetInt32();
-            if (root.TryGetProperty("TempoMedio",         out var tm))  tempoMedio    = tm.GetInt32();
-            if (root.TryGetProperty("Figure",             out var fg))  figure        = fg.GetInt32();
-            if (root.TryGetProperty("BarcodeLavorazione", out var bc))  barcode       = bc.GetInt32();
-
-            if (root.TryGetProperty("NuovaProduzioneTs", out var npts) && npts.ValueKind == System.Text.Json.JsonValueKind.String)
-                nuovaProdTs = npts.GetString();
-            if (root.TryGetProperty("InizioSetupTs", out var ists) && ists.ValueKind == System.Text.Json.JsonValueKind.String)
-                inizioSetupTs = ists.GetString();
-            if (root.TryGetProperty("FineSetupTs", out var fsts) && fsts.ValueKind == System.Text.Json.JsonValueKind.String)
-                fineSetupTs = fsts.GetString();
-            if (root.TryGetProperty("InProduzioneTs", out var ipts) && ipts.ValueKind == System.Text.Json.JsonValueKind.String)
-                inProduzioneTs = ipts.GetString();
-        }
-        catch
-        {
-            // Ignora errori di parsing: i valori default sono già stati impostati
-        }
+        var parsed = PlcStoricoSnapshotParser.Parse(dati);
+        cicliFatti = parsed.CicliFatti;
+        qtaDaProd = parsed.QuantitaDaProdurre;
+        cicliScarti = parsed.CicliScarti;
+        tempoMedioRil = parsed.TempoMedioRilevato;
+        tempoMedio = parsed.TempoMedio;
+        figure = parsed.Figure;
+        barcode = parsed.BarcodeLavorazione;
+        nuovaProdTs = parsed.NuovaProduzioneTs;
+        inizioSetupTs = parsed.InizioSetupTs;
+        fineSetupTs = parsed.FineSetupTs;
+        inProduzioneTs = parsed.InProduzioneTs;
     }
 
     /// <summary>

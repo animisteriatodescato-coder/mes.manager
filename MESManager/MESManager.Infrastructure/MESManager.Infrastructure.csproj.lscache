@@ -212,6 +212,7 @@ Services/
  PlcAppService.cs
  PlcRecipeWriterService.cs
  PlcStatusService.cs
+ PlcStoricoSnapshotParser.cs
  PlcSyncCoordinator.cs
  PreferenzeUtenteService.cs
  PreventivoService.cs

@@ -957,6 +957,15 @@ Tool autorizzati principali:
 
 Estendere l'assistente significa aggiungere un tool applicativo mirato, con query parametrizzate e output sintetico. Non introdurre endpoint generici di query SQL o accesso diretto libero alle tabelle.
 
+Per produzione su intervallo, `get_production_interval` deve calcolare i valori dai contatori storici in `PLCStorico.Dati`, non solo dagli stati:
+- `CicliFatti` → delta positivi ordinati per timestamp.
+- `CicliScarti` → delta positivi ordinati per timestamp.
+- `Figure` → conversione cicli → pezzi (`deltaCicli * Figure`, fallback 1).
+- Media produzione → pezzi/intervallo richiesto in ore.
+- Cambio `BarcodeLavorazione` o reset contatore → ripartenza dal nuovo valore.
+
+Il parsing JSON dello storico PLC deve passare da `PlcStoricoSnapshotParser`, riusato anche da `PlcAppService`. Non duplicare parsing manuale dei campi `CicliFatti`, `CicliScarti`, `TempoMedioRilevato`, `Figure`, `BarcodeLavorazione`.
+
 ---
 
 ## 🔌 Pattern Centralizzati — Usa Questi, Non Duplicare

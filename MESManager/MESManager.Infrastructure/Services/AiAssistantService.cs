@@ -357,7 +357,7 @@ public class AiAssistantService : IAiAssistantService
                     ["date"]),
 
                 GemFun("get_production_interval",
-                    "Analizza la produzione e gli stati PLC per intervallo, opzionalmente filtrando una macchina.",
+                    "Analizza produzione reale per intervallo: cicli, pezzi prodotti, scarti, media pezzi/ora, tempo ciclo medio e stati PLC. Opzionalmente filtra una macchina.",
                     new()
                     {
                         ["date_from"] = GemParam("Inizio intervallo in formato YYYY-MM-DD o YYYY-MM-DD HH:mm."),
@@ -472,6 +472,7 @@ public class AiAssistantService : IAiAssistantService
         Rispondi SEMPRE in italiano. Sii conciso, diretto e formatta i dati in modo leggibile (elenchi puntati, orari HH:mm).
         Puoi analizzare screenshot allegati dall'utente e incrociarli con i dati reali del gestionale tramite le funzioni disponibili.
         Usa i tool quando servono dati reali. Non inventare mai dati che non provengono dal database o dallo screenshot allegato.
+        Se un dato si può calcolare dai valori restituiti dai tool (delta contatori, media oraria, percentuali), calcolalo e spiega la formula in modo breve.
         Non puoi eseguire SQL libero: puoi solo usare le funzioni applicative autorizzate.
         Data e ora corrente: {DateTime.Now:dddd d MMMM yyyy HH:mm}
         """;
@@ -532,7 +533,7 @@ public class AiAssistantService : IAiAssistantService
              ["date"]),
 
         Tool("get_production_interval",
-             "Analizza la produzione e gli stati PLC per intervallo, opzionalmente filtrando una macchina.",
+             "Analizza produzione reale per intervallo: cicli, pezzi prodotti, scarti, media pezzi/ora, tempo ciclo medio e stati PLC. Opzionalmente filtra una macchina.",
              new()
              {
                  ["date_from"] = Param("Inizio intervallo in formato YYYY-MM-DD o YYYY-MM-DD HH:mm."),
@@ -802,34 +803,60 @@ public class AiAssistantService : IAiAssistantService
             query = query.Where(p => p.Macchina.Codice == machineCode);
         }
 
-        var data = await query
-            .GroupBy(p => new { p.MacchinaId, p.Macchina.Codice, p.Macchina.Nome })
-            .Select(g => new
-            {
-                g.Key.Codice,
-                g.Key.Nome,
-                Rilevamenti = g.Count(),
-                Primo = g.Min(p => p.DataOra),
-                Ultimo = g.Max(p => p.DataOra),
-                Automatico = g.Count(p => p.StatoMacchina != null &&
-                    (p.StatoMacchina.Contains("AUTOMATICO") || p.StatoMacchina.Contains("CICLO"))),
-                Allarme = g.Count(p => p.StatoMacchina != null && p.StatoMacchina.Contains("ALLARME")),
-                Emergenza = g.Count(p => p.StatoMacchina != null && p.StatoMacchina.Contains("EMERGENZA")),
-                Operatori = g.Select(p => p.NumeroOperatore).Distinct().Count()
-            })
-            .OrderBy(g => g.Codice)
+        var rangeRows = await query
+            .OrderBy(p => p.Macchina.Codice)
+            .ThenBy(p => p.DataOra)
+            .Select(p => new PlcAiHistoryRow(
+                p.MacchinaId,
+                p.Macchina.Codice,
+                p.Macchina.Nome,
+                p.DataOra,
+                p.StatoMacchina,
+                p.NumeroOperatore,
+                p.Dati,
+                false))
             .ToListAsync(ct);
 
-        if (!data.Any())
+        if (!rangeRows.Any())
             return $"Nessun dato PLC storico tra {from:dd/MM/yyyy HH:mm} e {to:dd/MM/yyyy HH:mm}.";
+
+        var machineIds = rangeRows.Select(r => r.MacchinaId).Distinct().ToList();
+        var previousRows = await db.PLCStorico
+            .Include(p => p.Macchina)
+            .Where(p => machineIds.Contains(p.MacchinaId) && p.DataOra < from)
+            .OrderBy(p => p.MacchinaId)
+            .ThenByDescending(p => p.DataOra)
+            .Select(p => new PlcAiHistoryRow(
+                p.MacchinaId,
+                p.Macchina.Codice,
+                p.Macchina.Nome,
+                p.DataOra,
+                p.StatoMacchina,
+                p.NumeroOperatore,
+                p.Dati,
+                true))
+            .ToListAsync(ct);
+
+        var baselines = previousRows
+            .GroupBy(r => r.MacchinaId)
+            .Select(g => g.OrderByDescending(r => r.DataOra).First())
+            .ToList();
+
+        var data = rangeRows
+            .Concat(baselines)
+            .GroupBy(r => new { r.MacchinaId, r.Codice, r.Nome })
+            .Select(g => BuildProductionIntervalSummary(g, from, to))
+            .OrderBy(g => g.Codice)
+            .ToList();
 
         var sb = new StringBuilder();
         sb.AppendLine($"Analisi produzione {from:dd/MM/yyyy HH:mm} - {to:dd/MM/yyyy HH:mm}:");
         foreach (var m in data)
         {
             var autoPerc = m.Rilevamenti > 0 ? m.Automatico * 100.0 / m.Rilevamenti : 0;
-            sb.AppendLine($"• {m.Codice} ({m.Nome}): AUTO {autoPerc:F0}% | Allarmi {m.Allarme} | Emergenze {m.Emergenza} | Operatori {m.Operatori} | Rilevamenti {m.Rilevamenti} | Copertura {m.Primo:HH:mm}-{m.Ultimo:HH:mm}");
+            sb.AppendLine($"• {m.Codice} ({m.Nome}): Pezzi {m.PezziProdotti} | Cicli {m.CicliProdotti} | Scarti {m.Scarti} | Media {m.PezziOra:F1} pz/h ({m.CicliOra:F1} cicli/h) | Tempo ciclo medio rilevato {m.TempoMedioRilevato:F1}s | AUTO {autoPerc:F0}% | Allarmi {m.Allarme} | Emergenze {m.Emergenza} | Operatori {m.Operatori} | Rilevamenti {m.Rilevamenti} | Copertura {m.Primo:HH:mm}-{m.Ultimo:HH:mm}");
         }
+        sb.AppendLine("Nota calcolo: produzione e scarti sono calcolati dai delta positivi dei contatori storici PLC nel periodo; se il contatore cambia barcode o si azzera, il calcolo riparte dal nuovo valore.");
         return sb.ToString();
     }
 
@@ -998,6 +1025,127 @@ public class AiAssistantService : IAiAssistantService
         }
         return sb.ToString();
     }
+
+    private static PlcAiProductionSummary BuildProductionIntervalSummary(
+        IEnumerable<PlcAiHistoryRow> rows,
+        DateTime from,
+        DateTime to)
+    {
+        var ordered = rows
+            .OrderBy(r => r.DataOra)
+            .Select(r => new PlcAiParsedHistoryRow(r, PlcStoricoSnapshotParser.Parse(r.Dati)))
+            .ToList();
+
+        var inRange = ordered
+            .Where(r => !r.Row.IsBaseline && r.Row.DataOra >= from && r.Row.DataOra < to)
+            .ToList();
+
+        var first = inRange.First();
+        var requestedHours = Math.Max(0.01, (to - from).TotalHours);
+        var cicliProdotti = 0;
+        var pezziProdotti = 0;
+        var scarti = 0;
+
+        PlcAiParsedHistoryRow? previous = null;
+        foreach (var current in ordered)
+        {
+            if (current.Row.IsBaseline || current.Row.DataOra < from)
+            {
+                previous = current;
+                continue;
+            }
+
+            if (previous != null)
+            {
+                var cycleDelta = CalculateCounterDelta(
+                    previous.Values.CicliFatti,
+                    current.Values.CicliFatti,
+                    previous.Values.BarcodeLavorazione,
+                    current.Values.BarcodeLavorazione);
+                var scrapDelta = CalculateCounterDelta(
+                    previous.Values.CicliScarti,
+                    current.Values.CicliScarti,
+                    previous.Values.BarcodeLavorazione,
+                    current.Values.BarcodeLavorazione);
+
+                var figure = current.Values.Figure > 0 ? current.Values.Figure : 1;
+                cicliProdotti += cycleDelta;
+                pezziProdotti += cycleDelta * figure;
+                scarti += scrapDelta;
+            }
+
+            previous = current;
+        }
+
+        var tempi = inRange
+            .Select(r => r.Values.TempoMedioRilevato)
+            .Where(v => v > 0)
+            .ToList();
+
+        return new PlcAiProductionSummary(
+            first.Row.Codice,
+            first.Row.Nome,
+            inRange.Count,
+            inRange.Min(r => r.Row.DataOra),
+            inRange.Max(r => r.Row.DataOra),
+            inRange.Count(r => IsAutomaticState(r.Row.StatoMacchina)),
+            inRange.Count(r => IsStateMatch(r.Row.StatoMacchina, "ALLARME")),
+            inRange.Count(r => IsStateMatch(r.Row.StatoMacchina, "EMERGENZA")),
+            inRange.Select(r => r.Row.NumeroOperatore).Where(n => n > 0).Distinct().Count(),
+            cicliProdotti,
+            pezziProdotti,
+            scarti,
+            pezziProdotti / requestedHours,
+            cicliProdotti / requestedHours,
+            tempi.Any() ? tempi.Average() : 0);
+    }
+
+    private static int CalculateCounterDelta(int previous, int current, int previousBarcode, int currentBarcode)
+    {
+        if (current < 0) return 0;
+        if (previousBarcode > 0 && currentBarcode > 0 && previousBarcode != currentBarcode)
+            return current;
+
+        var delta = current - previous;
+        return delta >= 0 ? delta : current;
+    }
+
+    private static bool IsAutomaticState(string? state) =>
+        IsStateMatch(state, "AUTOMATICO") || IsStateMatch(state, "CICLO");
+
+    private static bool IsStateMatch(string? state, string value) =>
+        state?.Contains(value, StringComparison.OrdinalIgnoreCase) == true;
+
+    private sealed record PlcAiHistoryRow(
+        Guid MacchinaId,
+        string Codice,
+        string Nome,
+        DateTime DataOra,
+        string? StatoMacchina,
+        int NumeroOperatore,
+        string Dati,
+        bool IsBaseline);
+
+    private sealed record PlcAiParsedHistoryRow(
+        PlcAiHistoryRow Row,
+        PlcStoricoSnapshotValues Values);
+
+    private sealed record PlcAiProductionSummary(
+        string Codice,
+        string Nome,
+        int Rilevamenti,
+        DateTime Primo,
+        DateTime Ultimo,
+        int Automatico,
+        int Allarme,
+        int Emergenza,
+        int Operatori,
+        int CicliProdotti,
+        int PezziProdotti,
+        int Scarti,
+        double PezziOra,
+        double CicliOra,
+        double TempoMedioRilevato);
 
     // ─────────────────────────────────────────────────────────────────────────
     // HELPER
