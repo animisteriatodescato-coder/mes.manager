@@ -997,3 +997,20 @@ Il parsing JSON dello storico PLC deve passare da `PlcStoricoSnapshotParser`, ri
 | **Azione pericolosa PLC (invia a macchina)** | Sempre `await DialogService.ShowMessageBox(...)` confirm prima — vedi `DashboardProduzione.razor` |
 | **Generare PDF per un'entità (Scheda Anima)** | `IAnimePdfService` → `AnimePdfService` in `Application/Services/`. Segue pattern `QuotePdfGenerator`. Controller REST: `GET /api/anime/{id}/pdf`. Pulsante nel TitleContent del dialog → `JS.InvokeVoidAsync("open", $"/api/anime/{id}/pdf", "_blank")`. MAI duplicare la logica di rendering QuestPDF — estendi `AnimePdfService` o crea un nuovo `IXxxPdfService` separato. |
 
+### Controlli Qualita In-Process (v1.66.06)
+
+Il modulo qualita usa tabelle dedicate e non riusa le schede manutenzione:
+
+```
+ControlloQualitaAttivita
+  -> ControlloQualitaSchede
+      -> ControlloQualitaRighe
+```
+
+Regole:
+- La pagina operatore e' `/qualita/controlli-in-process`.
+- L'esito visuale richiesto e' `X` per macchina OK e `O` per problema rilevato.
+- I problemi (`O`) devono avere una nota prima della chiusura della scheda macchina.
+- Il servizio e' `IControlloQualitaService` / `ControlloQualitaService` e usa `IDbContextFactory<MesManagerDbContext>` per evitare concorrenze EF in Blazor Server.
+- I controlli standard sono seedati in modo idempotente all'avvio da `SeedAttivitaDefaultAsync()`.
+

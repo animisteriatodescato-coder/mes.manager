@@ -76,6 +76,9 @@ public static class DependencyInjection
         services.AddScoped<IAlertProduzioneService, AlertProduzioneService>();
         services.AddScoped<IAllegatoNonConformitaService, AllegatoNonConformitaRepository>();
 
+        // Modulo Controlli Qualita in-process (v1.66.06)
+        services.AddScoped<IControlloQualitaService, ControlloQualitaService>();
+
         // Aggiungi altri servizi qui quando implementati
 
         return services;

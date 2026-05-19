@@ -70,6 +70,9 @@ Entities/
  Cliente.cs
  Commessa.cs
  ConfigurazionePLC.cs
+ ControlloQualitaAttivita.cs
+ ControlloQualitaRiga.cs
+ ControlloQualitaScheda.cs
  EventoPLC.cs
  Festivo.cs
  ImpostazioniGantt.cs
@@ -113,10 +116,12 @@ Entities/
  WorkProcessingType.cs
 Enums/
  EsitoAttivitaManutenzione.cs
+ EsitoControlloQualita.cs
  IssueEnums.cs
  StatoCommessa.cs
  StatoMacchina.cs
  StatoProgramma.cs
+ StatoSchedaControlloQualita.cs
  StatoSchedaManutenzione.cs
  TipoFrequenzaManutenzione.cs
  TipoSchedaManutenzione.cs

@@ -4,7 +4,39 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.66.05
+## 🔖 Versione Corrente: v1.66.06
+
+---
+
+## 🔖 v1.66.06 — Controlli Qualita In-Process
+
+**Data**: 2026-05-19
+
+### ✨ Feature
+
+- **Nuova sezione Qualita**: aggiunta pagina `/qualita/controlli-in-process` per controlli operatore macchina per macchina durante la produzione.
+- **Griglia X/O**: per ogni macchina l'operatore segna `X` quando il controllo e' OK e `O` quando rileva un problema.
+- **Tracciabilita dedicata**: aggiunte tabelle separate `ControlloQualitaAttivita`, `ControlloQualitaSchede` e `ControlloQualitaRighe`, senza mescolare i dati con la manutenzione.
+- **Seed controlli default**: inseriti gli 8 controlli in-process richiesti: temperatura stampi, tempo ciclo, rilascio stampi, visivo anime finite, pulizia anime/cassa, peso anime vuote, controlli dimensionali e resistenza meccanica.
+- **Note problemi obbligatorie in chiusura**: se una cella e' marcata con `O`, la scheda macchina richiede una nota prima della chiusura.
+- **Accesso menu e policy**: nuova voce menu `Qualita > In-Proc.` e nuova policy claim `qualita-controlli-in-process`.
+- **Avvio Development robusto**: se `appsettings.Secrets.encrypted` non e' decriptabile dall'utente corrente, in Development il bootstrap usa i JSON locali disponibili; in Production l'errore resta bloccante.
+- **Override ambiente ripristinato**: `Program.cs` ricarica le variabili d'ambiente dopo la configurazione condivisa, rendendo possibile forzare il DB DEV senza modificare JSON locali.
+
+#### File modificati
+- `MESManager.Domain/Entities/ControlloQualita*.cs` — nuove entita qualita.
+- `MESManager.Domain/Enums/EsitoControlloQualita.cs` e `StatoSchedaControlloQualita.cs` — enum dedicati.
+- `MESManager.Application/DTOs/ControlloQualitaDto.cs` — DTO modulo qualita.
+- `MESManager.Application/Interfaces/IControlloQualitaService.cs` — contratto applicativo.
+- `MESManager.Infrastructure/Services/ControlloQualitaService.cs` — servizio con `IDbContextFactory`.
+- `MESManager.Infrastructure/Data/MesManagerDbContext.cs` — DbSet e mapping EF.
+- `MESManager.Infrastructure/Migrations/20260519100523_AddControlliQualitaInProcess.cs` — migration DB.
+- `MESManager.Web/Components/Pages/Qualita/ControlliInProcess.razor` — nuova pagina operatore.
+- `MESManager.Web/Components/Layout/MainLayout.*` e `Constants/PaginaPolicy.cs` — menu e autorizzazioni.
+- `MESManager.Infrastructure/Configuration/SharedConfigurationExtensions.cs` — fallback Development per secrets DPAPI non decriptabili.
+- `MESManager.Web/Program.cs` — override environment finale e logging Development su console/debug.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.66.05 → 1.66.06.
+- `docs/04-ARCHITETTURA.md` e `docs/09-CHANGELOG.md` — documentazione aggiornata.
 
 ---
 

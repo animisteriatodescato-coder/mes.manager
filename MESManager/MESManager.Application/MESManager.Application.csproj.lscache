@@ -74,6 +74,7 @@ DTOs/
  CommessaCambiataEventArgs.cs
  CommessaDto.cs
  CommessaGanttDto.cs
+ ControlloQualitaDto.cs
  EventoPLCDto.cs
  ImpostazioniGanttDto.cs
  ImpostazioniProduzioneDto.cs
@@ -120,6 +121,7 @@ Interfaces/
  ICalendarioLavoroAppService.cs
  IClienteAppService.cs
  ICommessaAppService.cs
+ IControlloQualitaService.cs
  IEmailService.cs
  IFestiviAppService.cs
  IImpostazioniGanttAppService.cs

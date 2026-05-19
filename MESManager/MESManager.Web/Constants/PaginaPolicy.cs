@@ -31,6 +31,9 @@ public static class PaginaPolicy
     public const string CatPreventivi      = "pagina-cat-preventivi";
     public const string CatNonConformita   = "pagina-cat-non-conformita";
 
+    // ── Qualita ──
+    public const string QualitaControlliInProcess = "pagina-qualita-controlli-in-process";
+
     // ── Manutenzioni ──
     public const string ManutenzioniAlert        = "pagina-manutenzioni-alert";
     public const string ManutenzioniCatalogo     = "pagina-manutenzioni-catalogo";
@@ -73,6 +76,10 @@ public static class PaginaPolicy
             new("cat-ricette",        "Ricette",         "/cataloghi/ricette",           CatRicette),
             new("cat-preventivi",     "Preventivi",      "/preventivi",                 CatPreventivi),
             new("cat-non-conformita", "Non Conformità",  "/cataloghi/non-conformita",   CatNonConformita),
+        ]),
+        new("Qualita", ["Admin", "Produzione", "Manutenzione"],
+        [
+            new("qualita-controlli-in-process", "Controlli In-Process", "/qualita/controlli-in-process", QualitaControlliInProcess),
         ]),
         new("Manutenzioni", ["Admin", "Manutenzione"],
         [

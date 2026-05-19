@@ -66,6 +66,11 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ManutenzioneCassaRiga> ManutenzioneCasseRighe => Set<ManutenzioneCassaRiga>();
     public DbSet<ManutenzioneCassaAllegato> ManutenzioneCasseAllegati => Set<ManutenzioneCassaAllegato>();
 
+    // Modulo Controlli Qualita in-process (v1.66.06)
+    public DbSet<ControlloQualitaAttivita> ControlloQualitaAttivita => Set<ControlloQualitaAttivita>();
+    public DbSet<ControlloQualitaScheda> ControlloQualitaSchede => Set<ControlloQualitaScheda>();
+    public DbSet<ControlloQualitaRiga> ControlloQualitaRighe => Set<ControlloQualitaRiga>();
+
     // Modulo Non Conformità (v1.65.68)
     public DbSet<NonConformita> NonConformita => Set<NonConformita>();
     public DbSet<AllegatoNonConformita> AllegatiNonConformita => Set<AllegatoNonConformita>();
@@ -383,6 +388,53 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
             .HasIndex(r => r.SchedaId);
         modelBuilder.Entity<ManutenzioneAttivita>()
             .HasIndex(a => a.TipoFrequenza);
+
+        // =====================================
+        // MODULO CONTROLLI QUALITA IN-PROCESS
+        // =====================================
+        modelBuilder.Entity<ControlloQualitaAttivita>(b =>
+        {
+            b.ToTable("ControlloQualitaAttivita");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Nome).HasMaxLength(220).IsRequired();
+            b.Property(x => x.Dettaglio).HasMaxLength(1000);
+            b.Property(x => x.MacchinaCodiceFiltro).HasMaxLength(20);
+            b.HasIndex(x => x.Attiva);
+            b.HasIndex(x => x.Ordine);
+        });
+
+        modelBuilder.Entity<ControlloQualitaScheda>(b =>
+        {
+            b.ToTable("ControlloQualitaSchede");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.OperatoreId).HasMaxLength(450);
+            b.Property(x => x.NomeOperatore).HasMaxLength(200);
+            b.Property(x => x.Note).HasMaxLength(2000);
+            b.HasOne(s => s.Macchina)
+                .WithMany(m => m.SchedeControlloQualita)
+                .HasForeignKey(s => s.MacchinaId)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(x => x.MacchinaId);
+            b.HasIndex(x => x.DataEsecuzione);
+            b.HasIndex(x => new { x.MacchinaId, x.DataEsecuzione });
+        });
+
+        modelBuilder.Entity<ControlloQualitaRiga>(b =>
+        {
+            b.ToTable("ControlloQualitaRighe");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Commento).HasMaxLength(2000);
+            b.HasOne(r => r.Scheda)
+                .WithMany(s => s.Righe)
+                .HasForeignKey(r => r.SchedaId)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(r => r.Attivita)
+                .WithMany(a => a.Righe)
+                .HasForeignKey(r => r.AttivitaId)
+                .OnDelete(DeleteBehavior.Restrict);
+            b.HasIndex(x => x.SchedaId);
+            b.HasIndex(x => x.AttivitaId);
+        });
 
         // ── Modulo Preventivi (v1.64.0) ───────────────────────────────────
         modelBuilder.Entity<PreventivoTipoSabbia>(b =>

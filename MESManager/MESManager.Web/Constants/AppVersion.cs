@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.66.05";
+    public const string Current = "1.66.06";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.66.05: AI production interval counters
+    public const string Display = "v" + Current; // v1.66.06: controlli qualita in-process
 }

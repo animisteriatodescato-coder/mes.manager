@@ -23,9 +23,21 @@ public static class SharedConfigurationExtensions
         var dbConfigPath = Path.Combine(root, "appsettings.Database.json");
         var dbConfigEnvPath = Path.Combine(root, $"appsettings.Database.{environment.EnvironmentName}.json");
 
+        var encryptedSecretsLoaded = false;
+
         if (File.Exists(encryptedSecretsPath))
         {
-            configuration.AddEncryptedSecrets(encryptedSecretsPath);
+            try
+            {
+                configuration.AddEncryptedSecrets(encryptedSecretsPath);
+                encryptedSecretsLoaded = true;
+            }
+            catch (InvalidOperationException) when (!environment.IsProduction()
+                && (File.Exists(secretsPath) || File.Exists(dbConfigPath) || File.Exists(dbConfigEnvPath)))
+            {
+                // In sviluppo un file DPAPI creato da un altro utente non deve bloccare
+                // il fallback ai JSON locali. In produzione l'errore resta bloccante.
+            }
         }
 
         if (File.Exists(secretsPath))
@@ -33,7 +45,7 @@ public static class SharedConfigurationExtensions
             configuration.AddJsonFile(secretsPath, optional: true, reloadOnChange: true);
         }
 
-        if (!File.Exists(encryptedSecretsPath) && !File.Exists(secretsPath) && File.Exists(dbConfigPath))
+        if (!encryptedSecretsLoaded && !File.Exists(secretsPath) && File.Exists(dbConfigPath))
         {
             configuration.AddJsonFile(dbConfigPath, optional: false, reloadOnChange: true);
         }

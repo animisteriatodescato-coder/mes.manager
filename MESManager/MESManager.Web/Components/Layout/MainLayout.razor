@@ -326,6 +326,7 @@
                 <MudMenuItem OnClick="@(() => SetCategory("Produzione"))">Produzione</MudMenuItem>
                 <MudMenuItem OnClick="@(() => SetCategory("Programma"))">Programma</MudMenuItem>
                 <MudMenuItem OnClick="@(() => SetCategory("Cataloghi"))">Cataloghi</MudMenuItem>
+                <MudMenuItem OnClick="@(() => SetCategory("Qualita"))">Qualita</MudMenuItem>
                 <MudMenuItem OnClick="@(() => SetCategory("Manutenzioni"))">Manutenzioni</MudMenuItem>
                 <MudMenuItem OnClick="@(() => SetCategory("Sync"))">Sync</MudMenuItem>
                 <MudMenuItem OnClick="@(() => SetCategory("Statistiche"))">Statistiche</MudMenuItem>
@@ -571,6 +572,26 @@
                                     </div>
                                 </MudNavLink>
                             }
+                        </MudNavGroup>
+                        </MudTooltip>
+                    }
+                </Authorized>
+            </AuthorizeView>
+
+            @* Qualita - claim-aware per Visualizzazione *@
+            <AuthorizeView Roles="Admin,Produzione,Manutenzione,Visualizzazione">
+                <Authorized Context="qualCtx">
+                    @{
+                        bool _isQualBase = qualCtx.User.IsInRole("Admin") || qualCtx.User.IsInRole("Produzione") || qualCtx.User.IsInRole("Manutenzione");
+                        bool _canQualInProcess = _isQualBase || qualCtx.User.HasClaim(PaginaPolicy.ClaimType, "qualita-controlli-in-process");
+                    }
+                    @if (_canQualInProcess)
+                    {
+                        <MudTooltip Text="Qualita" Placement="Placement.Right" Disabled="@(!_miniDrawer)">
+                        <MudNavGroup Title="Qualita" Icon="@Icons.Material.Filled.FactCheck" IconColor="Color.Info" Expanded="@_expandedQual" ExpandedChanged="@(v => OnNavGroupToggled("qual", v))" Class="nav-sec-qualita">
+                            <MudNavLink Href="/qualita/controlli-in-process" title="Controlli In-Process">
+                                <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 13px;">X/O</span><span>In-Proc.</span></div>
+                            </MudNavLink>
                         </MudNavGroup>
                         </MudTooltip>
                     }

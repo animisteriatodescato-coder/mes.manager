@@ -29,4 +29,5 @@ public class Macchina
     public ICollection<Manutenzione> Manutenzioni { get; set; } = new List<Manutenzione>();
     public ICollection<ConfigurazionePLC> ConfigurazioniPLC { get; set; } = new List<ConfigurazionePLC>();
     public ICollection<ManutenzioneScheda> SchedeManutenzione { get; set; } = new List<ManutenzioneScheda>();
+    public ICollection<ControlloQualitaScheda> SchedeControlloQualita { get; set; } = new List<ControlloQualitaScheda>();
 }

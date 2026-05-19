@@ -39,6 +39,16 @@ var builder = WebApplication.CreateBuilder(args);
 // 6. Variabili d'ambiente (per produzione/container)
 
 builder.Configuration.AddMesManagerSharedConfiguration(builder.Environment);
+// Le variabili d'ambiente devono restare l'ultimo override, come da commento
+// di bootstrap: utile per DEV locale e automazioni senza toccare i JSON.
+builder.Configuration.AddEnvironmentVariables();
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Logging.ClearProviders();
+    builder.Logging.AddConsole();
+    builder.Logging.AddDebug();
+}
 
 // Configura DatabaseConfiguration per la DI
 builder.Services.ConfigureMesManagerDatabaseConfiguration(builder.Configuration);
@@ -225,6 +235,17 @@ using (var seedScope = app.Services.CreateScope())
     // Seed attività manutenzione casse d'anima (idempotente)
     var manCassaService = seedScope.ServiceProvider.GetRequiredService<IManutenzioneCassaService>();
     await manCassaService.SeedAttivitaDefaultAsync();
+    // Seed controlli qualità in-process (idempotente)
+    var qualitaService = seedScope.ServiceProvider.GetRequiredService<IControlloQualitaService>();
+    var seedLogger = seedScope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Seed");
+    try
+    {
+        await qualitaService.SeedAttivitaDefaultAsync();
+    }
+    catch (Exception ex)
+    {
+        seedLogger.LogWarning(ex, "Seed controlli qualita saltato: verificare che la migration AddControlliQualitaInProcess sia applicata.");
+    }
 }
 var enableE2ESeed = (Environment.GetEnvironmentVariable("E2E_SEED") ?? "")
     .Equals("1", StringComparison.OrdinalIgnoreCase)

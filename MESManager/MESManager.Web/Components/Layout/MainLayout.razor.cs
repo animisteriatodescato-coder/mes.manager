@@ -73,6 +73,7 @@ public partial class MainLayout : IDisposable
     private bool _expandedProg = true;
     private bool _expandedProd = false;
     private bool _expandedCat  = false;
+    private bool _expandedQual = false;
     private bool _expandedMan  = false;
     private bool _expandedSync = false;
     private bool _expandedStat = false;
@@ -87,6 +88,7 @@ public partial class MainLayout : IDisposable
             case "prog": _expandedProg = expanded; break;
             case "prod": _expandedProd = expanded; break;
             case "cat":  _expandedCat  = expanded; break;
+            case "qual": _expandedQual = expanded; break;
             case "man":  _expandedMan  = expanded; break;
             case "sync": _expandedSync = expanded; break;
             case "stat": _expandedStat = expanded; break;
@@ -105,6 +107,7 @@ public partial class MainLayout : IDisposable
                     case "prog": _expandedProg = false; break;
                     case "prod": _expandedProd = false; break;
                     case "cat":  _expandedCat  = false; break;
+                    case "qual": _expandedQual = false; break;
                     case "man":  _expandedMan  = false; break;
                     case "sync": _expandedSync = false; break;
                     case "stat": _expandedStat = false; break;
@@ -448,6 +451,9 @@ public partial class MainLayout : IDisposable
             "cataloghi/ricette" => "Catalogo Ricette",
             "cataloghi/foto" => "Catalogo Foto",
             "cataloghi/non-conformita" => "Non Conformità",
+
+            // Qualita
+            "qualita/controlli-in-process" => "Controlli Qualita In-Process",
             
             // Manutenzioni
             "manutenzioni/alert" => "Alert Manutenzioni",
@@ -607,6 +613,10 @@ public partial class MainLayout : IDisposable
                 new("Foto", "/cataloghi/foto"),
                 new("Preventivi", "/preventivi"),
                 new("Non Conformità", "/cataloghi/non-conformita")
+            },
+            "Qualita" => new List<MenuItem>
+            {
+                new("Controlli In-Process", "/qualita/controlli-in-process")
             },
             "Manutenzioni" => new List<MenuItem>
             {

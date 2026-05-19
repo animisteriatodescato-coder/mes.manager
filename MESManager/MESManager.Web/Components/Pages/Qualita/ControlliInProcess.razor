@@ -1,0 +1,482 @@
+@page "/qualita/controlli-in-process"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = MESManager.Web.Constants.PaginaPolicy.QualitaControlliInProcess)]
+@using MESManager.Application.DTOs
+@using MESManager.Application.Interfaces
+@using MESManager.Application.Services
+@using MESManager.Domain.Enums
+@inject IControlloQualitaService QualitaService
+@inject IMacchinaAppService MacchinaService
+@inject CurrentUserService CurrentUserService
+@inject ISnackbar Snackbar
+
+<PageTitle>Controlli Qualita In-Process</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4 px-3" data-testid="page-controlli-qualita">
+<MudPaper Elevation="1" Class="pa-3">
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2" Wrap="Wrap.Wrap">
+        <MudIcon Icon="@Icons.Material.Filled.FactCheck" Color="Color.Info" />
+        <MudText Typo="Typo.h6" Class="me-3">Controlli Qualita In-Process</MudText>
+
+        <MudDatePicker @bind-Date="_dataGiornata"
+                       @bind-Date:after="@OnDataChangedAfter"
+                       Label="Data"
+                       DateFormat="dd/MM/yyyy"
+                       Editable="true"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       PickerVariant="PickerVariant.Dialog"
+                       Style="max-width:180px"
+                       data-testid="dp-data-qualita" />
+
+        <MudChip T="string" Icon="@Icons.Material.Filled.Person"
+                 Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Medium">
+            @CurrentUserService.UserName
+        </MudChip>
+
+        <MudAlert Severity="Severity.Warning" Dense="true" Class="py-1">
+            Verificare che non vengano usati cartoni buoni se non necessari.
+        </MudAlert>
+
+        <MudSpacer />
+
+        @{
+            var totCelle = _macchine.Sum(m => _attivita.Count(a => AttivitaApplicabile(a, m)));
+            var okCelle = _schedeMap.Values.Where(s => s != null)
+                .SelectMany(s => s!.Righe)
+                .Count(r => r.Esito == EsitoControlloQualita.OK);
+        }
+        @if (totCelle > 0)
+        {
+            <MudText Typo="Typo.body2" Color="Color.Default">
+                @okCelle / @totCelle X
+            </MudText>
+            <MudProgressLinear Value="@(100.0 * okCelle / totCelle)"
+                               Color="@(okCelle == totCelle ? Color.Success : Color.Primary)"
+                               Rounded="true" Size="Size.Small" Style="width:120px" />
+        }
+    </MudStack>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+    }
+    else if (!_attivita.Any())
+    {
+        <MudAlert Severity="Severity.Info">Nessun controllo qualita configurato.</MudAlert>
+    }
+    else
+    {
+        <div style="overflow-x:auto;">
+            <table class="mes-mant-grid" data-testid="griglia-controlli-qualita">
+                <thead>
+                    <tr>
+                        <th class="mes-mant-th-mac">Macchina</th>
+                        @foreach (var att in _attivita)
+                        {
+                            <th class="mes-mant-th-att" title="@BuildAttivitaTitle(att)">
+                                <span class="mes-mant-att-label" style="font-size:@(att.FontSize > 0 ? att.FontSize : 11)px">@att.Nome</span>
+                                @if (att.QuandoNecessario)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning" Class="mt-1">se serve</MudChip>
+                                }
+                                <button class="mes-mant-btn-selall"
+                                        title="Segna tutti X - @att.Nome"
+                                        @onclick="@(() => SelezionaTuttiOkAsync(att))"
+                                        disabled="@_saving">
+                                    X tutti
+                                </button>
+                            </th>
+                        }
+                        <th class="mes-mant-th-prog">Avanzamento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var mac in _macchine)
+                    {
+                        var scheda = _schedeMap.TryGetValue(mac.Id, out var s) ? s : null;
+                        var chiusa = scheda?.Stato is StatoSchedaControlloQualita.Completata or StatoSchedaControlloQualita.ConProblemi;
+
+                        var attApplicabili = _attivita.Where(a => AttivitaApplicabile(a, mac)).ToList();
+                        var attApplicabiliIds = attApplicabili.Select(a => a.Id).ToHashSet();
+                        var righeOk = scheda?.Righe.Count(r => r.Esito == EsitoControlloQualita.OK && attApplicabiliIds.Contains(r.AttivitaId)) ?? 0;
+                        var righeProb = scheda?.Righe.Count(r => r.Esito == EsitoControlloQualita.Problema && attApplicabiliIds.Contains(r.AttivitaId)) ?? 0;
+                        var progPct = attApplicabili.Count > 0 ? (double)(righeOk + righeProb) / attApplicabili.Count * 100 : 0;
+
+                        <tr class="@(chiusa ? "mes-mant-row-closed" : "")">
+                            <td class="mes-mant-td-mac">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudIcon Icon="@Icons.Material.Filled.PrecisionManufacturing"
+                                             Size="Size.Small" Color="Color.Default" />
+                                    <span><b>@mac.Codice</b><br /><span style="font-size:11px;opacity:.75">@mac.Nome</span></span>
+                                </MudStack>
+                            </td>
+
+                            @foreach (var att in _attivita)
+                            {
+                                if (!AttivitaApplicabile(att, mac))
+                                {
+                                    <td class="mes-mant-td-cell mes-mant-cell-na"
+                                        data-testid="cell-qualita-@mac.Id-@att.Id">
+                                        <span class="mes-mant-na-dash">-</span>
+                                    </td>
+                                }
+                                else
+                                {
+                                    var riga = scheda?.Righe.FirstOrDefault(r => r.AttivitaId == att.Id);
+                                    var esito = riga?.Esito ?? EsitoControlloQualita.NonEseguito;
+                                    var isEditingComment = _commentEditingRigaId == riga?.Id;
+
+                                    <td class="mes-mant-td-cell @GetCellClass(esito)"
+                                        data-testid="cell-qualita-@mac.Id-@att.Id">
+                                        @if (!chiusa)
+                                        {
+                                            <div class="mes-mant-cell-inner">
+                                                <div class="mes-mant-btn-row">
+                                                    <button class="mes-mant-btn-ok @(esito == EsitoControlloQualita.OK ? "mes-mant-btn-active-ok" : "")"
+                                                            title="X - macchina OK"
+                                                            @onclick="@(() => ImpostaEsito(mac.Id, att, EsitoControlloQualita.OK))"
+                                                            disabled="@_saving">
+                                                        X
+                                                    </button>
+                                                    <button class="mes-mant-btn-anom @(esito == EsitoControlloQualita.Problema ? "mes-mant-btn-active-anom" : "")"
+                                                            title="O - problema rilevato"
+                                                            @onclick="@(() => ImpostaEsito(mac.Id, att, EsitoControlloQualita.Problema))"
+                                                            disabled="@_saving">
+                                                        O
+                                                    </button>
+                                                </div>
+
+                                                @if (esito == EsitoControlloQualita.Problema)
+                                                {
+                                                    @if (isEditingComment)
+                                                    {
+                                                        <div class="mes-mant-comment-box" @onclick:stopPropagation>
+                                                            @{ var txtCommentoId = $"txt-qualita-commento-{riga!.Id}"; }
+                                                            <MudTextField @bind-Value="_commentDraft"
+                                                                          Placeholder="Descrivi il problema..."
+                                                                          Variant="Variant.Outlined"
+                                                                          Margin="Margin.Dense"
+                                                                          Lines="2"
+                                                                          Style="font-size:11px"
+                                                                          data-testid="@txtCommentoId" />
+                                                            <MudStack Row="true" Spacing="1" Class="mt-1" Justify="Justify.FlexEnd">
+                                                                <MudButton Size="Size.Small" Variant="Variant.Text"
+                                                                           OnClick="@AnnullaCommento">Ann.</MudButton>
+                                                                <MudButton Size="Size.Small" Variant="Variant.Filled"
+                                                                           Color="Color.Warning"
+                                                                           OnClick="@(() => SalvaCommento(scheda!.Id, riga!))"
+                                                                           data-testid="btn-salva-commento-qualita">Salva</MudButton>
+                                                            </MudStack>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="mes-mant-comment-saved"
+                                                             @onclick="@(() => ApriCommento(riga))"
+                                                             title="Click per modificare il commento">
+                                                            @if (!string.IsNullOrEmpty(riga?.Commento))
+                                                            {
+                                                                <MudIcon Icon="@Icons.Material.Filled.Comment"
+                                                                         Size="Size.Small" Color="Color.Warning" Class="me-1" />
+                                                                <span class="mes-mant-comment-text">@riga.Commento</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <MudIcon Icon="@Icons.Material.Outlined.AddComment"
+                                                                         Size="Size.Small" Color="Color.Default" Style="opacity:.5" />
+                                                                <span class="mes-mant-comment-empty">aggiungi nota...</span>
+                                                            }
+                                                        </div>
+                                                    }
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="mes-mant-cell-inner" style="cursor:default">
+                                                @if (esito == EsitoControlloQualita.OK)
+                                                {
+                                                    <span class="mes-mant-icon-lg">X</span>
+                                                }
+                                                else if (esito == EsitoControlloQualita.Problema)
+                                                {
+                                                    <span class="mes-mant-icon-lg">O</span>
+                                                    @if (!string.IsNullOrEmpty(riga?.Commento))
+                                                    {
+                                                        <div class="mes-mant-comment-saved mes-mant-comment-readonly">
+                                                            <span class="mes-mant-comment-text">@riga.Commento</span>
+                                                        </div>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="mes-mant-empty">-</span>
+                                                }
+                                            </div>
+                                        }
+                                    </td>
+                                }
+                            }
+
+                            <td class="mes-mant-td-prog">
+                                <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                                    <MudProgressCircular Value="@progPct"
+                                                         Size="Size.Small"
+                                                         Color="@(righeProb > 0 ? Color.Error : (righeOk == attApplicabili.Count ? Color.Success : Color.Default))" />
+                                    <MudText Typo="Typo.caption">@(righeOk + righeProb)/@attApplicabili.Count</MudText>
+                                    @if (chiusa)
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.Lock"
+                                                 Size="Size.Small" Color="Color.Default" Style="opacity:.5" />
+                                    }
+                                    else if (scheda != null && (righeOk + righeProb) == attApplicabili.Count)
+                                    {
+                                        <MudTooltip Text="Chiudi scheda controllo">
+                                            @{ var btnChiudiId = $"btn-chiudi-qualita-{mac.Id}"; }
+                                            <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
+                                                           Color="Color.Success" Size="Size.Small"
+                                                           OnClick="@(() => ChiudiScheda(scheda.Id))"
+                                                           data-testid="@btnChiudiId" />
+                                        </MudTooltip>
+                                    }
+                                </MudStack>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <MudStack Row="true" Spacing="3" Class="mt-3" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.caption" Color="Color.Tertiary">Legenda:</MudText>
+            <span class="mes-mant-leg-ok">X macchina OK</span>
+            <span class="mes-mant-leg-anom">O problema rilevato</span>
+            <span class="mes-mant-leg-ne">- non eseguito</span>
+            <MudText Typo="Typo.caption" Color="Color.Tertiary" Class="ms-3">
+                Il cerchio apre la nota problema sulla cella.
+            </MudText>
+        </MudStack>
+    }
+
+</MudPaper>
+</MudContainer>
+
+@code {
+    private DateTime? _dataGiornata = DateTime.Today;
+
+    private List<MacchinaDto> _macchine = new();
+    private List<ControlloQualitaAttivitaDto> _attivita = new();
+    private Dictionary<Guid, ControlloQualitaSchedaDto?> _schedeMap = new();
+
+    private bool _loading = true;
+    private bool _saving;
+
+    private Guid? _commentEditingRigaId;
+    private string _commentDraft = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CaricaDati();
+    }
+
+    private async Task CaricaDati()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        _macchine = (await MacchinaService.GetListaAsync())
+            .OrderBy(m => m.OrdineVisualizazione)
+            .ThenBy(m => m.Codice)
+            .ToList();
+        _attivita = await QualitaService.GetAttivitaAsync();
+
+        await CaricaSchedeGiorno();
+        _loading = false;
+    }
+
+    private async Task CaricaSchedeGiorno()
+    {
+        var data = _dataGiornata ?? DateTime.Today;
+        var schede = await QualitaService.GetSchedeAsync(
+            dal: data.Date,
+            al: data.Date.AddDays(1).AddTicks(-1));
+
+        _schedeMap = _macchine.ToDictionary(
+            m => m.Id,
+            m => (ControlloQualitaSchedaDto?)schede.FirstOrDefault(s => s.MacchinaId == m.Id));
+    }
+
+    private async Task OnDataChangedAfter()
+    {
+        _loading = true;
+        StateHasChanged();
+        await CaricaSchedeGiorno();
+        _loading = false;
+    }
+
+    private async Task ImpostaEsito(Guid macchinaId, ControlloQualitaAttivitaDto att, EsitoControlloQualita nuovoEsito)
+    {
+        if (_saving) return;
+        _saving = true;
+
+        try
+        {
+            if (_schedeMap[macchinaId] == null)
+            {
+                var data = _dataGiornata ?? DateTime.Today;
+                _schedeMap[macchinaId] = await QualitaService.GetOrCreateSchedaAsync(
+                    macchinaId,
+                    data,
+                    CurrentUserService.UserId,
+                    CurrentUserService.UserName);
+            }
+
+            var scheda = _schedeMap[macchinaId]!;
+            var riga = scheda.Righe.FirstOrDefault(r => r.AttivitaId == att.Id);
+            if (riga == null) return;
+
+            riga.Esito = riga.Esito == nuovoEsito
+                ? EsitoControlloQualita.NonEseguito
+                : nuovoEsito;
+
+            if (riga.Esito == EsitoControlloQualita.Problema)
+            {
+                _commentEditingRigaId = riga.Id;
+                _commentDraft = riga.Commento ?? string.Empty;
+            }
+            else
+            {
+                if (_commentEditingRigaId == riga.Id)
+                    AnnullaCommento();
+                riga.Commento = null;
+            }
+
+            var updated = await QualitaService.UpdateRigaAsync(scheda.Id, riga);
+            if (updated != null)
+                _schedeMap[macchinaId] = updated;
+        }
+        finally
+        {
+            _saving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ApriCommento(ControlloQualitaRigaDto? riga)
+    {
+        if (riga == null) return;
+        _commentEditingRigaId = riga.Id;
+        _commentDraft = riga.Commento ?? string.Empty;
+    }
+
+    private void AnnullaCommento()
+    {
+        _commentEditingRigaId = null;
+        _commentDraft = string.Empty;
+    }
+
+    private async Task SalvaCommento(Guid schedaId, ControlloQualitaRigaDto riga)
+    {
+        riga.Commento = _commentDraft.Trim();
+        var updated = await QualitaService.UpdateRigaAsync(schedaId, riga);
+
+        var macchinaId = _schedeMap.FirstOrDefault(kv => kv.Value?.Id == schedaId).Key;
+        if (macchinaId != Guid.Empty && updated != null)
+            _schedeMap[macchinaId] = updated;
+
+        AnnullaCommento();
+        Snackbar.Add("Nota problema salvata", Severity.Success);
+    }
+
+    private async Task ChiudiScheda(Guid schedaId)
+    {
+        var scheda = _schedeMap.Values.FirstOrDefault(s => s?.Id == schedaId);
+        var problemaSenzaNota = scheda?.Righe.FirstOrDefault(r =>
+            r.Esito == EsitoControlloQualita.Problema &&
+            r.RichiedeNotaSeProblema &&
+            string.IsNullOrWhiteSpace(r.Commento));
+
+        if (problemaSenzaNota != null)
+        {
+            ApriCommento(problemaSenzaNota);
+            Snackbar.Add("Aggiungi una nota al problema prima di chiudere la scheda.", Severity.Warning);
+            return;
+        }
+
+        var closed = await QualitaService.ChiudiSchedaAsync(schedaId);
+        if (closed != null)
+        {
+            var macchinaId = _schedeMap.FirstOrDefault(kv => kv.Value?.Id == schedaId).Key;
+            if (macchinaId != Guid.Empty)
+                _schedeMap[macchinaId] = closed;
+        }
+
+        Snackbar.Add("Scheda controllo qualita chiusa", Severity.Success);
+        StateHasChanged();
+    }
+
+    private async Task SelezionaTuttiOkAsync(ControlloQualitaAttivitaDto att)
+    {
+        if (_saving) return;
+        _saving = true;
+        try
+        {
+            var data = _dataGiornata ?? DateTime.Today;
+            foreach (var mac in _macchine)
+            {
+                var scheda = _schedeMap.TryGetValue(mac.Id, out var s) ? s : null;
+                var chiusa = scheda?.Stato is StatoSchedaControlloQualita.Completata or StatoSchedaControlloQualita.ConProblemi;
+                if (chiusa) continue;
+                if (!AttivitaApplicabile(att, mac)) continue;
+
+                if (_schedeMap[mac.Id] == null)
+                {
+                    _schedeMap[mac.Id] = await QualitaService.GetOrCreateSchedaAsync(
+                        mac.Id,
+                        data,
+                        CurrentUserService.UserId,
+                        CurrentUserService.UserName);
+                }
+
+                scheda = _schedeMap[mac.Id]!;
+                var riga = scheda.Righe.FirstOrDefault(r => r.AttivitaId == att.Id);
+                if (riga == null || riga.Esito == EsitoControlloQualita.OK) continue;
+
+                riga.Esito = EsitoControlloQualita.OK;
+                riga.Commento = null;
+                if (_commentEditingRigaId == riga.Id)
+                    AnnullaCommento();
+
+                var updated = await QualitaService.UpdateRigaAsync(scheda.Id, riga);
+                if (updated != null)
+                    _schedeMap[mac.Id] = updated;
+            }
+
+            Snackbar.Add($"Tutti X per \"{att.Nome}\"", Severity.Success);
+        }
+        finally
+        {
+            _saving = false;
+            StateHasChanged();
+        }
+    }
+
+    private static bool AttivitaApplicabile(ControlloQualitaAttivitaDto att, MacchinaDto mac) =>
+        string.IsNullOrEmpty(att.MacchinaCodiceFiltro) || att.MacchinaCodiceFiltro == mac.Codice;
+
+    private static string GetCellClass(EsitoControlloQualita esito) => esito switch
+    {
+        EsitoControlloQualita.OK => "mes-mant-cell-ok",
+        EsitoControlloQualita.Problema => "mes-mant-cell-anom",
+        _ => "mes-mant-cell-ne"
+    };
+
+    private static string BuildAttivitaTitle(ControlloQualitaAttivitaDto att)
+    {
+        if (string.IsNullOrWhiteSpace(att.Dettaglio))
+            return att.Nome;
+
+        return $"{att.Nome} - {att.Dettaglio}";
+    }
+}

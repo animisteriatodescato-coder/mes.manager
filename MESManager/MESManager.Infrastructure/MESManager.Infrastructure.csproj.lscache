@@ -173,6 +173,8 @@ Migrations/
  20260504123845_AddAllegatiNonConformita.Designer.cs
  20260504135203_AddNonConformitaCampiEstesi.cs
  20260504135203_AddNonConformitaCampiEstesi.Designer.cs
+ 20260519100523_AddControlliQualitaInProcess.cs
+ 20260519100523_AddControlliQualitaInProcess.Designer.cs
  MesManagerDbContextModelSnapshot.cs
 obj/Debug/net8.0/
  .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
@@ -199,6 +201,7 @@ Services/
  CalendarioLavoroAppService.cs
  ClienteAppService.cs
  CommessaAppService.cs
+ ControlloQualitaService.cs
  EmailService.cs
  FestiviAppService.cs
  ImpostazioniGanttAppService.cs
