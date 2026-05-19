@@ -931,6 +931,34 @@ Parametri principali: `Label`, `Value`/`ValueChanged` (string hex), `Palette` (L
 
 ---
 
+## 🤖 Assistente AI
+
+### Pattern multimodale e tool dati (v1.66.04+)
+
+L'assistente AI nel drawer (`AiAssistantPanel.razor`) supporta chat testuale e screenshot allegati.
+
+Regole architetturali:
+- Gli screenshot restano in memoria nel circuito Blazor: non vengono salvati su disco o DB.
+- `AiChatMessage.Attachments` usa `AiChatAttachment` con `ContentType` + `Base64Data`.
+- Gemini riceve immagini tramite `inlineData`; OpenAI tramite content parts `image_url` con data URL.
+- Ollama resta testo/tool-only finché non viene configurato un modello vision locale e un formato API esplicitamente supportato.
+- L'AI non esegue SQL libero: può solo chiamare tool C# autorizzati in `AiAssistantService.BuildTools()` / `BuildGeminiTools()`.
+- `AiAssistantService` deve usare `IDbContextFactory<MesManagerDbContext>` per ogni query, perché il drawer vive nel layout Blazor Server e può inizializzarsi in concorrenza con le pagine figlie.
+
+Tool autorizzati principali:
+- `get_machines_status`
+- `get_active_orders`
+- `get_kpi_day`
+- `get_alarms`
+- `get_production_interval`
+- `get_gantt_orders`
+- `search_orders`
+- `search_articles`
+
+Estendere l'assistente significa aggiungere un tool applicativo mirato, con query parametrizzate e output sintetico. Non introdurre endpoint generici di query SQL o accesso diretto libero alle tabelle.
+
+---
+
 ## 🔌 Pattern Centralizzati — Usa Questi, Non Duplicare
 
 > ⚠️ Esistono già. Usarli è **OBBLIGATORIO**. Reimplementare = bug architetturale. Cerca prima con grep/semantic search → estendi → **mai duplica**.

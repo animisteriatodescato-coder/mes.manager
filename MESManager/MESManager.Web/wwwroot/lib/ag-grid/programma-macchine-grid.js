@@ -1,5 +1,6 @@
 window.programmaMacchineGrid = (function() {
     let gridApi = null;
+    let moveInProgress = false;
         function safeApiCall(action) {
             if (!gridApi) return;
             setTimeout(() => {
@@ -358,20 +359,55 @@ window.programmaMacchineGrid = (function() {
         }
     }
 
+    function applyProgrammaOrderSort() {
+        if (!gridApi) return;
+
+        gridApi.applyColumnState({
+            state: [
+                { colId: 'numeroMacchina', sort: 'asc', sortIndex: 0 },
+                { colId: 'ordineSequenza', sort: 'asc', sortIndex: 1 }
+            ],
+            defaultState: { sort: null }
+        });
+    }
+
+    function getRowsByProgrammaOrder() {
+        const byMachine = {};
+        allMachines.forEach(m => byMachine[m] = []);
+
+        gridApi.forEachNodeAfterFilter(node => {
+            if (node.data && !node.data.isPlaceholder && node.data.numeroMacchina) {
+                const mc = node.data.numeroMacchina;
+                if (byMachine[mc]) byMachine[mc].push(node.data);
+            }
+        });
+
+        allMachines.forEach(m => {
+            byMachine[m].sort((a, b) => {
+                const orderDiff = (a.ordineSequenza || 0) - (b.ordineSequenza || 0);
+                if (orderDiff !== 0) return orderDiff;
+                return (a.codice || '').localeCompare(b.codice || '', 'it-IT');
+            });
+        });
+
+        return byMachine;
+    }
+
     // Sposta una commessa su/giù, anche tra macchine diverse (incluse macchine vuote)
     // ▲ in prima posizione → ultima posizione della macchina precedente (anche vuota)
     // ▼ in ultima posizione → prima posizione della macchina successiva (anche vuota)
     async function moveRow(commessaId, numeroMacchina, direction) {
+        if (moveInProgress) {
+            console.warn('[moveRow] Spostamento già in corso, attendo il completamento');
+            return;
+        }
+
+        moveInProgress = true;
         try {
-            // Raggruppa tutte le righe vere (no placeholder) per macchina, nell'ordine corrente
-            const byMachine = {};
-            allMachines.forEach(m => byMachine[m] = []);
-            gridApi.forEachNodeAfterFilterAndSort(node => {
-                if (node.data && !node.data.isPlaceholder && node.data.numeroMacchina) {
-                    const mc = node.data.numeroMacchina;
-                    if (byMachine[mc]) byMachine[mc].push(node.data);
-                }
-            });
+            const byMachine = getRowsByProgrammaOrder();
+            const visibleCommessaIds = Object.values(byMachine)
+                .flat()
+                .map(row => row.id);
 
             // Usa allMachines (NON filtra le vuote) per navigare anche nelle macchine senza commesse
             const currentMachineIndex = allMachines.indexOf(numeroMacchina);
@@ -422,7 +458,8 @@ window.programmaMacchineGrid = (function() {
                 body: JSON.stringify({
                     commessaId: commessaId,
                     nuovoNumeroMacchina: getMachineNumber(targetMachine),
-                    nuovaPosizioneIndex: targetIndex
+                    nuovaPosizioneIndex: targetIndex,
+                    commesseVisibiliIds: visibleCommessaIds
                 })
             });
 
@@ -433,11 +470,14 @@ window.programmaMacchineGrid = (function() {
             }
 
             console.log('[moveRow] ✓ Spostamento salvato');
+            applyProgrammaOrderSort();
             await refreshGridData();
 
         } catch (err) {
             console.error('[moveRow] Errore:', err);
             alert(`Errore spostamento: ${err.message}`);
+        } finally {
+            moveInProgress = false;
         }
     }
 

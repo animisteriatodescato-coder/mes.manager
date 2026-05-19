@@ -8,7 +8,11 @@ public interface IAiAssistantService
     /// Invia un messaggio all'AI, esegue eventuali function calls sui dati reali del DB
     /// e restituisce la risposta in italiano.
     /// </summary>
-    Task<string> AskAsync(IList<AiChatMessage> history, string userMessage, CancellationToken ct = default);
+    Task<string> AskAsync(
+        IList<AiChatMessage> history,
+        string userMessage,
+        IList<AiChatAttachment>? attachments = null,
+        CancellationToken ct = default);
 
     /// <summary>
     /// Verifica se il provider AI attivo è raggiungibile e restituisce i modelli disponibili.

@@ -63,7 +63,7 @@ public class CommesseController : ControllerBase
     {
         try
         {
-            await _service.RiordinaCommessaAsync(request.CommessaId, request.NuovoNumeroMacchina, request.NuovaPosizioneIndex);
+            await _service.RiordinaCommessaAsync(request.CommessaId, request.NuovoNumeroMacchina, request.NuovaPosizioneIndex, request.CommesseVisibiliIds);
             return Ok();
         }
         catch (Exception ex)
@@ -95,4 +95,5 @@ public class RiordinaCommessaRequest
     public Guid CommessaId { get; set; }
     public int? NuovoNumeroMacchina { get; set; }
     public int NuovaPosizioneIndex { get; set; }
+    public List<Guid> CommesseVisibiliIds { get; set; } = new();
 }

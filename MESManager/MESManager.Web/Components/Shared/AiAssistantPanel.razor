@@ -1,5 +1,6 @@
 @using MESManager.Application.DTOs
 @using MESManager.Application.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
 @inject IAiAssistantService AiService
 @inject IJSRuntime JS
 @implements IDisposable
@@ -62,6 +63,15 @@
             <div class="ai-msg-row @(msg.Role == "user" ? "ai-row-user" : "ai-row-assistant")">
                 <div class="ai-bubble @(msg.Role == "user" ? "ai-bubble-user" : msg.IsError ? "ai-bubble-error" : "ai-bubble-assistant")">
                     <pre class="ai-bubble-text">@msg.Content</pre>
+                    @if (msg.Attachments.Any())
+                    {
+                        <div class="ai-message-attachments">
+                            @foreach (var attachment in msg.Attachments)
+                            {
+                                <img src="@attachment.DataUrl" alt="@attachment.FileName" class="ai-message-thumb" />
+                            }
+                        </div>
+                    }
                     <div class="ai-bubble-time">@msg.Timestamp.ToString("HH:mm")</div>
                 </div>
             </div>
@@ -81,18 +91,50 @@
 
     @* ── Input ── *@
     <div class="ai-panel-input">
-        <MudTextField @bind-Value="_input"
-                      Placeholder="Scrivi una domanda..."
-                      Variant="Variant.Outlined"
-                      Margin="Margin.Dense"
-                      Lines="1"
-                      Disabled="@_loading"
-                      @onkeydown="OnKeyDown"
-                      Adornment="Adornment.End"
-                      AdornmentIcon="@Icons.Material.Filled.Send"
-                      OnAdornmentClick="Send"
-                      AdornmentColor="Color.Primary"
-                      data-testid="ai-input" />
+        @if (_pendingAttachments.Any())
+        {
+            <div class="ai-pending-attachments">
+                @foreach (var attachment in _pendingAttachments)
+                {
+                    <div class="ai-pending-attachment">
+                        <img src="@attachment.DataUrl" alt="@attachment.FileName" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                       Size="Size.Small"
+                                       OnClick="@(() => RemoveAttachment(attachment))"
+                                       title="Rimuovi screenshot" />
+                    </div>
+                }
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(_uploadError))
+        {
+            <MudText Typo="Typo.caption" Color="Color.Error">@_uploadError</MudText>
+        }
+
+        <div class="ai-input-row">
+            <InputFile id="ai-file-input"
+                       class="ai-file-input"
+                       OnChange="OnFilesSelected"
+                       accept="image/png,image/jpeg,image/webp"
+                       multiple />
+            <label class="ai-attach-label" for="ai-file-input" title="Allega screenshot">
+                <MudIcon Icon="@Icons.Material.Filled.AttachFile" Size="Size.Small" />
+            </label>
+
+            <MudTextField @bind-Value="_input"
+                          Placeholder="Scrivi una domanda..."
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Lines="1"
+                          Disabled="@_loading"
+                          @onkeydown="OnKeyDown"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@Icons.Material.Filled.Send"
+                          OnAdornmentClick="Send"
+                          AdornmentColor="Color.Primary"
+                          data-testid="ai-input" />
+        </div>
     </div>
 
 </div>
@@ -105,6 +147,10 @@
     private bool   _loading;
     private bool   _shouldScroll;
     private CancellationTokenSource? _cts;
+    private readonly List<AiChatAttachment> _pendingAttachments = [];
+    private string? _uploadError;
+    private const long MaxAttachmentBytes = 4 * 1024 * 1024;
+    private const int MaxAttachments = 3;
 
     // ── Provider health ───────────────────────────────────────────────────────
     private AiHealthResult? _health;
@@ -131,7 +177,8 @@
         "Qual è lo stato attuale delle macchine?",
         "Quali commesse sono in lavorazione?",
         "Ci sono stati allarmi oggi?",
-        "Dammi i KPI di produzione di oggi"
+        "Dammi i KPI di produzione di oggi",
+        "Analizza questo screenshot del gestionale"
     ];
 
     private async Task SendSuggestion(string text)
@@ -149,21 +196,29 @@
     private async Task Send()
     {
         var trimmed = _input.Trim();
-        if (string.IsNullOrEmpty(trimmed) || _loading) return;
+        if ((string.IsNullOrEmpty(trimmed) && !_pendingAttachments.Any()) || _loading) return;
+
+        var attachments = _pendingAttachments.ToList();
+        var messageText = string.IsNullOrWhiteSpace(trimmed)
+            ? "Analizza lo screenshot allegato."
+            : trimmed;
 
         _messages.Add(new AiChatMessage
         {
             Role      = "user",
-            Content   = trimmed,
+            Content   = messageText,
+            Attachments = attachments,
             Timestamp = DateTime.Now
         });
-        _input        = string.Empty;
-        _loading      = true;
+        _input = string.Empty;
+        _pendingAttachments.Clear();
+        _uploadError = null;
+        _loading = true;
         _shouldScroll = true;
         StateHasChanged();
 
         _cts?.Cancel();
-        _cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        _cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 
         string reply;
         bool   isError = false;
@@ -171,11 +226,11 @@
         {
             // Passa la history (tutti i messaggi già presenti meno l'ultimo user appena aggiunto)
             var history = _messages.Take(_messages.Count - 1).ToList();
-            reply = await AiService.AskAsync(history, trimmed, _cts.Token);
+            reply = await AiService.AskAsync(history, messageText, attachments, _cts.Token);
         }
         catch (OperationCanceledException)
         {
-            reply   = "⏱️ Richiesta scaduta (timeout 30s). Riprova.";
+            reply   = "⏱️ Richiesta scaduta (timeout 60s). Riprova.";
             isError = true;
         }
         catch (Exception ex)
@@ -198,6 +253,50 @@
         _shouldScroll = true;
         StateHasChanged();
     }
+
+    private async Task OnFilesSelected(InputFileChangeEventArgs e)
+    {
+        _uploadError = null;
+        var remaining = MaxAttachments - _pendingAttachments.Count;
+        if (remaining <= 0)
+        {
+            _uploadError = $"Puoi allegare al massimo {MaxAttachments} screenshot.";
+            return;
+        }
+
+        foreach (var file in e.GetMultipleFiles(MaxAttachments).Take(remaining))
+        {
+            if (!IsSupportedImage(file.ContentType))
+            {
+                _uploadError = "Formato non supportato. Usa PNG, JPG o WEBP.";
+                continue;
+            }
+
+            if (file.Size > MaxAttachmentBytes)
+            {
+                _uploadError = "Screenshot troppo grande. Limite 4 MB per immagine.";
+                continue;
+            }
+
+            await using var stream = file.OpenReadStream(MaxAttachmentBytes);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            _pendingAttachments.Add(new AiChatAttachment
+            {
+                FileName    = file.Name,
+                ContentType = file.ContentType,
+                Base64Data  = Convert.ToBase64String(ms.ToArray())
+            });
+        }
+    }
+
+    private void RemoveAttachment(AiChatAttachment attachment)
+    {
+        _pendingAttachments.Remove(attachment);
+    }
+
+    private static bool IsSupportedImage(string contentType) =>
+        contentType is "image/png" or "image/jpeg" or "image/webp";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

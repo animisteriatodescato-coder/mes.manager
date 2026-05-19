@@ -452,11 +452,14 @@ LEFT JOIN Clienti cl ON cl.Id = c.ClienteId";
         }).ToList();
     }
 
-    public async Task RiordinaCommessaAsync(Guid commessaId, int? nuovoNumeroMacchina, int nuovaPosizioneIndex)
+    public async Task RiordinaCommessaAsync(Guid commessaId, int? nuovoNumeroMacchina, int nuovaPosizioneIndex, IReadOnlyCollection<Guid>? commesseVisibiliIds = null)
     {
         var commessa = await _context.Commesse.FindAsync(commessaId);
         if (commessa == null) throw new Exception("Commessa non trovata");
 
+        var visibleIds = commesseVisibiliIds is { Count: > 0 }
+            ? commesseVisibiliIds.ToHashSet()
+            : null;
         var vecchioNumeroMacchina = commessa.NumeroMacchina;
         var cambioMacchina = vecchioNumeroMacchina != nuovoNumeroMacchina;
 
@@ -474,21 +477,37 @@ LEFT JOIN Clienti cl ON cl.Id = c.ClienteId";
             .ThenBy(c => c.DataConsegna)
             .ToListAsync();
 
+        if (visibleIds != null)
+        {
+            commesseDestinazione = ReorderVisibleFirst(commesseDestinazione, visibleIds);
+        }
+
         // Inserisce la commessa nella posizione corretta
         var listaOrdinata = new List<Commessa>();
-        for (int i = 0; i < commesseDestinazione.Count; i++)
+        var commesseVisibiliDestinazione = visibleIds == null
+            ? commesseDestinazione
+            : commesseDestinazione.Where(c => visibleIds.Contains(c.Id)).ToList();
+        var commesseNascosteDestinazione = visibleIds == null
+            ? new List<Commessa>()
+            : commesseDestinazione.Where(c => !visibleIds.Contains(c.Id)).ToList();
+
+        nuovaPosizioneIndex = Math.Clamp(nuovaPosizioneIndex, 0, commesseVisibiliDestinazione.Count);
+
+        for (int i = 0; i < commesseVisibiliDestinazione.Count; i++)
         {
             if (i == nuovaPosizioneIndex)
             {
                 listaOrdinata.Add(commessa);
             }
-            listaOrdinata.Add(commesseDestinazione[i]);
+            listaOrdinata.Add(commesseVisibiliDestinazione[i]);
         }
         // Se la posizione è alla fine o oltre
-        if (nuovaPosizioneIndex >= commesseDestinazione.Count)
+        if (nuovaPosizioneIndex >= commesseVisibiliDestinazione.Count)
         {
             listaOrdinata.Add(commessa);
         }
+
+        listaOrdinata.AddRange(commesseNascosteDestinazione);
 
         // Assegna ordineSequenza sequenziale
         for (int i = 0; i < listaOrdinata.Count; i++)
@@ -505,6 +524,11 @@ LEFT JOIN Clienti cl ON cl.Id = c.ClienteId";
                 .ThenBy(c => c.DataConsegna)
                 .ToListAsync();
 
+            if (visibleIds != null)
+            {
+                commesseOrigine = ReorderVisibleFirst(commesseOrigine, visibleIds);
+            }
+
             for (int i = 0; i < commesseOrigine.Count; i++)
             {
                 commesseOrigine[i].OrdineSequenza = i + 1;
@@ -512,6 +536,14 @@ LEFT JOIN Clienti cl ON cl.Id = c.ClienteId";
         }
 
         await _context.SaveChangesAsync();
+    }
+
+    private static List<Commessa> ReorderVisibleFirst(List<Commessa> commesse, IReadOnlySet<Guid> visibleIds)
+    {
+        return commesse
+            .Where(c => visibleIds.Contains(c.Id))
+            .Concat(commesse.Where(c => !visibleIds.Contains(c.Id)))
+            .ToList();
     }
 
     public async Task EliminaAsync(Guid id)

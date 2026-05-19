@@ -28,6 +28,8 @@ internal sealed record GeminiContent
 internal sealed record GeminiPart
 {
     public string?                 Text             { get; init; }
+    [JsonPropertyName("inlineData")]
+    public GeminiInlineData?       InlineData       { get; init; }
     // Gemini REST API returns camelCase in responses — explicit mapping required
     // (SnakeCaseLower naming policy + PropertyNameCaseInsensitive can't resolve underscore vs camelCase)
     [JsonPropertyName("functionCall")]
@@ -39,6 +41,13 @@ internal sealed record GeminiPart
     // See: https://ai.google.dev/gemini-api/docs/thought-signatures
     [JsonPropertyName("thoughtSignature")]
     public string?                 ThoughtSignature { get; init; }
+}
+
+internal sealed record GeminiInlineData
+{
+    [JsonPropertyName("mimeType")]
+    public string MimeType { get; init; } = "";
+    public string Data { get; init; } = "";
 }
 
 internal sealed record GeminiFunctionCall

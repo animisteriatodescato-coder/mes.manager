@@ -4,7 +4,92 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.66.00
+## 🔖 Versione Corrente: v1.66.04
+
+---
+
+## 🔖 v1.66.04 — Assistente AI vision e tool dati estesi
+
+**Data**: 2026-05-19
+
+### ✨ Feature
+
+- **Screenshot nel drawer AI**: aggiunto upload in memoria di immagini PNG/JPG/WEBP, con anteprima e invio anche senza testo.
+- **Provider multimodali**: Gemini riceve gli screenshot via `inlineData`; OpenAI via `image_url` data URL. Ollama viene bloccato in modo esplicito sugli allegati immagine finché non viene configurato un modello vision locale dedicato.
+- **Tool dati estesi**: aggiunte funzioni autorizzate per analisi produzione su intervallo, commesse Gantt/Programma per periodo, ricerca commesse e ricerca articoli/anime.
+- **DbContext isolato**: `AiAssistantService` usa `IDbContextFactory<MesManagerDbContext>` per evitare concorrenza EF in Blazor Server quando il drawer AI viene usato dal layout.
+- **Cache CSS**: aggiornato `app.css?v=1606`.
+
+#### File modificati
+- `MESManager.Application/DTOs/AiChatMessage.cs` — allegati immagine non persistiti.
+- `MESManager.Application/Interfaces/IAiAssistantService.cs` — firma `AskAsync` estesa con allegati.
+- `MESManager.Infrastructure/Services/AiAssistantService.cs` — prompt, vision, tool dati e query isolate.
+- `MESManager.Infrastructure/Services/AI/OaiModels.cs` — content parts OpenAI per immagini.
+- `MESManager.Infrastructure/Services/AI/GeminiModels.cs` — `inlineData` Gemini.
+- `MESManager.Web/Components/Shared/AiAssistantPanel.razor` — upload screenshot e anteprima.
+- `MESManager.Web/wwwroot/app.css` — UI allegati AI.
+- `MESManager.Web/Components/App.razor` — cache bust CSS.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.66.03 → 1.66.04.
+- `docs/04-ARCHITETTURA.md` — documentato pattern Assistente AI multimodale.
+- `docs/09-CHANGELOG.md` — nuova voce v1.66.04.
+
+---
+
+## 🔖 v1.66.03 — Stabilizzazione frecce Programma Macchine
+
+**Data**: 2026-05-18
+
+### 🐛 Fix
+
+- **Riordino coerente con la griglia visibile**: l'endpoint `api/Commesse/riordina` riceve ora gli ID delle commesse visibili, così righe chiuse/completate/filtrate non occupano posizioni invisibili durante gli spostamenti.
+- **Click concorrenti bloccati**: mentre uno spostamento è in corso, ulteriori click sulle frecce vengono ignorati fino al completamento della richiesta.
+- **Cache JS**: aggiornato `programma-macchine-grid.js?v=1623`.
+
+#### File modificati
+- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` — invio righe visibili e guard anti doppio click.
+- `MESManager.Web/Controllers/CommesseController.cs` — request riordino con `CommesseVisibiliIds`.
+- `MESManager.Application/Interfaces/ICommessaAppService.cs` — firma riordino estesa.
+- `MESManager.Infrastructure/Services/CommessaAppService.cs` — riordino visibili prima, nascosti in coda.
+- `MESManager.Web/Components/App.razor` — cache bust `programma-macchine-grid.js?v=1623`.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.66.02 → 1.66.03.
+- `docs/09-CHANGELOG.md` — nuova voce v1.66.03.
+
+---
+
+## 🔖 v1.66.02 — Fix frecce riordino Programma Macchine
+
+**Data**: 2026-05-18
+
+### 🐛 Fix
+
+- **Frecce su/giù Programma Macchine**: il riordino ora usa sempre `OrdineSequenza` come ordine operativo, anche se la griglia aveva un ordinamento utente salvato su altre colonne.
+- **Feedback visivo immediato**: dopo il click su freccia viene ripristinata la sort `MA + Ord.`, così la riga si sposta subito nella posizione programmata.
+- **Cache JS**: aggiornato `programma-macchine-grid.js?v=1622`.
+
+#### File modificati
+- `MESManager.Web/wwwroot/lib/ag-grid/programma-macchine-grid.js` — ordine operativo stabile e sort canonica dopo riordino.
+- `MESManager.Web/Components/App.razor` — cache bust `programma-macchine-grid.js?v=1622`.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.66.01 → 1.66.02.
+- `docs/09-CHANGELOG.md` — nuova voce v1.66.02.
+- `docs/05-SCHEDULING-ENGINE.md` — documentata la regola Programma Macchine su frecce e sort.
+
+---
+
+## 🔖 v1.66.01 — Centratura sottomenu drawer espanso
+
+**Data**: 2026-05-18
+
+### 🐛 Fix
+
+- **Sottomenu espansi più centrati**: ridotto l’offset laterale tra rail colorata e pulsante figlio.
+- **Allineamento verticale**: icona e testo dei link figlio ora sono forzati su flex center, evitando l’effetto “troppo in alto”.
+- **Cache CSS**: aggiornato `app.css?v=1605`.
+
+#### File modificati
+- `MESManager.Web/wwwroot/app.css` — centratura link figli del drawer espanso.
+- `MESManager.Web/Components/App.razor` — cache bust `app.css?v=1605`.
+- `MESManager.Web/Constants/AppVersion.cs` — 1.66.00 → 1.66.01.
+- `docs/09-CHANGELOG.md` — nuova voce v1.66.01.
 
 ---
 

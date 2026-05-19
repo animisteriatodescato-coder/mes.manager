@@ -1503,8 +1503,94 @@ body.ai-drawer-resizing * {
     flex-shrink: 0;
 }
 
+.ai-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.ai-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ai-attach-label {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--mud-palette-divider);
+    border-radius: 6px;
+    color: var(--mud-palette-text-primary);
+    background: var(--mud-palette-surface);
+    cursor: pointer;
+    flex: 0 0 38px;
+}
+
+.ai-attach-label:hover {
+    border-color: var(--mud-palette-primary);
+    color: var(--mud-palette-primary);
+}
+
 .ai-panel-input .mud-input-control {
     width: 100%;
+}
+
+.ai-pending-attachments,
+.ai-message-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ai-pending-attachments {
+    margin-bottom: 8px;
+}
+
+.ai-pending-attachment {
+    position: relative;
+    width: 88px;
+    height: 58px;
+    border: 1px solid var(--mud-palette-divider);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--mud-palette-background);
+}
+
+.ai-pending-attachment img,
+.ai-message-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.ai-pending-attachment .mud-icon-button {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    padding: 0;
+    background: rgba(0,0,0,0.52);
+    color: #fff;
+}
+
+.ai-message-attachments {
+    margin-top: 8px;
+}
+
+.ai-message-thumb {
+    width: 128px;
+    height: 82px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.32);
 }
 
 /* Dark mode adjustments */
@@ -2729,4 +2815,53 @@ body.mes-pseudo-fullscreen .mud-main-content {
     width: 0 !important;
     height: 0 !important;
     display: none !important;
+}
+
+/* ==========================================================================
+   DRAWER FIX — centratura sottomenu espansi (v1.66.01)
+   ========================================================================== */
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container {
+    margin-left: 10px !important;
+    padding-left: 6px !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 0 5px !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text {
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text > div {
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text span:first-child {
+    margin: 0 1px 0 0 !important;
+    line-height: 1 !important;
+    transform: translateY(1px) !important;
+}
+
+.mud-drawer:not(.mes-mini-drawer) .mud-nav-group .mud-collapse-container .mud-nav-link .mud-nav-link-text span:not(:first-child) {
+    line-height: 1 !important;
+    transform: translateY(0) !important;
 }

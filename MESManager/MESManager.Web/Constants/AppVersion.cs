@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.66.00";
+    public const string Current = "1.66.04";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.66.00: two-digit patch version format
+    public const string Display = "v" + Current; // v1.66.04: AI assistant vision and data tools
 }

@@ -19,9 +19,22 @@ internal sealed record OaiRequest
 internal sealed record OaiMessage
 {
     public string         Role       { get; init; } = "user";
-    public string?        Content    { get; init; }
+    public object?        Content    { get; init; }
     public OaiToolCall[]? ToolCalls  { get; init; }
     public string?        ToolCallId { get; init; }
+}
+
+internal sealed record OaiContentPart
+{
+    public string       Type     { get; init; } = "text";
+    public string?      Text     { get; init; }
+    public OaiImageUrl? ImageUrl { get; init; }
+}
+
+internal sealed record OaiImageUrl
+{
+    public string Url    { get; init; } = "";
+    public string Detail { get; init; } = "auto";
 }
 
 internal sealed record OaiToolCall

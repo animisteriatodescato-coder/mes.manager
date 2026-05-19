@@ -11,7 +11,7 @@ public interface ICommessaAppService
     Task AggiornaStatoAsync(Guid id, string stato);
     Task AggiornaStatoProgrammaAsync(Guid id, string statoProgramma, string? note = null, string? utente = null);
     Task AggiornaNumeroMacchinaAsync(Guid id, int? numeroMacchina);
-    Task RiordinaCommessaAsync(Guid commessaId, int? nuovoNumeroMacchina, int nuovaPosizioneIndex);
+    Task RiordinaCommessaAsync(Guid commessaId, int? nuovoNumeroMacchina, int nuovaPosizioneIndex, IReadOnlyCollection<Guid>? commesseVisibiliIds = null);
     Task EliminaAsync(Guid id);
     Task<List<StoricoProgrammazioneDto>> GetStoricoProgrammazioneAsync(Guid commessaId);
     Task<List<string>> GetClienteNomiDistinctAsync();

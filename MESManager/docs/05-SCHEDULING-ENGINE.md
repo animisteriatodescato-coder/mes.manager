@@ -359,6 +359,17 @@ public static decimal CalcoloOreNecessarie(
 
 ## 3. WORKFLOW PATTERN - Commessa Lifecycle
 
+### 3.0 Programma Macchine - Riordino Manuale
+
+Le frecce su/giù della pagina Programma Macchine modificano `OrdineSequenza`, non l'ordinamento visuale temporaneo scelto dall'utente nella griglia.
+
+Regola fissa:
+- Calcolare la posizione di partenza usando l'ordine operativo `NumeroMacchina + OrdineSequenza`.
+- Dopo un riordino riuscito, ripristinare la sort della griglia su `MA + Ord.`.
+- Non usare il sort utente salvato (es. Cliente, Ubicazione, Data) come fonte di verita per spostare commesse: puo nascondere il cambio e far sembrare che la freccia non funzioni.
+- Passare al backend gli ID delle commesse visibili nella griglia: le righe chiuse/completate/filtrate devono restare in coda e non devono bloccare le posizioni visibili.
+- Bloccare click concorrenti sulle frecce fino al completamento della richiesta corrente.
+
 ### 3.1 State Diagram
 
 ```
