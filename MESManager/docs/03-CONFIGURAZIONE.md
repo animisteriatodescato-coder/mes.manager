@@ -527,6 +527,8 @@ Le variabili d'ambiente sono l'ultimo override del bootstrap centralizzato, quin
 $env:ConnectionStrings__MESManagerDb='Server=192.168.1.230\SQLEXPRESS01;Database=MESManager_Prod;User Id=FAB;Password=password.123;TrustServerCertificate=True;Encrypt=False;'
 ```
 
+In Development il wildcard evita `400 Bad Request - Invalid Hostname` quando il browser o i test usano `127.0.0.1` invece di `localhost`. In Production non usare il wildcard: `appsettings.Production.json` deve elencare solo host/IP reali autorizzati.
+
 ---
 
 ### ❌ DataProtection DPAPI non scrivibile in Development

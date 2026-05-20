@@ -163,6 +163,14 @@ taskkill /PID <PID> /F
 
 ---
 
+### ❌ "Bad Request - Invalid Hostname" su `127.0.0.1:5156`
+
+**Causa**: `AllowedHosts` troppo stretto. In Development l'app può essere aperta sia con `localhost` sia con `127.0.0.1`.
+
+**Soluzione**: il base config `MESManager.Web/appsettings.json` usa `AllowedHosts: "*"`. La produzione resta controllata da `appsettings.Production.json`, che contiene gli host reali autorizzati.
+
+---
+
 ### ❌ "Crittografia non supportata dal client" / SSL Provider
 
 **Causa**: il driver usato dall'app (`Microsoft.Data.SqlClient`) negozia la cifratura SQL in modo più rigido rispetto ai vecchi test `System.Data.SqlClient` o ad alcune versioni di `sqlcmd`.

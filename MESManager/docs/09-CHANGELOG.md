@@ -4,7 +4,18 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.67.1
+## 🔖 Versione Corrente: v1.67.2
+
+---
+
+## 🔖 v1.67.2 — Fix host locale 127.0.0.1
+
+**Data**: 2026-05-20
+
+### 🐛 Fix
+
+- **Development host locale**: `MESManager.Web/appsettings.json` ora usa `AllowedHosts: "*"` per evitare `400 Bad Request - Invalid Hostname` quando l'app viene aperta da `127.0.0.1:5156` invece di `localhost:5156`.
+- **Docs troubleshooting**: documentato il caso `127.0.0.1` nei docs di sviluppo/configurazione. La produzione resta limitata da `appsettings.Production.json`.
 
 ---
 
