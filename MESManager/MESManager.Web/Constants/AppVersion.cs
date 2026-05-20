@@ -9,10 +9,10 @@ public static class AppVersion
     /// <summary>
     /// Versione corrente dell'applicazione (formato: major.minor.patch)
     /// </summary>
-    public const string Current = "1.67.0";
+    public const string Current = "1.67.1";
 
     /// <summary>
     /// Versione con prefisso 'v' per display UI
     /// </summary>
-    public const string Display = "v" + Current; // v1.67.0: integrazione impianto fotovoltaico Huawei SUN2000
+    public const string Display = "v" + Current; // v1.67.1: stabilizzazione avvio Development
 }

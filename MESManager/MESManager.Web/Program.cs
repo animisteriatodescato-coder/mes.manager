@@ -7,6 +7,7 @@ using MESManager.Sync;
 using MESManager.Sync.Configuration;
 using MudBlazor.Services;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MESManager.Infrastructure.Configuration;
@@ -48,6 +49,13 @@ if (builder.Environment.IsDevelopment())
     builder.Logging.ClearProviders();
     builder.Logging.AddConsole();
     builder.Logging.AddDebug();
+
+    var dataProtectionKeysPath = Path.GetFullPath(
+        Path.Combine(builder.Environment.ContentRootPath, "..", ".dev-data-protection-keys"));
+    Directory.CreateDirectory(dataProtectionKeysPath);
+
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath));
 }
 
 // Configura DatabaseConfiguration per la DI

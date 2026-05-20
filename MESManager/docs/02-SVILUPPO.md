@@ -56,9 +56,9 @@ dotnet build MESManager.sln -c Release --nologo
 ### 4️⃣ Avvia Applicazione
 
 ```powershell
-cd C:\Dev\MESManager\MESManager.Web
+cd C:\Dev
 
-dotnet run --environment Development
+dotnet run --project MESManager/MESManager.Web/MESManager.Web.csproj --environment Development --urls http://localhost:5156
 ```
 
 **Output atteso**:
@@ -92,6 +92,29 @@ git commit -m "feat: descrizione della modifica"
 # ✅ Push su GitHub avviene AUTOMATICAMENTE (hook post-commit)
 # Se necessario push manuale: git push origin main
 ```
+
+---
+
+### Avvio corretto da shell/AI
+
+Per sviluppo locale e test assistiti usare sempre lo stesso flusso della Bibbia:
+
+```powershell
+# 1. Libera la porta 5156 senza terminare tutti i dotnet
+$proc = Get-NetTCPConnection -LocalPort 5156 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess; if($proc) { Stop-Process -Id $proc -Force; Start-Sleep -Seconds 2 }
+
+# 2. Build dalla root repo
+cd C:\Dev\MESManager
+dotnet build MESManager.sln --nologo
+
+# 3. Run da C:\Dev
+cd C:\Dev
+dotnet run --project MESManager/MESManager.Web/MESManager.Web.csproj --environment Development --urls http://localhost:5156
+```
+
+Se il DEV punta direttamente a `192.168.1.230\SQLEXPRESS01` e l'app segnala errori SSL/Encryption con `Microsoft.Data.SqlClient`, la connection string Development deve includere anche `Encrypt=False;` oltre a `TrustServerCertificate=True;`.
+
+In ambiente Development le chiavi ASP.NET DataProtection sono salvate in `.dev-data-protection-keys/` nella root repo, directory ignorata da Git. Questo evita errori DPAPI quando l'app viene avviata da shell o sandbox con un'identità Windows diversa dall'utente desktop.
 
 ---
 
@@ -137,6 +160,28 @@ netstat -ano | findstr :5156
 # Termina processo (sostituisci PID)
 taskkill /PID <PID> /F
 ```
+
+---
+
+### ❌ "Crittografia non supportata dal client" / SSL Provider
+
+**Causa**: il driver usato dall'app (`Microsoft.Data.SqlClient`) negozia la cifratura SQL in modo più rigido rispetto ai vecchi test `System.Data.SqlClient` o ad alcune versioni di `sqlcmd`.
+
+**Soluzione Development**: aggiungi `Encrypt=False;` alla connection string locale che punta a `192.168.1.230\SQLEXPRESS01`.
+
+```powershell
+$env:ConnectionStrings__MESManagerDb='Server=192.168.1.230\SQLEXPRESS01;Database=MESManager_Prod;User Id=FAB;Password=password.123;TrustServerCertificate=True;Encrypt=False;'
+```
+
+Questa variabile vale solo per la sessione corrente e prevale sui JSON perché le variabili d'ambiente sono caricate per ultime.
+
+---
+
+### ❌ "Access denied" su ASP.NET DataProtection Keys
+
+**Causa**: avvio da shell/sandbox con identità Windows diversa da quella che possiede `%LOCALAPPDATA%\ASP.NET\DataProtection-Keys`.
+
+**Soluzione**: in Development l'app usa automaticamente `.dev-data-protection-keys/` nella root repo. Se l'errore continua, elimina solo quella directory locale e riavvia l'app.
 
 ---
 

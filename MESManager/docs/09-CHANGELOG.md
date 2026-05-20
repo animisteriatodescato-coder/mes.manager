@@ -4,7 +4,47 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.66.06
+## 🔖 Versione Corrente: v1.67.1
+
+---
+
+## 🔖 v1.67.1 — Stabilizzazione avvio Development
+
+**Data**: 2026-05-20
+
+### 🐛 Fix
+
+- **Avvio locale stabile**: in Development le chiavi ASP.NET DataProtection vengono salvate in `.dev-data-protection-keys/` nella root repo, evitando errori DPAPI/access denied quando l'app viene avviata da shell o sandbox.
+- **Docs avvio corrette**: `02-SVILUPPO.md` ora allinea il comando di run alla Bibbia (`dotnet run --project ...` da `C:\Dev`) e documenta la gestione della porta 5156.
+- **Docs SQL Development**: `03-CONFIGURAZIONE.md` documenta `Encrypt=False;` per la connection string DEV diretta a `192.168.1.230\SQLEXPRESS01`, necessario con `Microsoft.Data.SqlClient` quando l'istanza SQL segnala errori SSL/Encryption.
+
+---
+
+## 🔖 v1.67.0 — Integrazione Fotovoltaico Huawei SUN2000
+
+**Data**: 2026-05-20
+
+### ✨ Feature
+
+- **Modulo Fotovoltaico**: integrazione impianto fotovoltaico Huawei SUN2000 tramite Modbus TCP.
+- **Worker polling**: `FotovoltaicoWorker` legge i dati ogni 30s via FluentModbus (FC3 Holding Registers), aggiorna `FotovoltaicoRealtime` (riga unica Id=1) e accumula storico orario in `FotovoltaicoStorico`.
+- **Dashboard Blazor**: nuova pagina `/energia/fotovoltaico` con 4 card KPI (potenza, energia oggi, energia accumulata, temperatura/stato), tabella dati elettrici DC/AC, grafico a barre storico 24h con MudChart, auto-refresh 30s, avviso offline/errore.
+- **NavMenu**: aggiunta sezione "Energia" con link Fotovoltaico.
+- **Configurazione**: abilitazione tramite `appsettings.json` Worker (`Fotovoltaico.Enabled`, `ModbusIp`, `ModbusPort`). Default `Enabled: false` — sicuro finché il dongle non è configurato.
+- **Database**: aggiunte tabelle `FotovoltaicoRealtime` e `FotovoltaicoStorico` con migration EF `AddFotovoltaico`.
+
+#### File modificati/creati
+- `MESManager.Domain/Entities/FotovoltaicoRealtime.cs` — entità snapshot realtime.
+- `MESManager.Domain/Entities/FotovoltaicoStorico.cs` — entità storico orario.
+- `MESManager.Infrastructure/Data/MesManagerDbContext.cs` — 2 DbSet aggiunti.
+- `MESManager.Infrastructure/Migrations/20260520055540_AddFotovoltaico.cs` — migration EF.
+- `MESManager.Worker/Workers/FotovoltaicoWorker.cs` — BackgroundService polling Modbus.
+- `MESManager.Worker/MESManager.Worker.csproj` — aggiunto FluentModbus 5.0.3.
+- `MESManager.Worker/appsettings.json` / `appsettings.Development.json` — sezione Fotovoltaico.
+- `MESManager.Web/Components/Pages/Energia/Fotovoltaico.razor` — pagina dashboard.
+- `MESManager.Web/Components/Pages/Energia/Fotovoltaico.razor.cs` — code-behind.
+- `MESManager.Web/Components/Layout/NavMenu.razor` — sezione Energia aggiunta.
+- `MESManager.Web/Constants/AppVersion.cs` — versione 1.67.0.
 
 ---
 

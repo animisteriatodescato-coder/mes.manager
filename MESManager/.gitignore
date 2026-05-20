@@ -30,6 +30,7 @@ web-run.log
 # Impostazioni runtime (generate a runtime, non da committare)
 wwwroot/app-settings.json
 MESManager.Web/wwwroot/app-settings.json
+.dev-data-protection-keys/
 
 # RAG - LanceDB locale (generato da rag/index_codebase.py)
 rag/lancedb/

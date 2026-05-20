@@ -216,7 +216,7 @@ Se un file locale e' gia' stato committato per errore, rimuoverlo solo dall'indi
 ```json
 {
   "ConnectionStrings": {
-    "MESManagerDb": "Server=192.168.1.230\\SQLEXPRESS01;Database=MESManager_Prod;User Id=FAB;Password=password.123;TrustServerCertificate=True;"
+    "MESManagerDb": "Server=192.168.1.230\\SQLEXPRESS01;Database=MESManager_Prod;User Id=FAB;Password=password.123;TrustServerCertificate=True;Encrypt=False;"
   },
   "Files": {
     "AllegatiBasePath": "\\\\192.168.1.230\\Dati\\Documenti\\AA SCHEDE PRODUZIONE\\foto cel",
@@ -234,6 +234,7 @@ Se un file locale e' gia' stato committato per errore, rimuoverlo solo dall'indi
 - Database: `MESManager_Prod` (non `Gantt`)
 - Path file via UNC `\\192.168.1.230\Dati` (richiede rete attiva)
 - Credenziali: `User Id=FAB; Password=password.123`
+- Con `Microsoft.Data.SqlClient` in Development aggiungere `Encrypt=False;` se SQL Server 230 risponde con errori SSL/Encryption.
 
 ---
 
@@ -505,6 +506,36 @@ taskkill /IM dotnet.exe /F
 
 # Oppure riavvia servizi su server
 ```
+
+---
+
+### ❌ Errore SSL/Encryption su `192.168.1.230\SQLEXPRESS01`
+
+**Sintomo**: l'app o `dotnet ef` fallisce con errori tipo `Crittografia non supportata dal client`, `SSL Provider` o timeout di login, mentre un test con `System.Data.SqlClient` può comunque riuscire.
+
+**Causa**: il client moderno `Microsoft.Data.SqlClient` richiede una scelta esplicita sulla cifratura quando parla con questa istanza SQL Server.
+
+**Soluzione Development**: nella connection string DEV diretta a `MESManager_Prod` usare:
+
+```text
+TrustServerCertificate=True;Encrypt=False;
+```
+
+Le variabili d'ambiente sono l'ultimo override del bootstrap centralizzato, quindi per una prova temporanea:
+
+```powershell
+$env:ConnectionStrings__MESManagerDb='Server=192.168.1.230\SQLEXPRESS01;Database=MESManager_Prod;User Id=FAB;Password=password.123;TrustServerCertificate=True;Encrypt=False;'
+```
+
+---
+
+### ❌ DataProtection DPAPI non scrivibile in Development
+
+**Sintomo**: all'avvio compaiono errori su `%LOCALAPPDATA%\ASP.NET\DataProtection-Keys`, chiavi non decifrabili o accesso negato.
+
+**Causa**: shell, AI sandbox o servizio locale possono avviare l'app con un'identità Windows diversa dall'utente che possiede le chiavi DPAPI del desktop.
+
+**Soluzione implementata**: in Development `MESManager.Web` persiste le chiavi in `.dev-data-protection-keys/` nella root repo. La directory è ignorata da Git e non va copiata in produzione.
 
 ---
 
