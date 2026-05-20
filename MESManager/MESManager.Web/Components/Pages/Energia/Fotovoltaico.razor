@@ -1,0 +1,148 @@
+@page "/energia/fotovoltaico"
+@using MESManager.Domain.Entities
+@using MudBlazor
+@attribute [Authorize]
+
+<PageTitle>Fotovoltaico | MESManager</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-4">
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Spacing="2">
+        <MudIcon Icon="@Icons.Material.Filled.WbSunny" Color="Color.Warning" Size="Size.Large"/>
+        <MudText Typo="Typo.h5">Impianto Fotovoltaico</MudText>
+        <MudSpacer/>
+        @if (_realtime != null)
+        {
+            <MudChip T="string" Icon="@(_realtime.ConnessioneOk ? Icons.Material.Filled.Wifi : Icons.Material.Filled.WifiOff)"
+                     Color="@(_realtime.ConnessioneOk ? Color.Success : Color.Error)" Size="Size.Small">
+                @(_realtime.ConnessioneOk ? "Inverter connesso" : "Inverter non raggiungibile")
+            </MudChip>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                Agg: @_realtime.UltimoAggiornamento.ToString("HH:mm:ss")
+            </MudText>
+        }
+        <MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="LoadDataAsync" Title="Aggiorna"/>
+    </MudStack>
+
+    @if (_realtime == null)
+    {
+        <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.Settings">
+            <MudText>Dati non ancora disponibili. Assicurarsi che il Worker sia in esecuzione e il Modbus TCP dell'inverter sia abilitato.</MudText>
+            <MudText Typo="Typo.caption" Class="mt-1">
+                Configurazione: <b>Worker appsettings.json → Fotovoltaico → Enabled: true, ModbusIp: [IP-inverter]</b>
+            </MudText>
+        </MudAlert>
+    }
+    else
+    {
+        @if (!_realtime.ConnessioneOk && !string.IsNullOrEmpty(_realtime.ErroreConnessione))
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-4">@_realtime.ErroreConnessione</MudAlert>
+        }
+
+        <!-- ── Card valori principali ── -->
+        <MudGrid Spacing="3" Class="mb-4">
+
+            <!-- Potenza attuale -->
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4" Elevation="2" Style="text-align:center">
+                    <MudIcon Icon="@Icons.Material.Filled.Bolt" Color="Color.Warning" Size="Size.Large"/>
+                    <MudText Typo="Typo.h4" Color="Color.Warning">
+                        @_realtime.PotenzaAttuale_kW.ToString("F2") <span style="font-size:.6em">kW</span>
+                    </MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Potenza attuale</MudText>
+                </MudPaper>
+            </MudItem>
+
+            <!-- Energia oggi -->
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4" Elevation="2" Style="text-align:center">
+                    <MudIcon Icon="@Icons.Material.Filled.Today" Color="Color.Info" Size="Size.Large"/>
+                    <MudText Typo="Typo.h4" Color="Color.Info">
+                        @_realtime.EnergiaOggi_kWh.ToString("F2") <span style="font-size:.6em">kWh</span>
+                    </MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Produzione oggi</MudText>
+                </MudPaper>
+            </MudItem>
+
+            <!-- Energia totale -->
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4" Elevation="2" Style="text-align:center">
+                    <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Success" Size="Size.Large"/>
+                    <MudText Typo="Typo.h4" Color="Color.Success">
+                        @((_realtime.EnergiaAccumulata_kWh / 1000.0).ToString("F1")) <span style="font-size:.6em">MWh</span>
+                    </MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Energia totale</MudText>
+                </MudPaper>
+            </MudItem>
+
+            <!-- Stato inverter -->
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="pa-4" Elevation="2" Style="text-align:center">
+                    <MudIcon Icon="@Icons.Material.Filled.Thermostat" Color="Color.Default" Size="Size.Large"/>
+                    <MudText Typo="Typo.h5">@_realtime.TemperaturaInterna_C.ToString("F1") °C</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@_realtime.StatoInverter</MudText>
+                </MudPaper>
+            </MudItem>
+
+        </MudGrid>
+
+        <!-- ── Dati elettrici DC/AC ── -->
+        <MudGrid Spacing="3" Class="mb-4">
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.subtitle1" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.FlashOn" Size="Size.Small" Class="mr-1"/>
+                        Lato DC (Stringa PV1)
+                    </MudText>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Tensione</MudText>
+                            <MudText Typo="Typo.h6">@_realtime.TensioneStringa_V.ToString("F1") V</MudText>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Corrente</MudText>
+                            <MudText Typo="Typo.h6">@_realtime.CorrenteStringa_A.ToString("F2") A</MudText>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.subtitle1" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.PowerInput" Size="Size.Small" Class="mr-1"/>
+                        Lato AC (Rete)
+                    </MudText>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Tensione fase A</MudText>
+                            <MudText Typo="Typo.h6">@_realtime.TensioneRete_V.ToString("F1") V</MudText>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Stato codice</MudText>
+                            <MudText Typo="Typo.h6">0x@_realtime.StatoCodice.ToString("X4")</MudText>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <!-- ── Grafico storico produzione oraria ── -->
+        @if (_storicoLabels.Length > 0)
+        {
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.subtitle1" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Timeline" Size="Size.Small" Class="mr-1"/>
+                    Produzione ultimi @_storicoLabels.Length record orari (kWh/ora)
+                </MudText>
+                <MudChart ChartType="ChartType.Bar"
+                          ChartSeries="@_chartSeries"
+                          XAxisLabels="@_storicoLabels"
+                          Width="100%"
+                          Height="250px"
+                          ChartOptions="@_chartOptions"/>
+            </MudPaper>
+        }
+    }
+
+</MudContainer>

@@ -31,6 +31,7 @@ builder.Services.AddMagoSync(magoOptions, backupPath);
 // Worker Services
 builder.Services.AddHostedService<SimulatorePLCWorker>();
 builder.Services.AddHostedService<SyncMagoWorker>();
+builder.Services.AddHostedService<MESManager.Worker.Workers.FotovoltaicoWorker>();
 // TODO: RecipeAutoLoaderWorker richiede IPianificazioneService - da sistemare DI
 // builder.Services.AddHostedService<RecipeAutoLoaderWorker>();  // v1.33.0 - Auto-load ricette su cambio commessa
 

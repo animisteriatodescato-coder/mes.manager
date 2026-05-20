@@ -75,6 +75,8 @@ Entities/
  ControlloQualitaScheda.cs
  EventoPLC.cs
  Festivo.cs
+ FotovoltaicoRealtime.cs
+ FotovoltaicoStorico.cs
  ImpostazioniGantt.cs
  ImpostazioniProduzione.cs
  LogEvento.cs

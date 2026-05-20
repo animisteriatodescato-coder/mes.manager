@@ -175,6 +175,8 @@ Migrations/
  20260504135203_AddNonConformitaCampiEstesi.Designer.cs
  20260519100523_AddControlliQualitaInProcess.cs
  20260519100523_AddControlliQualitaInProcess.Designer.cs
+ 20260520055540_AddFotovoltaico.cs
+ 20260520055540_AddFotovoltaico.Designer.cs
  MesManagerDbContextModelSnapshot.cs
 obj/Debug/net8.0/
  .NETCoreApp,Version=v8.0.AssemblyAttributes.cs

@@ -58,6 +58,7 @@ Components/
  Layout/MainLayout.razor.cs
  Pages/
   Cataloghi/CatalogoGridBase.cs
+  Energia/Fotovoltaico.razor.cs
   Manutenzioni/SchedaManutenzioneCassaPrintBuilder.cs
 Constants/
  AppVersion.cs
@@ -558,6 +559,7 @@ Components/
   CatalogoNonConformita.razor
   CatalogoRicette.razor
  Pages/
+  Energia/Fotovoltaico.razor
   Error.razor
   Home.razor
   Impostazioni/
@@ -660,6 +662,7 @@ Components/
   CatalogoNonConformita.razor
   CatalogoRicette.razor
  Pages/
+  Energia/Fotovoltaico.razor
   Error.razor
   Home.razor
   Impostazioni/

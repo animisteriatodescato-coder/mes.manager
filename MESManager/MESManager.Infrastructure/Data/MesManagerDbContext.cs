@@ -78,6 +78,10 @@ public class MesManagerDbContext : IdentityDbContext<ApplicationUser>
     // Log cambi stato schede manutenzione (v1.65.73)
     public DbSet<SchedaStatoLog> SchedeStatoLog => Set<SchedaStatoLog>();
 
+    // Modulo Fotovoltaico (v1.67.0)
+    public DbSet<FotovoltaicoRealtime> FotovoltaicoRealtime => Set<FotovoltaicoRealtime>();
+    public DbSet<FotovoltaicoStorico> FotovoltaicoStorico => Set<FotovoltaicoStorico>();
+
     // Modulo Preventivi (v1.64.0)
     public DbSet<PreventivoTipoSabbia> PreventivoTipiSabbia => Set<PreventivoTipoSabbia>();
     public DbSet<PreventivoTipoVernice> PreventivoTipiVernice => Set<PreventivoTipoVernice>();
