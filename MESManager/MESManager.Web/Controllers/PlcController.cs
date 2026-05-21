@@ -716,15 +716,23 @@ public class PlcController : ControllerBase
         [FromQuery] DateTime? to,
         [FromQuery] Guid? macchinaId)
     {
-        var fromDate = from ?? DateTime.Today.AddDays(-1);
-        var toDate   = to   ?? DateTime.Now;
-        var segmenti = await _service.GetGanttStoricoAsync(fromDate, toDate, macchinaId);
+        try
+        {
+            var fromDate = from ?? DateTime.Today.AddDays(-1);
+            var toDate   = to   ?? DateTime.Now;
+            var segmenti = await _service.GetGanttStoricoAsync(fromDate, toDate, macchinaId);
 
-        // Arricchisce Colore nel layer Web (MesDesignTokens — fonte di verità colori stato PLC)
-        foreach (var s in segmenti)
-            s.Colore = MesDesignTokens.PlcStatoColore(s.StatoMacchina);
+            // Arricchisce Colore nel layer Web (MesDesignTokens — fonte di verità colori stato PLC)
+            foreach (var s in segmenti)
+                s.Colore = MesDesignTokens.PlcStatoColore(s.StatoMacchina);
 
-        return Ok(segmenti);
+            return Ok(segmenti);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore GetGanttStorico from={From} to={To}", from, to);
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -736,10 +744,18 @@ public class PlcController : ControllerBase
         [FromQuery] DateTime? to,
         [FromQuery] Guid? macchinaId)
     {
-        var fromDate = from ?? DateTime.Today.AddDays(-1);
-        var toDate   = to   ?? DateTime.Now;
-        var result = await _service.GetKpiStoricoAsync(fromDate, toDate, macchinaId);
-        return Ok(result);
+        try
+        {
+            var fromDate = from ?? DateTime.Today.AddDays(-1);
+            var toDate   = to   ?? DateTime.Now;
+            var result = await _service.GetKpiStoricoAsync(fromDate, toDate, macchinaId);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Errore GetKpiStorico from={From} to={To}", from, to);
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 }
 
