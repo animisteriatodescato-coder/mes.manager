@@ -4,7 +4,27 @@
 
 ---
 
-## 🔖 Versione Corrente: v1.67.2
+## 🔖 Versione Corrente: v1.68.0
+
+---
+
+## 🔖 v1.68.0 — Unit + Integration Tests (S3)
+
+**Data**: 2026-05-21
+
+### ✨ Feature
+
+- **MESManager.UnitTests**: nuovo progetto xUnit + Moq + FluentAssertions per test di logica pura (no DB).
+  - 40 test su `PianificazioneService` (CalcolaDurata, CalcolaDataFine, GetColoreStato)  
+  - Test su `MacchinaCodiceHelper` (ExtractNumero, FormatNumeroDueCifreOrCodice)
+- **MESManager.IntegrationTests**: nuovo progetto xUnit + EF Core InMemory + FluentAssertions per test di repository.
+  - 9 test su `RicettaRepository` (GetArticoli, GetByCode, Count, UpdateParametro)
+- **`run-all-tests.ps1`**: script pre-deploy che esegue entrambe le suite e blocca con `exit 1` se un test fallisce.
+- Entrambi i progetti aggiunti alla `MESManager.sln`.
+
+### 📋 Workflow
+
+Prima di ogni deploy eseguire: `cd C:\Dev\MESManager; .\run-all-tests.ps1`
 
 ---
 

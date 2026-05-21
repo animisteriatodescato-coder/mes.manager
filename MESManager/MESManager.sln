@@ -19,6 +19,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MESManager.E2E", "tests\MES
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MESManager.Sync", "MESManager.Sync\MESManager.Sync.csproj", "{E96088E3-AEB5-41D7-8027-5C9218030EE6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{DEFC0E3F-DDAD-4227-9B8A-18181D7626C2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MESManager.UnitTests", "tests\MESManager.UnitTests\MESManager.UnitTests.csproj", "{64691206-9B39-4BD7-9C2A-0FBF86C5F406}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MESManager.IntegrationTests", "tests\MESManager.IntegrationTests\MESManager.IntegrationTests.csproj", "{504A59A3-A404-4E06-8F4F-2D020B5396B3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -60,5 +66,17 @@ Global
 		{E96088E3-AEB5-41D7-8027-5C9218030EE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E96088E3-AEB5-41D7-8027-5C9218030EE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E96088E3-AEB5-41D7-8027-5C9218030EE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64691206-9B39-4BD7-9C2A-0FBF86C5F406}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64691206-9B39-4BD7-9C2A-0FBF86C5F406}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64691206-9B39-4BD7-9C2A-0FBF86C5F406}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64691206-9B39-4BD7-9C2A-0FBF86C5F406}.Release|Any CPU.Build.0 = Release|Any CPU
+		{504A59A3-A404-4E06-8F4F-2D020B5396B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{504A59A3-A404-4E06-8F4F-2D020B5396B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{504A59A3-A404-4E06-8F4F-2D020B5396B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{504A59A3-A404-4E06-8F4F-2D020B5396B3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{64691206-9B39-4BD7-9C2A-0FBF86C5F406} = {DEFC0E3F-DDAD-4227-9B8A-18181D7626C2}
+		{504A59A3-A404-4E06-8F4F-2D020B5396B3} = {DEFC0E3F-DDAD-4227-9B8A-18181D7626C2}
 	EndGlobalSection
 EndGlobal
